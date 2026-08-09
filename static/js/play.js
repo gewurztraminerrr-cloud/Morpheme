@@ -5,18 +5,23 @@
 // lets iOS viewport-resize events (e.g. "exit full screen" banner) interrupt the
 // scroll animation midway, freezing the .play-grid between two snap points.
 //
-// Fix: 'instant' scroll via switchPlayPanel() + resize/visibilitychange re-snap.
+// Fix: direct scrollLeft assignment (always synchronously instant on all browsers
+//      including iOS Safari, which ignores scrollIntoView's behavior parameter).
 //      CSS scroll-snap-type:x mandatory still snaps native touch-swipes correctly.
 // =============================================================================
 
+const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
 window.switchPlayPanel = function(panelId) {
     window._currentPlayPanel = panelId;
-    const el = document.getElementById('play-panel-' + panelId);
-    if (el) {
-        el.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
-    }
+    const playGrid = document.querySelector('.play-grid');
+    if (!playGrid) return;
+    const idx = _PLAY_PANELS.indexOf(panelId);
+    if (idx === -1) return;
+    // Direct scrollLeft = value is ALWAYS instant on every browser, including
+    // iOS Safari (which ignores scrollIntoView's behavior:'instant' parameter).
+    playGrid.scrollLeft = idx * playGrid.clientWidth;
 };
 
 // Track which panel the user swiped to (native touch swipes bypass switchPlayPanel).
@@ -31,8 +36,7 @@ window.switchPlayPanel = function(panelId) {
                 const panelWidth = playGrid.clientWidth;
                 if (!panelWidth) return;
                 const idx = Math.round(playGrid.scrollLeft / panelWidth);
-                const panels = ['players', 'board', 'words'];
-                window._currentPlayPanel = panels[Math.min(idx, panels.length - 1)] || 'board';
+                window._currentPlayPanel = _PLAY_PANELS[Math.min(idx, _PLAY_PANELS.length - 1)] || 'board';
             }, 80);
         }, { passive: true });
     }
@@ -44,15 +48,14 @@ window.switchPlayPanel = function(panelId) {
 })();
 
 // Re-snap the game panels when the viewport changes (iOS "exit full screen" banner).
-// app.js already fires _restoreToolsLayout on resize; this is the play.js equivalent.
 window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
     requestAnimationFrame(() => {
-        const el = document.getElementById('play-panel-' + (window._currentPlayPanel || 'board'));
-        if (el) el.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
+        const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel || 'board');
+        playGrid.scrollLeft = Math.max(0, idx) * playGrid.clientWidth;
     });
 });
 

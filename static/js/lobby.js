@@ -210,8 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
                 const roomsPanel = document.getElementById('mobile-panel-rooms');
-                if (roomsPanel) {
-                    roomsPanel.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                // Direct scrollLeft assignment is always instant on iOS Safari (scrollIntoView behavior param is ignored)
+                const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
+                if (lobbyGrid) {
+                    lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
                 }
             }
 

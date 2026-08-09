@@ -2085,7 +2085,7 @@ function _restoreToolsLayout() {
     const layoutEl = document.querySelector('#page-tools .tools-split-layout');
     if (layoutEl) {
         requestAnimationFrame(() => {
-            layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
+            layoutEl.scrollLeft = layoutEl.scrollWidth; // direct assignment = always instant on iOS Safari
         });
     }
 }

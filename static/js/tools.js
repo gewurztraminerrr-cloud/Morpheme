@@ -64,13 +64,13 @@ window.showTool = function(toolId) {
     }
 
     // Scroll tools content into view horizontally to the right pane on mobile.
-    // 'instant' (not 'smooth') prevents iOS viewport-resize events from interrupting
-    // the scroll animation mid-way and snapping the panel back to the sidebar.
+    // Direct scrollLeft assignment is ALWAYS instant on all browsers including iOS Safari
+    // (which ignores scrollTo/scrollIntoView behavior parameters).
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
         if (layoutEl) {
-            layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
+            layoutEl.scrollLeft = layoutEl.scrollWidth; // scroll to right panel (clamped to clientWidth)
         }
     }
 };
@@ -119,7 +119,7 @@ function setupToolsNavigation() {
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                 if (layoutEl) {
-                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    layoutEl.scrollLeft = 0; // instant: no smooth to interrupt
                 }
             }
         }, { passive: true });
@@ -136,7 +136,7 @@ function setupToolsNavigation() {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
         if (layoutEl) {
             requestAnimationFrame(() => {
-                layoutEl.scrollTo({ left: layoutEl.scrollWidth, behavior: 'instant' });
+                layoutEl.scrollLeft = layoutEl.scrollWidth; // re-snap right panel
             });
         }
     });
