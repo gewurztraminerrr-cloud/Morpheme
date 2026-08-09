@@ -349,13 +349,17 @@
     overflow-wrap: anywhere;
 }
 
-/* Delete Post button sits above thread title as a plain block element */
-.forum-delete-post-btn-style {
+/* Wrapper ensures Delete Post is a block row above the title */
+.forum-delete-post-wrapper {
     display: block;
-    background: #f43f5e !important;
-    font-size: 0.8rem;
-    padding: 5px 14px;
     margin-bottom: 10px;
+}
+.forum-delete-post-btn-style {
+    display: inline-flex !important;    /* keep flex for icon alignment */
+    width: auto !important;             /* override forum-action-btn width:100% */
+    background: #f43f5e !important;
+    font-size: 0.8rem !important;
+    padding: 5px 14px !important;
 }
 
 .post-author-box {
