@@ -928,9 +928,24 @@ def get_undefined_words_api():
                     if len(parts) == 2:
                         defined_words.add(parts[0].strip().upper())
 
-        # --- Subtract standard dictionaries to get truly custom words ---
-        word_validator.ensure_csw_loaded()
-        standard = word_validator.nwl_words | word_validator.long_words | word_validator.csw_words
+        # --- Read standard dictionaries directly from disk ---
+        # word_validator.nwl_words/csw_words are lazy-loaded and may be empty
+        # until a game runs; always read from disk to guarantee accuracy.
+        def _read_wordlist(path):
+            words = set()
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8', errors='ignore') as fh:
+                    for ln in fh:
+                        w = ln.strip().upper()
+                        if w:
+                            words.add(w)
+            return words
+
+        dicts_dir = os.path.join(base_dir, 'dictionaries')
+        nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
+        csw_words   = _read_wordlist(os.path.join(dicts_dir, 'CSW.txt'))
+        long_words  = _read_wordlist(os.path.join(dicts_dir, '16plus.txt'))
+        standard    = nwl_words | csw_words | long_words
         truly_added = raw_added - standard
 
         # --- Words with no definition entry ---
