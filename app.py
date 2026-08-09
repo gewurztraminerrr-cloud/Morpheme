@@ -906,29 +906,48 @@ def get_undefined_words_api():
         return jsonify({'error': 'Unauthorized'}), 403
         
     try:
-        global DEFINITIONS_CACHE
-        if not DEFINITIONS_CACHE:
-            load_definitions()
-            
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # --- Read added_words.txt directly from disk ---
+        added_words_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
+        raw_added = set()
+        if os.path.exists(added_words_path):
+            with open(added_words_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    w = line.strip().upper()
+                    if w:
+                        raw_added.add(w)
+
+        # --- Read Definitions.txt directly from disk ---
+        defs_path = DEFINITIONS_PATH or os.path.join(base_dir, 'dictionaries', 'Definitions.txt')
+        defined_words = set()
+        if defs_path and os.path.exists(defs_path):
+            with open(defs_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    parts = line.split(' - ', 1)
+                    if len(parts) == 2:
+                        defined_words.add(parts[0].strip().upper())
+
+        # --- Subtract standard dictionaries to get truly custom words ---
         word_validator.ensure_csw_loaded()
-        
-        # Compute truly custom added words: subtract all standard dictionaries.
-        # _filter_added_words() may not have run with CSW loaded at startup,
-        # so do the subtraction here after ensure_csw_loaded() guarantees availability.
-        truly_added = (
-            word_validator.added_words
-            - word_validator.nwl_words
-            - word_validator.long_words
-            - word_validator.csw_words
-        )
-        
-        # Filter out words that have definitions in DEFINITIONS_CACHE
-        undefined_words = [w for w in truly_added if w not in DEFINITIONS_CACHE]
-        undefined_words.sort()
-        
+        standard = word_validator.nwl_words | word_validator.long_words | word_validator.csw_words
+        truly_added = raw_added - standard
+
+        # --- Words with no definition entry ---
+        undefined_words = sorted([w for w in truly_added if w not in defined_words])
+
         return jsonify({
             'success': True,
-            'words': undefined_words
+            'words': undefined_words,
+            '_debug': {
+                'raw_added_count': len(raw_added),
+                'defined_count': len(defined_words),
+                'standard_dict_count': len(standard),
+                'truly_added_count': len(truly_added),
+                'undefined_count': len(undefined_words),
+                'added_words_path': added_words_path,
+                'defs_path': defs_path,
+            }
         })
     except Exception as e:
         print(f"Error fetching undefined words: {e}")
