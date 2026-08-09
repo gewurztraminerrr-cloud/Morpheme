@@ -1118,52 +1118,18 @@ async function renderProfile(user) {
     // Helper for rendering a dense data row for a round
     window.renderRoundGridItem = (round) => {
         const gameTypeLabel = round.game_type === 'split' ? 'Split' :
-            round.game_type === 'fcfs' ? 'FCFS' : 
+            round.game_type === 'fcfs' ? 'FCFS' :
             round.game_type === '3d' ? 'Cube' : 'Acc';
         const typeClass = `history-type-${round.game_type}`;
 
-        let miniBoardHTML = '';
-        if (round.board && Array.isArray(round.board)) {
-            const rows = round.board.length;
-            const firstRow = round.board[0];
-            const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
-
-            if (is3D) {
-                // Render the front face (Face 0)
-                const frontFace = round.board[0];
-                let cellsHTML = '';
-                for (let r = 0; r < 3; r++) {
-                    for (let c = 0; c < 3; c++) {
-                        const letter = frontFace[r][c] || '?';
-                        cellsHTML += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(var(--accent-color-rgb), 0.2); border-radius: 1px; font-size: 8px; color: #fff; font-weight: 800;">${letter}</div>`;
-                    }
-                }
-                miniBoardHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 40px; height: 40px; border: 1px solid var(--accent-color); border-radius: 4px; overflow: hidden;">
-                        ${cellsHTML}
-                    </div>
-                `;
-            } else if (firstRow && Array.isArray(firstRow)) {
-                const cols = firstRow.length;
-                let gridCells = '';
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const letter = round.board[r] ? round.board[r][c] : '?';
-                        gridCells += `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 1px; font-size: 5px; color: rgba(255,255,255,0.5);">${letter}</div>`;
-                    }
-                }
-
-                miniBoardHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 1px; width: 40px; height: 40px; pointer-events: none;">
-                        ${gridCells}
-                    </div>
-                `;
-            } else {
-                miniBoardHTML = '<span style="opacity:0.3; font-size: 0.7rem;">No Preview</span>';
-            }
-        } else {
-            miniBoardHTML = '<span style="opacity:0.3; font-size: 0.7rem;">No Preview</span>';
-        }
+        // Board dimension + time display (replaces mini board icon)
+        const dims = round.dimensions || '?';
+        const dur = round.round_duration || 0;
+        const mins = Math.floor(dur / 60);
+        const secs = dur % 60;
+        const timeStr = mins > 0
+            ? `${mins}:${String(secs).padStart(2, '0')}`
+            : `0:${String(secs).padStart(2, '0')}`;
 
         // Date Formatting
         let dateStr = '-';
@@ -1177,12 +1143,13 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(8, 1fr); gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 700px;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
-            
-            <!-- Mini Board Preview Column -->
-            <div style="display: flex; justify-content: center;">
-                ${miniBoardHTML}
+
+            <!-- Board: dimension + time -->
+            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; text-align: center;">
+                <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${dims}</span>
+                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.35); font-weight: 600;">${timeStr}</span>
             </div>
 
             <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
@@ -1193,11 +1160,7 @@ async function renderProfile(user) {
                 <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
             </div>
             <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
-            <div style="display: flex; flex-direction: column; gap: 1px;">
-                <span style="font-size: 0.7rem; color: #60a5fa; font-weight: 700; opacity: 0.8;">${round.room_id}</span>
-                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.3); font-weight: 600;">Str: ${round.room_strength || '-'}</span>
-            </div>
-            
+
             <!-- Date Column -->
             <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; text-align: right;">${dateStr}</div>
         </div>
@@ -1205,14 +1168,13 @@ async function renderProfile(user) {
     };
 
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(8, 1fr); gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 700px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Mode</div>
             <div style="text-align: center;">Board</div>
             <div>Score</div>
             <div>PE</div>
             <div>Stats</div>
             <div>Top Word</div>
-            <div>Room</div>
             <div style="text-align: right;">Date</div>
         </div>
     `;

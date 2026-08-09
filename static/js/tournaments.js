@@ -149,9 +149,11 @@ function renderTournament(data) {
     const lbList = document.getElementById('tournament-leaderboard-list');
     if (lbCard && lbList) {
         const hasNotPlayedYet = userStatus.status === 'active' && userStatus.has_turn;
-        if (data.round_scores && data.round_scores.length > 0 && !hasNotPlayedYet) {
+        // Only show players who have submitted (finished) their round
+        const finishedScores = (data.round_scores || []).filter(s => s.submitted_at);
+        if (finishedScores.length > 0 && !hasNotPlayedYet) {
             lbCard.classList.remove('hidden');
-            lbList.innerHTML = data.round_scores.map((s, idx) => {
+            lbList.innerHTML = finishedScores.map((s, idx) => {
                 const isMe = s.username === window.currentUser;
                 const highlight = isMe ? 'border: 1px solid rgba(46, 204, 113, 0.3); background: rgba(46, 204, 113, 0.05);' : '';
 
