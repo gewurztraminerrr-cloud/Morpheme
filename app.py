@@ -912,11 +912,8 @@ def get_undefined_words_api():
             
         word_validator.ensure_csw_loaded()
         
-        all_words = set()
-        all_words.update(word_validator.nwl_words)
-        all_words.update(word_validator.csw_words)
-        all_words.update(word_validator.long_words)
-        all_words.update(word_validator.added_words)
+        # Only check Added Words — standard NWL/CSW words don't need custom definitions here
+        all_words = set(word_validator.added_words)
         
         # Filter out words that have definitions in DEFINITIONS_CACHE
         undefined_words = [w for w in all_words if w not in DEFINITIONS_CACHE]
