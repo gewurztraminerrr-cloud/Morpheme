@@ -617,14 +617,6 @@ function setupProfileTool() {
                 return;
             }
 
-            // Visual spin feedback
-            refreshBtn.style.transition = 'transform 0.5s ease';
-            refreshBtn.style.transform = 'rotate(360deg)';
-            setTimeout(() => {
-                refreshBtn.style.transform = '';
-                refreshBtn.style.transition = '';
-            }, 520);
-
             console.log(`[Profile] Manual refresh for: ${targetUser}`);
             performProfileSearch(targetUser);
         };
