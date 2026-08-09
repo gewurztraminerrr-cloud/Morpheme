@@ -347,6 +347,28 @@
     color: var(--text-primary);
 }
 
+/* Row holding the thread title + optional Delete Post button */
+.post-detail-title-row {
+    display: flex;
+    flex-direction: row-reverse;    /* button on the right, title on the left */
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 0;
+}
+.post-detail-title-row .post-detail-title {
+    flex: 1;
+    margin-bottom: 15px;
+}
+.forum-delete-post-btn-style {
+    background: #f43f5e !important;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 4px;    /* optical alignment with top of title */
+}
+
 .post-author-box {
     display: flex;
     align-items: center;
@@ -1235,5 +1257,19 @@ body.theme-black .forum-action-btn {
     .forum-comment-delete-btn {
         margin-left: 0 !important;
         flex-shrink: 0 !important;
+    }
+    /* On mobile: Delete Post above the title, each on its own line */
+    .post-detail-title-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .post-detail-title-row .post-detail-title {
+        width: 100% !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+    .forum-delete-post-btn-style {
+        align-self: flex-start !important;
+        margin-top: 0 !important;
     }
 }

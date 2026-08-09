@@ -873,11 +873,11 @@ const Forum = {
 
         detailEl.innerHTML = `
             <div class="post-detail-header">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
+                <div class="post-detail-title-row">
                     ${window.currentUserIsMod ? `
-                        <button id="forum-delete-post-btn" class="forum-action-btn remove" style="background: #f43f5e; font-size: 0.8rem; padding: 5px 12px;">Delete Post</button>
+                        <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
                     ` : ''}
+                    <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
                 </div>
                 <div class="post-author-box">
                     <div class="author-avatar">${post.username[0].toUpperCase()}</div>
