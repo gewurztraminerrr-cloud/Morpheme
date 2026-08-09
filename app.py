@@ -912,11 +912,18 @@ def get_undefined_words_api():
             
         word_validator.ensure_csw_loaded()
         
-        # Only check Added Words — standard NWL/CSW words don't need custom definitions here
-        all_words = set(word_validator.added_words)
+        # Compute truly custom added words: subtract all standard dictionaries.
+        # _filter_added_words() may not have run with CSW loaded at startup,
+        # so do the subtraction here after ensure_csw_loaded() guarantees availability.
+        truly_added = (
+            word_validator.added_words
+            - word_validator.nwl_words
+            - word_validator.long_words
+            - word_validator.csw_words
+        )
         
         # Filter out words that have definitions in DEFINITIONS_CACHE
-        undefined_words = [w for w in all_words if w not in DEFINITIONS_CACHE]
+        undefined_words = [w for w in truly_added if w not in DEFINITIONS_CACHE]
         undefined_words.sort()
         
         return jsonify({
