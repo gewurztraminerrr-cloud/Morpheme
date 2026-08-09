@@ -6932,7 +6932,7 @@ body .board-cell.tile-flash-purple * {
    list-scroll-area scrolls.
    ================================================ */
 @media (min-width: 901px) {
-    #tool-lists {
+    #tool-lists.active {
         height: 100% !important;
         overflow: hidden !important;
         display: flex !important;
