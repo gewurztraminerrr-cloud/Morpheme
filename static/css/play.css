@@ -6964,3 +6964,30 @@ body .board-cell.tile-flash-purple * {
         height: 100% !important;
     }
 }
+
+/* ================================================
+   FULL LIST MODAL — word item styles
+   ================================================ */
+.full-list-item {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+    opacity: 0.88;
+    padding: 2px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    min-width: 70px;
+    display: inline-block;
+    transition: background 0.1s;
+}
+.full-list-item:hover {
+    background: rgba(167, 139, 250, 0.12);
+    opacity: 1;
+}
+.full-list-item .likelihood-score {
+    font-size: 0.72rem;
+    opacity: 0.6;
+    margin-right: 3px;
+}

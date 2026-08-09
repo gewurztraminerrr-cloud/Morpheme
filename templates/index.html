@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=125">
     <link rel="stylesheet" href="/css/lobby.css?v=81">
-    <link rel="stylesheet" href="/css/play.css?v=162">
+    <link rel="stylesheet" href="/css/play.css?v=163">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=38">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -2205,7 +2205,10 @@
                             <div class="list-column" id="main-list-column" style="flex: 1;">
                                 <h3 id="list-column-header-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; user-select: none;" title="Click to scroll back to top filter options">
                                     <span><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></span>
-                                    <button id="list-scroll-top-btn" class="mod-refresh-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #a5b4fc; cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;">▲ Top Options</button>
+                                    <span style="display: flex; gap: 6px; align-items: center;">
+                                        <button id="list-view-full-btn" class="mod-refresh-btn" style="background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.5); color: #a78bfa; cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;" title="View the full list in a fullscreen overlay">⛶ View Full List</button>
+                                        <button id="list-scroll-top-btn" class="mod-refresh-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #a5b4fc; cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;">▲ Top Options</button>
+                                    </span>
                                 </h3>
                                 <div class="list-scroll-area-wrapper">
                                     <div class="list-scroll-area" id="main-list-results">Loading...</div>
@@ -2213,6 +2216,22 @@
                                         <div class="custom-scrollbar-thumb" id="list-scrollbar-thumb"></div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Full List Modal Overlay -->
+                        <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); flex-direction: column;">
+                            <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box;">
+                                <!-- Modal Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0;">
+                                    <div>
+                                        <span style="font-size: 1.3rem; font-weight: 800; color: #a78bfa;" id="full-list-modal-title">Full List</span>
+                                        <span style="font-size: 0.85rem; opacity: 0.6; margin-left: 10px;" id="full-list-modal-count"></span>
+                                    </div>
+                                    <button id="full-list-modal-close" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">✕</button>
+                                </div>
+                                <!-- Scrollable Word Grid -->
+                                <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; column-count: auto;"></div>
                             </div>
                         </div>
                     </div>
@@ -5144,7 +5163,7 @@
     <script src="/js/play.js?v=250"></script>
     <script src="/js/tournaments.js?v=9"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=86"></script>
+    <script src="/js/tools.js?v=87"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=13"></script>
     <script src="/js/private_matches.js?v=7"></script>

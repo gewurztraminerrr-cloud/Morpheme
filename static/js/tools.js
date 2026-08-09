@@ -2786,6 +2786,87 @@ function setupListsTool() {
         });
     }
 
+    // --- View Full List Modal ---
+    const viewFullBtn = document.getElementById('list-view-full-btn');
+    const fullListModal = document.getElementById('full-list-modal');
+    const fullListClose = document.getElementById('full-list-modal-close');
+    const fullListResults = document.getElementById('full-list-modal-results');
+    const fullListTitle = document.getElementById('full-list-modal-title');
+    const fullListCount = document.getElementById('full-list-modal-count');
+
+    function openFullListModal() {
+        if (!fullListModal || !fullListResults) return;
+        if (!currentWordsList || currentWordsList.length === 0) {
+            alert('No list loaded yet. Please select a list type and click Update first.');
+            return;
+        }
+
+        // Set title and count
+        const titleEl = document.getElementById('list-display-title');
+        if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
+        if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
+
+        // Render all words in a column-friendly flex layout
+        fullListResults.innerHTML = '';
+        fullListResults.scrollTop = 0;
+
+        // Render progressively in chunks so the modal opens instantly
+        const MODAL_CHUNK = 500;
+        let rendered = 0;
+
+        function renderModalChunk() {
+            const chunk = currentWordsList.slice(rendered, rendered + MODAL_CHUNK);
+            if (chunk.length === 0) return;
+
+            let html = '';
+            if (currentWordsType === 'likelihood') {
+                html = chunk.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> ${item.word}</span>`).join('');
+            } else {
+                html = chunk.map(w => `<span class="full-list-item">${w}</span>`).join('');
+            }
+            fullListResults.insertAdjacentHTML('beforeend', html);
+            rendered += chunk.length;
+
+            if (rendered < currentWordsList.length) {
+                setTimeout(renderModalChunk, 40);
+            }
+        }
+
+        renderModalChunk();
+
+        // Show modal
+        fullListModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
+
+    function closeFullListModal() {
+        if (!fullListModal) return;
+        fullListModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    if (viewFullBtn) {
+        viewFullBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openFullListModal();
+        });
+    }
+    if (fullListClose) {
+        fullListClose.addEventListener('click', closeFullListModal);
+    }
+    if (fullListModal) {
+        // Click backdrop to close
+        fullListModal.addEventListener('click', (e) => {
+            if (e.target === fullListModal) closeFullListModal();
+        });
+    }
+    // Escape key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && fullListModal && fullListModal.style.display === 'flex') {
+            closeFullListModal();
+        }
+    });
+
     const listHeaderTitle = document.getElementById('list-column-header-title');
     if (listHeaderTitle) {
         listHeaderTitle.addEventListener('click', () => {
