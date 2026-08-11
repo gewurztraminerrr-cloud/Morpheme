@@ -63,15 +63,12 @@ window.showTool = function(toolId) {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
 
-    // Scroll tools content into view horizontally to the right pane on mobile.
+    // Scroll tools content into view horizontally to the right pane on mobile with smooth sliding
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
         if (layoutEl) {
-            const targetLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
-            layoutEl.scrollLeft = targetLeft;
-            requestAnimationFrame(() => { layoutEl.scrollLeft = targetLeft; });
-            setTimeout(() => { layoutEl.scrollLeft = targetLeft; }, 50);
+            layoutEl.scrollTo({ left: layoutEl.clientWidth || layoutEl.scrollWidth, behavior: 'smooth' });
         }
     }
 };
@@ -89,6 +86,26 @@ function setupToolsNavigation() {
             window.showTool(toolId);
         }
     });
+
+    // Mobile Layout snapping on navigation to Tools page
+    const toolsPage = document.getElementById('page-tools');
+    if (toolsPage) {
+        const observer = new MutationObserver(() => {
+            if (toolsPage.classList.contains('active')) {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    setTimeout(() => {
+                        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                        if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    }, 100);
+                }
+            }
+        });
+        observer.observe(toolsPage, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
 
     // Mobile touch swipe handling for sliding back to tools list
     const toolsContent = document.querySelector('#page-tools .tools-content');
@@ -120,7 +137,7 @@ function setupToolsNavigation() {
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                 if (layoutEl) {
-                    layoutEl.scrollLeft = 0; // instant: no smooth to interrupt
+                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
                 }
             }
         }, { passive: true });
