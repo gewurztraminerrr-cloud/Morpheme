@@ -2110,6 +2110,9 @@ document.addEventListener('visibilitychange', () => {
         setTimeout(() => {
             _updateVhVariable();
             _restoreToolsLayout();
+            if (typeof window.switchPlayPanel === 'function') {
+                window.switchPlayPanel(window._currentPlayPanel || 'board');
+            }
         }, 350);
     }
 });

@@ -5,40 +5,60 @@
 // lets iOS viewport-resize events (e.g. "exit full screen" banner) interrupt the
 // scroll animation midway, freezing the .play-grid between two snap points.
 //
-// Fix: direct scrollLeft assignment (always synchronously instant on all browsers
-//      including iOS Safari, which ignores scrollIntoView's behavior parameter).
-//      CSS scroll-snap-type:x mandatory still snaps native touch-swipes correctly.
+// Fix: direct scrollLeft assignment + strict snap enforcement on touchend/resize/visibility.
 // =============================================================================
 
 const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
 window.switchPlayPanel = function(panelId) {
-    window._currentPlayPanel = panelId;
+    window._currentPlayPanel = panelId || 'board';
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
-    const idx = _PLAY_PANELS.indexOf(panelId);
+    const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel);
     if (idx === -1) return;
-    // Direct scrollLeft = value is ALWAYS instant on every browser, including
-    // iOS Safari (which ignores scrollIntoView's behavior:'instant' parameter).
-    playGrid.scrollLeft = idx * playGrid.clientWidth;
+    const targetLeft = idx * playGrid.clientWidth;
+    playGrid.scrollLeft = targetLeft;
 };
 
-// Track which panel the user swiped to (native touch swipes bypass switchPlayPanel).
+// Track which panel the user swiped to and enforce clean snapping when scrolling/swiping finishes.
 (function _setupPlayGridScrollTracker() {
+    function enforceSnap() {
+        const playGrid = document.querySelector('.play-grid');
+        if (!playGrid) return;
+        const panelWidth = playGrid.clientWidth;
+        if (!panelWidth || panelWidth <= 0) return;
+        
+        const idx = Math.round(playGrid.scrollLeft / panelWidth);
+        const targetIdx = Math.max(0, Math.min(idx, _PLAY_PANELS.length - 1));
+        window._currentPlayPanel = _PLAY_PANELS[targetIdx] || 'board';
+        const targetLeft = targetIdx * panelWidth;
+        
+        if (Math.abs(playGrid.scrollLeft - targetLeft) > 1) {
+            playGrid.scrollLeft = targetLeft;
+        }
+    }
+
     function _attachTracker() {
         const playGrid = document.querySelector('.play-grid');
         if (!playGrid) return;
         let _scrollTimeout;
+        
         playGrid.addEventListener('scroll', () => {
             clearTimeout(_scrollTimeout);
-            _scrollTimeout = setTimeout(() => {
-                const panelWidth = playGrid.clientWidth;
-                if (!panelWidth) return;
-                const idx = Math.round(playGrid.scrollLeft / panelWidth);
-                window._currentPlayPanel = _PLAY_PANELS[Math.min(idx, _PLAY_PANELS.length - 1)] || 'board';
-            }, 80);
+            _scrollTimeout = setTimeout(enforceSnap, 80);
         }, { passive: true });
+
+        // Enforce snap as soon as finger lifts off screen
+        ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(evt => {
+            document.addEventListener(evt, () => {
+                const playPage = document.getElementById('page-play');
+                if (playPage && playPage.classList.contains('active')) {
+                    setTimeout(enforceSnap, 50);
+                    setTimeout(enforceSnap, 250);
+                }
+            }, { passive: true });
+        });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _attachTracker);
@@ -47,16 +67,15 @@ window.switchPlayPanel = function(panelId) {
     }
 })();
 
-// Re-snap the game panels when the viewport changes (iOS "exit full screen" banner).
+// Re-snap the game panels when the viewport changes (iOS "exit full screen" banner or orientation change).
 window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
-    const playGrid = document.querySelector('.play-grid');
-    if (!playGrid) return;
-    requestAnimationFrame(() => {
-        const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel || 'board');
-        playGrid.scrollLeft = Math.max(0, idx) * playGrid.clientWidth;
-    });
+    if (typeof window.switchPlayPanel === 'function') {
+        requestAnimationFrame(() => {
+            window.switchPlayPanel(window._currentPlayPanel || 'board');
+        });
+    }
 });
 
 // =============================================================================
@@ -8153,8 +8172,20 @@ function finishDragSelection(e) {
 
     boardEl.addEventListener('mouseover', handleCellMouseOver);
     document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
-    boardEl.addEventListener('touchstart', handleCellTouchStart, { passive: false });
-    boardEl.addEventListener('touchmove', handleCellTouchMove, { passive: false });
+    // Unconditionally prevent board touches from starting page/panel horizontal scrolling
+    boardEl.addEventListener('touchstart', (e) => {
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+        handleCellTouchStart(e);
+    }, { passive: false });
+
+    boardEl.addEventListener('touchmove', (e) => {
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+        handleCellTouchMove(e);
+    }, { passive: false });
 
     // Release: commit word
     document.addEventListener('mouseup', finishDragSelection);

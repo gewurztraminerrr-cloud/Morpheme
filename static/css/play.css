@@ -4435,6 +4435,9 @@ input[type=range]::-moz-range-track {
     .play-grid::-webkit-scrollbar {
         display: none !important;
     }
+    #game-board, .game-board {
+        touch-action: none !important;
+    }
 
     #page-play.active {
         height: 100vh !important;
