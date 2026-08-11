@@ -60,7 +60,7 @@ window.showTool = function(toolId) {
         fetch('/api/tools/flag_manual', { method: 'POST' }).catch(e => console.error(e));
     }
     if (toolId === 'find-count') {
-        if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords();
+        if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
 
     // Scroll tools content into view horizontally to the right pane on mobile.
@@ -4767,7 +4767,7 @@ function setupFindCountTool() {
     const moreBtn = document.getElementById('more-random-words-btn');
     if (moreBtn) {
         moreBtn.addEventListener('click', () => {
-            loadRandomSuggestedWords();
+            loadRandomSuggestedWords(true);
         });
         moreBtn.addEventListener('mouseenter', () => {
             moreBtn.style.background = 'rgba(165, 180, 252, 0.15)';
@@ -4782,14 +4782,19 @@ function setupFindCountTool() {
     const dictSelect = document.getElementById('random-words-dict-select');
     if (dictSelect) {
         dictSelect.addEventListener('change', () => {
-            loadRandomSuggestedWords();
+            loadRandomSuggestedWords(true);
         });
     }
 }
 
-async function loadRandomSuggestedWords() {
+async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
+
+    // If words are already rendered and force is false, preserve existing words
+    if (!force && tableBody.querySelectorAll('.suggested-word-row').length > 0) {
+        return;
+    }
 
     const dictSelect = document.getElementById('random-words-dict-select');
     const selectedDict = dictSelect ? dictSelect.value : 'ALL';
