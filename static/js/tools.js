@@ -4802,6 +4802,8 @@ function setupFindCountTool() {
             loadRandomSuggestedWords(true);
         });
     }
+}
+
 let _isFetchingRandomWords = false;
 let _randomWordsLoadedOnce = false;
 
