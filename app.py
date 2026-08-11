@@ -1840,21 +1840,25 @@ def _get_word_finds(word):
         
         for row in cursor.fetchall():
             try:
-                words = json.loads(row['words_json'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp')
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = format_chicago_to_utc(row['timestamp'])
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
+                words = json.loads(row['words_json']) if row['words_json'] else []
+                if isinstance(words, list):
+                    for w_obj in words:
+                        w_str = w_obj.get('word', '') if isinstance(w_obj, dict) else str(w_obj)
+                        if w_str.upper() == word:
+                            ts_val = (w_obj.get('timestamp') if isinstance(w_obj, dict) else None)
+                            if ts_val and isinstance(ts_val, (int, float)):
+                                dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                                iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            elif ts_val and isinstance(ts_val, str) and ('T' in ts_val or '-' in ts_val):
+                                iso_ts = ts_val
+                            else:
+                                iso_ts = format_chicago_to_utc(row['timestamp'])
+                            
+                            finds.append({
+                                'username': row['username'],
+                                'country_flag': row['country_flag'],
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                            })
             except Exception as ex:
                 print(f"[FindCount] Error parsing round_history row: {ex}")
 
@@ -1868,21 +1872,25 @@ def _get_word_finds(word):
         
         for row in cursor.fetchall():
             try:
-                words = json.loads(row['submitted_words'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp') or row['submitted_at']
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
+                words = json.loads(row['submitted_words']) if row['submitted_words'] else []
+                if isinstance(words, list):
+                    for w_obj in words:
+                        w_str = w_obj.get('word', '') if isinstance(w_obj, dict) else str(w_obj)
+                        if w_str.upper() == word:
+                            ts_val = (w_obj.get('timestamp') if isinstance(w_obj, dict) else None) or row['submitted_at']
+                            if ts_val and isinstance(ts_val, (int, float)):
+                                dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                                iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            elif ts_val and isinstance(ts_val, str) and ('T' in ts_val or '-' in ts_val):
+                                iso_ts = ts_val
+                            else:
+                                iso_ts = format_chicago_to_utc(row['submitted_at'])
+                            
+                            finds.append({
+                                'username': row['username'],
+                                'country_flag': row['country_flag'],
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                            })
             except Exception as ex:
                 print(f"[FindCount] Error parsing tournament_scores row: {ex}")
 
@@ -1896,21 +1904,25 @@ def _get_word_finds(word):
         
         for row in cursor.fetchall():
             try:
-                words = json.loads(row['submitted_words'])
-                for w_obj in words:
-                    if w_obj.get('word', '').upper() == word:
-                        ts_val = w_obj.get('timestamp') or row['submitted_at']
-                        if ts_val and isinstance(ts_val, (int, float)):
-                            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
-                            iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        else:
-                            iso_ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        finds.append({
-                            'username': row['username'],
-                            'country_flag': row['country_flag'],
-                            'timestamp': iso_ts
-                        })
+                words = json.loads(row['submitted_words']) if row['submitted_words'] else []
+                if isinstance(words, list):
+                    for w_obj in words:
+                        w_str = w_obj.get('word', '') if isinstance(w_obj, dict) else str(w_obj)
+                        if w_str.upper() == word:
+                            ts_val = (w_obj.get('timestamp') if isinstance(w_obj, dict) else None) or row['submitted_at']
+                            if ts_val and isinstance(ts_val, (int, float)):
+                                dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                                iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            elif ts_val and isinstance(ts_val, str) and ('T' in ts_val or '-' in ts_val):
+                                iso_ts = ts_val
+                            else:
+                                iso_ts = format_chicago_to_utc(row['submitted_at'])
+                            
+                            finds.append({
+                                'username': row['username'],
+                                'country_flag': row['country_flag'],
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                            })
             except Exception as ex:
                 print(f"[FindCount] Error parsing private_match_turns row: {ex}")
 
@@ -1919,8 +1931,8 @@ def _get_word_finds(word):
     finally:
         conn.close()
 
-    # Sort finds descending by timestamp string
-    finds.sort(key=lambda x: x['timestamp'], reverse=True)
+    # Sort finds descending by timestamp string (newest first, oldest last)
+    finds.sort(key=lambda x: str(x['timestamp']), reverse=True)
     return finds
 
 @app.route('/api/word_tally/<word>', methods=['GET'])
