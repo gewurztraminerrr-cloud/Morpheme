@@ -4883,7 +4883,7 @@ async function runFindCountSearch() {
         
         if (summaryEl) {
             if (data.is_valid) {
-                summaryEl.innerText = `The word "${data.word}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began.`;
+                summaryEl.innerText = `The word "${data.word}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.`;
             } else {
                 const escapedWord = (data.word || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${escapedWord}" is not a valid word in Morpheme's dictionaries.</span>`;

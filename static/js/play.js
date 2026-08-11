@@ -9563,7 +9563,7 @@ window.showFinderModal = function (word) {
                 
                 let html = `
                     <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
-                        <strong>${wordUpper}</strong> (${defaultWordVal} pts) has been found <strong>${totalCombined}</strong> times total since Morpheme began.
+                        <strong>${wordUpper}</strong> (${defaultWordVal} pts) has been found <strong>${totalCombined}</strong> ${totalCombined === 1 ? 'time' : 'times'} since Morpheme began in 2026.
                     </div>
                 `;
                 
