@@ -4177,6 +4177,8 @@ input[type=range]::-moz-range-track {
     max-width: 95vw;
     max-height: 95vw;
     box-sizing: border-box;
+    transform: scale(min(1, calc(86vw / var(--cube-container-size))));
+    transform-origin: center center;
 }
 
 .cube {
