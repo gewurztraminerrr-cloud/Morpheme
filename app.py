@@ -477,7 +477,7 @@ def add_pronunciation():
         return jsonify({'error': 'Word and pronunciation required'}), 400
     
     # Check if word is valid in NWL, CSW, or Added Words
-    if not (word_validator.is_valid_word(word, 'CSW') or word_validator.is_valid_word(word, 'NWL')):
+    if not word_validator.is_valid_word(word, 'ALL + AW', use_added_words=True):
         return jsonify({'error': f'"{word}" is not a valid word in NWL, CSW, or Added Words.'}), 400
         
     pron_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'pronunciations.txt')
@@ -5702,8 +5702,8 @@ def tools_find_count():
         total_count = len(finds)
         recent_finds = finds[:10]
         
-        # Check if the word is valid in dictionaries (NWL, CSW, or supplementary/added lists)
-        is_valid = word_validator.is_valid_word(word, 'NWL') or word_validator.is_valid_word(word, 'CSW')
+        # Check if the word is valid in dictionaries (NWL, CSW, supplementary 16+, or added words)
+        is_valid = word_validator.is_valid_word(word, 'ALL + AW', use_added_words=True)
         
         return jsonify({
             'word': word,

@@ -347,28 +347,20 @@ class WordValidator:
     
     def is_valid_word(self, word, dictionary='NWL', use_added_words=None):
         """Check if word is valid using pre-merged sets."""
-        if use_added_words is None:
-            self.get_use_added_words()
-            val = use_added_words_ctx.get()
-            if val is None:
-                val = False
-        else:
-            val = use_added_words
-            
         d_upper = str(dictionary).upper()
-        has_aw = ('+ AW' in d_upper) or ('+AW' in d_upper) or (d_upper in ['AW', 'ADDED_WORDS'])
+        has_aw = ('+ AW' in d_upper) or ('+AW' in d_upper) or (d_upper in ['AW', 'ADDED_WORDS', 'ALL', 'ALL + AW', 'ALL+AW'])
         if use_added_words is None:
             self.get_use_added_words()
             val = use_added_words_ctx.get()
             if val is None:
-                val = has_aw
+                val = has_aw or getattr(self, 'use_added_words', True)
         else:
             val = use_added_words or has_aw
             
-        if 'CSW' in d_upper:
+        if 'CSW' in d_upper and 'NWL' not in d_upper and 'ALL' not in d_upper:
             self.ensure_csw_loaded()
             return word in self.csw_words or word in self.long_words or (val and word in self.added_words)
-        elif 'AW' in d_upper and 'NWL' not in d_upper and 'CSW' not in d_upper:
+        elif d_upper in ['ALL', 'ALL + AW', 'ALL+AW', 'AW', 'ADDED_WORDS'] or ('ALL' in d_upper) or ('AW' in d_upper and 'NWL' not in d_upper and 'CSW' not in d_upper):
             self.ensure_csw_loaded()
             return word in self.nwl_words or word in self.csw_words or word in self.long_words or word in self.added_words
         else:  # NWL
