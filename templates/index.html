@@ -2219,20 +2219,6 @@
                             </div>
                         </div>
 
-                        <!-- Full List Modal Overlay -->
-                        <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); flex-direction: column;">
-                            <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box;">
-                                <!-- Modal Header -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0;">
-                                    <div>
-                                        <span style="font-size: 1.3rem; font-weight: 800; color: #a78bfa;" id="full-list-modal-title">Full List</span>
-                                        <span style="font-size: 0.85rem; opacity: 0.6; margin-left: 10px;" id="full-list-modal-count"></span>
-                                    </div>
-                                    <button id="full-list-modal-close" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">✕</button>
-                                </div>
-                                <!-- Scrollable Word Grid -->
-                                <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; column-count: auto;"></div>
-                            </div>
                         </div>
                     </div>
 
@@ -4650,6 +4636,22 @@
                 </div>
             </div>
         </div>
+        <!-- Full List Modal Overlay -->
+        <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(10, 10, 16, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); flex-direction: column;">
+            <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box;">
+                <!-- Modal Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
+                    <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                        <span style="font-size: 1.3rem; font-weight: 800; color: #a78bfa;" id="full-list-modal-title">Full List</span>
+                        <span style="font-size: 0.85rem; opacity: 0.7; color: rgba(255,255,255,0.8);" id="full-list-modal-count"></span>
+                    </div>
+                    <button id="full-list-modal-close" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;" title="Close">✕</button>
+                </div>
+                <!-- Scrollable Word Grid -->
+                <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px;"></div>
+            </div>
+        </div>
+
         <!-- Mini Profile Modal -->
         <div id="mini-profile-modal" class="mini-profile-overlay hidden">
             <div class="mini-profile-card">

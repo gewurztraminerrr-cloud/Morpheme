@@ -1,30 +1,25 @@
 ---
-description: Revert the project to the August 9, 2026 save point. Use this when the user says "Start Over".
+description: Revert the project to the August 11, 2026 save point. Use this when the user says "Start Over".
 ---
 
 ### Revert Procedure
 
 1.  **Reset Repository to Save Point:**
-    - `git reset --hard 744d004`
+    - `git reset --hard 3b9c152`
 
 2.  **Clean Up Untracked Files:**
 // turbo
     - `git clean -fd`
 
-3.  **Restore Database Snapshot (Synesthesia & User Settings):**
+3.  **Restart Server / Sync:**
 // turbo
-    - `cp morpheme.db.save_point_2026-03-26_final morpheme.db`
+    - `python3 scratch/deploy_all_fixes.py`
 
-4.  **Restart Server:**
-// turbo
-    - `nohup python3 app.py > server.log 2>&1 &`
+4.  **Verify Status:**
+    - Navigate to `morpheme.games` and confirm UI is at the August 11 stable state.
 
-5.  **Verify Status:**
-    - Navigate to `http://localhost:3000` and confirm the UI is at the August 9 stable state.
-    - Check: Delete Post button appears above thread title in Forum (static HTML), About Me scrollbar visible on full Profile page and mini-profile modal (all browsers), Word Lists tab does NOT bleed below Store on desktop.
-
-### August 9 Save Point Details
-- **Commit**: `744d004`
+### August 11 Save Point Details
+- **Commit**: `3b9c152`
 - **Branch**: `main`
 - **GitHub**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
-- **Stable State Doc**: `stable_state_august_9_2026.md` in Antigravity brain
+- **Stable State Doc**: `stable_state_august_11_2026.md` in Antigravity brain
