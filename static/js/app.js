@@ -2075,19 +2075,15 @@ function _updateVhVariable() {
 }
 
 function _restoreToolsLayout() {
-    // If the user had a tool open on mobile, the viewport resize caused by the
-    // browser chrome appearing may have snapped the split layout back to the
-    // sidebar (scrollLeft = 0). Re-snap instantly to the content panel.
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
-    const activeTool = document.querySelector('#page-tools .tool-nav-btn.active');
-    if (!activeTool) return;
-    const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-    if (layoutEl) {
+    document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
+        const activePane = layoutEl.querySelector('.tools-content .tool-pane.active');
+        const targetLeft = activePane ? (layoutEl.clientWidth || layoutEl.scrollWidth) : 0;
         requestAnimationFrame(() => {
-            layoutEl.scrollLeft = layoutEl.scrollWidth; // direct assignment = always instant on iOS Safari
+            layoutEl.scrollLeft = targetLeft;
         });
-    }
+    });
 }
 
 // Initialize immediately and on every resize

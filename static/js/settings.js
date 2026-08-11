@@ -790,7 +790,7 @@ function debounce(func, wait) {
         if (isMobile) {
             const layout = document.querySelector('#page-settings .tools-split-layout');
             if (layout) {
-                layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
+                layout.scrollLeft = layout.clientWidth || layout.scrollWidth;
             }
         }
     };

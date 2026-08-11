@@ -64,13 +64,14 @@ window.showTool = function(toolId) {
     }
 
     // Scroll tools content into view horizontally to the right pane on mobile.
-    // Direct scrollLeft assignment is ALWAYS instant on all browsers including iOS Safari
-    // (which ignores scrollTo/scrollIntoView behavior parameters).
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
         if (layoutEl) {
-            layoutEl.scrollLeft = layoutEl.scrollWidth; // scroll to right panel (clamped to clientWidth)
+            const targetLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
+            layoutEl.scrollLeft = targetLeft;
+            requestAnimationFrame(() => { layoutEl.scrollLeft = targetLeft; });
+            setTimeout(() => { layoutEl.scrollLeft = targetLeft; }, 50);
         }
     }
 };
@@ -124,23 +125,48 @@ function setupToolsNavigation() {
             }
         }, { passive: true });
     }
-
-    // Resize handler: when iOS browser chrome appears/disappears, the viewport
-    // size changes. If the user had a tool open, re-snap the split layout to the
-    // content panel so it doesn't appear half-open or retract to the sidebar.
-    window.addEventListener('resize', () => {
-        const isMobileResize = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (!isMobileResize) return;
-        const activeTool = document.querySelector('#page-tools .tool-nav-btn.active');
-        if (!activeTool) return;
-        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-        if (layoutEl) {
-            requestAnimationFrame(() => {
-                layoutEl.scrollLeft = layoutEl.scrollWidth; // re-snap right panel
-            });
-        }
-    });
 }
+
+// Global snap enforcement for all tools/settings/mods split layouts
+(function _setupToolsSplitSnapTracker() {
+    function enforceSnapForLayout(layoutEl) {
+        if (!layoutEl) return;
+        const w = layoutEl.clientWidth;
+        if (!w || w <= 0) return;
+        const currentLeft = layoutEl.scrollLeft;
+        const activePane = layoutEl.querySelector('.tools-content .tool-pane.active');
+        // If an active tool content pane exists, snap to content panel (100% width); otherwise snap to sidebar (0px)
+        const targetLeft = (activePane && currentLeft > w * 0.25) ? w : (currentLeft >= w * 0.5 ? w : 0);
+        if (Math.abs(currentLeft - targetLeft) > 1) {
+            layoutEl.scrollLeft = targetLeft;
+        }
+    }
+
+    function _attachSnapListeners() {
+        ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(evt => {
+            document.addEventListener(evt, () => {
+                document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
+                    setTimeout(() => enforceSnapForLayout(layoutEl), 50);
+                    setTimeout(() => enforceSnapForLayout(layoutEl), 250);
+                });
+            }, { passive: true });
+        });
+        
+        window.addEventListener('resize', () => {
+            const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) return;
+            document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
+                requestAnimationFrame(() => enforceSnapForLayout(layoutEl));
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _attachSnapListeners);
+    } else {
+        _attachSnapListeners();
+    }
+})();
+
 
 function setupComboChecker() {
     const searchBtn = document.getElementById('combo-search-btn');

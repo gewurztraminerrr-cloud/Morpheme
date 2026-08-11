@@ -884,7 +884,7 @@ window.showModTab = function(tabId) {
     if (isMobile) {
         const layout = document.querySelector('#page-mods .tools-split-layout');
         if (layout) {
-            layout.scrollTo({ left: layout.clientWidth, behavior: 'smooth' });
+            layout.scrollLeft = layout.clientWidth || layout.scrollWidth;
         }
     }
 };
