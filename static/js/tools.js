@@ -4847,7 +4847,7 @@ async function loadRandomSuggestedWords(force = false) {
         if (data.words && data.words.length > 0) {
             tableBody.innerHTML = data.words.map(word => `
                 <tr class="suggested-word-row" data-word="${word}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                    <td style="padding: 10px; color: var(--accent-color); font-weight: 500;">${word}</td>
+                    <td style="padding: 7px 10px; color: var(--accent-color); font-weight: 500;">${word}</td>
                 </tr>
             `).join('');
 
