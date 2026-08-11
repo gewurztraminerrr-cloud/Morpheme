@@ -6202,7 +6202,12 @@ body .board-cell.tile-flash-purple * {
 #seq-results-container::-webkit-scrollbar,
 #sub-results-container::-webkit-scrollbar,
 #seq-results-container *::-webkit-scrollbar,
-#sub-results-container *::-webkit-scrollbar {
+#sub-results-container *::-webkit-scrollbar,
+.tools-content::-webkit-scrollbar,
+.tool-pane::-webkit-scrollbar,
+#tool-sequence::-webkit-scrollbar,
+#tool-subanagrams::-webkit-scrollbar,
+#page-tools ::-webkit-scrollbar {
     width: 0px !important;
     height: 0px !important;
     background: transparent !important;
@@ -6215,9 +6220,23 @@ body .board-cell.tile-flash-purple * {
 #seq-results-container,
 #sub-results-container,
 #seq-results-container *,
-#sub-results-container * {
+#sub-results-container *,
+.tools-content,
+.tool-pane,
+#tool-sequence,
+#tool-subanagrams,
+#page-tools * {
     scrollbar-width: none !important; /* Firefox */
     -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+@media (min-width: 901px) {
+    #tool-sequence.tool-pane.active,
+    #tool-subanagrams.tool-pane.active {
+        overflow-y: hidden !important;
+        height: 100% !important;
+        max-height: calc(100vh - 180px) !important;
+    }
 }
 
 .custom-scrollbar-track {
