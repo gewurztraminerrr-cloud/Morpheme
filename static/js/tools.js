@@ -4785,16 +4785,21 @@ function setupFindCountTool() {
             loadRandomSuggestedWords(true);
         });
     }
-}
+let _isFetchingRandomWords = false;
+let _randomWordsLoadedOnce = false;
 
 async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
 
-    // If words are already rendered and force is false, preserve existing words
-    if (!force && tableBody.querySelectorAll('.suggested-word-row').length > 0) {
-        return;
+    // If words are already rendered, currently fetching, or loaded once, preserve existing words unless force is true
+    if (!force) {
+        if (_isFetchingRandomWords || _randomWordsLoadedOnce || tableBody.querySelectorAll('.suggested-word-row').length > 0) {
+            return;
+        }
     }
+
+    _isFetchingRandomWords = true;
 
     const dictSelect = document.getElementById('random-words-dict-select');
     const selectedDict = dictSelect ? dictSelect.value : 'ALL';
@@ -4844,6 +4849,7 @@ async function loadRandomSuggestedWords(force = false) {
                     row.style.background = 'transparent';
                 });
             });
+            _randomWordsLoadedOnce = true;
         } else {
             tableBody.innerHTML = `
                 <tr>
@@ -4858,6 +4864,8 @@ async function loadRandomSuggestedWords(force = false) {
                 <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
             </tr>
         `;
+    } finally {
+        _isFetchingRandomWords = false;
     }
 }
 window.loadRandomSuggestedWords = loadRandomSuggestedWords;
