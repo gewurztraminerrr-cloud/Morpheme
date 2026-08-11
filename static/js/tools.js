@@ -4806,13 +4806,47 @@ function setupFindCountTool() {
 
 let _isFetchingRandomWords = false;
 let _randomWordsLoadedOnce = false;
+let _cachedRandomWords = null;
+
+function renderSuggestedWordsTable(tableBody, words) {
+    if (!tableBody || !words || words.length === 0) return;
+    tableBody.innerHTML = words.map(word => `
+        <tr class="suggested-word-row" data-word="${word}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+            <td style="padding: 7px 10px; color: var(--accent-color); font-weight: 500;">${word}</td>
+        </tr>
+    `).join('');
+
+    // Add click events to suggested rows
+    tableBody.querySelectorAll('.suggested-word-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const word = row.dataset.word;
+            const input = document.getElementById('find-count-input');
+            if (input && word) {
+                input.value = word;
+                runFindCountSearch();
+            }
+        });
+        row.addEventListener('mouseenter', () => {
+            row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
+        });
+        row.addEventListener('mouseleave', () => {
+            row.style.background = 'transparent';
+        });
+    });
+}
 
 async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
 
-    // If words are already rendered, currently fetching, or loaded once, preserve existing words unless force is true
+    // If words are already rendered or cached, preserve existing display unless force is true
     if (!force) {
+        if (_cachedRandomWords && _cachedRandomWords.length > 0) {
+            if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+                renderSuggestedWordsTable(tableBody, _cachedRandomWords);
+            }
+            return;
+        }
         if (_isFetchingRandomWords || _randomWordsLoadedOnce || tableBody.querySelectorAll('.suggested-word-row').length > 0) {
             return;
         }
@@ -4823,52 +4857,35 @@ async function loadRandomSuggestedWords(force = false) {
     const dictSelect = document.getElementById('random-words-dict-select');
     const selectedDict = dictSelect ? dictSelect.value : 'ALL';
 
-    tableBody.innerHTML = `
-        <tr>
-            <td style="padding: 15px; opacity: 0.6;">
-                <div class="loading-spinner" style="margin: 0 auto; width: 20px; height: 20px; border-width: 2px;"></div>
-            </td>
-        </tr>
-    `;
+    if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td style="padding: 12px; opacity: 0.6;">
+                    <div class="loading-spinner" style="margin: 0 auto; width: 20px; height: 20px; border-width: 2px;"></div>
+                </td>
+            </tr>
+        `;
+    }
 
     try {
         const response = await fetch(`/api/tools/random-words?dictionary=${encodeURIComponent(selectedDict)}`);
         const data = await response.json();
         
         if (data.error) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td style="padding: 15px; color: #ff6b6b;">Error: ${data.error}</td>
-                </tr>
-            `;
+            if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td style="padding: 12px; color: #ff6b6b;">Error: ${data.error}</td>
+                    </tr>
+                `;
+            }
             return;
         }
 
         if (data.words && data.words.length > 0) {
-            tableBody.innerHTML = data.words.map(word => `
-                <tr class="suggested-word-row" data-word="${word}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                    <td style="padding: 7px 10px; color: var(--accent-color); font-weight: 500;">${word}</td>
-                </tr>
-            `).join('');
-
-            // Add click events to suggested rows
-            tableBody.querySelectorAll('.suggested-word-row').forEach(row => {
-                row.addEventListener('click', () => {
-                    const word = row.dataset.word;
-                    const input = document.getElementById('find-count-input');
-                    if (input && word) {
-                        input.value = word;
-                        runFindCountSearch();
-                    }
-                });
-                row.addEventListener('mouseenter', () => {
-                    row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
-                });
-                row.addEventListener('mouseleave', () => {
-                    row.style.background = 'transparent';
-                });
-            });
+            _cachedRandomWords = data.words;
             _randomWordsLoadedOnce = true;
+            renderSuggestedWordsTable(tableBody, data.words);
         } else {
             tableBody.innerHTML = `
                 <tr>
@@ -4878,11 +4895,13 @@ async function loadRandomSuggestedWords(force = false) {
         }
     } catch (err) {
         console.error('Failed to load random words:', err);
-        tableBody.innerHTML = `
-            <tr>
-                <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
-            </tr>
-        `;
+        if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
+                </tr>
+            `;
+        }
     } finally {
         _isFetchingRandomWords = false;
     }
