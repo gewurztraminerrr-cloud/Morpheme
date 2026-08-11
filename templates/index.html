@@ -1591,12 +1591,12 @@
                             <div id="find-count-summary" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; color: var(--accent-color);"></div>
                             
                             <h3 style="margin: 20px 0 10px 0; font-size: 1.1rem; color: var(--text-primary);">10 Most Recent Finders</h3>
-                            <div class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
-                                <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <div class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.1); -webkit-overflow-scrolling: touch;">
+                                <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 280px;">
                                     <thead>
                                         <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.05);">
-                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Finder</th>
-                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Date Found</th>
+                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Finder</th>
+                                            <th style="padding: 12px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Date Found</th>
                                         </tr>
                                     </thead>
                                     <tbody id="find-count-table-body">

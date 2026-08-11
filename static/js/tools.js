@@ -4940,10 +4940,12 @@ async function runFindCountSearch() {
                 const flagHtml = window.getFlagHtml ? window.getFlagHtml(item.country_flag) : (item.country_flag || '');
                 return `
                     <tr class="finder-row" data-username="${item.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                        <td style="padding: 12px; color: var(--accent-color); font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                            ${flagHtml} <span>${item.username}</span>
+                        <td style="padding: 12px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
+                                ${flagHtml} <span style="white-space: nowrap; font-weight: 600;">${item.username}</span>
+                            </div>
                         </td>
-                        <td style="padding: 12px; color: var(--muted-text);">${formattedDate}</td>
+                        <td style="padding: 12px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
                     </tr>
                 `;
             }).join('');
