@@ -6812,7 +6812,7 @@ body .board-cell.tile-flash-purple * {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
 }
 
 #setting-tab-appearance #synesthesia-letters-grid {
