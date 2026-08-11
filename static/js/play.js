@@ -17,15 +17,12 @@ window.switchPlayPanel = function(panelId) {
     if (!playGrid) return;
     const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel);
     if (idx === -1) return;
-    const targetLeft = idx * playGrid.clientWidth;
-    playGrid.scrollLeft = targetLeft;
-    requestAnimationFrame(() => { playGrid.scrollLeft = targetLeft; });
-    setTimeout(() => { playGrid.scrollLeft = targetLeft; }, 50);
+    playGrid.scrollLeft = idx * playGrid.clientWidth;
 };
 
-// Track which panel the user swiped to and enforce clean snapping when scrolling/swiping finishes.
+// Track which panel the user swiped to so window._currentPlayPanel stays in sync.
 (function _setupPlayGridScrollTracker() {
-    function enforceSnap() {
+    function updateActivePanelTrack() {
         const playGrid = document.querySelector('.play-grid');
         if (!playGrid) return;
         const panelWidth = playGrid.clientWidth;
@@ -34,33 +31,16 @@ window.switchPlayPanel = function(panelId) {
         const idx = Math.round(playGrid.scrollLeft / panelWidth);
         const targetIdx = Math.max(0, Math.min(idx, _PLAY_PANELS.length - 1));
         window._currentPlayPanel = _PLAY_PANELS[targetIdx] || 'board';
-        const targetLeft = targetIdx * panelWidth;
-        
-        if (Math.abs(playGrid.scrollLeft - targetLeft) > 1) {
-            playGrid.scrollLeft = targetLeft;
-        }
     }
 
     function _attachTracker() {
         const playGrid = document.querySelector('.play-grid');
         if (!playGrid) return;
-        let _scrollTimeout;
         
-        playGrid.addEventListener('scroll', () => {
-            clearTimeout(_scrollTimeout);
-            _scrollTimeout = setTimeout(enforceSnap, 80);
-        }, { passive: true });
-
-        // Enforce snap as soon as finger lifts off screen
-        ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(evt => {
-            document.addEventListener(evt, () => {
-                const playPage = document.getElementById('page-play');
-                if (playPage && playPage.classList.contains('active')) {
-                    setTimeout(enforceSnap, 50);
-                    setTimeout(enforceSnap, 250);
-                }
-            }, { passive: true });
-        });
+        playGrid.addEventListener('scroll', updateActivePanelTrack, { passive: true });
+        if ('onscrollend' in window) {
+            playGrid.addEventListener('scrollend', updateActivePanelTrack, { passive: true });
+        }
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _attachTracker);
@@ -74,9 +54,7 @@ window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
     if (typeof window.switchPlayPanel === 'function') {
-        requestAnimationFrame(() => {
-            window.switchPlayPanel(window._currentPlayPanel || 'board');
-        });
+        window.switchPlayPanel(window._currentPlayPanel || 'board');
     }
 });
 

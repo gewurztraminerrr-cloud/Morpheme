@@ -127,7 +127,7 @@ function setupToolsNavigation() {
     }
 }
 
-// Global snap enforcement for all tools/settings/mods split layouts
+// Global snap enforcement on resize for all tools/settings/mods split layouts
 (function _setupToolsSplitSnapTracker() {
     function enforceSnapForLayout(layoutEl) {
         if (!layoutEl) return;
@@ -135,7 +135,6 @@ function setupToolsNavigation() {
         if (!w || w <= 0) return;
         const currentLeft = layoutEl.scrollLeft;
         const activePane = layoutEl.querySelector('.tools-content .tool-pane.active');
-        // If an active tool content pane exists, snap to content panel (100% width); otherwise snap to sidebar (0px)
         const targetLeft = (activePane && currentLeft > w * 0.25) ? w : (currentLeft >= w * 0.5 ? w : 0);
         if (Math.abs(currentLeft - targetLeft) > 1) {
             layoutEl.scrollLeft = targetLeft;
@@ -143,15 +142,6 @@ function setupToolsNavigation() {
     }
 
     function _attachSnapListeners() {
-        ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(evt => {
-            document.addEventListener(evt, () => {
-                document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
-                    setTimeout(() => enforceSnapForLayout(layoutEl), 50);
-                    setTimeout(() => enforceSnapForLayout(layoutEl), 250);
-                });
-            }, { passive: true });
-        });
-        
         window.addEventListener('resize', () => {
             const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (!isMobile) return;
