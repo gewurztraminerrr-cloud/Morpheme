@@ -19,6 +19,8 @@ window.switchPlayPanel = function(panelId) {
     if (idx === -1) return;
     const targetLeft = idx * playGrid.clientWidth;
     playGrid.scrollLeft = targetLeft;
+    requestAnimationFrame(() => { playGrid.scrollLeft = targetLeft; });
+    setTimeout(() => { playGrid.scrollLeft = targetLeft; }, 50);
 };
 
 // Track which panel the user swiped to and enforce clean snapping when scrolling/swiping finishes.
@@ -3184,7 +3186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 listEl.scrollTo({ 
                     top: scrollTarget, 
-                    behavior: 'smooth' 
+                    behavior: 'instant' 
                 });
 
                 // Subtle highlight animation
@@ -7886,9 +7888,8 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
     // Scroll to the Words panel instantly (Only on mobile devices to prevent viewport jumps on desktop)
     const isMobile = window.innerWidth <= 992;
     if (isMobile && window.intermissionTileFilter) {
-        const wordsPanel = document.getElementById('words-panel') || document.querySelector('.words-panel');
-        if (wordsPanel) {
-            wordsPanel.scrollIntoView({ behavior: 'auto' });
+        if (typeof window.switchPlayPanel === 'function') {
+            window.switchPlayPanel('words');
         }
     }
 }
@@ -8264,10 +8265,10 @@ document.addEventListener('click', (e) => {
                 const scrollTarget = listEl.scrollTop + relativeTop - (containerRect.height / 2) + (rowRect.height / 2);
                 listEl.scrollTo({
                     top: scrollTarget,
-                    behavior: 'smooth'
+                    behavior: 'instant'
                 });
             } else {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.scrollIntoView({ behavior: 'instant', block: 'center' });
             }
             // Flash effect for visibility
             row.style.transition = 'background-color 0.3s ease';

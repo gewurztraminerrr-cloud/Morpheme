@@ -513,7 +513,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMobile) {
             setTimeout(() => {
                 const mainPanel = document.getElementById('mobile-panel-main');
-                if (mainPanel) mainPanel.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                if (mainPanel) {
+                    const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
+                    if (lobbyGrid) {
+                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                    }
+                }
             }, 100);
         }
     }
@@ -851,7 +856,12 @@ if (lobbyPage) {
             if (isMobile) {
                 setTimeout(() => {
                     const mainPanel = document.getElementById('mobile-panel-main');
-                    if (mainPanel) mainPanel.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                    if (mainPanel) {
+                        const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
+                        if (lobbyGrid) {
+                            lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                        }
+                    }
                 }, 100);
             }
 
