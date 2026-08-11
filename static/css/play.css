@@ -4159,8 +4159,8 @@ input[type=range]::-moz-range-track {
 /* 3D Cube Styles */
 :root {
     --cube-face-size: 220px;
-    --cube-half-size: 110px; /* S/2 */
-    --cube-container-size: 320px;
+    --cube-half-size: calc(var(--cube-face-size) / 2);
+    --cube-container-size: calc(var(--cube-face-size) * 1.45);
     --cube-cell-font-size: calc(var(--cube-face-size) * 0.175);
 }
 
@@ -4169,11 +4169,13 @@ input[type=range]::-moz-range-track {
     perspective-origin: 50% 50%;
     width: var(--cube-container-size);
     height: var(--cube-container-size);
+    aspect-ratio: 1 / 1;
     margin: 20px auto;
     position: relative;
     user-select: none;
     display: block;
     max-width: 95vw;
+    max-height: 95vw;
     box-sizing: border-box;
 }
 
@@ -4182,6 +4184,7 @@ input[type=range]::-moz-range-track {
     height: 100%;
     position: absolute;
     transform-style: preserve-3d;
+    transform-origin: 50% 50%;
     transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform: rotateX(-25deg) rotateY(45deg); /* Default isometric view */
 }
@@ -4199,9 +4202,10 @@ input[type=range]::-moz-range-track {
     padding: 10px;
     box-sizing: border-box;
     backface-visibility: visible;
-    /* Center the face in the container */
-    left: calc((var(--cube-container-size) - var(--cube-face-size)) / 2);
-    top: calc((var(--cube-container-size) - var(--cube-face-size)) / 2);
+    /* Center the face dynamically in the container relative to actual container dimensions */
+    left: calc((100% - var(--cube-face-size)) / 2);
+    top: calc((100% - var(--cube-face-size)) / 2);
+    transform-origin: 50% 50%;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.1), 0 5px 25px rgba(0,0,0,0.2);
 }
 
