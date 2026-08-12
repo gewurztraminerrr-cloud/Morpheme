@@ -526,7 +526,8 @@ window.showMiniProfile = async function (username) {
         const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
 
         if (msgBtn) {
-            if (currentName && currentName.toLowerCase() !== data.username.toLowerCase()) {
+            const allowPm = data.allow_pm !== false;
+            if (currentName && currentName.toLowerCase() !== data.username.toLowerCase() && allowPm) {
                 msgBtn.classList.remove('hidden');
                 msgBtn.onclick = () => {
                     modal.classList.add('hidden');
@@ -1199,7 +1200,8 @@ async function renderProfile(user) {
     const friendBtn = document.getElementById('profile-friend-btn');
 
     if (messageBtn) {
-        if (currentName && !isOwner) {
+        const allowPm = user.allow_pm !== false;
+        if (currentName && !isOwner && allowPm) {
             messageBtn.classList.remove('hidden');
             const newMsgBtn = messageBtn.cloneNode(true);
             messageBtn.parentNode.replaceChild(newMsgBtn, messageBtn);

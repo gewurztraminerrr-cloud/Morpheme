@@ -305,6 +305,20 @@ function debounce(func, wait) {
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
+        // Allow Private Messages
+        if (settings.allow_pm !== undefined) {
+            let val = settings.allow_pm;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const pmToggle = document.getElementById('setting-allow-pm');
+            if (pmToggle) pmToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.allow_pm = val;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+        }
+
         // Next Round Bell Type
         if (settings.next_round_bell_type) {
             const type = settings.next_round_bell_type;
@@ -648,6 +662,15 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.vibration_alert = val;
             saveSettingDebounced('vibration_alert', val);
+        });
+    }
+
+    const pmToggle = document.getElementById('setting-allow-pm');
+    if (pmToggle) {
+        pmToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.allow_pm = val;
+            saveSettingDebounced('allow_pm', val);
         });
     }
 

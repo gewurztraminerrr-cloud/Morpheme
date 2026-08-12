@@ -2726,6 +2726,15 @@ def get_public_profile(username):
         touch_user_last_visited(user[0])
 
     user_id = user[0]
+
+    # Query allow_pm setting for target user
+    pm_setting_row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'allow_pm'", (user_id,)).fetchone()
+    allow_pm = True
+    if pm_setting_row:
+        val = str(pm_setting_row[0]).lower()
+        if val in ('false', '0', 'off'):
+            allow_pm = False
+
     period = request.args.get('period', 'all').lower()
     
     # Calculate Chicago local time boundaries
@@ -2916,6 +2925,7 @@ def get_public_profile(username):
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17],
         'last_visited': user[18] or user[17],
+        'allow_pm': allow_pm,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,
@@ -5550,6 +5560,13 @@ def send_private_message():
         if not sender or not receiver:
             return jsonify({'error': 'User not found'}), 404
             
+        # Check if receiver has disabled private messages
+        pm_setting = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'allow_pm'", (receiver[0],)).fetchone()
+        if pm_setting:
+            val = str(pm_setting[0]).lower()
+            if val in ('false', '0', 'off'):
+                return jsonify({'error': 'This user is not accepting private messages'}), 403
+
         conn.execute('''
             INSERT INTO private_messages (sender_id, receiver_id, sender_username, message)
             VALUES (?, ?, ?, ?)
