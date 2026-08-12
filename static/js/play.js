@@ -1771,7 +1771,7 @@ async function updateGameState(incomingState = null) {
                 // Handle Bounce format
                 const is3D = state.board_dimensions && state.board_dimensions.includes('3x3x3');
                 if (bFormat.toLowerCase().includes('bounce') && !is3D) {
-                    setTimeout(startBounceFormat, 300);
+                    startBounceFormat();
                 } else {
                     stopBounceFormat();
                 }
@@ -4724,7 +4724,15 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     // OPTIMIZATION: In Density mode, we want SMOOTH transitions.
     // Wiping innerHTML destroys elements and breaks CSS transitions. 
     // We only wipe if the board dimensions have changed.
-    boardEl.innerHTML = '';
+    // Preserve existing bounce-ball elements, removing only board cells
+    const existingCells = boardEl.querySelectorAll('.board-cell');
+    existingCells.forEach(el => el.remove());
+    Array.from(boardEl.childNodes).forEach(node => {
+        if (!node.classList || !node.classList.contains('bounce-ball')) {
+            node.remove();
+        }
+    });
+
     for (let rOut = 0; rOut < rows; rOut++) {
         for (let cOut = 0; cOut < cols; cOut++) {
             let r1 = isBoardRotated ? (rows - 1 - rOut) : rOut;
@@ -4742,7 +4750,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     // Handle format specific animations (Rotation and Bounce)
     const bFormat = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
     if (bFormat.toLowerCase().includes('bounce') && !is3D) {
-        setTimeout(startBounceFormat, 300);
+        startBounceFormat();
     } else {
         stopBounceFormat();
     }
@@ -5290,22 +5298,28 @@ let bounceBalls = [];
 let bounceAnimationId = null;
 
 function startBounceFormat() {
-    stopBounceFormat();
-    
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
     
     // Ensure boardEl has position: relative
     boardEl.style.position = 'relative';
-    
-    // Determine cell size
-    const cell = boardEl.querySelector('.board-cell');
-    const cellSize = cell ? cell.offsetWidth : 60;
-    
+
     // Number of balls based on board parameters: exactly 10 balls per 16 tiles
     const rows = window.lastGameState && window.lastGameState.board ? window.lastGameState.board.length : 4;
     const cols = window.lastGameState && window.lastGameState.board && window.lastGameState.board[0] ? window.lastGameState.board[0].length : 4;
     const count = Math.round((rows * cols * 10) / 16);
+
+    // If bounce balls are ALREADY active on the board, keep them bouncing without reset/removal!
+    const existingBallsOnDOM = boardEl.querySelectorAll('.bounce-ball');
+    if (bounceBalls.length === count && existingBallsOnDOM.length === count && bounceAnimationId) {
+        return;
+    }
+
+    stopBounceFormat();
+    
+    // Determine cell size
+    const cell = boardEl.querySelector('.board-cell');
+    const cellSize = cell ? cell.offsetWidth : 60;
     
     const colors = [
         'radial-gradient(circle at 30% 30%, #a855f7 0%, #7e22ce 60%, #581c87 100%)', // Glossy Purple
