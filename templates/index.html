@@ -441,7 +441,7 @@
         </div>
 
         <!-- Global Audio Elements (Outside of SPA hidden containers) -->
-        <audio id="lobby-music" src="/music/lobby.mp3#t=205" autoplay preload="auto" loop></audio>
+        <audio id="lobby-music" src="/music/lobby.mp3" autoplay preload="auto" loop></audio>
         <audio id="triple-music" src="/music/triple.mp3" preload="auto" loop></audio>
 
         <style>
@@ -587,38 +587,23 @@
                         if (pageLogin) pageLogin.classList.add('active');
                     }
 
-                    // Start Lobby music at designated timeframe [205s, 295s] the literal exact moment Loading screen appears
+                    // Start Lobby music the literal exact moment Loading screen appears
                     const tryStartLobbyMusic = function() {
                         const music = document.getElementById('lobby-music');
                         if (!music) return;
 
-                        const seekTo205 = function() {
-                            if (music.currentTime < 205 || music.currentTime >= 295) {
-                                try { music.currentTime = 205; } catch(e) {}
-                            }
-                        };
-
-                        music.ontimeupdate = function() {
-                            if (music.currentTime < 205 || music.currentTime >= 295) {
-                                try { music.currentTime = 205; } catch(e) {}
-                            }
-                        };
-
                         const enableAudioOutput = function() {
                             music.muted = false;
-                            seekTo205();
                             if (music.paused) {
                                 music.play().catch(function() {});
                             }
                         };
 
                         // Attempt instant unmuted play, fallback to muted play + gesture unmute
-                        seekTo205();
                         const p = music.play();
                         if (p !== undefined) {
                             p.then(function() {
                                 music.muted = false;
-                                seekTo205();
                             }).catch(function() {
                                 music.muted = true;
                                 music.play().catch(function() {});

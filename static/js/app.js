@@ -446,34 +446,19 @@ async function fetchUserCount() {
 }
 
 
-// Helper to play lobby music safely on both mobile and desktop.
 // Helper to play lobby music safely across all platforms (desktops, laptops, tablets, mobile).
-// Starts at 205s and loops continuously between 205s and 295s.
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    // Loop between 205s and 295s
-    lobbyMusic.ontimeupdate = function () {
-        if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-            try { 
-                lobbyMusic.currentTime = 205; 
-            } catch(err) {}
-        }
-    };
-
-    // If already playing smoothly within the [205s, 295s] timeframe, continue playback without restarting!
-    if (!lobbyMusic.paused && lobbyMusic.currentTime >= 205 && lobbyMusic.currentTime < 295) {
+    // If already playing smoothly, continue playback without restarting!
+    if (!lobbyMusic.paused) {
         console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
         if (onSuccess) onSuccess();
         return;
     }
 
-    if (lobbyMusic.currentTime < 205 || lobbyMusic.currentTime >= 295) {
-        try { lobbyMusic.currentTime = 205; } catch(err) {}
-    }
-
-    console.log('[LobbyMusic] Playing lobby music in designated window [205s, 295s].');
+    console.log('[LobbyMusic] Playing cropped lobby music.');
     lobbyMusic.play()
         .then(() => {
-            console.log('[LobbyMusic] Play succeeded at designated window.');
+            console.log('[LobbyMusic] Play succeeded.');
             if (onSuccess) onSuccess();
         })
         .catch(err => {
