@@ -3931,7 +3931,7 @@ function updateParameters(state) {
         const newDiff = factDiff;
         const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq, factBonus]);
         
-        if (window._lastParamString !== stringified) {
+        if (triggerAnimation || window._lastParamString !== stringified) {
             window._lastParamString = stringified;
             
             window._displayedParams.dims = factBoardDims;
@@ -4212,6 +4212,7 @@ function updateLocalTimer() {
             if (remaining <= 45 && window.lastGameState) {
                 const currentRound = window.lastGameState.current_round || 0;
                 if (window._animTriggeredForRound !== currentRound) {
+                    window.lastGameState.spinner_params_revealed = true;
                     updateParameters(window.lastGameState);
                 }
             }
