@@ -37,3 +37,7 @@ This document summarizes the stable state of **Morpheme** as of August 12, 2026.
    - Added **Visual Settings** tab to Appearance settings.
    - Added **Private Message Blocking** and **With Friends Invitation Blocking** toggles in Settings ("Gameplay & Preferences").
    - Added popup notice when attempting to invite players who have With Friends invitations disabled.
+
+7. **24h Room Dictionary & Word Count Constraints**:
+   - Strictly disabled Added Words (`AW` / `+ AW` / `added_words`) in 24h rooms (`round_duration >= 7200`), forcing standard dictionary selection (`NWL` or `CSW`).
+   - Strictly enforced word count range to `300-400` words for all 24h room boards across `spinner_set.py`, `game_room.py`, and `app.py`.

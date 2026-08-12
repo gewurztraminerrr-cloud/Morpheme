@@ -7183,17 +7183,23 @@ def create_solo_match():
         dict_name = SpinnerSet._spin_dictionary()
         
     # Extract + AW from dictionary name
+    is_24h_room = (time_limit >= 7200)
     use_aw_flag = False
     if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
-        use_aw_flag = True
+        use_aw_flag = not is_24h_room
         dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
     elif dict_name == 'AW':
-        use_aw_flag = True
+        use_aw_flag = not is_24h_room
         dict_name = 'NWL'
     
-    board_format = parameters.get('board_format', 'Normal')
+    if is_24h_room:
+        use_aw_flag = False
+        if not dict_name or dict_name not in ['NWL', 'CSW']:
+            dict_name = 'NWL'
+
+    board_format = 'Valued Letters' if is_24h_room else parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
-    if board_format == 'random':
+    if not is_24h_room and board_format == 'random':
         board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=board_dimensions)
 
     # First-round difficulty randomization
@@ -7205,7 +7211,9 @@ def create_solo_match():
     # Point range / word count: allow user to specify, else spin a default
     custom_word_count_range = parameters.get('word_count_range', 'random')
     min_word_len = _safe_int_param(parameters.get('min_word_length'), 3)
-    if custom_word_count_range == 'random':
+    if is_24h_room:
+        wc_range = '300-400'
+    elif custom_word_count_range == 'random':
         from spinner_set import SpinnerSet
         wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions, use_added_words=use_aw_flag)
     else:

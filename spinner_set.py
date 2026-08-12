@@ -32,6 +32,11 @@ class SpinnerSet:
             if is_24h and isinstance(res, dict):
                 res['board_format'] = 'Valued Letters'
                 res['word_count_range'] = '300-400'
+                res['use_added_words'] = False
+                clean_dict = str(res.get('dictionary', 'CSW')).replace('+ AW', '').replace('+AW', '').replace('ADDED_WORDS', '').replace('AW', '').strip()
+                if clean_dict not in ['NWL', 'CSW']:
+                    clean_dict = 'CSW'
+                res['dictionary'] = clean_dict
                 
             # Ironclad validation to ensure 50-100 word count is strictly restricted to greatest minimum lengths
             if isinstance(res, dict) and res.get('word_count_range') == '50-100':
@@ -169,6 +174,11 @@ class SpinnerSet:
         if is_24h:
             p['board_format'] = 'Valued Letters'
             p['word_count_range'] = '300-400'
+            p['use_added_words'] = False
+            clean_dict = str(p.get('dictionary', 'CSW')).replace('+ AW', '').replace('+AW', '').replace('ADDED_WORDS', '').replace('AW', '').strip()
+            if clean_dict not in ['NWL', 'CSW']:
+                clean_dict = 'CSW'
+            p['dictionary'] = clean_dict
 
         bw_raw = p.get('bonus_word_length')
         try:
@@ -198,17 +208,22 @@ class SpinnerSet:
             else: # 6x8, 3x3x3, etc.
                 min_word_length = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
             
-            # 2. Dictionary (25% NWL | 25% CSW | 25% NWL + AW | 25% CSW + AW)
-            dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
+            # 2. Dictionary (25% NWL | 25% CSW | 25% NWL + AW | 25% CSW + AW, but no AW for 24h rooms)
+            if is_24h:
+                dictionary = random.choice(['NWL', 'CSW'])
+            else:
+                dictionary = random.choices(['NWL', 'CSW', 'NWL + AW', 'CSW + AW'], weights=[25, 25, 25, 25])[0]
 
-            is_aw_effective = '+ AW' in dictionary
+            is_aw_effective = ('+ AW' in dictionary or '+AW' in dictionary) and not is_24h
             use_added_words = is_aw_effective
 
             # 3. Difficulty (25% Easy | 50% Medium | 25% Hard)
             difficulty = random.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
 
-            # 4. Word Count Range
-            if is_aw_effective:
+            # 4. Word Count Range (300-400 strictly for 24h rooms)
+            if is_24h:
+                wc_range = '300-400'
+            elif is_aw_effective:
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             else:
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]

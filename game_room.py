@@ -2639,21 +2639,31 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     parts = dimensions.split("x")
     is_24h = time_limit >= 7200
     
+    if is_24h:
+        use_added_words = False
+        dictionary = str(dictionary or 'NWL').upper().replace('+ AW', '').replace('+AW', '').replace('ADDED_WORDS', '').replace('AW', '').strip()
+        if dictionary not in ['NWL', 'CSW']:
+            dictionary = 'NWL'
+        target_range = '300-400'
+        target_range_resolved = '300-400'
+        fmt = 'Valued Letters'
+    else:
+        fmt = board_format
+
     try:
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         
         # Determine target range
-        if use_added_words:
+        if not is_24h and use_added_words:
             use_added_words = True
             import random
             target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-        else:
+        elif not is_24h:
             if target_range:
                 target_range_resolved = target_range
             else:
-                target_range_resolved = '300-400' if is_24h else '100-200'
-        fmt = 'Valued Letters' if is_24h else board_format
+                target_range_resolved = '100-200'
         
         floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
 
