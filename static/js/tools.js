@@ -4788,8 +4788,10 @@ function setupFindCountTool() {
 
     const moreBtn = document.getElementById('more-random-words-btn');
     if (moreBtn) {
-        moreBtn.addEventListener('click', () => {
-            loadRandomSuggestedWords(true);
+        moreBtn.addEventListener('click', (e) => {
+            if (e && e.isTrusted) {
+                loadRandomSuggestedWords(true);
+            }
         });
         moreBtn.addEventListener('mouseenter', () => {
             moreBtn.style.background = 'rgba(165, 180, 252, 0.15)';
@@ -4803,8 +4805,10 @@ function setupFindCountTool() {
 
     const dictSelect = document.getElementById('random-words-dict-select');
     if (dictSelect) {
-        dictSelect.addEventListener('change', () => {
-            loadRandomSuggestedWords(true);
+        dictSelect.addEventListener('change', (e) => {
+            if (e && e.isTrusted) {
+                loadRandomSuggestedWords(true);
+            }
         });
     }
 
@@ -4815,6 +4819,7 @@ function setupFindCountTool() {
 let _isFetchingRandomWords = false;
 let _randomWordsLoadedOnce = false;
 let _cachedRandomWords = null;
+let _initialDesktopRandomWords = null;
 let _randomWordsFetchPromise = null;
 
 function renderSuggestedWordsTable(tableBody, words) {
@@ -4848,9 +4853,11 @@ async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
 
+    const targetWords = _initialDesktopRandomWords || _cachedRandomWords;
+
     // 1. If words are already cached and not forcing a refresh, keep original display permanently
-    if (!force && _cachedRandomWords && _cachedRandomWords.length > 0) {
-        renderSuggestedWordsTable(tableBody, _cachedRandomWords);
+    if (!force && targetWords && targetWords.length > 0) {
+        renderSuggestedWordsTable(tableBody, targetWords);
         return;
     }
 
@@ -4859,8 +4866,9 @@ async function loadRandomSuggestedWords(force = false) {
         try {
             await _randomWordsFetchPromise;
         } catch (e) {}
-        if (!force && _cachedRandomWords && _cachedRandomWords.length > 0) {
-            renderSuggestedWordsTable(tableBody, _cachedRandomWords);
+        const currentWords = _initialDesktopRandomWords || _cachedRandomWords;
+        if (!force && currentWords && currentWords.length > 0) {
+            renderSuggestedWordsTable(tableBody, currentWords);
         }
         return;
     }
@@ -4903,6 +4911,9 @@ async function loadRandomSuggestedWords(force = false) {
             }
 
             if (data.words && data.words.length > 0) {
+                if (!_initialDesktopRandomWords) {
+                    _initialDesktopRandomWords = data.words;
+                }
                 _cachedRandomWords = data.words;
                 _randomWordsLoadedOnce = true;
                 renderSuggestedWordsTable(tableBody, data.words);
