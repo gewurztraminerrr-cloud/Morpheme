@@ -1292,6 +1292,14 @@ def init_db():
     except sqlite3.OperationalError:
         pass
 
+    # MIGRATION: Add last_visited column for tracking user activity
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN last_visited DATETIME')
+        conn.commit()
+        print("Migrated DB: Added last_visited column to users")
+    except sqlite3.OperationalError:
+        pass
+
     # TOURNAMENTS TABLES
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS tournaments (
@@ -2570,6 +2578,7 @@ def guest_login():
 def get_session():
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
+        touch_user_last_visited(session['user_id'])
         
         # Fetch fresh rating from DB
         try:
@@ -2645,15 +2654,33 @@ def update_profile():
         print(f"Profile update error: {e}")
         return jsonify({'error': 'Update failed'}), 500
         
+_last_visited_touch_cache = {}
+
+def touch_user_last_visited(user_id):
+    if not user_id:
+        return
+    now = time.time()
+    last_touch = _last_visited_touch_cache.get(str(user_id), 0)
+    if now - last_touch > 30: # Throttled to at most once per 30s per user
+        _last_visited_touch_cache[str(user_id)] = now
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            conn.execute('UPDATE users SET last_visited = CURRENT_TIMESTAMP WHERE id = ?', (user_id,))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[LastVisited] Error touching last_visited for user {user_id}: {e}")
+
 @app.route('/api/profile/<username>', methods=['GET'])
 def get_public_profile(username):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
+        touch_user_last_visited(session['user_id'])
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
-               max_pe, avg_pe, pe_count, created_at
+               max_pe, avg_pe, pe_count, created_at, last_visited
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -2661,6 +2688,10 @@ def get_public_profile(username):
     if not user:
         conn.close()
         return jsonify({'error': 'User not found'}), 404
+
+    # Touch visited timestamp for target user if they match logged in user
+    if 'user_id' in session and session['user_id'] == user[0]:
+        touch_user_last_visited(user[0])
 
     user_id = user[0]
     period = request.args.get('period', 'all').lower()
@@ -2850,6 +2881,7 @@ def get_public_profile(username):
         'max_pe': dynamic_max_pe,
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17],
+        'last_visited': user[18] or user[17],
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,

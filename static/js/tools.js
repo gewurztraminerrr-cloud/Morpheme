@@ -329,6 +329,26 @@ function setupMiniProfileModal() {
     }
 }
 
+function formatLastVisited(lastVisitedStr, isOnline) {
+    if (isOnline) {
+        return 'Currently Online';
+    }
+    if (!lastVisitedStr) return '-';
+    const visitedDate = new Date(lastVisitedStr.endsWith('Z') ? lastVisitedStr : lastVisitedStr + 'Z');
+    if (isNaN(visitedDate.getTime())) return '-';
+    const now = new Date();
+    const diffMs = now - visitedDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return visitedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
 window.showMiniProfile = async function (username) {
     if (!username) return;
     console.log(`[showMiniProfile] Attempting to open profile for: ${username}`);
@@ -400,6 +420,14 @@ window.showMiniProfile = async function (username) {
             joinedEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
         } else if (joinedEl) {
             joinedEl.innerText = "Registered: -";
+        }
+
+        // Render Last Visited
+        const lastVisitedEl = document.getElementById('mini-profile-last-visited');
+        if (lastVisitedEl) {
+            const isOnline = data.status && data.status.is_online;
+            const lvStr = formatLastVisited(data.last_visited, isOnline);
+            lastVisitedEl.innerText = `Last Visited: ${lvStr}`;
         }
 
         // Flag and Meta
@@ -1052,6 +1080,14 @@ async function renderProfile(user) {
         joinedValEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
     } else if (joinedValEl) {
         joinedValEl.innerText = 'Registered: -';
+    }
+
+    // Last Visited Date
+    const lastVisitedValEl = document.getElementById('profile-last-visited-val');
+    if (lastVisitedValEl) {
+        const isOnline = user.status && user.status.is_online;
+        const lvStr = formatLastVisited(user.last_visited, isOnline);
+        lastVisitedValEl.innerText = `Last Visited: ${lvStr}`;
     }
 
     // Proof of Legitimacy Rendering
