@@ -6343,9 +6343,13 @@ def get_leaderboard_data():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        # Base filters
+        # Base filters: exclude Guests, 24h rooms (>= 7200s), and Valued Letters format rounds
         params = []
-        where_clauses = ["u.username NOT LIKE 'Guest_%'"]
+        where_clauses = [
+            "u.username NOT LIKE 'Guest_%'",
+            "rh.round_duration < 7200",
+            "LOWER(COALESCE(rh.board_format, '')) NOT LIKE '%valued%'"
+        ]
 
         if game_type != 'all':
             where_clauses.append("rh.game_type = ?")
@@ -6357,7 +6361,6 @@ def get_leaderboard_data():
             where_clauses.append("rh.round_duration = ?")
             params.append(time_limit)
         else:
-            where_clauses.append("rh.round_duration != 86400")
             if game_type == 'all' or game_type == 'accumulative':
                 where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration != 600)")
 
