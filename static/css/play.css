@@ -6405,6 +6405,22 @@ body .board-cell.tile-flash-purple * {
     left: 1px;
 }
 
+#full-list-modal-results::-webkit-scrollbar,
+#full-list-modal-results::-webkit-scrollbar-thumb,
+#full-list-modal-results::-webkit-scrollbar-track {
+    width: 0px !important;
+    height: 0px !important;
+    background: transparent !important;
+    border: none !important;
+    display: none !important;
+    opacity: 0 !important;
+}
+
+#full-list-modal-results {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
 /* Find Count Tool Styles */
 #find-count-input {
     flex: 1;
