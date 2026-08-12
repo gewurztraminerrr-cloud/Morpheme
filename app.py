@@ -1562,12 +1562,15 @@ def init_db():
             ("Screenshots", "Show off your high scores and cool boards."),
             ("Introduce Yourself", "New here? Say hello!"),
             ("News", "Official news and updates from the developers."),
-            ("Suggestions", "Share your ideas for improving Morpheme."),
+            ("Suggestions/Ideas", "Share your ideas for improving Morpheme."),
             ("Bugs/Errors", "Report bugs or technical issues encountered.")
         ]
         for name, desc in categories:
             conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
         
+        # MIGRATION: Rename Suggestions category to Suggestions/Ideas
+        conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions'")
+
         conn.commit()
         print("Migrated DB: Added Forum tables and categories")
     except Exception as e:
