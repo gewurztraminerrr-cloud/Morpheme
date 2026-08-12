@@ -7084,25 +7084,25 @@ body .board-cell.tile-flash-purple * {
 
 /* Full List Modal — custom scrollbar */
 #full-list-modal-results {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(167, 139, 250, 0.6) rgba(255, 255, 255, 0.06);
+    scrollbar-width: auto;
+    scrollbar-color: rgba(167, 139, 250, 0.85) rgba(255, 255, 255, 0.08);
 }
 #full-list-modal-results::-webkit-scrollbar {
-    width: 8px;
+    width: 14px;
 }
 #full-list-modal-results::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
 }
 #full-list-modal-results::-webkit-scrollbar-thumb {
-    background: rgba(167, 139, 250, 0.6);
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: content-box;
+    background: rgba(167, 139, 250, 0.85);
+    border-radius: 8px;
+    border: 2px solid rgba(10, 10, 16, 0.5);
+    min-height: 45px;
 }
 #full-list-modal-results::-webkit-scrollbar-thumb:hover {
-    background: rgba(167, 139, 250, 0.9);
-    background-clip: content-box;
+    background: #a78bfa;
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.6);
 }
 
 /* ============================================================
