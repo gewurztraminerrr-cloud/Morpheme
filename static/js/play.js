@@ -2608,8 +2608,8 @@ async function updateGameState(incomingState = null) {
         // --- SCORE SUM TAB (24H Only) ---
         const scoreSumListEl = document.getElementById('score-sum-list');
         if (scoreSumListEl && activeWordsTab === 'score-sum') {
-            if (!window._dailyScoreSumsData) {
-                fetchDailyScoreSums();
+            if (!window._dailyScoreSumsData || window._dailyScoreSumsRoomId !== state.room_id) {
+                fetchDailyScoreSums(state.room_id);
             } else {
                 renderDailyScoreSums();
             }
@@ -2647,16 +2647,18 @@ async function updateGameState(incomingState = null) {
     }
 }
 
-function fetchDailyScoreSums() {
+function fetchDailyScoreSums(targetRoomId) {
+    const roomId = targetRoomId || window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : '24h_4x4');
     const listEl = document.getElementById('score-sum-list');
     if (listEl) {
         listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
     }
     
-    fetch('/api/daily-score-sums')
+    fetch(`/api/daily-score-sums?room_id=${encodeURIComponent(roomId)}`)
         .then(res => res.json())
         .then(data => {
             window._dailyScoreSumsData = data.players || [];
+            window._dailyScoreSumsRoomId = data.room_id || roomId;
             renderDailyScoreSums();
         })
         .catch(err => {
@@ -8217,7 +8219,8 @@ document.addEventListener('click', (e) => {
         activeWordsTab = e.target.dataset.tab;
 
         if (activeWordsTab === 'score-sum') {
-            fetchDailyScoreSums();
+            const currentRoom = window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : null);
+            fetchDailyScoreSums(currentRoom);
         }
 
         // Update UI immediately for responsiveness
