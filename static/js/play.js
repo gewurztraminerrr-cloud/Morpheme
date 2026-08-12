@@ -4014,24 +4014,15 @@ function updateParameters(state) {
         const paramContainer = document.querySelector('.game-params');
         const labelContainer = document.querySelector('.spinner-set-label');
         const headerMetaContainer = document.querySelector('.header-meta');
-        if (paramContainer) {
-            paramContainer.classList.remove('reveal-new');
-            void paramContainer.offsetWidth; // Force reflow
-            paramContainer.classList.add('reveal-new');
-            setTimeout(() => paramContainer.classList.remove('reveal-new'), 4500);
-        }
-        if (labelContainer) {
-            labelContainer.classList.remove('reveal-new');
-            void labelContainer.offsetWidth; // Force reflow
-            labelContainer.classList.add('reveal-new');
-            setTimeout(() => labelContainer.classList.remove('reveal-new'), 4500);
-        }
-        if (headerMetaContainer) {
-            headerMetaContainer.classList.remove('reveal-new');
-            void headerMetaContainer.offsetWidth; // Force reflow
-            headerMetaContainer.classList.add('reveal-new');
-            setTimeout(() => headerMetaContainer.classList.remove('reveal-new'), 4500);
-        }
+        const spinnerModalContainer = document.querySelector('.spinner-modal-card');
+        [paramContainer, labelContainer, headerMetaContainer, spinnerModalContainer].forEach(el => {
+            if (el) {
+                el.classList.remove('reveal-new');
+                void el.offsetWidth; // Force reflow
+                el.classList.add('reveal-new');
+                setTimeout(() => el.classList.remove('reveal-new'), 4600);
+            }
+        });
     }
     
     window._lastRevealedState = isRevealed;

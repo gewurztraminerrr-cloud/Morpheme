@@ -61,7 +61,9 @@
 .spinner-set-label.reveal-new,
 .spinner-set-label.reveal-new *,
 .header-meta.reveal-new,
-.header-meta.reveal-new * {
+.header-meta.reveal-new *,
+.spinner-modal-card.reveal-new,
+.spinner-modal-card.reveal-new * {
     animation: slowFlashGold 4s ease-in-out forwards !important;
 }
 
