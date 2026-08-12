@@ -1816,6 +1816,7 @@ async function updateGameState(incomingState = null) {
                 // Reset Highlighting
                 highlightedSplitWord = null;
                 highlightedFoundWord = null;
+                window._lastAnimatedReviewWord = null;
                 selectedPlayerUsername = null; // Reset player selection
 
                 // DATA SYNC FIX: Explicitly clear Remaining list to prevent crossover
@@ -1826,8 +1827,8 @@ async function updateGameState(incomingState = null) {
                 playersFilterMode = 'everyone';
 
                 window.intermissionTileFilter = null;
-                document.querySelectorAll('.board-cell.intermission-highlight').forEach(el => {
-                    el.classList.remove('intermission-highlight');
+                document.querySelectorAll('.board-cell.intermission-highlight, .board-cell.review-highlight, .board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(el => {
+                    el.classList.remove('intermission-highlight', 'review-highlight', 'selected', 'current', 'typing-highlight');
                 });
                 const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
                 if (existingFilterBtn) {
@@ -5797,6 +5798,15 @@ function reapplyBoardHighlights() {
     }
     if (!board) return;
 
+    const isCurrentActiveRound = window.lastGameState && window.lastGameState.state === 'active' && activeWordsTab !== 'previous';
+    if (isCurrentActiveRound) {
+        // Clear stale intermission/review word selection when an active round is running
+        highlightedFoundWord = null;
+        highlightedSplitWord = null;
+        window._lastAnimatedReviewWord = null;
+        window.intermissionTileFilter = null;
+    }
+
     // Clear PREVIOUS highlights of ALL types to avoid stale visuals
     document.querySelectorAll('.board-cell').forEach(cell => {
         cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight', 'intermission-highlight');
@@ -5844,7 +5854,7 @@ function reapplyBoardHighlights() {
     }
 
     // 3. Reapply review highlights (All Words / Finder list)
-    if (typeof highlightedFoundWord !== 'undefined' && highlightedFoundWord) {
+    if (!isCurrentActiveRound && typeof highlightedFoundWord !== 'undefined' && highlightedFoundWord) {
         const path = is3D ? findWordPathOnCube(highlightedFoundWord, board) : findWordPathOnBoard(highlightedFoundWord, board);
         if (path) {
             // Check if we need to animate (new selection) or just show (board refresh)
