@@ -4807,6 +4807,9 @@ function setupFindCountTool() {
             loadRandomSuggestedWords(true);
         });
     }
+
+    // Pre-fetch and lock initial 6 random words immediately on setup so they are fixed on page load
+    loadRandomSuggestedWords(false);
 }
 
 let _isFetchingRandomWords = false;
