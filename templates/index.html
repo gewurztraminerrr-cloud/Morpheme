@@ -36,7 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=127">
     <link rel="stylesheet" href="/css/lobby.css?v=81">
-    <link rel="stylesheet" href="/css/play.css?v=172">
+    <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
     <link rel="stylesheet" href="/css/donate.css?v=1">
@@ -1968,7 +1968,13 @@
                         <div id="combo-results" class="combo-results-container hidden">
                             <!-- MP Section: Horizontal Groups (0MP to 3MP) -->
                             <div class="result-section">
-                                <h3 style="color: #ffd700;">MP (Microprocedures) v2.0</h3>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
+                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
+                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                                    </div>
+                                </div>
                                 <div class="chart-desc">
                                     Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. You can make up any sequence that works for you!
                                 </div>
@@ -1979,7 +1985,13 @@
 
                             <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
                             <div class="result-section">
-                                <h3>LIC (Letters In Common)</h3>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <h3 style="margin: 0;">LIC (Letters In Common)</h3>
+                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
+                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                    </div>
+                                </div>
                                 <div class="chart-desc">The letters are there, but are they
                                     arranged in such a way
                                     so as
@@ -5256,7 +5268,7 @@
     <script src="/js/play.js?v=252"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=94"></script>
+    <script src="/js/tools.js?v=95"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=14"></script>
     <script src="/js/private_matches.js?v=7"></script>

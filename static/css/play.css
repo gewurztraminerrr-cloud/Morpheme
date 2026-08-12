@@ -2413,12 +2413,37 @@ body.theme-light-brown .word-item.missed {
 .horizontal-scroll-container {
     display: flex;
     flex-direction: row;
-    overflow-x: auto;
+    overflow-x: auto !important;
     overflow-y: hidden;
     flex: 1;
     padding: 10px;
     gap: 10px;
     overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+}
+
+.table-scroll-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.table-scroll-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
+.table-scroll-btn:active {
+    transform: scale(0.95);
 }
 
 /* Individual Group Column (e.g. "0MP", "1MP") */
