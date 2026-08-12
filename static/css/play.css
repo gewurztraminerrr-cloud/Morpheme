@@ -6193,26 +6193,54 @@ body .board-cell.tile-flash-purple * {
     min-height: 0;
 }
 
-/* Hide native scrollbars across all screen sizes (Desktop and Mobile) so only 
+/* Hide small native browser scrollbars, tracks, and thumbs across all screen sizes (Desktop and Mobile) so only 
    the single larger custom scrollbar thumb (.custom-scrollbar-thumb) is displayed */
+#page-tools ::-webkit-scrollbar,
+#page-tools ::-webkit-scrollbar-thumb,
+#page-tools ::-webkit-scrollbar-track,
 .list-scroll-area::-webkit-scrollbar,
+.list-scroll-area::-webkit-scrollbar-thumb,
+.list-scroll-area::-webkit-scrollbar-track,
 .seq-scroll-area::-webkit-scrollbar,
+.seq-scroll-area::-webkit-scrollbar-thumb,
+.seq-scroll-area::-webkit-scrollbar-track,
 .sub-scroll-area::-webkit-scrollbar,
+.sub-scroll-area::-webkit-scrollbar-thumb,
+.sub-scroll-area::-webkit-scrollbar-track,
 #seq-results-container::-webkit-scrollbar,
+#seq-results-container::-webkit-scrollbar-thumb,
+#seq-results-container::-webkit-scrollbar-track,
 #sub-results-container::-webkit-scrollbar,
+#sub-results-container::-webkit-scrollbar-thumb,
+#sub-results-container::-webkit-scrollbar-track,
 #seq-results-container *::-webkit-scrollbar,
+#seq-results-container *::-webkit-scrollbar-thumb,
+#seq-results-container *::-webkit-scrollbar-track,
 #sub-results-container *::-webkit-scrollbar,
+#sub-results-container *::-webkit-scrollbar-thumb,
+#sub-results-container *::-webkit-scrollbar-track,
 .tools-content::-webkit-scrollbar,
+.tools-content::-webkit-scrollbar-thumb,
+.tools-content::-webkit-scrollbar-track,
 .tool-pane::-webkit-scrollbar,
+.tool-pane::-webkit-scrollbar-thumb,
+.tool-pane::-webkit-scrollbar-track,
 #tool-sequence::-webkit-scrollbar,
+#tool-sequence::-webkit-scrollbar-thumb,
+#tool-sequence::-webkit-scrollbar-track,
 #tool-subanagrams::-webkit-scrollbar,
-#page-tools ::-webkit-scrollbar {
+#tool-subanagrams::-webkit-scrollbar-thumb,
+#tool-subanagrams::-webkit-scrollbar-track {
     width: 0px !important;
     height: 0px !important;
     background: transparent !important;
+    border: none !important;
     display: none !important;
+    opacity: 0 !important;
 }
 
+#page-tools,
+#page-tools *,
 .list-scroll-area,
 .seq-scroll-area,
 .sub-scroll-area,
@@ -6223,8 +6251,7 @@ body .board-cell.tile-flash-purple * {
 .tools-content,
 .tool-pane,
 #tool-sequence,
-#tool-subanagrams,
-#page-tools * {
+#tool-subanagrams {
     scrollbar-width: none !important; /* Firefox */
     -ms-overflow-style: none !important; /* IE/Edge */
 }
