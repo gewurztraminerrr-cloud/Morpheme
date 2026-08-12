@@ -879,12 +879,12 @@ window.showModTab = function(tabId) {
         }
     });
 
-    // Trigger scroll to content area on mobile
+    // Trigger scroll to content area on mobile with smooth sliding animation
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layout = document.querySelector('#page-mods .tools-split-layout');
         if (layout) {
-            layout.scrollLeft = layout.clientWidth || layout.scrollWidth;
+            layout.scrollTo({ left: layout.clientWidth || layout.scrollWidth, behavior: 'smooth' });
         }
     }
 };
