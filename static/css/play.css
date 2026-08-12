@@ -64,40 +64,24 @@
 .header-meta.reveal-new *,
 .spinner-modal-card.reveal-new,
 .spinner-modal-card.reveal-new * {
-    animation: slowFlashGold 4s ease-in-out forwards !important;
+    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 
-@keyframes slowFlashGold {
+@keyframes fadeGoldToNormal {
     0% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
-        transform: scale(1.05);
+        color: #ffd700 !important; /* Instant snap to bright gold */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.03); /* Slight pop when turning gold */
     }
     20% {
-        color: var(--text-primary);
-        text-shadow: none !important;
+        color: #ffd700 !important; /* Hold gold briefly */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
         transform: scale(1);
-    }
-    40% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
-        transform: scale(1.05);
-    }
-    60% {
-        color: var(--text-primary);
-        text-shadow: none !important;
-        transform: scale(1);
-    }
-    80% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
-        transform: scale(1.05);
     }
     100% {
         color: var(--text-primary);
         text-shadow: none !important;
-        transform: scale(1);
     }
 }
 

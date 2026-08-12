@@ -3865,7 +3865,7 @@ function updateParameters(state) {
 
     const currentRound = state.current_round || 0;
     const isIntermission = state.intermission === true || state.state === 'intermission';
-    const isRevealed = !!(state.spinner_params && (state.spinner_params_revealed || (isIntermission && state.time_remaining !== undefined && state.time_remaining <= 45)));
+    const isRevealed = isIntermission && (state.spinner_params_revealed === true || (state.time_remaining !== undefined && state.time_remaining <= 45) || (state._clientTimeRemaining !== undefined && state._clientTimeRemaining <= 45));
     const wasRevealed = !!(window._lastRevealedState);
     const now = Date.now();
 
@@ -4200,6 +4200,7 @@ function updateLocalTimer() {
             if (remaining > limit) {
                 remaining = limit;
             }
+            window.lastGameState._clientTimeRemaining = remaining;
             // Instantly trigger parameter reveal & gold flash at 0:45
             if (remaining <= 45 && window.lastGameState) {
                 const currentRound = window.lastGameState.current_round || 0;
