@@ -4012,11 +4012,12 @@ function updateParameters(state) {
     }
 
     if (triggerAnimation) {
+        const playHeaderContainer = document.querySelector('.play-header');
         const paramContainer = document.querySelector('.game-params');
         const labelContainer = document.querySelector('.spinner-set-label');
         const headerMetaContainer = document.querySelector('.header-meta');
         const spinnerModalContainer = document.querySelector('.spinner-modal-card');
-        [paramContainer, labelContainer, headerMetaContainer, spinnerModalContainer].forEach(el => {
+        [playHeaderContainer, paramContainer, labelContainer, headerMetaContainer, spinnerModalContainer].forEach(el => {
             if (el) {
                 el.classList.remove('reveal-new');
                 void el.offsetWidth; // Force reflow

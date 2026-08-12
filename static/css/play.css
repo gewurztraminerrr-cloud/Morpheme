@@ -56,6 +56,8 @@
     transition: color 0.3s ease;
 }
 
+.play-header.reveal-new,
+.play-header.reveal-new *,
 .game-params.reveal-new,
 .game-params.reveal-new *,
 .spinner-set-label.reveal-new,
@@ -71,17 +73,18 @@
 @keyframes fadeGoldToNormal {
     0% {
         color: #ffd700 !important; /* Instant snap to bright gold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
-        transform: scale(1.03); /* Slight pop when turning gold */
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.95), 0 0 40px rgba(255, 215, 0, 0.7) !important;
+        transform: scale(1.03);
     }
-    20% {
-        color: #ffd700 !important; /* Hold gold briefly */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
-        transform: scale(1);
+    30% {
+        color: #ffd700 !important; /* Hold gold for 1.2 seconds */
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.95), 0 0 40px rgba(255, 215, 0, 0.7) !important;
+        transform: scale(1.01);
     }
     100% {
         color: var(--text-primary);
         text-shadow: none !important;
+        transform: scale(1);
     }
 }
 
