@@ -199,8 +199,9 @@ class PrivateMatchManager:
         conn = self.get_db()
         now = time.time()
         
-        # 1. Verify all non-AI participants exist (case-insensitively)
+        # 1. Verify all non-AI participants exist (case-insensitively) and check invite settings
         if participants:
+            disabled_invite_users = []
             for p in participants:
                 if not p.get('is_ai'):
                     user = conn.execute('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE', (p['username'],)).fetchone()
@@ -209,6 +210,20 @@ class PrivateMatchManager:
                         raise ValueError(f"User '{p['username']}' does not exist.")
                     # Use canonical username to ensure correct casing in invites/player records
                     p['username'] = user[1]
+
+                    # Check if user has match/room invitations toggled off
+                    inv_setting = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'allow_invites'", (user[0],)).fetchone()
+                    if inv_setting:
+                        val = str(inv_setting[0]).lower()
+                        if val in ('false', '0', 'off'):
+                            disabled_invite_users.append(user[1])
+
+            if disabled_invite_users:
+                conn.close()
+                if len(disabled_invite_users) == 1:
+                    raise ValueError(f"User '{disabled_invite_users[0]}' has invites toggled off.")
+                else:
+                    raise ValueError(f"The following users have invites toggled off: {', '.join(disabled_invite_users)}")
         
         # 2. Create Match Entry (Start at round 0 so it's not active until board is ready)
         cur = conn.execute('''

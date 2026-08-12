@@ -12,7 +12,7 @@ def run_local_cmd(cmd):
 
 def main():
     # 1. Commit and push local changes to GitHub
-    run_local_cmd("git add templates/index.html static/js/settings.js static/css/style.css static/css/play.css static/js/app.js static/js/mods.js static/js/play.js static/js/lobby.js game_room.py app.py spinner_set.py board_generator.py tournament_logic.py static/js/tools.js static/js/private_matches.js word_validator.py dictionaries/static_fallbacks.json scratch/deploy_remote.py scratch/query_remote_db.py scratch/view_pm2_logs.py")
+    run_local_cmd("git add templates/index.html static/js/settings.js static/css/style.css static/css/play.css static/js/app.js static/js/mods.js static/js/play.js static/js/lobby.js game_room.py app.py spinner_set.py board_generator.py tournament_logic.py private_match_logic.py static/js/tools.js static/js/private_matches.js word_validator.py dictionaries/static_fallbacks.json scratch/deploy_remote.py scratch/query_remote_db.py scratch/view_pm2_logs.py")
     # Check if there are changes to commit
     status = subprocess.run("git diff --cached --quiet", shell=True)
     if status.returncode == 1: # 1 means there are cached changes

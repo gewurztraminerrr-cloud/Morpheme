@@ -319,6 +319,20 @@ function debounce(func, wait) {
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
+        // Allow Game Invitations
+        if (settings.allow_invites !== undefined) {
+            let val = settings.allow_invites;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const invitesToggle = document.getElementById('setting-allow-invites');
+            if (invitesToggle) invitesToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.allow_invites = val;
+            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+        }
+
         // Next Round Bell Type
         if (settings.next_round_bell_type) {
             const type = settings.next_round_bell_type;
@@ -671,6 +685,15 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.allow_pm = val;
             saveSettingDebounced('allow_pm', val);
+        });
+    }
+
+    const invitesToggle = document.getElementById('setting-allow-invites');
+    if (invitesToggle) {
+        invitesToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            window.userSettings.allow_invites = val;
+            saveSettingDebounced('allow_invites', val);
         });
     }
 
