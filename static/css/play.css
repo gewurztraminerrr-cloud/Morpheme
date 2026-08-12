@@ -2139,22 +2139,30 @@ body.theme-light-brown .word-item.missed {
         flex: unset !important;
     }
     .combo-results-container .result-section {
-        min-height: 540px !important;
+        min-height: 680px !important;
         flex: none !important;
     }
     .combo-results-container .horizontal-scroll-container {
-        min-height: 460px !important;
+        min-height: 600px !important;
         flex: 1 !important;
     }
     .combo-results-container .group-column {
-        min-height: 440px !important;
+        min-height: 580px !important;
         height: 100% !important;
     }
     .combo-results-container .group-table-container {
-        min-height: 400px !important;
-        max-height: 480px !important;
+        min-height: 540px !important;
+        max-height: 650px !important;
         flex: 1 !important;
         overflow-y: auto !important;
+    }
+
+    /* Is Valid Tool: Expanded vertical length for result and definition panel on desktop */
+    #tool-is-valid .validation-scroll-container,
+    .validation-scroll-container {
+        min-height: 500px !important;
+        max-height: calc(100vh - 280px) !important;
+        flex: 1 !important;
     }
     .tools-content {
         background: rgba(0, 0, 0, 0.25) !important;
