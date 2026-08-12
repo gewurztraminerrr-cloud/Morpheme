@@ -4730,7 +4730,12 @@
                     <button id="full-list-modal-close" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;" title="Close">✕</button>
                 </div>
                 <!-- Scrollable Word Grid -->
-                <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px;"></div>
+                <div style="position: relative; flex: 1; min-height: 0; width: 100%;">
+                    <div id="full-list-modal-results" style="height: 100%; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 28px 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; box-sizing: border-box;"></div>
+                    <div class="custom-scrollbar-track" id="full-list-scrollbar-track">
+                        <div class="custom-scrollbar-thumb" id="full-list-scrollbar-thumb"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -5251,7 +5256,7 @@
     <script src="/js/play.js?v=252"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
-    <script src="/js/tools.js?v=93"></script>
+    <script src="/js/tools.js?v=94"></script>
     <script src="/js/mouse_selection.js?v=3"></script>
     <script src="/js/mods.js?v=13"></script>
     <script src="/js/private_matches.js?v=7"></script>

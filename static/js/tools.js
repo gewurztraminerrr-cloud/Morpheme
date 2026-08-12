@@ -2928,6 +2928,7 @@ function setupListsTool() {
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
 
         // Render a list of words progressively into the modal
         const MODAL_CHUNK = 500;
@@ -3219,6 +3220,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
 
 function initCustomScrollbar() {
     initCustomScrollbarForElement('main-list-results', 'list-scrollbar-track', 'list-scrollbar-thumb');
+    initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
 }
 
 
