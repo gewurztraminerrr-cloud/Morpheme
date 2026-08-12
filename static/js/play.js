@@ -5531,28 +5531,25 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
 
         const cellValue = board[r][c].toUpperCase();
         const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
-        let foundMatch = false;
-        let matchLength = 0;
+        let matchOptions = [];
 
         for (const char of letters) {
             if (char === 'Q') {
                 if (upperWord.substring(index, index + 2) === 'QU') {
-                    matchLength = 2;
-                    foundMatch = true;
+                    matchOptions.push(2);
+                    matchOptions.push(1);
                     break;
                 } else if (upperWord[index] === 'Q') {
-                    matchLength = 1;
-                    foundMatch = true;
+                    matchOptions.push(1);
                     break;
                 }
             } else if (upperWord[index] === char) {
-                matchLength = 1;
-                foundMatch = true;
+                matchOptions.push(1);
                 break;
             }
         }
 
-        if (!foundMatch) return null;
+        if (matchOptions.length === 0) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
@@ -5560,20 +5557,23 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         
         let nowHit = hasHitTarget || specialCoords.has(`${r},${c}`);
 
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) {
-            if (specialCoords.size > 0 && !nowHit) return null;
-            return newPath;
-        }
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) {
+                if (specialCoords.size > 0 && !nowHit) continue;
+                return newPath;
+            }
 
-        // Try directions
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited, nowHit);
-                if (result) return result;
+            // Try directions
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited, nowHit);
+                    if (result) return result;
+                }
             }
         }
+        return null;
         return null;
     }
 
@@ -7813,16 +7813,37 @@ function selectCell(row, col, letter, cellEl, face = null) {
     BoardAudio.playTileSound(mouseState.selectedPath.length);
 }
 
+function getLetterFromPathIndex(path, i, isForDisplay = false) {
+    if (!path || i < 0 || i >= path.length) return '';
+    const p = path[i];
+    const L = p.letter;
+    
+    if (isForDisplay && L && L.includes('/')) {
+        return `[${L}]`;
+    }
+    
+    const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
+    
+    if (cleanL === 'Q') {
+        const prevP = i > 0 ? path[i - 1] : null;
+        const nextP = i < path.length - 1 ? path[i + 1] : null;
+        
+        const prevL = prevP && prevP.letter ? (prevP.letter.includes('/') ? prevP.letter.split('/')[0] : prevP.letter) : null;
+        const nextL = nextP && nextP.letter ? (nextP.letter.includes('/') ? nextP.letter.split('/')[0] : nextP.letter) : null;
+        
+        if (prevL === 'U' || nextL === 'U') {
+            return 'Q';
+        }
+        return 'QU';
+    }
+    
+    return cleanL;
+}
+
 function updateWordInputFromPath() {
     const wordInputEl = document.getElementById('word-input');
     if (wordInputEl) {
-        wordInputEl.value = mouseState.selectedPath.map(p => {
-            const L = p.letter; // Show full letter string (e.g. "L/T")
-            if (L && L.includes('/')) {
-                return `[${L}]`;
-            }
-            return L === 'Q' ? 'QU' : L;
-        }).join('');
+        wordInputEl.value = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('');
     }
 }
 
@@ -8120,13 +8141,7 @@ function finishDragSelection(e) {
 
     if (path.length >= 1) {
         try {
-            const word = path.map(p => {
-                const L = p.letter;
-                // For Either/Or slash letters, use the first character option as a clean representation.
-                // The server's path reconstruction will auto-correct to the valid dictionary option.
-                const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
-                return cleanL === 'Q' ? 'QU' : cleanL;
-            }).join('');
+            const word = path.map((p, i) => getLetterFromPathIndex(path, i, false)).join('');
             const serverPath = path.map(p => {
                 if (p.face !== null && p.face !== undefined) {
                     return [p.face, p.row, p.col];

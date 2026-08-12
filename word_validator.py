@@ -471,13 +471,16 @@ class WordValidator:
                 cell_val = str(board[r][c]).upper()
                 letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 for char in letters:
-                    match_len = 0
-                    if char == 'Q' and word[index:index+2] == 'QU': 
-                        match_len = 2
-                    elif word.startswith(char, index): 
-                        match_len = len(char)
+                    match_lens = []
+                    if char == 'Q':
+                        if word[index:index+2] == 'QU':
+                            match_lens = [2, 1]
+                        elif word[index] == 'Q':
+                            match_lens = [1]
+                    elif word.startswith(char, index):
+                        match_lens = [len(char)]
                     
-                    if match_len > 0:
+                    for match_len in match_lens:
                         current_path = visited_path + [(r, c)]
                         if index + match_len >= len(word):
                             return current_path
@@ -538,11 +541,16 @@ class WordValidator:
                 cell_val = str(board[f][r][c]).upper()
                 letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 for char in letters:
-                    match_len = 0
-                    if char == 'Q' and word[index:index+2] == 'QU': match_len = 2
-                    elif word.startswith(char, index): match_len = len(char)
+                    match_lens = []
+                    if char == 'Q':
+                        if word[index:index+2] == 'QU':
+                            match_lens = [2, 1]
+                        elif word[index] == 'Q':
+                            match_lens = [1]
+                    elif word.startswith(char, index):
+                        match_lens = [len(char)]
                     
-                    if match_len > 0:
+                    for match_len in match_lens:
                         current_path = visited_path + [(f, r, c)]
                         if index + match_len >= len(word):
                             return current_path
