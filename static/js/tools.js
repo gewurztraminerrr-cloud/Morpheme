@@ -4812,6 +4812,7 @@ function setupFindCountTool() {
 let _isFetchingRandomWords = false;
 let _randomWordsLoadedOnce = false;
 let _cachedRandomWords = null;
+let _randomWordsFetchPromise = null;
 
 function renderSuggestedWordsTable(tableBody, words) {
     if (!tableBody || !words || words.length === 0) return;
@@ -4844,17 +4845,27 @@ async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
 
-    // If words are already rendered or cached, preserve existing display unless force is true
-    if (!force) {
-        if (_cachedRandomWords && _cachedRandomWords.length > 0) {
-            if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
-                renderSuggestedWordsTable(tableBody, _cachedRandomWords);
-            }
-            return;
+    // 1. If words are already cached and not forcing a refresh, keep original display permanently
+    if (!force && _cachedRandomWords && _cachedRandomWords.length > 0) {
+        renderSuggestedWordsTable(tableBody, _cachedRandomWords);
+        return;
+    }
+
+    // 2. If a fetch request is already in progress, await existing promise to prevent duplicate concurrent fetches
+    if (_randomWordsFetchPromise) {
+        try {
+            await _randomWordsFetchPromise;
+        } catch (e) {}
+        if (!force && _cachedRandomWords && _cachedRandomWords.length > 0) {
+            renderSuggestedWordsTable(tableBody, _cachedRandomWords);
         }
-        if (_isFetchingRandomWords || _randomWordsLoadedOnce || tableBody.querySelectorAll('.suggested-word-row').length > 0) {
-            return;
-        }
+        return;
+    }
+
+    // 3. If not forced and already loaded once, preserve display
+    if (!force && _randomWordsLoadedOnce && _cachedRandomWords && _cachedRandomWords.length > 0) {
+        renderSuggestedWordsTable(tableBody, _cachedRandomWords);
+        return;
     }
 
     _isFetchingRandomWords = true;
@@ -4872,44 +4883,49 @@ async function loadRandomSuggestedWords(force = false) {
         `;
     }
 
-    try {
-        const response = await fetch(`/api/tools/random-words?dictionary=${encodeURIComponent(selectedDict)}`);
-        const data = await response.json();
-        
-        if (data.error) {
-            if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+    _randomWordsFetchPromise = (async () => {
+        try {
+            const response = await fetch(`/api/tools/random-words?dictionary=${encodeURIComponent(selectedDict)}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td style="padding: 12px; color: #ff6b6b;">Error: ${data.error}</td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
+
+            if (data.words && data.words.length > 0) {
+                _cachedRandomWords = data.words;
+                _randomWordsLoadedOnce = true;
+                renderSuggestedWordsTable(tableBody, data.words);
+            } else {
                 tableBody.innerHTML = `
                     <tr>
-                        <td style="padding: 12px; color: #ff6b6b;">Error: ${data.error}</td>
+                        <td style="padding: 15px; opacity: 0.6;">No random words available.</td>
                     </tr>
                 `;
             }
-            return;
+        } catch (err) {
+            console.error('Failed to load random words:', err);
+            if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
+                    </tr>
+                `;
+            }
+        } finally {
+            _isFetchingRandomWords = false;
+            _randomWordsFetchPromise = null;
         }
+    })();
 
-        if (data.words && data.words.length > 0) {
-            _cachedRandomWords = data.words;
-            _randomWordsLoadedOnce = true;
-            renderSuggestedWordsTable(tableBody, data.words);
-        } else {
-            tableBody.innerHTML = `
-                <tr>
-                    <td style="padding: 15px; opacity: 0.6;">No random words available.</td>
-                </tr>
-            `;
-        }
-    } catch (err) {
-        console.error('Failed to load random words:', err);
-        if (tableBody.querySelectorAll('.suggested-word-row').length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td style="padding: 15px; color: #ff6b6b;">Failed to load words.</td>
-                </tr>
-            `;
-        }
-    } finally {
-        _isFetchingRandomWords = false;
-    }
+    await _randomWordsFetchPromise;
 }
 window.loadRandomSuggestedWords = loadRandomSuggestedWords;
 
