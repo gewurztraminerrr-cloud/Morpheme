@@ -7089,10 +7089,10 @@ class RoomManager:
 
                 if room.time_limit >= 7200 and u_id != -1 and u_name != 'System':
                     conn.execute('''
-                        INSERT INTO daily_score_sums (user_id, score_sum)
-                        VALUES (?, ?)
-                        ON CONFLICT(user_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
-                    ''', (u_id, u_score))
+                        INSERT INTO daily_score_sums (user_id, room_id, score_sum)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
+                    ''', (u_id, room.room_id, u_score))
                 
             conn.commit()
             conn.close()

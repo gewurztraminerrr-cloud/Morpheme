@@ -1184,12 +1184,40 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
         CREATE TABLE IF NOT EXISTS daily_score_sums (
-            user_id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            room_id TEXT NOT NULL DEFAULT '24h_4x4',
             score_sum INTEGER NOT NULL,
+            PRIMARY KEY (user_id, room_id),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
     ''')
     conn.commit()
+    
+    # MIGRATION: Upgrade daily_score_sums table to include room_id composite key if needed
+    try:
+        table_info = conn.execute("PRAGMA table_info(daily_score_sums)").fetchall()
+        column_names = [col[1] for col in table_info]
+        if 'room_id' not in column_names:
+            conn.execute('''
+                CREATE TABLE daily_score_sums_new (
+                    user_id INTEGER NOT NULL,
+                    room_id TEXT NOT NULL DEFAULT '24h_4x4',
+                    score_sum INTEGER NOT NULL,
+                    PRIMARY KEY (user_id, room_id),
+                    FOREIGN KEY(user_id) REFERENCES users(id)
+                )
+            ''')
+            conn.execute('''
+                INSERT INTO daily_score_sums_new (user_id, room_id, score_sum)
+                SELECT user_id, '24h_4x4', score_sum FROM daily_score_sums
+            ''')
+            conn.execute('DROP TABLE daily_score_sums')
+            conn.execute('ALTER TABLE daily_score_sums_new RENAME TO daily_score_sums')
+            conn.commit()
+            print("Migrated DB: Upgraded daily_score_sums table to include room_id composite key")
+    except Exception as e:
+        print(f"Migration check for daily_score_sums info: {e}")
+
     conn.commit()
     
     # MIGRATION: Ensure games_played column exists
@@ -6261,6 +6289,7 @@ def create_forum_comment():
 
 @app.route('/api/daily-score-sums', methods=['GET'])
 def get_daily_score_sums():
+    room_id = request.args.get('room_id', '24h_4x4')
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
@@ -6268,11 +6297,12 @@ def get_daily_score_sums():
             SELECT u.username, d.score_sum
             FROM daily_score_sums d
             JOIN users u ON d.user_id = u.id
+            WHERE d.room_id = ?
             ORDER BY d.score_sum DESC
-        ''')
+        ''', (room_id,))
         rows = cursor.fetchall()
         players = [{'username': row['username'], 'score_sum': row['score_sum']} for row in rows]
-        return jsonify({'players': players})
+        return jsonify({'players': players, 'room_id': room_id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
