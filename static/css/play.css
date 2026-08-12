@@ -62,24 +62,35 @@
 .spinner-set-label.reveal-new *,
 .header-meta.reveal-new,
 .header-meta.reveal-new * {
-    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    animation: slowFlashGold 4.5s ease-in-out forwards !important;
 }
 
 
-@keyframes fadeGoldToNormal {
+@keyframes slowFlashGold {
     0% {
-        color: #ffd700 !important; /* Instant snap to gold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
-        transform: scale(1.03); /* Slight pop when turning gold */
+        color: #ffd700 !important;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.04);
     }
-    20% {
-        color: #ffd700 !important; /* Hold gold briefly */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
+    25% {
+        color: var(--text-primary);
+        text-shadow: none !important;
+        transform: scale(1);
+    }
+    50% {
+        color: #ffd700 !important;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 40px rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.04);
+    }
+    75% {
+        color: var(--text-primary);
+        text-shadow: none !important;
         transform: scale(1);
     }
     100% {
         color: var(--text-primary);
         text-shadow: none !important;
+        transform: scale(1);
     }
 }
 
