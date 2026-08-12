@@ -59,7 +59,9 @@
 .game-params.reveal-new,
 .game-params.reveal-new *,
 .spinner-set-label.reveal-new,
-.spinner-set-label.reveal-new * {
+.spinner-set-label.reveal-new *,
+.header-meta.reveal-new,
+.header-meta.reveal-new * {
     animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
@@ -76,6 +78,7 @@
         transform: scale(1);
     }
     100% {
+        color: var(--text-primary);
         text-shadow: none !important;
     }
 }

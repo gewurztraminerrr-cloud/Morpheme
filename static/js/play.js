@@ -3864,9 +3864,9 @@ function updateParameters(state) {
     }
 
     const currentRound = state.current_round || 0;
-    const isRevealed = !!(state.spinner_params && state.spinner_params_revealed);
-    const wasRevealed = !!(window._lastRevealedState);
     const isIntermission = state.intermission === true || state.state === 'intermission';
+    const isRevealed = !!(state.spinner_params && (state.spinner_params_revealed || (isIntermission && state.time_remaining !== undefined && state.time_remaining <= 45)));
+    const wasRevealed = !!(window._lastRevealedState);
     const now = Date.now();
 
     // Determine current fact-checked labels
@@ -3904,7 +3904,7 @@ function updateParameters(state) {
     // UPDATE POLICY:
     // 1. If Active Round: Update immediately to match facts.
     // 2. If Intermission & NOT Revealed: Stay sticky to previous round facts.
-    // 3. If Intermission & JUST Revealed: Update NOW and trigger animation.
+    // 3. If Intermission & JUST Revealed / 0:45 reached: Update NOW and trigger gold animation.
     
     let shouldUpdateLabels = false;
     let triggerAnimation = false;
@@ -3914,11 +3914,11 @@ function updateParameters(state) {
         window._lastRevealedRoundCount = currentRound; 
         window._animTriggeredForRound = -1;
     } else {
-        if (isRevealed && !wasRevealed && (window._animTriggeredForRound !== currentRound)) {
+        if (isRevealed && (window._animTriggeredForRound !== currentRound)) {
             shouldUpdateLabels = true;
             triggerAnimation = true;
             window._animTriggeredForRound = currentRound;
-            console.log("[play.js] REVEAL ANIMATION + LABEL UPDATE for round:", currentRound);
+            console.log("[play.js] REVEAL ANIMATION + LABEL UPDATE at 0:45 for round:", currentRound);
         } else if (isRevealed) {
             shouldUpdateLabels = true;
         } else {
@@ -4013,15 +4013,24 @@ function updateParameters(state) {
     if (triggerAnimation) {
         const paramContainer = document.querySelector('.game-params');
         const labelContainer = document.querySelector('.spinner-set-label');
+        const headerMetaContainer = document.querySelector('.header-meta');
         if (paramContainer) {
             paramContainer.classList.remove('reveal-new');
             void paramContainer.offsetWidth; // Force reflow
             paramContainer.classList.add('reveal-new');
+            setTimeout(() => paramContainer.classList.remove('reveal-new'), 4500);
         }
         if (labelContainer) {
             labelContainer.classList.remove('reveal-new');
             void labelContainer.offsetWidth; // Force reflow
             labelContainer.classList.add('reveal-new');
+            setTimeout(() => labelContainer.classList.remove('reveal-new'), 4500);
+        }
+        if (headerMetaContainer) {
+            headerMetaContainer.classList.remove('reveal-new');
+            void headerMetaContainer.offsetWidth; // Force reflow
+            headerMetaContainer.classList.add('reveal-new');
+            setTimeout(() => headerMetaContainer.classList.remove('reveal-new'), 4500);
         }
     }
     
@@ -4198,6 +4207,13 @@ function updateLocalTimer() {
             const limit = (window.lastGameState.time_limit >= 7200) ? 5 : 60;
             if (remaining > limit) {
                 remaining = limit;
+            }
+            // Instantly trigger parameter reveal & gold flash at 0:45
+            if (remaining <= 45 && window.lastGameState) {
+                const currentRound = window.lastGameState.current_round || 0;
+                if (window._animTriggeredForRound !== currentRound) {
+                    updateParameters(window.lastGameState);
+                }
             }
         }
     }
