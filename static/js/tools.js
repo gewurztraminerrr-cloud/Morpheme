@@ -2232,7 +2232,7 @@ function renderRatingsGrid(configRatings, user = null) {
                 if (mode !== '3d' && time === 300) return;
 
                 const configKey = `${mode}|${board}|${time}`;
-                const configData = ratings[configKey] || { rating: 1200, games_played: 0, wins: 0, point_sum: 0, avg_pct_found: 0 };
+                const configData = ratings[configKey] || { rating: 1200, games_played: 0, wins: 0, point_sum: 0, avg_score: 0, avg_words: 0, avg_pct_found: 0 };
                 const rating = configData.rating;
 
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
@@ -2247,7 +2247,8 @@ function renderRatingsGrid(configRatings, user = null) {
                         <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
                         <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
                            <div>Played: <span style="color: #fff;">${configData.games_played || 0}</span> | Wins: <span style="color: #fff;">${configData.wins || 0}</span></div>
-                           <div>Points: <span style="color: #fff;">${configData.point_sum || 0}</span> | Avg Found: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></div>
+                           <div>Avg Score: <span style="color: #fff;">${configData.avg_score || 0}</span> | Total Points: <span style="color: #fff;">${configData.point_sum || 0}</span></div>
+                           <div>Avg Words: <span style="color: #fff;">${configData.avg_words || 0}</span> | Avg Found: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></div>
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>

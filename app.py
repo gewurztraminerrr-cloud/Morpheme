@@ -2834,6 +2834,7 @@ def get_public_profile(username):
                 'avg_pct_found': avg_pct_found,
                 'max_pct_found': max_pct_found,
                 'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
+                'avg_words': round(sum(p['num_words'] for p in matching) / len(matching), 1) if matching else 0,
                 'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
             }
         except Exception as e:
@@ -2846,6 +2847,7 @@ def get_public_profile(username):
                 'avg_pct_found': 0,
                 'max_pct_found': 0,
                 'avg_score': 0,
+                'avg_words': 0,
                 'avg_perf': 0
             }
 
