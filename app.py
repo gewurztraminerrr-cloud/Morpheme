@@ -1568,8 +1568,9 @@ def init_db():
         for name, desc in categories:
             conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
         
-        # MIGRATION: Rename Suggestions category to Suggestions/Ideas
-        conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions'")
+        # MIGRATION: Ensure Suggestions category is renamed to Suggestions/Ideas and clean up duplicates
+        conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions' OR id = 6")
+        conn.execute("DELETE FROM forum_categories WHERE name = 'Suggestions/Ideas' AND id != 6")
 
         conn.commit()
         print("Migrated DB: Added Forum tables and categories")
