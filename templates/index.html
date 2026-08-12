@@ -4453,47 +4453,54 @@
                     </div>
 
                     <!-- Dictionary -->
-                    <div class="odds-section">
-                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
-                            Dict: Word Lists
+                    <div class="odds-section" style="margin-bottom: 20px;">
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 10px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>📖 Dict: Word Lists</span>
+                            <span style="font-size: 0.72rem; font-weight: 600; color: var(--muted-text);">(25% Each)</span>
                         </h4>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div>
-                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
-                                    🎲 Dictionary Spin Distribution
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <!-- NWL Card -->
+                            <div style="background: rgba(53, 131, 228, 0.08); border: 1px solid rgba(53, 131, 228, 0.25); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #3583e4;">📘 NWL</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; background: rgba(53, 131, 228, 0.2); color: #3583e4; padding: 2px 8px; border-radius: 12px;">25%</span>
                                 </div>
-                                <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 8px; border-left: 2px solid #2ec27e;">
-                                    <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📘 NWL</span>
-                                        <span style="font-weight: 700;">25%</span>
-                                    </div>
-                                    <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 25%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
-                                    </div>
-                                    
-                                    <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📕 CSW</span>
-                                        <span style="font-weight: 700;">25%</span>
-                                    </div>
-                                    <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 25%; height: 100%; background: #e01b24; border-radius: 2.5px;"></div>
-                                    </div>
-                                    
-                                    <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📘 NWL + AW</span>
-                                        <span style="font-weight: 700;">25%</span>
-                                    </div>
-                                    <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 25%; height: 100%; background: #1a5fb4; border-radius: 2.5px;"></div>
-                                    </div>
+                                <div style="font-size: 0.72rem; color: var(--text-primary); opacity: 0.85; line-height: 1.3;">
+                                    <strong>North American Official</strong><br>Standard tournament dictionary.
+                                </div>
+                            </div>
 
-                                    <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                                        <span>📕 CSW + AW</span>
-                                        <span style="font-weight: 700;">25%</span>
-                                    </div>
-                                    <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 2.5px; overflow: hidden; margin-bottom: 4px;">
-                                        <div style="width: 25%; height: 100%; background: #a51d2d; border-radius: 2.5px;"></div>
-                                    </div>
+                            <!-- CSW Card -->
+                            <div style="background: rgba(224, 27, 36, 0.08); border: 1px solid rgba(224, 27, 36, 0.25); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #e01b24;">📕 CSW</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; background: rgba(224, 27, 36, 0.2); color: #e01b24; padding: 2px 8px; border-radius: 12px;">25%</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-primary); opacity: 0.85; line-height: 1.3;">
+                                    <strong>Collins Scrabble Words</strong><br>International tournament dictionary.
+                                </div>
+                            </div>
+
+                            <!-- NWL + AW Card -->
+                            <div style="background: rgba(26, 95, 180, 0.08); border: 1px solid rgba(26, 95, 180, 0.25); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #64a5f5;">📘 NWL + AW</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; background: rgba(26, 95, 180, 0.2); color: #64a5f5; padding: 2px 8px; border-radius: 12px;">25%</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-primary); opacity: 0.85; line-height: 1.3;">
+                                    <strong>NWL + Added Words</strong><br>Includes Morpheme extra vocabulary.
+                                </div>
+                            </div>
+
+                            <!-- CSW + AW Card -->
+                            <div style="background: rgba(165, 29, 45, 0.08); border: 1px solid rgba(165, 29, 45, 0.25); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; font-weight: 800; color: #f56c7a;">📕 CSW + AW</span>
+                                    <span style="font-size: 0.8rem; font-weight: 800; background: rgba(165, 29, 45, 0.2); color: #f56c7a; padding: 2px 8px; border-radius: 12px;">25%</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-primary); opacity: 0.85; line-height: 1.3;">
+                                    <strong>CSW + Added Words</strong><br>Includes Morpheme extra vocabulary.
                                 </div>
                             </div>
                         </div>
@@ -4501,71 +4508,128 @@
 
                     <!-- Word Count Range -->
                     <div class="odds-section">
-                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 8px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 4px;">
-                            Words: Total Board Words
+                        <h4 class="odds-title" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue, #1a5fb4); margin: 0 0 10px 0; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); padding-bottom: 6px;">
+                            🎯 Words: Total Board Words
                         </h4>
-                         <p style="font-size: 0.75rem; color: var(--muted-text); margin: 0 0 10px 0; line-height: 1.4;">
-                            <span style="display: block; font-style: italic; color: var(--text-primary); margin-bottom: 5px;">For boards with 50-100 words: 4x4 → 5L only, 4x6 → 6L only, 5x7 → 7L only, 6x8 → 8L only.</span>
-                            <span style="display: block; font-style: italic; color: var(--text-primary); margin-bottom: 5px;">For boards with 100-200 words: 4x4 → 3-4L, 4x6 → 4-6L, 5x7 → 5-7L, 6x8 → 6-8L (spun [25%/50%/25%]).</span>
-                            <span style="display: block; font-style: italic; color: var(--text-primary); margin-bottom: 5px;">For boards with 200-300 words: 4x4 → 3L, 4x6 → 4-6L, 5x7 → 5-6L, 6x8 → 6-8L (spun [25%/50%/25%]).</span>
-                            <span style="display: block; font-style: italic; color: var(--accent-blue, #1a5fb4); font-weight: 600;">Note: 50-100, 100-200, and 200-300 word counts are strictly limited to standard NWL and CSW dictionaries. 300-400 word counts are for all dictionaries (including "+ AW" versions).</span>
-                        </p>
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>50 - 100 words <span style="font-size: 0.7rem; color: var(--muted-text); font-style: italic;">(Greatest Min-Length Only)</span></span>
-                                <span style="font-weight: 700;">9%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 9%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                        
+                        <!-- Side-by-side or stacked Dictionary Breakdown Containers -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                            
+                            <!-- Standard Dictionaries (NWL & CSW) -->
+                            <div style="background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; padding: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06);">
+                                    <span style="font-size: 0.82rem; font-weight: 800; color: #3583e4;">Standard Dictionaries (NWL & CSW)</span>
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: var(--muted-text);">50% Total Rounds</span>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>50 – 100 words</strong> <span style="font-size: 0.7rem; color: var(--muted-text);">(Greatest Min-Len Only)</span></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">9%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.06); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 9%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>100 – 200 words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">30%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.06); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 30%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>200 – 300 words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">30%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.06); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 30%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>300 – 400 words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">30%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.06); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 30%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>500+ words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">1%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(var(--text-primary-rgb), 0.06); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 1%; height: 100%; background: #3583e4; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>100 - 200 words</span>
-                                <span style="font-weight: 700;">30%</span>
+                            <!-- Extended Dictionaries (NWL + AW & CSW + AW) -->
+                            <div style="background: rgba(167, 139, 250, 0.05); border: 1px solid rgba(167, 139, 250, 0.2); border-radius: 10px; padding: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(167, 139, 250, 0.15);">
+                                    <span style="font-size: 0.82rem; font-weight: 800; color: #a78bfa;">Extended Dictionaries (+ AW)</span>
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: var(--muted-text);">50% Total Rounds</span>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>300 – 400 words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">33%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(167, 139, 250, 0.1); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 33%; height: 100%; background: #a78bfa; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>400 – 500 words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">33%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(167, 139, 250, 0.1); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 33%; height: 100%; background: #a78bfa; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 2px;">
+                                            <span><strong>500+ words</strong></span>
+                                            <span style="font-weight: 700; color: var(--text-primary);">34%</span>
+                                        </div>
+                                        <div style="height: 5px; background: rgba(167, 139, 250, 0.1); border-radius: 2.5px; overflow: hidden;">
+                                            <div style="width: 34%; height: 100%; background: #a78bfa; border-radius: 2.5px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 14px; padding: 6px 8px; background: rgba(167, 139, 250, 0.08); border-radius: 6px; font-size: 0.7rem; color: #a78bfa; line-height: 1.3;">
+                                        💡 <strong>Added Words (+ AW)</strong> expands the dictionary, producing higher word counts per board.
+                                    </div>
+                                </div>
                             </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 30%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
+                        </div>
+
+                        <!-- Minimum Word Length Rules Note Card -->
+                        <div style="background: rgba(var(--text-primary-rgb), 0.02); border: 1px dashed rgba(var(--text-primary-rgb), 0.12); border-radius: 8px; padding: 10px 12px; font-size: 0.73rem; color: var(--muted-text); line-height: 1.4;">
+                            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                                💡 Board Min-Word Length Breakdown by Word Count:
                             </div>
-                            
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>200 - 300 words</span>
-                                <span style="font-weight: 700;">30%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 30%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
-                            </div>
-                            
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>300 - 400 words</span>
-                                <span style="font-weight: 700;">30%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 30%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
-                            </div>
-                            
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                                <span>500+ words</span>
-                                <span style="font-weight: 700;">1%</span>
-                            </div>
-                            <div style="height: 6px; background: rgba(var(--text-primary-rgb), 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: 1%; height: 100%; background: var(--text-primary); opacity: 0.7; border-radius: 3px;"></div>
-                            </div>
-                            
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-top: 10px; border-top: 1px dashed rgba(var(--text-primary-rgb), 0.15); padding-top: 8px;">
-                                <span style="font-weight: 700; color: #a78bfa;">📝 For CSW + AW and NWL + AW rounds:</span>
-                            </div>
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding-left: 8px;">
-                                <span>300 - 400 words</span>
-                                <span style="font-weight: 700;">33%</span>
-                            </div>
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding-left: 8px;">
-                                <span>400 - 500 words</span>
-                                <span style="font-weight: 700;">33%</span>
-                            </div>
-                            <div class="odds-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding-left: 8px;">
-                                <span>500+ words</span>
-                                <span style="font-weight: 700;">34%</span>
-                            </div>
+                            <ul style="margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px;">
+                                <li><strong>50 – 100 Words</strong>: Restricted strictly to the highest min-length (4x4 → 5L, 4x6 → 6L, 5x7 → 7L, 6x8/Cube → 8L).</li>
+                                <li><strong>100 – 200 Words</strong>: Spun across standard min-lengths (4x4 → 3-4L, 4x6 → 4-6L, 5x7 → 5-7L, 6x8/Cube → 6-8L).</li>
+                                <li><strong>200 – 300 Words</strong>: Spun across high-density min-lengths (4x4 → 3L, 4x6 → 4-6L, 5x7 → 5-6L, 6x8/Cube → 6-8L).</li>
+                            </ul>
                         </div>
                     </div>
 
