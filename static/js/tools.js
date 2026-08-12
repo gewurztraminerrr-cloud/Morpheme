@@ -318,7 +318,7 @@ function renderGroups(groupsData, containerId, type) {
             <div class="group-header">${label}</div>
             <div class="group-table-container">
                 <div class="group-word-list">
-                    ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></div>`).join('')}
+                    ${words.map(w => `<div class="group-row clickable-word-link" onclick="window.lookupWord('${w}')" style="cursor: pointer; user-select: none;"><span>${w}</span></div>`).join('')}
                 </div>
             </div>
         `;
@@ -5342,6 +5342,9 @@ window.lookupWord = function (word) {
     }
 
     // 2. Switch tool navigation to "Is Valid"
+    if (typeof window.showTool === 'function') {
+        window.showTool('is-valid');
+    }
     const navBtns = document.querySelectorAll('.tool-nav-btn');
     const isValidBtn = Array.from(navBtns).find(b => b.dataset.tool === 'is-valid');
     if (isValidBtn) isValidBtn.click();
