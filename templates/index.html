@@ -4701,10 +4701,13 @@
                     </div>
                     <button id="full-list-modal-close" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;" title="Close">✕</button>
                 </div>
-                <!-- Scrollable Word Grid & Custom Draggable Scrollbar -->
-                <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: block; box-sizing: border-box; position: relative; -webkit-overflow-scrolling: touch;">
-                    <div id="full-list-modal-results-inner" style="display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; width: 100%; box-sizing: border-box; padding-right: 18px;"></div>
-                    <!-- Dedicated Draggable Scrollbar Track & Thumb -->
+                <!-- Viewport-Anchored Container for Scrollable Word Grid & Fixed Draggable Scrollbar -->
+                <div style="flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column;">
+                    <!-- Scrollable Word Grid -->
+                    <div id="full-list-modal-results" style="flex: 1; min-height: 0; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: block; box-sizing: border-box; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                        <div id="full-list-modal-results-inner" style="display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; width: 100%; box-sizing: border-box; padding-right: 28px;"></div>
+                    </div>
+                    <!-- Fixed Draggable Scrollbar Track & Thumb Overlay -->
                     <div id="full-list-modal-scrollbar-track" class="modal-custom-track">
                         <div id="full-list-modal-scrollbar-thumb" class="modal-custom-thumb" title="Drag to scroll">
                             <div class="thumb-grip-lines">

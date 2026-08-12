@@ -7082,33 +7082,14 @@ body .board-cell.tile-flash-purple * {
     margin-right: 3px;
 }
 
-/* Full List Modal — custom grabbable scrollbar */
+/* Full List Modal — native scrollbars hidden in favor of custom draggable overlay */
 #full-list-modal-results {
-    scrollbar-width: auto;
-    scrollbar-color: #c084fc rgba(255, 255, 255, 0.1);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 #full-list-modal-results::-webkit-scrollbar {
-    width: 20px !important;
-}
-#full-list-modal-results::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-#full-list-modal-results::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #c084fc 0%, #8b5cf6 100%);
-    border-radius: 10px;
-    border: 3px solid #0a0a14;
-    min-height: 65px;
-    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.4);
-}
-#full-list-modal-results::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #f0abfc 0%, #a855f7 100%);
-    border-color: #131326;
-    box-shadow: 0 0 16px rgba(192, 132, 252, 0.85);
-}
-#full-list-modal-results::-webkit-scrollbar-thumb:active {
-    background: #ffffff;
+    display: none;
+    width: 0 !important;
 }
 
 /* Custom Draggable Scrollbar Track & Thumb Overlay */
