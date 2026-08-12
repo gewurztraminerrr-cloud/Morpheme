@@ -2917,6 +2917,8 @@ function setupListsTool() {
 
     function openFullListModal() {
         if (!fullListModal || !fullListResults) return;
+        const resultsInner = document.getElementById('full-list-modal-results-inner') || fullListResults;
+
         if (!currentWordsList || currentWordsList.length === 0) {
             alert('No list loaded yet. Please select a list type and click Update first.');
             return;
@@ -2936,12 +2938,13 @@ function setupListsTool() {
         if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
 
         // If exact same modal list is already rendered, display instantly and restore scroll position
-        if (window._currentFullListKey === modalKey && fullListResults.children.length > 0) {
+        if (window._currentFullListKey === modalKey && resultsInner.children.length > 0) {
             fullListModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             if (window._savedFullListScrollTop) {
                 fullListResults.scrollTop = window._savedFullListScrollTop;
             }
+            updateCustomScrollbar();
             return;
         }
 
@@ -2950,7 +2953,7 @@ function setupListsTool() {
         window._savedFullListScrollTop = 0;
 
         if (fullListCount) fullListCount.textContent = `Loading…`;
-        fullListResults.innerHTML = '';
+        resultsInner.innerHTML = '';
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -2974,6 +2977,7 @@ function setupListsTool() {
                     if (window._savedFullListScrollTop && fullListResults) {
                         fullListResults.scrollTop = window._savedFullListScrollTop;
                     }
+                    updateCustomScrollbar();
                     if (onDone) onDone();
                     return;
                 }
@@ -2983,11 +2987,12 @@ function setupListsTool() {
                 } else {
                     html = slice.map(w => `<span class="full-list-item clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span>`).join('');
                 }
-                fullListResults.insertAdjacentHTML('beforeend', html);
+                resultsInner.insertAdjacentHTML('beforeend', html);
                 rendered += slice.length;
                 if (window._savedFullListScrollTop && fullListResults && fullListResults.scrollTop !== window._savedFullListScrollTop) {
                     fullListResults.scrollTop = window._savedFullListScrollTop;
                 }
+                updateCustomScrollbar();
                 setTimeout(chunk, 40);
             }
             chunk();
@@ -3013,11 +3018,12 @@ function setupListsTool() {
                     if (fullListCount) fullListCount.textContent = `${sortedFullWords.length.toLocaleString()} words`;
 
                     // Re-render completely with full sorted words list
-                    fullListResults.innerHTML = '';
+                    resultsInner.innerHTML = '';
                     renderWordList(sortedFullWords, 0, () => {
                         if (window._savedFullListScrollTop && fullListResults) {
                             fullListResults.scrollTop = window._savedFullListScrollTop;
                         }
+                        updateCustomScrollbar();
                     });
                 })
                 .catch(err => {
@@ -3030,8 +3036,99 @@ function setupListsTool() {
                 if (window._savedFullListScrollTop && fullListResults) {
                     fullListResults.scrollTop = window._savedFullListScrollTop;
                 }
+                updateCustomScrollbar();
             });
         }
+    }
+
+    // --- Custom Draggable Scrollbar Overlay Handlers ---
+    const customTrack = document.getElementById('full-list-modal-scrollbar-track');
+    const customThumb = document.getElementById('full-list-modal-scrollbar-thumb');
+
+    function updateCustomScrollbar() {
+        if (!fullListResults || !customTrack || !customThumb) return;
+        const clientH = fullListResults.clientHeight;
+        const scrollH = fullListResults.scrollHeight;
+        if (scrollH <= clientH || clientH === 0) {
+            customTrack.style.display = 'none';
+            return;
+        }
+        customTrack.style.display = 'block';
+        const trackH = customTrack.clientHeight;
+        const minThumbH = 65;
+        const rawRatio = clientH / scrollH;
+        const thumbH = Math.max(minThumbH, Math.round(rawRatio * trackH));
+        customThumb.style.height = `${thumbH}px`;
+
+        const maxScroll = scrollH - clientH;
+        const maxThumbTop = trackH - thumbH;
+        const scrollRatio = maxScroll > 0 ? (fullListResults.scrollTop / maxScroll) : 0;
+        const thumbTop = Math.min(maxThumbTop, Math.max(0, Math.round(scrollRatio * maxThumbTop)));
+        customThumb.style.transform = `translateY(${thumbTop}px)`;
+    }
+
+    if (fullListResults) {
+        fullListResults.addEventListener('scroll', updateCustomScrollbar, { passive: true });
+    }
+
+    if (customThumb && customTrack && fullListResults) {
+        let isDragging = false;
+        let startY = 0;
+        let startScrollTop = 0;
+
+        customThumb.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isDragging = true;
+            startY = e.clientY;
+            startScrollTop = fullListResults.scrollTop;
+            customThumb.classList.add('dragging');
+            try { customThumb.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+
+        customThumb.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const deltaY = e.clientY - startY;
+            const trackH = customTrack.clientHeight;
+            const thumbH = customThumb.offsetHeight;
+            const maxThumbTop = trackH - thumbH;
+            const maxScroll = fullListResults.scrollHeight - fullListResults.clientHeight;
+
+            if (maxThumbTop > 0 && maxScroll > 0) {
+                const scrollDelta = (deltaY / maxThumbTop) * maxScroll;
+                fullListResults.scrollTop = startScrollTop + scrollDelta;
+            }
+        });
+
+        const stopDrag = (e) => {
+            if (isDragging) {
+                isDragging = false;
+                customThumb.classList.remove('dragging');
+                try { customThumb.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
+
+        customThumb.addEventListener('pointerup', stopDrag);
+        customThumb.addEventListener('pointercancel', stopDrag);
+
+        customTrack.addEventListener('pointerdown', (e) => {
+            if (e.target === customThumb || customThumb.contains(e.target)) return;
+            e.preventDefault();
+            const rect = customTrack.getBoundingClientRect();
+            const clickY = e.clientY - rect.top;
+            const thumbH = customThumb.offsetHeight;
+            const trackH = customTrack.clientHeight;
+            const maxThumbTop = trackH - thumbH;
+            const targetThumbTop = clickY - (thumbH / 2);
+            const clampedThumbTop = Math.min(maxThumbTop, Math.max(0, targetThumbTop));
+            const maxScroll = fullListResults.scrollHeight - fullListResults.clientHeight;
+
+            if (maxThumbTop > 0 && maxScroll > 0) {
+                fullListResults.scrollTop = (clampedThumbTop / maxThumbTop) * maxScroll;
+            }
+        });
     }
 
     if (viewFullBtn) {
