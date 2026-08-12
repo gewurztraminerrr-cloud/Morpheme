@@ -6229,10 +6229,19 @@ body .board-cell.tile-flash-purple * {
     -ms-overflow-style: none !important; /* IE/Edge */
 }
 
+.tools-content.no-outer-scroll,
+.tools-content.no-outer-scroll .tool-pane.active {
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+}
+
 @media (min-width: 901px) {
+    .tools-content.no-outer-scroll,
+    .tools-content.no-outer-scroll .tool-pane.active,
     #tool-sequence.tool-pane.active,
     #tool-subanagrams.tool-pane.active {
         overflow-y: hidden !important;
+        overflow-x: hidden !important;
         height: 100% !important;
         max-height: calc(100vh - 180px) !important;
     }

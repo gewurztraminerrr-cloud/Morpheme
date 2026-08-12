@@ -44,6 +44,11 @@ window.showTool = function(toolId) {
             if (p.id === `tool-${toolId}`) p.classList.add('active');
             else p.classList.remove('active');
         });
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists') {
+            content.classList.add('no-outer-scroll');
+        } else {
+            content.classList.remove('no-outer-scroll');
+        }
     }
 
     // Trigger lazy loads
