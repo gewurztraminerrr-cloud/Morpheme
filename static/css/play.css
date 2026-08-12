@@ -1764,10 +1764,9 @@ body.theme-light-brown .word-item.missed {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 75vh;
-    /* Increased for more room */
-    max-height: 1200px;
-    /* Increased from 400px to allow full vertical utilization */
+    height: calc(100vh - 270px);
+    max-height: 650px;
+    min-height: 320px;
 }
 
 /* --- MANUAL TOOL STYLING --- */
@@ -6236,6 +6235,12 @@ body .board-cell.tile-flash-purple * {
         overflow-y: hidden !important;
         height: 100% !important;
         max-height: calc(100vh - 180px) !important;
+    }
+    .seq-results-container {
+        height: calc(100vh - 270px) !important;
+        max-height: 650px !important;
+        min-height: 350px !important;
+        overflow-y: hidden !important;
     }
 }
 
