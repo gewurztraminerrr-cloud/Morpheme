@@ -27,6 +27,15 @@ window.parseUTCTimestamp = function(isoStr) {
 
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
+    // Save lists scroll position before navigating away from Lists tool
+    const currentActivePane = document.querySelector('.tool-pane.active');
+    if (currentActivePane && currentActivePane.id === 'tool-lists') {
+        const listScrollArea = document.getElementById('main-list-results');
+        if (listScrollArea) {
+            window._savedListsScrollTop = listScrollArea.scrollTop;
+        }
+    }
+
     const sidebar = document.querySelector('#page-tools .tools-sidebar');
     const content = document.querySelector('#page-tools .tools-content');
     
@@ -56,7 +65,17 @@ window.showTool = function(toolId) {
         if (typeof refreshProfileTool === 'function') refreshProfileTool();
     }
     if (toolId === 'lists') {
-        if (typeof fetchListsData === 'function') fetchListsData();
+        if (!listsDataLoaded) {
+            if (typeof fetchListsData === 'function') fetchListsData();
+        } else {
+            // Keep the loaded list present and restore saved scroll position
+            const listScrollArea = document.getElementById('main-list-results');
+            if (listScrollArea && typeof window._savedListsScrollTop === 'number') {
+                setTimeout(() => {
+                    listScrollArea.scrollTop = window._savedListsScrollTop;
+                }, 30);
+            }
+        }
     }
     if (toolId === 'wotd') {
         if (typeof updateWotd === 'function') updateWotd();
@@ -299,7 +318,7 @@ function renderGroups(groupsData, containerId, type) {
             <div class="group-header">${label}</div>
             <div class="group-table-container">
                 <div class="group-word-list">
-                    ${words.map(w => `<div class="group-row">${w}</div>`).join('')}
+                    ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></div>`).join('')}
                 </div>
             </div>
         `;
@@ -2810,19 +2829,19 @@ function renderNextWordsPage() {
     if (currentWordsType === 'likelihood') {
         html = nextPageWords.map(item => `
             <div class="list-item">
-                <span class="likelihood-score">${item.score}</span> ${item.word}
+                <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span>
             </div>
         `).join('');
     } else if (currentWordsType === 'added') {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(w => `
             <div class="list-item added-word" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="display: flex; justify-content: space-between; align-items: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">
-                <span style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
                 ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
             </div>
         `).join('');
     } else {
-        html = nextPageWords.map(w => `<div class="list-item">${w}</div>`).join('');
+        html = nextPageWords.map(w => `<div class="list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></div>`).join('');
     }
 
     if (currentWordsRenderedCount === 0) {
@@ -2917,9 +2936,9 @@ function setupListsTool() {
                 if (slice.length === 0) { if (onDone) onDone(); return; }
                 let html = '';
                 if (currentWordsType === 'likelihood') {
-                    html = slice.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> ${item.word}</span>`).join('');
+                    html = slice.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span></span>`).join('');
                 } else {
-                    html = slice.map(w => `<span class="full-list-item">${w}</span>`).join('');
+                    html = slice.map(w => `<span class="full-list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></span>`).join('');
                 }
                 fullListResults.insertAdjacentHTML('beforeend', html);
                 rendered += slice.length;
@@ -5156,19 +5175,32 @@ function setupPersonalTimer() {
 window.lookupWord = function (word) {
     if (!word) return;
 
-    // 1. Switch tool navigation to "Is Valid"
+    // 1. Save scroll position if we are currently in Lists tool
+    const currentActivePane = document.querySelector('.tool-pane.active');
+    if (currentActivePane && currentActivePane.id === 'tool-lists') {
+        const listScrollArea = document.getElementById('main-list-results');
+        if (listScrollArea) {
+            window._savedListsScrollTop = listScrollArea.scrollTop;
+        }
+    }
+
+    // 2. Switch tool navigation to "Is Valid"
     const navBtns = document.querySelectorAll('.tool-nav-btn');
     const isValidBtn = Array.from(navBtns).find(b => b.dataset.tool === 'is-valid');
     if (isValidBtn) isValidBtn.click();
 
-    // 2. Set input and run check
+    // 3. Set dictionary select to "ALL"
+    const dictEl = document.getElementById('valid-dict');
+    if (dictEl) dictEl.value = 'ALL';
+
+    // 4. Set input and run check
     const input = document.getElementById('valid-input');
     if (input) {
         input.value = word;
         runValidationCheck();
     }
 
-    // 3. Scroll to results if needed
+    // 5. Scroll to results if needed
     const container = document.getElementById('valid-results-container');
     if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
