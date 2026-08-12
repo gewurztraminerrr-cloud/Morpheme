@@ -66,23 +66,32 @@
 .header-meta.reveal-new *,
 .spinner-modal-card.reveal-new,
 .spinner-modal-card.reveal-new * {
-    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    animation: slowGoldPulse 4s ease-in-out forwards !important;
 }
 
 
-@keyframes fadeGoldToNormal {
+@keyframes slowGoldPulse {
     0% {
-        color: #ffd700 !important; /* Instant snap to bright gold */
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.95), 0 0 40px rgba(255, 215, 0, 0.7) !important;
-        transform: scale(1.03);
+        color: #ffd700 !important;
+        text-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.8) !important;
+        transform: scale(1.04);
     }
-    30% {
-        color: #ffd700 !important; /* Hold gold for 1.2 seconds */
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.95), 0 0 40px rgba(255, 215, 0, 0.7) !important;
-        transform: scale(1.01);
+    25% {
+        color: var(--text-primary);
+        text-shadow: none !important;
+        transform: scale(1);
+    }
+    50% {
+        color: #ffd700 !important;
+        text-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.8) !important;
+        transform: scale(1.04);
+    }
+    75% {
+        color: var(--text-primary);
+        text-shadow: none !important;
+        transform: scale(1);
     }
     100% {
-        color: var(--text-primary);
         text-shadow: none !important;
         transform: scale(1);
     }
