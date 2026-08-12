@@ -3870,23 +3870,24 @@ function updateParameters(state) {
     const now = Date.now();
 
     // Determine current fact-checked labels
-    // INTERMISSION REVEAL: During intermission, we prefer the spinner_params (sp) if they are the target of the reveal.
-    // Otherwise, we prefer the state's authoritative ground-truth labels.
-    const factBoardDims = sp.board_dimensions || state.board_dimensions || '4x4';
-    const factTimeLimit = sp.time_limit || state.time_limit || 60;
-    const preferSp = (isIntermission && isRevealed);
+    // INTERMISSION REVEAL: During intermission, we only use spinner_params (sp) once revealed at 0:45.
+    // Otherwise before 0:45, we display the completed round's parameters.
+    const useSp = (isRevealed || !isIntermission) && sp && Object.keys(sp).length > 0;
 
-    const factFmt = sp.board_format || state.current_board_format || 'Normal';
-    const factDiff = sp.difficulty || state.current_difficulty || 'Medium';
-    const factBonus = sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0;
-    const factMinLen = sp.min_word_length || state.current_min_length || 3;
-    const rawDict = (sp && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
-    const useAW = (sp && sp.use_added_words !== undefined) 
+    const factBoardDims = useSp ? (sp.board_dimensions || state.board_dimensions || '4x4') : (state.board_dimensions || '4x4');
+    const factTimeLimit = useSp ? (sp.time_limit || state.time_limit || 60) : (state.time_limit || 60);
+
+    const factFmt = useSp ? (sp.board_format || state.current_board_format || 'Normal') : (state.current_board_format || 'Normal');
+    const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
+    const factBonus = useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0);
+    const factMinLen = useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3);
+    const rawDict = useSp ? (sp.dictionary || state.current_dictionary || 'NWL') : (state.current_dictionary || 'NWL');
+    const useAW = useSp 
         ? (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || ''))
         : (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || ''));
     const cleanBaseDict = rawDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').replace(/ADDED_WORDS/i, '').trim() || 'NWL';
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    let rawWordRange = sp.word_count_range || state.current_word_count_range || 'Random';
+    let rawWordRange = useSp ? (sp.word_count_range || state.current_word_count_range || 'Random') : (state.current_word_count_range || 'Random');
     if (Array.isArray(rawWordRange)) {
         rawWordRange = rawWordRange.join('-');
     } else {
@@ -3895,7 +3896,7 @@ function updateParameters(state) {
     const factWordRange = rawWordRange;
     
     let factUniq = 0;
-    if (sp && sp.uniqueness !== undefined && sp.uniqueness !== null && sp.uniqueness > 0) {
+    if (useSp && sp.uniqueness !== undefined && sp.uniqueness !== null && sp.uniqueness > 0) {
         factUniq = sp.uniqueness;
     } else if (state.current_uniqueness !== undefined && state.current_uniqueness !== null) {
         factUniq = state.current_uniqueness;
