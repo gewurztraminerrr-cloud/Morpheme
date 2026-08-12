@@ -2157,12 +2157,16 @@ body.theme-light-brown .word-item.missed {
         overflow-y: auto !important;
     }
 
-    /* Is Valid Tool: Expanded vertical length for result and definition panel on desktop */
+    /* Is Valid Tool: Expanded vertical length so all content is fully readable without internal scrolling */
+    #tool-is-valid #valid-results-container,
     #tool-is-valid .validation-scroll-container,
     .validation-scroll-container {
-        min-height: 500px !important;
-        max-height: calc(100vh - 280px) !important;
-        flex: 1 !important;
+        max-height: none !important;
+        height: auto !important;
+        min-height: 350px !important;
+        overflow-y: visible !important;
+        overflow: visible !important;
+        flex: unset !important;
     }
     .tools-content {
         background: rgba(0, 0, 0, 0.25) !important;
