@@ -2859,6 +2859,8 @@ function setupListsTool() {
     if (updateBtn) {
         updateBtn.addEventListener('click', () => {
             listsDataLoaded = false; // Force refresh
+            window._currentFullListKey = null;
+            window._savedFullListScrollTop = 0;
             fetchListsData();
         });
     }
@@ -2866,6 +2868,8 @@ function setupListsTool() {
     const typeFilter = document.getElementById('list-type-filter');
     if (typeFilter) {
         typeFilter.addEventListener('change', () => {
+            window._currentFullListKey = null;
+            window._savedFullListScrollTop = 0;
             fetchListsData();
         });
     }
@@ -2901,6 +2905,16 @@ function setupListsTool() {
     const fullListTitle = document.getElementById('full-list-modal-title');
     const fullListCount = document.getElementById('full-list-modal-count');
 
+    function closeFullListModal() {
+        if (!fullListModal) return;
+        if (fullListResults) {
+            window._savedFullListScrollTop = fullListResults.scrollTop;
+        }
+        fullListModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    window.closeFullListModal = closeFullListModal;
+
     function openFullListModal() {
         if (!fullListModal || !fullListResults) return;
         if (!currentWordsList || currentWordsList.length === 0) {
@@ -2908,7 +2922,7 @@ function setupListsTool() {
             return;
         }
 
-        // Get current filter state to replicate the fetch
+        // Get current filter state
         const lengthSelect = document.getElementById('list-length-filter');
         const startSelect = document.getElementById('list-start-filter');
         const typeSelect = document.getElementById('list-type-filter');
@@ -2916,16 +2930,39 @@ function setupListsTool() {
         const selectedLength = lengthSelect ? lengthSelect.value : 'all';
         const selectedStart = startSelect ? startSelect.value : 'all';
 
-        // Set title and show modal immediately
+        const modalKey = `${selectedType}_${selectedLength}_${selectedStart}_${currentWordsList.length}`;
+
         const titleEl = document.getElementById('list-display-title');
         if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
-        if (fullListCount) fullListCount.textContent = `Loading…`;
 
-        // Clear and show modal right away
+        // If exact same modal list is already rendered, display instantly and restore scroll position
+        if (window._currentFullListKey === modalKey && fullListResults.children.length > 0) {
+            fullListModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            if (window._savedFullListScrollTop) {
+                fullListResults.scrollTop = window._savedFullListScrollTop;
+            }
+            return;
+        }
+
+        // Otherwise, new list parameters — store key and reset saved scroll position
+        window._currentFullListKey = modalKey;
+        window._savedFullListScrollTop = 0;
+
+        if (fullListCount) fullListCount.textContent = `Loading…`;
         fullListResults.innerHTML = '';
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
+        // Helper to sort array alphabetically by word
+        function sortAlphabetically(arr) {
+            return arr.slice().sort((a, b) => {
+                const wordA = (typeof a === 'object' && a !== null) ? a.word : String(a);
+                const wordB = (typeof b === 'object' && b !== null) ? b.word : String(b);
+                return wordA.localeCompare(wordB);
+            });
+        }
 
         // Render a list of words progressively into the modal
         const MODAL_CHUNK = 500;
@@ -2933,25 +2970,36 @@ function setupListsTool() {
             let rendered = startIndex;
             function chunk() {
                 const slice = words.slice(rendered, rendered + MODAL_CHUNK);
-                if (slice.length === 0) { if (onDone) onDone(); return; }
+                if (slice.length === 0) {
+                    if (window._savedFullListScrollTop && fullListResults) {
+                        fullListResults.scrollTop = window._savedFullListScrollTop;
+                    }
+                    if (onDone) onDone();
+                    return;
+                }
                 let html = '';
                 if (currentWordsType === 'likelihood') {
-                    html = slice.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span></span>`).join('');
+                    html = slice.map(item => `<span class="full-list-item clickable-word-link" onclick="window.lookupWord('${item.word}')"><span class="likelihood-score">${item.score}</span> ${item.word}</span>`).join('');
                 } else {
-                    html = slice.map(w => `<span class="full-list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></span>`).join('');
+                    html = slice.map(w => `<span class="full-list-item clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span>`).join('');
                 }
                 fullListResults.insertAdjacentHTML('beforeend', html);
                 rendered += slice.length;
+                if (window._savedFullListScrollTop && fullListResults && fullListResults.scrollTop !== window._savedFullListScrollTop) {
+                    fullListResults.scrollTop = window._savedFullListScrollTop;
+                }
                 setTimeout(chunk, 40);
             }
             chunk();
         }
 
-        if (window.listsServerTruncated) {
-            // Render the already-loaded words first (instant feedback)
-            renderWordList(currentWordsList, 0, null);
+        const sortedInitialList = sortAlphabetically(currentWordsList);
 
-            // Then fetch the full uncapped list from the server
+        if (window.listsServerTruncated) {
+            // Render the initial words first (alphabetically sorted)
+            renderWordList(sortedInitialList, 0, null);
+
+            // Fetch the full uncapped list from server
             let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
             if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
             if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
@@ -2961,30 +3009,29 @@ function setupListsTool() {
                 .then(r => r.json())
                 .then(data => {
                     const fullWords = data[selectedType] || [];
-                    // Only append the words beyond what was already rendered
-                    const extraWords = fullWords.slice(currentWordsList.length);
-                    if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
-                    if (extraWords.length > 0) {
-                        renderWordList(extraWords, 0, null);
-                    } else {
-                        if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
-                    }
+                    const sortedFullWords = sortAlphabetically(fullWords);
+                    if (fullListCount) fullListCount.textContent = `${sortedFullWords.length.toLocaleString()} words`;
+
+                    // Re-render completely with full sorted words list
+                    fullListResults.innerHTML = '';
+                    renderWordList(sortedFullWords, 0, () => {
+                        if (window._savedFullListScrollTop && fullListResults) {
+                            fullListResults.scrollTop = window._savedFullListScrollTop;
+                        }
+                    });
                 })
                 .catch(err => {
                     console.error('[Full List] Failed to fetch full word list:', err);
-                    if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words (fetch failed)`;
+                    if (fullListCount) fullListCount.textContent = `${sortedInitialList.length.toLocaleString()} words (fetch failed)`;
                 });
         } else {
-            // List was not truncated — render what we have
-            if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
-            renderWordList(currentWordsList, 0, null);
+            if (fullListCount) fullListCount.textContent = `${sortedInitialList.length.toLocaleString()} words`;
+            renderWordList(sortedInitialList, 0, () => {
+                if (window._savedFullListScrollTop && fullListResults) {
+                    fullListResults.scrollTop = window._savedFullListScrollTop;
+                }
+            });
         }
-    }
-
-    function closeFullListModal() {
-        if (!fullListModal) return;
-        fullListModal.style.display = 'none';
-        document.body.style.overflow = '';
     }
 
     if (viewFullBtn) {
@@ -5174,6 +5221,19 @@ function setupPersonalTimer() {
 // Global function to lookup word in Tool Validator
 window.lookupWord = function (word) {
     if (!word) return;
+
+    // 0. If Full List Modal is open, close it cleanly and save scroll position
+    const fullListModal = document.getElementById('full-list-modal');
+    if (fullListModal && (fullListModal.style.display === 'flex' || fullListModal.style.display === 'block')) {
+        if (typeof window.closeFullListModal === 'function') {
+            window.closeFullListModal();
+        } else {
+            const fullListResults = document.getElementById('full-list-modal-results');
+            if (fullListResults) window._savedFullListScrollTop = fullListResults.scrollTop;
+            fullListModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
 
     // 1. Save scroll position if we are currently in Lists tool
     const currentActivePane = document.querySelector('.tool-pane.active');
