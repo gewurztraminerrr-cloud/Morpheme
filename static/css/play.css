@@ -6263,20 +6263,53 @@ body .board-cell.tile-flash-purple * {
 }
 
 @media (min-width: 901px) {
-    .tools-content.no-outer-scroll,
-    .tools-content.no-outer-scroll .tool-pane.active,
-    #tool-sequence.tool-pane.active,
-    #tool-subanagrams.tool-pane.active {
+    /* Disable outer scroller (Scroller 1) on desktop for Sequence and Subanagrams */
+    #page-tools .tools-content,
+    .tools-content,
+    .tools-content.no-outer-scroll {
         overflow-y: hidden !important;
         overflow-x: hidden !important;
-        height: 100% !important;
-        max-height: calc(100vh - 180px) !important;
     }
-    .seq-results-container {
-        height: calc(100vh - 270px) !important;
-        max-height: 650px !important;
-        min-height: 350px !important;
+
+    #tool-sequence.tool-pane.active,
+    #tool-subanagrams.tool-pane.active,
+    .tools-content.no-outer-scroll .tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
         overflow-y: hidden !important;
+        overflow-x: hidden !important;
+    }
+
+    #tool-sequence .seq-results-container,
+    #tool-subanagrams #sub-results-container,
+    .seq-results-container,
+    #sub-results-container {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: 100% !important;
+        margin-bottom: 0 !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+    }
+
+    .list-scroll-area-wrapper {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .seq-scroll-area,
+    .sub-scroll-area,
+    .list-scroll-area {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
     }
 }
 
