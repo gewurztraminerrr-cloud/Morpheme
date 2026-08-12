@@ -15,8 +15,9 @@ def main():
     child.expect([r"\$", r"#"])
     print("\nLogged in successfully!")
     
-    print("\n--- Printing PM2 error logs ---")
-    child.sendline("tail -n 100 ~/.pm2/logs/morpheme-error.log")
+    cmd = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "tail -n 100 ~/.pm2/logs/morpheme-error.log"
+    print(f"\n--- Executing remote command: {cmd} ---")
+    child.sendline(cmd)
     child.expect([r"\$", r"#"], timeout=15)
     
     child.sendline("exit")
