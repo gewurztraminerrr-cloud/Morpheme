@@ -3636,7 +3636,13 @@ def list_rooms():
         room_manager.update_presence(session['user_id'])
     game_type = request.args.get('game_type')
     board_dimensions = request.args.get('board_dimensions')
-    time_limit = request.args.get('time_limit', type=int)
+    time_limit_raw = request.args.get('time_limit')
+    time_limit = None
+    if time_limit_raw is not None:
+        try:
+            time_limit = int(time_limit_raw)
+        except (ValueError, TypeError):
+            pass
     
     active_rooms = []
     
@@ -3647,13 +3653,17 @@ def list_rooms():
             
         matches_game = not game_type or str(room.game_type) == str(game_type)
         matches_board = not board_dimensions or str(room.board_dimensions) == str(board_dimensions)
-        matches_time = time_limit is None or int(room.time_limit) == int(time_limit)
+        try:
+            room_t = int(room.time_limit)
+        except (ValueError, TypeError):
+            room_t = 45
+        matches_time = time_limit is None or room_t == time_limit
         
         if matches_game and matches_board and matches_time:
             
             humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
             # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent 24h room
-            is_daily = (room.time_limit >= 7200)
+            is_daily = (room_t >= 7200)
             if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
                 continue
             
@@ -3685,14 +3695,18 @@ def get_lobby_stats():
         if room.is_solo or getattr(room, 'is_private', False):
             continue
             
-        humans = [p for p in room.players if not p.is_ai]
+        humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
+        try:
+            t_lim = int(room.time_limit)
+        except (ValueError, TypeError):
+            t_lim = 45
         # Skip empty rooms — UNLESS it's a persistent 24h room
-        is_daily = (room.time_limit >= 7200)
+        is_daily = (t_lim >= 7200)
         if len(humans) == 0 and not is_daily:
             continue
             
         # Create a unique key for this configuration
-        key = f"{room.game_type}|{room.board_dimensions}|{room.time_limit}"
+        key = f"{room.game_type}|{room.board_dimensions}|{t_lim}"
         
         if key not in stats:
             stats[key] = 0
