@@ -3659,11 +3659,9 @@ def list_rooms():
             
             if matches_game and matches_board and matches_time:
                 humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
-                # Keep persistent 24h rooms, public hubs, AND newly created rooms (<10m old) listed
                 is_daily = (room_t >= 7200)
-                is_public = str(room.room_id).startswith('pub_')
-                room_uptime = time.time() - getattr(room, 'creation_time', time.time())
-                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and not is_public and room_uptime > 600:
+                # Only list rooms with active human players/spectators or 24h rooms
+                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
                     continue
                 
                 # Calculate average rating safely
@@ -3686,6 +3684,7 @@ def list_rooms():
                     'min_rating': room.min_rating,
                     'max_rating': room.max_rating,
                     'average_rating': avg_rating,
+                    'display_average_rating': avg_rating,
                     'state': room.state,
                     'current_round': room.current_round,
                     'players': players_list
@@ -3711,10 +3710,9 @@ def get_lobby_stats():
                 t_lim = int(room.time_limit)
             except (ValueError, TypeError):
                 t_lim = 45
-            # Keep persistent 24h rooms AND public multiplayer hubs counted
+            # Only count rooms with active human players or 24h rooms
             is_daily = (t_lim >= 7200)
-            is_public = str(room.room_id).startswith('pub_')
-            if len(humans) == 0 and not is_daily and not is_public:
+            if len(humans) == 0 and not is_daily:
                 continue
                 
             # Create a unique key for this configuration (case-insensitive)

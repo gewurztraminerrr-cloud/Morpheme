@@ -575,14 +575,19 @@ class GameRoom:
         if is_daily:
             self.save_active_players()
         
-        # USER REQUEST: Kick spectators if last human player leaves
+        # Delete room immediately when all human players leave (non-24h rooms)
         humans = [p for p in self.players if not p.is_ai]
         
-        if not humans and self.spectators and not is_daily:
-            print(f"[GameRoom] Last human player has left room {self.room_id}. CLOSING ROOM.")
+        if not humans and not is_daily:
+            print(f"[GameRoom] Last human player has left room {self.room_id}. DELETING ROOM IMMEDIATELY.")
             self.is_closing = True
             self.spectators = []
-            self.add_chat_message("System", "All players have left. Room is closing.", is_system=True)
+            try:
+                import app as app_module
+                if hasattr(app_module, 'room_manager'):
+                    app_module.room_manager.delete_room(self.room_id)
+            except Exception as e:
+                print(f"[GameRoom] Error deleting room {self.room_id} on last human exit: {e}")
 
         # If forced (logout), clear from past_players archive (except for 24h rooms where persistence is mandatory)
         if force and not is_daily:
