@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update My Rating button and auto-populate filter
             if (typeof updateMyRatingButton === 'function') {
-                await updateMyRatingButton(gameType, boardDimensions, timeLimit);
+                updateMyRatingButton(gameType, boardDimensions, timeLimit);
             }
 
             const gameNames = {
@@ -980,21 +980,24 @@ async function updateMyRatingButton(gameType, board, time) {
         return;
     }
 
+    // Set initial text synchronously
+    const initialRating = getUserConfigRating(gameType, board, time);
+    btn.textContent = `My Rating (${initialRating})`;
+    btn.dataset.rating = initialRating;
+    btn.style.display = 'inline-block';
+
     if (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0) {
         if (typeof window.loadCurrentUserConfigRatings === 'function') {
             try {
                 await window.loadCurrentUserConfigRatings();
+                const updatedRating = getUserConfigRating(gameType, board, time);
+                btn.textContent = `My Rating (${updatedRating})`;
+                btn.dataset.rating = updatedRating;
             } catch (e) {
                 console.error('[Lobby] Error loading config ratings:', e);
             }
         }
     }
-
-    const rating = getUserConfigRating(gameType, board, time);
-
-    btn.textContent = `My Rating (${rating})`;
-    btn.dataset.rating = rating;
-    btn.style.display = 'inline-block';
 }
 window.updateMyRatingButton = updateMyRatingButton;
 
