@@ -231,15 +231,17 @@ async function handleShowRoomsClick(listBtn) {
 }
 window.handleShowRoomsClick = handleShowRoomsClick;
 
-function handleLobbyButtonClick(btn) {
+function handleLobbyButtonClickCore(btn) {
     if (!btn) return;
-    if (btn.classList.contains('acc-btn') || (btn.dataset && btn.dataset.game === 'accumulative')) {
+    const gameType = btn.dataset ? btn.dataset.game : 'accumulative';
+    if (btn.classList.contains('acc-btn') || gameType === 'accumulative') {
         handleAccumulativeClick(btn);
     } else {
         handleShowRoomsClick(btn);
     }
 }
-window.handleLobbyButtonClick = handleLobbyButtonClick;
+window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
+window.handleLobbyButtonClick = handleLobbyButtonClickCore;
 
 // Use event delegation on document as fallback
 function setupLobbyEvents() {

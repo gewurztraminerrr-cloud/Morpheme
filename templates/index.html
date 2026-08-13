@@ -40,6 +40,30 @@
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
     <link rel="stylesheet" href="/css/donate.css?v=1">
+    <script>
+        window.handleLobbyButtonClick = function(btn) {
+            console.log('[LobbyClick] Matrix button clicked:', btn);
+            if (btn && btn.style) {
+                btn.style.transform = 'scale(0.92)';
+                btn.style.outline = '3px solid #38bdf8';
+                setTimeout(function() {
+                    btn.style.transform = '';
+                    btn.style.outline = '';
+                }, 350);
+            }
+            if (typeof window.handleLobbyButtonClickCore === 'function') {
+                try {
+                    window.handleLobbyButtonClickCore(btn);
+                } catch (err) {
+                    console.error('[LobbyClick] Error:', err);
+                    alert('Lobby error: ' + err.message);
+                }
+            } else {
+                console.warn('[LobbyClick] Core handler not loaded yet');
+                alert('Morpheme Lobby is loading... Please click again in 1 second!');
+            }
+        };
+    </script>
     <style>
         .board-cell.bonus-highlight {
             background: #32cd32 !important;
