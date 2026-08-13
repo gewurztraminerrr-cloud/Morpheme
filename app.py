@@ -3646,14 +3646,14 @@ def list_rooms():
     
     active_rooms = []
     
-    for room_id, room in room_manager.rooms.items():
+    for room_id, room in list(room_manager.rooms.items()):
         try:
             # Exclude solo and private rooms from public listing
             if room.is_solo or getattr(room, 'is_private', False):
                 continue
                 
-            matches_game = not game_type or str(room.game_type) == str(game_type)
-            matches_board = not board_dimensions or str(room.board_dimensions) == str(board_dimensions)
+            matches_game = not game_type or str(room.game_type).lower() == str(game_type).lower()
+            matches_board = not board_dimensions or str(room.board_dimensions).lower() == str(board_dimensions).lower()
             try:
                 room_t = int(room.time_limit)
             except (ValueError, TypeError):
@@ -3701,7 +3701,7 @@ def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     stats = {}
     
-    for room in room_manager.rooms.values():
+    for room in list(room_manager.rooms.values()):
         try:
             # Hide solo and private rooms from lobby stats
             if room.is_solo or getattr(room, 'is_private', False):
@@ -3717,8 +3717,8 @@ def get_lobby_stats():
             if len(humans) == 0 and not is_daily:
                 continue
                 
-            # Create a unique key for this configuration
-            key = f"{room.game_type}|{room.board_dimensions}|{t_lim}"
+            # Create a unique key for this configuration (case-insensitive)
+            key = f"{str(room.game_type).lower()}|{str(room.board_dimensions).lower()}|{t_lim}"
             
             if key not in stats:
                 stats[key] = 0
