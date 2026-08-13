@@ -5753,9 +5753,25 @@ body .tab-btn.active {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 400px;
+    max-height: 240px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color, #ff0844) rgba(255, 255, 255, 0.05);
+}
+
+.t-leaderboard-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.t-leaderboard-list::-webkit-scrollbar-track {
+    background: rgba(var(--text-primary-rgb), 0.03);
+    border-radius: 10px;
+}
+
+.t-leaderboard-list::-webkit-scrollbar-thumb {
+    background: var(--accent-color, #ff0844);
+    border-radius: 10px;
 }
 
 .t-leaderboard-item {
