@@ -3,7 +3,7 @@
 // Global state for polling
 let lobbyPollInterval = null;
 let lobbyStatsInterval = null;
-let currentLobbyConfig = null;
+let currentLobbyConfig = { gameType: 'fcfs', boardDimensions: '4x4', timeLimit: 45 };
 window.activeRatingFilterValue = null;
 
 function formatLobbyTime(seconds) {
