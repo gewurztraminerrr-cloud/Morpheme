@@ -1106,7 +1106,9 @@ function showPage(pageId) {
         const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
         if (isMatch) {
             page.classList.add('active');
-            page.style.opacity = '1'; // Explicitly force visibility
+            page.style.display = 'block';
+            page.style.opacity = '1';
+            page.style.visibility = 'visible';
             page.scrollTop = 0;
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
@@ -1114,6 +1116,7 @@ function showPage(pageId) {
             }
         } else {
             page.classList.remove('active');
+            page.style.display = 'none';
         }
     });
     if (pageId !== 'page-loading') {

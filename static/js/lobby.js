@@ -55,12 +55,13 @@ function showLobbyToast(message, type = 'info') {
 }
 window.showLobbyToast = showLobbyToast;
 
-async function enterLobbyRoom(btn) {
-    if (!btn) return;
+async function enterLobbyRoom(rawBtn) {
+    if (!rawBtn) return;
+    const btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
     try {
-        stopLobbyPolling();
+        if (typeof stopLobbyPolling === 'function') stopLobbyPolling();
         const gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
-        const timeLimit = parseInt((btn.dataset && btn.dataset.time) ? btn.dataset.time : 45) || 45;
+        const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
         const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
         showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
