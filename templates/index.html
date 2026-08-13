@@ -191,6 +191,15 @@
 
             if (typeof window.fetchAndRenderRooms === 'function') {
                 await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
+            } else {
+                setTimeout(async function() {
+                    if (typeof window.fetchAndRenderRooms === 'function') {
+                        await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
+                    } else {
+                        var rc = document.getElementById('dynamic-rooms-container');
+                        if (rc) rc.innerHTML = '<p class="placeholder">Click again to refresh rooms</p>';
+                    }
+                }, 200);
             }
 
             if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();

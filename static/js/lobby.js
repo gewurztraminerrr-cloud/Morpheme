@@ -518,6 +518,7 @@ if (document.readyState === 'loading') {
 
 // Helper function to fetch and render rooms
 async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAutoCreate = false, minRating = 0, maxRating = 9999, force = false) {
+    window.fetchAndRenderRooms = fetchAndRenderRooms;
     const roomsList = document.getElementById('rooms-list');
 
     // Safety check if we navigated away (only check during background poll, bypass when force=true)
