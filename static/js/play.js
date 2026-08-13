@@ -6416,8 +6416,10 @@ function addSplitViewBoardToggle() {
     btn.style.verticalAlign = 'middle';
     btn.style.borderRadius = '4px';
 
-    titleEl.style.display = 'inline-flex';
+    titleEl.style.display = 'flex';
+    titleEl.style.justifyContent = 'center';
     titleEl.style.alignItems = 'center';
+    titleEl.style.width = '100%';
     titleEl.style.gap = '8px';
 
     if (btn.parentElement !== titleEl) {
