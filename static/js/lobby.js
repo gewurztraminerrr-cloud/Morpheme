@@ -8,6 +8,187 @@ window.activeRatingFilterValue = null;
 
 // Use event delegation on the lobby page container
 // This ensures clicks work even after navigating away and back
+async function handleAccumulativeClick(accBtn) {
+    if (!accBtn) return;
+    stopLobbyPolling();
+
+    if (window.currentRoomId) {
+        console.log('Leaving current room before creating new one...');
+        if (window.leaveCurrentRoom) {
+            try {
+                await window.leaveCurrentRoom();
+            } catch (errLeave) {
+                console.error('Error leaving current room:', errLeave);
+            }
+        }
+    }
+
+    const gameType = accBtn.dataset.game || 'accumulative';
+    const timeLimit = parseInt(accBtn.dataset.time) || 45;
+    const boardDimensions = accBtn.dataset.board || '4x4';
+
+    console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
+    
+    if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
+    accBtn.style.opacity = '0.5';
+    accBtn.style.pointerEvents = 'none';
+
+    localStorage.removeItem('tournament_play_active');
+    localStorage.removeItem('private_match_active');
+
+    try {
+        let joined = false;
+        const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
+        if (listResp.ok) {
+            const listData = await listResp.json();
+            if (listData.rooms && listData.rooms.length > 0) {
+                const existingId = listData.rooms[0].room_id;
+                console.log('Found existing Accumulative room, joining:', existingId);
+                const joinResp = await fetch(`/api/room/${existingId}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ as_spectator: false })
+                });
+
+                if (joinResp.ok) {
+                    const joinData = await joinResp.json();
+                    if (joinData.success) {
+                        window.currentRoomId = existingId;
+                        localStorage.setItem('last_joined_room', existingId);
+                        window.isSpectatorMode = false;
+                        joined = true;
+                    }
+                }
+            }
+        }
+
+        if (!joined) {
+            const createResp = await fetch('/api/room/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    game_type: gameType,
+                    time_limit: timeLimit,
+                    board_dimensions: boardDimensions
+                })
+            });
+
+            if (createResp.ok) {
+                const data = await createResp.json();
+                if (data.success && data.room_id) {
+                    window.currentRoomId = data.room_id;
+                    localStorage.setItem('last_joined_room', data.room_id);
+                    window.isSpectatorMode = false;
+                    joined = true;
+                } else {
+                    alert('Failed to create room: ' + (data.error || 'Unknown error'));
+                }
+            } else {
+                alert('Server error creating room.');
+            }
+        }
+
+        if (joined) {
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
+            showPage('page-play');
+
+            setTimeout(() => {
+                const input = document.getElementById('word-input');
+                if (input) {
+                    input.disabled = false;
+                    input.focus();
+                }
+            }, 100);
+
+            if (window.startGamePolling) window.startGamePolling();
+        }
+    } catch (error) {
+        console.error('Error in room discovery/join:', error);
+        alert('Network error: ' + error.message);
+        startLobbyPolling();
+    } finally {
+        accBtn.style.pointerEvents = 'auto';
+        accBtn.style.opacity = '1';
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    }
+}
+window.handleAccumulativeClick = handleAccumulativeClick;
+
+async function handleShowRoomsClick(listBtn) {
+    if (!listBtn) return;
+    const gameType = listBtn.dataset.game;
+    const timeLimit = parseInt(listBtn.dataset.time);
+    const boardDimensions = listBtn.dataset.board;
+
+    currentLobbyConfig = { gameType, timeLimit, boardDimensions };
+    window.currentLobbyConfig = currentLobbyConfig;
+
+    if (typeof updateMyRatingButton === 'function') {
+        updateMyRatingButton(gameType, boardDimensions, timeLimit);
+    }
+
+    const gameNames = {
+        'fcfs': 'First Come First Serve',
+        'split': 'Split Points',
+        '3d': 'Cube'
+    };
+
+    const infoEl = document.getElementById('selected-game-info');
+    if (infoEl) {
+        infoEl.innerHTML = `
+            <strong>${gameNames[gameType] || gameType}</strong><br>
+            Board: ${boardDimensions} | Time: ${formatTime(timeLimit)}
+        `;
+    }
+
+    const roomsList = document.getElementById('rooms-list');
+    if (roomsList) {
+        let roomsContainer = document.getElementById('dynamic-rooms-container');
+        if (!roomsContainer) {
+            roomsList.innerHTML = `
+                <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <p class="placeholder">Loading rooms...</p>
+                </div>
+            `;
+        } else {
+            roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
+        }
+    }
+
+    await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
+
+    startLobbyPolling();
+
+    const roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
+    if (roomsPanel) {
+        roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
+            if (lobbyGrid) {
+                lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
+            }
+        }
+    }
+}
+window.handleShowRoomsClick = handleShowRoomsClick;
+
+function handleLobbyButtonClick(btn) {
+    if (!btn) return;
+    if (btn.classList.contains('acc-btn') || (btn.dataset && btn.dataset.game === 'accumulative')) {
+        handleAccumulativeClick(btn);
+    } else {
+        handleShowRoomsClick(btn);
+    }
+}
+window.handleLobbyButtonClick = handleLobbyButtonClick;
+
+// Use event delegation on document as fallback
 function setupLobbyEvents() {
     console.log('Setting up Lobby event delegation');
     document.addEventListener('click', async (e) => {
@@ -16,189 +197,16 @@ function setupLobbyEvents() {
         const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
         if (!target || typeof target.closest !== 'function') return;
 
-        // Handle Accumulative button clicks - create room and go to Play
         const accBtn = target.closest('.acc-btn');
         if (accBtn) {
-            // Stop any existing polling since we are leaving the lobby flow (or entering a non-polled flow)
-            stopLobbyPolling();
-
-            // If already in a room, leave it first
-            if (window.currentRoomId) {
-                console.log('Leaving current room before creating new one...');
-                if (window.leaveCurrentRoom) {
-                    try {
-                        await window.leaveCurrentRoom();
-                    } catch (errLeave) {
-                        console.error('Error leaving current room:', errLeave);
-                    }
-                }
-            }
-
-            const gameType = accBtn.dataset.game || 'accumulative';
-            const timeLimit = parseInt(accBtn.dataset.time) || 45;
-            const boardDimensions = accBtn.dataset.board || '4x4';
-
-            console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
-            
-            // UI FEEDBACK: Show immediate loading state
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
-            accBtn.style.opacity = '0.5';
-            accBtn.style.pointerEvents = 'none';
-
-            // CLEAR SPECIAL MODES: We are entering a normal room
-            localStorage.removeItem('tournament_play_active');
-            localStorage.removeItem('private_match_active');
-
-            try {
-                let joined = false;
-                // For ALL Accumulative rooms, check if one already exists and JOIN it
-                // This ensures all users share the same board/timer (Multiplayer)
-                const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
-                if (listResp.ok) {
-                    const listData = await listResp.json();
-                    if (listData.rooms && listData.rooms.length > 0) {
-                        const existingId = listData.rooms[0].room_id;
-                        console.log('Found existing Accumulative room, joining:', existingId);
-                        const joinResp = await fetch(`/api/room/${existingId}/join`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ as_spectator: false })
-                        });
-
-                        if (joinResp.ok) {
-                            const joinData = await joinResp.json();
-                            if (joinData.success) {
-                                window.currentRoomId = existingId;
-                                localStorage.setItem('last_joined_room', existingId);
-                                window.isSpectatorMode = false;
-                                joined = true;
-                            }
-                        }
-                    }
-                }
-
-                if (!joined) {
-                    // No existing room found or join failed, create one
-                    const createResp = await fetch('/api/room/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            game_type: gameType,
-                            time_limit: timeLimit,
-                            board_dimensions: boardDimensions
-                        })
-                    });
-
-                    if (createResp.ok) {
-                        const data = await createResp.json();
-                        if (data.success && data.room_id) {
-                            window.currentRoomId = data.room_id;
-                            localStorage.setItem('last_joined_room', data.room_id);
-                            window.isSpectatorMode = false;
-                            joined = true;
-                        } else {
-                            alert('Failed to create room: ' + (data.error || 'Unknown error'));
-                        }
-                    } else {
-                        alert('Server error creating room.');
-                    }
-                }
-
-                if (joined) {
-                    const playBtn = document.getElementById('play-btn');
-                    if (playBtn) {
-                        playBtn.disabled = false;
-                        playBtn.title = "";
-                    }
-                    if (window.updateManualToolState) window.updateManualToolState();
-                    showPage('page-play');
-
-                    setTimeout(() => {
-                        const input = document.getElementById('word-input');
-                        if (input) {
-                            input.disabled = false;
-                            input.focus();
-                        }
-                    }, 100);
-
-                    if (window.startGamePolling) window.startGamePolling();
-                }
-            } catch (error) {
-                console.error('Error in room discovery/join:', error);
-                alert('Network error: ' + error.message);
-                startLobbyPolling();
-            } finally {
-                accBtn.style.pointerEvents = 'auto';
-                accBtn.style.opacity = '1';
-                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-            }
+            handleAccumulativeClick(accBtn);
             return;
         }
 
-        // Handle FCFS and Split buttons - update Active Rooms panel
         const listBtn = target.closest('.fcfs-btn, .split-btn');
         if (listBtn) {
-            const gameType = listBtn.dataset.game;
-            const timeLimit = parseInt(listBtn.dataset.time);
-            const boardDimensions = listBtn.dataset.board;
-
-            // Update global config
-            currentLobbyConfig = { gameType, timeLimit, boardDimensions };
-            window.currentLobbyConfig = currentLobbyConfig;
-
-            // Update My Rating button and auto-populate filter
-            if (typeof updateMyRatingButton === 'function') {
-                updateMyRatingButton(gameType, boardDimensions, timeLimit);
-            }
-
-            const gameNames = {
-                'fcfs': 'First Come First Serve',
-                'split': 'Split Points',
-                '3d': 'Cube'
-            };
-
-            const infoEl = document.getElementById('selected-game-info');
-            if (infoEl) {
-                infoEl.innerHTML = `
-                    <strong>${gameNames[gameType] || gameType}</strong><br>
-                    Board: ${boardDimensions} | Time: ${formatTime(timeLimit)}
-                `;
-            }
-
-            const roomsList = document.getElementById('rooms-list');
-            if (roomsList) {
-                let roomsContainer = document.getElementById('dynamic-rooms-container');
-                if (!roomsContainer) {
-                    roomsList.innerHTML = `
-                        <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
-                            <p class="placeholder">Loading rooms...</p>
-                        </div>
-                    `;
-                } else {
-                    roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
-                }
-            }
-
-            // Fetch immediately WITH force=true so rendering is never suppressed
-            await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
-
-            // Start polling
-            startLobbyPolling();
-
-            // Smoothly bring the Active Rooms panel into view
-            const roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
-            if (roomsPanel) {
-                roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
-                    if (lobbyGrid) {
-                        lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
-                    }
-                }
-            }
-
-            return; // Handled
+            handleShowRoomsClick(listBtn);
+            return;
         }
 
         // Handle "Create Room" button click (inside the panel)
