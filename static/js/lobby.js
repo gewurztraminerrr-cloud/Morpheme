@@ -167,13 +167,22 @@ async function handleAccumulativeClick(accBtn) {
 window.handleAccumulativeClick = handleAccumulativeClick;
 
 async function handleShowRoomsClick(listBtn) {
+    if (typeof window.handleShowRoomsInline === 'function') {
+        return window.handleShowRoomsInline(listBtn);
+    }
     return enterLobbyRoom(listBtn);
 }
 window.handleShowRoomsClick = handleShowRoomsClick;
 
-function handleLobbyButtonClickCore(btn) {
+function handleLobbyButtonClickCore(btn, evt) {
     if (!btn) return;
-    enterLobbyRoom(btn);
+    const realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
+    const gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
+    if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
+        enterLobbyRoom(realBtn);
+    } else {
+        handleShowRoomsClick(realBtn);
+    }
 }
 window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
 window.handleLobbyButtonClick = handleLobbyButtonClickCore;

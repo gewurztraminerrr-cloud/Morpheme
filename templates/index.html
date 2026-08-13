@@ -156,11 +156,70 @@
             }
         }
 
+        async function handleShowRoomsInline(rawBtn) {
+            if (!rawBtn) return;
+            var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
+            var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'fcfs';
+            var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
+            var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
+
+            var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
+            showLobbyToast('Fetching active rooms for ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
+
+            window.currentLobbyConfig = { gameType: gameType, timeLimit: timeLimit, boardDimensions: boardDimensions };
+
+            var gameNames = {
+                'fcfs': 'First Come First Serve',
+                'split': 'Split Points',
+                '3d': 'Cube'
+            };
+
+            var infoEl = document.getElementById('selected-game-info');
+            if (infoEl) {
+                infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
+            }
+
+            var roomsList = document.getElementById('rooms-list');
+            if (roomsList) {
+                var roomsContainer = document.getElementById('dynamic-rooms-container');
+                if (!roomsContainer) {
+                    roomsList.innerHTML = '<div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;"><p class="placeholder">Loading rooms...</p></div>';
+                } else {
+                    roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
+                }
+            }
+
+            if (typeof window.fetchAndRenderRooms === 'function') {
+                await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
+            }
+
+            if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
+
+            var roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
+            if (roomsPanel) {
+                roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                var isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    var lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
+                    if (lobbyGrid) {
+                        lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
+                    }
+                }
+            }
+        }
+
         window.handleLobbyButtonClick = function(btn, evt) {
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
             }
-            enterLobbyRoomInline(btn);
+            var realBtn = (btn && typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
+            var gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
+
+            if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
+                enterLobbyRoomInline(realBtn);
+            } else {
+                handleShowRoomsInline(realBtn);
+            }
         };
         window.handleLobbyButtonClickCore = window.handleLobbyButtonClick;
     </script>
