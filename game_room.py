@@ -3190,15 +3190,15 @@ class RoomManager:
             with self.lock:
                 # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
                 if not is_private:
-                    for existing_room in self.rooms.values():
-                        if (existing_room.game_type == game_type and 
-                            existing_room.board_dimensions == board_dimensions and
-                            existing_room.time_limit == time_limit and
-                            existing_room.min_rating == min_rating and
-                            existing_room.max_rating == max_rating and
+                    for existing_room in list(self.rooms.values()):
+                        if (str(existing_room.game_type).lower() == str(game_type).lower() and 
+                            str(existing_room.board_dimensions).lower() == str(board_dimensions).lower() and
+                            int(existing_room.time_limit) == int(time_limit) and
+                            int(existing_room.min_rating) == int(min_rating) and
+                            int(existing_room.max_rating) == int(max_rating) and
                             not existing_room.is_solo and
                             not existing_room.is_private and
-                            not existing_room.room_id.startswith('practice_')):
+                            not str(existing_room.room_id).startswith('practice_')):
                             # WAKE UP CHECK: If room is empty of human players and in waiting/intermission state, wake it up to active Round 1!
                             humans = [p for p in existing_room.players if not p.is_ai]
                             if len(humans) == 0 and existing_room.time_limit < 7200:

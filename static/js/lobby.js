@@ -645,7 +645,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             }
         } else {
             const html = filteredRooms.map(room => {
-                const playersHtml = (room.players || []).map(p => {
+                let playersHtml = (room.players || []).map(p => {
                     // Override rating for Guest users
                     const uname = (p && p.username) ? String(p.username) : 'Player';
                     const isGuest = uname.startsWith('Guest_');
@@ -657,6 +657,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                         ${uname} (${displayRating})
                     </span>`;
                 }).join('');
+
+                if (!playersHtml) {
+                    playersHtml = '<span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; font-style: italic;">No active players currently in room — Click Join to start!</span>';
+                }
 
                 // Logic for Join vs Spectate
                 const pCountVal = Number(room.player_count) || (room.players ? room.players.length : 0);
