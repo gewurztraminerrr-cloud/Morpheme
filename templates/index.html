@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/lobby.js?v=250"></script>
+    <script src="/js/lobby.js?v=350"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -212,7 +212,7 @@
 
             var doFetch = async function() {
                 if (typeof window.fetchAndRenderRooms === 'function') {
-                    await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
+                    await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
                 }
             };
 
@@ -5472,8 +5472,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=250"></script>
-    <script src="/js/lobby.js?v=250"></script>
+    <script src="/js/app.js?v=350"></script>
+    <script src="/js/lobby.js?v=350"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>

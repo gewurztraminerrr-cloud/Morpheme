@@ -631,7 +631,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         }
 
         if (filteredRooms.length === 0) {
-            roomsContainer.innerHTML = '<p class="placeholder">No active rooms found matching criteria</p>';
+            roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
         } else {
             const html = filteredRooms.map(room => {
                 const playersHtml = room.players.map(p => {
