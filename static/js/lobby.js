@@ -523,15 +523,17 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     window.fetchAndRenderRooms = fetchAndRenderRooms;
     const roomsList = document.getElementById('rooms-list');
 
-    // Safety check if we navigated away (only check during background poll, bypass when force=true)
-    if (!force && !isOnLobby()) {
+    // Ensure persistent structure for inputs so they aren't wiped on poll
+    let roomsContainer = document.getElementById('dynamic-rooms-container');
+    const isLoadingText = roomsContainer && roomsContainer.innerHTML.includes('Loading active rooms');
+
+    // Safety check if we navigated away (bypass when force=true or when container is currently showing loading indicator)
+    if (!force && !isLoadingText && !isOnLobby()) {
         console.log('fetchAndRenderRooms called but not on lobby, ignoring');
         return;
     }
 
-    // Ensure persistent structure for inputs so they aren't wiped on poll
-    let roomsContainer = document.getElementById('dynamic-rooms-container');
-    if (!roomsContainer) {
+    if (!roomsContainer && roomsList) {
         const isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
         const createButtonHtml = `
             <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
@@ -547,7 +549,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 </button>
             </div>
             <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
-                <p class="placeholder">Loading rooms...</p>
+                <p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>
             </div>
         `;
         roomsList.innerHTML = createButtonHtml;
@@ -555,9 +557,12 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     }
 
     try {
-        // Fetch active rooms for this configuration with cache busting
+        // Fetch active rooms for this configuration with cache busting and 4-second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
         const url = `/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json();
 
