@@ -898,18 +898,6 @@ function isOnLobby() {
     return el && el.classList.contains('active');
 }
 
-function resetLobbyButtons() {
-    console.log('Resetting lobby buttons...');
-    const accButtons = document.querySelectorAll('.acc-btn');
-    accButtons.forEach(btn => {
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-    });
-    const joinButtons = document.querySelectorAll('.join-room-btn');
-    joinButtons.forEach(btn => {
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-    });
 function getUserConfigRating(gameType, board, time) {
     if (!window.currentUser || window.currentUserIsGuest) return 0;
     const cleanType = String(gameType || '').replace('solo_', '');
