@@ -37,20 +37,28 @@ async function loadCurrentUserConfigRatings() {
         if (data && data.config_ratings) {
             window.currentUserConfigRatings = data.config_ratings;
             console.log('Loaded config ratings for current user:', window.currentUserConfigRatings);
-            const activeCfg = window.currentLobbyConfig || { gameType: 'fcfs', boardDimensions: '4x4', timeLimit: 45 };
-            if (window.updateMyRatingButton) {
-                window.updateMyRatingButton(
-                    activeCfg.gameType,
-                    activeCfg.boardDimensions,
-                    activeCfg.timeLimit
-                );
+            if (window.currentLobbyConfig) {
+                const activeCfg = window.currentLobbyConfig;
+                if (window.updateMyRatingButton) {
+                    window.updateMyRatingButton(
+                        activeCfg.gameType,
+                        activeCfg.boardDimensions,
+                        activeCfg.timeLimit
+                    );
+                } else {
+                    const ratingBtn = document.getElementById('my-rating-btn');
+                    if (ratingBtn && typeof window.getUserConfigRating === 'function') {
+                        const exact = window.getUserConfigRating(activeCfg.gameType, activeCfg.boardDimensions, activeCfg.timeLimit);
+                        ratingBtn.textContent = `My Rating (${exact})`;
+                        ratingBtn.dataset.rating = exact;
+                        ratingBtn.style.display = 'inline-block';
+                    }
+                }
             } else {
                 const ratingBtn = document.getElementById('my-rating-btn');
-                if (ratingBtn && typeof window.getUserConfigRating === 'function') {
-                    const exact = window.getUserConfigRating(activeCfg.gameType, activeCfg.boardDimensions, activeCfg.timeLimit);
-                    ratingBtn.textContent = `My Rating (${exact})`;
-                    ratingBtn.dataset.rating = exact;
-                    ratingBtn.style.display = 'inline-block';
+                if (ratingBtn) {
+                    ratingBtn.textContent = 'My Rating';
+                    ratingBtn.removeAttribute('data-rating');
                 }
             }
         } else {

@@ -976,19 +976,28 @@ async function updateMyRatingButton(gameType, board, time) {
     const btn = document.getElementById('my-rating-btn');
     if (!btn) return;
 
+    if (!window.currentLobbyConfig) {
+        btn.textContent = 'My Rating';
+        btn.removeAttribute('data-rating');
+        btn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
+        return;
+    }
+
     const initialRating = getUserConfigRating(gameType, board, time);
     btn.textContent = `My Rating (${initialRating})`;
     btn.dataset.rating = initialRating;
-    btn.style.display = 'inline-block';
+    btn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
 
     if (window.currentUser && !window.currentUserIsGuest) {
         if (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0) {
             if (typeof window.loadCurrentUserConfigRatings === 'function') {
                 try {
                     await window.loadCurrentUserConfigRatings();
-                    const updatedRating = getUserConfigRating(gameType, board, time);
-                    btn.textContent = `My Rating (${updatedRating})`;
-                    btn.dataset.rating = updatedRating;
+                    if (window.currentLobbyConfig) {
+                        const updatedRating = getUserConfigRating(gameType, board, time);
+                        btn.textContent = `My Rating (${updatedRating})`;
+                        btn.dataset.rating = updatedRating;
+                    }
                 } catch (e) {
                     console.error('[Lobby] Error loading config ratings:', e);
                 }

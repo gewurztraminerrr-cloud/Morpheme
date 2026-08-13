@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 29000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 30000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '29000') {
-                localStorage.setItem('morpheme_script_v', '29000');
+            if (localStorage.getItem('morpheme_script_v') !== '30000') {
+                localStorage.setItem('morpheme_script_v', '30000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=29000">
-    <link rel="stylesheet" href="/css/lobby.css?v=29000">
-    <link rel="stylesheet" href="/css/play.css?v=29000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=29000">
-    <link rel="stylesheet" href="/css/forum.css?v=29000">
-    <link rel="stylesheet" href="/css/donate.css?v=29000">
-    <script src="/js/app.js?v=29000"></script>
-    <script src="/js/lobby.js?v=29000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=30000">
+    <link rel="stylesheet" href="/css/lobby.css?v=30000">
+    <link rel="stylesheet" href="/css/play.css?v=30000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=30000">
+    <link rel="stylesheet" href="/css/forum.css?v=30000">
+    <link rel="stylesheet" href="/css/donate.css?v=30000">
+    <script src="/js/app.js?v=30000"></script>
+    <script src="/js/lobby.js?v=30000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -318,22 +318,26 @@
 
             // 5. Update rating button asynchronously without blocking UI response
             var updateRatingBtn = function() {
-                var getRating = window.getUserConfigRating || function(gt, b, t) {
-                    var clean = String(gt || '').replace('solo_', '');
-                    var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
-                    var rMap = window.currentUserConfigRatings || {};
-                    var v = rMap[k];
-                    if (v && typeof v === 'object' && v.rating) return Number(v.rating);
-                    if (typeof v === 'number' && v > 0) return v;
-                    return Number(window.currentUserRating || window.lastPlayerRating || 1200);
-                };
-                var exactRating = getRating(gameType, boardDimensions, timeLimit);
                 var ratingBtn = document.getElementById('my-rating-btn');
-                if (ratingBtn) {
+                if (!ratingBtn) return;
+                if (window.currentLobbyConfig) {
+                    var getRating = window.getUserConfigRating || function(gt, b, t) {
+                        var clean = String(gt || '').replace('solo_', '');
+                        var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
+                        var rMap = window.currentUserConfigRatings || {};
+                        var v = rMap[k];
+                        if (v && typeof v === 'object' && v.rating) return Number(v.rating);
+                        if (typeof v === 'number' && v > 0) return v;
+                        return Number(window.currentUserRating || window.lastPlayerRating || 1200);
+                    };
+                    var exactRating = getRating(window.currentLobbyConfig.gameType, window.currentLobbyConfig.boardDimensions, window.currentLobbyConfig.timeLimit);
                     ratingBtn.textContent = 'My Rating (' + exactRating + ')';
                     ratingBtn.dataset.rating = exactRating;
-                    ratingBtn.style.display = 'inline-block';
+                } else {
+                    ratingBtn.textContent = 'My Rating';
+                    ratingBtn.removeAttribute('data-rating');
                 }
+                ratingBtn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
             };
             updateRatingBtn();
 
@@ -1419,7 +1423,7 @@
                     <div class="rating-filter-container">
                         <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100">
                         <button id="find-rating-btn">Find</button>
-                        <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)">My Rating (1200)</button>
+                        <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)">My Rating</button>
                     </div>
                     <div id="rooms-list">
                         <p class="placeholder">No "Show Rooms" selected</p>
@@ -5653,18 +5657,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=29000"></script>
-    <script src="/js/forum.js?v=29000"></script>
-    <script src="/js/app.js?v=29000"></script>
-    <script src="/js/lobby.js?v=29000"></script>
-    <script src="/js/play.js?v=29000"></script>
-    <script src="/js/tournaments.js?v=29000"></script>
-    <script src="/js/leaderboard.js?v=29000"></script>
-    <script src="/js/tools.js?v=29000"></script>
-    <script src="/js/mouse_selection.js?v=29000"></script>
-    <script src="/js/mods.js?v=29000"></script>
-    <script src="/js/private_matches.js?v=29000"></script>
-    <script src="/js/donate.js?v=29000"></script>
+    <script src="/js/settings.js?v=30000"></script>
+    <script src="/js/forum.js?v=30000"></script>
+    <script src="/js/app.js?v=30000"></script>
+    <script src="/js/lobby.js?v=30000"></script>
+    <script src="/js/play.js?v=30000"></script>
+    <script src="/js/tournaments.js?v=30000"></script>
+    <script src="/js/leaderboard.js?v=30000"></script>
+    <script src="/js/tools.js?v=30000"></script>
+    <script src="/js/mouse_selection.js?v=30000"></script>
+    <script src="/js/mods.js?v=30000"></script>
+    <script src="/js/private_matches.js?v=30000"></script>
+    <script src="/js/donate.js?v=30000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
