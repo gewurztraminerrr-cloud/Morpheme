@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 4500
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 5000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '4500') {
-                localStorage.setItem('morpheme_script_v', '4500');
+            if (localStorage.getItem('morpheme_script_v') !== '5000') {
+                localStorage.setItem('morpheme_script_v', '5000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,13 +47,13 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=4500">
-    <link rel="stylesheet" href="/css/lobby.css?v=4500">
-    <link rel="stylesheet" href="/css/play.css?v=4500">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=4500">
-    <link rel="stylesheet" href="/css/forum.css?v=4500">
-    <script src="/js/app.js?v=4500"></script>
-    <script src="/js/lobby.js?v=4500"></script>
+    <link rel="stylesheet" href="/css/style.css?v=5000">
+    <link rel="stylesheet" href="/css/lobby.css?v=5000">
+    <link rel="stylesheet" href="/css/play.css?v=5000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=5000">
+    <link rel="stylesheet" href="/css/forum.css?v=5000">
+    <script src="/js/app.js?v=5000"></script>
+    <script src="/js/lobby.js?v=5000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -236,18 +236,43 @@
                 }
             }
 
-            // 4. Immediately trigger room fetching
+            // 4. Immediately trigger room fetching with fallback for script readiness
+            var retries = 0;
             var doFetch = async function() {
                 var fn = window.fetchAndRenderRooms || (typeof fetchAndRenderRooms === 'function' ? fetchAndRenderRooms : null);
                 if (fn) {
                     await fn(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
-                } else {
-                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying...');
+                } else if (retries < 5) {
+                    retries++;
+                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying (' + retries + '/5)...');
                     setTimeout(doFetch, 100);
+                } else {
+                    console.warn('[doFetch] fetchAndRenderRooms not found after retries. Running direct fallback fetch...');
+                    try {
+                        var res = await fetch('/api/rooms?game_type=' + gameType + '&board_dimensions=' + boardDimensions + '&time_limit=' + timeLimit + '&_t=' + Date.now());
+                        var data = await res.json();
+                        var rooms = (data && data.rooms) ? data.rooms : [];
+                        var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+                        if (targetContainer) {
+                            if (rooms.length === 0) {
+                                targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+                            } else {
+                                targetContainer.innerHTML = rooms.map(function(r) {
+                                    var rState = String(r.state || 'active').toUpperCase();
+                                    var rId = String(r.room_id || '');
+                                    return '<div class="room-item"><div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div><button class="join-room-btn" data-room="' + rId + '">Join</button></div>';
+                                }).join('');
+                            }
+                        }
+                    } catch(e) {
+                        var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+                        if (targetContainer) {
+                            targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+                        }
+                    }
                 }
             };
             doFetch();
-            setTimeout(doFetch, 150);
 
             if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
 
@@ -5587,18 +5612,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=4500"></script>
-    <script src="/js/forum.js?v=4500"></script>
-    <script src="/js/app.js?v=4500"></script>
-    <script src="/js/lobby.js?v=4500"></script>
-    <script src="/js/play.js?v=4500"></script>
-    <script src="/js/tournaments.js?v=4500"></script>
-    <script src="/js/leaderboard.js?v=4500"></script>
-    <script src="/js/tools.js?v=4500"></script>
-    <script src="/js/mouse_selection.js?v=4500"></script>
-    <script src="/js/mods.js?v=4500"></script>
-    <script src="/js/private_matches.js?v=4500"></script>
-    <script src="/js/donate.js?v=4500"></script>
+    <script src="/js/settings.js?v=5000"></script>
+    <script src="/js/forum.js?v=5000"></script>
+    <script src="/js/app.js?v=5000"></script>
+    <script src="/js/lobby.js?v=5000"></script>
+    <script src="/js/play.js?v=5000"></script>
+    <script src="/js/tournaments.js?v=5000"></script>
+    <script src="/js/leaderboard.js?v=5000"></script>
+    <script src="/js/tools.js?v=5000"></script>
+    <script src="/js/mouse_selection.js?v=5000"></script>
+    <script src="/js/mods.js?v=5000"></script>
+    <script src="/js/private_matches.js?v=5000"></script>
+    <script src="/js/donate.js?v=5000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
