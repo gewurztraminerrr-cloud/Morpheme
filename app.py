@@ -3645,9 +3645,11 @@ def list_rooms():
         if room.is_solo or getattr(room, 'is_private', False):
             continue
             
-        if (room.game_type == game_type and 
-            room.board_dimensions == board_dimensions and 
-            room.time_limit == time_limit):
+        matches_game = not game_type or str(room.game_type) == str(game_type)
+        matches_board = not board_dimensions or str(room.board_dimensions) == str(board_dimensions)
+        matches_time = time_limit is None or int(room.time_limit) == int(time_limit)
+        
+        if matches_game and matches_board and matches_time:
             
             humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
             # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent 24h room
