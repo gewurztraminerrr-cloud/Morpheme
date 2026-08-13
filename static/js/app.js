@@ -1138,6 +1138,9 @@ function showPage(pageId) {
 
     // NEW: Load Private Matches instantly when entering Lobby
     if (pageId === 'page-lobby') {
+        if (typeof window.resetLobbyButtons === 'function') {
+            window.resetLobbyButtons();
+        }
         if (typeof window.loadPrivateMatches === 'function') {
             window.loadPrivateMatches();
         }

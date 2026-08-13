@@ -155,8 +155,10 @@ function setupLobbyEvents() {
                 console.error('Error in room discovery/join:', error);
                 alert('Network error: ' + error.message);
                 startLobbyPolling();
+            } finally {
                 accBtn.style.pointerEvents = 'auto';
                 accBtn.style.opacity = '1';
+                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
             }
             return;
         }
@@ -923,14 +925,15 @@ function getUserConfigRating(gameType, board, time) {
 window.getUserConfigRating = getUserConfigRating;
 
 function resetLobbyButtons() {
-    const gameButtons = document.querySelectorAll('.game-btn');
+    const gameButtons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     gameButtons.forEach(btn => {
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
     });
-    const joinButtons = document.querySelectorAll('.join-room-btn');
+    const joinButtons = document.querySelectorAll('.join-room-btn, .confirm-create-room-btn');
     joinButtons.forEach(btn => {
+        btn.disabled = false;
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
     });
