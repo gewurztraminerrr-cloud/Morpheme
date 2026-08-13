@@ -8,17 +8,9 @@ window.activeRatingFilterValue = null;
 
 // Use event delegation on the lobby page container
 // This ensures clicks work even after navigating away and back
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded - setting up Lobby event delegation');
-    const lobbyPage = document.getElementById('page-lobby');
-
-    if (!lobbyPage) {
-        console.error('Lobby page not found!');
-        return;
-    }
-
-    // Event delegation for all button clicks in the lobby
-    lobbyPage.addEventListener('click', async (e) => {
+function setupLobbyEvents() {
+    console.log('Setting up Lobby event delegation');
+    document.addEventListener('click', async (e) => {
         const target = e.target;
 
         // Handle Accumulative button clicks - create room and go to Play
@@ -533,9 +525,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }, 100);
-        }
-    }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupLobbyEvents);
+} else {
+    setupLobbyEvents();
+}
 
 // Helper function to fetch and render rooms
 async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAutoCreate = false, minRating = 0, maxRating = 9999) {
@@ -676,6 +672,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 // Check rating restrictions for FCFS and SP (Split) rooms
                 const gameTypeLower = String(room.game_type || '').toLowerCase();
                 const isFcfsOrSp = gameTypeLower === 'fcfs' || gameTypeLower === 'split' || gameTypeLower === 'sp' || (room.room_id && (room.room_id.includes('fcfs') || room.room_id.includes('split')));
+                const currentUser = window.currentUser || '';
+                const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
                 const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
 
                 let actionButtons = '';
