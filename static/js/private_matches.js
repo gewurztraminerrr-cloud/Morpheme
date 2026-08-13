@@ -193,12 +193,12 @@
         const params = {
             board_dimensions: getVal('sf-config-dims', '4x4'),
             time_limit: parseNum(getVal('sf-config-time', '60'), 60),
-            dictionary: getVal('sf-config-dict', 'NWL'),
-            min_word_length: parseNum(getVal('sf-config-min-len', '3'), 3),
-            bonus_word_length: parseNum(getVal('sf-config-bonus', '8'), 8),
-            difficulty: getVal('sf-config-difficulty', 'Medium'),
-            board_format: getVal('sf-config-format', 'Normal'),
-            word_count_range: getVal('sf-config-range', '100-200')
+            dictionary: getVal('sf-config-dict', 'random'),
+            min_word_length: parseNum(getVal('sf-config-min-len', 'random'), 'random'),
+            bonus_word_length: parseNum(getVal('sf-config-bonus', 'random'), 'random'),
+            difficulty: getVal('sf-config-difficulty', 'random'),
+            board_format: getVal('sf-config-format', 'random'),
+            word_count_range: getVal('sf-config-range', 'random')
         };
 
         const participants = soloBots.map(b => ({ username: b.username, is_ai: true, ai_rating: b.rating }));
@@ -237,15 +237,25 @@
         const usernames = input.value.split(',').map(u => u.trim()).filter(u => u);
         if (usernames.length === 0) return;
 
+        const getVal = (id, def = 'random') => {
+            const el = document.getElementById(id);
+            return el ? el.value : def;
+        };
+        const parseNum = (val, def = 'random') => {
+            if (!val || val === 'random') return 'random';
+            const n = parseInt(val);
+            return isNaN(n) ? 'random' : n;
+        };
+
         const params = {
-            board_dimensions: document.getElementById('sf-config-dims').value, // Use same config as solo for simplicity
-            time_limit: parseInt(document.getElementById('sf-config-time').value),
-            dictionary: document.getElementById('sf-config-dict').value,
-            min_word_length: parseInt(document.getElementById('sf-config-min-len').value),
-            bonus_word_length: parseInt(document.getElementById('sf-config-bonus').value),
-            difficulty: document.getElementById('sf-config-difficulty').value,
-            board_format: document.getElementById('sf-config-format').value,
-            word_count_range: document.getElementById('sf-config-range').value
+            board_dimensions: getVal('sf-config-dims', '4x4'),
+            time_limit: parseNum(getVal('sf-config-time', '60'), 60),
+            dictionary: getVal('sf-config-dict', 'random'),
+            min_word_length: parseNum(getVal('sf-config-min-len', 'random'), 'random'),
+            bonus_word_length: parseNum(getVal('sf-config-bonus', 'random'), 'random'),
+            difficulty: getVal('sf-config-difficulty', 'random'),
+            board_format: getVal('sf-config-format', 'random'),
+            word_count_range: getVal('sf-config-range', 'random')
         };
 
         const participants = usernames.map(u => ({ username: u, is_ai: false }));

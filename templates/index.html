@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 14000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 15000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '14000') {
-                localStorage.setItem('morpheme_script_v', '14000');
+            if (localStorage.getItem('morpheme_script_v') !== '15000') {
+                localStorage.setItem('morpheme_script_v', '15000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=14000">
-    <link rel="stylesheet" href="/css/lobby.css?v=14000">
-    <link rel="stylesheet" href="/css/play.css?v=14000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=14000">
-    <link rel="stylesheet" href="/css/forum.css?v=14000">
-    <link rel="stylesheet" href="/css/donate.css?v=14000">
-    <script src="/js/app.js?v=14000"></script>
-    <script src="/js/lobby.js?v=14000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=15000">
+    <link rel="stylesheet" href="/css/lobby.css?v=15000">
+    <link rel="stylesheet" href="/css/play.css?v=15000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=15000">
+    <link rel="stylesheet" href="/css/forum.css?v=15000">
+    <link rel="stylesheet" href="/css/donate.css?v=15000">
+    <script src="/js/app.js?v=15000"></script>
+    <script src="/js/lobby.js?v=15000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1129,9 +1129,10 @@
                             <div class="config-group">
                                 <label>Min Word Len</label>
                                 <select id="sf-config-min-len">
-                                    <option value="3">3 Letters</option>
-                                    <option value="4">4 Letters</option>
-                                    <option value="5">5 Letters</option>
+                                    <option value="random" selected>Random (25/50/25)</option>
+                                    <option value="3">3 Letters (25%)</option>
+                                    <option value="4">4 Letters (50%)</option>
+                                    <option value="5">5 Letters (25%)</option>
                                 </select>
                             </div>
                             <div class="config-group">
