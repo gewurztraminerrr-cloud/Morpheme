@@ -636,15 +636,20 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             });
         }
 
+        // Ensure we target the fresh active container element right before DOM mutation
+        roomsContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+
         if (filteredRooms.length === 0) {
-            roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+            if (roomsContainer) {
+                roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+            }
         } else {
             const html = filteredRooms.map(room => {
                 const playersHtml = (room.players || []).map(p => {
                     // Override rating for Guest users
                     const uname = (p && p.username) ? String(p.username) : 'Player';
                     const isGuest = uname.startsWith('Guest_');
-                    const displayRating = isGuest ? 0 : (p && p.rating ? p.rating : 1200);
+                    const displayRating = isGuest ? 0 : (p && p.rating !== undefined ? p.rating : 0);
                     const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
 
                     return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
@@ -717,7 +722,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 `;
             }).join('');
 
-            if (roomsContainer.innerHTML !== html) {
+            if (roomsContainer && roomsContainer.innerHTML !== html) {
                 roomsContainer.innerHTML = html;
             }
         }
