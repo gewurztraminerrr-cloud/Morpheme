@@ -6,11 +6,64 @@ let lobbyStatsInterval = null;
 let currentLobbyConfig = null;
 window.activeRatingFilterValue = null;
 
-// Use event delegation on the lobby page container
-// This ensures clicks work even after navigating away and back
+function formatLobbyTime(seconds) {
+    const s = parseInt(seconds);
+    if (isNaN(s)) return '3m';
+    if (s < 60) return `${s}s`;
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h`;
+    return `${Math.floor(s / 86400)}d`;
+}
+
+function showLobbyToast(message, type = 'info') {
+    let toast = document.getElementById('lobby-action-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'lobby-action-toast';
+        toast.style.cssText = `
+            position: fixed;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            color: #ffffff;
+            border: 2px solid #38bdf8;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            z-index: 100000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            text-align: center;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.style.borderColor = (type === 'error') ? '#ef4444' : (type === 'success') ? '#22c55e' : '#38bdf8';
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    toast.style.display = 'block';
+
+    if (window._lobbyToastTimeout) clearTimeout(window._lobbyToastTimeout);
+    window._lobbyToastTimeout = setTimeout(() => {
+        if (toast) {
+            toast.style.opacity = '0';
+            setTimeout(() => { toast.style.display = 'none'; }, 300);
+        }
+    }, 3500);
+}
+window.showLobbyToast = showLobbyToast;
+
 async function handleAccumulativeClick(accBtn) {
     if (!accBtn) return;
     stopLobbyPolling();
+
+    const gameType = accBtn.dataset.game || 'accumulative';
+    const timeLimit = parseInt(accBtn.dataset.time) || 45;
+    const boardDimensions = accBtn.dataset.board || '4x4';
+
+    showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
 
     if (window.currentRoomId) {
         console.log('Leaving current room before creating new one...');
@@ -23,13 +76,9 @@ async function handleAccumulativeClick(accBtn) {
         }
     }
 
-    const gameType = accBtn.dataset.game || 'accumulative';
-    const timeLimit = parseInt(accBtn.dataset.time) || 45;
-    const boardDimensions = accBtn.dataset.board || '4x4';
-
     console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
     
-    if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
+    if (window.showLoadingOverlay) window.showLoadingOverlay('Entering Room...');
     accBtn.style.opacity = '0.5';
     accBtn.style.pointerEvents = 'none';
 
@@ -81,21 +130,22 @@ async function handleAccumulativeClick(accBtn) {
                     window.isSpectatorMode = false;
                     joined = true;
                 } else {
-                    alert('Failed to create room: ' + (data.error || 'Unknown error'));
+                    showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
                 }
             } else {
-                alert('Server error creating room.');
+                showLobbyToast('Server error creating room.', 'error');
             }
         }
 
         if (joined) {
+            showLobbyToast('Room joined! Navigating to play...', 'success');
             const playBtn = document.getElementById('play-btn');
             if (playBtn) {
                 playBtn.disabled = false;
                 playBtn.title = "";
             }
             if (window.updateManualToolState) window.updateManualToolState();
-            showPage('page-play');
+            if (typeof window.showPage === 'function') window.showPage('page-play'); else showPage('page-play');
 
             setTimeout(() => {
                 const input = document.getElementById('word-input');
@@ -109,7 +159,7 @@ async function handleAccumulativeClick(accBtn) {
         }
     } catch (error) {
         console.error('Error in room discovery/join:', error);
-        alert('Network error: ' + error.message);
+        showLobbyToast('Network error: ' + error.message, 'error');
         startLobbyPolling();
     } finally {
         accBtn.style.pointerEvents = 'auto';
@@ -124,6 +174,8 @@ async function handleShowRoomsClick(listBtn) {
     const gameType = listBtn.dataset.game;
     const timeLimit = parseInt(listBtn.dataset.time);
     const boardDimensions = listBtn.dataset.board;
+
+    showLobbyToast(`Fetching active rooms for ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
 
     currentLobbyConfig = { gameType, timeLimit, boardDimensions };
     window.currentLobbyConfig = currentLobbyConfig;
@@ -142,7 +194,7 @@ async function handleShowRoomsClick(listBtn) {
     if (infoEl) {
         infoEl.innerHTML = `
             <strong>${gameNames[gameType] || gameType}</strong><br>
-            Board: ${boardDimensions} | Time: ${formatTime(timeLimit)}
+            Board: ${boardDimensions} | Time: ${formatLobbyTime(timeLimit)}
         `;
     }
 
@@ -160,7 +212,8 @@ async function handleShowRoomsClick(listBtn) {
         }
     }
 
-    await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
+    // Auto-create room if no room exists so pressing Show Rooms immediately enables playing!
+    await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
 
     startLobbyPolling();
 
