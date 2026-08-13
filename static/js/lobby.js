@@ -739,10 +739,6 @@ function startLobbyPolling() {
                 currentLobbyConfig.boardDimensions,
                 false
             );
-        } else {
-            // If we're not on lobby or no config, stop polling to save resources
-            console.log('Stopping lobby polling (not on lobby or no config)');
-            stopLobbyPolling();
         }
     }, 3000); // 3 seconds
 }
@@ -766,10 +762,8 @@ function startStatsPolling() {
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
             fetchLobbyStats();
-        } else {
-            stopStatsPolling();
         }
-    }, 5000); // 5 seconds
+    }, 4000); // 4 seconds
 }
 
 function stopStatsPolling() {
