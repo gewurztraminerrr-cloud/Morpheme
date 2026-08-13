@@ -650,6 +650,7 @@ async function checkSession() {
             localStorage.setItem('morpheme_username', currentUser);
 
             window.lastPlayerRating = data.rating;
+            window.currentUserRating = data.rating;
             updateAuthUI(data.rating); // Update UI for logged in state
 
 

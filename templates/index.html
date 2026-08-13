@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/lobby.js?v=400"></script>
+    <script src="/js/lobby.js?v=500"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -181,6 +181,13 @@
 
             if (typeof window.updateMyRatingButton === 'function') {
                 try { window.updateMyRatingButton(gameType, boardDimensions, timeLimit); } catch (e) {}
+            } else {
+                var ratingBtn = document.getElementById('my-rating-btn');
+                if (ratingBtn) {
+                    var userRating = window.currentUserRating || window.lastPlayerRating || 1200;
+                    ratingBtn.textContent = 'My Rating (' + userRating + ')';
+                    ratingBtn.dataset.rating = userRating;
+                }
             }
 
             var roomsList = document.getElementById('rooms-list');
@@ -5546,8 +5553,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=400"></script>
-    <script src="/js/lobby.js?v=400"></script>
+    <script src="/js/app.js?v=500"></script>
+    <script src="/js/lobby.js?v=500"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>

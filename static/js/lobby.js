@@ -889,18 +889,16 @@ function getUserConfigRating(gameType, board, time) {
     const ratings = window.currentUserConfigRatings || {};
     const val = ratings[configKey];
     if (val !== undefined && val !== null) {
-        if (typeof val === 'object' && val.rating !== undefined) {
+        if (typeof val === 'object' && val.rating !== undefined && val.rating !== null) {
             return Number(val.rating) || 1200;
         }
         if (typeof val === 'number' && val > 0) {
             return val;
         }
     }
-    if (window.currentUserRating !== undefined && window.currentUserRating !== null && Number(window.currentUserRating) > 0) {
-        return Number(window.currentUserRating) || 1200;
-    }
-    if (window.lastPlayerRating !== undefined && window.lastPlayerRating !== null && Number(window.lastPlayerRating) > 0) {
-        return Number(window.lastPlayerRating) || 1200;
+    const overall = window.currentUserRating || window.lastPlayerRating;
+    if (overall !== undefined && overall !== null && Number(overall) > 0) {
+        return Number(overall);
     }
     return 1200;
 }
