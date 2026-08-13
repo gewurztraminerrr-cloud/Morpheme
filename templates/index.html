@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 18000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 19000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '18000') {
-                localStorage.setItem('morpheme_script_v', '18000');
+            if (localStorage.getItem('morpheme_script_v') !== '19000') {
+                localStorage.setItem('morpheme_script_v', '19000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=18000">
-    <link rel="stylesheet" href="/css/lobby.css?v=18000">
-    <link rel="stylesheet" href="/css/play.css?v=18000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=18000">
-    <link rel="stylesheet" href="/css/forum.css?v=18000">
-    <link rel="stylesheet" href="/css/donate.css?v=18000">
-    <script src="/js/app.js?v=18000"></script>
-    <script src="/js/lobby.js?v=18000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=19000">
+    <link rel="stylesheet" href="/css/lobby.css?v=19000">
+    <link rel="stylesheet" href="/css/play.css?v=19000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=19000">
+    <link rel="stylesheet" href="/css/forum.css?v=19000">
+    <link rel="stylesheet" href="/css/donate.css?v=19000">
+    <script src="/js/app.js?v=19000"></script>
+    <script src="/js/lobby.js?v=19000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1091,150 +1091,12 @@
             </style>
 
             <div class="lobby-grid">
-                <!-- Main Lobby Panel with all room buttons -->
-                <div class="game-types-panel" id="mobile-panel-main">
-                    <!-- Global Filters/Settings -->
-
-                    <div class="lobby-journey-message">
-                        Enter a room to continue your journey
-                    </div>
-
-                    <!-- Accumulative -->
-                    <div class="game-section">
-                        <h3 class="game-title">Accumulative</h3>
-                        <div class="game-matrix">
-                            <div class="matrix-header">
-                                <span class="header-cell">Time</span>
-                                <span class="header-cell">4x4</span>
-                                <span class="header-cell">4x6</span>
-                                <span class="header-cell">5x7</span>
-                                <span class="header-cell">6x8</span>
-                            </div>
-                            <div class="matrix-row">
-                                <span class="row-label">45s</span>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                            </div>
-                            <div class="matrix-row">
-                                <span class="row-label">1m</span>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="60"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="60"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="60"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="60"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                            </div>
-                            <div class="matrix-row">
-                                <span class="row-label">2m</span>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="120"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="120"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="120"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="120"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                            </div>
-                            <div class="matrix-row">
-                                <span class="row-label">3m</span>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- FCFS (First Come First Serve) -->
-                    <div class="game-section">
-                        <h3 class="game-title">First Come First Serve</h3>
-
-                        <div class="matrix-row-quick">
-                            <span class="row-label-quick">45s Standard Options</span>
-                            <div class="matrix-buttons-grid">
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                            </div>
-                        </div>
-
-                        <div class="matrix-row-quick">
-                            <span class="row-label-quick">3m Standard Options</span>
-                            <div class="matrix-buttons-grid">
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Split Points -->
-                    <div class="game-section">
-                        <h3 class="game-title">Split Points</h3>
-
-                        <div class="matrix-row-quick">
-                            <span class="row-label-quick">45s Standard Options</span>
-                            <div class="matrix-buttons-grid">
-                                <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                            </div>
-                        </div>
-
-                        <div class="matrix-row-quick">
-                            <span class="row-label-quick">3m Standard Options</span>
-                            <div class="matrix-buttons-grid">
-                                <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3D Board Options -->
-                    <div class="game-section">
-                        <h3 class="game-title">Cube Board (3x3x3)</h3>
-                        <div class="matrix-row-quick">
-                            <span class="row-label-quick">3D Cube (3x3x3)</span>
-                            <div class="matrix-buttons-grid-3d">
-                                <button class="game-btn acc-btn" data-game="accumulative" data-time="120"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="120"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                                <button class="game-btn split-btn" data-game="split" data-time="120"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Left Panel: Game Types -->
                 <!-- Solo / Friends Panel -->
-                <div class="solo-friends-panel" id="mobile-panel-solo">
-                    <!-- Solo and With Friends Section -->
+                    <div class="solo-friends-panel" id="mobile-panel-solo">
+
+
+<!-- Solo and With Friends Section -->
                     <div class="game-section solo-friends-section">
                         <h3 class="game-title">PLAY SOLO OR WITH FRIENDS</h3>
                         <div class="sf-config-grid">
@@ -1384,6 +1246,171 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="game-types-panel" id="mobile-panel-main">
+                    <!-- Global Filters/Settings -->
+
+                    <div class="lobby-journey-message">
+                        Enter a room to continue your journey
+                    </div>
+
+                    <!-- Accumulative -->
+                    <div class="game-section">
+                        <h3 class="game-title">Accumulative</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">10m</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">24h</div>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                                <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- First Come First Serve -->
+                    <div class="game-section">
+                        <h3 class="game-title">First Come First Serve</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
+                                    Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Split Points -->
+                    <div class="game-section">
+                        <h3 class="game-title">Split Points</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label">4x4</div>
+                                <div class="dim-label">4x6</div>
+                                <div class="dim-label">5x7</div>
+                                <div class="dim-label">6x8</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">45s</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="45"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn split-btn" data-game="split" data-time="180"
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cube -->
+                    <div class="game-section matrix-3d">
+                        <h3 class="game-title">Cube</h3>
+                        <div class="game-matrix">
+                            <div class="matrix-header">
+                                <div class="corner-cell"></div>
+                                <div class="dim-label" style="flex: 1;">3x3x3</div>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">3m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="180"
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">5m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="300"
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                            </div>
+                            <div class="matrix-row">
+                                <div class="time-label">10m</div>
+                                <button class="game-btn split-btn" data-game="3d" data-time="600"
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    </div> <!-- End of game-types-panel -->
 
                     <!-- Right Panel: Active Rooms -->
                 <div class="active-rooms-panel" id="mobile-panel-rooms">
@@ -5626,18 +5653,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=18000"></script>
-    <script src="/js/forum.js?v=18000"></script>
-    <script src="/js/app.js?v=18000"></script>
-    <script src="/js/lobby.js?v=18000"></script>
-    <script src="/js/play.js?v=18000"></script>
-    <script src="/js/tournaments.js?v=18000"></script>
-    <script src="/js/leaderboard.js?v=18000"></script>
-    <script src="/js/tools.js?v=18000"></script>
-    <script src="/js/mouse_selection.js?v=18000"></script>
-    <script src="/js/mods.js?v=18000"></script>
-    <script src="/js/private_matches.js?v=18000"></script>
-    <script src="/js/donate.js?v=18000"></script>
+    <script src="/js/settings.js?v=19000"></script>
+    <script src="/js/forum.js?v=19000"></script>
+    <script src="/js/app.js?v=19000"></script>
+    <script src="/js/lobby.js?v=19000"></script>
+    <script src="/js/play.js?v=19000"></script>
+    <script src="/js/tournaments.js?v=19000"></script>
+    <script src="/js/leaderboard.js?v=19000"></script>
+    <script src="/js/tools.js?v=19000"></script>
+    <script src="/js/mouse_selection.js?v=19000"></script>
+    <script src="/js/mods.js?v=19000"></script>
+    <script src="/js/private_matches.js?v=19000"></script>
+    <script src="/js/donate.js?v=19000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
