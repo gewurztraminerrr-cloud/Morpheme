@@ -654,28 +654,31 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 }).join('');
 
                 // Logic for Join vs Spectate
-                const isFull = room.player_count >= (room.max_players || 8);
-                const roomMin = room.min_rating || 0;
-                const roomMax = room.max_rating || 9999;
+                const pCountVal = Number(room.player_count) || (room.players ? room.players.length : 0);
+                const isFull = pCountVal >= (Number(room.max_players) || 8);
+                const roomMin = Number(room.min_rating) || 0;
+                const roomMax = Number(room.max_rating) || 9999;
                 const hasLimits = roomMin > 0 || roomMax < 9999;
+                const rId = String(room.room_id || '');
+                const rState = String(room.state || 'active');
 
                 // Determine user's rating for this room configuration
                 const userRating = getUserConfigRating(room.game_type, room.board_dimensions, room.time_limit);
 
                 // Check rating restrictions for FCFS and SP (Split) rooms
                 const gameTypeLower = String(room.game_type || '').toLowerCase();
-                const isFcfsOrSp = gameTypeLower === 'fcfs' || gameTypeLower === 'split' || gameTypeLower === 'sp' || (room.room_id && (room.room_id.includes('fcfs') || room.room_id.includes('split')));
+                const isFcfsOrSp = gameTypeLower === 'fcfs' || gameTypeLower === 'split' || gameTypeLower === 'sp' || rId.includes('fcfs') || rId.includes('split');
                 const currentUser = window.currentUser || '';
                 const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
                 const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
 
                 let actionButtons = '';
 
-                if (room.room_id === window.currentRoomId) {
-                    actionButtons = `<button class="join-room-btn return-mode" data-room="${room.room_id}" style="background: #e67e22;">Return to Game</button>`;
+                if (rId && rId === window.currentRoomId) {
+                    actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" style="background: #e67e22;">Return to Game</button>`;
                 } else {
                     // Spectate Button - Always allowed for public rooms
-                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
+                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
 
                     let ratingText = '';
                     if (hasLimits) {
@@ -686,7 +689,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     if (isRatingOutOfRange) {
                         // Join green button is completely removed
                     } else if (!isFull) {
-                        actionButtons += `<button class="join-room-btn" data-room="${room.room_id}" data-min-rating="${roomMin}">
+                        actionButtons += `<button class="join-room-btn" data-room="${rId}" data-min-rating="${roomMin}">
                             Join ${ratingText}
                         </button>`;
                     } else {
@@ -700,9 +703,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 return `
                 <div class="room-item">
                     <div class="room-header-row">
-                        <div class="room-status ${room.state}">${room.state.toUpperCase()}</div>
+                        <div class="room-status ${rState}">${rState.toUpperCase()}</div>
                         <div class="room-meta">
-                            <span class="room-avg-rating">Avg Rating: ${room.display_average_rating}</span> 
+                            <span class="room-avg-rating">Avg Rating: ${room.display_average_rating || 0}</span> 
                             ${hasLimits ? `<span class="rating-req-badge">Req: ${ratingRangeText}</span>` : ''}
                         </div>
                     </div>
