@@ -609,8 +609,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             if (room.players && Array.isArray(room.players)) {
                 pCount = room.players.length;
                 totalRating = room.players.reduce((sum, p) => {
-                    const isGuest = p.username.startsWith('Guest_');
-                    const rating = isGuest ? 0 : (p.rating || 0);
+                    const uname = (p && p.username) ? String(p.username) : '';
+                    const isGuest = uname.startsWith('Guest_');
+                    const rating = isGuest ? 0 : (p && p.rating ? p.rating : 0);
                     return sum + rating;
                 }, 0);
             }
@@ -634,15 +635,16 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
         } else {
             const html = filteredRooms.map(room => {
-                const playersHtml = room.players.map(p => {
+                const playersHtml = (room.players || []).map(p => {
                     // Override rating for Guest users
-                    const isGuest = p.username.startsWith('Guest_');
-                    const displayRating = isGuest ? 0 : p.rating;
+                    const uname = (p && p.username) ? String(p.username) : 'Player';
+                    const isGuest = uname.startsWith('Guest_');
+                    const displayRating = isGuest ? 0 : (p && p.rating ? p.rating : 1200);
                     const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
 
                     return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
-                        <span onclick="window.showMiniProfile('${p.username}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
-                        ${p.username} (${displayRating})
+                        <span onclick="window.showMiniProfile('${uname}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
+                        ${uname} (${displayRating})
                     </span>`;
                 }).join('');
 
