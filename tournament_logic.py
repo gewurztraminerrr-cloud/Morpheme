@@ -15,6 +15,10 @@ class TournamentManager:
     def get_db(self):
         conn = sqlite3.connect(self.db_path, timeout=30)
         conn.row_factory = sqlite3.Row
+        try:
+            conn.execute('PRAGMA journal_mode=WAL;')
+            conn.execute('PRAGMA busy_timeout=30000;')
+        except: pass
         return conn
 
     def get_current_tournament(self):
@@ -37,18 +41,18 @@ class TournamentManager:
         # SpinnerSet.generate_tournament_params() already includes them based on my check of spinner_set.py
         
         now = time.time()
-        start_date = now + self.signup_duration
+        start_time = now + self.signup_duration
         
         cursor = conn.execute('''
-            INSERT INTO tournaments (status, start_date, parameters, current_round, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ('signup', start_date, json.dumps(params), 0, now))
+            INSERT INTO tournaments (status, created_at, start_time, parameters)
+            VALUES (?, ?, ?, ?)
+        ''', ('signup', now, start_time, json.dumps(params)))
         
-        tournament_id = cursor.lastrowid
+        tid = cursor.lastrowid
         conn.commit()
         conn.close()
         
-        return self.get_tournament_by_id(tournament_id)
+        return self.get_tournament_by_id(tid)
 
     def get_tournament_by_id(self, tid):
         conn = self.get_db()
@@ -57,47 +61,30 @@ class TournamentManager:
         return dict(row) if row else None
 
     def update_tournament_status(self):
-        """Main lifecycle update loop"""
         current = self.get_current_tournament()
-        if not current: return
-        
-        now = time.time()
-        
-        if current['status'] == 'signup':
-            if now >= current['start_date']:
-                # Start the tournament!
-                self.start_tournament(current['id'])
-                
-        elif current['status'] == 'active':
-            # Check if the current round has ended
-            self.check_round_advancement(current['id'])
+        if not current:
+            return
             
-        # If completed, the frontend logic will handle the week-long signup window for the NEXT one
-        # but we need to ensure a new tournament is created if the current is COMPLETED and the cooldown is over.
-        elif current['status'] == 'completed':
-            # After a tournament is completed, we wait 1 week before starting a NEW signup window?
-            # User: "When the tournament is over, keep the opening panel with the Spinner Set and Sign-in button open for about a week again"
-            # This means as soon as one ends, the NEXT signup period begins.
-            if now >= current['completed_at']:
-                 self.create_new_tournament()
+        now = time.time()
+        status = current['status']
+        
+        if status == 'signup' and now >= current['start_time']:
+            self.start_tournament(current['id'])
+        elif status == 'active':
+            self.check_round_progression(current['id'])
 
     def start_tournament(self, tid):
+        # 1. Fetch participants (read-only query)
         conn = self.get_db()
         try:
-            # 1. Filter participants
             participants = conn.execute('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchall()
-            participant_ids = [p['user_id'] for p in participants]
+            user_ids = [p['user_id'] for p in participants]
             
-            if not participant_ids:
-                # Handle empty tournament? Just complete it.
-                conn.execute("UPDATE tournaments SET status = 'completed', completed_at = ? WHERE id = ?", (time.time(), tid))
+            if len(user_ids) < 2:
+                conn.execute('UPDATE tournaments SET status = ? WHERE id = ?', ('cancelled', tid))
                 conn.commit()
                 return
-
-            # USER REQUEST: Do NOT fill bracket with AI bots.
-            # create_matchups() uses byes (user2_id = -1) for odd participant counts.
-            pass
-
+                
             conn.commit()
         finally:
             conn.close()
@@ -124,6 +111,7 @@ class TournamentManager:
         conn.execute('DELETE FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
         conn.execute('DELETE FROM tournament_matchups WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
         conn.execute('DELETE FROM tournament_scores WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
+        conn.commit()
             
         tournament = self.get_tournament_by_id(tid)
         params = json.loads(tournament['parameters'])
