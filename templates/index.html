@@ -39,32 +39,19 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/lobby.js?v=100"></script>
+    <script src="/js/lobby.js?v=110"></script>
     <script>
         window.handleLobbyButtonClick = function(btn) {
-            console.log('[LobbyClick] Matrix button clicked:', btn);
-            if (btn && btn.style) {
-                btn.style.transform = 'scale(0.92)';
-                btn.style.outline = '3px solid #38bdf8';
-                setTimeout(function() {
-                    btn.style.transform = '';
-                    btn.style.outline = '';
-                }, 350);
-            }
             if (typeof window.handleLobbyButtonClickCore === 'function') {
                 try {
                     window.handleLobbyButtonClickCore(btn);
                 } catch (err) {
                     console.error('[LobbyClick] Error:', err);
-                    alert('Lobby error: ' + err.message);
                 }
             } else {
-                console.warn('[LobbyClick] Core handler not ready yet, retrying in 100ms...');
                 setTimeout(function() {
                     if (window.handleLobbyButtonClickCore) {
                         window.handleLobbyButtonClickCore(btn);
-                    } else if (typeof window.handleLobbyButtonClick === 'function') {
-                        window.handleLobbyButtonClick(btn);
                     }
                 }, 100);
             }
@@ -5294,7 +5281,7 @@
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
     <script src="/js/app.js?v=90"></script>
-    <script src="/js/lobby.js?v=60"></script>
+    <script src="/js/lobby.js?v=110"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
