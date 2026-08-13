@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 7000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 8000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '7000') {
-                localStorage.setItem('morpheme_script_v', '7000');
+            if (localStorage.getItem('morpheme_script_v') !== '8000') {
+                localStorage.setItem('morpheme_script_v', '8000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,13 +47,13 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=7000">
-    <link rel="stylesheet" href="/css/lobby.css?v=7000">
-    <link rel="stylesheet" href="/css/play.css?v=7000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=7000">
-    <link rel="stylesheet" href="/css/forum.css?v=7000">
-    <script src="/js/app.js?v=7000"></script>
-    <script src="/js/lobby.js?v=7000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=8000">
+    <link rel="stylesheet" href="/css/lobby.css?v=8000">
+    <link rel="stylesheet" href="/css/play.css?v=8000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=8000">
+    <link rel="stylesheet" href="/css/forum.css?v=8000">
+    <script src="/js/app.js?v=8000"></script>
+    <script src="/js/lobby.js?v=8000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -260,7 +260,7 @@
                                 targetContainer.innerHTML = rooms.map(function(r) {
                                     var rState = String(r.state || 'active').toUpperCase();
                                     var rId = String(r.room_id || '');
-                                    return '<div class="room-item"><div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div><button class="join-room-btn" data-room="' + rId + '">Join</button></div>';
+                                    return '<div class="room-item"><div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div><button class="join-room-btn" data-room="' + rId + '" onclick="handleJoinRoomInline(this)">Join</button></div>';
                                 }).join('');
                             }
                         }
@@ -273,6 +273,40 @@
                 }
             };
             doFetch();
+
+            window.handleJoinRoomInline = async function(btn) {
+                if (!btn) return;
+                var roomId = btn.getAttribute('data-room');
+                if (!roomId) return;
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
+                try {
+                    var isSpectator = btn.getAttribute('data-spectator') === 'true';
+                    var response = await fetch('/api/room/' + roomId + '/join', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ as_spectator: isSpectator })
+                    });
+                    var data = await response.json();
+                    if (data && data.success) {
+                        window.currentRoomId = roomId;
+                        localStorage.setItem('last_joined_room', roomId);
+                        if (typeof showPage === 'function') showPage('page-play');
+                        if (typeof window.startGamePolling === 'function') window.startGamePolling();
+                    } else {
+                        alert('Failed to join room: ' + (data ? data.error : 'Unknown error'));
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    }
+                } catch(err) {
+                    alert('Network error joining room: ' + err.message);
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                } finally {
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+                }
+            };
 
             if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
 
@@ -5612,18 +5646,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=7000"></script>
-    <script src="/js/forum.js?v=7000"></script>
-    <script src="/js/app.js?v=7000"></script>
-    <script src="/js/lobby.js?v=7000"></script>
-    <script src="/js/play.js?v=7000"></script>
-    <script src="/js/tournaments.js?v=7000"></script>
-    <script src="/js/leaderboard.js?v=7000"></script>
-    <script src="/js/tools.js?v=7000"></script>
-    <script src="/js/mouse_selection.js?v=7000"></script>
-    <script src="/js/mods.js?v=7000"></script>
-    <script src="/js/private_matches.js?v=7000"></script>
-    <script src="/js/donate.js?v=7000"></script>
+    <script src="/js/settings.js?v=8000"></script>
+    <script src="/js/forum.js?v=8000"></script>
+    <script src="/js/app.js?v=8000"></script>
+    <script src="/js/lobby.js?v=8000"></script>
+    <script src="/js/play.js?v=8000"></script>
+    <script src="/js/tournaments.js?v=8000"></script>
+    <script src="/js/leaderboard.js?v=8000"></script>
+    <script src="/js/tools.js?v=8000"></script>
+    <script src="/js/mouse_selection.js?v=8000"></script>
+    <script src="/js/mods.js?v=8000"></script>
+    <script src="/js/private_matches.js?v=8000"></script>
+    <script src="/js/donate.js?v=8000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

@@ -684,10 +684,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 let actionButtons = '';
 
                 if (rId && rId === window.currentRoomId) {
-                    actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" style="background: #e67e22;">Return to Game</button>`;
+                    actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" onclick="handleJoinRoomInline(this)" style="background: #e67e22;">Return to Game</button>`;
                 } else {
                     // Spectate Button - Always allowed for public rooms
-                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
+                    actionButtons += `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" onclick="handleJoinRoomInline(this)" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
 
                     let ratingText = '';
                     if (hasLimits) {
@@ -698,7 +698,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     if (isRatingOutOfRange) {
                         // Join green button is completely removed
                     } else if (!isFull) {
-                        actionButtons += `<button class="join-room-btn" data-room="${rId}" data-min-rating="${roomMin}">
+                        actionButtons += `<button class="join-room-btn" data-room="${rId}" data-min-rating="${roomMin}" onclick="handleJoinRoomInline(this)">
                             Join ${ratingText}
                         </button>`;
                     } else {
