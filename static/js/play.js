@@ -3424,7 +3424,11 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const prevScrollTop = (listEl && !isMobile) ? listEl.scrollTop : 0;
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
+        const existingBtn = document.getElementById('toggle-board-btn');
         titleEl.textContent = 'All Words';
+        if (existingBtn) {
+            titleEl.appendChild(existingBtn);
+        }
     }
 
     if (!allWords || allWords.length === 0) {
@@ -6388,9 +6392,8 @@ function renderFCFSNotepads(players, state) {
 
 
 function addSplitViewBoardToggle() {
-    const isMobile = window.innerWidth <= 992;
-    const timerDisplay = document.querySelector('.timer-display');
-    const panelHeader = document.querySelector('.words-panel h3');
+    const titleEl = document.getElementById('words-panel-title') || document.querySelector('.words-panel h3');
+    if (!titleEl) return;
 
     // Check if button already exists
     let btn = document.getElementById('toggle-board-btn');
@@ -6404,25 +6407,21 @@ function addSplitViewBoardToggle() {
     }
 
     btn.textContent = showBoardInSplitIntermission ? 'Show Notepads' : 'Show Board';
+    btn.className = 'active-room-btn';
+    btn.style.fontSize = '0.75rem';
+    btn.style.marginLeft = '10px';
+    btn.style.padding = '3px 8px';
+    btn.style.cursor = 'pointer';
+    btn.style.display = 'inline-block';
+    btn.style.verticalAlign = 'middle';
+    btn.style.borderRadius = '4px';
 
-    if (isMobile && timerDisplay) {
-        // Mobile style and placement inside timer display (same as rotate button position)
-        btn.className = 'rotate-btn'; // Matches .timer-display .rotate-btn CSS rule
-        btn.style.fontSize = ''; // Clear desktop styling overrides
-        btn.style.marginLeft = '';
-        btn.style.padding = '';
-        if (btn.parentElement !== timerDisplay) {
-            timerDisplay.appendChild(btn);
-        }
-    } else if (panelHeader) {
-        // Desktop style and placement
-        btn.className = 'active-room-btn';
-        btn.style.fontSize = '0.7rem';
-        btn.style.marginLeft = '10px';
-        btn.style.padding = '2px 8px';
-        if (btn.parentElement !== panelHeader) {
-            panelHeader.appendChild(btn);
-        }
+    titleEl.style.display = 'inline-flex';
+    titleEl.style.alignItems = 'center';
+    titleEl.style.gap = '8px';
+
+    if (btn.parentElement !== titleEl) {
+        titleEl.appendChild(btn);
     }
 }
 
