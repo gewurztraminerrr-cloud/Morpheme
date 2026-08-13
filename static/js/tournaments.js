@@ -375,15 +375,33 @@ function renderActiveState(container, data, userStatus) {
                     </div>
                 `;
             } else {
-                // Both played — wait for the backend to officially close the round before declaring
+                // Both played — declare winner and loser immediately!
+                const myScore = matchup.my_score || 0;
+                const oppScore = matchup.opponent_score || 0;
                 const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
-                container.innerHTML += `
-                    <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 12px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
-                        <div style="font-size:1.8rem; color:#f39c12; font-weight:800; margin-bottom:10px;">BOTH SCORES IN</div>
-                        <p style="opacity:0.9; margin-bottom:15px;">Both players have finished. The official result will be declared once the round closes.</p>
-                        ${scoresHtml}
-                    </div>
-                `;
+                
+                const curUserId = window.currentUserId;
+                const iWon = matchup.winner_id 
+                    ? (matchup.winner_id === matchup.user1_id && matchup.user1_id === curUserId) || (matchup.winner_id === matchup.user2_id && matchup.user2_id === curUserId)
+                    : (myScore >= oppScore);
+
+                if (iWon) {
+                    container.innerHTML += `
+                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
+                            <div style="font-size:2rem; color:#2ecc71; font-weight:900; margin-bottom:5px; text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">YOU WON THIS MATCH!</div>
+                            <div style="font-size:1.1rem; opacity:0.9; margin-bottom:15px; font-weight:600;">Match result finalized. Advancing to next round...</div>
+                            ${scoresHtml}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML += `
+                        <div style="background: rgba(231, 76, 60, 0.1); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
+                            <div style="font-size:2rem; color:#e74c3c; font-weight:900; margin-bottom:5px; text-shadow: 0 0 15px rgba(231, 76, 60, 0.4);">YOU LOST THIS MATCH</div>
+                            <div style="font-size:1.1rem; opacity:0.9; margin-bottom:15px; font-weight:600;">Match result finalized.</div>
+                            ${scoresHtml}
+                        </div>
+                    `;
+                }
             }
         } else if (matchup && matchup.opponent_id === -1) {
             // Bye

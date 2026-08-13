@@ -71,7 +71,79 @@ class TournamentManager:
         if status == 'signup' and now >= current['start_time']:
             self.start_tournament(current['id'])
         elif status == 'active':
-            self.check_round_progression(current['id'])
+            self.update_matchup_winners(current['id'], current['current_round'])
+            self.check_round_advancement(current['id'])
+
+    def update_matchup_winners(self, tid, round_number):
+        conn = self.get_db()
+        try:
+            matchups = conn.execute('''
+                SELECT * FROM tournament_matchups
+                WHERE tournament_id = ? AND round_number = ?
+            ''', (tid, round_number)).fetchall()
+            
+            scores = conn.execute('''
+                SELECT user_id, score, submitted_at FROM tournament_scores
+                WHERE tournament_id = ? AND round_number = ? AND submitted_at IS NOT NULL
+            ''', (tid, round_number)).fetchall()
+            
+            score_dict = {row['user_id']: row for row in scores}
+            
+            all_complete = True
+            has_changes = False
+
+            for m in matchups:
+                u1 = m['user1_id']
+                u2 = m['user2_id']
+                
+                if u2 == -1:
+                    if not m['winner_id']:
+                        conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u1, m['id']))
+                        has_changes = True
+                    continue
+                
+                u1_submitted = u1 in score_dict
+                u2_submitted = u2 in score_dict
+
+                if u1_submitted and u2_submitted:
+                    if not m['winner_id']:
+                        row1 = score_dict[u1]
+                        row2 = score_dict[u2]
+                        s1 = row1['score']
+                        s2 = row2['score']
+                        
+                        if s1 > s2:
+                            w = u1
+                        elif s2 > s1:
+                            w = u2
+                        else:
+                            # Tiebreaker: earlier submission time
+                            t1 = row1['submitted_at'] or 0
+                            t2 = row2['submitted_at'] or 0
+                            if t1 < t2:
+                                w = u1
+                            elif t2 < t1:
+                                w = u2
+                            else:
+                                w = u1
+                        
+                        conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (w, m['id']))
+                        has_changes = True
+                else:
+                    all_complete = False
+
+            if has_changes:
+                conn.commit()
+
+            # If all matchups in the active round are completed, advance the round immediately!
+            if all_complete and len(matchups) > 0:
+                print(f"[Tournament] All matchups finished for tournament {tid} round {round_number}. Advancing round!")
+                self.advance_tournament(tid, round_number)
+
+        except Exception as e:
+            print(f"[Tournament] Error updating matchup winners: {e}")
+        finally:
+            conn.close()
 
     def start_tournament(self, tid):
         # 1. Fetch participants (read-only query)
@@ -361,8 +433,8 @@ class TournamentManager:
         row = conn.execute('''
             SELECT m.*, 
                    u1.username as u1_name, u2.username as u2_name,
-                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id) as u1_score,
-                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id) as u2_score
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
             FROM tournament_matchups m
             LEFT JOIN users u1 ON m.user1_id = u1.id
             LEFT JOIN users u2 ON m.user2_id = u2.id
@@ -373,6 +445,7 @@ class TournamentManager:
         if not row: return None
         
         res = dict(row)
+        res['user_id'] = user_id
         # Determine who the opponent is
         if res['user1_id'] == user_id:
             res['opponent_id'] = res['user2_id']
@@ -437,8 +510,8 @@ class TournamentManager:
         rows = conn.execute('''
             SELECT m.*, 
                    u1.username as u1_name, u2.username as u2_name,
-                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id) as u1_score,
-                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id) as u2_score
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
             FROM tournament_matchups m
             LEFT JOIN users u1 ON m.user1_id = u1.id
             LEFT JOIN users u2 ON m.user2_id = u2.id

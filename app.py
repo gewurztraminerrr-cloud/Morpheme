@@ -7109,11 +7109,18 @@ def submit_tournament_score():
             WHERE tournament_id = ? AND round_number = ? AND user_id = ?
         ''', (total_score, json.dumps(valid_words), time.time(), round_start_time, tid, round_num, user_id))
         conn.commit()
-        return jsonify({'success': True, 'score': total_score})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+
+    try:
+        tournament_manager.update_matchup_winners(tid, round_num)
+        tournament_manager.update_tournament_status()
+    except Exception as e:
+        print(f"[Tournament] Exception evaluating matchup winner: {e}")
+
+    return jsonify({'success': True, 'score': total_score})
 
 
 @app.route('/api/tournament/save-draft', methods=['POST'])
