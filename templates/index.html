@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 15000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 16000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '15000') {
-                localStorage.setItem('morpheme_script_v', '15000');
+            if (localStorage.getItem('morpheme_script_v') !== '16000') {
+                localStorage.setItem('morpheme_script_v', '16000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=15000">
-    <link rel="stylesheet" href="/css/lobby.css?v=15000">
-    <link rel="stylesheet" href="/css/play.css?v=15000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=15000">
-    <link rel="stylesheet" href="/css/forum.css?v=15000">
-    <link rel="stylesheet" href="/css/donate.css?v=15000">
-    <script src="/js/app.js?v=15000"></script>
-    <script src="/js/lobby.js?v=15000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=16000">
+    <link rel="stylesheet" href="/css/lobby.css?v=16000">
+    <link rel="stylesheet" href="/css/play.css?v=16000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=16000">
+    <link rel="stylesheet" href="/css/forum.css?v=16000">
+    <link rel="stylesheet" href="/css/donate.css?v=16000">
+    <script src="/js/app.js?v=16000"></script>
+    <script src="/js/lobby.js?v=16000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -5648,18 +5648,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=14000"></script>
-    <script src="/js/forum.js?v=14000"></script>
-    <script src="/js/app.js?v=14000"></script>
-    <script src="/js/lobby.js?v=14000"></script>
-    <script src="/js/play.js?v=14000"></script>
-    <script src="/js/tournaments.js?v=14000"></script>
-    <script src="/js/leaderboard.js?v=14000"></script>
-    <script src="/js/tools.js?v=14000"></script>
-    <script src="/js/mouse_selection.js?v=14000"></script>
-    <script src="/js/mods.js?v=14000"></script>
-    <script src="/js/private_matches.js?v=14000"></script>
-    <script src="/js/donate.js?v=14000"></script>
+    <script src="/js/settings.js?v=16000"></script>
+    <script src="/js/forum.js?v=16000"></script>
+    <script src="/js/app.js?v=16000"></script>
+    <script src="/js/lobby.js?v=16000"></script>
+    <script src="/js/play.js?v=16000"></script>
+    <script src="/js/tournaments.js?v=16000"></script>
+    <script src="/js/leaderboard.js?v=16000"></script>
+    <script src="/js/tools.js?v=16000"></script>
+    <script src="/js/mouse_selection.js?v=16000"></script>
+    <script src="/js/mods.js?v=16000"></script>
+    <script src="/js/private_matches.js?v=16000"></script>
+    <script src="/js/donate.js?v=16000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

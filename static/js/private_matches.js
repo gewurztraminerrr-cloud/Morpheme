@@ -85,15 +85,21 @@
         };
 
         const options = config[dim] || [3, 4, 5];
-        const currentVal = parseInt(soloMinLen.value);
+        const currentVal = soloMinLen.value || 'random';
 
-        soloMinLen.innerHTML = options.map(opt =>
-            `<option value="${opt}" ${opt === currentVal ? 'selected' : ''}>${opt} Letters</option>`
-        ).join('');
+        let html = `<option value="random" ${currentVal === 'random' ? 'selected' : ''}>Random (25/50/25)</option>`;
+        const pctMap = [25, 50, 25];
+        options.forEach((opt, idx) => {
+            const pct = pctMap[idx] || 25;
+            const isSel = (String(opt) === String(currentVal));
+            html += `<option value="${opt}" ${isSel ? 'selected' : ''}>${opt} Letters (${pct}%)</option>`;
+        });
 
-        // Ensure the selected value is valid for the new options
-        if (!options.includes(parseInt(soloMinLen.value))) {
-            soloMinLen.value = options[0];
+        soloMinLen.innerHTML = html;
+
+        const validValues = ['random', ...options.map(String)];
+        if (!validValues.includes(String(soloMinLen.value))) {
+            soloMinLen.value = 'random';
         }
     }
 
