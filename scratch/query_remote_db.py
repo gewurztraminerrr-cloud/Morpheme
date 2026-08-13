@@ -7,25 +7,23 @@ def main():
     
     print(f"Connecting to {ip} via SSH...")
     child = pexpect.spawn(f'ssh morpheme@{ip}', encoding='utf-8', timeout=20)
+    child.logfile = sys.stdout
     
     child.expect([r"password:"])
     child.sendline(password)
     
     child.expect([r"\$", r"#"])
     # Create remote script
-    child.sendline("""cat << 'EOF' > /tmp/check_db.py
-import sqlite3
-conn = sqlite3.connect('/home/morpheme/morpheme/morpheme.db')
-cursor = conn.cursor()
-cursor.execute('SELECT COUNT(*), COUNT(CASE WHEN param_key LIKE "%AW%" THEN 1 END) FROM pregenerated_boards')
-total, aw_count = cursor.fetchone()
-print(f'Total pregenerated: {total}, AW count: {aw_count}')
-cursor.execute('SELECT DISTINCT param_key FROM pregenerated_boards')
-for r in cursor.fetchall():
-    print(r[0])
-conn.close()
-EOF
-""")
+    child.sendline("cat << 'EOF' > /tmp/check_db.py")
+    child.sendline("import sqlite3")
+    child.sendline("conn = sqlite3.connect('/home/morpheme/morpheme/morpheme.db')")
+    child.sendline("cursor = conn.cursor()")
+    child.sendline("cursor.execute('SELECT username, rating FROM users WHERE username = \"jeffjeff\"')")
+    child.sendline("print('USERS TABLE RATING:', cursor.fetchall())")
+    child.sendline("cursor.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = (SELECT id FROM users WHERE username = \"jeffjeff\")')")
+    child.sendline("print('USER_RATINGS TABLE:', cursor.fetchall())")
+    child.sendline("conn.close()")
+    child.sendline("EOF")
     child.expect([r"\$", r"#"])
     
     # Run the script
