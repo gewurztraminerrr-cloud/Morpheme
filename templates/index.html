@@ -41,21 +41,128 @@
     <link rel="stylesheet" href="/css/forum.css?v=42">
     <script src="/js/lobby.js?v=110"></script>
     <script>
-        window.handleLobbyButtonClick = function(btn) {
-            if (typeof window.handleLobbyButtonClickCore === 'function') {
-                try {
-                    window.handleLobbyButtonClickCore(btn);
-                } catch (err) {
-                    console.error('[LobbyClick] Error:', err);
-                }
-            } else {
-                setTimeout(function() {
-                    if (window.handleLobbyButtonClickCore) {
-                        window.handleLobbyButtonClickCore(btn);
-                    }
-                }, 100);
+        function showLobbyToast(message, type) {
+            var toast = document.getElementById('lobby-action-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'lobby-action-toast';
+                toast.style.cssText = 'position:fixed; top:75px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.98); color:#ffffff; border:2px solid #38bdf8; padding:12px 24px; border-radius:30px; font-weight:800; font-size:1rem; z-index:100000; box-shadow:0 8px 32px rgba(0,0,0,0.6); pointer-events:none; text-align:center; transition:all 0.2s ease;';
+                document.body.appendChild(toast);
             }
+            toast.style.borderColor = (type === 'error') ? '#ef4444' : (type === 'success') ? '#22c55e' : '#38bdf8';
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            toast.style.display = 'block';
+
+            if (window._lobbyToastTimeout) clearTimeout(window._lobbyToastTimeout);
+            window._lobbyToastTimeout = setTimeout(function() {
+                if (toast) {
+                    toast.style.opacity = '0';
+                    setTimeout(function() { toast.style.display = 'none'; }, 300);
+                }
+            }, 3500);
+        }
+        window.showLobbyToast = showLobbyToast;
+
+        async function enterLobbyRoomInline(rawBtn) {
+            if (!rawBtn) return;
+            var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
+            try {
+                if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
+                var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
+                var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
+                var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
+
+                var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
+                showLobbyToast('Entering ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
+
+                if (window.currentRoomId && typeof window.leaveCurrentRoom === 'function') {
+                    try { await window.leaveCurrentRoom(); } catch (e) {}
+                }
+                window.currentRoomId = null;
+
+                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Entering Room...');
+                localStorage.removeItem('tournament_play_active');
+                localStorage.removeItem('private_match_active');
+
+                var joinedId = null;
+                var listResp = await fetch('/api/rooms?game_type=' + gameType + '&board_dimensions=' + boardDimensions + '&time_limit=' + timeLimit + '&_t=' + Date.now(), { cache: 'no-store' });
+                if (listResp.ok) {
+                    var listData = await listResp.json();
+                    if (listData.rooms && listData.rooms.length > 0) {
+                        var existingId = listData.rooms[0].room_id;
+                        var joinResp = await fetch('/api/room/' + existingId + '/join', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ as_spectator: false })
+                        });
+                        if (joinResp.ok) {
+                            var joinData = await joinResp.json();
+                            if (joinData.success) joinedId = existingId;
+                        }
+                    }
+                }
+
+                if (!joinedId) {
+                    var createResp = await fetch('/api/room/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            game_type: gameType,
+                            time_limit: timeLimit,
+                            board_dimensions: boardDimensions
+                        })
+                    });
+                    if (createResp.ok) {
+                        var data = await createResp.json();
+                        if (data.success && data.room_id) {
+                            joinedId = data.room_id;
+                        } else {
+                            showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } else {
+                        showLobbyToast('Server error creating room.', 'error');
+                    }
+                }
+
+                if (joinedId) {
+                    window.currentRoomId = joinedId;
+                    localStorage.setItem('last_joined_room', joinedId);
+                    window.isSpectatorMode = false;
+
+                    var playBtn = document.getElementById('play-btn');
+                    if (playBtn) { playBtn.disabled = false; playBtn.title = ""; }
+                    if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
+
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('page-play');
+                    } else if (typeof showPage === 'function') {
+                        showPage('page-play');
+                    }
+
+                    setTimeout(function() {
+                        var input = document.getElementById('word-input');
+                        if (input) { input.disabled = false; input.focus(); }
+                    }, 100);
+
+                    if (typeof window.startGamePolling === 'function') window.startGamePolling();
+                    showLobbyToast('Room joined successfully!', 'success');
+                }
+            } catch (err) {
+                console.error('[LobbyClick] Error entering room:', err);
+                showLobbyToast('Error: ' + err.message, 'error');
+            } finally {
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+            }
+        }
+
+        window.handleLobbyButtonClick = function(btn, evt) {
+            if (evt && typeof evt.preventDefault === 'function') {
+                try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+            }
+            enterLobbyRoomInline(btn);
         };
+        window.handleLobbyButtonClickCore = window.handleLobbyButtonClick;
     </script>
     <style>
         .board-cell.bonus-highlight {
@@ -893,46 +1000,46 @@
                             <div class="matrix-row">
                                 <div class="time-label">45s</div>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="45"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">3m</div>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="180"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">10m</div>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="600"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">24h</div>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                                 <button class="game-btn acc-btn" data-game="accumulative" data-time="86400"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Start [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Start [0]</button>
                             </div>
                         </div>
                     </div>
@@ -950,24 +1057,24 @@
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">45s</div>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">3m</div>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Show
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
                                     Rooms [0]</button>
                             </div>
                         </div>
@@ -987,24 +1094,24 @@
                             <div class="matrix-row">
                                 <div class="time-label">45s</div>
                                 <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="45"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">3m</div>
                                 <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                                 <button class="game-btn split-btn" data-game="split" data-time="180"
-                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                         </div>
                     </div>
@@ -1020,17 +1127,17 @@
                             <div class="matrix-row">
                                 <div class="time-label">3m</div>
                                 <button class="game-btn split-btn" data-game="3d" data-time="180"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">5m</div>
                                 <button class="game-btn split-btn" data-game="3d" data-time="300"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">10m</div>
                                 <button class="game-btn split-btn" data-game="3d" data-time="600"
-                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this)">Show Rooms [0]</button>
+                                    data-board="3x3x3" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                         </div>
                     </div>
