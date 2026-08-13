@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/lobby.js?v=800"></script>
+    <script src="/js/lobby.js?v=900"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -177,6 +177,8 @@
             var infoEl = document.getElementById('selected-game-info');
             if (infoEl) {
                 infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
+            }
+
             if (typeof window.loadCurrentUserConfigRatings === 'function' && (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0)) {
                 try { await window.loadCurrentUserConfigRatings(); } catch (e) {}
             }
@@ -5562,8 +5564,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=800"></script>
-    <script src="/js/lobby.js?v=800"></script>
+    <script src="/js/app.js?v=900"></script>
+    <script src="/js/lobby.js?v=900"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
