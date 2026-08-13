@@ -5,7 +5,7 @@ description: Revert the project to the August 12, 2026 save point. Use this when
 ### Revert Procedure
 
 1.  **Reset Repository to Save Point:**
-    - `git reset --hard c30079f`
+    - `git reset --hard 7a20c44`
 
 2.  **Clean Up Untracked Files:**
     - `git clean -fd`
@@ -17,7 +17,7 @@ description: Revert the project to the August 12, 2026 save point. Use this when
     - Navigate to `morpheme.games` and confirm UI is at the August 12 stable state.
 
 ### August 12 Save Point Details
-- **Commit**: `c30079f`
+- **Commit**: `7a20c44`
 - **Branch**: `main`
 - **GitHub**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 - **Stable State Doc**: `stable_state_summary_august_12.md` in repository root
