@@ -948,7 +948,7 @@ body.theme-light-brown .field-hint {
         overflow-x: auto !important;
         scroll-snap-type: x mandatory !important;
         -webkit-overflow-scrolling: touch !important;
-        scroll-behavior: auto !important; /* Do NOT use 'smooth' — iOS viewport resizes interrupt it, splitting panels */
+        scroll-behavior: smooth !important;
         gap: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
