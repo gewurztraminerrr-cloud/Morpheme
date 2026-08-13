@@ -45,3 +45,8 @@ This document summarizes the stable state of **Morpheme** as of August 12, 2026.
 8. **Rating Limit Enforcement for FCFS & SP Rooms**:
    - Removed the green Join button and restricted users strictly to spectator mode (`Spectate` button only) when their rating does not fall within the Rating Limit assigned to an FCFS or SP (Split) room in `lobby.js`.
    - Added backend enforcement in `app.py` `/api/room/join` to automatically route users outside room rating limits into spectator mode.
+
+9. **FCFS Rating Resolution & Active Rooms Loading Fix**:
+   - Resolved config rating extraction bug in `lobby.js` by creating `getUserConfigRating()` helper to safely extract numerical rating values from `window.currentUserConfigRatings`.
+   - Fixed `updateMyRatingButton()` to await profile rating fetching and display exact config ratings (`My Rating (XXXX)`) for FCFS, Split, and Cube rooms without falling back to 1200.
+   - Fixed room container DOM structure when clicking "Show Rooms" to ensure active rooms load without getting stuck.

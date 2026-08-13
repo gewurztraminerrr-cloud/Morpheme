@@ -180,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentLobbyConfig = { gameType, timeLimit, boardDimensions };
             window.currentLobbyConfig = currentLobbyConfig;
 
-            // Update My Rating button and auto-populate filter if FCFS 45s
+            // Update My Rating button and auto-populate filter
             if (typeof updateMyRatingButton === 'function') {
-                updateMyRatingButton(gameType, boardDimensions, timeLimit);
+                await updateMyRatingButton(gameType, boardDimensions, timeLimit);
             }
 
             const gameNames = {
@@ -192,13 +192,26 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const infoEl = document.getElementById('selected-game-info');
-            infoEl.innerHTML = `
-                <strong>${gameNames[gameType]}</strong><br>
-                Board: ${boardDimensions} | Time: ${formatTime(timeLimit)}
-            `;
+            if (infoEl) {
+                infoEl.innerHTML = `
+                    <strong>${gameNames[gameType] || gameType}</strong><br>
+                    Board: ${boardDimensions} | Time: ${formatTime(timeLimit)}
+                `;
+            }
 
             const roomsList = document.getElementById('rooms-list');
-            roomsList.innerHTML = '<p class="placeholder">Loading rooms...</p>';
+            if (roomsList) {
+                let roomsContainer = document.getElementById('dynamic-rooms-container');
+                if (!roomsContainer) {
+                    roomsList.innerHTML = `
+                        <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
+                            <p class="placeholder">Loading rooms...</p>
+                        </div>
+                    `;
+                } else {
+                    roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
+                }
+            }
 
             // Fetch immediately WITHOUT auto-create (just show list)
             await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false);
@@ -657,22 +670,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const roomMax = room.max_rating || 9999;
                 const hasLimits = roomMin > 0 || roomMax < 9999;
 
-                const currentUser = window.currentUser || '';
-                const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || window.currentUserIsGuest;
-
                 // Determine user's rating for this room configuration
-                let userRating = 1200;
-                if (isCurrentUserGuest) {
-                    userRating = 0;
-                } else {
-                    const displayType = (room.game_type || '').replace('solo_', '');
-                    const configKey = `${displayType}|${room.board_dimensions || '4x4'}|${room.time_limit || 180}`;
-                    if (window.currentUserConfigRatings && window.currentUserConfigRatings[configKey] !== undefined) {
-                        userRating = window.currentUserConfigRatings[configKey];
-                    } else if (window.currentUserRating !== undefined) {
-                        userRating = window.currentUserRating;
-                    }
-                }
+                const userRating = getUserConfigRating(room.game_type, room.board_dimensions, room.time_limit);
 
                 // Check rating restrictions for FCFS and SP (Split) rooms
                 const gameTypeLower = String(room.game_type || '').toLowerCase();
@@ -913,30 +912,55 @@ function resetLobbyButtons() {
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
     });
+function getUserConfigRating(gameType, board, time) {
+    if (!window.currentUser || window.currentUserIsGuest) return 0;
+    const cleanType = String(gameType || '').replace('solo_', '');
+    const configKey = `${cleanType}|${board || '4x4'}|${time || 180}`;
+    const ratings = window.currentUserConfigRatings || {};
+    const val = ratings[configKey];
+    if (val !== undefined && val !== null) {
+        if (typeof val === 'object' && val.rating !== undefined) {
+            return Number(val.rating) || 1200;
+        }
+        if (typeof val === 'number') {
+            return val;
+        }
+    }
+    if (window.currentUserRating !== undefined && window.currentUserRating !== null) {
+        return Number(window.currentUserRating) || 1200;
+    }
+    if (window.lastPlayerRating !== undefined && window.lastPlayerRating !== null) {
+        return Number(window.lastPlayerRating) || 1200;
+    }
+    return 1200;
+}
+window.getUserConfigRating = getUserConfigRating;
+
+function resetLobbyButtons() {
+    const gameButtons = document.querySelectorAll('.game-btn');
+    gameButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    });
+    const joinButtons = document.querySelectorAll('.join-room-btn');
+    joinButtons.forEach(btn => {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    });
     const myRatingBtn = document.getElementById('my-rating-btn');
     if (myRatingBtn) {
         if (!window.currentUser || window.currentUserIsGuest) {
             myRatingBtn.style.display = 'none';
         } else {
-            myRatingBtn.style.display = 'block';
+            myRatingBtn.style.display = 'inline-block';
             if (window.currentLobbyConfig) {
-                let rating = 1200;
-                const gameType = window.currentLobbyConfig.gameType;
-                const board = window.currentLobbyConfig.boardDimensions;
-                const time = window.currentLobbyConfig.timeLimit;
-                const configKey = `${gameType}|${board}|${time}`;
-                const ratings = window.currentUserConfigRatings || {};
-                const ratingObj = ratings[configKey];
-                if (ratingObj && ratingObj.rating !== undefined) {
-                    rating = ratingObj.rating;
-                } else {
-                    if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
-                        rating = 1200;
-                    } else {
-                        rating = window.lastPlayerRating || 1200;
-                    }
-                }
-                myRatingBtn.textContent = `My Rating: ${rating}`;
+                const rating = getUserConfigRating(
+                    window.currentLobbyConfig.gameType,
+                    window.currentLobbyConfig.boardDimensions,
+                    window.currentLobbyConfig.timeLimit
+                );
+                myRatingBtn.textContent = `My Rating (${rating})`;
                 myRatingBtn.dataset.rating = rating;
             } else {
                 myRatingBtn.textContent = 'My Rating';
@@ -947,7 +971,7 @@ function resetLobbyButtons() {
 }
 window.resetLobbyButtons = resetLobbyButtons;
 
-function updateMyRatingButton(gameType, board, time) {
+async function updateMyRatingButton(gameType, board, time) {
     const btn = document.getElementById('my-rating-btn');
     if (!btn) return;
 
@@ -956,30 +980,21 @@ function updateMyRatingButton(gameType, board, time) {
         return;
     }
 
-    let rating = 1200;
-    const configKey = `${gameType}|${board}|${time}`;
-    const ratings = window.currentUserConfigRatings || {};
-    const ratingObj = ratings[configKey];
-    if (ratingObj && ratingObj.rating !== undefined) {
-        rating = ratingObj.rating;
-    } else {
-        if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
-            rating = 1200;
-        } else {
-            rating = window.lastPlayerRating || 1200;
+    if (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0) {
+        if (typeof window.loadCurrentUserConfigRatings === 'function') {
+            try {
+                await window.loadCurrentUserConfigRatings();
+            } catch (e) {
+                console.error('[Lobby] Error loading config ratings:', e);
+            }
         }
     }
 
-    btn.textContent = `My Rating: ${rating}`;
-    btn.dataset.rating = rating;
-    btn.style.display = 'block';
+    const rating = getUserConfigRating(gameType, board, time);
 
-    // Clear the textbox for all configurations to avoid leftover filters by default
-    const ratingFilter = document.getElementById('rating-filter');
-    if (ratingFilter) {
-        ratingFilter.value = '';
-        ratingFilter.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    btn.textContent = `My Rating (${rating})`;
+    btn.dataset.rating = rating;
+    btn.style.display = 'inline-block';
 }
 window.updateMyRatingButton = updateMyRatingButton;
 
