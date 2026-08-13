@@ -3660,8 +3660,9 @@ def list_rooms():
             if matches_game and matches_board and matches_time:
                 humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
                 is_daily = (room_t >= 7200)
-                # Only list rooms with active human players/spectators or 24h rooms
-                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
+                room_uptime = time.time() - getattr(room, 'creation_time', time.time())
+                # Only skip empty rooms if they are older than 60 seconds (grace period for room creation & navigation)
+                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and room_uptime > 60:
                     continue
                 
                 # Calculate average rating safely
@@ -3710,9 +3711,10 @@ def get_lobby_stats():
                 t_lim = int(room.time_limit)
             except (ValueError, TypeError):
                 t_lim = 45
-            # Only count rooms with active human players or 24h rooms
+            # Count rooms with active human players, 24h rooms, or newly created rooms in grace period
             is_daily = (t_lim >= 7200)
-            if len(humans) == 0 and not is_daily:
+            room_uptime = time.time() - getattr(room, 'creation_time', time.time())
+            if len(humans) == 0 and not is_daily and room_uptime > 60:
                 continue
                 
             # Create a unique key for this configuration (case-insensitive)
@@ -3720,7 +3722,7 @@ def get_lobby_stats():
             
             if key not in stats:
                 stats[key] = 0
-            stats[key] += len(humans)
+            stats[key] += max(1, len(humans))
         except Exception as err:
             print(f"[get_lobby_stats] Error processing room {getattr(room, 'room_id', 'unknown')}: {err}")
     
