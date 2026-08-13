@@ -882,6 +882,15 @@ if (lobbyPage) {
     });
 }
 
+// Start stats polling immediately on page load
+if (typeof isOnLobby === 'function' && isOnLobby()) {
+    startStatsPolling();
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof isOnLobby === 'function' && isOnLobby()) startStatsPolling();
+    });
+}
+
 function isOnLobby() {
     const el = lobbyPage || document.getElementById('page-lobby');
     return el && el.classList.contains('active');
