@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <link rel="stylesheet" href="/css/donate.css?v=1">
+    <script src="/js/lobby.js?v=100"></script>
     <script>
         window.handleLobbyButtonClick = function(btn) {
             console.log('[LobbyClick] Matrix button clicked:', btn);
@@ -59,8 +59,14 @@
                     alert('Lobby error: ' + err.message);
                 }
             } else {
-                console.warn('[LobbyClick] Core handler not loaded yet');
-                alert('Morpheme Lobby is loading... Please click again in 1 second!');
+                console.warn('[LobbyClick] Core handler not ready yet, retrying in 100ms...');
+                setTimeout(function() {
+                    if (window.handleLobbyButtonClickCore) {
+                        window.handleLobbyButtonClickCore(btn);
+                    } else if (typeof window.handleLobbyButtonClick === 'function') {
+                        window.handleLobbyButtonClick(btn);
+                    }
+                }, 100);
             }
         };
     </script>
