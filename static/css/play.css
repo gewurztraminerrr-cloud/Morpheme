@@ -1911,7 +1911,8 @@ body.theme-light-brown .word-item.missed {
 }
 
 .validation-scroll-container {
-    max-height: 280px;
+    min-height: 300px;
+    max-height: 580px;
     overflow-y: auto;
     overflow-x: hidden;
     justify-content: flex-start !important;
@@ -4977,6 +4978,9 @@ input[type=range]::-moz-range-track {
     .random-word-container {
         padding: 15px !important;
         min-height: auto !important;
+    }
+    .validation-scroll-container {
+        max-height: 380px !important;
     }
     #valid-definition-display {
         max-width: 100% !important;
