@@ -183,24 +183,37 @@
             if (roomsList) {
                 var roomsContainer = document.getElementById('dynamic-rooms-container');
                 if (!roomsContainer) {
-                    roomsList.innerHTML = '<div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;"><p class="placeholder">Loading rooms...</p></div>';
+                    var isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
+                    roomsList.innerHTML = `
+                        <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                                ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
+                            </div>
+                            <div class="rating-inputs-row">
+                                <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                                <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                            </div>
+                            <button class="confirm-create-room-btn" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
+                                ${isGuest ? 'Registered Only' : '+ Create Room'}
+                            </button>
+                        </div>
+                        <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
+                            <p class="placeholder">Loading rooms...</p>
+                        </div>
+                    `;
                 } else {
                     roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
                 }
             }
 
-            if (typeof window.fetchAndRenderRooms === 'function') {
-                await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
-            } else {
-                setTimeout(async function() {
-                    if (typeof window.fetchAndRenderRooms === 'function') {
-                        await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
-                    } else {
-                        var rc = document.getElementById('dynamic-rooms-container');
-                        if (rc) rc.innerHTML = '<p class="placeholder">Click again to refresh rooms</p>';
-                    }
-                }, 200);
-            }
+            var doFetch = async function() {
+                if (typeof window.fetchAndRenderRooms === 'function') {
+                    await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
+                }
+            };
+
+            await doFetch();
+            setTimeout(doFetch, 150);
 
             if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
 

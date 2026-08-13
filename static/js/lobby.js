@@ -971,5 +971,6 @@ async function updateMyRatingButton(gameType, board, time) {
     }
 }
 window.updateMyRatingButton = updateMyRatingButton;
+window.fetchAndRenderRooms = fetchAndRenderRooms;
 
 console.log('lobby.js fully loaded - version with polling');
