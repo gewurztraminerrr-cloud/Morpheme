@@ -275,10 +275,10 @@ _MODS_CACHE_TIME = 0
 
 def get_moderators():
     global _MODS_CACHE, _MODS_CACHE_TIME
-    if _MODS_CACHE is not None and time.time() - _MODS_CACHE_TIME < 60:
+    if _MODS_CACHE is not None and time.time() - _MODS_CACHE_TIME < 30:
         return _MODS_CACHE
 
-    mods = {'jeffbabiak', 'system'}
+    mods = {'jeffbabiak', 'jeffb', 'system'}
     if os.path.exists(MODS_FILE):
         try:
             with open(MODS_FILE, 'r') as f:
@@ -286,6 +286,17 @@ def get_moderators():
                 mods.update(lines)
         except Exception as e:
             print(f"[Mods] Error reading {MODS_FILE}: {e}")
+
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT username FROM moderators").fetchall()
+        conn.close()
+        for r in rows:
+            if r['username']:
+                mods.add(r['username'].strip().lower())
+    except Exception as e:
+        pass
     
     _MODS_CACHE = mods
     _MODS_CACHE_TIME = time.time()
@@ -293,21 +304,34 @@ def get_moderators():
 
 
 def save_moderator(username):
+    username = username.strip().lower()
+    if not username: return False
     mods = get_moderators()
-    mods.add(username.strip().lower())
+    mods.add(username)
     try:
         with open(MODS_FILE, 'w') as f:
             for mod in sorted(mods):
                 f.write(f"{mod}\n")
-        return True
     except Exception as e:
         print(f"[Mods] Error saving to {MODS_FILE}: {e}")
-        return False
+
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.execute("CREATE TABLE IF NOT EXISTS moderators (username TEXT PRIMARY KEY, added_at REAL)")
+        conn.execute("INSERT OR REPLACE INTO moderators (username, added_at) VALUES (?, ?)", (username, time.time()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[Mods] Error saving to DB: {e}")
+
+    global _MODS_CACHE
+    _MODS_CACHE = mods
+    return True
 
 def remove_moderator(username):
     username = username.strip().lower()
-    if username == 'jeffbabiak':
-        print("[Mods] Attempt to remove protected moderator jeffbabiak blocked.")
+    if username in ('jeffbabiak', 'jeffb', 'system'):
+        print(f"[Mods] Attempt to remove protected moderator {username} blocked.")
         return False
     mods = get_moderators()
     if username in mods:
@@ -316,10 +340,20 @@ def remove_moderator(username):
             with open(MODS_FILE, 'w') as f:
                 for mod in sorted(mods):
                     f.write(f"{mod}\n")
-            return True
         except Exception as e:
             print(f"[Mods] Error removing from {MODS_FILE}: {e}")
-            return False
+
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            conn.execute("DELETE FROM moderators WHERE username = ?", (username,))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[Mods] Error removing from DB: {e}")
+
+        global _MODS_CACHE
+        _MODS_CACHE = mods
+        return True
     return False
 
 
@@ -1084,8 +1118,8 @@ def ban_user_api():
     if not username:
         return jsonify({'error': 'Username required'}), 400
         
-    if username.lower() == 'jeffbabiak':
-        return jsonify({'error': 'Cannot ban the ultimate authority jeffbabiak'}), 403
+    if username.lower() in ('jeffbabiak', 'jeffb'):
+        return jsonify({'error': 'Cannot ban protected moderator'}), 403
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
