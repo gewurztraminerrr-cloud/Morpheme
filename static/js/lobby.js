@@ -721,9 +721,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     } catch (error) {
         console.error('Error fetching rooms:', error);
         if (roomsContainer) {
-            roomsContainer.innerHTML = '<p class="placeholder">Error loading rooms</p>';
-        } else if (roomsList) {
-            roomsList.innerHTML = '<p class="placeholder">Error loading rooms</p>';
+            roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
         }
     }
 }

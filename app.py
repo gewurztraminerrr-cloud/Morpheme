@@ -3647,41 +3647,52 @@ def list_rooms():
     active_rooms = []
     
     for room_id, room in room_manager.rooms.items():
-        # Exclude solo and private rooms from public listing
-        if room.is_solo or getattr(room, 'is_private', False):
-            continue
-            
-        matches_game = not game_type or str(room.game_type) == str(game_type)
-        matches_board = not board_dimensions or str(room.board_dimensions) == str(board_dimensions)
         try:
-            room_t = int(room.time_limit)
-        except (ValueError, TypeError):
-            room_t = 45
-        matches_time = time_limit is None or room_t == time_limit
-        
-        if matches_game and matches_board and matches_time:
-            
-            humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
-            # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent 24h room
-            is_daily = (room_t >= 7200)
-            if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
+            # Exclude solo and private rooms from public listing
+            if room.is_solo or getattr(room, 'is_private', False):
                 continue
+                
+            matches_game = not game_type or str(room.game_type) == str(game_type)
+            matches_board = not board_dimensions or str(room.board_dimensions) == str(board_dimensions)
+            try:
+                room_t = int(room.time_limit)
+            except (ValueError, TypeError):
+                room_t = 45
+            matches_time = time_limit is None or room_t == time_limit
             
-            # Calculate average rating
-            p_count = len(room.players)
-            avg_rating = round(sum(p.rating for p in room.players) / p_count) if p_count > 0 else 0
-            
-            active_rooms.append({
-                'room_id': room.room_id,
-                'player_count': p_count,
-                'max_players': room.max_players,
-                'min_rating': room.min_rating,
-                'max_rating': room.max_rating,
-                'average_rating': avg_rating,
-                'state': room.state,
-                'current_round': room.current_round,
-                'players': [{'username': p.username, 'rating': p.rating, 'user_id': p.user_id} for p in room.players]
-            })
+            if matches_game and matches_board and matches_time:
+                humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
+                # Never list empty rooms in the Active Rooms panel — UNLESS it's a persistent 24h room
+                is_daily = (room_t >= 7200)
+                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily:
+                    continue
+                
+                # Calculate average rating safely
+                p_count = len(room.players)
+                ratings = [(getattr(p, 'rating', 1200) if getattr(p, 'rating', 1200) is not None else 1200) for p in room.players]
+                avg_rating = round(sum(ratings) / p_count) if p_count > 0 else 0
+                
+                players_list = []
+                for p in room.players:
+                    p_uname = getattr(p, 'username', 'Player') or 'Player'
+                    p_rat = getattr(p, 'rating', 1200)
+                    if p_rat is None: p_rat = 1200
+                    p_uid = getattr(p, 'user_id', 0) or 0
+                    players_list.append({'username': p_uname, 'rating': p_rat, 'user_id': p_uid})
+
+                active_rooms.append({
+                    'room_id': room.room_id,
+                    'player_count': p_count,
+                    'max_players': room.max_players,
+                    'min_rating': room.min_rating,
+                    'max_rating': room.max_rating,
+                    'average_rating': avg_rating,
+                    'state': room.state,
+                    'current_round': room.current_round,
+                    'players': players_list
+                })
+        except Exception as err:
+            print(f"[list_rooms] Error formatting room {room_id}: {err}")
             
     return jsonify({'rooms': active_rooms})
 
@@ -3691,26 +3702,29 @@ def get_lobby_stats():
     stats = {}
     
     for room in room_manager.rooms.values():
-        # Hide solo and private rooms from lobby stats
-        if room.is_solo or getattr(room, 'is_private', False):
-            continue
-            
-        humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
         try:
-            t_lim = int(room.time_limit)
-        except (ValueError, TypeError):
-            t_lim = 45
-        # Skip empty rooms — UNLESS it's a persistent 24h room
-        is_daily = (t_lim >= 7200)
-        if len(humans) == 0 and not is_daily:
-            continue
+            # Hide solo and private rooms from lobby stats
+            if room.is_solo or getattr(room, 'is_private', False):
+                continue
+                
+            humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
+            try:
+                t_lim = int(room.time_limit)
+            except (ValueError, TypeError):
+                t_lim = 45
+            # Skip empty rooms — UNLESS it's a persistent 24h room
+            is_daily = (t_lim >= 7200)
+            if len(humans) == 0 and not is_daily:
+                continue
+                
+            # Create a unique key for this configuration
+            key = f"{room.game_type}|{room.board_dimensions}|{t_lim}"
             
-        # Create a unique key for this configuration
-        key = f"{room.game_type}|{room.board_dimensions}|{t_lim}"
-        
-        if key not in stats:
-            stats[key] = 0
-        stats[key] += len(humans)
+            if key not in stats:
+                stats[key] = 0
+            stats[key] += len(humans)
+        except Exception as err:
+            print(f"[get_lobby_stats] Error processing room {getattr(room, 'room_id', 'unknown')}: {err}")
     
     return jsonify({'stats': stats})
 
