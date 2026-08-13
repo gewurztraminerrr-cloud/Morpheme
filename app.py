@@ -278,7 +278,7 @@ def get_moderators():
     if _MODS_CACHE is not None and time.time() - _MODS_CACHE_TIME < 30:
         return _MODS_CACHE
 
-    mods = {'jeffbabiak', 'jeffb', 'system'}
+    mods = {'jeffb', 'system'}
     if os.path.exists(MODS_FILE):
         try:
             with open(MODS_FILE, 'r') as f:
@@ -293,10 +293,13 @@ def get_moderators():
         rows = conn.execute("SELECT username FROM moderators").fetchall()
         conn.close()
         for r in rows:
-            if r['username']:
+            if r['username'] and r['username'].strip().lower() != 'jeffbabiak':
                 mods.add(r['username'].strip().lower())
     except Exception as e:
         pass
+
+    if 'jeffbabiak' in mods:
+        mods.remove('jeffbabiak')
     
     _MODS_CACHE = mods
     _MODS_CACHE_TIME = time.time()
@@ -330,7 +333,7 @@ def save_moderator(username):
 
 def remove_moderator(username):
     username = username.strip().lower()
-    if username in ('jeffbabiak', 'jeffb', 'system'):
+    if username in ('jeffb', 'system'):
         print(f"[Mods] Attempt to remove protected moderator {username} blocked.")
         return False
     mods = get_moderators()
