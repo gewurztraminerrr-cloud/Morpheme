@@ -687,7 +687,6 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
                 // Display limitations
                 const ratingRangeText = `${roomMin} - ${roomMax < 9999 ? roomMax : '∞'}`;
-                const hasLimits = roomMin > 0 || roomMax < 9999;
 
                 return `
                 <div class="room-item">
@@ -946,26 +945,22 @@ async function updateMyRatingButton(gameType, board, time) {
     const btn = document.getElementById('my-rating-btn');
     if (!btn) return;
 
-    if (!window.currentUser || window.currentUserIsGuest) {
-        btn.style.display = 'none';
-        return;
-    }
-
-    // Set initial text synchronously
     const initialRating = getUserConfigRating(gameType, board, time);
     btn.textContent = `My Rating (${initialRating})`;
     btn.dataset.rating = initialRating;
     btn.style.display = 'inline-block';
 
-    if (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0) {
-        if (typeof window.loadCurrentUserConfigRatings === 'function') {
-            try {
-                await window.loadCurrentUserConfigRatings();
-                const updatedRating = getUserConfigRating(gameType, board, time);
-                btn.textContent = `My Rating (${updatedRating})`;
-                btn.dataset.rating = updatedRating;
-            } catch (e) {
-                console.error('[Lobby] Error loading config ratings:', e);
+    if (window.currentUser && !window.currentUserIsGuest) {
+        if (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0) {
+            if (typeof window.loadCurrentUserConfigRatings === 'function') {
+                try {
+                    await window.loadCurrentUserConfigRatings();
+                    const updatedRating = getUserConfigRating(gameType, board, time);
+                    btn.textContent = `My Rating (${updatedRating})`;
+                    btn.dataset.rating = updatedRating;
+                } catch (e) {
+                    console.error('[Lobby] Error loading config ratings:', e);
+                }
             }
         }
     }

@@ -179,6 +179,10 @@
                 infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
             }
 
+            if (typeof window.updateMyRatingButton === 'function') {
+                try { window.updateMyRatingButton(gameType, boardDimensions, timeLimit); } catch (e) {}
+            }
+
             var roomsList = document.getElementById('rooms-list');
             if (roomsList) {
                 var roomsContainer = document.getElementById('dynamic-rooms-container');
