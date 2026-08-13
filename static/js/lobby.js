@@ -211,19 +211,21 @@ function setupLobbyEvents() {
         // Handle "Create Room" button click (inside the panel)
         const createBtn = target.closest('.confirm-create-room-btn');
         if (createBtn) {
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
-            console.log('Create Room clicked. Config:', currentLobbyConfig);
+            const activeConfig = window.currentLobbyConfig || currentLobbyConfig;
+            console.log('Create Room clicked. Config:', activeConfig);
 
-            if (!currentLobbyConfig) {
+            if (!activeConfig) {
                 console.error('Create Room failed: Missing lobby config');
                 alert('Error: Game configuration not found. Please select a game type again.');
                 return;
             }
 
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
+
             // Read from embedded inputs
             const panel = createBtn.closest('.create-room-panel');
-            const minInput = panel.querySelector('.min-rating-input');
-            const maxInput = panel.querySelector('.max-rating-input');
+            const minInput = panel ? panel.querySelector('.min-rating-input') : null;
+            const maxInput = panel ? panel.querySelector('.max-rating-input') : null;
 
             let minRating = 0;
             let maxRating = 9999;
@@ -238,11 +240,11 @@ function setupLobbyEvents() {
             if (isNaN(minRating)) minRating = 0;
             if (isNaN(maxRating)) maxRating = 9999;
 
-            createRoom(minRating, maxRating);
+            createRoom(activeConfig, minRating, maxRating);
             return;
         }
 
-        async function createRoom(minRating, maxRating) {
+        async function createRoom(config, minRating, maxRating) {
             // CLEAR SPECIAL MODES: We are entering a normal room
             localStorage.removeItem('tournament_play_active');
             localStorage.removeItem('private_match_active');
@@ -252,9 +254,9 @@ function setupLobbyEvents() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        game_type: currentLobbyConfig.gameType,
-                        time_limit: currentLobbyConfig.timeLimit,
-                        board_dimensions: currentLobbyConfig.boardDimensions,
+                        game_type: config.gameType,
+                        time_limit: config.timeLimit,
+                        board_dimensions: config.boardDimensions,
                         min_rating: minRating,
                         max_rating: maxRating
                     })
