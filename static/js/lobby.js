@@ -55,44 +55,32 @@ function showLobbyToast(message, type = 'info') {
 }
 window.showLobbyToast = showLobbyToast;
 
-async function handleAccumulativeClick(accBtn) {
-    if (!accBtn) return;
-    stopLobbyPolling();
-
-    const gameType = accBtn.dataset.game || 'accumulative';
-    const timeLimit = parseInt(accBtn.dataset.time) || 45;
-    const boardDimensions = accBtn.dataset.board || '4x4';
-
-    showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
-
-    if (window.currentRoomId) {
-        console.log('Leaving current room before creating new one...');
-        if (window.leaveCurrentRoom) {
-            try {
-                await window.leaveCurrentRoom();
-            } catch (errLeave) {
-                console.error('Error leaving current room:', errLeave);
-            }
-        }
-    }
-
-    console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
-    
-    if (window.showLoadingOverlay) window.showLoadingOverlay('Entering Room...');
-    accBtn.style.opacity = '0.5';
-    accBtn.style.pointerEvents = 'none';
-
-    localStorage.removeItem('tournament_play_active');
-    localStorage.removeItem('private_match_active');
-
+async function enterLobbyRoom(btn) {
+    if (!btn) return;
     try {
-        let joined = false;
+        stopLobbyPolling();
+        const gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
+        const timeLimit = parseInt((btn.dataset && btn.dataset.time) ? btn.dataset.time : 45) || 45;
+        const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
+
+        showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
+
+        if (window.currentRoomId && window.leaveCurrentRoom) {
+            try { await window.leaveCurrentRoom(); } catch (e) {}
+        }
+        window.currentRoomId = null;
+
+        if (window.showLoadingOverlay) window.showLoadingOverlay('Entering Room...');
+        localStorage.removeItem('tournament_play_active');
+        localStorage.removeItem('private_match_active');
+
+        let joinedId = null;
         const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
         if (listResp.ok) {
             const listData = await listResp.json();
             if (listData.rooms && listData.rooms.length > 0) {
                 const existingId = listData.rooms[0].room_id;
-                console.log('Found existing Accumulative room, joining:', existingId);
+                console.log('Found existing room, joining:', existingId);
                 const joinResp = await fetch(`/api/room/${existingId}/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -102,16 +90,14 @@ async function handleAccumulativeClick(accBtn) {
                 if (joinResp.ok) {
                     const joinData = await joinResp.json();
                     if (joinData.success) {
-                        window.currentRoomId = existingId;
-                        localStorage.setItem('last_joined_room', existingId);
-                        window.isSpectatorMode = false;
-                        joined = true;
+                        joinedId = existingId;
                     }
                 }
             }
         }
 
-        if (!joined) {
+        if (!joinedId) {
+            console.log('Creating new room for config:', { gameType, timeLimit, boardDimensions });
             const createResp = await fetch('/api/room/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -125,10 +111,7 @@ async function handleAccumulativeClick(accBtn) {
             if (createResp.ok) {
                 const data = await createResp.json();
                 if (data.success && data.room_id) {
-                    window.currentRoomId = data.room_id;
-                    localStorage.setItem('last_joined_room', data.room_id);
-                    window.isSpectatorMode = false;
-                    joined = true;
+                    joinedId = data.room_id;
                 } else {
                     showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
                 }
@@ -137,15 +120,23 @@ async function handleAccumulativeClick(accBtn) {
             }
         }
 
-        if (joined) {
-            showLobbyToast('Room joined! Navigating to play...', 'success');
+        if (joinedId) {
+            window.currentRoomId = joinedId;
+            localStorage.setItem('last_joined_room', joinedId);
+            window.isSpectatorMode = false;
+
             const playBtn = document.getElementById('play-btn');
             if (playBtn) {
                 playBtn.disabled = false;
                 playBtn.title = "";
             }
             if (window.updateManualToolState) window.updateManualToolState();
-            if (typeof window.showPage === 'function') window.showPage('page-play'); else showPage('page-play');
+            
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-play');
+            } else if (typeof showPage === 'function') {
+                showPage('page-play');
+            }
 
             setTimeout(() => {
                 const input = document.getElementById('word-input');
@@ -156,89 +147,32 @@ async function handleAccumulativeClick(accBtn) {
             }, 100);
 
             if (window.startGamePolling) window.startGamePolling();
+            showLobbyToast('Room joined successfully!', 'success');
+        } else {
+            startLobbyPolling();
         }
     } catch (error) {
-        console.error('Error in room discovery/join:', error);
+        console.error('Error entering room:', error);
         showLobbyToast('Network error: ' + error.message, 'error');
         startLobbyPolling();
     } finally {
-        accBtn.style.pointerEvents = 'auto';
-        accBtn.style.opacity = '1';
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }
+}
+
+async function handleAccumulativeClick(accBtn) {
+    return enterLobbyRoom(accBtn);
 }
 window.handleAccumulativeClick = handleAccumulativeClick;
 
 async function handleShowRoomsClick(listBtn) {
-    if (!listBtn) return;
-    const gameType = listBtn.dataset.game;
-    const timeLimit = parseInt(listBtn.dataset.time);
-    const boardDimensions = listBtn.dataset.board;
-
-    showLobbyToast(`Fetching active rooms for ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
-
-    currentLobbyConfig = { gameType, timeLimit, boardDimensions };
-    window.currentLobbyConfig = currentLobbyConfig;
-
-    if (typeof updateMyRatingButton === 'function') {
-        updateMyRatingButton(gameType, boardDimensions, timeLimit);
-    }
-
-    const gameNames = {
-        'fcfs': 'First Come First Serve',
-        'split': 'Split Points',
-        '3d': 'Cube'
-    };
-
-    const infoEl = document.getElementById('selected-game-info');
-    if (infoEl) {
-        infoEl.innerHTML = `
-            <strong>${gameNames[gameType] || gameType}</strong><br>
-            Board: ${boardDimensions} | Time: ${formatLobbyTime(timeLimit)}
-        `;
-    }
-
-    const roomsList = document.getElementById('rooms-list');
-    if (roomsList) {
-        let roomsContainer = document.getElementById('dynamic-rooms-container');
-        if (!roomsContainer) {
-            roomsList.innerHTML = `
-                <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
-                    <p class="placeholder">Loading rooms...</p>
-                </div>
-            `;
-        } else {
-            roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
-        }
-    }
-
-    // Auto-create room if no room exists so pressing Show Rooms immediately enables playing!
-    await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, true, 0, 9999, true);
-
-    startLobbyPolling();
-
-    const roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
-    if (roomsPanel) {
-        roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile) {
-            const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
-            if (lobbyGrid) {
-                lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
-            }
-        }
-    }
+    return enterLobbyRoom(listBtn);
 }
 window.handleShowRoomsClick = handleShowRoomsClick;
 
 function handleLobbyButtonClickCore(btn) {
     if (!btn) return;
-    const gameType = btn.dataset ? btn.dataset.game : 'accumulative';
-    if (btn.classList.contains('acc-btn') || gameType === 'accumulative') {
-        handleAccumulativeClick(btn);
-    } else {
-        handleShowRoomsClick(btn);
-    }
+    enterLobbyRoom(btn);
 }
 window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
 window.handleLobbyButtonClick = handleLobbyButtonClickCore;
