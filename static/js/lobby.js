@@ -655,11 +655,29 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const isFull = room.player_count >= (room.max_players || 8);
                 const roomMin = room.min_rating || 0;
                 const roomMax = room.max_rating || 9999;
+                const hasLimits = roomMin > 0 || roomMax < 9999;
 
                 const currentUser = window.currentUser || '';
-                const isCurrentUserGuest = currentUser.startsWith('Guest_');
-                // Restriction: Guests cannot join if ANY rating limits exist
-                const isRestrictedForGuest = isCurrentUserGuest && (roomMin > 0 || roomMax < 9999);
+                const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || window.currentUserIsGuest;
+
+                // Determine user's rating for this room configuration
+                let userRating = 1200;
+                if (isCurrentUserGuest) {
+                    userRating = 0;
+                } else {
+                    const displayType = (room.game_type || '').replace('solo_', '');
+                    const configKey = `${displayType}|${room.board_dimensions || '4x4'}|${room.time_limit || 180}`;
+                    if (window.currentUserConfigRatings && window.currentUserConfigRatings[configKey] !== undefined) {
+                        userRating = window.currentUserConfigRatings[configKey];
+                    } else if (window.currentUserRating !== undefined) {
+                        userRating = window.currentUserRating;
+                    }
+                }
+
+                // Check rating restrictions for FCFS and SP (Split) rooms
+                const gameTypeLower = String(room.game_type || '').toLowerCase();
+                const isFcfsOrSp = gameTypeLower === 'fcfs' || gameTypeLower === 'split' || gameTypeLower === 'sp' || (room.room_id && (room.room_id.includes('fcfs') || room.room_id.includes('split')));
+                const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
 
                 let actionButtons = '';
 
@@ -670,12 +688,13 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     actionButtons += `<button class="join-room-btn watch-mode" data-room="${room.room_id}" data-spectator="true" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
 
                     let ratingText = '';
-                    if (roomMin > 0 || roomMax < 9999) {
+                    if (hasLimits) {
                         ratingText = `(${roomMin}-${roomMax < 9999 ? roomMax : '∞'})`;
                     }
 
-                    if (isRestrictedForGuest) {
-                        actionButtons += `<button class="join-room-btn disabled" disabled style="opacity:0.5; cursor:not-allowed;" title="Guests can only join open rooms">Registered Only</button>`;
+                    // For FCFS and SP rooms (or any room with rating limits), if user rating is outside limit, ONLY allow spectate (Remove Join button)
+                    if (isRatingOutOfRange) {
+                        // Join green button is completely removed
                     } else if (!isFull) {
                         actionButtons += `<button class="join-room-btn" data-room="${room.room_id}" data-min-rating="${roomMin}">
                             Join ${ratingText}

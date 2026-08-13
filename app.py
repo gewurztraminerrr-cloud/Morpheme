@@ -3530,17 +3530,12 @@ def join_room(room_id):
         room.update_player_activity(user_id)
         return jsonify({'success': True, 'role': 'spectator'})
 
-    # Guest Restriction: Guests can only join rooms with NO rating limits
-    if session.get('is_guest', False):
-        if room.min_rating > 0 or room.max_rating < 9999:
-            return jsonify({'error': 'Guests can only join rooms with no rating limits (0-∞).'}), 403
-
-    # Validate Rating Range
-    if rating < room.min_rating:
-         return jsonify({'error': f'Rating {rating} too low (Min: {room.min_rating})'}), 403
-    
-    if rating > room.max_rating:
-         return jsonify({'error': f'Rating {rating} too high (Max: {room.max_rating})'}), 403
+    # Rating limit check for FCFS, SP, and rating-restricted rooms: force spectator mode if rating outside limits
+    has_limits = (room.min_rating > 0 or room.max_rating < 9999)
+    if has_limits and (rating < room.min_rating or rating > room.max_rating or session.get('is_guest', False)):
+        room.add_spectator(user_id, session['username'], rating)
+        room.update_player_activity(user_id)
+        return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.'})
 
     # Get extra stats (games_played, country_flag)
     games_played = 0

@@ -41,3 +41,7 @@ This document summarizes the stable state of **Morpheme** as of August 12, 2026.
 7. **24h Room Dictionary & Word Count Constraints**:
    - Strictly disabled Added Words (`AW` / `+ AW` / `added_words`) in 24h rooms (`round_duration >= 7200`), forcing standard dictionary selection (`NWL` or `CSW`).
    - Strictly enforced word count range to `300-400` words for all 24h room boards across `spinner_set.py`, `game_room.py`, and `app.py`.
+
+8. **Rating Limit Enforcement for FCFS & SP Rooms**:
+   - Removed the green Join button and restricted users strictly to spectator mode (`Spectate` button only) when their rating does not fall within the Rating Limit assigned to an FCFS or SP (Split) room in `lobby.js`.
+   - Added backend enforcement in `app.py` `/api/room/join` to automatically route users outside room rating limits into spectator mode.
