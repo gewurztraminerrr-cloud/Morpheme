@@ -35,10 +35,10 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
         rel="stylesheet">
     <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 24000
+        // Automatic cache buster: Purge stale browser CacheStorage if version is below 25000
         try {
-            if (localStorage.getItem('morpheme_script_v') !== '24000') {
-                localStorage.setItem('morpheme_script_v', '24000');
+            if (localStorage.getItem('morpheme_script_v') !== '25000') {
+                localStorage.setItem('morpheme_script_v', '25000');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(name) { caches.delete(name); });
@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=24000">
-    <link rel="stylesheet" href="/css/lobby.css?v=24000">
-    <link rel="stylesheet" href="/css/play.css?v=24000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=24000">
-    <link rel="stylesheet" href="/css/forum.css?v=24000">
-    <link rel="stylesheet" href="/css/donate.css?v=24000">
-    <script src="/js/app.js?v=24000"></script>
-    <script src="/js/lobby.js?v=24000"></script>
+    <link rel="stylesheet" href="/css/style.css?v=25000">
+    <link rel="stylesheet" href="/css/lobby.css?v=25000">
+    <link rel="stylesheet" href="/css/play.css?v=25000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=25000">
+    <link rel="stylesheet" href="/css/forum.css?v=25000">
+    <link rel="stylesheet" href="/css/donate.css?v=25000">
+    <script src="/js/app.js?v=25000"></script>
+    <script src="/js/lobby.js?v=25000"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2088,12 +2088,12 @@
                             <h3>Official Scrabble Dictionary (Collins CSW)</h3>
                             <span class="store-item-price">~$24.99 CAD</span>
                         </div>
-                        <p class="store-item-desc">The official, authoritative word list for Scrabble and international word tournaments (CSW). Essential for mastering all valid playable words in Morpheme's CSW dictionary mode.</p>
+                        <p class="store-item-desc">The official, authoritative word list for Scrabble and international word tournaments (CSW), containing 2-9 letter words. Essential for mastering all valid playable words in Morpheme's CSW dictionary mode.</p>
                         <ul class="store-item-features">
                             <li>Official Collins CSW Word List</li>
+                            <li>Includes 2-9 Letter Words</li>
                             <li>International Tournament Standard</li>
                             <li>Complete Playable Words & Endings</li>
-                            <li>Ideal for Advanced Word Study</li>
                         </ul>
                         <a href="https://www.amazon.ca/SCRABBLETM-Dictionary-official-bestselling-playable/dp/0008660735" target="_blank" class="buy-now-btn">View on Amazon</a>
                     </div>
@@ -5653,18 +5653,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=24000"></script>
-    <script src="/js/forum.js?v=24000"></script>
-    <script src="/js/app.js?v=24000"></script>
-    <script src="/js/lobby.js?v=24000"></script>
-    <script src="/js/play.js?v=24000"></script>
-    <script src="/js/tournaments.js?v=24000"></script>
-    <script src="/js/leaderboard.js?v=24000"></script>
-    <script src="/js/tools.js?v=24000"></script>
-    <script src="/js/mouse_selection.js?v=24000"></script>
-    <script src="/js/mods.js?v=24000"></script>
-    <script src="/js/private_matches.js?v=24000"></script>
-    <script src="/js/donate.js?v=24000"></script>
+    <script src="/js/settings.js?v=25000"></script>
+    <script src="/js/forum.js?v=25000"></script>
+    <script src="/js/app.js?v=25000"></script>
+    <script src="/js/lobby.js?v=25000"></script>
+    <script src="/js/play.js?v=25000"></script>
+    <script src="/js/tournaments.js?v=25000"></script>
+    <script src="/js/leaderboard.js?v=25000"></script>
+    <script src="/js/tools.js?v=25000"></script>
+    <script src="/js/mouse_selection.js?v=25000"></script>
+    <script src="/js/mods.js?v=25000"></script>
+    <script src="/js/private_matches.js?v=25000"></script>
+    <script src="/js/donate.js?v=25000"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
