@@ -3188,8 +3188,8 @@ class RoomManager:
         import threading
         try:
             with self.lock:
-                # Singleton Logic for Multiplayer Hubs (Skip for Private/Solo rooms)
-                if not is_private:
+                # Singleton Logic ONLY for default pub_v2_ hubs (User-created rooms generate unique instances)
+                if not is_private and str(room_id).startswith('pub_v2_'):
                     for existing_room in list(self.rooms.values()):
                         if (str(existing_room.game_type).lower() == str(game_type).lower() and 
                             str(existing_room.board_dimensions).lower() == str(board_dimensions).lower() and

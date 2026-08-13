@@ -3423,14 +3423,11 @@ def create_room():
             if min_rating > 0 or max_rating < 9999:
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
-        is_public = (min_rating == 0 and max_rating == 9999)
-        if is_public:
-            generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
-            print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
-        else:
-            generated_id = str(uuid.uuid4())
+        # Every "+ Create Room" request generates a brand new unique room for that user
+        generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
+        print(f"[app.py] Generated unique ID for newly created room: {generated_id}")
             
-        room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating)
+        room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating, is_private=False)
         
         # Ensure user is not in any other room
         cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
@@ -3662,10 +3659,11 @@ def list_rooms():
             
             if matches_game and matches_board and matches_time:
                 humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
-                # Keep persistent 24h rooms AND public multiplayer hubs listed even if empty
+                # Keep persistent 24h rooms, public hubs, AND newly created rooms (<10m old) listed
                 is_daily = (room_t >= 7200)
                 is_public = str(room.room_id).startswith('pub_')
-                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and not is_public:
+                room_uptime = time.time() - getattr(room, 'creation_time', time.time())
+                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and not is_public and room_uptime > 600:
                     continue
                 
                 # Calculate average rating safely
