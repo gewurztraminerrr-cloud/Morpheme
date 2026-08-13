@@ -39,8 +39,8 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/app.js?v=1100"></script>
-    <script src="/js/lobby.js?v=1100"></script>
+    <script src="/js/app.js?v=1200"></script>
+    <script src="/js/lobby.js?v=1200"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -213,6 +213,7 @@
                     var guestBtnText = isGuest ? 'Registered Only' : '+ Create Room';
                     var guestBtnStyle = isGuest ? 'disabled style="cursor:not-allowed;"' : '';
 
+                    var noRoomsMsg = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
                     roomsList.innerHTML = '<div class="create-room-panel" ' + guestStyle + '>' +
                         '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
                         '<div class="rating-inputs-row">' +
@@ -222,10 +223,10 @@
                         '<button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
                     '</div>' +
                     '<div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">' +
-                        '<p class="placeholder">Loading rooms...</p>' +
+                        noRoomsMsg +
                     '</div>';
                 } else {
-                    roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
+                    roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
                 }
             }
 
@@ -5569,8 +5570,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=1100"></script>
-    <script src="/js/lobby.js?v=1100"></script>
+    <script src="/js/app.js?v=1200"></script>
+    <script src="/js/lobby.js?v=1200"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
