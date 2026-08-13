@@ -401,34 +401,15 @@
 }
 
 .payment-btn.paypal {
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    padding: 16px;
-    border-radius: 16px;
-    font-size: 1.1rem;
-    font-weight: 800;
-    text-decoration: none;
-    background: linear-gradient(135deg, #0070ba 0%, #005ea6 100%);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 112, 186, 0.2);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(0, 112, 186, 0.1);
+    color: #0070ba;
+    border: 1px solid rgba(0, 112, 186, 0.25);
 }
 
 .payment-btn.paypal:hover {
-    background: linear-gradient(135deg, #007ccf 0%, #006ec4 100%);
+    background: #0070ba;
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 112, 186, 0.4);
-}
-
-.payment-btn.paypal:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(0, 112, 186, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 112, 186, 0.35);
 }
 
 /* Supporter Hall of Fame columns structure */
