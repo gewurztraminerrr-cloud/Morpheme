@@ -2424,6 +2424,27 @@ body.theme-light-brown .word-item.missed {
     touch-action: pan-x pan-y !important;
 }
 
+@media (min-width: 901px) {
+    #tool-combo .horizontal-scroll-container,
+    .combo-results-container .horizontal-scroll-container {
+        min-height: 520px !important;
+        height: 560px !important;
+    }
+
+    #tool-combo .group-column,
+    .combo-results-container .group-column {
+        min-height: 500px !important;
+        height: 100% !important;
+    }
+
+    #tool-combo .group-table-container,
+    .combo-results-container .group-table-container {
+        min-height: 450px !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+    }
+}
+
 .table-scroll-btn {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.25);
