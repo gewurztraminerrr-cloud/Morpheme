@@ -591,10 +591,10 @@ class TournamentManager:
             conn.close()
             return False
             
-        # Check if already submitted score for this round
+        # Check if user has already submitted score for this round
         score = conn.execute('''
             SELECT 1 FROM tournament_scores 
-            WHERE tournament_id = ? AND round_number = ? AND user_id = ?
+            WHERE tournament_id = ? AND round_number = ? AND user_id = ? AND submitted_at IS NOT NULL
         ''', (tid, round_num, user_id)).fetchone()
         
         conn.close()

@@ -728,16 +728,28 @@ async function checkTournamentTurn() {
         }
     } catch (e) { }
 }
+window.checkTournamentTurn = checkTournamentTurn;
 
-// Check initially and periodically (every 60s)
+// Check initially (500ms) and periodically every 4s for instant turn green button flashing
 setTimeout(() => {
     checkTournamentTurn();
     checkForumActivity();
-}, 2000);
+}, 500);
 setInterval(() => {
     checkTournamentTurn();
+}, 4000);
+setInterval(() => {
     checkForumActivity();
 }, 60000);
+
+window.addEventListener('focus', () => {
+    checkTournamentTurn();
+});
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        checkTournamentTurn();
+    }
+});
 
 async function checkForumActivity() {
     if (!currentUser) return;
