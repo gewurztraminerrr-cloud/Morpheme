@@ -1149,8 +1149,24 @@ function showPage(pageId) {
         }
     }
 
-    // NEW: Load Private Matches instantly when entering Lobby
+    // NEW: Load Private Matches & snap to main Lobby window on mobile when entering Lobby
     if (pageId === 'page-lobby') {
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const scrollToMain = () => {
+                const mainPanel = document.getElementById('mobile-panel-main');
+                if (mainPanel) {
+                    const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
+                    if (lobbyGrid) {
+                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                    }
+                }
+            };
+            scrollToMain();
+            requestAnimationFrame(scrollToMain);
+            setTimeout(scrollToMain, 50);
+            setTimeout(scrollToMain, 150);
+        }
         if (typeof window.resetLobbyButtons === 'function') {
             window.resetLobbyButtons();
         }

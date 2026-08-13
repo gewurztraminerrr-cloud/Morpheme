@@ -498,10 +498,10 @@ function setupLobbyEvents() {
     if (isOnLobby()) {
         startStatsPolling();
 
-        // Mobile layout: Snap to center panel on load
+        // Mobile layout: Snap to center main lobby panel on load
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
-            setTimeout(() => {
+            const scrollToMain = () => {
                 const mainPanel = document.getElementById('mobile-panel-main');
                 if (mainPanel) {
                     const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
@@ -509,8 +509,12 @@ function setupLobbyEvents() {
                         lobbyGrid.scrollLeft = mainPanel.offsetLeft;
                     }
                 }
-            }, 100);
-}
+            };
+            scrollToMain();
+            requestAnimationFrame(scrollToMain);
+            setTimeout(scrollToMain, 50);
+            setTimeout(scrollToMain, 150);
+        }
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupLobbyEvents);
@@ -867,10 +871,10 @@ if (lobbyPage) {
                 startStatsPolling();
             }
 
-            // Mobile layout: Snap to center panel on load
+            // Mobile layout: Snap to center main lobby panel on load
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
-                setTimeout(() => {
+                const scrollToMain = () => {
                     const mainPanel = document.getElementById('mobile-panel-main');
                     if (mainPanel) {
                         const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
@@ -878,7 +882,11 @@ if (lobbyPage) {
                             lobbyGrid.scrollLeft = mainPanel.offsetLeft;
                         }
                     }
-                }, 100);
+                };
+                scrollToMain();
+                requestAnimationFrame(scrollToMain);
+                setTimeout(scrollToMain, 50);
+                setTimeout(scrollToMain, 150);
             }
 
         } else {
