@@ -188,23 +188,23 @@
                 var roomsContainer = document.getElementById('dynamic-rooms-container');
                 if (!roomsContainer) {
                     var isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
-                    roomsList.innerHTML = `
-                        <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
-                            <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
-                                ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
-                            </div>
-                            <div class="rating-inputs-row">
-                                <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
-                                <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
-                            </div>
-                            <button class="confirm-create-room-btn" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
-                                ${isGuest ? 'Registered Only' : '+ Create Room'}
-                            </button>
-                        </div>
-                        <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
-                            <p class="placeholder">Loading rooms...</p>
-                        </div>
-                    `;
+                    var guestStyle = isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : '';
+                    var guestText = isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)';
+                    var guestDis = isGuest ? 'disabled' : '';
+                    var guestBtnText = isGuest ? 'Registered Only' : '+ Create Room';
+                    var guestBtnStyle = isGuest ? 'disabled style="cursor:not-allowed;"' : '';
+
+                    roomsList.innerHTML = '<div class="create-room-panel" ' + guestStyle + '>' +
+                        '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
+                        '<div class="rating-inputs-row">' +
+                            '<input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ' + guestDis + '>' +
+                            '<input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ' + guestDis + '>' +
+                        '</div>' +
+                        '<button class="confirm-create-room-btn" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
+                    '</div>' +
+                    '<div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">' +
+                        '<p class="placeholder">Loading rooms...</p>' +
+                    '</div>';
                 } else {
                     roomsContainer.innerHTML = '<p class="placeholder">Loading rooms...</p>';
                 }

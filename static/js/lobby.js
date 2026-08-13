@@ -884,7 +884,6 @@ function isOnLobby() {
 }
 
 function getUserConfigRating(gameType, board, time) {
-    if (!window.currentUser || window.currentUserIsGuest) return 0;
     const cleanType = String(gameType || '').replace('solo_', '');
     const configKey = `${cleanType}|${board || '4x4'}|${time || 180}`;
     const ratings = window.currentUserConfigRatings || {};
@@ -893,14 +892,14 @@ function getUserConfigRating(gameType, board, time) {
         if (typeof val === 'object' && val.rating !== undefined) {
             return Number(val.rating) || 1200;
         }
-        if (typeof val === 'number') {
+        if (typeof val === 'number' && val > 0) {
             return val;
         }
     }
-    if (window.currentUserRating !== undefined && window.currentUserRating !== null) {
+    if (window.currentUserRating !== undefined && window.currentUserRating !== null && Number(window.currentUserRating) > 0) {
         return Number(window.currentUserRating) || 1200;
     }
-    if (window.lastPlayerRating !== undefined && window.lastPlayerRating !== null) {
+    if (window.lastPlayerRating !== undefined && window.lastPlayerRating !== null && Number(window.lastPlayerRating) > 0) {
         return Number(window.lastPlayerRating) || 1200;
     }
     return 1200;
