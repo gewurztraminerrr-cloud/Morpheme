@@ -712,6 +712,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             }
         }
 
+        if (typeof updateMyRatingButton === 'function') {
+            updateMyRatingButton(gameType, boardDimensions, timeLimit);
+        }
+
     } catch (error) {
         console.error('Error fetching rooms:', error);
         if (roomsContainer) {

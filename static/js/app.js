@@ -37,12 +37,21 @@ async function loadCurrentUserConfigRatings() {
         if (data && data.config_ratings) {
             window.currentUserConfigRatings = data.config_ratings;
             console.log('Loaded config ratings for current user:', window.currentUserConfigRatings);
-            if (window.updateMyRatingButton && window.currentLobbyConfig) {
+            const activeCfg = window.currentLobbyConfig || { gameType: 'fcfs', boardDimensions: '4x4', timeLimit: 45 };
+            if (window.updateMyRatingButton) {
                 window.updateMyRatingButton(
-                    window.currentLobbyConfig.gameType,
-                    window.currentLobbyConfig.boardDimensions,
-                    window.currentLobbyConfig.timeLimit
+                    activeCfg.gameType,
+                    activeCfg.boardDimensions,
+                    activeCfg.timeLimit
                 );
+            } else {
+                const ratingBtn = document.getElementById('my-rating-btn');
+                if (ratingBtn && typeof window.getUserConfigRating === 'function') {
+                    const exact = window.getUserConfigRating(activeCfg.gameType, activeCfg.boardDimensions, activeCfg.timeLimit);
+                    ratingBtn.textContent = `My Rating (${exact})`;
+                    ratingBtn.dataset.rating = exact;
+                    ratingBtn.style.display = 'inline-block';
+                }
             }
         } else {
             window.currentUserConfigRatings = {};
