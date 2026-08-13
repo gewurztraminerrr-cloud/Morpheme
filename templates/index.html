@@ -39,8 +39,8 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/app.js?v=1200"></script>
-    <script src="/js/lobby.js?v=1200"></script>
+    <script src="/js/app.js?v=1300"></script>
+    <script src="/js/lobby.js?v=1300"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -157,7 +157,7 @@
             }
         }
 
-        async function handleShowRoomsInline(rawBtn) {
+        function handleShowRoomsInline(rawBtn) {
             if (!rawBtn) return;
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'fcfs';
@@ -175,33 +175,13 @@
                 '3d': 'Cube'
             };
 
+            // 1. Immediately update header info
             var infoEl = document.getElementById('selected-game-info');
             if (infoEl) {
                 infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
             }
 
-            if (typeof window.loadCurrentUserConfigRatings === 'function' && (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0)) {
-                try { await window.loadCurrentUserConfigRatings(); } catch (e) {}
-            }
-
-            var getRating = window.getUserConfigRating || function(gt, b, t) {
-                var clean = String(gt || '').replace('solo_', '');
-                var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
-                var rMap = window.currentUserConfigRatings || {};
-                var v = rMap[k];
-                if (v && typeof v === 'object' && v.rating) return Number(v.rating);
-                if (typeof v === 'number' && v > 0) return v;
-                return Number(window.currentUserRating || window.lastPlayerRating || 1200);
-            };
-
-            var exactRating = getRating(gameType, boardDimensions, timeLimit);
-            var ratingBtn = document.getElementById('my-rating-btn');
-            if (ratingBtn) {
-                ratingBtn.textContent = 'My Rating (' + exactRating + ')';
-                ratingBtn.dataset.rating = exactRating;
-                ratingBtn.style.display = 'inline-block';
-            }
-
+            // 2. Immediately render/prepare room list structure
             var roomsList = document.getElementById('rooms-list');
             if (roomsList) {
                 var roomsContainer = document.getElementById('dynamic-rooms-container');
@@ -230,21 +210,7 @@
                 }
             }
 
-            var doFetch = async function() {
-                var fn = window.fetchAndRenderRooms || (typeof fetchAndRenderRooms === 'function' ? fetchAndRenderRooms : null);
-                if (fn) {
-                    await fn(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
-                } else {
-                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying...');
-                    setTimeout(doFetch, 100);
-                }
-            };
-
-            await doFetch();
-            setTimeout(doFetch, 150);
-
-            if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
-
+            // 3. Immediately scroll to Active Rooms panel so user instantly sees visual focus
             var roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
             if (roomsPanel) {
                 roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -255,6 +221,46 @@
                         lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
                     }
                 }
+            }
+
+            // 4. Immediately trigger room fetching
+            var doFetch = async function() {
+                var fn = window.fetchAndRenderRooms || (typeof fetchAndRenderRooms === 'function' ? fetchAndRenderRooms : null);
+                if (fn) {
+                    await fn(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
+                } else {
+                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying...');
+                    setTimeout(doFetch, 100);
+                }
+            };
+            doFetch();
+            setTimeout(doFetch, 150);
+
+            if (typeof window.startLobbyPolling === 'function') window.startLobbyPolling();
+
+            // 5. Update rating button asynchronously without blocking UI response
+            var updateRatingBtn = function() {
+                var getRating = window.getUserConfigRating || function(gt, b, t) {
+                    var clean = String(gt || '').replace('solo_', '');
+                    var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
+                    var rMap = window.currentUserConfigRatings || {};
+                    var v = rMap[k];
+                    if (v && typeof v === 'object' && v.rating) return Number(v.rating);
+                    if (typeof v === 'number' && v > 0) return v;
+                    return Number(window.currentUserRating || window.lastPlayerRating || 1200);
+                };
+                var exactRating = getRating(gameType, boardDimensions, timeLimit);
+                var ratingBtn = document.getElementById('my-rating-btn');
+                if (ratingBtn) {
+                    ratingBtn.textContent = 'My Rating (' + exactRating + ')';
+                    ratingBtn.dataset.rating = exactRating;
+                    ratingBtn.style.display = 'inline-block';
+                }
+            };
+            updateRatingBtn();
+
+            if (typeof window.loadCurrentUserConfigRatings === 'function') {
+                window.loadCurrentUserConfigRatings().then(updateRatingBtn).catch(function(e) {});
             }
         }
 
@@ -5570,8 +5576,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=1200"></script>
-    <script src="/js/lobby.js?v=1200"></script>
+    <script src="/js/app.js?v=1300"></script>
+    <script src="/js/lobby.js?v=1300"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
