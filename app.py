@@ -3424,7 +3424,7 @@ def create_room():
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
         is_public = (min_rating == 0 and max_rating == 9999)
-        if is_public and game_type not in ['fcfs', 'split']:
+        if is_public:
             generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
             print(f"[app.py] Using stable v2 ID for public room: {generated_id}")
         else:
