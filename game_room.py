@@ -575,11 +575,12 @@ class GameRoom:
         if is_daily:
             self.save_active_players()
         
-        # Delete room immediately when all human players leave (non-24h rooms)
+        # Delete room when all human players leave (with 60s grace period for new room navigation)
         humans = [p for p in self.players if not p.is_ai]
+        room_uptime = time.time() - getattr(self, 'creation_time', time.time())
         
-        if not humans and not is_daily:
-            print(f"[GameRoom] Last human player has left room {self.room_id}. DELETING ROOM IMMEDIATELY.")
+        if not humans and not is_daily and room_uptime > 60:
+            print(f"[GameRoom] Last human player has left room {self.room_id} (uptime: {int(room_uptime)}s). DELETING ROOM.")
             self.is_closing = True
             self.spectators = []
             try:
