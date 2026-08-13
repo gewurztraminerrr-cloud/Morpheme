@@ -11,7 +11,10 @@ window.activeRatingFilterValue = null;
 function setupLobbyEvents() {
     console.log('Setting up Lobby event delegation');
     document.addEventListener('click', async (e) => {
-        const target = e.target;
+        const rawTarget = e.target;
+        if (!rawTarget) return;
+        const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+        if (!target || typeof target.closest !== 'function') return;
 
         // Handle Accumulative button clicks - create room and go to Play
         const accBtn = target.closest('.acc-btn');
@@ -23,13 +26,17 @@ function setupLobbyEvents() {
             if (window.currentRoomId) {
                 console.log('Leaving current room before creating new one...');
                 if (window.leaveCurrentRoom) {
-                    await window.leaveCurrentRoom();
+                    try {
+                        await window.leaveCurrentRoom();
+                    } catch (errLeave) {
+                        console.error('Error leaving current room:', errLeave);
+                    }
                 }
             }
 
-            const gameType = accBtn.dataset.game;
-            const timeLimit = parseInt(accBtn.dataset.time);
-            const boardDimensions = accBtn.dataset.board;
+            const gameType = accBtn.dataset.game || 'accumulative';
+            const timeLimit = parseInt(accBtn.dataset.time) || 45;
+            const boardDimensions = accBtn.dataset.board || '4x4';
 
             console.log('Accumulative button clicked!', { gameType, timeLimit, boardDimensions });
             
@@ -43,64 +50,35 @@ function setupLobbyEvents() {
             localStorage.removeItem('private_match_active');
 
             try {
-                let data = null;
+                let joined = false;
                 // For ALL Accumulative rooms, check if one already exists and JOIN it
                 // This ensures all users share the same board/timer (Multiplayer)
                 const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
-                if (!listResp.ok) {
-                    const errText = await listResp.text();
-                    throw new Error(`Server returned ${listResp.status}: ${errText}`);
-                }
-                const listData = await listResp.json();
+                if (listResp.ok) {
+                    const listData = await listResp.json();
+                    if (listData.rooms && listData.rooms.length > 0) {
+                        const existingId = listData.rooms[0].room_id;
+                        console.log('Found existing Accumulative room, joining:', existingId);
+                        const joinResp = await fetch(`/api/room/${existingId}/join`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ as_spectator: false })
+                        });
 
-                if (listData.rooms && listData.rooms.length > 0) {
-                    const existingId = listData.rooms[0].room_id;
-                    console.log('Found existing Accumulative room, joining:', existingId);
-                    const joinResp = await fetch(`/api/room/${existingId}/join`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ as_spectator: false })
-                    });
-
-                    if (!joinResp.ok) {
-                        const joinErr = await joinResp.text();
-                        throw new Error(`Join failed (${joinResp.status}): ${joinErr}`);
-                    }
-
-                    const joinData = await joinResp.json();
-                    if (joinData.success) {
-                        window.currentRoomId = existingId;
-                        localStorage.setItem('last_joined_room', existingId);
-                        
-                        // Enable Play button
-                        const playBtn = document.getElementById('play-btn');
-                        if (playBtn) {
-                            playBtn.disabled = false;
-                            playBtn.title = "";
-                        }
-                        if (window.updateManualToolState) window.updateManualToolState();
-
-
-                        showPage('page-play');
-
-                        setTimeout(() => {
-                            const input = document.getElementById('word-input');
-                            if (input) {
-                                input.disabled = false;
-                                input.focus();
+                        if (joinResp.ok) {
+                            const joinData = await joinResp.json();
+                            if (joinData.success) {
+                                window.currentRoomId = existingId;
+                                localStorage.setItem('last_joined_room', existingId);
+                                window.isSpectatorMode = false;
+                                joined = true;
                             }
-                        }, 100);
-
-                        if (window.startGamePolling) window.startGamePolling();
-                    } else {
-                        alert(joinData.error || 'Failed to join existing room');
-                        startLobbyPolling();
-                        accBtn.style.pointerEvents = 'auto';
-                        accBtn.style.opacity = '1';
-                        return;
+                        }
                     }
-                } else {
-                    // No existing room, create one
+                }
+
+                if (!joined) {
+                    // No existing room found or join failed, create one
                     const createResp = await fetch('/api/room/create', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -111,45 +89,39 @@ function setupLobbyEvents() {
                         })
                     });
 
-                    if (!createResp.ok) {
-                        let errText = "Room creation failed";
-                        try {
-                            const errJson = await createResp.json();
-                            errText = errJson.error || errJson.message || errText;
-                        } catch(e) {
-                            errText = "Server busy, please retry in a moment.";
+                    if (createResp.ok) {
+                        const data = await createResp.json();
+                        if (data.success && data.room_id) {
+                            window.currentRoomId = data.room_id;
+                            localStorage.setItem('last_joined_room', data.room_id);
+                            window.isSpectatorMode = false;
+                            joined = true;
+                        } else {
+                            alert('Failed to create room: ' + (data.error || 'Unknown error'));
                         }
-                        throw new Error(errText);
-                    }
-
-                    const data = await createResp.json();
-                    if (data.success) {
-                        window.currentRoomId = data.room_id;
-                        localStorage.setItem('last_joined_room', data.room_id);
-                        window.isSpectatorMode = false;
-
-                        const playBtn = document.getElementById('play-btn');
-                        if (playBtn) {
-                            playBtn.disabled = false;
-                            playBtn.title = "";
-                        }
-                        if (window.updateManualToolState) window.updateManualToolState();
-                        showPage('page-play');
-
-                        setTimeout(() => {
-                            const input = document.getElementById('word-input');
-                            if (input) {
-                                input.disabled = false;
-                                input.focus();
-                            }
-                        }, 100);
-
-                        if (window.startGamePolling) window.startGamePolling();
                     } else {
-                        alert('Failed to create room: ' + (data.error || 'Unknown error'));
-                        accBtn.style.pointerEvents = 'auto';
-                        accBtn.style.opacity = '1';
+                        alert('Server error creating room.');
                     }
+                }
+
+                if (joined) {
+                    const playBtn = document.getElementById('play-btn');
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                        playBtn.title = "";
+                    }
+                    if (window.updateManualToolState) window.updateManualToolState();
+                    showPage('page-play');
+
+                    setTimeout(() => {
+                        const input = document.getElementById('word-input');
+                        if (input) {
+                            input.disabled = false;
+                            input.focus();
+                        }
+                    }, 100);
+
+                    if (window.startGamePolling) window.startGamePolling();
                 }
             } catch (error) {
                 console.error('Error in room discovery/join:', error);
@@ -207,20 +179,22 @@ function setupLobbyEvents() {
                 }
             }
 
-            // Fetch immediately WITHOUT auto-create (just show list)
-            await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false);
+            // Fetch immediately WITH force=true so rendering is never suppressed
+            await fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
 
             // Start polling
             startLobbyPolling();
 
-            // Mobile redirection: Swipe smoothly to Active Rooms panel in the carousel
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                const roomsPanel = document.getElementById('mobile-panel-rooms');
-                // Direct scrollLeft assignment is always instant on iOS Safari (scrollIntoView behavior param is ignored)
-                const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
-                if (lobbyGrid) {
-                    lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
+            // Smoothly bring the Active Rooms panel into view
+            const roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
+            if (roomsPanel) {
+                roomsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
+                    if (lobbyGrid) {
+                        lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
+                    }
                 }
             }
 
@@ -536,11 +510,11 @@ if (document.readyState === 'loading') {
 }
 
 // Helper function to fetch and render rooms
-async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAutoCreate = false, minRating = 0, maxRating = 9999) {
+async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAutoCreate = false, minRating = 0, maxRating = 9999, force = false) {
     const roomsList = document.getElementById('rooms-list');
 
-    // Safety check if we navigated away
-    if (!isOnLobby()) {
+    // Safety check if we navigated away (only check during background poll, bypass when force=true)
+    if (!force && !isOnLobby()) {
         console.log('fetchAndRenderRooms called but not on lobby, ignoring');
         return;
     }
