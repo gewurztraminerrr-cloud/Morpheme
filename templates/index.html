@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="/css/play.css?v=173">
     <link rel="stylesheet" href="/css/howtoplay.css?v=10">
     <link rel="stylesheet" href="/css/forum.css?v=42">
-    <script src="/js/lobby.js?v=500"></script>
+    <script src="/js/lobby.js?v=600"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -179,15 +179,22 @@
                 infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
             }
 
-            if (typeof window.updateMyRatingButton === 'function') {
-                try { window.updateMyRatingButton(gameType, boardDimensions, timeLimit); } catch (e) {}
-            } else {
-                var ratingBtn = document.getElementById('my-rating-btn');
-                if (ratingBtn) {
-                    var userRating = window.currentUserRating || window.lastPlayerRating || 1200;
-                    ratingBtn.textContent = 'My Rating (' + userRating + ')';
-                    ratingBtn.dataset.rating = userRating;
-                }
+            var getRating = window.getUserConfigRating || function(gt, b, t) {
+                var clean = String(gt || '').replace('solo_', '');
+                var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
+                var rMap = window.currentUserConfigRatings || {};
+                var v = rMap[k];
+                if (v && typeof v === 'object' && v.rating) return Number(v.rating);
+                if (typeof v === 'number' && v > 0) return v;
+                return Number(window.currentUserRating || window.lastPlayerRating || 1200);
+            };
+
+            var exactRating = getRating(gameType, boardDimensions, timeLimit);
+            var ratingBtn = document.getElementById('my-rating-btn');
+            if (ratingBtn) {
+                ratingBtn.textContent = 'My Rating (' + exactRating + ')';
+                ratingBtn.dataset.rating = exactRating;
+                ratingBtn.style.display = 'inline-block';
             }
 
             var roomsList = document.getElementById('rooms-list');
@@ -5553,8 +5560,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=29"></script>
     <script src="/js/forum.js?v=66"></script>
-    <script src="/js/app.js?v=500"></script>
-    <script src="/js/lobby.js?v=500"></script>
+    <script src="/js/app.js?v=600"></script>
+    <script src="/js/lobby.js?v=600"></script>
     <script src="/js/play.js?v=270"></script>
     <script src="/js/tournaments.js?v=10"></script>
     <script src="/js/leaderboard.js?v=3"></script>
