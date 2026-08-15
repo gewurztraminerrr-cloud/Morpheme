@@ -575,12 +575,12 @@ class GameRoom:
         if is_daily:
             self.save_active_players()
         
-        # Delete room when all human players leave (with 60s grace period for new room navigation)
+        # Delete room immediately when the last human player actually leaves (non-daily rooms only).
+        # Only trigger if a real player was removed — never fire when called for a user not in this room.
         humans = [p for p in self.players if not p.is_ai]
-        room_uptime = time.time() - getattr(self, 'creation_time', time.time())
         
-        if not humans and not is_daily and room_uptime > 60:
-            print(f"[GameRoom] Last human player has left room {self.room_id} (uptime: {int(room_uptime)}s). DELETING ROOM.")
+        if leaving_player and not humans and not is_daily:
+            print(f"[GameRoom] Last human player ({username}) has left room {self.room_id}. DELETING ROOM immediately.")
             self.is_closing = True
             self.spectators = []
             try:
@@ -4205,10 +4205,10 @@ class RoomManager:
                 
                 is_public = room_id.startswith('pub_')
                 if is_empty_of_humans and not is_daily and not is_public:
-                    # Grace Period: Don't delete rooms that are less than 10 minutes old
-                    # This allows time for players to join newly created/reconstructed rooms.
+                    # Grace Period: 2 minutes — catch rooms that slipped through immediate deletion
+                    # (e.g. server hiccup, inactivity eviction path that bypasses remove_player).
                     room_uptime = time.time() - getattr(room, 'creation_time', time.time())
-                    if room_uptime > 600:
+                    if room_uptime > 120:
                         print(f"[RoomManager] Marking room {room_id} for deletion (No human players, uptime: {int(room_uptime)}s)")
                         rooms_to_delete.append(room_id)
                     

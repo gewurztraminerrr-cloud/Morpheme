@@ -3697,9 +3697,9 @@ def list_rooms():
             if matches_game and matches_board and matches_time:
                 humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
                 is_daily = (room_t >= 7200)
-                room_uptime = time.time() - getattr(room, 'creation_time', time.time())
-                # Only skip empty rooms if they are older than 60 seconds (grace period for room creation & navigation)
-                if len(humans) == 0 and len(room.spectators) == 0 and not is_daily and room_uptime > 60:
+                # Only list rooms that have at least 1 active human player (or 24h daily rooms).
+                # Empty rooms should never be visible in the lobby.
+                if len(humans) == 0 and not is_daily:
                     continue
                 
                 # Calculate average rating safely
@@ -3717,6 +3717,9 @@ def list_rooms():
 
                 active_rooms.append({
                     'room_id': room.room_id,
+                    'game_type': str(room.game_type),
+                    'board_dimensions': str(room.board_dimensions),
+                    'time_limit': room_t,
                     'player_count': p_count,
                     'max_players': room.max_players,
                     'min_rating': room.min_rating,
@@ -3748,10 +3751,10 @@ def get_lobby_stats():
                 t_lim = int(room.time_limit)
             except (ValueError, TypeError):
                 t_lim = 45
-            # Count rooms with active human players, 24h rooms, or newly created rooms in grace period
+            # Count rooms with active human players only. 24h rooms are always counted.
+            # Skip any room that has no human players — it should not contribute to the button count.
             is_daily = (t_lim >= 7200)
-            room_uptime = time.time() - getattr(room, 'creation_time', time.time())
-            if len(humans) == 0 and not is_daily and room_uptime > 60:
+            if len(humans) == 0 and not is_daily:
                 continue
                 
             # Create a unique key for this configuration (case-insensitive)
@@ -3759,7 +3762,7 @@ def get_lobby_stats():
             
             if key not in stats:
                 stats[key] = 0
-            stats[key] += max(1, len(humans))
+            stats[key] += len(humans)
         except Exception as err:
             print(f"[get_lobby_stats] Error processing room {getattr(room, 'room_id', 'unknown')}: {err}")
     
