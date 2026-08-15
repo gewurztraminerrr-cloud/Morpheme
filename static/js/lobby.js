@@ -628,6 +628,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             room.display_average_rating = avgRating;
         });
 
+        // Client-side safety filter: never display rooms with no players, regardless of what the server returned.
+        // This guards against any race conditions between room creation and the lobby poll cycle.
+        rooms = rooms.filter(room => room.players && room.players.length > 0);
+
         // Apply Authoritative Rating Proximity Filter/Sort if "Find" or "Enter" has been executed
         let filteredRooms = [...rooms];
         const targetRating = window.activeRatingFilterValue;
