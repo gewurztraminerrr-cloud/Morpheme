@@ -575,20 +575,19 @@ class GameRoom:
         if is_daily:
             self.save_active_players()
         
-        # Delete room immediately when the last human player actually leaves (non-daily rooms only).
-        # Only trigger if a real player was removed — never fire when called for a user not in this room.
+        # When the last human player leaves a non-daily room, mark it as closing.
+        # IMPORTANT: Do NOT call room_manager.delete_room() here — remove_player can be invoked
+        # from check_inactivity() inside the cleanup_rooms background loop which may hold
+        # self.lock. Calling delete_room() here would deadlock on self.lock.
+        # Actual deletion is handled by:
+        #   - leave_room() in app.py (for explicit /api/room/<id>/leave calls)
+        #   - cleanup_rooms() loop (for inactivity evictions — checks is_closing flag)
         humans = [p for p in self.players if not p.is_ai]
         
         if leaving_player and not humans and not is_daily:
-            print(f"[GameRoom] Last human player ({username}) has left room {self.room_id}. DELETING ROOM immediately.")
+            print(f"[GameRoom] Last human player ({username}) has left room {self.room_id}. Marking as closing.")
             self.is_closing = True
             self.spectators = []
-            try:
-                import app as app_module
-                if hasattr(app_module, 'room_manager'):
-                    app_module.room_manager.delete_room(self.room_id)
-            except Exception as e:
-                print(f"[GameRoom] Error deleting room {self.room_id} on last human exit: {e}")
 
         # If forced (logout), clear from past_players archive (except for 24h rooms where persistence is mandatory)
         if force and not is_daily:
@@ -4205,12 +4204,16 @@ class RoomManager:
                 
                 is_public = room_id.startswith('pub_')
                 if is_empty_of_humans and not is_daily and not is_public:
-                    # Grace Period: 2 minutes — catch rooms that slipped through immediate deletion
-                    # (e.g. server hiccup, inactivity eviction path that bypasses remove_player).
-                    room_uptime = time.time() - getattr(room, 'creation_time', time.time())
-                    if room_uptime > 120:
-                        print(f"[RoomManager] Marking room {room_id} for deletion (No human players, uptime: {int(room_uptime)}s)")
+                    # If remove_player already flagged this room as closing, delete immediately.
+                    if getattr(room, 'is_closing', False):
+                        print(f"[RoomManager] Room {room_id} flagged as closing (last player left). Deleting now.")
                         rooms_to_delete.append(room_id)
+                    else:
+                        # Grace Period: 2 minutes fallback for rooms not caught by remove_player
+                        room_uptime = time.time() - getattr(room, 'creation_time', time.time())
+                        if room_uptime > 120:
+                            print(f"[RoomManager] Marking room {room_id} for deletion (No human players, uptime: {int(room_uptime)}s)")
+                            rooms_to_delete.append(room_id)
                     
             except Exception as e:
                 import traceback
