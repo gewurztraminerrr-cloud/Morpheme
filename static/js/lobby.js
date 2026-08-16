@@ -792,33 +792,34 @@ function stopLobbyPolling() {
 // Stats Polling
 function startStatsPolling() {
     stopStatsPolling();
-    console.log('Starting lobby stats polling...');
 
-    // Initial fetch
-    fetchLobbyStats();
+    // Immediately do a FULL update (all buttons) when entering lobby
+    fetchLobbyStats(true);
 
+    // Auto-poll every 4 seconds — only updates Accumulative buttons automatically.
+    // FCFS/SP buttons update on: lobby entry, Refresh button click, or "Show Rooms" click.
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
-            fetchLobbyStats();
+            fetchLobbyStats(false); // accumulative only
         }
-    }, 4000); // 4 seconds
+    }, 4000);
 }
 
 function stopStatsPolling() {
     if (lobbyStatsInterval) {
         clearInterval(lobbyStatsInterval);
         lobbyStatsInterval = null;
-        console.log('Stats polling stopped.');
     }
 }
 
-async function fetchLobbyStats() {
+// allButtons=true → update every button (FCFS, SP, Accumulative)
+// allButtons=false → only update Accumulative buttons (auto-poll)
+async function fetchLobbyStats(allButtons) {
     try {
         const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
-
         if (data.stats) {
-            updateLobbyButtons(data.stats);
+            updateLobbyButtons(data.stats, allButtons !== false);
         }
     } catch (error) {
         console.error('Error fetching lobby stats:', error);
@@ -826,31 +827,63 @@ async function fetchLobbyStats() {
 }
 window.fetchLobbyStats = fetchLobbyStats;
 
-function updateLobbyButtons(stats) {
+// Lobby Refresh button handler
+async function handleLobbyRefresh(btn) {
+    const refreshBtn = btn || document.getElementById('lobby-refresh-btn');
+    if (!refreshBtn) return;
+
+    // Spin the icon
+    refreshBtn.classList.add('refreshing');
+    refreshBtn.disabled = true;
+
+    try {
+        // Full stats update — all button types
+        await fetchLobbyStats(true);
+
+        // If a room panel is open, also re-fetch the room list
+        if (window.currentLobbyConfig) {
+            const { gameType, timeLimit, boardDimensions } = window.currentLobbyConfig;
+            if (typeof window.fetchAndRenderRooms === 'function') {
+                await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false);
+            }
+        }
+    } finally {
+        // Stop spinning after a short minimum duration so the animation is visible
+        setTimeout(() => {
+            refreshBtn.classList.remove('refreshing');
+            refreshBtn.disabled = false;
+        }, 600);
+    }
+}
+window.handleLobbyRefresh = handleLobbyRefresh;
+
+function updateLobbyButtons(stats, allButtons) {
     // Stats format: "game_type|board|time": count
-
-    // Reset all buttons to [0] first? Or just update known ones?
-    // Safer to just update based on keys match.
-    // Actually, if a count goes to 0, it might disappear from stats (if map is sparse).
-    // If no rooms exist for a config, key won't be in stats.
-
+    // allButtons=true  → update all button types (initial load, manual Refresh)
+    // allButtons=false → only update Accumulative buttons (auto 4s poll)
     const buttons = document.querySelectorAll('.game-btn');
     buttons.forEach(btn => {
         const game = btn.dataset.game;
         const board = btn.dataset.board;
         const time = btn.dataset.time;
+        if (!game || !board || !time) return;
+
+        // Skip FCFS and SP during auto-poll — they update on Refresh or "Show Rooms" click only
+        if (!allButtons && game !== 'accumulative') return;
 
         const key = `${game}|${board}|${time}`;
         const count = stats[key] || 0;
 
-        // Update text: "Start [N]" or "Show Rooms [N]"
-        // Preserve prefix
-        const currentText = btn.textContent;
-        // Regex to find [N]
-        const newText = currentText.replace(/\[\d+\]/, `[${count}]`);
+        // Normalize whitespace: collapse newlines/spaces from multi-line HTML text content
+        const rawText = btn.textContent;
+        const normalizedText = rawText.replace(/\s+/g, ' ').trim();
 
-        if (currentText !== newText) {
-            btn.textContent = newText;
+        // Replace [N] with current count — always, so counts go down as well as up
+        const newNormalized = normalizedText.replace(/\[\d+\]/, `[${count}]`);
+
+        // Only write back if the displayed text actually changed
+        if (normalizedText !== newNormalized) {
+            btn.textContent = newNormalized;
         }
     });
 }

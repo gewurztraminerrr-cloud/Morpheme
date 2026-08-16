@@ -1351,25 +1351,17 @@
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">45s</div>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="45" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                             <div class="matrix-row">
                                 <div class="time-label">3m</div>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
-                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show
-                                    Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x4" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="4x6" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="5x7" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
+                                <button class="game-btn fcfs-btn" data-game="fcfs" data-time="180" data-board="6x8" onclick="window.handleLobbyButtonClick(this, event)">Show Rooms [0]</button>
                             </div>
                         </div>
                     </div>
@@ -1446,6 +1438,7 @@
                         <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100">
                         <button id="find-rating-btn">Find</button>
                         <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)">My Rating</button>
+                        <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="padding:6px 10px; margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
                     <div id="rooms-list">
                         <p class="placeholder">No "Show Rooms" selected</p>
