@@ -260,6 +260,13 @@
                         var rooms = (data && data.rooms) ? data.rooms : [];
                         // Client-side safety: never show rooms with no players
                         rooms = rooms.filter(function(r) { return r.players && r.players.length > 0; });
+                        // Update the Show Rooms [N] button count directly from rooms data
+                        var totalPlayers = rooms.reduce(function(sum, r) { return sum + (r.players ? r.players.length : 0); }, 0);
+                        document.querySelectorAll('.game-btn[data-game="' + gameType + '"][data-board="' + boardDimensions + '"][data-time="' + timeLimit + '"]').forEach(function(btn) {
+                            var cur = btn.textContent;
+                            var upd = cur.replace(/\[\d+\]/, '[' + totalPlayers + ']');
+                            if (cur !== upd) btn.textContent = upd;
+                        });
                         var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
                         if (targetContainer) {
                             if (rooms.length === 0) {

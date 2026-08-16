@@ -632,6 +632,17 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         // This guards against any race conditions between room creation and the lobby poll cycle.
         rooms = rooms.filter(room => room.players && room.players.length > 0);
 
+        // Directly update the Show Rooms [N] button for this config from the rooms data we already have.
+        // This is more reliable than a separate stats polling interval.
+        const totalPlayers = rooms.reduce((sum, r) => sum + (r.players ? r.players.length : 0), 0);
+        document.querySelectorAll(
+            `.game-btn[data-game="${gameType}"][data-board="${boardDimensions}"][data-time="${timeLimit}"]`
+        ).forEach(btn => {
+            const currentText = btn.textContent;
+            const newText = currentText.replace(/\[\d+\]/, `[${totalPlayers}]`);
+            if (currentText !== newText) btn.textContent = newText;
+        });
+
         // Apply Authoritative Rating Proximity Filter/Sort if "Find" or "Enter" has been executed
         let filteredRooms = [...rooms];
         const targetRating = window.activeRatingFilterValue;
