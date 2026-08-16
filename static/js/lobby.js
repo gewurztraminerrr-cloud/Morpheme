@@ -515,6 +515,8 @@ function setupLobbyEvents() {
             setTimeout(scrollToMain, 50);
             setTimeout(scrollToMain, 150);
         }
+    } // end if (isOnLobby())
+} // end setupLobbyEvents
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupLobbyEvents);
