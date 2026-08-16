@@ -248,16 +248,18 @@
                 var fn = window.fetchAndRenderRooms || (typeof fetchAndRenderRooms === 'function' ? fetchAndRenderRooms : null);
                 if (fn) {
                     await fn(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
-                } else if (retries < 5) {
+                } else if (retries < 20) {
                     retries++;
-                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying (' + retries + '/5)...');
-                    setTimeout(doFetch, 100);
+                    console.warn('[doFetch] fetchAndRenderRooms not ready yet, retrying (' + retries + '/20)...');
+                    setTimeout(doFetch, 200);
                 } else {
                     console.warn('[doFetch] fetchAndRenderRooms not found after retries. Running direct fallback fetch...');
                     try {
                         var res = await fetch('/api/rooms?game_type=' + gameType + '&board_dimensions=' + boardDimensions + '&time_limit=' + timeLimit + '&_t=' + Date.now());
                         var data = await res.json();
                         var rooms = (data && data.rooms) ? data.rooms : [];
+                        // Client-side safety: never show rooms with no players
+                        rooms = rooms.filter(function(r) { return r.players && r.players.length > 0; });
                         var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
                         if (targetContainer) {
                             if (rooms.length === 0) {
@@ -266,7 +268,20 @@
                                 targetContainer.innerHTML = rooms.map(function(r) {
                                     var rState = String(r.state || 'active').toUpperCase();
                                     var rId = String(r.room_id || '');
-                                    return '<div class="room-item"><div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div><button class="join-room-btn" data-room="' + rId + '" onclick="handleJoinRoomInline(this)">Join</button></div>';
+                                    var playersHtml = (r.players || []).map(function(p) {
+                                        var uname = (p && p.username) ? String(p.username) : 'Player';
+                                        var isGuest = uname.startsWith('Guest_');
+                                        var displayRating = isGuest ? 0 : (p && p.rating ? p.rating : 0);
+                                        return '<span class="room-player-pill" style="display:inline-flex;align-items:center;margin-right:6px;">' +
+                                               '<span style="background:#a78bfa;width:11px;height:11px;border-radius:3px;margin-right:5px;display:inline-block;"></span>' +
+                                               uname + ' (' + displayRating + ')</span>';
+                                    }).join('');
+                                    if (!playersHtml) playersHtml = '<span style="color:rgba(255,255,255,0.5);font-size:0.85rem;font-style:italic;">No active players</span>';
+                                    return '<div class="room-item">' +
+                                           '<div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div>' +
+                                           '<div class="room-players-row" style="margin:6px 0;">' + playersHtml + '</div>' +
+                                           '<button class="join-room-btn" data-room="' + rId + '" onclick="handleJoinRoomInline(this)">Join</button>' +
+                                           '</div>';
                                 }).join('');
                             }
                         }
