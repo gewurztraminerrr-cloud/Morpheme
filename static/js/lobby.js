@@ -764,6 +764,8 @@ function startLobbyPolling() {
                 currentLobbyConfig.boardDimensions,
                 false
             );
+            // Also refresh button counts on the same tick
+            fetchLobbyStats();
         }
     }, 3000); // 3 seconds
 }
@@ -912,6 +914,12 @@ if (typeof isOnLobby === 'function' && isOnLobby()) {
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof isOnLobby === 'function' && isOnLobby()) startStatsPolling();
     });
+    // Fallback: if DOMContentLoaded already fired (script loaded late), poll after short delay
+    setTimeout(() => {
+        if (typeof isOnLobby === 'function' && isOnLobby() && !lobbyStatsInterval) {
+            startStatsPolling();
+        }
+    }, 500);
 }
 
 function isOnLobby() {
