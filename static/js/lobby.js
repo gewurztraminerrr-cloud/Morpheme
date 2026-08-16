@@ -494,7 +494,53 @@ function setupLobbyEvents() {
         });
     }
 
-    // Start stats polling if we land on lobby
+    // Set up MutationObserver here, inside setupLobbyEvents, where DOM is guaranteed ready.
+    // (The top-level getElementById runs before DOM and returns null, so the observer
+    //  must be set up here instead.)
+    const lobbyEl = document.getElementById('page-lobby');
+    if (lobbyEl) {
+        const lobbyObserver = new MutationObserver(() => {
+            if (isOnLobby()) {
+                // ALWAYS do an immediate full stats update on every lobby entry.
+                // This is the primary mechanism for showing correct counts on entry.
+                fetchLobbyStats(true);
+
+                if (window.resetLobbyButtons) window.resetLobbyButtons();
+
+                if (currentLobbyConfig) {
+                    if (typeof updateMyRatingButton === 'function') {
+                        updateMyRatingButton(currentLobbyConfig.gameType, currentLobbyConfig.boardDimensions, currentLobbyConfig.timeLimit);
+                    }
+                    if (!lobbyPollInterval) startLobbyPolling();
+                }
+
+                // Start accumulative auto-poll interval if not already running
+                if (!lobbyStatsInterval) startStatsPolling();
+
+                // Mobile: snap to main panel
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const scrollToMain = () => {
+                        const mainPanel = document.getElementById('mobile-panel-main');
+                        if (mainPanel) {
+                            const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
+                            if (lobbyGrid) lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                        }
+                    };
+                    scrollToMain();
+                    requestAnimationFrame(scrollToMain);
+                    setTimeout(scrollToMain, 50);
+                    setTimeout(scrollToMain, 150);
+                }
+            } else {
+                stopLobbyPolling();
+                stopStatsPolling();
+            }
+        });
+        lobbyObserver.observe(lobbyEl, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Start stats polling if we land on lobby at page-load time
     if (isOnLobby()) {
         startStatsPolling();
 
@@ -898,75 +944,9 @@ function formatTime(seconds) {
     return `${Math.floor(s / 86400)}d`;
 }
 
-// Lobby music is handled by app.js to ensure consistent state management
-
-// Observe page changes to handle polling
+// NOTE: MutationObserver is set up inside setupLobbyEvents() where DOM is guaranteed ready.
+// Top-level getElementById runs before DOM, so it's only used as a fallback for isOnLobby().
 const lobbyPage = document.getElementById('page-lobby');
-if (lobbyPage) {
-    const observer = new MutationObserver(() => {
-        if (isOnLobby()) {
-            // Ensure we resume polling if coming back to lobby
-            // If we navigate in app, 'isOnLobby' changes.
-            if (window.resetLobbyButtons) window.resetLobbyButtons();
-            
-            if (currentLobbyConfig) {
-                if (typeof updateMyRatingButton === 'function') {
-                    updateMyRatingButton(currentLobbyConfig.gameType, currentLobbyConfig.boardDimensions, currentLobbyConfig.timeLimit);
-                }
-                if (!lobbyPollInterval) {
-                    startLobbyPolling();
-                }
-            }
-
-            // Always start stats polling when entering lobby
-            if (!lobbyStatsInterval) {
-                startStatsPolling();
-            }
-
-            // Mobile layout: Snap to center main lobby panel on load
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                const scrollToMain = () => {
-                    const mainPanel = document.getElementById('mobile-panel-main');
-                    if (mainPanel) {
-                        const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
-                        if (lobbyGrid) {
-                            lobbyGrid.scrollLeft = mainPanel.offsetLeft;
-                        }
-                    }
-                };
-                scrollToMain();
-                requestAnimationFrame(scrollToMain);
-                setTimeout(scrollToMain, 50);
-                setTimeout(scrollToMain, 150);
-            }
-
-        } else {
-            stopLobbyPolling();
-            stopStatsPolling();
-        }
-    });
-
-    observer.observe(lobbyPage, {
-        attributes: true,
-        attributeFilter: ['class']
-    });
-}
-
-// Start stats polling immediately on page load
-if (typeof isOnLobby === 'function' && isOnLobby()) {
-    startStatsPolling();
-} else {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof isOnLobby === 'function' && isOnLobby()) startStatsPolling();
-    });
-    // Fallback: if DOMContentLoaded already fired (script loaded late), poll after short delay
-    setTimeout(() => {
-        if (typeof isOnLobby === 'function' && isOnLobby() && !lobbyStatsInterval) {
-            startStatsPolling();
-        }
-    }, 500);
-}
 
 function isOnLobby() {
     const el = lobbyPage || document.getElementById('page-lobby');
