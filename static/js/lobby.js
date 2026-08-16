@@ -150,12 +150,11 @@ async function enterLobbyRoom(rawBtn) {
             if (window.startGamePolling) window.startGamePolling();
             showLobbyToast('Room joined successfully!', 'success');
         } else {
-            startLobbyPolling();
+            // No room joined — stay on lobby, user can retry
         }
     } catch (error) {
         console.error('Error entering room:', error);
         showLobbyToast('Network error: ' + error.message, 'error');
-        startLobbyPolling();
     } finally {
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }
@@ -381,12 +380,10 @@ function setupLobbyEvents() {
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
                     alert('Failed to join room: ' + data.error);
-                    startLobbyPolling(); // Resume polling
                 }
             } catch (error) {
                 console.error('Error joining room:', error);
                 alert('Network error joining room: ' + error.message);
-                startLobbyPolling();
             }
             return; // Handled
         }
@@ -511,7 +508,6 @@ function setupLobbyEvents() {
                     if (typeof updateMyRatingButton === 'function') {
                         updateMyRatingButton(currentLobbyConfig.gameType, currentLobbyConfig.boardDimensions, currentLobbyConfig.timeLimit);
                     }
-                    if (!lobbyPollInterval) startLobbyPolling();
                 }
 
                 // Start accumulative auto-poll interval if not already running
