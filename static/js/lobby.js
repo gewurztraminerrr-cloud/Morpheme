@@ -379,7 +379,15 @@ function setupLobbyEvents() {
 
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
-                    alert('Failed to join room: ' + data.error);
+                    const errMsg = data.error || 'Unknown error';
+                    if (errMsg.toLowerCase().includes('not found')) {
+                        alert('This room has ended or is no longer active.');
+                        if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
+                            window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
+                        }
+                    } else {
+                        alert('Failed to join room: ' + errMsg);
+                    }
                 }
             } catch (error) {
                 console.error('Error joining room:', error);
