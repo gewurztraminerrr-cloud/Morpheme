@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33011">
-    <link rel="stylesheet" href="/css/lobby.css?v=33011">
-    <link rel="stylesheet" href="/css/play.css?v=33011">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33011">
-    <link rel="stylesheet" href="/css/forum.css?v=33011">
-    <link rel="stylesheet" href="/css/donate.css?v=33011">
-    <script src="/js/app.js?v=33011"></script>
-    <script src="/js/lobby.js?v=33011"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33012">
+    <link rel="stylesheet" href="/css/lobby.css?v=33012">
+    <link rel="stylesheet" href="/css/play.css?v=33012">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33012">
+    <link rel="stylesheet" href="/css/forum.css?v=33012">
+    <link rel="stylesheet" href="/css/donate.css?v=33012">
+    <script src="/js/app.js?v=33012"></script>
+    <script src="/js/lobby.js?v=33012"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1483,10 +1483,10 @@
                     <div id="selected-game-info">Select a game type</div>
                     <div class="rating-filter-container">
                         <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100">
-                        <button id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')">Open Rooms</button>
-                        <button id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')">Closed Rooms</button>
-                        <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)">My Rating</button>
-                        <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="padding:6px 10px; margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
+                        <button id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')"><span>Open</span> <span>Rooms</span></button>
+                        <button id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')"><span>Closed</span> <span>Rooms</span></button>
+                        <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)"><span>My</span> <span>Rating</span></button>
+                        <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
                     <div id="rooms-list">
                         <p class="placeholder">No "Show Rooms" selected</p>
@@ -5743,18 +5743,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33011"></script>
-    <script src="/js/forum.js?v=33011"></script>
-    <script src="/js/app.js?v=33011"></script>
-    <script src="/js/lobby.js?v=33011"></script>
-    <script src="/js/play.js?v=33011"></script>
-    <script src="/js/tournaments.js?v=33011"></script>
-    <script src="/js/leaderboard.js?v=33011"></script>
-    <script src="/js/tools.js?v=33011"></script>
-    <script src="/js/mouse_selection.js?v=33011"></script>
-    <script src="/js/mods.js?v=33011"></script>
-    <script src="/js/private_matches.js?v=33011"></script>
-    <script src="/js/donate.js?v=33011"></script>
+    <script src="/js/settings.js?v=33012"></script>
+    <script src="/js/forum.js?v=33012"></script>
+    <script src="/js/app.js?v=33012"></script>
+    <script src="/js/lobby.js?v=33012"></script>
+    <script src="/js/play.js?v=33012"></script>
+    <script src="/js/tournaments.js?v=33012"></script>
+    <script src="/js/leaderboard.js?v=33012"></script>
+    <script src="/js/tools.js?v=33012"></script>
+    <script src="/js/mouse_selection.js?v=33012"></script>
+    <script src="/js/mods.js?v=33012"></script>
+    <script src="/js/private_matches.js?v=33012"></script>
+    <script src="/js/donate.js?v=33012"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

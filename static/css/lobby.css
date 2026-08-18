@@ -207,13 +207,14 @@
 
 .rating-filter-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr auto;
     gap: 6px;
     width: 100%;
+    align-items: stretch;
 }
 
 #rating-filter {
-    grid-column: span 2;
+    grid-column: 1 / -1;
     width: 100%;
     padding: 12px 8px;
     background: var(--input-bg);
@@ -221,6 +222,7 @@
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.85rem;
+    box-sizing: border-box;
 }
 
 #rating-filter::placeholder {
@@ -235,19 +237,25 @@
 }
 
 .room-tab-btn {
-    grid-column: span 1;
+    grid-column: auto;
     width: 100%;
-    padding: 12px 8px;
+    padding: 8px 4px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.75);
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    line-height: 1.15;
+    box-sizing: border-box;
 }
 
 .room-tab-btn:hover {
@@ -276,19 +284,25 @@
 }
 
 #my-rating-btn {
-    grid-column: span 1;
+    grid-column: auto;
     width: 100%;
-    padding: 12px 8px;
+    padding: 8px 4px;
     background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
     border: none;
     border-radius: 8px;
     color: #fff;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    line-height: 1.15;
+    box-sizing: border-box;
 }
 
 #my-rating-btn:hover {
@@ -301,30 +315,51 @@
     transform: translateY(0);
 }
 
+#lobby-refresh-btn {
+    grid-column: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
 /* Widescreen desktop/laptop side-by-side override */
 @media (min-width: 901px) {
     .rating-filter-container {
         display: flex;
+        flex-direction: row;
+        align-items: center;
         gap: 8px;
     }
     #rating-filter {
         flex: 1;
-        grid-column: auto;
         min-width: 185px;
         padding: 12px;
         font-size: 1rem;
     }
     .room-tab-btn {
-        grid-column: auto;
+        flex-direction: row;
+        gap: 4px;
         width: auto;
         padding: 12px 14px;
         font-size: 0.9rem;
+        white-space: nowrap;
     }
     #my-rating-btn {
-        grid-column: auto;
+        flex-direction: row;
+        gap: 4px;
         width: auto;
         padding: 12px 15px;
         font-size: 0.95rem;
+        white-space: nowrap;
+    }
+    #lobby-refresh-btn {
+        padding: 12px 14px !important;
+        height: auto !important;
     }
 }
 
@@ -1252,9 +1287,12 @@ body.theme-light-brown .field-hint {
     #rating-filter::placeholder {
         font-size: 0.7rem !important;
     }
-    #find-rating-btn, #my-rating-btn {
-        padding: 10px 6px !important;
-        font-size: 0.72rem !important;
+    .room-tab-btn, #my-rating-btn {
+        padding: 6px 2px !important;
+        font-size: 0.7rem !important;
+    }
+    #lobby-refresh-btn {
+        padding: 6px 8px !important;
     }
 }
 
