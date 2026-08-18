@@ -2123,7 +2123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Following user to room: ${roomId}`);
 
             try {
-                // 1. Fetch room state to check player count
+                // 1. Fetch room state to check player count and rating limits
                 const resp = await fetch(`/api/room/${roomId}/state`);
                 const data = await resp.json();
 
@@ -2133,24 +2133,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 2. Decide if join as player or spectator
-                // Rule: Max 8 players; more than that -> Spectator
-                // Note: accumulative and fcfs modes have higher limits, but request said "8 players" specifically
+                // Rule: Max 8 players; or rating outside set limits -> Spectator
                 const playerCount = (data.players && data.players.length) || 0;
-                const isFull = playerCount >= 8;
-                console.log(`Room population: ${playerCount} (Full: ${isFull})`);
+                const isFull = playerCount >= (Number(data.max_players) || 8);
+
+                const roomMin = Number(data.min_rating) || 0;
+                const roomMax = Number(data.max_rating) || 9999;
+                const hasLimits = (roomMin > 0 || roomMax < 9999);
+
+                let userRating = 1200;
+                if (typeof getUserConfigRating === 'function') {
+                    userRating = getUserConfigRating(data.game_type, data.board_dimensions, data.time_limit);
+                } else if (window.currentUserConfigRatings) {
+                    const cfgKey = `${(data.game_type || '').replace('solo_', '')}|${data.board_dimensions}|${data.time_limit}`;
+                    const rObj = window.currentUserConfigRatings[cfgKey];
+                    if (rObj && rObj.rating !== undefined) userRating = rObj.rating;
+                }
+
+                const currentUser = window.currentUser || '';
+                const isGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
+                const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isGuest);
+
+                const shouldSpectate = isFull || isRatingOutOfRange;
+                console.log(`Following user: Room ${roomId}, Population: ${playerCount} (Full: ${isFull}), Rating Out of Range: ${isRatingOutOfRange} -> Spectator: ${shouldSpectate}`);
 
                 // 3. Join the room
                 const joinResp = await fetch(`/api/room/${roomId}/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: isFull })
+                    body: JSON.stringify({ as_spectator: shouldSpectate })
                 });
                 const joinData = await joinResp.json();
 
                 if (joinData.success) {
-                    // Navigate to Play Page
+                    const isSpectator = Boolean(joinData.role === 'spectator' || shouldSpectate);
                     window.currentRoomId = roomId;
-                    window.isSpectatorMode = isFull;
+                    window.isSpectatorMode = isSpectator;
+                    localStorage.setItem('last_joined_room', roomId);
+
+                    const playBtn = document.getElementById('play-btn');
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                        playBtn.title = "";
+                    }
+                    if (window.updateManualToolState) window.updateManualToolState();
 
                     if (typeof showPage === 'function') {
                         showPage('page-play');
@@ -2161,7 +2187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Force focus for Word Input if not spectator
                     setTimeout(() => {
                         const input = document.getElementById('word-input');
-                        if (input && !isFull) {
+                        if (input && !window.isSpectatorMode) {
                             input.disabled = false;
                             input.focus();
                         }

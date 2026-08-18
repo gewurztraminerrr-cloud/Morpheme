@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33009`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33010`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -59,6 +59,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Full Room Join Alert Popup**: If a room becomes full before clicking Join, alerts *"This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms."* and refreshes room cards.
 - **Scroll Position Preservation**: Captures and restores scroll position on `rooms-list` and dynamic containers across refreshes so list position and relative average rating views remain stable.
 - **Comprehensive FAQ Section**: Added a dedicated FAQ entry and Quick Navigate shortcut covering all Active Rooms mechanics.
+
+### I. User Follow Spectator Mode Logic (`tools.js`)
+- **Rating Limit Check on Follow**: When following a player into their current active room, checks whether the target room has rating limits and whether the following user meets those limits.
+- **Automatic Spectator Transition**: If the target room is full (>= 8 players) or if the following user's rating falls outside the room's min/max rating limits (or if guest), puts the user directly into `SPECTATING` mode (`window.isSpectatorMode = true`) upon entering the room.
 
 ---
 
