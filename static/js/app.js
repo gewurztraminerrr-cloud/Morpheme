@@ -2144,7 +2144,7 @@ document.addEventListener('visibilitychange', () => {
             _updateVhVariable();
             _restoreToolsLayout();
             if (typeof window.switchPlayPanel === 'function') {
-                window.switchPlayPanel(window._currentPlayPanel || 'board');
+                window.switchPlayPanel(window._currentPlayPanel || 'board', false);
             }
         }, 350);
     }

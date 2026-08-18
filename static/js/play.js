@@ -11,13 +11,18 @@
 const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
-window.switchPlayPanel = function(panelId) {
+window.switchPlayPanel = function(panelId, smooth = true) {
     window._currentPlayPanel = panelId || 'board';
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
     const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel);
     if (idx === -1) return;
-    playGrid.scrollLeft = idx * playGrid.clientWidth;
+    const targetLeft = idx * playGrid.clientWidth;
+    if (smooth && typeof playGrid.scrollTo === 'function') {
+        playGrid.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    } else {
+        playGrid.scrollLeft = targetLeft;
+    }
 };
 
 // Track which panel the user swiped to so window._currentPlayPanel stays in sync.
@@ -54,7 +59,7 @@ window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
     if (typeof window.switchPlayPanel === 'function') {
-        window.switchPlayPanel(window._currentPlayPanel || 'board');
+        window.switchPlayPanel(window._currentPlayPanel || 'board', false);
     }
 });
 
