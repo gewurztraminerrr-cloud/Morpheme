@@ -234,29 +234,44 @@
     filter: brightness(1.2);
 }
 
-#find-rating-btn {
+.room-tab-btn {
     grid-column: span 1;
     width: 100%;
     padding: 12px 8px;
-    background: linear-gradient(135deg, var(--accent-color, #ff0844) 0%, #ffb199 100%);
-    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 8px;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.75);
     font-weight: 700;
     font-size: 0.8rem;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     white-space: nowrap;
 }
 
-#find-rating-btn:hover {
+.room-tab-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(255, 8, 68, 0.35);
-    filter: brightness(1.1);
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
-#find-rating-btn:active {
+.room-tab-btn.active#open-rooms-filter-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #34d399;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.room-tab-btn.active#closed-rooms-filter-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border-color: #f87171;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.room-tab-btn:active {
     transform: translateY(0);
 }
 
@@ -299,11 +314,11 @@
         padding: 12px;
         font-size: 1rem;
     }
-    #find-rating-btn {
+    .room-tab-btn {
         grid-column: auto;
         width: auto;
-        padding: 12px 15px;
-        font-size: 0.95rem;
+        padding: 12px 14px;
+        font-size: 0.9rem;
     }
     #my-rating-btn {
         grid-column: auto;

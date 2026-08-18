@@ -350,6 +350,13 @@ function setupLobbyEvents() {
                 const data = await response.json();
 
                 if (data.success) {
+                    if (!isSpectator && data.role === 'spectator') {
+                        alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        if (currentLobbyConfig) {
+                            fetchAndRenderRooms(currentLobbyConfig.gameType, currentLobbyConfig.timeLimit, currentLobbyConfig.boardDimensions, false);
+                        }
+                        return;
+                    }
                     window.currentRoomId = roomId;
                     localStorage.setItem('last_joined_room', roomId);
                     if (data.role === 'spectator') {
@@ -365,8 +372,6 @@ function setupLobbyEvents() {
                     }
                     if (window.updateManualToolState) window.updateManualToolState();
 
-
-
                     showPage('page-play');
                     // FORCE FOCUS
                     setTimeout(() => {
@@ -380,7 +385,12 @@ function setupLobbyEvents() {
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
                     const errMsg = data.error || 'Unknown error';
-                    if (errMsg.toLowerCase().includes('not found')) {
+                    if (errMsg.toLowerCase().includes('full')) {
+                        alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        if (currentLobbyConfig) {
+                            fetchAndRenderRooms(currentLobbyConfig.gameType, currentLobbyConfig.timeLimit, currentLobbyConfig.boardDimensions, false);
+                        }
+                    } else if (errMsg.toLowerCase().includes('not found')) {
                         alert('This room has ended or is no longer active.');
                         if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                             window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
@@ -399,7 +409,48 @@ function setupLobbyEvents() {
 
     console.log('Lobby event delegation setup complete');
 
-    // Setup Rating Filter Handlers (Find button and Enter key)
+    // Setup Open Rooms vs Closed Rooms tab selection
+    window.currentRoomFilterTab = window.currentRoomFilterTab || 'open';
+    window.setRoomFilterTab = function(tab) {
+        window.currentRoomFilterTab = (tab === 'closed') ? 'closed' : 'open';
+        const openBtn = document.getElementById('open-rooms-filter-btn');
+        const closedBtn = document.getElementById('closed-rooms-filter-btn');
+        if (openBtn) {
+            if (window.currentRoomFilterTab === 'open') openBtn.classList.add('active');
+            else openBtn.classList.remove('active');
+        }
+        if (closedBtn) {
+            if (window.currentRoomFilterTab === 'closed') closedBtn.classList.add('active');
+            else closedBtn.classList.remove('active');
+        }
+        console.log('[Lobby] Room filter tab switched to:', window.currentRoomFilterTab);
+        if (currentLobbyConfig) {
+            fetchAndRenderRooms(
+                currentLobbyConfig.gameType,
+                currentLobbyConfig.timeLimit,
+                currentLobbyConfig.boardDimensions,
+                false
+            );
+        }
+    };
+
+    const openRoomsBtn = document.getElementById('open-rooms-filter-btn');
+    if (openRoomsBtn) {
+        openRoomsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.setRoomFilterTab('open');
+        });
+    }
+
+    const closedRoomsBtn = document.getElementById('closed-rooms-filter-btn');
+    if (closedRoomsBtn) {
+        closedRoomsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.setRoomFilterTab('closed');
+        });
+    }
+
+    // Setup Rating Filter Handlers (Enter key and input)
     function handleRatingFilterSearch() {
         const input = document.getElementById('rating-filter');
         if (input) {
@@ -449,14 +500,6 @@ function setupLobbyEvents() {
                     false
                 );
             }
-        });
-    }
-
-    const findRatingBtn = document.getElementById('find-rating-btn');
-    if (findRatingBtn) {
-        findRatingBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleRatingFilterSearch();
         });
     }
 
@@ -657,8 +700,33 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             if (normalizedText !== newNormalized) btn.textContent = newNormalized;
         });
 
-        // Apply Authoritative Rating Proximity Filter/Sort if "Find" or "Enter" has been executed
-        let filteredRooms = [...rooms];
+        // Ensure we target the fresh active container element right before DOM mutation
+        roomsContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+        const scrollParent = document.getElementById('rooms-list');
+        const savedListScroll = scrollParent ? scrollParent.scrollTop : 0;
+        const savedContainerScroll = roomsContainer ? roomsContainer.scrollTop : 0;
+
+        // Classify each room as Open or Closed for the current user
+        rooms.forEach(room => {
+            const pCountVal = Number(room.player_count) || (room.players ? room.players.length : 0);
+            const isFull = pCountVal >= (Number(room.max_players) || 8);
+            const roomMin = Number(room.min_rating) || 0;
+            const roomMax = Number(room.max_rating) || 9999;
+            const hasLimits = roomMin > 0 || roomMax < 9999;
+            const userRating = getUserConfigRating(room.game_type, room.board_dimensions, room.time_limit);
+            const currentUser = window.currentUser || '';
+            const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
+            const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
+
+            // Open Room: within rating limits AND less than 8 players
+            room._isOpen = !isRatingOutOfRange && !isFull;
+        });
+
+        // Filter based on active tab ('open' vs 'closed')
+        const activeTab = window.currentRoomFilterTab || 'open';
+        let filteredRooms = rooms.filter(room => activeTab === 'open' ? room._isOpen : !room._isOpen);
+
+        // Apply Authoritative Rating Proximity Filter/Sort if "Enter" or input has been executed
         const targetRating = window.activeRatingFilterValue;
         if (targetRating !== null && !isNaN(targetRating)) {
             // Sort rooms by closeness to entered average value (closest first)
@@ -669,12 +737,12 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             });
         }
 
-        // Ensure we target the fresh active container element right before DOM mutation
-        roomsContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
-
         if (filteredRooms.length === 0) {
             if (roomsContainer) {
-                roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+                const emptyMsg = (activeTab === 'open')
+                    ? 'No open rooms currently available for your rating. Click <strong>+ Create Room</strong> above to start one!'
+                    : 'No closed or full rooms currently active in this configuration.';
+                roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">${emptyMsg}</p>`;
             }
         } else {
             const html = filteredRooms.map(room => {
@@ -695,48 +763,30 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     playersHtml = '<span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; font-style: italic;">No active players currently in room — Click Join to start!</span>';
                 }
 
-                // Logic for Join vs Spectate
-                const pCountVal = Number(room.player_count) || (room.players ? room.players.length : 0);
-                const isFull = pCountVal >= (Number(room.max_players) || 8);
                 const roomMin = Number(room.min_rating) || 0;
                 const roomMax = Number(room.max_rating) || 9999;
                 const hasLimits = roomMin > 0 || roomMax < 9999;
                 const rId = String(room.room_id || '');
                 const rState = String(room.state || 'active');
 
-                // Determine user's rating for this room configuration
-                const userRating = getUserConfigRating(room.game_type, room.board_dimensions, room.time_limit);
-
-                // Check rating restrictions for FCFS and SP (Split) rooms
-                const gameTypeLower = String(room.game_type || '').toLowerCase();
-                const isFcfsOrSp = gameTypeLower === 'fcfs' || gameTypeLower === 'split' || gameTypeLower === 'sp' || rId.includes('fcfs') || rId.includes('split');
-                const currentUser = window.currentUser || '';
-                const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
-                const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
-
                 let actionButtons = '';
 
                 if (rId && rId === window.currentRoomId) {
                     actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" onclick="handleJoinRoomInline(this)" style="background: #e67e22;">Return to Game</button>`;
+                } else if (activeTab === 'closed' || !room._isOpen) {
+                    // Closed Rooms: ONLY allow Spectate button to be visible
+                    actionButtons = `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" onclick="handleJoinRoomInline(this)" style="background: #34495e;">Spectate</button>`;
                 } else {
-                    // Spectate Button - Always allowed for public rooms
+                    // Open Rooms: Spectate & Join
                     actionButtons += `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" onclick="handleJoinRoomInline(this)" style="background: #34495e; margin-right: 5px;">Spectate</button>`;
 
                     let ratingText = '';
                     if (hasLimits) {
                         ratingText = `(${roomMin}-${roomMax < 9999 ? roomMax : '∞'})`;
                     }
-
-                    // For FCFS and SP rooms (or any room with rating limits), if user rating is outside limit, ONLY allow spectate (Remove Join button)
-                    if (isRatingOutOfRange) {
-                        // Join green button is completely removed
-                    } else if (!isFull) {
-                        actionButtons += `<button class="join-room-btn" data-room="${rId}" data-min-rating="${roomMin}" onclick="handleJoinRoomInline(this)">
-                            Join ${ratingText}
-                        </button>`;
-                    } else {
-                        actionButtons += `<button class="join-room-btn disabled" disabled style="opacity:0.5; cursor:not-allowed;">Full</button>`;
-                    }
+                    actionButtons += `<button class="join-room-btn" data-room="${rId}" data-min-rating="${roomMin}" onclick="handleJoinRoomInline(this)">
+                        Join ${ratingText}
+                    </button>`;
                 }
 
                 // Display limitations
@@ -762,6 +812,14 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             if (roomsContainer && roomsContainer.innerHTML !== html) {
                 roomsContainer.innerHTML = html;
             }
+        }
+
+        // Restore scroll positions after render
+        if (scrollParent && savedListScroll > 0) {
+            try { scrollParent.scrollTop = savedListScroll; } catch(e) {}
+        }
+        if (roomsContainer && savedContainerScroll > 0) {
+            try { roomsContainer.scrollTop = savedContainerScroll; } catch(e) {}
         }
 
         if (typeof updateMyRatingButton === 'function') {

@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33008`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33009`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -50,6 +50,15 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Spectator State Transition**: Properly initialized `window.isSpectatorMode` in `handleJoinRoomInline`, restoring full board loading.
 - **"Join Room" Button & Rating Restrictions**: Rooms with open slots display the prominent **"Join Room"** button for players within the rating range, and display clean **`SPECTATING`** mode when spectating a rating-restricted room outside their range.
 - **404 Stale Room Cleanup**: If a user clicks a room card that has ended or expired, the client alerts *"This room has ended or is no longer active"* and immediately re-fetches the live room list to remove the stale card.
+
+### H. Open Rooms & Closed Rooms Lobby Tabs, Spectate Rules & FAQ (`templates/index.html`, `lobby.js`, `lobby.css`)
+- **Open Rooms & Closed Rooms Buttons**: Replaced the legacy `Find` button with dedicated `Open Rooms` and `Closed Rooms` tab buttons along the same row as `My Rating` and `🔄 Refresh`.
+- **Open Rooms Qualification**: Rooms qualify as Open if the user's rating is within the set limits (or unrestricted) **and** player count is `< 8`. Displays both `Join` and `Spectate` buttons.
+- **Closed Rooms Qualification & Spectate-Only**: Rooms qualify as Closed if player count `== 8` (full) or rating is outside the room's limits. In Closed Rooms, **ONLY** the `Spectate` button is visible.
+- **No Background Auto-Shifts**: If a room drops from 8 to 7 players, it remains in the current list until the user explicitly clicks `Refresh`.
+- **Full Room Join Alert Popup**: If a room becomes full before clicking Join, alerts *"This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms."* and refreshes room cards.
+- **Scroll Position Preservation**: Captures and restores scroll position on `rooms-list` and dynamic containers across refreshes so list position and relative average rating views remain stable.
+- **Comprehensive FAQ Section**: Added a dedicated FAQ entry and Quick Navigate shortcut covering all Active Rooms mechanics.
 
 ---
 

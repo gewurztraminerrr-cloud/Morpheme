@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33008">
-    <link rel="stylesheet" href="/css/lobby.css?v=33008">
-    <link rel="stylesheet" href="/css/play.css?v=33008">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33008">
-    <link rel="stylesheet" href="/css/forum.css?v=33008">
-    <link rel="stylesheet" href="/css/donate.css?v=33008">
-    <script src="/js/app.js?v=33008"></script>
-    <script src="/js/lobby.js?v=33008"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33009">
+    <link rel="stylesheet" href="/css/lobby.css?v=33009">
+    <link rel="stylesheet" href="/css/play.css?v=33009">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33009">
+    <link rel="stylesheet" href="/css/forum.css?v=33009">
+    <link rel="stylesheet" href="/css/donate.css?v=33009">
+    <script src="/js/app.js?v=33009"></script>
+    <script src="/js/lobby.js?v=33009"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -318,6 +318,15 @@
                     });
                     var data = await response.json();
                     if (data && data.success) {
+                        if (!isSpectator && data.role === 'spectator') {
+                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
+                                window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
+                            }
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'auto';
+                            return;
+                        }
                         window.currentRoomId = roomId;
                         localStorage.setItem('last_joined_room', roomId);
                         window.isSpectatorMode = (data.role === 'spectator' || isSpectator);
@@ -331,7 +340,12 @@
                         if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     } else {
                         var errMsg = (data && data.error) ? data.error : 'Unknown error';
-                        if (errMsg.toLowerCase().includes('not found') || response.status === 404) {
+                        if (errMsg.toLowerCase().includes('full') || response.status === 409) {
+                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
+                                window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
+                            }
+                        } else if (errMsg.toLowerCase().includes('not found') || response.status === 404) {
                             alert('This room has ended or is no longer active.');
                             if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                                 window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
@@ -437,6 +451,24 @@
             }
         }
         window.handleCreateRoomButtonClick = handleCreateRoomButtonClick;
+
+        window.currentRoomFilterTab = window.currentRoomFilterTab || 'open';
+        window.setRoomFilterTab = function(tab) {
+            window.currentRoomFilterTab = (tab === 'closed') ? 'closed' : 'open';
+            var openBtn = document.getElementById('open-rooms-filter-btn');
+            var closedBtn = document.getElementById('closed-rooms-filter-btn');
+            if (openBtn) {
+                if (window.currentRoomFilterTab === 'open') openBtn.classList.add('active');
+                else openBtn.classList.remove('active');
+            }
+            if (closedBtn) {
+                if (window.currentRoomFilterTab === 'closed') closedBtn.classList.add('active');
+                else closedBtn.classList.remove('active');
+            }
+            if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
+                window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions, false);
+            }
+        };
 
         window.handleMyRatingButtonClick = function(rawBtn, evt) {
             if (evt && typeof evt.preventDefault === 'function') {
@@ -1451,7 +1483,8 @@
                     <div id="selected-game-info">Select a game type</div>
                     <div class="rating-filter-container">
                         <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100">
-                        <button id="find-rating-btn">Find</button>
+                        <button id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')">Open Rooms</button>
+                        <button id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')">Closed Rooms</button>
                         <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)">My Rating</button>
                         <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="padding:6px 10px; margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
@@ -3949,6 +3982,7 @@
                         <button class="faq-nav-link" data-target="faq-qu-tile">How does the QU tile work?</button>
                         <button class="faq-nav-link" data-target="faq-tools-position">Does using Tools tab while in a room affect your position in the room?</button>
                         <button class="faq-nav-link" data-target="faq-zoom">The features seem to be oversized or undersized.</button>
+                        <button class="faq-nav-link" data-target="faq-active-rooms-guide">How do Active Rooms (Open Rooms, Closed Rooms, Spectating, and Refresh) work in the Lobby?</button>
                     </div>
                 </div>
 
@@ -4687,6 +4721,20 @@
                         <div class="faq-question">The features seem to be oversized or undersized.</div>
                         <div class="faq-answer">
                             <p>You can adjust the size of the content using the <strong>Zoom</strong> feature on your browser. On most browsers, use <strong>Ctrl + +</strong> (or <strong>⌘ + +</strong> on Mac) to zoom in and <strong>Ctrl + −</strong> (or <strong>⌘ + −</strong> on Mac) to zoom out. <strong>Ctrl + 0</strong> (or <strong>⌘ + 0</strong>) resets zoom to 100%.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-active-rooms-guide">
+                        <div class="faq-question">How do Active Rooms (Open Rooms, Closed Rooms, Spectating, and Refresh) work in the Lobby?</div>
+                        <div class="faq-answer">
+                            <p>The <strong>Active Rooms</strong> panel allows you to browse and participate in multiplayer rooms (First-Come First-Served and Split Points):</p>
+                            <ul>
+                                <li><strong>Open Rooms:</strong> Rooms qualify as <em>Open Rooms</em> if your rating is within the room’s required rating range (or if the room has no rating restrictions) <strong>and</strong> there are fewer than 8 players in the room. In Open Rooms, both <strong>Join</strong> and <strong>Spectate</strong> options are available.</li>
+                                <li><strong>Closed Rooms:</strong> Rooms qualify as <em>Closed Rooms</em> if your rating falls outside the room’s set rating range, and/or if the room is currently full (at its 8-player capacity). In Closed Rooms, only the <strong>Spectate</strong> button is available so you can watch without interfering with rating requirements or maximum capacity.</li>
+                                <li><strong>Refresh Button (🔄):</strong> Pressing <strong>Refresh</strong> re-queries active rooms and updates player counts without abruptly shifting rooms across your screen while you are viewing. If a player leaves a room and opens a spot (reducing count from 8 to 7), the room will not suddenly jump to Open Rooms automatically—pressing Refresh will update the lists smoothly. In addition, your scroll position in the rooms list is maintained after refreshing so your view remains stable.</li>
+                                <li><strong>Room Full Notification:</strong> If an open room reaches maximum capacity (8 players) right before you click Join, a notification will inform you that the room has become full and prompt you to press Refresh to update the list of Open Rooms and Closed Rooms.</li>
+                                <li><strong>Proximity & Average Ratings:</strong> You can sort rooms by closeness to an average rating using the search input, or click <strong>My Rating</strong> to sort active rooms closest to your rating in that specific configuration.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -5695,18 +5743,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33008"></script>
-    <script src="/js/forum.js?v=33008"></script>
-    <script src="/js/app.js?v=33008"></script>
-    <script src="/js/lobby.js?v=33008"></script>
-    <script src="/js/play.js?v=33008"></script>
-    <script src="/js/tournaments.js?v=33008"></script>
-    <script src="/js/leaderboard.js?v=33008"></script>
-    <script src="/js/tools.js?v=33008"></script>
-    <script src="/js/mouse_selection.js?v=33008"></script>
-    <script src="/js/mods.js?v=33008"></script>
-    <script src="/js/private_matches.js?v=33008"></script>
-    <script src="/js/donate.js?v=33008"></script>
+    <script src="/js/settings.js?v=33009"></script>
+    <script src="/js/forum.js?v=33009"></script>
+    <script src="/js/app.js?v=33009"></script>
+    <script src="/js/lobby.js?v=33009"></script>
+    <script src="/js/play.js?v=33009"></script>
+    <script src="/js/tournaments.js?v=33009"></script>
+    <script src="/js/leaderboard.js?v=33009"></script>
+    <script src="/js/tools.js?v=33009"></script>
+    <script src="/js/mouse_selection.js?v=33009"></script>
+    <script src="/js/mods.js?v=33009"></script>
+    <script src="/js/private_matches.js?v=33009"></script>
+    <script src="/js/donate.js?v=33009"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
