@@ -28,15 +28,16 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### C. Dedicated Lobby Refresh Button (`templates/index.html`, `static/js/lobby.js`)
 - Added a compact `🔄` Refresh button adjacent to "My Rating" in the Active Rooms panel.
 - Reuses the animated spin effect (`profileRefreshSpin`) matching the Profile page.
-- On user click: immediately queries `/api/lobby-stats`, refreshes all game matrix badges, and re-renders active room listings if a game configuration is open.
+- On user click: queries `/api/lobby-stats`, refreshes FCFS & Split Points button badges, and re-renders active room listings (player pills, average rating, empty room cleanup) if a game configuration is open. Per specification, Refresh does not touch Accumulative buttons.
 
-### D. Game-Type Specific Polling Architecture (`static/js/lobby.js`)
-- **Accumulative Rooms (`acc-btn`)**: Auto-polls every 4 seconds in the background so player counts (`Start [N]`) stay updated in real time as players enter/exit.
-- **FCFS & Split Points Rooms (`fcfs-btn`, `split-btn`)**: Does not auto-poll or shift room statuses unprompted; listings and player counts update on explicit user action (clicking "Show Rooms" or pressing the 🔄 Refresh button).
-- **Lobby Navigation & Observer**: `MutationObserver` inside `setupLobbyEvents()` guarantees immediate full stats hydration every time the user enters or returns to the lobby.
+### D. Game-Type Specific Polling & Interaction Rules (`static/js/lobby.js`)
+- **Lobby Entry (`fetchLobbyStats('all')`)**: Immediately fetches and displays live, authoritative numbers across all buttons (`Show Rooms [N]` and `Start [N]`) at the moment of entry.
+- **Accumulative Matrix (`acc-btn`)**: Auto-polls every 4 seconds in the background so player counts (`Start [N]`) stay updated in real time as players enter/exit.
+- **FCFS & Split Points Matrix (`fcfs-btn`, `split-btn`)**: Does not auto-poll or shift room statuses unprompted while waiting in a configuration; listings and button counts update on explicit user action (clicking "Show Rooms" or pressing the 🔄 Refresh button).
+- **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33001`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33002`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.

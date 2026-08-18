@@ -500,7 +500,7 @@ function setupLobbyEvents() {
             if (isOnLobby()) {
                 // ALWAYS do an immediate full stats update on every lobby entry.
                 // This is the primary mechanism for showing correct counts on entry.
-                fetchLobbyStats(true);
+                fetchLobbyStats('all');
 
                 if (window.resetLobbyButtons) window.resetLobbyButtons();
 
@@ -682,9 +682,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         document.querySelectorAll(
             `.game-btn[data-game="${gameType}"][data-board="${boardDimensions}"][data-time="${timeLimit}"]`
         ).forEach(btn => {
-            const currentText = btn.textContent;
-            const newText = currentText.replace(/\[\d+\]/, `[${totalPlayers}]`);
-            if (currentText !== newText) btn.textContent = newText;
+            const rawText = btn.textContent;
+            const normalizedText = rawText.replace(/\s+/g, ' ').trim();
+            const newNormalized = normalizedText.replace(/\[\d+\]/, `[${totalPlayers}]`);
+            if (normalizedText !== newNormalized) btn.textContent = newNormalized;
         });
 
         // Apply Authoritative Rating Proximity Filter/Sort if "Find" or "Enter" has been executed
@@ -838,13 +839,13 @@ function startStatsPolling() {
     stopStatsPolling();
 
     // Immediately do a FULL update (all buttons) when entering lobby
-    fetchLobbyStats(true);
+    fetchLobbyStats('all');
 
     // Auto-poll every 4 seconds — only updates Accumulative buttons automatically.
     // FCFS/SP buttons update on: lobby entry, Refresh button click, or "Show Rooms" click.
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
-            fetchLobbyStats(false); // accumulative only
+            fetchLobbyStats('accumulative_only'); // accumulative only
         }
     }, 4000);
 }
@@ -856,14 +857,13 @@ function stopStatsPolling() {
     }
 }
 
-// allButtons=true → update every button (FCFS, SP, Accumulative)
-// allButtons=false → only update Accumulative buttons (auto-poll)
-async function fetchLobbyStats(allButtons) {
+// mode: 'all' (initial/entry) | 'accumulative_only' (4s poll) | 'fcfs_sp_only' (Refresh click)
+async function fetchLobbyStats(mode = 'all') {
     try {
         const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
         if (data.stats) {
-            updateLobbyButtons(data.stats, allButtons !== false);
+            updateLobbyButtons(data.stats, mode);
         }
     } catch (error) {
         console.error('Error fetching lobby stats:', error);
@@ -881,8 +881,8 @@ async function handleLobbyRefresh(btn) {
     refreshBtn.disabled = true;
 
     try {
-        // Full stats update — all button types
-        await fetchLobbyStats(true);
+        // Refresh FCFS and SP buttons only (Accumulative is updated automatically on player enter/exit)
+        await fetchLobbyStats('fcfs_sp_only');
 
         // If a room panel is open, also re-fetch the room list
         if (window.currentLobbyConfig) {
@@ -901,10 +901,11 @@ async function handleLobbyRefresh(btn) {
 }
 window.handleLobbyRefresh = handleLobbyRefresh;
 
-function updateLobbyButtons(stats, allButtons) {
+function updateLobbyButtons(stats, mode = 'all') {
     // Stats format: "game_type|board|time": count
-    // allButtons=true  → update all button types (initial load, manual Refresh)
-    // allButtons=false → only update Accumulative buttons (auto 4s poll)
+    // mode = 'all'               → update all buttons (FCFS, SP, Accumulative)
+    // mode = 'accumulative_only' → only update Accumulative buttons (auto 4s poll)
+    // mode = 'fcfs_sp_only'      → only update FCFS and SP buttons (Refresh button click)
     const buttons = document.querySelectorAll('.game-btn');
     buttons.forEach(btn => {
         const game = btn.dataset.game;
@@ -912,8 +913,9 @@ function updateLobbyButtons(stats, allButtons) {
         const time = btn.dataset.time;
         if (!game || !board || !time) return;
 
-        // Skip FCFS and SP during auto-poll — they update on Refresh or "Show Rooms" click only
-        if (!allButtons && game !== 'accumulative') return;
+        // Skip filtering based on mode
+        if (mode === 'accumulative_only' && game !== 'accumulative') return;
+        if (mode === 'fcfs_sp_only' && game === 'accumulative') return;
 
         const key = `${game}|${board}|${time}`;
         const count = stats[key] || 0;
