@@ -33,11 +33,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### D. Game-Type Specific Polling & Interaction Rules (`static/js/lobby.js`)
 - **Lobby Entry (`fetchLobbyStats('all')`)**: Immediately fetches and displays live, authoritative numbers across all buttons (`Show Rooms [N]` and `Start [N]`) at the moment of entry.
 - **Accumulative Matrix (`acc-btn`)**: Auto-polls every 4 seconds in the background so player counts (`Start [N]`) stay updated in real time as players enter/exit.
-- **FCFS & Split Points Matrix (`fcfs-btn`, `split-btn`)**: Does not auto-poll or shift room statuses unprompted while waiting in a configuration; listings and button counts update on explicit user action (clicking "Show Rooms" or pressing the 🔄 Refresh button).
-- **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button.
+- **FCFS & Split Points Matrix (`fcfs-btn`, `split-btn`)**: Does not auto-poll or shift room statuses unprompted while waiting in a configuration; newly created rooms never display automatically while viewing a list. Listings and button counts update strictly on explicit user action (clicking "Show Rooms" or pressing the 🔄 Refresh button).
+- **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33002`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33003`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.

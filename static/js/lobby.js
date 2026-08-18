@@ -616,45 +616,6 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
         let rooms = (data && data.rooms) ? data.rooms : [];
 
-        // AUTO-CREATE: If no rooms exist, AND we are allowed to auto-create (i.e. user action)
-        if (rooms.length === 0 && allowAutoCreate) {
-            console.log('No rooms found. Auto-creating a new room...');
-
-            const createResp = await fetch('/api/room/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    game_type: gameType,
-                    time_limit: timeLimit,
-                    board_dimensions: boardDimensions,
-                    min_rating: minRating,
-                    max_rating: maxRating
-                })
-            });
-            const createData = await createResp.json();
-
-            if (createData.success && createData.room_id) {
-                // Manually add the new room to the list so it appears immediately
-                rooms.push({
-                    room_id: createData.room_id,
-                    player_count: 1,
-                    max_players: 8,
-                    min_rating: minRating,
-                    max_rating: maxRating,
-                    combined_rating: 1000,
-                    state: 'waiting',
-                    current_round: 0,
-                    players: [{
-                        username: window.currentUser || 'You',
-                        rating: (window.currentUser && window.currentUser.startsWith('Guest_')) ? 0 : 1000
-                    }]
-                });
-            } else {
-                roomsContainer.innerHTML = '<p class="placeholder">Error creating room</p>';
-                return;
-            }
-        }
-
         // Recalculate average ratings
         rooms.forEach(room => {
             let totalRating = 0;
@@ -808,29 +769,14 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 }
 
 function startLobbyPolling() {
-    stopLobbyPolling(); // Clear existing
-    console.log('Starting lobby polling...');
-
-    lobbyPollInterval = setInterval(() => {
-        if (isOnLobby() && currentLobbyConfig) {
-            // Poll without auto-create
-            fetchAndRenderRooms(
-                currentLobbyConfig.gameType,
-                currentLobbyConfig.timeLimit,
-                currentLobbyConfig.boardDimensions,
-                false
-            );
-            // Also refresh button counts on the same tick
-            fetchLobbyStats();
-        }
-    }, 3000); // 3 seconds
+    // No auto-polling for FCFS/SP room lists.
+    // Active rooms update only on user actions: clicking 'Show Rooms', pressing 🔄 Refresh, or creating a room.
 }
 
 function stopLobbyPolling() {
     if (lobbyPollInterval) {
         clearInterval(lobbyPollInterval);
         lobbyPollInterval = null;
-        console.log('Lobby polling stopped.');
     }
 }
 
