@@ -436,9 +436,26 @@ function renderActiveState(container, data, userStatus) {
 }
 
 function renderCompletedState(container, data) {
+    let winnerName = '';
+    if (data && data.standings && Array.isArray(data.standings)) {
+        const winner = data.standings.find(s => s.final_rank === 1);
+        if (winner && winner.username) {
+            winnerName = winner.username;
+        }
+    }
+    if (!winnerName && data && data.history && Array.isArray(data.history)) {
+        const histMatch = data.history.find(h => h.id === data.id);
+        if (histMatch && histMatch.username) {
+            winnerName = histMatch.username;
+        } else if (data.history[0] && data.history[0].username) {
+            winnerName = data.history[0].username;
+        }
+    }
+    const congratulationsText = winnerName ? ` Congratulations to ${winnerName}!` : '';
+
     container.innerHTML = `
         <h2 style="color:#9b59b6; margin-bottom:15px; text-align:left;">Tournament Finalized</h2>
-        <p style="opacity:0.8;">The champions have been crowned! The next tournament signup period will begin shortly.</p>
+        <p style="opacity:0.8;">The champion has been crowned!${congratulationsText} The next tournament signup period will begin shortly.</p>
     `;
 }
 
