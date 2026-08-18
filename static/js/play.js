@@ -1331,7 +1331,7 @@ async function updateGameState(incomingState = null) {
                     const canJoinInThisRoom = (playerCount < maxPlayers) || state.game_type === 'accumulative';
 
                     const joinButtonHtml = (!amIPlayerInRoom && canJoinInThisRoom) 
-                        ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0;">Join Match</button>` 
+                        ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0; cursor: pointer;">Join Room</button>` 
                         : '';
 
                     defContent.innerHTML = `
@@ -1366,7 +1366,7 @@ async function updateGameState(incomingState = null) {
                                             setTimeout(updateGameState, 100);
                                         } else {
                                             alert(data.error);
-                                            winJoinBtn.textContent = 'Join Match';
+                                            winJoinBtn.textContent = 'Join Room';
                                             winJoinBtn.disabled = false;
                                         }
                                     } catch (e) {
@@ -1530,9 +1530,15 @@ async function updateGameState(incomingState = null) {
 
             // Determine spectator rating limits
             const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
-            let myRating = window.lastPlayerRating;
-            if (myRating === undefined || myRating === null || isNaN(myRating)) {
-                myRating = (currentUsername && currentUsername.startsWith('Guest_')) ? 0 : 1000;
+            let myRating = 1200;
+            if (typeof window.getUserConfigRating === 'function' && state.game_type && state.board_dimensions && state.time_limit) {
+                myRating = window.getUserConfigRating(state.game_type, state.board_dimensions, state.time_limit);
+            } else if (window.currentUserRating) {
+                myRating = Number(window.currentUserRating);
+            } else if (window.lastPlayerRating !== undefined && window.lastPlayerRating !== null && !isNaN(window.lastPlayerRating)) {
+                myRating = Number(window.lastPlayerRating);
+            } else if (currentUsername && currentUsername.startsWith('Guest_')) {
+                myRating = 0;
             }
             if (state.spectators && Array.isArray(state.spectators) && currentUsername) {
                 const meSpec = state.spectators.find(s => s.username && s.username.toLowerCase() === currentUsername.toLowerCase());
@@ -1541,9 +1547,10 @@ async function updateGameState(incomingState = null) {
                 }
             }
 
-            const minRating = state.min_rating !== undefined ? state.min_rating : 0;
-            const maxRating = state.max_rating !== undefined ? state.max_rating : 9999;
-            const isWithinLimits = (myRating >= minRating && myRating <= maxRating);
+            const minRating = Number(state.min_rating) || 0;
+            const maxRating = Number(state.max_rating) || 9999;
+            const hasLimits = (minRating > 0 || maxRating < 9999);
+            const isWithinLimits = !hasLimits || (myRating >= minRating && myRating <= maxRating);
 
             // Render Content
             if (spectatorPanel) {
@@ -1553,18 +1560,21 @@ async function updateGameState(incomingState = null) {
                         <div class="spectator-title">SPECTATING</div>
                         <div class="spectator-actions" style="flex-direction: column; align-items: center; gap: 8px;">
                             ${slotOpen ?
-                            `<button id="spec-join-btn" class="spectator-join-btn premium-btn">Join Game</button>
+                            `<button id="spec-join-btn" class="spectator-join-btn premium-btn" style="cursor: pointer; padding: 10px 24px; font-size: 0.95rem; font-weight: 700; border-radius: 8px;">Join Room</button>
                              <div class="spectator-slot-open" style="font-size: 0.8rem; color: #10b981; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; animation: pulse 2s infinite;">
                                 <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%;"></span>
                                 Slot Open - Join When Ready
                              </div>` :
-                            `<div class="spectator-full-badge">Full Room</div>`
+                            `<div class="spectator-full-badge" style="color: #ef4444; font-weight: 700; font-size: 0.9rem;">Full Room (8/8)</div>`
                         }
                         </div>
                     `;
                 } else {
                     spectatorPanel.innerHTML = `
                         <div class="spectator-title">SPECTATING</div>
+                        <div class="spectator-actions" style="flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="font-size: 0.8rem; color: #f59e0b; font-weight: 600;">Rating Required: ${minRating} - ${maxRating < 9999 ? maxRating : '∞'}</div>
+                        </div>
                     `;
                 }
 
@@ -1573,7 +1583,7 @@ async function updateGameState(incomingState = null) {
                     const joinBtn = document.getElementById('spec-join-btn');
                     if (joinBtn) {
                         joinBtn.onclick = async () => {
-                            console.log('[SpecJoin] Join clicked');
+                            console.log('[SpecJoin] Join Room clicked');
                             joinBtn.textContent = 'Joining...';
                             joinBtn.disabled = true;
 
@@ -1596,7 +1606,7 @@ async function updateGameState(incomingState = null) {
                                     setTimeout(updateGameState, 100);
                                 } else {
                                     alert(data.error);
-                                    joinBtn.textContent = 'Join Game';
+                                    joinBtn.textContent = 'Join Room';
                                     joinBtn.disabled = false;
                                 }
                             } catch (e) {
