@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33010`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33011`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -84,7 +84,12 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 1. **Lobby Arrival**: Opening the lobby immediately loads fresh room numbers across all matrix buttons without requiring manual action.
 2. **Accumulative Matrix**: Entering/exiting an Accumulative room automatically updates the `Start [N]` badge for all players viewing the lobby.
 3. **FCFS / Split Points**: Room status, player pills, and average rating updates strictly on "Show Rooms" click and "Refresh" button click. Newly created rooms do not appear unprompted while viewing a list.
-4. **Spectator Mode**: Clicking "Spectate" on any active room immediately loads the room, board, timer, and the definitions panel status.
-5. **Refresh Animation**: Clicking the 🔄 button triggers the smooth rotation indicator and updates all lobby numbers.
-6. **No Thread Lockups**: Database lock errors during login and room creation remain completely eliminated.
-7. **Smooth Server Load**: Board transitions and background refills remain well below hosting provider high-resource thresholds.
+4. **Open & Closed Rooms Tabs**: Switching between Open Rooms and Closed Rooms displays the proper qualifying rooms. Closed Rooms strictly show the Spectate button only.
+5. **Full Room Popup Notification**: Joining a full room notifies the user to press Refresh to update the list of Open Rooms and Closed Rooms.
+6. **Scroll Position Retention**: Refreshing room listings retains the user's scroll position in the rooms panel.
+7. **User Follow Rating Restriction**: Following a user with a rating outside the room limit (e.g., 1191 rating into 1193–1300) places the user directly into `SPECTATING` mode.
+8. **User Follow 8-Player Cap**: Following a user into an 8-player full room places the user directly into `SPECTATING` mode.
+9. **Spectator Mode**: Clicking "Spectate" on any active room immediately loads the room, board, timer, and the definitions panel status.
+10. **Refresh Animation**: Clicking the 🔄 button triggers the smooth rotation indicator and updates all lobby numbers.
+11. **No Thread Lockups**: Database lock errors during login and room creation remain completely eliminated.
+12. **Smooth Server Load**: Board transitions and background refills remain well below hosting provider high-resource thresholds.
