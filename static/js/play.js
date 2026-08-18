@@ -7013,11 +7013,6 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             updateGameState();
                         }
                     }
-                } else if (!isPenaltyMode) {
-                    // Confirmed invalid locally in non-penalty mode — flash red and return immediately
-                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath);
-                    clearSubmissionVisuals();
-                    return;
                 }
             }
         }

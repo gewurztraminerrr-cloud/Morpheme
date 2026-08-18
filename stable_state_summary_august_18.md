@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33012`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33013`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -67,6 +67,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **8-Player Capacity Enforcement on Follow**: When following a user into a room that already has 8 people playing, the user is placed directly into **`SPECTATING`** mode.
 - **Server Auto-Sync Safeguard**: `get_room_state` polling automatically categorizes unassigned users as spectators rather than active players if the room is full or if the user's rating is outside room limits, preventing mid-round rating/capacity bypasses.
 - **Spectator Panel Display**: The definitions panel renders clean `SPECTATING` header without the "Join Room" button when rating limits are not met.
+
+### J. Word Submission Robustness & Spectator Isolation (`game_room.py`, `play.js`)
+- **Server Authoritative Validation**: Removed client-side early rejection return in `submitWord` (`play.js`), ensuring all submitted words reach the backend `/room/<id>/submit_word` endpoint for authoritative validation and dynamic board self-healing.
+- **Active Player vs. Spectator Clean State**: Added strict cross-list pruning in `add_player` and `add_spectator` (`game_room.py`). When an active player submits words, `submit_word` verifies their active player status first and clears any stale spectator records.
 
 ---
 

@@ -324,6 +324,9 @@ class GameRoom:
         """Add player to room"""
         is_daily = self.time_limit >= 7200
         
+        # Always remove from spectators if adding as player
+        self.spectators = [s for s in self.spectators if str(s.user_id) != str(user_id)]
+        
         # Clear eviction flag if they are re-joining
         if str(user_id) in self.evicted_users:
             del self.evicted_users[str(user_id)]
@@ -486,6 +489,9 @@ class GameRoom:
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
+        # Always remove from active players if adding as spectator
+        self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
+        
         # Clear eviction flag if they are re-joining
         if str(user_id) in self.evicted_users:
             del self.evicted_users[str(user_id)]
@@ -796,15 +802,14 @@ class GameRoom:
         if self.state != 'active':
             return False, "Round is not active", 0, None
             
-        # Security check: Spectators cannot play
-        for s in self.spectators:
-            if str(s.user_id) == str(user_id):
-                return False, "Spectators cannot submit words", 0, None
-        
         player = self.get_player(user_id)
-
         if not player:
+            if self.get_spectator(user_id):
+                return False, "Spectators cannot submit words", 0, None
             return False, "Player not in room", 0, None
+
+        # Clean spectator list if they are an active player
+        self.spectators = [s for s in self.spectators if str(s.user_id) != str(user_id)]
         
         # Update activity on submission
         self.update_player_activity(user_id)
