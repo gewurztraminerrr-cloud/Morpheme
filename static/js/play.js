@@ -651,6 +651,11 @@ function clearGameUIAndCache() {
     selectedPlayerUsername = null;
     
     // 2. Reset DOM elements to clean placeholders
+    const tabsContainer = document.getElementById('words-tabs-container');
+    if (tabsContainer) {
+        tabsContainer.style.display = 'flex';
+    }
+
     const wordsList = document.getElementById('submitted-words-list');
     if (wordsList) {
         wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
@@ -1876,9 +1881,13 @@ async function updateGameState(incomingState = null) {
         const wordsStats = document.getElementById('words-stats');
         const tabsContainer = document.getElementById('words-tabs-container');
 
-        // Show tabs in ALL rooms
+        // Show tabs in standard rooms, but hide in tournament play
         if (tabsContainer) {
-            tabsContainer.style.display = 'flex';
+            if (window.isTournamentPlay || isTournamentPlay) {
+                tabsContainer.style.display = 'none';
+            } else {
+                tabsContainer.style.display = 'flex';
+            }
         }
 
         // words-panel-title
@@ -8379,8 +8388,29 @@ async function initTournamentPlay() {
 
     // Clear UI
     resetChat();
+    
+    // Configure words panel for Tournament play: Hide Words/History tabs and display pure words list
+    const tabsContainer = document.getElementById('words-tabs-container');
+    if (tabsContainer) tabsContainer.style.display = 'none';
+
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    const foundContent = document.getElementById('tab-content-found');
+    if (foundContent) {
+        foundContent.classList.add('active');
+        foundContent.style.display = 'block';
+    }
+
+    const wordsPanelHeader = document.getElementById('words-panel-title');
+    if (wordsPanelHeader) wordsPanelHeader.textContent = 'Words';
+
+    const findersBtn = document.getElementById('finders-button-container');
+    if (findersBtn) findersBtn.style.display = 'none';
+
+    const lengthFilter = document.getElementById('length-filter-container');
+    if (lengthFilter) lengthFilter.style.display = 'none';
+
     const wordsList = document.getElementById('submitted-words-list');
-    if (wordsList) wordsList.innerHTML = '';
+    if (wordsList) wordsList.innerHTML = '<p class="placeholder">No words yet</p>';
     const wordsStats = document.getElementById('words-stats');
     if (wordsStats) wordsStats.textContent = '';
 
@@ -8715,7 +8745,12 @@ async function handleTournamentWord(word, path = null) {
         item.style.display = 'flex';
         item.style.justifyContent = 'space-between';
         item.style.animation = 'slideIn 0.3s ease';
+        item.style.cursor = 'pointer';
+        item.dataset.word = word;
         item.innerHTML = `<span>${word}</span> <span style="opacity:0.8">${pts}</span>`;
+        item.onclick = () => {
+            if (typeof window.fetchDefinition === 'function') window.fetchDefinition(word);
+        };
         list.prepend(item);
     }
 
