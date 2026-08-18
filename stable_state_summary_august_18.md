@@ -37,13 +37,17 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33003`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33004`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
 - **Single-Worker Refill Cap**: Restricted background cache refills to 1 concurrent worker with a 20s inter-board generation pacing.
 - **Heartbeat Loop Pacing**: Adjusted `_bg_cleanup_loop` interval in `game_room.py` from `0.1s` (100ms) to `0.25s` (250ms), reducing idle thread wakeups by 60% while maintaining crisp round transitions.
 - **Startup Seeder Throttle**: Paced `seed_pregenerated_cache_bg` config seeding with 5-second delays to prevent initial boot CPU spikes.
+
+### G. Spectator Mode Room Loading & UI Panel Fix (`game_room.py`, `index.html`)
+- **Missing `get_spectator` Method**: Added `get_spectator(self, user_id)` to `GameRoom` class, resolving a 500 server error crash during `/api/room/<id>/state` polling for spectators.
+- **Spectator State Transition**: Properly initialized `window.isSpectatorMode` in `handleJoinRoomInline`, restoring the blue `SPECTATING` title and "Join Game" button in the definitions panel with full board loading.
 
 ---
 

@@ -679,6 +679,14 @@ class GameRoom:
             if str(p.user_id) == uid_str:
                 return p
         return None
+
+    def get_spectator(self, user_id):
+        """Get spectator by ID"""
+        uid_str = str(user_id)
+        for s in self.spectators:
+            if str(s.user_id) == uid_str:
+                return s
+        return None
     
     @property
     def time_remaining(self):
