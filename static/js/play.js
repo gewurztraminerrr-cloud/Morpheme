@@ -1554,20 +1554,26 @@ async function updateGameState(incomingState = null) {
 
             // Render Content
             if (spectatorPanel) {
-                const slotOpen = playerCount < maxPlayers;
-                spectatorPanel.innerHTML = `
-                    <div class="spectator-title">SPECTATING</div>
-                    <div class="spectator-actions" style="flex-direction: column; align-items: center; gap: 8px;">
-                        ${slotOpen ?
-                        `<button id="spec-join-btn" class="spectator-join-btn premium-btn" style="cursor: pointer; padding: 10px 24px; font-size: 0.95rem; font-weight: 700; border-radius: 8px;">Join Room</button>
-                         <div class="spectator-slot-open" style="font-size: 0.8rem; color: #10b981; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; animation: pulse 2s infinite;">
-                            <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%;"></span>
-                            Slot Open - Join When Ready
-                         </div>` :
-                        `<div class="spectator-full-badge" style="color: #ef4444; font-weight: 700; font-size: 0.9rem;">Full Room (${playerCount}/${maxPlayers})</div>`
-                    }
-                    </div>
-                `;
+                if (isWithinLimits) {
+                    const slotOpen = playerCount < maxPlayers;
+                    spectatorPanel.innerHTML = `
+                        <div class="spectator-title">SPECTATING</div>
+                        <div class="spectator-actions" style="flex-direction: column; align-items: center; gap: 8px;">
+                            ${slotOpen ?
+                            `<button id="spec-join-btn" class="spectator-join-btn premium-btn" style="cursor: pointer; padding: 10px 24px; font-size: 0.95rem; font-weight: 700; border-radius: 8px;">Join Room</button>
+                             <div class="spectator-slot-open" style="font-size: 0.8rem; color: #10b981; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; animation: pulse 2s infinite;">
+                                <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%;"></span>
+                                Slot Open - Join When Ready
+                             </div>` :
+                            `<div class="spectator-full-badge" style="color: #ef4444; font-weight: 700; font-size: 0.9rem;">Full Room (${playerCount}/${maxPlayers})</div>`
+                        }
+                        </div>
+                    `;
+                } else {
+                    spectatorPanel.innerHTML = `
+                        <div class="spectator-title">SPECTATING</div>
+                    `;
+                }
 
                 // Re-attach event listener
                 setTimeout(() => {
