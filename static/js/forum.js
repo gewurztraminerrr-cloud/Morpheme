@@ -439,17 +439,17 @@ const Forum = {
         if (postImageWrapper && postImageInput) {
             postImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                const lbl = postImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--accent-color)'; lbl.style.background = 'rgba(0,0,0,0.4)'; }
+                const box = postImageWrapper.querySelector('.file-upload-box') || postImageWrapper.querySelector('label') || postImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--accent-color)'; box.style.background = 'rgba(0,0,0,0.4)'; }
             });
             postImageWrapper.addEventListener('dragleave', () => {
-                const lbl = postImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
+                const box = postImageWrapper.querySelector('.file-upload-box') || postImageWrapper.querySelector('label') || postImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
             });
             postImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                const lbl = postImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
+                const box = postImageWrapper.querySelector('.file-upload-box') || postImageWrapper.querySelector('label') || postImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('post', e.dataTransfer.files);
                 }
@@ -469,17 +469,17 @@ const Forum = {
         if (commentImageWrapper && commentImageInput) {
             commentImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                const lbl = commentImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--accent-color)'; lbl.style.background = 'rgba(0,0,0,0.4)'; }
+                const box = commentImageWrapper.querySelector('.file-upload-box') || commentImageWrapper.querySelector('label') || commentImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--accent-color)'; box.style.background = 'rgba(0,0,0,0.4)'; }
             });
             commentImageWrapper.addEventListener('dragleave', () => {
-                const lbl = commentImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
+                const box = commentImageWrapper.querySelector('.file-upload-box') || commentImageWrapper.querySelector('label') || commentImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
             });
             commentImageWrapper.addEventListener('drop', (e) => {
                 e.preventDefault();
-                const lbl = commentImageWrapper.querySelector('label');
-                if (lbl) { lbl.style.borderColor = 'var(--input-border)'; lbl.style.background = 'rgba(0,0,0,0.2)'; }
+                const box = commentImageWrapper.querySelector('.file-upload-box') || commentImageWrapper.querySelector('label') || commentImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     this.addFiles('comment', e.dataTransfer.files);
                 }
@@ -503,8 +503,8 @@ const Forum = {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (!file.type.startsWith('image/')) continue;
-            if (targetArray.length >= 3) {
-                alert("You can attach a maximum of 3 images per post.");
+            if (targetArray.length >= 4) {
+                alert("You can attach a maximum of 4 images per post.");
                 break;
             }
             if (!targetArray.some(f => f.name === file.name && f.size === file.size)) {
@@ -535,12 +535,12 @@ const Forum = {
             if (textSpan) {
                 if (targetArray.length === 0) {
                     textSpan.textContent = type === 'post' 
-                        ? 'Click to choose images (up to 3) or drag and drop' 
-                        : '📎 Attach images (up to 3)';
-                } else if (targetArray.length < 3) {
-                    textSpan.textContent = `📎 Attached ${targetArray.length}/3 images (Click to add more)`;
+                        ? 'Click to choose images (up to 4) or drag and drop' 
+                        : '📎 Attach images (up to 4)';
+                } else if (targetArray.length < 4) {
+                    textSpan.textContent = `📎 Attached ${targetArray.length}/4 images (Click to add more)`;
                 } else {
-                    textSpan.textContent = `📎 Maximum 3 images selected`;
+                    textSpan.textContent = `📎 Maximum 4 images selected`;
                 }
             }
         }

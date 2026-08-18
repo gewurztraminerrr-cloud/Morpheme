@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33019">
-    <link rel="stylesheet" href="/css/lobby.css?v=33019">
-    <link rel="stylesheet" href="/css/play.css?v=33019">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33019">
-    <link rel="stylesheet" href="/css/forum.css?v=33019">
-    <link rel="stylesheet" href="/css/donate.css?v=33019">
-    <script src="/js/app.js?v=33019"></script>
-    <script src="/js/lobby.js?v=33019"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33020">
+    <link rel="stylesheet" href="/css/lobby.css?v=33020">
+    <link rel="stylesheet" href="/css/play.css?v=33020">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33020">
+    <link rel="stylesheet" href="/css/forum.css?v=33020">
+    <link rel="stylesheet" href="/css/donate.css?v=33020">
+    <script src="/js/app.js?v=33020"></script>
+    <script src="/js/lobby.js?v=33020"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1863,9 +1863,9 @@
                                     <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 8px 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
                                         <input type="file" id="forum-comment-image" accept="image/*" multiple style="display: none;">
                                         <div id="forum-comment-image-wrapper" style="width: 100%; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
-                                            <label for="forum-comment-image" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
-                                                <span class="file-text">&#128206; Attach images (up to 3)</span>
-                                            </label>
+                                            <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
+                                                <span class="file-text">&#128206; Attach images (up to 4)</span>
+                                            </div>
                                         </div>
                                         <div id="forum-comment-image-preview" class="image-preview hidden"></div>
                                     </div>
@@ -1882,7 +1882,7 @@
                                     comments</span>
                             </div>
                             <div id="forum-comments-list">
-                                <!-- Comments injected via JS -->
+                                <!-- Comments injected by JS -->
                             </div>
                         </div>
                     </div>
@@ -1908,12 +1908,12 @@
                                         required></textarea>
                                 </div>
                                 <div id="forum-image-upload-section" class="forum-upload-group hidden">
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 3)</label>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 4)</label>
                                     <input type="file" id="forum-post-image" accept="image/*" multiple style="display: none;">
                                     <div id="forum-post-image-wrapper" style="width: 100%; display: block; cursor: pointer; margin: 0; padding: 0;">
-                                        <label for="forum-post-image" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
-                                            <span class="file-text">Click to choose images (up to 3) or drag and drop</span>
-                                        </label>
+                                        <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
+                                            <span class="file-text">Click to choose images (up to 4) or drag and drop</span>
+                                        </div>
                                     </div>
                                     <div id="forum-image-preview" class="image-preview hidden"></div>
                                 </div>
@@ -5743,18 +5743,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33019"></script>
-    <script src="/js/forum.js?v=33019"></script>
-    <script src="/js/app.js?v=33019"></script>
-    <script src="/js/lobby.js?v=33019"></script>
-    <script src="/js/play.js?v=33019"></script>
-    <script src="/js/tournaments.js?v=33019"></script>
-    <script src="/js/leaderboard.js?v=33019"></script>
-    <script src="/js/tools.js?v=33019"></script>
-    <script src="/js/mouse_selection.js?v=33019"></script>
-    <script src="/js/mods.js?v=33019"></script>
-    <script src="/js/private_matches.js?v=33019"></script>
-    <script src="/js/donate.js?v=33019"></script>
+    <script src="/js/settings.js?v=33020"></script>
+    <script src="/js/forum.js?v=33020"></script>
+    <script src="/js/app.js?v=33020"></script>
+    <script src="/js/lobby.js?v=33020"></script>
+    <script src="/js/play.js?v=33020"></script>
+    <script src="/js/tournaments.js?v=33020"></script>
+    <script src="/js/leaderboard.js?v=33020"></script>
+    <script src="/js/tools.js?v=33020"></script>
+    <script src="/js/mouse_selection.js?v=33020"></script>
+    <script src="/js/mods.js?v=33020"></script>
+    <script src="/js/private_matches.js?v=33020"></script>
+    <script src="/js/donate.js?v=33020"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

@@ -6342,7 +6342,7 @@ def create_forum_post():
             if f and f.filename != '' and allowed_file(f.filename):
                 if f not in upload_files:
                     upload_files.append(f)
-    upload_files = upload_files[:3]
+    upload_files = upload_files[:4]
 
     saved_urls = []
     text_to_moderate = f"Title: {title}\nContent: {content}"
@@ -6406,7 +6406,7 @@ def create_forum_comment():
             if f and f.filename != '' and allowed_file(f.filename):
                 if f not in upload_files:
                     upload_files.append(f)
-    upload_files = upload_files[:3]
+    upload_files = upload_files[:4]
 
     saved_urls = []
     for idx, file in enumerate(upload_files):
