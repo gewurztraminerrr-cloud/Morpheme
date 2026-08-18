@@ -5742,10 +5742,16 @@ body .tab-btn.active {
     text-decoration: line-through;
 }
 
-.t-standing-item.completed {
-    background: rgba(155, 89, 182, 0.15);
-    color: #9b59b6;
-    border-color: rgba(155, 89, 182, 0.3);
+.t-standing-item.completed,
+.t-standing-item.winner {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.35);
+}
+
+.t-standing-item.completed .dot,
+.t-standing-item.winner .dot {
+    box-shadow: 0 0 8px #ffd700;
 }
 
 .t-standing-item .dot {

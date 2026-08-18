@@ -221,13 +221,16 @@ function renderTournament(data) {
             stdCard.classList.remove('hidden');
             stdList.innerHTML = data.standings.map(s => {
                 const isMe = s.username === window.currentUser;
-                const statusClass = s.status; // 'active', 'eliminated', 'completed'
+                const isWinner = s.final_rank === 1 && (data.status === 'completed' || s.status === 'completed');
+                const statusClass = isWinner ? 'winner completed' : s.status; // 'active', 'eliminated', 'completed', 'winner'
                 const isEliminated = s.status === 'eliminated';
-                const rankInfo = s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '';
+                const rankInfo = isWinner 
+                    ? `<small style="margin-left:5px; font-weight:700; color:#ffd700;">🏆 Champion</small>`
+                    : (s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '');
                 const nameStyle = isEliminated ? 'text-decoration: line-through; opacity: 0.45;' : '';
 
                 return `
-                    <div class="t-standing-item ${statusClass}" title="${s.status}">
+                    <div class="t-standing-item ${statusClass}" title="${isWinner ? 'Winner' : s.status}">
                         <span class="dot"></span>
                         <span style="${nameStyle}">${s.username} ${isMe ? '(You)' : ''}</span>
                         ${rankInfo}

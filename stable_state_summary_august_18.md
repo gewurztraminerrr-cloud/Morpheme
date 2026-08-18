@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33016`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33017`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -80,6 +80,9 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 
 ### M. Tournament Hall of Fame Trophy Icon (`templates/index.html`)
 - Added a trophy icon (🏆) adjacent to the Tournament Hall of Fame section heading (`🏆 Tournament Hall of Fame`).
+
+### N. Tournament Championship Bracket Gold Winner Styling (`static/css/style.css`, `static/js/tournaments.js`)
+- Replaced the purple styling for tournament winners with radiant gold styling (`#ffd700`, `rgba(255, 215, 0, 0.15)` background with matching glowing indicator dot and `🏆 Champion` badge).
 
 ---
 
