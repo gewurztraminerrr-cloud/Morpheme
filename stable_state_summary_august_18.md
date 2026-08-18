@@ -45,10 +45,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Heartbeat Loop Pacing**: Adjusted `_bg_cleanup_loop` interval in `game_room.py` from `0.1s` (100ms) to `0.25s` (250ms), reducing idle thread wakeups by 60% while maintaining crisp round transitions.
 - **Startup Seeder Throttle**: Paced `seed_pregenerated_cache_bg` config seeding with 5-second delays to prevent initial boot CPU spikes.
 
-### G. Spectator Mode Room Loading & Join Room Button Fix (`game_room.py`, `play.js`, `index.html`)
+### G. Spectator Mode Room Loading & Stale Room Handling (`game_room.py`, `play.js`, `lobby.js`, `index.html`)
 - **Missing `get_spectator` Method**: Added `get_spectator(self, user_id)` to `GameRoom` class, resolving a 500 server error crash during `/api/room/<id>/state` polling for spectators.
 - **Spectator State Transition**: Properly initialized `window.isSpectatorMode` in `handleJoinRoomInline`, restoring full board loading.
-- **"Join Room" Button Restored**: Updated rating boundary checks in `play.js` so open rooms always render the prominent **"Join Room"** button with the green pulse indicator in the right-hand definitions panel.
+- **"Join Room" Button & Rating Restrictions**: Rooms with open slots display the prominent **"Join Room"** button for players within the rating range, and display clean **`SPECTATING`** mode when spectating a rating-restricted room outside their range.
+- **404 Stale Room Cleanup**: If a user clicks a room card that has ended or expired, the client alerts *"This room has ended or is no longer active"* and immediately re-fetches the live room list to remove the stale card.
 
 ---
 
@@ -66,6 +67,8 @@ cd /home/morpheme/morpheme && git pull origin main && pm2 restart all
 
 1. **Lobby Arrival**: Opening the lobby immediately loads fresh room numbers across all matrix buttons without requiring manual action.
 2. **Accumulative Matrix**: Entering/exiting an Accumulative room automatically updates the `Start [N]` badge for all players viewing the lobby.
-3. **FCFS / Split Points**: Room status, player pills, and average rating updates on "Show Rooms" click and "Refresh" button click.
-4. **Refresh Animation**: Clicking the 🔄 button triggers the smooth rotation indicator and updates all lobby numbers.
-5. **No Thread Lockups**: Database lock errors during login and room creation remain completely eliminated.
+3. **FCFS / Split Points**: Room status, player pills, and average rating updates strictly on "Show Rooms" click and "Refresh" button click. Newly created rooms do not appear unprompted while viewing a list.
+4. **Spectator Mode**: Clicking "Spectate" on any active room immediately loads the room, board, timer, and the definitions panel status.
+5. **Refresh Animation**: Clicking the 🔄 button triggers the smooth rotation indicator and updates all lobby numbers.
+6. **No Thread Lockups**: Database lock errors during login and room creation remain completely eliminated.
+7. **Smooth Server Load**: Board transitions and background refills remain well below hosting provider high-resource thresholds.
