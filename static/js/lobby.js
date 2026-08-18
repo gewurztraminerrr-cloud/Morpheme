@@ -797,8 +797,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     <div class="room-header-row">
                         <div class="room-status ${rState}">${rState.toUpperCase()}</div>
                         <div class="room-meta">
-                            <span class="room-avg-rating">Avg Rating: ${room.display_average_rating || 0}</span> 
                             ${hasLimits ? `<span class="rating-req-badge">Req: ${ratingRangeText}</span>` : ''}
+                            <span class="room-avg-rating">Avg Rating: ${room.display_average_rating || 0}</span> 
                         </div>
                     </div>
                     <div class="room-players-row">

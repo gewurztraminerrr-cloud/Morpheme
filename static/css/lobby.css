@@ -361,6 +361,12 @@
         padding: 12px 14px !important;
         height: auto !important;
     }
+    .room-meta {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 
@@ -457,9 +463,11 @@
 
 .room-meta {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-end;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-end;
     font-size: 0.85rem;
     opacity: 0.9;
 }

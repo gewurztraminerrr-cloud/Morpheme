@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33018`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33019`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -86,6 +86,9 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 
 ### O. Mobile Game Room Navigation Smooth Sliding Animation (`static/js/play.js`, `static/js/app.js`)
 - Enabled smooth animated sliding transitions (`scrollTo({ left: targetLeft, behavior: 'smooth' })`) when tapping mobile bottom navigation buttons (`Players`, `Board`, `Words`) across game rooms, matching the sleek sliding experience of Tools and Settings.
+
+### P. Desktop/Laptop Active Rooms Req Rating Position (`static/js/lobby.js`, `static/css/lobby.css`)
+- On desktop and laptop viewports, the `Req: [range]` rating badge is positioned horizontally directly to the left of `Avg Rating: [rating]` in the Active Rooms list cards.
 
 ---
 
