@@ -498,8 +498,8 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
     target_count = min(target_count, 4)
     
     with ACTIVE_REFILLS_LOCK:
-        # Global concurrency cap: allow 2 concurrent refill threads
-        if len(ACTIVE_REFILLS) >= 2:
+        # Global concurrency cap: allow only 1 concurrent refill thread to prevent CPU spikes
+        if len(ACTIVE_REFILLS) >= 1:
             return
         if param_key_str in ACTIVE_REFILLS:
             return
@@ -649,7 +649,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     time.sleep(1.0)
 
                     
-                time.sleep(10.0)  # Throttle: 10s between generations to avoid CPU saturation
+                time.sleep(20.0)  # Throttle: 20s between background generations to prevent CPU spikes
 
         except Exception as e:
             print(f"[BoardGen] [Refill] Background worker error: {e}")
@@ -703,7 +703,7 @@ def seed_pregenerated_cache_bg():
             try:
                 p_key = serialize_param_key(dims, None, wc_range, dict_name, fmt, min_l, diff, use_added_words=use_aw)
                 refill_board_cache_bg(bg, p_key, target_count=2)
-                time.sleep(0.5)
+                time.sleep(5.0)  # Paced delay between seeding configs
             except Exception as e:
                 print(f"[SeedBootstrapper] Error seeding {dims}: {e}")
     import threading
@@ -1888,6 +1888,8 @@ class BoardGenerator:
 
         while time.time() - start_time < timeout:
             attempts += 1
+            if attempts > 1:
+                time.sleep(0.005)  # Micro-yield to prevent pinning CPU at 100% during retry loop
             
             # Strict range compliance: Never relax target bounds below requested floor or above ceiling
             min_words, max_words = target_min_words, target_max_words

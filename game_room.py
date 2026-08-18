@@ -3001,14 +3001,14 @@ class RoomManager:
                     except Exception as tick_err:
                         print(f"[Heartbeat] Error on {room_id}: {tick_err}")
                 
-                # 2. Lazy Inactivity Cleanup (Every 30s)
-                if loop_counter % 60 == 0:
+                # 2. Lazy Inactivity Cleanup (Every 30s: 120 iterations at 0.25s)
+                if loop_counter % 120 == 0:
                     self.cleanup_rooms(timeout=600)
                     now = time.time()
                     with self.lock:
                         self.user_presence = {uid: ts for uid, ts in self.user_presence.items() if (now - ts) < 600}
                 
-                time.sleep(0.1)
+                time.sleep(0.25)
             except Exception as e:
                 import traceback
                 print(f"[Heartbeat] CRITICAL: {e}\n{traceback.format_exc()}")
