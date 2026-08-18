@@ -3790,6 +3790,7 @@ def get_room_state(room_id):
             room_manager.load_previous_day_data(room)
             
         print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
+        user_rating_for_snapshot = None
         if 'user_id' in session:
             uid = session['user_id']
             if str(uid) in getattr(room, 'evicted_users', {}):
@@ -3797,36 +3798,51 @@ def get_room_state(room_id):
                 print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
                 return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
             
-            # Automatically sync active polling user into room.players if not already present
+            # Fetch user's rating for this room's configuration
+            rating = 1200
+            games_played = 0
+            country_flag = '🏳️'
+            is_guest = session.get('is_guest', False)
+            if is_guest:
+                rating = 0
+            else:
+                conn = sqlite3.connect(DB_PATH, timeout=30)
+                try:
+                    game_type_base = str(room.game_type).replace('solo_', '')
+                    config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
+                    is_24h = (room.time_limit >= 7200)
+                    if is_24h:
+                        cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,))
+                        row = cursor.fetchone()
+                        rating = row[0] if row else 1200
+                    else:
+                        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key))
+                        row = cursor.fetchone()
+                        rating = row[0] if row else 1200
+                    cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
+                    row2 = cur.fetchone()
+                    if row2:
+                        games_played = row2[0]
+                        if row2[1]: country_flag = row2[1]
+                except Exception as e:
+                    print(f"[get_room_state] Error fetching rating: {e}")
+                finally:
+                    conn.close()
+
+            user_rating_for_snapshot = rating
+
+            # Automatically sync active polling user into room.players OR room.spectators if not already present
             if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
-                rating = 1200
-                games_played = 0
-                country_flag = '🏳️'
-                is_guest = session.get('is_guest', False)
-                if not is_guest:
-                    conn = sqlite3.connect(DB_PATH, timeout=30)
-                    try:
-                        game_type_base = str(room.game_type).replace('solo_', '')
-                        config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
-                        is_24h = (room.time_limit >= 7200)
-                        if is_24h:
-                            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,))
-                            row = cursor.fetchone()
-                            rating = row[0] if row else 1200
-                        else:
-                            cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key))
-                            row = cursor.fetchone()
-                            rating = row[0] if row else 1200
-                        cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
-                        row2 = cur.fetchone()
-                        if row2:
-                            games_played = row2[0]
-                            if row2[1]: country_flag = row2[1]
-                    except Exception as e:
-                        print(f"[get_room_state] Error fetching rating for player sync: {e}")
-                    finally:
-                        conn.close()
-                room.add_player(uid, session.get('username', 'Player'), rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
+                has_limits = (room.min_rating > 0 or room.max_rating < 9999)
+                is_out_of_range = has_limits and (rating < room.min_rating or rating > room.max_rating or is_guest)
+                p_count = len([p for p in room.players if not p.is_ai])
+                is_full = (p_count >= getattr(room, 'max_players', 8)) and (room.game_type not in ['accumulative', 'solo_accumulative'])
+
+                if is_out_of_range or is_full:
+                    print(f"[get_room_state] Auto-syncing user {session.get('username')} as SPECTATOR (rating: {rating}, limits: {room.min_rating}-{room.max_rating}, full: {is_full})")
+                    room.add_spectator(uid, session.get('username', 'Player'), rating)
+                else:
+                    room.add_player(uid, session.get('username', 'Player'), rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
 
             room.update_player_activity(uid)
     try:
@@ -4155,6 +4171,7 @@ def get_room_state(room_id):
                 'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
                 'your_username': session.get('username'),
+                'your_rating': user_rating_for_snapshot,
                 'board': (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board,
                 'board_dimensions': room.board_dimensions,
                 'bonus_word': (getattr(room, 'previous_bonus_word', None) or room.bonus_word) if is_intermission else room.bonus_word,

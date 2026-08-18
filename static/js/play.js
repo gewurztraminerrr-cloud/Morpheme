@@ -1530,8 +1530,13 @@ async function updateGameState(incomingState = null) {
 
             // Determine spectator rating limits
             const currentUsername = state.your_username || window.currentUser || localStorage.getItem('morpheme_username');
-            let myRating = 1200;
-            if (typeof window.getUserConfigRating === 'function' && state.game_type && state.board_dimensions && state.time_limit) {
+            let myRating = (state.your_rating !== undefined && state.your_rating !== null) ? Number(state.your_rating) : 1200;
+            if (state.spectators && Array.isArray(state.spectators) && currentUsername) {
+                const meSpec = state.spectators.find(s => s.username && s.username.toLowerCase() === currentUsername.toLowerCase());
+                if (meSpec && meSpec.rating !== undefined && meSpec.rating !== null) {
+                    myRating = Number(meSpec.rating);
+                }
+            } else if (typeof window.getUserConfigRating === 'function' && state.game_type && state.board_dimensions && state.time_limit) {
                 myRating = window.getUserConfigRating(state.game_type, state.board_dimensions, state.time_limit);
             } else if (window.currentUserRating) {
                 myRating = Number(window.currentUserRating);
@@ -1539,12 +1544,6 @@ async function updateGameState(incomingState = null) {
                 myRating = Number(window.lastPlayerRating);
             } else if (currentUsername && currentUsername.startsWith('Guest_')) {
                 myRating = 0;
-            }
-            if (state.spectators && Array.isArray(state.spectators) && currentUsername) {
-                const meSpec = state.spectators.find(s => s.username && s.username.toLowerCase() === currentUsername.toLowerCase());
-                if (meSpec && meSpec.rating !== undefined && meSpec.rating !== null) {
-                    myRating = meSpec.rating;
-                }
             }
 
             const minRating = Number(state.min_rating) || 0;

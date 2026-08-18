@@ -60,9 +60,12 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Scroll Position Preservation**: Captures and restores scroll position on `rooms-list` and dynamic containers across refreshes so list position and relative average rating views remain stable.
 - **Comprehensive FAQ Section**: Added a dedicated FAQ entry and Quick Navigate shortcut covering all Active Rooms mechanics.
 
-### I. User Follow Spectator Mode Logic (`tools.js`)
-- **Rating Limit Check on Follow**: When following a player into their current active room, checks whether the target room has rating limits and whether the following user meets those limits.
-- **Automatic Spectator Transition**: If the target room is full (>= 8 players) or if the following user's rating falls outside the room's min/max rating limits (or if guest), puts the user directly into `SPECTATING` mode (`window.isSpectatorMode = true`) upon entering the room.
+### I. User Follow Spectator Mode Logic (`app.py`, `play.js`, `tools.js`)
+- **Authoritative Rating on Follow & Polling**: The server passes the user's exact configuration rating (`your_rating`) in `/api/room/<id>/state` snapshot.
+- **Rating Limit Enforcement on Follow**: When following a player into a room whose rating limit does not align with the follower's rating (e.g. 1191 rating following into 1193–1300), the user is automatically transitioned into **`SPECTATING`** mode (`as_spectator: true`, `window.isSpectatorMode = true`).
+- **8-Player Capacity Enforcement on Follow**: When following a user into a room that already has 8 people playing, the user is placed directly into **`SPECTATING`** mode.
+- **Server Auto-Sync Safeguard**: `get_room_state` polling automatically categorizes unassigned users as spectators rather than active players if the room is full or if the user's rating is outside room limits, preventing mid-round rating/capacity bypasses.
+- **Spectator Panel Display**: The definitions panel renders clean `SPECTATING` header without the "Join Room" button when rating limits are not met.
 
 ---
 

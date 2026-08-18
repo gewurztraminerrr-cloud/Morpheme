@@ -2141,13 +2141,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const roomMax = Number(data.max_rating) || 9999;
                 const hasLimits = (roomMin > 0 || roomMax < 9999);
 
-                let userRating = 1200;
-                if (typeof getUserConfigRating === 'function') {
-                    userRating = getUserConfigRating(data.game_type, data.board_dimensions, data.time_limit);
-                } else if (window.currentUserConfigRatings) {
-                    const cfgKey = `${(data.game_type || '').replace('solo_', '')}|${data.board_dimensions}|${data.time_limit}`;
-                    const rObj = window.currentUserConfigRatings[cfgKey];
-                    if (rObj && rObj.rating !== undefined) userRating = rObj.rating;
+                let userRating = (data.your_rating !== undefined && data.your_rating !== null) ? Number(data.your_rating) : 1200;
+                if (data.your_rating === undefined || data.your_rating === null) {
+                    if (typeof getUserConfigRating === 'function') {
+                        userRating = getUserConfigRating(data.game_type, data.board_dimensions, data.time_limit);
+                    } else if (window.currentUserConfigRatings) {
+                        const cfgKey = `${(data.game_type || '').replace('solo_', '')}|${data.board_dimensions}|${data.time_limit}`;
+                        const rObj = window.currentUserConfigRatings[cfgKey];
+                        if (rObj && rObj.rating !== undefined) userRating = rObj.rating;
+                    }
                 }
 
                 const currentUser = window.currentUser || '';
@@ -2155,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isGuest);
 
                 const shouldSpectate = isFull || isRatingOutOfRange;
-                console.log(`Following user: Room ${roomId}, Population: ${playerCount} (Full: ${isFull}), Rating Out of Range: ${isRatingOutOfRange} -> Spectator: ${shouldSpectate}`);
+                console.log(`Following user: Room ${roomId}, Population: ${playerCount} (Full: ${isFull}), User Rating: ${userRating} (Req: ${roomMin}-${roomMax}), Out of Range: ${isRatingOutOfRange} -> Spectator: ${shouldSpectate}`);
 
                 // 3. Join the room
                 const joinResp = await fetch(`/api/room/${roomId}/join`, {
