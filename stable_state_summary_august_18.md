@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33023`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33024`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -100,6 +100,9 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### S. Unscramble Tool HTML Structure & Initialization Fix (`templates/index.html`, `static/js/tools.js`)
 - Resolved a stray extra `</div>` tag immediately following the Word Lists tool that was prematurely closing `.tools-content` and causing the `#tool-unscramble` container to be placed outside the tools content area (preventing it from receiving the `.active` class).
 - Hooked `showTool('unscramble')` to automatically load and generate a new game round if the board is empty, ensuring full interactive content renders instantly when selecting Unscramble from the Tools sidebar.
+
+### T. Lobby "My Rating" Unselected Room Protection (`templates/index.html`, `static/js/lobby.js`)
+- Safeguarded `handleMyRatingButtonClick` and the `#my-rating-btn` click listener so that pressing "My Rating" when no room matrix configuration is selected leaves the rating filter textbox completely blank and performs no action.
 
 ---
 

@@ -507,14 +507,15 @@ function setupLobbyEvents() {
     if (myRatingBtn) {
         myRatingBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (!currentLobbyConfig) {
+            const activeConfig = currentLobbyConfig || window.currentLobbyConfig;
+            if (!activeConfig) {
                 console.log('[Lobby] My Rating clicked, but no active config. Doing nothing.');
                 return;
             }
             let userRating = 1200;
-            const gameType = currentLobbyConfig.gameType;
-            const board = currentLobbyConfig.boardDimensions;
-            const time = currentLobbyConfig.timeLimit;
+            const gameType = activeConfig.gameType;
+            const board = activeConfig.boardDimensions;
+            const time = activeConfig.timeLimit;
             const configKey = `${gameType}|${board}|${time}`;
             const ratings = window.currentUserConfigRatings || {};
             const ratingObj = ratings[configKey];
@@ -534,9 +535,9 @@ function setupLobbyEvents() {
             window.activeRatingFilterValue = userRating;
             console.log('[Lobby] My Rating clicked. Value:', userRating);
             fetchAndRenderRooms(
-                currentLobbyConfig.gameType,
-                currentLobbyConfig.timeLimit,
-                currentLobbyConfig.boardDimensions,
+                activeConfig.gameType,
+                activeConfig.timeLimit,
+                activeConfig.boardDimensions,
                 false
             );
         });
