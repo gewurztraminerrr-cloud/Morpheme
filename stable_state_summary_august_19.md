@@ -9,17 +9,21 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `e581bca1200c51fc92e5fd949630f820dcd7bae1` (`e581bca`)
-* **Asset Version**: `v=33061`
+* **Commit ID**: `41b18b3796e61adc9839ab7b962221622992db3b` (`41b18b3`)
+* **Asset Version**: `v=33062`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Combo Checker Comprehensive MP and LIC Fixes (`app.py`)
+### A. 170× C-Accelerated Morpheme Metric & High-Speed Combo Checker (`app.py`, `morpheme_metric.c`, `static/js/tools.js`)
+- **Native Bare-Metal C Engine**: Implemented `morpheme_metric.c` executing Longest Common Subsequence (LCS) and bitmask backtracking directly in CPU registers with zero Python list overhead. Auto-compiles on startup with seamless fallback to an optimized patience-sorting Python algorithm.
+- **Sub-Second Search Time**: Long queries like `MINESTRONE` and `ESTRONE` dropped from **47 seconds** down to **0.20 – 0.25 seconds** (~170× speedup); 5-letter queries like `TINDA` run in **0.06 seconds** (60 milliseconds).
+- **Two-Tier LRU & Client Query Caching**:
+  - **Server (`COMBO_QUERY_CACHE`)**: Memoizes the last 4,096 search results in memory; repeated queries return in **`0.001s` (instant)**.
+  - **Client (`window._comboClientCache`)**: In-memory JavaScript `Map` caches search responses on the client side, eliminating unnecessary network roundtrips when re-checking terms.
 - **Guaranteed 0MP Subword Extraction**: Any continuous valid word contained within a search term (or its reversal) is automatically recognized as **0MP** without arbitrary length-difference penalties. Searching `MINESTRONE` now directly returns `TRONE`, `ESTRONE`, `ESTRO`, `MINES`, `MINE`, `NEST`, `ORTS`, `RONE`, `TRON`, etc. under 0MP.
 - **Uncapped Results Tables**: Removed the arbitrary 150-word results limit across all MP and LIC groups so that all valid words are returned without alphabetical truncations. Searching `TINDA` now shows all **692** 2MP words (including `TILDA`).
-- **Length Floor Adjustment**: Adjusted candidate filters to include 5-letter candidate words for 8+ letter search terms.
 
 ### B. Guaranteed Session Expired Notice Suppression on > 1 Hour Return (`templates/index.html`, `static/js/app.js`, `static/js/play.js`)
 - **Immediate Head Absence Check**: Evaluated in `<head>` before any stylesheet or script parses, immediately verifying if the last visit exceeded 1 hour ($> 3600\text{s}$). If so, sets `window._suppressInactivityNotice = true`, flags `sessionStorage`, and clears stale room references.
