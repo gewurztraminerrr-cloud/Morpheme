@@ -361,7 +361,7 @@ function renderGroups(groupsData, containerId, type) {
             <div class="group-header">${label}</div>
             <div class="group-table-container">
                 <div class="group-word-list">
-                    ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></div>`).join('')}
+                    ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
                 </div>
             </div>
         `;
@@ -2926,19 +2926,19 @@ function renderNextWordsPage() {
     if (currentWordsType === 'likelihood') {
         html = nextPageWords.map(item => `
             <div class="list-item">
-                <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span>
+                <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span>
             </div>
         `).join('');
     } else if (currentWordsType === 'added') {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(w => `
             <div class="list-item added-word" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="display: flex; justify-content: space-between; align-items: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">
-                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
                 ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
             </div>
         `).join('');
     } else {
-        html = nextPageWords.map(w => `<div class="list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></div>`).join('');
+        html = nextPageWords.map(w => `<div class="list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('');
     }
 
     if (currentWordsRenderedCount === 0) {
@@ -3134,9 +3134,9 @@ function setupListsTool() {
                 if (slice.length === 0) { if (onDone) onDone(); return; }
                 let html = '';
                 if (currentWordsType === 'likelihood') {
-                    html = slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span></span>`).join('');
+                    html = slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`).join('');
                 } else {
-                    html = slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></span>`).join('');
+                    html = slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></span>`).join('');
                 }
                 fullListResults.insertAdjacentHTML('beforeend', html);
                 rendered += slice.length;
@@ -3721,7 +3721,7 @@ async function runSequenceSearch() {
         // Clickable words for Sequence search
         html += words.map(w => `
             <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="font-family: monospace;">${w}</span>
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace;">${w}</span>
             </td></tr>
         `).join('');
 
@@ -4169,7 +4169,7 @@ async function runSubanagramSearch() {
         // Clickable words for Subanagram search
         html += words.map(w => `
             <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <span class="clickable-word-link" onclick="window.lookupWord('${w}')" style="font-family: monospace;">${w}</span>
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace;">${w}</span>
             </td></tr>
         `).join('');
 
@@ -5080,7 +5080,7 @@ function renderUnscrambleFound(revealMissed = false) {
             }
 
             if (isClickable) {
-                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}')" style="${style} padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s ease;">${displayWord}</div>`;
+                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s ease;">${displayWord}</div>`;
             } else {
                 html += `<div style="${style} padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; letter-spacing: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); user-select: none;">${displayWord}</div>`;
             }
@@ -5126,7 +5126,7 @@ function renderUnscrambleFound(revealMissed = false) {
                                 const wereFound = h.found.includes(s);
                                 const color = wereFound ? '#81c784' : 'rgba(255,255,255,0.35)';
                                 const bg = wereFound ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255,255,255,0.03)';
-                                return `<span class="clickable-word-link" onclick="window.lookupWord('${s}')" style="font-size: 0.72rem; background: ${bg}; padding: 2px 7px; border-radius: 4px; color: ${color}; border: 1px solid ${wereFound ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.05)'}; cursor: pointer;">${s}</span>`;
+                                return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.72rem; background: ${bg}; padding: 2px 7px; border-radius: 4px; color: ${color}; border: 1px solid ${wereFound ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.05)'}; cursor: pointer;">${s}</span>`;
                             }).join('')}
                         </div>
                     </div>
@@ -5487,10 +5487,12 @@ function setupPersonalTimer() {
 
         if (defPanel) defPanel.classList.remove('timer-flash');
     });
-}
-// Global function to lookup word in Tool Validator
-window.lookupWord = function (word) {
+// --- Global In-Place Word Definition Popover for Tools ---
+window._wordDefCache = window._wordDefCache || new Map();
+
+window.openWordInIsValid = function (word) {
     if (!word) return;
+    window.hideWordDefinitionPopup();
 
     // Check if full list modal is currently open
     const fullListModal = document.getElementById('full-list-modal');
@@ -5541,6 +5543,149 @@ window.lookupWord = function (word) {
     // 5. Scroll to results if needed
     const container = document.getElementById('valid-results-container');
     if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.hideWordDefinitionPopup = function () {
+    const popover = document.getElementById('tool-word-def-popover');
+    if (popover) {
+        popover.classList.remove('active');
+        setTimeout(() => {
+            if (!popover.classList.contains('active')) {
+                popover.style.display = 'none';
+            }
+        }, 150);
+    }
+};
+
+window.showWordDefinitionPopup = async function (word, event) {
+    if (!word) return;
+    const cleanWord = String(word).trim().toUpperCase();
+
+    let popover = document.getElementById('tool-word-def-popover');
+    if (!popover) {
+        popover = document.createElement('div');
+        popover.id = 'tool-word-def-popover';
+        popover.className = 'tool-def-popover';
+        popover.innerHTML = `
+            <div class="tool-def-popover-header">
+                <div class="tool-def-word-title">
+                    <span id="tool-def-word-text"></span>
+                    <span id="tool-def-len-badge" class="tool-def-len-badge"></span>
+                </div>
+                <button type="button" class="tool-def-close-btn" onclick="window.hideWordDefinitionPopup()" title="Close">✕</button>
+            </div>
+            <div id="tool-def-pronunciation" class="tool-def-pronunciation" style="display: none;"></div>
+            <div id="tool-def-content" class="tool-def-content">Loading definition...</div>
+            <div class="tool-def-actions">
+                <a href="javascript:void(0)" id="tool-def-isvalid-btn" class="tool-def-isvalid-link">Open in Is Valid ↗</a>
+            </div>
+        `;
+        document.body.appendChild(popover);
+
+        // Close on document click outside
+        document.addEventListener('click', (e) => {
+            if (popover && popover.classList.contains('active')) {
+                if (!popover.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item')) {
+                    window.hideWordDefinitionPopup();
+                }
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.hideWordDefinitionPopup();
+            }
+        });
+    }
+
+    const wordTextEl = document.getElementById('tool-def-word-text');
+    const lenBadgeEl = document.getElementById('tool-def-len-badge');
+    const pronEl = document.getElementById('tool-def-pronunciation');
+    const contentEl = document.getElementById('tool-def-content');
+    const isValidBtn = document.getElementById('tool-def-isvalid-btn');
+
+    if (wordTextEl) wordTextEl.textContent = cleanWord;
+    if (lenBadgeEl) lenBadgeEl.textContent = `${cleanWord.length}L`;
+    if (pronEl) pronEl.style.display = 'none';
+    if (isValidBtn) {
+        isValidBtn.onclick = () => window.openWordInIsValid(cleanWord);
+    }
+
+    // Smart Positioning
+    const evt = event || window.event;
+    const target = evt ? (evt.currentTarget || evt.target) : null;
+    popover.style.display = 'block';
+
+    if (target && typeof target.getBoundingClientRect === 'function') {
+        const rect = target.getBoundingClientRect();
+        const popWidth = Math.min(320, window.innerWidth - 24);
+        let left = rect.left;
+        if (left + popWidth > window.innerWidth - 12) {
+            left = window.innerWidth - popWidth - 12;
+        }
+        if (left < 12) left = 12;
+
+        let top = rect.bottom + 8;
+        if (top + 200 > window.innerHeight && rect.top > 200) {
+            top = rect.top - 190;
+        }
+        if (top < 12) top = 12;
+
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+        popover.style.transform = 'scale(1) translateY(0)';
+    } else {
+        popover.style.left = '50%';
+        popover.style.top = '50%';
+        popover.style.transform = 'translate(-50%, -50%)';
+    }
+
+    // Activate transition
+    void popover.offsetWidth;
+    popover.classList.add('active');
+
+    // Check in-memory cache for 0ms instant display
+    if (window._wordDefCache.has(cleanWord)) {
+        renderDefData(window._wordDefCache.get(cleanWord));
+        return;
+    }
+
+    if (contentEl) contentEl.innerHTML = '<span style="opacity: 0.6;">Loading definition...</span>';
+
+    try {
+        const res = await fetch('/api/tools/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: cleanWord, dictionary: 'ALL' })
+        });
+        const data = await res.json();
+        window._wordDefCache.set(cleanWord, data);
+        renderDefData(data);
+    } catch (err) {
+        if (contentEl) contentEl.innerHTML = '<span style="color: #f87171;">Failed to load definition.</span>';
+    }
+
+    function renderDefData(data) {
+        if (data && data.pronunciation && pronEl) {
+            pronEl.textContent = data.pronunciation;
+            pronEl.style.display = 'block';
+        } else if (pronEl) {
+            pronEl.style.display = 'none';
+        }
+
+        if (contentEl) {
+            if (data && data.definition && data.definition.trim()) {
+                contentEl.textContent = data.definition;
+            } else {
+                contentEl.innerHTML = '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
+            }
+        }
+    }
+};
+
+window.lookupWord = function (word, event) {
+    window.showWordDefinitionPopup(word, event);
 };
 
 window.findWordPath = findWordPath;

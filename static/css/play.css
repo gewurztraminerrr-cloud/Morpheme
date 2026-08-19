@@ -7800,3 +7800,128 @@ body.is-mobile .desktop-only-setting {
     box-sizing: border-box !important;
     text-align: center !important;
 }
+
+/* --- Tool Word Definition Popover --- */
+.tool-def-popover {
+    position: fixed;
+    z-index: 100010;
+    width: 320px;
+    max-width: calc(100vw - 24px);
+    background: rgba(18, 16, 30, 0.97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(167, 139, 250, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(167, 139, 250, 0.2);
+    padding: 12px 16px 14px 16px;
+    box-sizing: border-box;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: none;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.tool-def-popover.active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+
+.tool-def-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tool-def-word-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #c4b5fd;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-def-len-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(167, 139, 250, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    color: #ddd6fe;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.tool-def-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.tool-def-close-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+}
+
+.tool-def-pronunciation {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    font-style: italic;
+}
+
+.tool-def-content {
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.9);
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.tool-def-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 6px;
+}
+
+.tool-def-isvalid-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a78bfa;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tool-def-isvalid-link:hover {
+    color: #c4b5fd;
+    text-decoration: underline;
+}
