@@ -233,16 +233,16 @@
 .chat-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 10px;
-    height: 200px; /* Force height to 200px as requested */
+    padding: 6px 10px;
+    height: 110px; /* Compact height to give more vertical space to Players panel */
+    flex: 0 0 110px;
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
-
 
     /* Protect chat */
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 #chat-history {
@@ -592,10 +592,11 @@ body.theme-light-brown .player-score-val {
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 12px 15px;
-    flex: 0 0 150px !important; /* Force visibility and fixed size */
+    padding: 6px 12px;
+    flex: 0 0 85px !important; /* Compact size to give more vertical space to words list */
+    height: 85px !important;
+    max-height: 85px !important;
     border-top: none;
-    /* Removed redundant border since it's now a separate box */
     margin-top: 0;
     display: flex;
     flex-direction: column;
@@ -607,8 +608,8 @@ body.theme-light-brown .player-score-val {
 
 .definition-header {
     flex-shrink: 0;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -2129,28 +2130,28 @@ body.theme-light-brown .word-item.missed {
     #page-tools,
     #page-settings,
     #page-mods {
-        height: calc(100vh - 120px) !important;
-        max-height: calc(100vh - 120px) !important;
+        height: calc(100vh - 65px) !important;
+        max-height: calc(100vh - 65px) !important;
         overflow: hidden !important;
-        padding-top: 20px !important;
-        padding-bottom: 20px !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
         box-sizing: border-box !important;
     }
     .tools-split-layout {
         width: 100% !important;
-        max-width: 98% !important;
+        max-width: 99% !important;
         flex: 1 1 auto !important;
-        height: 0 !important;
+        height: 100% !important;
         min-height: 0 !important;
-        max-height: none !important;
+        max-height: 100% !important;
     }
     .tools-sidebar {
-        flex: 0 0 360px !important;
-        width: 360px !important;
-        min-width: 360px !important;
-        max-width: 360px !important;
-        padding: 20px 12px !important;
-        gap: 10px !important;
+        flex: 0 0 320px !important;
+        width: 320px !important;
+        min-width: 320px !important;
+        max-width: 320px !important;
+        padding: 12px 8px !important;
+        gap: 6px !important;
     }
     .tool-nav-btn {
         height: auto !important;
@@ -4971,24 +4972,22 @@ input[type=range]::-moz-range-track {
         max-height: none !important;
     }
     .chat-panel {
-        height: 200px !important; /* Made smaller to give more space to players list */
+        height: 110px !important; /* Compact to give more space to players list */
         flex: none !important;
         max-height: none !important;
-        margin-top: 15px !important;
+        margin-top: 10px !important;
+        padding: 6px 10px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
     }
 
-
-
-
-
-
     .definitions-panel {
-        flex: 0 0 150px !important; /* Give more space to definitions panel */
-        max-height: none !important;
-        margin-top: 15px !important;
+        flex: 0 0 85px !important; /* Compact to give more space to words table */
+        height: 85px !important;
+        max-height: 85px !important;
+        margin-top: 10px !important;
+        padding: 6px 12px !important;
     }
 
 
@@ -6657,6 +6656,7 @@ body .board-cell.tile-flash-purple * {
 
     #tool-sequence.tool-pane.active,
     #tool-subanagrams.tool-pane.active,
+    #tool-lists.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -6666,6 +6666,40 @@ body .board-cell.tile-flash-purple * {
         min-height: 0 !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+
+    #tool-sequence .tool-header,
+    #tool-subanagrams .tool-header,
+    #tool-lists .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 4px !important;
+        padding: 0 !important;
+    }
+
+    #tool-sequence .tool-header h2,
+    #tool-subanagrams .tool-header h2,
+    #tool-lists .tool-header h2 {
+        font-size: 1.15rem !important;
+        margin: 0 0 2px 0 !important;
+    }
+
+    #tool-sequence .tool-header p,
+    #tool-subanagrams .tool-header p,
+    #tool-lists .tool-header p {
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+        opacity: 0.75 !important;
+    }
+
+    #tool-sequence .combo-control-panel,
+    #tool-subanagrams .combo-control-panel,
+    #tool-lists .combo-control-panel {
+        flex: 0 0 auto !important;
+        margin-bottom: 4px !important;
+        padding: 4px 8px !important;
     }
 
     #tool-sequence .seq-results-container,
@@ -6674,26 +6708,47 @@ body .board-cell.tile-flash-purple * {
     #sub-results-container {
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        height: auto !important;
+        height: 100% !important;
         max-height: 100% !important;
         margin-bottom: 0 !important;
-        overflow-y: hidden !important;
-        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
 
     .list-scroll-area-wrapper {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .seq-scroll-area,
     .sub-scroll-area,
     .list-scroll-area {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
         overflow-y: auto !important;
+    }
+
+    #seq-list-results table,
+    #sub-list-results table,
+    .seq-scroll-area table,
+    .sub-scroll-area table {
+        width: 100% !important;
+    }
+
+    #seq-list-results table td,
+    #sub-list-results table td,
+    .seq-scroll-area table td,
+    .sub-scroll-area table td {
+        padding: 3px 6px !important;
+        font-size: 0.95rem !important;
     }
 }
 
