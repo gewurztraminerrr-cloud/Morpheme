@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33035`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33036`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -139,6 +139,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Single-Column Responsive Layout**: Converted `.hof-columns-container` and `.hof-grid` to responsive single-column layouts on mobile viewports (`<= 900px`), preventing two-column grid items from blowing past panel borders.
 - **Text & Item Overflow Containment**: Added `min-width: 0`, `width: 100%`, and `box-sizing: border-box` to `.hof-item` and `.hof-info`, alongside `text-overflow: ellipsis; white-space: nowrap; overflow: hidden;` on `.hof-name` and `.hof-tier`.
 - **Mobile Padding Optimization**: Adjusted glass panel padding from 30px to `20px 14px` on mobile, ensuring Top Lifetime Supporters and Recent Support Activity remain fully contained, neatly aligned, and elegantly presented on phones and tablets.
+
+### BB. Lists Tool "View Full List" Anti-Copy Protections (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
+- **CSS Selection Prevention**: Applied `-webkit-user-select: none !important`, `-moz-user-select: none !important`, `-ms-user-select: none !important`, `user-select: none !important`, and `-webkit-touch-callout: none !important` across `#full-list-modal`, `#full-list-modal-results`, and `.full-list-item`.
+- **DOM Event Blocking**: Intercepted and blocked `copy`, `cut`, `selectstart`, `dragstart`, and `contextmenu` events on the modal overlay.
+- **Keyboard Shortcut Interception**: Prevented copy/select shortcuts (`Ctrl+C`, `Cmd+C`, `Ctrl+A`, `Cmd+A`, `Ctrl+X`, `Cmd+X`, `Ctrl+S`, `Cmd+S`, `Ctrl+P`, `Cmd+P`, `Ctrl+U`, `Cmd+U`) while retaining clickable definition inspection.
 
 ---
 

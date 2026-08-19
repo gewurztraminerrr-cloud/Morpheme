@@ -7407,8 +7407,22 @@ body .board-cell.tile-flash-purple * {
 }
 
 /* ================================================
-   FULL LIST MODAL — word item styles
-   ================================================ */
+/* ============================================================
+   FULL LIST MODAL — word item styles & anti-copy protections
+   ============================================================ */
+#full-list-modal,
+#full-list-modal *,
+#full-list-modal-results,
+#full-list-modal-results *,
+.full-list-item,
+.full-list-item * {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
 .full-list-item {
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.82rem;

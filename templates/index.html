@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33035">
-    <link rel="stylesheet" href="/css/lobby.css?v=33035">
-    <link rel="stylesheet" href="/css/play.css?v=33035">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33035">
-    <link rel="stylesheet" href="/css/forum.css?v=33035">
-    <link rel="stylesheet" href="/css/donate.css?v=33035">
-    <script src="/js/app.js?v=33035"></script>
-    <script src="/js/lobby.js?v=33035"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33036">
+    <link rel="stylesheet" href="/css/lobby.css?v=33036">
+    <link rel="stylesheet" href="/css/play.css?v=33036">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33036">
+    <link rel="stylesheet" href="/css/forum.css?v=33036">
+    <link rel="stylesheet" href="/css/donate.css?v=33036">
+    <script src="/js/app.js?v=33036"></script>
+    <script src="/js/lobby.js?v=33036"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -5221,10 +5221,10 @@
             </div>
         </div>
         <!-- Full List Modal Overlay -->
-        <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(10, 10, 16, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); flex-direction: column;">
-            <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box;">
+        <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(10, 10, 16, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); flex-direction: column; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;" oncopy="return false" oncut="return false" oncontextmenu="return false" onselectstart="return false">
+            <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box; user-select: none; -webkit-user-select: none;">
                 <!-- Modal Header -->
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; user-select: none;">
                     <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
                         <span style="font-size: 1.3rem; font-weight: 800; color: #a78bfa;" id="full-list-modal-title">Full List</span>
                         <span style="font-size: 0.85rem; opacity: 0.7; color: rgba(255,255,255,0.8);" id="full-list-modal-count"></span>
@@ -5233,7 +5233,7 @@
                 </div>
                 <!-- Scrollable Word Grid -->
                 <div style="position: relative; flex: 1; min-height: 0; width: 100%;">
-                    <div id="full-list-modal-results" style="height: 100%; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 28px 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; box-sizing: border-box;"></div>
+                    <div id="full-list-modal-results" style="height: 100%; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 28px 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; box-sizing: border-box; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;" oncopy="return false" oncut="return false" oncontextmenu="return false" onselectstart="return false"></div>
                     <div class="custom-scrollbar-track" id="full-list-scrollbar-track">
                         <div class="custom-scrollbar-thumb" id="full-list-scrollbar-thumb"></div>
                     </div>
@@ -5751,18 +5751,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33035"></script>
-    <script src="/js/forum.js?v=33035"></script>
-    <script src="/js/app.js?v=33035"></script>
-    <script src="/js/lobby.js?v=33035"></script>
-    <script src="/js/play.js?v=33035"></script>
-    <script src="/js/tournaments.js?v=33035"></script>
-    <script src="/js/leaderboard.js?v=33035"></script>
-    <script src="/js/tools.js?v=33035"></script>
-    <script src="/js/mouse_selection.js?v=33035"></script>
-    <script src="/js/mods.js?v=33035"></script>
-    <script src="/js/private_matches.js?v=33035"></script>
-    <script src="/js/donate.js?v=33035"></script>
+    <script src="/js/settings.js?v=33036"></script>
+    <script src="/js/forum.js?v=33036"></script>
+    <script src="/js/app.js?v=33036"></script>
+    <script src="/js/lobby.js?v=33036"></script>
+    <script src="/js/play.js?v=33036"></script>
+    <script src="/js/tournaments.js?v=33036"></script>
+    <script src="/js/leaderboard.js?v=33036"></script>
+    <script src="/js/tools.js?v=33036"></script>
+    <script src="/js/mouse_selection.js?v=33036"></script>
+    <script src="/js/mods.js?v=33036"></script>
+    <script src="/js/private_matches.js?v=33036"></script>
+    <script src="/js/donate.js?v=33036"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

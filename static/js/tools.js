@@ -3083,6 +3083,26 @@ function setupListsTool() {
         fullListModal.addEventListener('click', (e) => {
             if (e.target === fullListModal) closeFullListModal();
         });
+
+        // Strict Anti-Copy Protections for View Full List
+        ['copy', 'cut', 'selectstart', 'dragstart', 'contextmenu'].forEach(evtType => {
+            fullListModal.addEventListener(evtType, (e) => {
+                e.preventDefault();
+                return false;
+            });
+        });
+
+        // Prevent keyboard shortcuts (Cmd+C, Ctrl+C, Cmd+A, Ctrl+A, Cmd+X, Ctrl+X, Cmd+S, Ctrl+S, Cmd+P, Ctrl+P)
+        fullListModal.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                const key = (e.key || '').toLowerCase();
+                if (['c', 'a', 'x', 's', 'p', 'u'].includes(key)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }
+        });
     }
     // Escape key to close
     document.addEventListener('keydown', (e) => {
