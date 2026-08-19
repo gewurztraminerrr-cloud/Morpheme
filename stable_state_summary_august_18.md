@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33034`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33035`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -134,6 +134,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Canonical 24h Room Keys**: Standardized all 24h room keys across database storage and API endpoints to `24h_4x4`, `24h_4x6`, `24h_5x7`, and `24h_6x8`, ensuring independent word counts and permanent score sums across all four 24h room sizes.
 - **Stable 24h Room Singletons**: Configured `/api/room/create` to always assign stable singleton room IDs (`pub_v2_accumulative_{dims}_86400`) rather than random UUIDs, keeping players in the same persistent room.
 - **Live Active Scores & Instant Non-Empty Rankings**: Enhanced `/api/daily-score-sums` to auto-backfill from `round_history` and dynamically incorporate active daily players with scores > 0 so that once a user establishes a score in any 24h room, the Score Sum tab never reads "No players found" again.
+
+### AA. Mobile Donate Tab Supporters Panel Containment Fix (`static/css/donate.css`)
+- **Single-Column Responsive Layout**: Converted `.hof-columns-container` and `.hof-grid` to responsive single-column layouts on mobile viewports (`<= 900px`), preventing two-column grid items from blowing past panel borders.
+- **Text & Item Overflow Containment**: Added `min-width: 0`, `width: 100%`, and `box-sizing: border-box` to `.hof-item` and `.hof-info`, alongside `text-overflow: ellipsis; white-space: nowrap; overflow: hidden;` on `.hof-name` and `.hof-tier`.
+- **Mobile Padding Optimization**: Adjusted glass panel padding from 30px to `20px 14px` on mobile, ensuring Top Lifetime Supporters and Recent Support Activity remain fully contained, neatly aligned, and elegantly presented on phones and tablets.
 
 ---
 
