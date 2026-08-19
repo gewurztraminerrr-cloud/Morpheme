@@ -36,7 +36,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33046`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33047`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -180,6 +180,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### JJ. Store Tool OSPD Dictionary Description & NWL Clarification (`templates/index.html`)
 - **OSPD Identification**: Updated the 2-to-8 letter dictionary listing in the Tools Store to "The Official Scrabble Players Dictionary (OSPD)".
 - **NWL Comparability Note**: Added the explicit clarification: *"This dictionary is not identical to NWL, but close enough to render it worth having for studying and reference."*
+
+### KK. Store Tool Collins Official Scrabble Words 2–15 Large Dictionary Addition (`templates/index.html`, `static/images/collins_words_large.png`)
+- **Large Dictionary Addition**: Added "Official SCRABBLE Words (Collins 2–15 All Words)" to the Dictionaries section of the Store in Tools.
+- **Section Layout Details**: Documented the two-part volume layout with 2-to-9 letter words in the first half and 10-to-15 letter words in the other half, linked directly to the official Amazon listing.
 
 ---
 
