@@ -5160,8 +5160,8 @@ def calculate_morpheme_metric(source, target, limit=6):
 
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
-    """Applies strict filtering logic from combos.java."""
-    # mp_groups is now a dict of sets
+    """Applies filtering logic for Morpheme Procedure combinations."""
+    # mp_groups is a dict of sets
     added = False
     
     if source_len == 3:
@@ -5169,15 +5169,15 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     elif source_len == 4:
         if target_len >= 4: added = True
     elif source_len == 5:
-        if target_len >= 5 and mp <= 3:
+        if target_len >= 4 and mp <= 3:
             if mp >= 3:
-                if target_len >= 6: added = True
+                if target_len >= 5: added = True
             else:
                 added = True
     elif source_len == 6:
-        if target_len >= 5 and mp <= 3:
+        if target_len >= 4 and mp <= 3:
             if mp >= 3:
-                if target_len >= 6: added = True
+                if target_len >= 5: added = True
             else:
                 added = True
     elif source_len == 7:
@@ -5190,13 +5190,13 @@ def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
         if target_len >= 5 and mp <= 4:
             added = True
     elif source_len >= 9:
-        if target_len >= 6 and mp <= 5:
+        if target_len >= 5 and mp <= 5:
              if mp >= 5:
                  if target_len >= 8: added = True
              else:
                  added = True
     
-    if added:
+    if added and mp in mp_groups:
         mp_groups[mp].add(word)
 
 def check_and_add_lic(lic_groups, count, target_len, word):
@@ -5258,13 +5258,13 @@ def tools_combo_check():
     max_mp = 3
     
     # MP Candidates: absolute length diff <= 3, and shared >= T - max_mp, and unique shared >= 3
-    # Check minimum candidate length rules based on Java specifications
-    if source_len == 8:
+    # Check minimum candidate length rules based on specifications
+    if source_len >= 8:
         mp_len_mask = (dict_lens_int >= 5)
-    elif source_len >= 9:
-        mp_len_mask = (dict_lens_int >= 6)
+    elif source_len >= 5:
+        mp_len_mask = (dict_lens_int >= 4)
     else:
-        mp_len_mask = True
+        mp_len_mask = (dict_lens_int >= 3)
 
     candidates_mp = np.where(
         passed_mask & 
@@ -5293,6 +5293,18 @@ def tools_combo_check():
     # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
     mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
     lic_groups = {}
+    
+    # 0. Guaranteed Substring Check for 0MP: Any valid dictionary word of length >= 4 (or >= 3)
+    # contained within search_term or search_term_rev is 0MP by definition
+    min_sub_len = 4 if source_len >= 5 else 3
+    for l in range(min_sub_len, source_len + 1):
+        for start in range(source_len - l + 1):
+            sub1 = search_term[start:start+l]
+            if sub1 in dict_data['set']:
+                mp_groups[0].add(sub1)
+            sub2 = search_term_rev[start:start+l]
+            if sub2 in dict_data['set']:
+                mp_groups[0].add(sub2)
     
     # --- OPTIMIZED SINGLE-THREADED LOOP ---
     for idx in sorted_candidates:
