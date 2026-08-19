@@ -2483,11 +2483,13 @@ body.theme-light-brown .word-item.missed {
 
     #tool-combo .chart-desc,
     .combo-results-container .chart-desc {
-        max-height: 48px !important;
-        overflow-y: auto !important;
-        font-size: 0.78rem !important;
-        line-height: 1.25 !important;
-        padding: 5px 12px !important;
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        font-size: 0.85rem !important;
+        line-height: 1.45 !important;
+        padding: 10px 16px 12px 16px !important;
+        color: rgba(var(--text-primary-rgb), 0.75) !important;
     }
 
     #tool-combo .horizontal-scroll-container,
