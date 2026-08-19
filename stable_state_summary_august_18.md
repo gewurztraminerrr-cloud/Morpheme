@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33033`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33034`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -109,9 +109,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - Completely hid the "Cube Scale (3D)" panel in Settings on mobile devices using CSS media queries (`max-width: 900px`), `body.is-mobile`, and runtime JavaScript detection (`applyMobileSettingsVisibility()`), restricting the setting exclusively to desktops and laptops.
 - Updated the FAQ section title and explanation to clarify why 3D Cube mode and Cube Scale are exclusive to desktops and laptops, highlighting the lack of an efficient word entry method and the lack of screen real estate for a dedicated word entry textbox on mobile screens.
 
-### V. Combo Checker Mobile MP Tables Vertical Length Expansion (`static/css/play.css`)
-- Removed the legacy 250px fixed section height on `.result-section` and expanded mobile table container heights (`min-height: 400px; height: 420px;`) with inner table scroll areas (`min-height: 330px; height: 350px;`).
-- Gave MP tables (0MP, 1MP, 2MP, 3MP) the same generous vertical length as 5LIC/LIC tables on mobile devices, ensuring full word lists remain clearly visible and scrollable.
+### V. Combo Checker Mobile MP & LIC Tables Vertical Length Expansion (`static/css/play.css`)
+- Greatly expanded mobile table container heights (`min-height: 520px;`) with dedicated horizontal scroll areas (`min-height: 440px; height: 460px;`), column heights (`min-height: 420px; height: 440px;`), and inner table scroll areas (`min-height: 370px; height: 390px;`).
+- Capped the mobile description text (`max-height: 50px`) so that the long description text does not compress the table containers.
+- Guaranteed MP tables (0MP, 1MP, 2MP, 3MP) have the exact same generous vertical length and scrollable word capacity as 5LIC/LIC tables on mobile devices, ensuring full word lists under 1MP and all other columns are prominently visible and scrollable.
 
 ### W. Lobby "My Rating" Configuration Rating Accuracy Fix (`static/js/lobby.js`, `templates/index.html`)
 - Fixed `getUserConfigRating` in `lobby.js` and `index.html` which previously fell back to the user's global overall rating (e.g. `1205`) for unplayed configurations instead of the default `1200`.
