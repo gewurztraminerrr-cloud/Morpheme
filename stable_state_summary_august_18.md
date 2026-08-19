@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33029`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33030`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -116,6 +116,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### W. Lobby "My Rating" Configuration Rating Accuracy Fix (`static/js/lobby.js`, `templates/index.html`)
 - Fixed `getUserConfigRating` in `lobby.js` and `index.html` which previously fell back to the user's global overall rating (e.g. `1205`) for unplayed configurations instead of the default `1200`.
 - Ensured all "My Rating" button displays (`My Rating ([rating])`) and button clicks precisely reflect the specific configuration rating shown on the user's Profile page ratings grid (e.g., 1191 for FCFS 4x4 45s, and 1200 for unplayed configurations).
+
+### X. Unscramble Sequence Stabilization & Persistent Session History (`static/js/tools.js`)
+- **Eliminated Jumbled Word Flash / Changing**: Introduced an `isLoading` mutex and eliminated redundant duplicate generators on input focus, timeout, and tab switching, ensuring only one clean generation request runs and preventing the first jumbled word from flickering or changing sequences upon arrival.
+- **Persistent Session History**: Added automatic `localStorage` synchronization (`morpheme_unscramble_history`), ensuring completed and revealed rounds are permanently retained across page reloads and tab navigations.
+- **Rich Session History UI**: Always renders the Session History section under Status & Results, displaying the jumbled puzzle, time, found count vs total solutions, color-coded solution pills with definition lookups, and a "Clear History" action button.
 
 ---
 
