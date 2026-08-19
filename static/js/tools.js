@@ -3066,15 +3066,41 @@ function setupListsTool() {
         const selectedType = typeSelect ? typeSelect.value : 'nwl';
         const selectedLength = lengthSelect ? lengthSelect.value : 'all';
         const selectedStart = startSelect ? startSelect.value : 'all';
+        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${currentWordsType}_${currentWordsList.length}`;
 
-        // Set title and show modal immediately
+        // Set title
         const titleEl = document.getElementById('list-display-title');
         if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
-        if (fullListCount) fullListCount.textContent = `Loading…`;
         if (fullListJumpInput) fullListJumpInput.value = '';
         if (fullListJumpToast) fullListJumpToast.style.display = 'none';
 
-        // Clear and show modal right away
+        // Check if we can resume the already rendered DOM in fullListResults
+        if (window._lastFullListFilterKey === currentFilterKey && fullListResults.children.length > 0) {
+            fullListModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            if (fullListCount && window._lastFullListCountText) {
+                fullListCount.textContent = window._lastFullListCountText;
+            }
+            initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
+
+            // Restore exact saved scroll position
+            if (typeof window._savedFullListScrollTop === 'number') {
+                const targetScroll = window._savedFullListScrollTop;
+                fullListResults.scrollTop = targetScroll;
+                requestAnimationFrame(() => {
+                    if (fullListResults) fullListResults.scrollTop = targetScroll;
+                });
+                setTimeout(() => {
+                    if (fullListResults) fullListResults.scrollTop = targetScroll;
+                }, 40);
+            }
+            return;
+        }
+
+        // Otherwise, new list or first time: clear and render from scratch
+        window._lastFullListFilterKey = currentFilterKey;
+        window._savedFullListScrollTop = 0;
+        if (fullListCount) fullListCount.textContent = `Loading…`;
         fullListResults.innerHTML = '';
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
@@ -3087,6 +3113,7 @@ function setupListsTool() {
         function renderWordList(words, startIndex, onDone) {
             let rendered = startIndex;
             function chunk() {
+                if (window._lastFullListFilterKey !== currentFilterKey) return;
                 const slice = words.slice(rendered, rendered + MODAL_CHUNK);
                 if (slice.length === 0) { if (onDone) onDone(); return; }
                 let html = '';
@@ -3115,16 +3142,17 @@ function setupListsTool() {
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
+                    if (window._lastFullListFilterKey !== currentFilterKey) return;
                     const fullWords = data[selectedType] || [];
-                    // Only append the words beyond what was already rendered
                     const extraWords = fullWords.slice(currentWordsList.length);
-                    if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
+                    const countText = `${fullWords.length.toLocaleString()} words`;
+                    window._lastFullListCountText = countText;
+                    if (fullListCount) fullListCount.textContent = countText;
                     if (extraWords.length > 0) {
                         renderWordList(extraWords, 0, () => {
                             window.isFullListLoading = false;
                         });
                     } else {
-                        if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
                         window.isFullListLoading = false;
                     }
                 })
@@ -3135,7 +3163,9 @@ function setupListsTool() {
                 });
         } else {
             // List was not truncated — render what we have
-            if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
+            const countText = `${currentWordsList.length.toLocaleString()} words`;
+            window._lastFullListCountText = countText;
+            if (fullListCount) fullListCount.textContent = countText;
             renderWordList(currentWordsList, 0, () => {
                 window.isFullListLoading = false;
             });
@@ -3144,10 +3174,14 @@ function setupListsTool() {
 
     function closeFullListModal() {
         if (!fullListModal) return;
+        if (fullListResults) {
+            window._savedFullListScrollTop = fullListResults.scrollTop;
+        }
         fullListModal.style.display = 'none';
         document.body.style.overflow = '';
         window.isFullListLoading = false;
     }
+    window.closeFullListModal = closeFullListModal;
 
     if (viewFullBtn) {
         viewFullBtn.addEventListener('click', (e) => {
@@ -3448,6 +3482,8 @@ async function fetchListsData(typeOverride) {
     // Cancel previous progressive render chunk loop
     currentProgressiveLoadId++;
     listsShowAll = false;
+    window._lastFullListFilterKey = null;
+    window._savedFullListScrollTop = 0;
 
     // Cancel previous fetch if it's still running
     if (listsFetchAbortController) {
@@ -5440,6 +5476,21 @@ function setupPersonalTimer() {
 window.lookupWord = function (word) {
     if (!word) return;
 
+    // Check if full list modal is currently open
+    const fullListModal = document.getElementById('full-list-modal');
+    const fullListResults = document.getElementById('full-list-modal-results');
+    if (fullListModal && fullListModal.style.display !== 'none' && fullListResults) {
+        // Save exact scroll position
+        window._savedFullListScrollTop = fullListResults.scrollTop;
+        if (typeof window.closeFullListModal === 'function') {
+            window.closeFullListModal();
+        } else {
+            fullListModal.style.display = 'none';
+            document.body.style.overflow = '';
+            window.isFullListLoading = false;
+        }
+    }
+
     // 1. Save scroll position if we are currently in Lists tool
     const currentActivePane = document.querySelector('.tool-pane.active');
     if (currentActivePane && currentActivePane.id === 'tool-lists') {
@@ -5450,9 +5501,13 @@ window.lookupWord = function (word) {
     }
 
     // 2. Switch tool navigation to "Is Valid"
-    const navBtns = document.querySelectorAll('.tool-nav-btn');
-    const isValidBtn = Array.from(navBtns).find(b => b.dataset.tool === 'is-valid');
-    if (isValidBtn) isValidBtn.click();
+    if (typeof window.showTool === 'function') {
+        window.showTool('is-valid');
+    } else {
+        const navBtns = document.querySelectorAll('.tool-nav-btn');
+        const isValidBtn = Array.from(navBtns).find(b => b.dataset.tool === 'is-valid');
+        if (isValidBtn) isValidBtn.click();
+    }
 
     // 3. Set dictionary select to "ALL"
     const dictEl = document.getElementById('valid-dict');
@@ -5462,7 +5517,9 @@ window.lookupWord = function (word) {
     const input = document.getElementById('valid-input');
     if (input) {
         input.value = word;
-        runValidationCheck();
+        if (typeof runValidationCheck === 'function') {
+            runValidationCheck();
+        }
     }
 
     // 5. Scroll to results if needed

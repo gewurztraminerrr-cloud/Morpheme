@@ -36,7 +36,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33041`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33043`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -163,6 +163,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Moderator Removal of JeffBabiak**: Removed `JeffBabiak` from `moderators` table and `dictionaries/mods.txt`.
 - **Permanent Moderator Status for jeffb**: Guaranteed `jeffb` is a root moderator with no removal `&times;` button rendered and backend blocking on removal attempts.
 - **Ban Prohibition for jeffb**: Explicitly prohibited banning user `jeffb` across frontend validation (`mods.js`) and backend API endpoint (`/api/mods/ban_user`).
+
+### GG. Lists Tool "View Full List" Word Selection Definition Lookup & Exact Spot Return (`static/js/tools.js`)
+- **Word Selection & Auto-Close**: When a user selects any word inside the "View Full List" modal, the exact scroll position is instantly captured (`window._savedFullListScrollTop`), the modal overlay automatically closes, and the app seamlessly navigates to the "Is Valid" tool in Tools, sets the dictionary to "ALL", inputs the word, and executes the validation check to display its lexicographical definition.
+- **Exact Spot Return on Reopening**: When the user navigates back to Lists and clicks "View Full List", the previously rendered list is preserved in the DOM without re-fetching or resetting to the top, and the scroll position is accurately restored to the exact same spot where the window was closed.
 
 ---
 
