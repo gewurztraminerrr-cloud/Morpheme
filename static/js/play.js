@@ -437,7 +437,7 @@ function isOnPlayPage() {
 async function ejectToLobby(reason = "inactivity") {
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
 
-    // Check if inactivity notice should be suppressed (e.g. absent > 1 hour)
+    // Check if inactivity notice should be suppressed (e.g. absent >= 1 hour)
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
         try {
@@ -445,8 +445,9 @@ async function ejectToLobby(reason = "inactivity") {
                                      (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
             const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
             const now = Date.now();
-            const exceededOneHour = (lastActive > 0) && ((now - lastActive) > 60 * 60 * 1000);
-            shouldSuppressNotice = isSuppressedFlag || exceededOneHour;
+            const exceededOneHourStorage = (lastActive > 0) && ((now - lastActive) >= 60 * 60 * 1000);
+            const exceededOneHourMemory = (typeof lastGameInteractionTime === 'number') && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
+            shouldSuppressNotice = isSuppressedFlag || exceededOneHourStorage || exceededOneHourMemory;
         } catch(e) {}
     }
 
