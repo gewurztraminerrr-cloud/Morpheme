@@ -76,6 +76,7 @@ async function enterLobbyRoom(rawBtn) {
         localStorage.removeItem('private_match_active');
 
         let joinedId = null;
+        let initialState = null;
         const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
         if (listResp.ok) {
             const listData = await listResp.json();
@@ -92,6 +93,7 @@ async function enterLobbyRoom(rawBtn) {
                     const joinData = await joinResp.json();
                     if (joinData.success) {
                         joinedId = existingId;
+                        if (joinData.state) initialState = joinData.state;
                     }
                 }
             }
@@ -113,6 +115,7 @@ async function enterLobbyRoom(rawBtn) {
                 const data = await createResp.json();
                 if (data.success && data.room_id) {
                     joinedId = data.room_id;
+                    if (data.state) initialState = data.state;
                 } else {
                     showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
                 }
@@ -133,6 +136,16 @@ async function enterLobbyRoom(rawBtn) {
             }
             if (window.updateManualToolState) window.updateManualToolState();
             
+            // Clear any stale previous board / UI before displaying play page
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
+            }
+
+            // Immediately apply fresh authoritative server state if present
+            if (initialState && typeof window.updateGameState === 'function') {
+                window.updateGameState(initialState);
+            }
+
             if (typeof window.showPage === 'function') {
                 window.showPage('page-play');
             } else if (typeof showPage === 'function') {
@@ -281,6 +294,15 @@ function setupLobbyEvents() {
                         playBtn.title = "";
                     }
                     if (window.updateManualToolState) window.updateManualToolState();
+                    
+                    // Clear stale UI and apply initial state before showing play page
+                    if (typeof window.clearGameUIAndCache === 'function') {
+                        window.clearGameUIAndCache();
+                    }
+                    if (data.state && typeof window.updateGameState === 'function') {
+                        window.updateGameState(data.state);
+                    }
+
                     showPage('page-play');
 
                     // Force focus
@@ -371,6 +393,14 @@ function setupLobbyEvents() {
                         playBtn.title = "";
                     }
                     if (window.updateManualToolState) window.updateManualToolState();
+
+                    // Clear stale UI and apply initial state before showing play page
+                    if (typeof window.clearGameUIAndCache === 'function') {
+                        window.clearGameUIAndCache();
+                    }
+                    if (data.state && typeof window.updateGameState === 'function') {
+                        window.updateGameState(data.state);
+                    }
 
                     showPage('page-play');
                     // FORCE FOCUS

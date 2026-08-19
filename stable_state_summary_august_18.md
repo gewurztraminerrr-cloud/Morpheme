@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33048`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33049`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -189,6 +189,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### LL. Settings Toggle Panel Highlight & Selection Suppression (`static/css/play.css`)
 - **Panel Highlight Suppression**: Suppressed blue selection highlights, tap highlights, and focus ring outlines across `.setting-panel`, `.setting-header`, `.toggle-switch`, and label text.
 - **Clean Toggle Visual State**: When a user toggles any setting, only the visual state of the toggle switch slider and knob changes with no blue highlight flashing on the surrounding panel.
+
+### MM. 24h Room Initial Board Instant Sync & Mid-Swipe Re-render Protection (`app.py`, `static/js/lobby.js`, `static/js/play.js`)
+- **Instant State Ingestion on Join**: `/api/room/create` and `/api/room/<id>/join` return the authoritative `state` snapshot synchronously, allowing the client to render the true 24h board before `showPage('page-play')` executes.
+- **Stale DOM Prevention**: Clears any previous room's board from DOM before navigating to `page-play`, eliminating transient display of old game boards.
+- **Mid-Swipe Re-render Deferral**: Added active drag safety (`mouseState.isDown`) in `renderBoard` so incoming poll state updates never replace or re-render board tiles while a player is in the middle of touching or swiping a word.
 
 ---
 

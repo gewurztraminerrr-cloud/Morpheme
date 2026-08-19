@@ -3545,7 +3545,8 @@ def create_room():
         else:
             print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
         
-        return jsonify({'success': True, 'room_id': room_id})
+        room_state = room.get_state(user_id=session['user_id'])
+        return jsonify({'success': True, 'room_id': room_id, 'state': room_state})
     except Exception as e:
         import traceback
         print(f"[create_room] Error: {e}\n{traceback.format_exc()}")
@@ -3607,14 +3608,16 @@ def join_room(room_id):
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator'})
+        room_state = room.get_state(user_id=user_id)
+        return jsonify({'success': True, 'role': 'spectator', 'state': room_state})
 
     # Rating limit check for FCFS, SP, and rating-restricted rooms: force spectator mode if rating outside limits
     has_limits = (room.min_rating > 0 or room.max_rating < 9999)
     if has_limits and (rating < room.min_rating or rating > room.max_rating or session.get('is_guest', False)):
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.'})
+        room_state = room.get_state(user_id=user_id)
+        return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.', 'state': room_state})
 
     # Get extra stats (games_played, country_flag)
     games_played = 0
@@ -3644,7 +3647,8 @@ def join_room(room_id):
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
+        room_state = room.get_state(user_id=user_id)
+        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False, 'state': room_state})
     else:
         # If room is full, automatically join as spectator instead of failing (except Accumulative)
         if room.game_type in ['accumulative', 'solo_accumulative']:
@@ -3653,7 +3657,8 @@ def join_room(room_id):
         print(f"[app.py] Room {room_id} is full. Automatically joining {session['username']} as spectator.")
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator', 'auto_spectator': True})
+        room_state = room.get_state(user_id=user_id)
+        return jsonify({'success': True, 'role': 'spectator', 'state': room_state})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST'])
 def leave_room(room_id):

@@ -4644,6 +4644,14 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         if (typeof checkBoardOverflow === 'function') checkBoardOverflow();
         return;
     }
+
+    // GESTURE SAFETY: If user is actively holding down/swiping tiles, defer board DOM replacement until touch/mouse release
+    if (typeof mouseState !== 'undefined' && mouseState && mouseState.isDown && lastRenderedBoardJSON !== null) {
+        console.log('[play.js] Deferring board re-render while user is actively swiping a word');
+        window._pendingBoardRender = { board, grayed, is3D, state };
+        return;
+    }
+
     lastRenderedBoardJSON = boardJSON;
     lastRenderedDensityJSON = densityJSON;
     lastRenderedGrayed = grayed;
@@ -8209,6 +8217,13 @@ function finishDragSelection(e) {
 
     if (inputEl) {
         inputEl.value = '';
+    }
+
+    // Apply deferred board re-render now that the swipe gesture has completed
+    if (window._pendingBoardRender) {
+        const pending = window._pendingBoardRender;
+        window._pendingBoardRender = null;
+        renderBoard(pending.board, pending.grayed, pending.is3D, pending.state);
     }
 }
 
