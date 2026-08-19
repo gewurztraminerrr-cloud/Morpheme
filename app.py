@@ -5294,17 +5294,11 @@ def tools_combo_check():
     mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
     lic_groups = {}
     
-    # --- OPTIMIZED SINGLE-THREADED LOOP WITH SAFETY CAP ---
-    eval_count = 0
+    # --- OPTIMIZED SINGLE-THREADED LOOP ---
     for idx in sorted_candidates:
-        eval_count += 1
-        if eval_count > 5000:
-            break
-            
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
-
             
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
@@ -5328,12 +5322,12 @@ def tools_combo_check():
         if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= 5:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
-    # Sort and limit groups to 150 words to prevent DOM bloat and layout recalc lag on mobile resizes
+    # Sort groups by length and alphabetically without arbitrary truncation
     for k in mp_groups:
-        mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))[:150]
+        mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))
         
     for k in lic_groups:
-        lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))[:150]
+        lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))
     
     return jsonify({
         'mp_groups': mp_groups, 
