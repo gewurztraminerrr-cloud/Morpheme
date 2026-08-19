@@ -2,6 +2,7 @@
 
 // Global state for polling
 let lobbyPollInterval = null;
+let lobbyStatsInterval = null;
 let currentLobbyConfig = null;
 window.currentLobbyConfig = null;
 window.activeRatingFilterValue = null;
@@ -875,14 +876,15 @@ function startStatsPolling() {
     // Immediately do a FULL update (all buttons) when entering lobby
     fetchLobbyStats('all');
 
-    // Auto-poll every 4 seconds — only updates Accumulative buttons automatically.
+    // Auto-poll every 2 seconds — updates Accumulative buttons automatically.
     // FCFS/SP buttons update on: lobby entry, Refresh button click, or "Show Rooms" click.
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
             fetchLobbyStats('accumulative_only'); // accumulative only
         }
-    }, 4000);
+    }, 2000);
 }
+window.startStatsPolling = startStatsPolling;
 
 function stopStatsPolling() {
     if (lobbyStatsInterval) {
@@ -890,8 +892,9 @@ function stopStatsPolling() {
         lobbyStatsInterval = null;
     }
 }
+window.stopStatsPolling = stopStatsPolling;
 
-// mode: 'all' (initial/entry) | 'accumulative_only' (4s poll) | 'fcfs_sp_only' (Refresh click)
+// mode: 'all' (initial/entry) | 'accumulative_only' (auto-poll) | 'fcfs_sp_only' (Refresh click)
 async function fetchLobbyStats(mode = 'all') {
     try {
         const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
@@ -938,12 +941,12 @@ window.handleLobbyRefresh = handleLobbyRefresh;
 function updateLobbyButtons(stats, mode = 'all') {
     // Stats format: "game_type|board|time": count
     // mode = 'all'               → update all buttons (FCFS, SP, Accumulative)
-    // mode = 'accumulative_only' → only update Accumulative buttons (auto 4s poll)
+    // mode = 'accumulative_only' → only update Accumulative buttons (auto 2s poll)
     // mode = 'fcfs_sp_only'      → only update FCFS and SP buttons (Refresh button click)
-    const buttons = document.querySelectorAll('.game-btn');
+    const buttons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     buttons.forEach(btn => {
-        const game = btn.dataset.game;
-        const board = btn.dataset.board;
+        const game = (btn.dataset.game || '').toLowerCase();
+        const board = (btn.dataset.board || '').toLowerCase();
         const time = btn.dataset.time;
         if (!game || !board || !time) return;
 
@@ -952,14 +955,19 @@ function updateLobbyButtons(stats, mode = 'all') {
         if (mode === 'fcfs_sp_only' && game === 'accumulative') return;
 
         const key = `${game}|${board}|${time}`;
-        const count = stats[key] || 0;
+        const count = (stats && stats[key] !== undefined) ? stats[key] : 0;
 
         // Normalize whitespace: collapse newlines/spaces from multi-line HTML text content
         const rawText = btn.textContent;
         const normalizedText = rawText.replace(/\s+/g, ' ').trim();
 
         // Replace [N] with current count — always, so counts go down as well as up
-        const newNormalized = normalizedText.replace(/\[\d+\]/, `[${count}]`);
+        let newNormalized;
+        if (/\[\d+\]/.test(normalizedText)) {
+            newNormalized = normalizedText.replace(/\[\d+\]/, `[${count}]`);
+        } else {
+            newNormalized = `${normalizedText} [${count}]`;
+        }
 
         // Only write back if the displayed text actually changed
         if (normalizedText !== newNormalized) {
@@ -976,14 +984,13 @@ function formatTime(seconds) {
     return `${Math.floor(s / 86400)}d`;
 }
 
-// NOTE: MutationObserver is set up inside setupLobbyEvents() where DOM is guaranteed ready.
-// Top-level getElementById runs before DOM, so it's only used as a fallback for isOnLobby().
-const lobbyPage = document.getElementById('page-lobby');
-
 function isOnLobby() {
-    const el = lobbyPage || document.getElementById('page-lobby');
-    return el && el.classList.contains('active');
+    if (window.currentPageId === 'page-lobby') return true;
+    const el = document.getElementById('page-lobby');
+    if (!el) return false;
+    return el.classList.contains('active') || (el.style.display && el.style.display !== 'none');
 }
+window.isOnLobby = isOnLobby;
 
 function getUserConfigRating(gameType, board, time) {
     const cleanType = String(gameType || '').replace('solo_', '');

@@ -1282,9 +1282,22 @@ function showPage(pageId) {
         if (typeof window.initDonatePage === 'function') {
             window.initDonatePage();
         }
+    } else if (pageId === 'page-lobby') {
+        if (typeof window.fetchLobbyStats === 'function') {
+            window.fetchLobbyStats('all');
+        }
+        if (typeof window.startStatsPolling === 'function') {
+            window.startStatsPolling();
+        }
     } else {
         if (window.stopGamePolling) {
             window.stopGamePolling();
+        }
+    }
+
+    if (pageId !== 'page-lobby') {
+        if (typeof window.stopStatsPolling === 'function') {
+            window.stopStatsPolling();
         }
     }
 
