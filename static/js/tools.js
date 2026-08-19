@@ -982,7 +982,31 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
         // Activate specific tab if requested
         if (activeTab) {
             const tabToggle = document.querySelector(`.profile-tab-toggle[data-tab="${activeTab}"]`);
-            if (tabToggle) tabToggle.click();
+            if (tabToggle) {
+                tabToggle.click();
+                if (activeTab === 'history') {
+                    setTimeout(() => {
+                        const targetEl = document.querySelector('.profile-tabs-header') || document.getElementById('profile-tab-history');
+                        if (targetEl) {
+                            try {
+                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } catch (e) {
+                                targetEl.scrollIntoView();
+                            }
+                            const profilePage = document.getElementById('page-profile');
+                            if (profilePage && profilePage.scrollHeight > profilePage.clientHeight) {
+                                const topPos = targetEl.offsetTop - 15;
+                                profilePage.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
+                            }
+                            const mainContent = document.querySelector('.main-content');
+                            if (mainContent && mainContent.scrollHeight > mainContent.clientHeight) {
+                                const topPos = targetEl.offsetTop - 15;
+                                mainContent.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
+                            }
+                        }
+                    }, 120);
+                }
+            }
         }
 
     } catch (err) {

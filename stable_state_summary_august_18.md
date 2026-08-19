@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33020`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33021`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -93,6 +93,9 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### Q. Forum Multi-Image Upload (4 Images Cap & macOS/Cross-Platform Reliability) (`app.py`, `static/js/forum.js`, `templates/index.html`)
 - **4 Images Capacity**: Increased attachable image capacity from 3 to 4 for both threads and replies across backend ingestion (`app.py`), UI labels, upload limits, and preview counters.
 - **macOS / Mac Laptop Multiple Upload Reliability**: Converted inner upload label containers to standard `<div>` elements, eliminating native double-triggering on Mac laptops (Safari and Chrome on macOS) and standardizing upload bridge behavior across mobile devices, desktops, Acer laptops, and Mac laptops.
+
+### R. Mini-Profile Round Reviews Auto-Scroll Navigation (`static/js/tools.js`)
+- When a user selects **Round Reviews** from any mini-profile overlay, the profile page opens with the **Round Reviews** tab active and automatically smooth-scrolls down to the reviews section for immediate inspection.
 
 ---
 
