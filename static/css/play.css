@@ -173,7 +173,7 @@
 .words-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 6px;
     min-height: 0;
     height: 100%;
     box-sizing: border-box;
@@ -185,7 +185,7 @@
 .words-table-box {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 15px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -210,7 +210,7 @@
 .left-panel-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 6px;
     height: 100%;
     min-width: 0; /* Allow the grid item to shrink below min-content width */
     container-type: inline-size;
@@ -222,7 +222,7 @@
     flex-direction: column;
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 15px;
+    padding: 10px 12px;
     overflow: hidden;
     flex: 1;
     /* Restore to take up remaining vertical space */
@@ -233,16 +233,16 @@
 .chat-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 6px 10px;
-    height: 110px; /* Compact height to give more vertical space to Players panel */
-    flex: 0 0 110px;
+    padding: 4px 8px;
+    height: 65px; /* Compact height to give maximum vertical space to Players panel */
+    flex: 0 0 65px;
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
     /* Protect chat */
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 #chat-history {
@@ -250,8 +250,8 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding: 5px;
+    gap: 3px;
+    padding: 2px 4px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
 }
@@ -320,13 +320,14 @@
     flex: 1;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 2px 8px;
     color: var(--text-primary);
-    font-size: var(--chat-font-size);
+    font-size: 0.8rem;
     outline: none;
     transition: all 0.3s ease;
-    height: 28px;
+    height: 22px;
+    box-sizing: border-box;
 }
 
 #chat-input:focus {
@@ -592,10 +593,10 @@ body.theme-light-brown .player-score-val {
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 6px 12px;
-    flex: 0 0 85px !important; /* Compact size to give more vertical space to words list */
-    height: 85px !important;
-    max-height: 85px !important;
+    padding: 3px 8px;
+    flex: 0 0 52px !important; /* Highly compact size to maximize vertical space for words list */
+    height: 52px !important;
+    max-height: 52px !important;
     border-top: none;
     margin-top: 0;
     display: flex;
@@ -608,20 +609,21 @@ body.theme-light-brown .player-score-val {
 
 .definition-header {
     flex-shrink: 0;
-    padding-bottom: 2px;
-    margin-bottom: 2px;
+    padding-bottom: 1px;
+    margin-bottom: 1px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
+    font-size: 0.85em;
 }
 
 #definition-content {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    font-size: 1em;
-    line-height: 1.5;
+    font-size: 0.82em;
+    line-height: 1.15;
     color: var(--text-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -2130,11 +2132,11 @@ body.theme-light-brown .word-item.missed {
     #page-tools,
     #page-settings,
     #page-mods {
-        height: calc(100vh - 65px) !important;
-        max-height: calc(100vh - 65px) !important;
+        height: calc(100vh - 40px) !important;
+        max-height: calc(100vh - 40px) !important;
         overflow: hidden !important;
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
         box-sizing: border-box !important;
     }
     .tools-split-layout {
@@ -2146,16 +2148,16 @@ body.theme-light-brown .word-item.missed {
         max-height: 100% !important;
     }
     .tools-sidebar {
-        flex: 0 0 320px !important;
-        width: 320px !important;
-        min-width: 320px !important;
-        max-width: 320px !important;
-        padding: 12px 8px !important;
-        gap: 6px !important;
+        flex: 0 0 280px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        padding: 8px 6px !important;
+        gap: 4px !important;
     }
     .tool-nav-btn {
         height: auto !important;
-        padding: 15px 20px !important;
+        padding: 10px 14px !important;
         border-radius: 8px !important;
         border: 1px solid transparent !important;
         background: transparent !important;
@@ -2163,7 +2165,7 @@ body.theme-light-brown .word-item.missed {
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 4px !important;
+        gap: 2px !important;
     }
     .tool-nav-btn:hover {
         background: var(--input-bg) !important;
@@ -2175,13 +2177,13 @@ body.theme-light-brown .word-item.missed {
         color: #4facfe !important;
     }
     .tool-btn-title {
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
         font-weight: 600 !important;
         margin-bottom: 0 !important;
     }
     .tool-btn-desc {
-        font-size: 0.8rem !important;
-        line-height: 1.4 !important;
+        font-size: 0.75rem !important;
+        line-height: 1.3 !important;
         margin-top: 0 !important;
     }
     .tool-nav-btn:not(.active) .tool-btn-title {
@@ -2204,7 +2206,7 @@ body.theme-light-brown .word-item.missed {
     .tools-content {
         background: rgba(0, 0, 0, 0.25) !important;
         border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-        padding: 30px !important;
+        padding: 8px 12px !important;
         box-sizing: border-box !important;
     }
 
@@ -6666,31 +6668,30 @@ body .board-cell.tile-flash-purple * {
         min-height: 0 !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
-        padding-top: 4px !important;
-        padding-bottom: 4px !important;
+        padding: 0 !important;
     }
 
     #tool-sequence .tool-header,
     #tool-subanagrams .tool-header,
     #tool-lists .tool-header {
         flex: 0 0 auto !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 2px !important;
         padding: 0 !important;
     }
 
     #tool-sequence .tool-header h2,
     #tool-subanagrams .tool-header h2,
     #tool-lists .tool-header h2 {
-        font-size: 1.15rem !important;
-        margin: 0 0 2px 0 !important;
+        font-size: 1.05rem !important;
+        margin: 0 0 1px 0 !important;
     }
 
     #tool-sequence .tool-header p,
     #tool-subanagrams .tool-header p,
     #tool-lists .tool-header p {
-        font-size: 0.8rem !important;
+        font-size: 0.75rem !important;
         margin: 0 !important;
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
         opacity: 0.75 !important;
     }
 
@@ -6698,12 +6699,13 @@ body .board-cell.tile-flash-purple * {
     #tool-subanagrams .combo-control-panel,
     #tool-lists .combo-control-panel {
         flex: 0 0 auto !important;
-        margin-bottom: 4px !important;
-        padding: 4px 8px !important;
+        margin-bottom: 2px !important;
+        padding: 2px 6px !important;
     }
 
     #tool-sequence .seq-results-container,
     #tool-subanagrams #sub-results-container,
+    #tool-lists .lists-container,
     .seq-results-container,
     #sub-results-container {
         flex: 1 1 auto !important;
@@ -6711,12 +6713,14 @@ body .board-cell.tile-flash-purple * {
         height: 100% !important;
         max-height: 100% !important;
         margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
     }
 
-    .list-scroll-area-wrapper {
+    .list-scroll-area-wrapper,
+    #tool-lists .list-scroll-area-wrapper {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
@@ -6728,12 +6732,23 @@ body .board-cell.tile-flash-purple * {
 
     .seq-scroll-area,
     .sub-scroll-area,
-    .list-scroll-area {
+    .list-scroll-area,
+    #tool-lists .list-scroll-area {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
         overflow-y: auto !important;
+    }
+
+    #tool-lists .list-column {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     #seq-list-results table,
@@ -6747,8 +6762,21 @@ body .board-cell.tile-flash-purple * {
     #sub-list-results table td,
     .seq-scroll-area table td,
     .sub-scroll-area table td {
-        padding: 3px 6px !important;
-        font-size: 0.95rem !important;
+        padding: 2px 5px !important;
+        font-size: 0.9rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .list-column-header {
+        padding: 2px 4px !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .list-word-item {
+        padding: 2px 4px !important;
+        font-size: 0.9rem !important;
+        line-height: 1.2 !important;
     }
 }
 
