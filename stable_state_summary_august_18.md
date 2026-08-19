@@ -36,7 +36,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33044`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33045`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -171,6 +171,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### HH. Forum "Complaints" Category Addition (`app.py`, `static/js/forum.js`)
 - **Complaints Category Creation**: Added the `Complaints` category (*"Voice your feedback, grievances, or criticisms."*) to `forum_categories` in the SQLite database and automatic startup migrations.
 - **Canonical Ordering**: Guaranteed `Complaints` is ordered directly below `Suggestions/Ideas` (under Suggestions) and above `Bugs/Errors` across the Forum category navigation panel.
+
+### II. Realistic 3D "ENTER LOBBY" Button & Persistent Flattened State (`templates/index.html`, `static/css/style.css`, `static/js/app.js`)
+- **3D Physical Socket Housing**: Wrapped `#btn-enter-lobby-gateway` with `.gateway-btn-housing`, featuring an inset dark bezel well with internal shadows and subtle outer ambient neon halo.
+- **Ultra-Realistic 3D Geometry**: Built multi-tiered 12-layer extrusion box shadows, top surface specular lighting highlights (`rgba(255, 255, 255, 0.85)`), and embossed text depth.
+- **Persistent Flattened Press Down**: When clicked, the button translates all 12px down into the socket, its side extrusions collapse, and `.flattened` permanently locks it in the sunken state upon release until the lobby transition executes.
 
 ---
 

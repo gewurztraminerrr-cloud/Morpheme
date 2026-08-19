@@ -6668,19 +6668,38 @@ select option,
     }
 }
 
-/* Neon Gateway Button */
+/* Gateway 3D Realistic Button & Socket Housing */
+.gateway-btn-housing {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: linear-gradient(180deg, #18091f 0%, #0d0411 100%);
+    border: 2px solid rgba(255, 0, 127, 0.35);
+    border-radius: 60px;
+    box-shadow:
+        inset 0 6px 12px rgba(0, 0, 0, 0.85),
+        inset 0 1px 2px rgba(0, 0, 0, 0.95),
+        0 10px 25px rgba(0, 0, 0, 0.6),
+        0 0 25px rgba(255, 0, 127, 0.2);
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 .neon-gateway-btn {
     position: relative;
-    background: linear-gradient(135deg, rgba(255, 0, 127, 0.4) 0%, rgba(255, 0, 127, 0.6) 100%);
-    border: 2.5px solid var(--accent-color, #ff007f);
-    color: #fff;
-    padding: 18px 50px;
+    display: inline-block;
+    background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    color: #ffffff;
+    padding: 18px 52px;
     font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: 3px;
+    font-weight: 900;
+    letter-spacing: 3.5px;
     border-radius: 50px;
     cursor: pointer;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -6688,34 +6707,84 @@ select option,
     -webkit-tap-highlight-color: transparent;
     outline: none;
 
-    /* 3D button styling */
-    transform: translateY(-16px);
+    /* Realistic 3D Elevated Resting State */
+    transform: translateY(-12px);
     box-shadow:
-        0 16px 0 #b30059,
-        0 25px 35px rgba(255, 0, 127, 0.45),
-        inset 0 0 12px rgba(255, 0, 127, 0.2);
-    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
+        inset 0 2px 1px rgba(255, 255, 255, 0.85),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.4),
+        inset 0 0 12px rgba(255, 255, 255, 0.2),
+        0 1px 0 #e60073,
+        0 2px 0 #d10069,
+        0 3px 0 #bd005e,
+        0 4px 0 #a80054,
+        0 5px 0 #94004a,
+        0 6px 0 #800040,
+        0 7px 0 #6b0035,
+        0 8px 0 #57002b,
+        0 9px 0 #420021,
+        0 10px 0 #2e0017,
+        0 11px 0 #1f0010,
+        0 12px 0 #120009,
+        0 14px 20px rgba(0, 0, 0, 0.65),
+        0 20px 35px rgba(255, 0, 127, 0.4);
+    text-shadow:
+        0 -1px 1px rgba(0, 0, 0, 0.35),
+        0 1px 2px rgba(255, 255, 255, 0.4),
+        0 0 14px rgba(255, 255, 255, 0.7);
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
 }
 
-.neon-gateway-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 0, 127, 0.5) 0%, rgba(255, 0, 127, 0.8) 100%);
-    transform: translateY(-20px) scale(1.02);
+.neon-gateway-btn:hover:not(.pressed):not(.flattened) {
+    background: linear-gradient(180deg, #ff5cae 0%, #ff148b 35%, #e00070 75%, #bf005f 100%);
+    transform: translateY(-14px) scale(1.015);
     box-shadow:
-        0 20px 0 #b30059,
-        0 30px 45px rgba(255, 0, 127, 0.65),
-        inset 0 0 16px rgba(255, 255, 255, 0.3);
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
+        inset 0 2px 1px rgba(255, 255, 255, 0.95),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.4),
+        inset 0 0 16px rgba(255, 255, 255, 0.3),
+        0 1px 0 #e60073,
+        0 2px 0 #d10069,
+        0 3px 0 #bd005e,
+        0 4px 0 #a80054,
+        0 5px 0 #94004a,
+        0 6px 0 #800040,
+        0 7px 0 #6b0035,
+        0 8px 0 #57002b,
+        0 9px 0 #420021,
+        0 10px 0 #2e0017,
+        0 11px 0 #1f0010,
+        0 12px 0 #120009,
+        0 13px 0 #080004,
+        0 14px 0 #000000,
+        0 16px 24px rgba(0, 0, 0, 0.7),
+        0 24px 45px rgba(255, 0, 127, 0.6);
+    text-shadow:
+        0 -1px 1px rgba(0, 0, 0, 0.3),
+        0 1px 2px rgba(255, 255, 255, 0.5),
+        0 0 18px rgba(255, 255, 255, 0.9);
 }
 
+/* Completely Flattened & Sunken State (Stays flattened upon release) */
 .neon-gateway-btn:active,
-.neon-gateway-btn.pressed {
-    transform: translateY(0px) scale(1.0) !important;
+.neon-gateway-btn.pressed,
+.neon-gateway-btn.flattened,
+.neon-gateway-btn.pressed:hover,
+.neon-gateway-btn.flattened:hover,
+.neon-gateway-btn.pressed:focus,
+.neon-gateway-btn.flattened:focus {
+    transform: translateY(0px) scale(0.985) !important;
+    background: linear-gradient(180deg, #c40062 0%, #aa0055 45%, #8a0045 100%) !important;
+    border-color: rgba(255, 0, 127, 0.4) !important;
     box-shadow:
-        0 0px 0 #b30059,
-        0 2px 10px rgba(255, 0, 127, 0.3),
-        inset 0 0 24px rgba(0, 0, 0, 0.5) !important;
-    filter: brightness(0.88);
-    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+        inset 0 4px 10px rgba(0, 0, 0, 0.8),
+        inset 0 1px 2px rgba(0, 0, 0, 0.95),
+        0 0px 0 #2e0017,
+        0 1px 3px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(255, 0, 127, 0.2) !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.95),
+        0 0 6px rgba(255, 0, 127, 0.7) !important;
+    filter: brightness(0.85) !important;
+    transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
 }
 
 

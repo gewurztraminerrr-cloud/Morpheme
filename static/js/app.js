@@ -376,25 +376,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
-                // Robust interaction handlers
+                // Robust interaction handlers: Flatten and stay flattened when clicked / released
                 let transitionTimeout = null;
                 const triggerTransition = (e) => {
-                    gatewayBtn.classList.add('pressed');
+                    gatewayBtn.classList.add('pressed', 'flattened');
                     if (transitionTimeout) return;
                     transitionTimeout = setTimeout(() => {
                         handleGatewayTransition(e);
-                    }, 200);
+                    }, 280);
                 };
 
-                // Flatten immediately on click-down (mousedown / touchstart)
+                // Flatten immediately on click-down (pointerdown / mousedown / touchstart)
+                gatewayBtn.addEventListener('pointerdown', () => {
+                    gatewayBtn.classList.add('pressed', 'flattened');
+                });
                 gatewayBtn.addEventListener('mousedown', () => {
-                    gatewayBtn.classList.add('pressed');
+                    gatewayBtn.classList.add('pressed', 'flattened');
                 });
                 gatewayBtn.addEventListener('touchstart', () => {
-                    gatewayBtn.classList.add('pressed');
+                    gatewayBtn.classList.add('pressed', 'flattened');
                 });
 
-                // Trigger transition on release (mouseup / touchend / click)
+                // Trigger transition on release (mouseup / touchend / click) and stay flattened
                 gatewayBtn.addEventListener('mouseup', (e) => {
                     triggerTransition(e);
                 });
@@ -404,18 +407,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gatewayBtn.onclick = (e) => {
                     triggerTransition(e);
                 };
-
-                // Pop back up if mouse/touch moves outside the boundary without releasing
-                gatewayBtn.addEventListener('mouseleave', () => {
-                    if (!transitionTimeout) {
-                        gatewayBtn.classList.remove('pressed');
-                    }
-                });
-                gatewayBtn.addEventListener('touchcancel', () => {
-                    if (!transitionTimeout) {
-                        gatewayBtn.classList.remove('pressed');
-                    }
-                });
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
