@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33027`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33028`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -107,7 +107,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 
 ### U. Settings "Cube Scale (3D)" Mobile Device Removal & FAQ Update (`templates/index.html`, `static/css/play.css`, `static/js/settings.js`)
 - Completely hid the "Cube Scale (3D)" panel in Settings on mobile devices using CSS media queries (`max-width: 900px`), `body.is-mobile`, and runtime JavaScript detection (`applyMobileSettingsVisibility()`), restricting the setting exclusively to desktops and laptops.
-- Updated the FAQ section title and explanation to clarify why 3D Cube mode and Cube Scale are exclusive to desktops and laptops.
+- Updated the FAQ section title and explanation to clarify why 3D Cube mode and Cube Scale are exclusive to desktops and laptops, highlighting the lack of an efficient word entry method and the lack of screen real estate for a dedicated word entry textbox on mobile screens.
 
 ### V. Combo Checker Mobile MP Tables Vertical Length Expansion (`static/css/play.css`)
 - Removed the legacy 250px fixed section height on `.result-section` and expanded mobile table container heights (`min-height: 400px; height: 420px;`) with inner table scroll areas (`min-height: 330px; height: 350px;`).
