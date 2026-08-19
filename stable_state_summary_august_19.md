@@ -9,20 +9,26 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `3611f074a0acb6f5238b4fdff4edab74a49de57e` (`3611f07`)
-* **Asset Version**: `v=33064`
+* **Commit ID**: `3f6f87965d2fb48e9fff2e33805b09865d5be617` (`3f6f879`)
+* **Asset Version**: `v=33065`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. In-Place Word Definition Popover across Tools (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### A. Guaranteed Session Expired Notice Suppression on $\ge$ 1 Hour Return (`templates/index.html`, `static/js/app.js`, `static/js/play.js`)
+- **True User Input Activity Tracking**: Removed artificial background `setInterval` touch loops that previously updated timestamps while users were absent. Timestamps now update strictly on physical human interactions (`mousedown`, `keydown`, `touchstart`, `pointerdown`, `scroll`).
+- **Dual-Layer Absence Enforcement**:
+  - **Cold Reload / Wake-up**: `<head>` script and `DOMContentLoaded` in `app.js` verify if `Date.now() - lastActiveTime >= 3600000` (1 hour). If so, silently sets `window._suppressInactivityNotice = true`, flags `sessionStorage`, and clears stale room references.
+  - **Warm Backgrounded Tabs / Sleep Return**: `ejectToLobby("inactivity")` in `play.js` directly checks memory absence (`now - lastGameInteractionTime >= 3600000`) and storage absence (`now - lastActiveTime >= 3600000`). If absent $\ge 1$ hour, returns to the lobby completely silently with zero modal popup.
+
+### B. In-Place Word Definition Popover across Tools (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Zero Context Switching**: Clicking words in **Combo Checker**, **Sequence**, **Subanagrams**, **Lists**, and **View Full List** displays a sleek in-place definition popover card directly next to the word instead of navigating the user away to the "Is Valid" tool.
 - **Rich Popover Details**: Displays the word in bold uppercase, letter count badge (`7L`), phonetic pronunciation (if available), and full lexicographical definition with a dedicated `✕` close button and `"Open in Is Valid ↗"` action link.
 - **Smart Responsive Positioning**: Automatically positions next to the clicked word, adapts to viewport boundaries, supports swipe/tap on mobile, and dismisses on click-outside, `Esc` key, or scrolling.
 - **0ms Instant Cache**: In-memory JavaScript dictionary caching (`window._wordDefCache`) provides instantaneous (0ms) definition rendering for all previously clicked words.
 
-### B. 170× C-Accelerated Morpheme Metric & High-Speed Combo Checker (`app.py`, `morpheme_metric.c`, `static/js/tools.js`)
+### C. 170× C-Accelerated Morpheme Metric & High-Speed Combo Checker (`app.py`, `morpheme_metric.c`, `static/js/tools.js`)
 - **Native Bare-Metal C Engine**: Implemented `morpheme_metric.c` executing Longest Common Subsequence (LCS) and bitmask backtracking directly in CPU registers with zero Python list overhead. Auto-compiles on startup with seamless fallback to an optimized patience-sorting Python algorithm.
 - **Sub-Second Search Time**: Long queries like `MINESTRONE` and `ESTRONE` dropped from **47 seconds** down to **0.20 – 0.25 seconds** (~170× speedup); 5-letter queries like `TINDA` run in **0.06 seconds** (60 milliseconds).
 - **Two-Tier LRU & Client Query Caching**:
@@ -30,11 +36,6 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - **Client (`window._comboClientCache`)**: In-memory JavaScript `Map` caches search responses on the client side, eliminating unnecessary network roundtrips when re-checking terms.
 - **Guaranteed 0MP Subword Extraction**: Any continuous valid word contained within a search term (or its reversal) is automatically recognized as **0MP** without arbitrary length-difference penalties. Searching `MINESTRONE` now directly returns `TRONE`, `ESTRONE`, `ESTRO`, `MINES`, `MINE`, `NEST`, `ORTS`, `RONE`, `TRON`, etc. under 0MP.
 - **Uncapped Results Tables**: Removed the arbitrary 150-word results limit across all MP and LIC groups so that all valid words are returned without alphabetical truncations. Searching `TINDA` now shows all **692** 2MP words (including `TILDA`).
-
-### C. Guaranteed Session Expired Notice Suppression on > 1 Hour Return (`templates/index.html`, `static/js/app.js`, `static/js/play.js`)
-- **Immediate Head Absence Check**: Evaluated in `<head>` before any stylesheet or script parses, immediately verifying if the last visit exceeded 1 hour ($> 3600\text{s}$). If so, sets `window._suppressInactivityNotice = true`, flags `sessionStorage`, and clears stale room references.
-- **Activity Timestamp Tracking**: Continuously tracks user interactions (`mousedown`, `keydown`, `touchstart`, `scroll`, heartbeat interval, and `beforeunload`) via `morpheme_last_active_time` in `localStorage`.
-- **Inactivity Ejection Suppression**: `ejectToLobby("inactivity")` in `play.js` verifies if the user's absence exceeded an hour or if suppression flags are active, returning silently to the lobby without presenting the "Session Expired" / inactivity popup notice.
 
 ### D. Accumulative Lobby Real-Time Auto-Polling & Live Count Synchronization (`static/js/lobby.js`, `static/js/app.js`, `templates/index.html`)
 - **Global Polling Lifecycle**: Added top-level `lobbyStatsInterval` reference and exported `window.startStatsPolling` / `window.stopStatsPolling`.
