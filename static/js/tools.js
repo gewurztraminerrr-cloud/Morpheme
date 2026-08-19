@@ -2974,13 +2974,83 @@ function setupListsTool() {
         });
     }
 
-    // --- View Full List Modal ---
+    // --- View Full List Modal & Word Jump ---
     const viewFullBtn = document.getElementById('list-view-full-btn');
     const fullListModal = document.getElementById('full-list-modal');
     const fullListClose = document.getElementById('full-list-modal-close');
     const fullListResults = document.getElementById('full-list-modal-results');
     const fullListTitle = document.getElementById('full-list-modal-title');
     const fullListCount = document.getElementById('full-list-modal-count');
+    const fullListJumpInput = document.getElementById('full-list-jump-input');
+    const fullListJumpBtn = document.getElementById('full-list-jump-btn');
+    const fullListJumpToast = document.getElementById('full-list-jump-toast');
+
+    window.isFullListLoading = false;
+
+    function showFullListToast(msg, isError = false) {
+        if (!fullListJumpToast) return;
+        fullListJumpToast.textContent = msg;
+        fullListJumpToast.style.borderColor = isError ? 'rgba(244, 63, 94, 0.6)' : 'rgba(167, 139, 250, 0.6)';
+        fullListJumpToast.style.color = isError ? '#fca5a5' : '#e9d5ff';
+        fullListJumpToast.style.display = 'block';
+        fullListJumpToast.style.opacity = '1';
+        clearTimeout(fullListJumpToast._timer);
+        fullListJumpToast._timer = setTimeout(() => {
+            fullListJumpToast.style.opacity = '0';
+            setTimeout(() => { fullListJumpToast.style.display = 'none'; }, 200);
+        }, 2800);
+    }
+
+    function handleFullListWordJump() {
+        if (!fullListJumpInput || !fullListResults) return;
+        const query = fullListJumpInput.value.trim().toUpperCase();
+        if (!query) return;
+
+        // Try exact match by data-word attribute or child link text
+        let targetEl = null;
+        try {
+            targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+        } catch (e) {}
+
+        if (!targetEl) {
+            const items = fullListResults.querySelectorAll('.full-list-item');
+            for (let i = 0; i < items.length; i++) {
+                const link = items[i].querySelector('.clickable-word-link');
+                const wordText = link ? link.textContent.trim().toUpperCase() : items[i].textContent.trim().toUpperCase();
+                if (wordText === query) {
+                    targetEl = items[i];
+                    break;
+                }
+            }
+        }
+
+        if (targetEl) {
+            // Remove previous jump pulses
+            fullListResults.querySelectorAll('.full-list-item.jump-target-pulse').forEach(el => {
+                el.classList.remove('jump-target-pulse');
+            });
+
+            // Scroll directly to the word centered in the container without highlighting or copying text
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Apply pulse effect to the element container without text selection
+            targetEl.classList.add('jump-target-pulse');
+            setTimeout(() => {
+                targetEl.classList.remove('jump-target-pulse');
+            }, 2500);
+
+            // Ensure no text selection is active
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            }
+        } else {
+            if (window.isFullListLoading) {
+                showFullListToast(`"${query}" is not loaded yet. The list is still loading words...`);
+            } else {
+                showFullListToast(`"${query}" was not found in this list.`, true);
+            }
+        }
+    }
 
     function openFullListModal() {
         if (!fullListModal || !fullListResults) return;
@@ -3001,12 +3071,15 @@ function setupListsTool() {
         const titleEl = document.getElementById('list-display-title');
         if (fullListTitle) fullListTitle.textContent = (titleEl ? titleEl.textContent : 'Full List');
         if (fullListCount) fullListCount.textContent = `Loading…`;
+        if (fullListJumpInput) fullListJumpInput.value = '';
+        if (fullListJumpToast) fullListJumpToast.style.display = 'none';
 
         // Clear and show modal right away
         fullListResults.innerHTML = '';
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        window.isFullListLoading = true;
         initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
 
         // Render a list of words progressively into the modal
@@ -3018,9 +3091,9 @@ function setupListsTool() {
                 if (slice.length === 0) { if (onDone) onDone(); return; }
                 let html = '';
                 if (currentWordsType === 'likelihood') {
-                    html = slice.map(item => `<span class="full-list-item"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span></span>`).join('');
+                    html = slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}')">${item.word}</span></span>`).join('');
                 } else {
-                    html = slice.map(w => `<span class="full-list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></span>`).join('');
+                    html = slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}')">${w}</span></span>`).join('');
                 }
                 fullListResults.insertAdjacentHTML('beforeend', html);
                 rendered += slice.length;
@@ -3047,19 +3120,25 @@ function setupListsTool() {
                     const extraWords = fullWords.slice(currentWordsList.length);
                     if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
                     if (extraWords.length > 0) {
-                        renderWordList(extraWords, 0, null);
+                        renderWordList(extraWords, 0, () => {
+                            window.isFullListLoading = false;
+                        });
                     } else {
                         if (fullListCount) fullListCount.textContent = `${fullWords.length.toLocaleString()} words`;
+                        window.isFullListLoading = false;
                     }
                 })
                 .catch(err => {
                     console.error('[Full List] Failed to fetch full word list:', err);
                     if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words (fetch failed)`;
+                    window.isFullListLoading = false;
                 });
         } else {
             // List was not truncated — render what we have
             if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words`;
-            renderWordList(currentWordsList, 0, null);
+            renderWordList(currentWordsList, 0, () => {
+                window.isFullListLoading = false;
+            });
         }
     }
 
@@ -3067,6 +3146,7 @@ function setupListsTool() {
         if (!fullListModal) return;
         fullListModal.style.display = 'none';
         document.body.style.overflow = '';
+        window.isFullListLoading = false;
     }
 
     if (viewFullBtn) {
@@ -3078,6 +3158,20 @@ function setupListsTool() {
     if (fullListClose) {
         fullListClose.addEventListener('click', closeFullListModal);
     }
+    if (fullListJumpBtn) {
+        fullListJumpBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleFullListWordJump();
+        });
+    }
+    if (fullListJumpInput) {
+        fullListJumpInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleFullListWordJump();
+            }
+        });
+    }
     if (fullListModal) {
         // Click backdrop to close
         fullListModal.addEventListener('click', (e) => {
@@ -3087,13 +3181,20 @@ function setupListsTool() {
         // Strict Anti-Copy Protections for View Full List
         ['copy', 'cut', 'selectstart', 'dragstart', 'contextmenu'].forEach(evtType => {
             fullListModal.addEventListener(evtType, (e) => {
+                // Allow input typing and cursor movement inside fullListJumpInput
+                if (e.target === fullListJumpInput && (evtType === 'selectstart' || evtType === 'copy' || evtType === 'cut')) {
+                    return;
+                }
                 e.preventDefault();
                 return false;
             });
         });
 
-        // Prevent keyboard shortcuts (Cmd+C, Ctrl+C, Cmd+A, Ctrl+A, Cmd+X, Ctrl+X, Cmd+S, Ctrl+S, Cmd+P, Ctrl+P)
+        // Prevent keyboard shortcuts (Cmd+C, Ctrl+C, Cmd+A, Ctrl+A, Cmd+X, Ctrl+X, Cmd+S, Ctrl+S, Cmd+P, Ctrl+P) except in input
         fullListModal.addEventListener('keydown', (e) => {
+            if (e.target === fullListJumpInput) {
+                return; // Let user select/cut/copy/paste inside the search input box
+            }
             if (e.ctrlKey || e.metaKey) {
                 const key = (e.key || '').toLowerCase();
                 if (['c', 'a', 'x', 's', 'p', 'u'].includes(key)) {

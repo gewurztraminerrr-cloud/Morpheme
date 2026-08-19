@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33036`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33037`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -144,6 +144,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **CSS Selection Prevention**: Applied `-webkit-user-select: none !important`, `-moz-user-select: none !important`, `-ms-user-select: none !important`, `user-select: none !important`, and `-webkit-touch-callout: none !important` across `#full-list-modal`, `#full-list-modal-results`, and `.full-list-item`.
 - **DOM Event Blocking**: Intercepted and blocked `copy`, `cut`, `selectstart`, `dragstart`, and `contextmenu` events on the modal overlay.
 - **Keyboard Shortcut Interception**: Prevented copy/select shortcuts (`Ctrl+C`, `Cmd+C`, `Ctrl+A`, `Cmd+A`, `Ctrl+X`, `Cmd+X`, `Ctrl+S`, `Cmd+S`, `Ctrl+P`, `Cmd+P`, `Ctrl+U`, `Cmd+U`) while retaining clickable definition inspection.
+
+### CC. Lists Tool "View Full List" Word Jump Bar & Loading Notifications (`templates/index.html`, `static/css/play.css`, `static/js/tools.js`)
+- **Jump-To-Word Input Bar**: Added a sleek jump input box and "Go" button directly below the top row of the Full List modal, allowing users to enter any word to navigate to.
+- **Smooth Scroll & Pulse Without Highlighting**: Submitting a word smoothly centers the word in view and flashes a subtle purple container glow (`jumpTargetGlow`) without highlighting, selecting, or copying any text.
+- **Loading State Notification Popup**: If the word is submitted while the uncapped word list is still loading in the background, gives the user an immediate toast popup: *"The list is still loading words..."*.
 
 ---
 

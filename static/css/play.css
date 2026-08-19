@@ -7447,6 +7447,52 @@ body .board-cell.tile-flash-purple * {
     margin-right: 3px;
 }
 
+/* Word jump pulse animation without text selection */
+@keyframes jumpTargetGlow {
+    0% {
+        background: rgba(167, 139, 250, 0.5);
+        box-shadow: 0 0 14px rgba(167, 139, 250, 0.85);
+        outline: 1.5px solid #c4b5fd;
+        transform: scale(1.12);
+    }
+    35% {
+        background: rgba(167, 139, 250, 0.4);
+        box-shadow: 0 0 20px rgba(167, 139, 250, 0.7);
+        outline: 1.5px solid #a78bfa;
+        transform: scale(1.08);
+    }
+    70% {
+        background: rgba(167, 139, 250, 0.25);
+        box-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+        outline: 1px solid rgba(167, 139, 250, 0.4);
+        transform: scale(1.02);
+    }
+    100% {
+        background: rgba(167, 139, 250, 0.12);
+        box-shadow: none;
+        outline: none;
+        transform: scale(1);
+    }
+}
+
+.full-list-item.jump-target-pulse {
+    animation: jumpTargetGlow 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+    position: relative;
+    z-index: 5;
+}
+
+#full-list-jump-input:focus {
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.35) !important;
+}
+
+#full-list-jump-btn:hover {
+    background: rgba(167, 139, 250, 0.35) !important;
+    border-color: #a78bfa !important;
+    color: #fff !important;
+}
+
 /* Full List Modal — custom scrollbar */
 #full-list-modal-results {
     scrollbar-width: thin;
