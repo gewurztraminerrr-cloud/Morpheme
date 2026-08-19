@@ -2310,7 +2310,10 @@ body.theme-light-brown .word-item.missed {
 .random-word-container,
 .wotd-container,
 .manual-grid-scroll,
-.manual-grid {
+.manual-grid,
+.unscramble-container,
+.unscramble-game-area,
+#unscramble-found-container {
     width: 100%;
     max-width: 1200px;
 }
@@ -6777,6 +6780,37 @@ body .board-cell.tile-flash-purple * {
         padding: 2px 4px !important;
         font-size: 0.9rem !important;
         line-height: 1.2 !important;
+    }
+
+    /* Unscramble Tool Desktop & Laptop Layout */
+    #tool-unscramble .unscramble-container {
+        width: 100% !important;
+        max-width: 1200px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-unscramble .unscramble-game-area {
+        width: 100% !important;
+        max-width: 1200px !important;
+        padding: 20px 30px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-unscramble #unscramble-found-container {
+        width: 100% !important;
+        max-width: 1200px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-unscramble #unscramble-jumbled {
+        width: 100% !important;
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-align: center !important;
+        font-size: clamp(1.6rem, 3.8vw, 3.2rem) !important;
+        letter-spacing: clamp(5px, 1.2vw, 15px) !important;
+        box-sizing: border-box !important;
     }
 }
 

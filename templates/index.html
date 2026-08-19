@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33057">
-    <link rel="stylesheet" href="/css/lobby.css?v=33057">
-    <link rel="stylesheet" href="/css/play.css?v=33057">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33057">
-    <link rel="stylesheet" href="/css/forum.css?v=33057">
-    <link rel="stylesheet" href="/css/donate.css?v=33057">
-    <script src="/js/app.js?v=33057"></script>
-    <script src="/js/lobby.js?v=33057"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33058">
+    <link rel="stylesheet" href="/css/lobby.css?v=33058">
+    <link rel="stylesheet" href="/css/play.css?v=33058">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33058">
+    <link rel="stylesheet" href="/css/forum.css?v=33058">
+    <link rel="stylesheet" href="/css/donate.css?v=33058">
+    <script src="/js/app.js?v=33058"></script>
+    <script src="/js/lobby.js?v=33058"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2770,11 +2770,11 @@
 
                             <!-- Top Area: Game Dashboard -->
                             <div class="unscramble-game-area"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; width: 100%; max-width: 600px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 15px 25px; box-sizing: border-box; flex-shrink: 0;">
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; width: 100%; max-width: 100%; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 20px 30px; box-sizing: border-box; flex-shrink: 0;">
 
-                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                                     <div id="unscramble-jumbled" class="random-word-large"
-                                        style="letter-spacing: 15px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: 3.2rem; margin-bottom: 5px; font-family: 'Outfit', sans-serif;">
+                                        style="letter-spacing: clamp(5px, 1.2vw, 15px); font-weight: 900; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); font-size: clamp(1.8rem, 3.8vw, 3.2rem); margin-bottom: 5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-align: center; max-width: 100%; overflow: visible;">
                                         <!-- Jumbled word -->
                                     </div>
                                     <div id="unscramble-count-info"
@@ -2784,7 +2784,7 @@
                                 </div>
 
                                 <div class="input-dashboard"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 450px; margin-top: 10px;">
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 480px; margin-top: 10px;">
 
                                     <input type="text" id="unscramble-input" placeholder="Enter word..."
                                         autocomplete="off"
@@ -2805,7 +2805,7 @@
 
                             <!-- Bottom Area: Results (Now stacked underneath the game area) -->
                             <div id="unscramble-found-container" class="hidden"
-                                style="width: 100%; max-width: 600px; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; margin-bottom: 20px;">
+                                style="width: 100%; max-width: 100%; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; margin-bottom: 20px;">
                                 <h3
                                     style="font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; text-align: center; font-weight: 800; letter-spacing: 2px;">
                                     Status & Results</h3>
@@ -5781,18 +5781,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33057"></script>
-    <script src="/js/forum.js?v=33057"></script>
-    <script src="/js/app.js?v=33057"></script>
-    <script src="/js/lobby.js?v=33057"></script>
-    <script src="/js/play.js?v=33057"></script>
-    <script src="/js/tournaments.js?v=33057"></script>
-    <script src="/js/leaderboard.js?v=33057"></script>
-    <script src="/js/tools.js?v=33057"></script>
-    <script src="/js/mouse_selection.js?v=33057"></script>
-    <script src="/js/mods.js?v=33057"></script>
-    <script src="/js/private_matches.js?v=33057"></script>
-    <script src="/js/donate.js?v=33057"></script>
+    <script src="/js/settings.js?v=33058"></script>
+    <script src="/js/forum.js?v=33058"></script>
+    <script src="/js/app.js?v=33058"></script>
+    <script src="/js/lobby.js?v=33058"></script>
+    <script src="/js/play.js?v=33058"></script>
+    <script src="/js/tournaments.js?v=33058"></script>
+    <script src="/js/leaderboard.js?v=33058"></script>
+    <script src="/js/tools.js?v=33058"></script>
+    <script src="/js/mouse_selection.js?v=33058"></script>
+    <script src="/js/mods.js?v=33058"></script>
+    <script src="/js/private_matches.js?v=33058"></script>
+    <script src="/js/donate.js?v=33058"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
