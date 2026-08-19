@@ -5874,8 +5874,8 @@ input[type=range]::-moz-range-track {
         font-size: 1.3rem !important;
     }
 
-    .board-panel .game-board,
-    .board-panel.full-bleed-mobile .game-board {
+    .board-panel .game-board:not(.game-board-loading),
+    .board-panel.full-bleed-mobile .game-board:not(.game-board-loading) {
         width: auto !important;
         max-width: none !important;
         padding: 0 !important;
@@ -7463,4 +7463,48 @@ body .board-cell.tile-flash-purple * {
 body.is-mobile #setting-panel-cube-scale,
 body.is-mobile .desktop-only-setting {
     display: none !important;
+}
+
+/* ============================================================
+   DEFINITIVE GAME BOARD LOADING CARD CENTERING OVERRIDES
+   Guarantees the loading card is always full-width & centered
+   ============================================================ */
+.board-panel #game-board.game-board-loading,
+.board-panel.full-bleed-mobile #game-board.game-board-loading,
+#game-board.game-board-loading,
+.game-board-loading {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 220px !important;
+    height: auto !important;
+    padding: 16px 8px !important;
+    background: transparent !important;
+    border: none !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    float: none !important;
+}
+
+.board-panel #game-board.game-board-loading .loading-container,
+.board-panel.full-bleed-mobile #game-board.game-board-loading .loading-container,
+#game-board.game-board-loading .loading-container,
+.loading-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    min-height: 200px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
 }
