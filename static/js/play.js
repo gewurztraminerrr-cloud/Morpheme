@@ -2672,12 +2672,13 @@ async function updateGameState(incomingState = null) {
 
 function fetchDailyScoreSums(targetRoomId) {
     const roomId = targetRoomId || window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : '24h_4x4');
+    const dims = (window.lastGameState && window.lastGameState.board_dimensions) || '';
     const listEl = document.getElementById('score-sum-list');
     if (listEl) {
         listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
     }
     
-    fetch(`/api/daily-score-sums?room_id=${encodeURIComponent(roomId)}`)
+    fetch(`/api/daily-score-sums?room_id=${encodeURIComponent(roomId)}&board_dimensions=${encodeURIComponent(dims)}`)
         .then(res => res.json())
         .then(data => {
             window._dailyScoreSumsData = data.players || [];

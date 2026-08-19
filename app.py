@@ -3460,9 +3460,12 @@ def create_room():
             if min_rating > 0 or max_rating < 9999:
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
-        # Every "+ Create Room" request generates a brand new unique room for that user
-        generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
-        print(f"[app.py] Generated unique ID for newly created room: {generated_id}")
+        # 24h rooms are permanent singletons per dimension; custom rooms get unique IDs
+        if int(time_limit) >= 7200:
+            generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
+        else:
+            generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
+        print(f"[app.py] Generated ID for room: {generated_id}")
             
         room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating, is_private=False)
         
@@ -6444,22 +6447,62 @@ def create_forum_comment():
     finally:
         conn.close()
 
+def normalize_24h_room_key(room_id, board_dimensions=None):
+    if board_dimensions and board_dimensions != 'all':
+        return f"24h_{board_dimensions}"
+    s = str(room_id or '').lower()
+    for dim in ['4x4', '4x6', '5x7', '6x8', '3x3x3', '2x2x2', '3x3']:
+        if dim in s:
+            return f"24h_{dim}"
+    if s.startswith('24h_'):
+        return s
+    return f"24h_{s}"
+
 @app.route('/api/daily-score-sums', methods=['GET'])
 def get_daily_score_sums():
-    room_id = request.args.get('room_id', '24h_4x4')
+    raw_room_id = request.args.get('room_id', '24h_4x4')
+    board_dimensions = request.args.get('board_dimensions', '')
+    canonical_key = normalize_24h_room_key(raw_room_id, board_dimensions)
+    dims = canonical_key.replace('24h_', '')
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
+        # 1. Automatic backfill / recovery from historical round_history if needed
+        conn.execute('''
+            INSERT OR IGNORE INTO daily_score_sums (user_id, room_id, score_sum)
+            SELECT rh.user_id, ?, SUM(rh.total_score)
+            FROM round_history rh
+            WHERE rh.user_id > 0 
+              AND (rh.board_dimensions = ? OR rh.room_id LIKE ? OR rh.room_id = ?)
+              AND (rh.round_duration >= 7200 OR rh.room_id LIKE '%86400%' OR rh.room_id LIKE '%24h%')
+            GROUP BY rh.user_id
+        ''', (canonical_key, dims, f"%{dims}%", canonical_key))
+        conn.commit()
+
+        # 2. Fetch all scores for this 24h room from daily_score_sums
         cursor = conn.execute('''
-            SELECT u.username, d.score_sum
+            SELECT u.username, d.user_id, MAX(d.score_sum) as score_sum
             FROM daily_score_sums d
             JOIN users u ON d.user_id = u.id
-            WHERE d.room_id = ?
-            ORDER BY d.score_sum DESC
-        ''', (room_id,))
+            WHERE d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?
+            GROUP BY d.user_id, u.username
+            ORDER BY score_sum DESC
+        ''', (canonical_key, raw_room_id, f"%{dims}%"))
         rows = cursor.fetchall()
-        players = [{'username': row['username'], 'score_sum': row['score_sum']} for row in rows]
-        return jsonify({'players': players, 'room_id': room_id})
+        
+        scores_by_username = {row['username']: row['score_sum'] for row in rows}
+
+        # 3. Check active in-memory room for any players who have scored today in this 24h room
+        for r in room_manager.rooms.values():
+            if r.time_limit >= 7200 and (r.board_dimensions == dims or dims in str(r.room_id)):
+                for p in list(r.players) + list(r.past_players.values()):
+                    if p.score > 0 and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and p.username:
+                        if p.username not in scores_by_username:
+                            scores_by_username[p.username] = p.score
+
+        players = [{'username': uname, 'score_sum': ssum} for uname, ssum in sorted(scores_by_username.items(), key=lambda x: x[1], reverse=True)]
+        return jsonify({'players': players, 'room_id': canonical_key})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

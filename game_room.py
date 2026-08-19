@@ -1924,16 +1924,12 @@ class GameRoom:
                             str(p.user_id): {
                                 'username': p.username,
                                 'found_words': [w['word'] for w in p.submitted_words]
-                            } for p in self.players
+                            } for p in (self.players or [])
                         }
                         
                         # Capture intermission stats
                         self.previous_total_words = getattr(self, 'total_words_count', 0)
                         self.previous_total_points = getattr(self, 'total_points_count', 0)
-                        
-                        # Clear active players and spectators at midnight boundary reset
-                        self.players = []
-                        self.spectators = []
                         
                         # Direct room resets instead of invalid method call
                         self.custom_end_time = 0
@@ -6790,6 +6786,11 @@ class RoomManager:
                 room.custom_end_time = 0
                 room.round_start_time = time.time()
                 room.state = 'active'
+                if room.time_limit >= 7200:
+                    room.players = []
+                    room.past_players = {}
+                    room.spectators = []
+                    print(f"[RoomManager] Reset 24h room {room_id} players for fresh new daily round.")
                 room.midnight_reset_occurred = False
                 if hasattr(room, 'intermission_stuck_start_time'):
                     delattr(room, 'intermission_stuck_start_time')
@@ -7119,12 +7120,13 @@ class RoomManager:
                     solutions_payload, paths_payload
                 ))
 
-                if room.time_limit >= 7200 and u_id != -1 and u_name != 'System':
+                if room.time_limit >= 7200 and u_id != -1 and u_name != 'System' and u_score > 0:
+                    canonical_id = f"24h_{room.board_dimensions}"
                     conn.execute('''
                         INSERT INTO daily_score_sums (user_id, room_id, score_sum)
                         VALUES (?, ?, ?)
                         ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
-                    ''', (u_id, room.room_id, u_score))
+                    ''', (u_id, canonical_id, u_score))
                 
             conn.commit()
             conn.close()

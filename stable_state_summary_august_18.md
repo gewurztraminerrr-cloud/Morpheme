@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33032`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33033`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -123,9 +123,16 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Rich Session History UI**: Always renders the Session History section under Status & Results, displaying the jumbled puzzle, time, found count vs total solutions, color-coded solution pills with definition lookups, and a "Clear History" action button.
 
 ### Y. Game Board Loading Card Centering & Alignment Fix (`static/css/play.css`, `static/js/play.js`)
-- Resolved the layout issue where the "Generating [Format]…" loading card would occasionally appear scrunched along the left side before pressing Rotate.
-- **Enhanced CSS Specificity**: Styled `.game-board-loading` and `#game-board.game-board-loading` across desktop and responsive mobile rules with `display: flex !important`, `align-items: center !important`, `justify-content: center !important`, `margin: 0 auto !important`, and `grid-template-columns: none !important`.
+- Resolved the layout issue where the "Generating [Format]…" loading card would appear scrunched along the left side.
+- **Mobile Grid Exclusions**: Updated `.board-panel .game-board:not(.game-board-loading)` to prevent mobile grid template rules (`display: grid !important`, `grid-template-columns: repeat(...) !important`, `width: auto !important`) from applying to `#game-board` while in loading state.
+- **Definitive Loading Overrides**: Placed top-priority styling rules at the bottom of `play.css` guaranteeing that `#game-board.game-board-loading` and `.loading-container` always render with `display: flex !important`, `align-items: center !important`, `justify-content: center !important`, `width: 100% !important`, `max-width: 440px !important`, and `margin: 0 auto !important`.
 - **Clean Style Reset**: Updated `ensureLoadingCardStyles()` to programmatically clear any stale grid template column constraints and set clean flex-centering properties, ensuring the loading spinner, title, status ticker, and explanation text always render perfectly centered and readable.
+
+### Z. Permanent 24h Daily Room Score Sums & 12AM Rollover Preservation (`app.py`, `game_room.py`, `static/js/play.js`)
+- **Fixed 12AM Midnight Score Rollover**: Fixed the race condition where `self.players` was cleared before capturing `intermission_player_snapshots`, preventing scores from being credited to `daily_score_sums`. Players are now preserved through intermission, accurately snapshotted, and added to the cumulative permanent score sums in SQLite `daily_score_sums`.
+- **Canonical 24h Room Keys**: Standardized all 24h room keys across database storage and API endpoints to `24h_4x4`, `24h_4x6`, `24h_5x7`, and `24h_6x8`, ensuring independent word counts and permanent score sums across all four 24h room sizes.
+- **Stable 24h Room Singletons**: Configured `/api/room/create` to always assign stable singleton room IDs (`pub_v2_accumulative_{dims}_86400`) rather than random UUIDs, keeping players in the same persistent room.
+- **Live Active Scores & Instant Non-Empty Rankings**: Enhanced `/api/daily-score-sums` to auto-backfill from `round_history` and dynamically incorporate active daily players with scores > 0 so that once a user establishes a score in any 24h room, the Score Sum tab never reads "No players found" again.
 
 ---
 
