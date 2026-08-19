@@ -420,6 +420,9 @@ let lastGameInteractionTime = Date.now();
 
 function resetIdleTimer() {
     lastGameInteractionTime = Date.now();
+    try {
+        localStorage.setItem('morpheme_last_active_timestamp', Date.now().toString());
+    } catch(e) {}
 }
 
 function isOnPlayPage() {
@@ -431,6 +434,15 @@ function isOnPlayPage() {
 
 async function ejectToLobby(reason = "inactivity") {
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
+
+    // Check if inactivity notice should be suppressed (e.g. absent > 1 hour)
+    let shouldSuppressNotice = false;
+    try {
+        const lastActive = parseInt(localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+        const now = Date.now();
+        const exceededOneHour = (lastActive > 0) && ((now - lastActive) > 60 * 60 * 1000);
+        shouldSuppressNotice = (reason === "inactivity") && (exceededOneHour || window._suppressInactivityNotice);
+    } catch(e) {}
 
     // 1. Notify server immediately so lobby counts decrease
     if (window.leaveCurrentRoom) {
@@ -444,7 +456,17 @@ async function ejectToLobby(reason = "inactivity") {
     // 2. Stop poll and clear state
     stopPolling();
     window.currentRoomId = null;
-    localStorage.removeItem('last_joined_room');
+    try {
+        localStorage.removeItem('last_joined_room');
+    } catch(e) {}
+
+    if (shouldSuppressNotice) {
+        console.log('[play.js] Session Expired notice suppressed because last visit exceeded 1 hour.');
+        if (window.navigateToPage) window.navigateToPage('lobby');
+        else if (window.showPage) window.showPage('page-lobby');
+        else window.location.href = '#page-lobby';
+        return;
+    }
 
     // 3. Clear ANY other overlays that might block the explanation
     document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay').forEach(ov => {

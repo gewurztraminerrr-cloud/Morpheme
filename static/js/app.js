@@ -190,6 +190,20 @@ function showAlreadyOpenScreen() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check if the user's last visit was more than 1 hour ago (3600s)
+    try {
+        const lastActiveTime = parseInt(localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+        const nowTime = Date.now();
+        const exceededOneHour = (lastActiveTime > 0) && ((nowTime - lastActiveTime) > 60 * 60 * 1000);
+        if (exceededOneHour) {
+            console.log(`[app.js] Last visit was ${Math.round((nowTime - lastActiveTime) / 60000)} minutes ago (> 1 hour). Silently clearing room session without Session Expired notice.`);
+            window._suppressInactivityNotice = true;
+            localStorage.removeItem('last_joined_room');
+            if (window.currentRoomId) window.currentRoomId = null;
+        }
+        localStorage.setItem('morpheme_last_active_timestamp', nowTime.toString());
+    } catch(e) {}
+
     // 1. Core UI Setup (Always Run First for Responsiveness)
     setupNavigation();
     setupModalListeners();
@@ -2339,5 +2353,30 @@ window.loadFAQDictionaryStats = async function() {
         console.error('[loadFAQDictionaryStats] Error fetching dictionary stats:', e);
     }
 };
+
+// Activity timestamp tracker to support silence on > 1 hour return
+function touchMorphemeActivity() {
+    try {
+        localStorage.setItem('morpheme_last_active_timestamp', Date.now().toString());
+    } catch(e) {}
+}
+['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+    window.addEventListener(evt, touchMorphemeActivity, { passive: true });
+});
+window.addEventListener('beforeunload', touchMorphemeActivity);
+window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        try {
+            const last = parseInt(localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+            if (last > 0 && (Date.now() - last > 60 * 60 * 1000)) {
+                window._suppressInactivityNotice = true;
+                localStorage.removeItem('last_joined_room');
+                if (window.currentRoomId) window.currentRoomId = null;
+            }
+        } catch(e) {}
+    }
+    touchMorphemeActivity();
+});
+setInterval(touchMorphemeActivity, 15000);
 
 console.log('app.js fully loaded - version with UI optimizations');
