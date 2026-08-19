@@ -615,13 +615,20 @@ window.stopGamePolling = function () {
 function ensureLoadingCardStyles() {
     const boardEl = document.getElementById('game-board');
     if (boardEl) {
+        boardEl.className = 'game-board-loading';
         boardEl.style.display = 'flex';
         boardEl.style.flexDirection = 'column';
         boardEl.style.alignItems = 'center';
         boardEl.style.justifyContent = 'center';
-        boardEl.style.gridTemplateColumns = 'none';
-        boardEl.style.gridTemplateRows = 'none';
+        boardEl.style.gridTemplateColumns = '';
+        boardEl.style.gridTemplateRows = '';
         boardEl.style.width = '100%';
+        boardEl.style.maxWidth = '100%';
+        boardEl.style.margin = '0 auto';
+        boardEl.style.padding = '16px';
+        boardEl.style.background = 'transparent';
+        boardEl.style.border = 'none';
+        boardEl.style.boxSizing = 'border-box';
     }
 }
 
@@ -686,8 +693,6 @@ function clearGameUIAndCache() {
     const boardEl = document.getElementById('game-board');
     if (boardEl) {
         ensureLoadingCardStyles();
-        boardEl.className = 'game-board-loading';
-        boardEl.removeAttribute('style');
         boardEl.innerHTML = `
             <div class="loading-container">
                 <div class="glow-spinner"></div>
@@ -1199,12 +1204,10 @@ async function updateGameState(incomingState = null) {
 
             const boardEl = document.getElementById('game-board');
             if (boardEl) {
-                ensureLoadingCardStyles();
                 let loadingMsg = "GENERATING NEXT BOARD…";
                 if (state.current_board_format) {
                     loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}…`;
                 }
-                boardEl.className = 'game-board-loading';
                 ensureLoadingCardStyles();
                 boardEl.innerHTML = `
                     <div class="loading-container">
@@ -4613,8 +4616,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }, 1200);
         
         ensureLoadingCardStyles();
-        boardEl.className = 'game-board-loading';
-        boardEl.removeAttribute('style');
         boardEl.innerHTML = `
             <div class="loading-container">
                 <div class="glow-spinner"></div>

@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33030`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33031`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -121,6 +121,11 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Eliminated Jumbled Word Flash / Changing**: Introduced an `isLoading` mutex and eliminated redundant duplicate generators on input focus, timeout, and tab switching, ensuring only one clean generation request runs and preventing the first jumbled word from flickering or changing sequences upon arrival.
 - **Persistent Session History**: Added automatic `localStorage` synchronization (`morpheme_unscramble_history`), ensuring completed and revealed rounds are permanently retained across page reloads and tab navigations.
 - **Rich Session History UI**: Always renders the Session History section under Status & Results, displaying the jumbled puzzle, time, found count vs total solutions, color-coded solution pills with definition lookups, and a "Clear History" action button.
+
+### Y. Game Board Loading Card Centering & Alignment Fix (`static/css/play.css`, `static/js/play.js`)
+- Resolved the layout issue where the "Generating [Format]…" loading card would occasionally appear scrunched along the left side before pressing Rotate.
+- **Enhanced CSS Specificity**: Styled `.game-board-loading` and `#game-board.game-board-loading` across desktop and responsive mobile rules with `display: flex !important`, `align-items: center !important`, `justify-content: center !important`, `margin: 0 auto !important`, and `grid-template-columns: none !important`.
+- **Clean Style Reset**: Updated `ensureLoadingCardStyles()` to programmatically clear any stale grid template column constraints and set clean flex-centering properties, ensuring the loading spinner, title, status ticker, and explanation text always render perfectly centered and readable.
 
 ---
 
