@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33038`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33039`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -150,9 +150,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Smooth Scroll & Pulse Without Highlighting**: Submitting a word smoothly centers the word in view and flashes a subtle purple container glow (`jumpTargetGlow`) without highlighting, selecting, or copying any text.
 - **Loading State Notification Popup**: If the word is submitted while the uncapped word list is still loading in the background, gives the user an immediate toast popup: *"The list is still loading words..."*.
 
-### DD. Desktop Combo Checker MP & LIC Description Space Expansion (`static/css/play.css`)
+### DD. Desktop Combo Checker MP & LIC Description Space Expansion & Sequence Facilitation Example (`static/css/play.css`, `templates/index.html`)
 - Removed the restrictive `max-height: 48px` desktop cap on `.chart-desc` in Combo Checker.
-- Set `max-height: none !important; height: auto !important; overflow: visible !important;` with relaxed `0.85rem` font size and `1.45` line height, ensuring the complete 314-character explanation for "MP (Microprocedures) v2.0" and all examples are fully visible and comfortably readable on desktops and laptops.
+- Set `max-height: none !important; height: auto !important; overflow: visible !important;` with relaxed `0.85rem` font size and `1.45` line height on desktops and laptops.
+- Updated the description for **"MP (Microprocedures) v2.0"** to include made-up sequence facilitation with the illustrative example: *`LIVEE (LIVE + E)` -> append `W` -> reverse to forge `WEEVIL`*.
 
 ---
 
