@@ -2,8 +2,8 @@
 
 // Global state for polling
 let lobbyPollInterval = null;
-let lobbyStatsInterval = null;
-let currentLobbyConfig = { gameType: 'fcfs', boardDimensions: '4x4', timeLimit: 45 };
+let currentLobbyConfig = null;
+window.currentLobbyConfig = null;
 window.activeRatingFilterValue = null;
 
 function formatLobbyTime(seconds) {
@@ -621,6 +621,8 @@ if (document.readyState === 'loading') {
 // Helper function to fetch and render rooms
 async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAutoCreate = false, minRating = 0, maxRating = 9999, force = false) {
     window.fetchAndRenderRooms = fetchAndRenderRooms;
+    currentLobbyConfig = { gameType, timeLimit: parseInt(timeLimit) || 45, boardDimensions: boardDimensions || '4x4' };
+    window.currentLobbyConfig = currentLobbyConfig;
     const roomsList = document.getElementById('rooms-list');
 
     // Ensure persistent structure for inputs so they aren't wiped on poll
