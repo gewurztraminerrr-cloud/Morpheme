@@ -233,16 +233,16 @@
 .chat-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 5px 8px;
-    height: 88px; /* Balanced height slightly smaller than 110px but comfortable to read */
-    flex: 0 0 88px;
+    padding: 6px 10px;
+    height: 120px; /* Comfortably sized chat box */
+    flex: 0 0 120px;
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
     /* Protect chat */
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
 }
 
 #chat-history {
@@ -250,8 +250,8 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding: 2px 4px;
+    gap: 4px;
+    padding: 4px 6px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
 }
@@ -321,12 +321,12 @@
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 6px;
-    padding: 3px 8px;
+    padding: 4px 8px;
     color: var(--text-primary);
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     outline: none;
     transition: all 0.3s ease;
-    height: 24px;
+    height: 26px;
     box-sizing: border-box;
 }
 
@@ -593,10 +593,10 @@ body.theme-light-brown .player-score-val {
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 5px 10px;
-    flex: 0 0 72px !important; /* Balanced size slightly smaller than 85px but comfortable to read */
-    height: 72px !important;
-    max-height: 72px !important;
+    padding: 6px 12px;
+    flex: 0 0 105px !important; /* Comfortably sized definitions panel */
+    height: 105px !important;
+    max-height: 105px !important;
     border-top: none;
     margin-top: 0;
     display: flex;
@@ -609,21 +609,21 @@ body.theme-light-brown .player-score-val {
 
 .definition-header {
     flex-shrink: 0;
-    padding-bottom: 2px;
-    margin-bottom: 2px;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
-    font-size: 0.9em;
+    font-size: 0.95em;
 }
 
 #definition-content {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    font-size: 0.85em;
-    line-height: 1.25;
+    font-size: 0.9em;
+    line-height: 1.35;
     color: var(--text-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
