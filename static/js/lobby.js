@@ -512,22 +512,11 @@ function setupLobbyEvents() {
                 console.log('[Lobby] My Rating clicked, but no active config. Doing nothing.');
                 return;
             }
-            let userRating = 1200;
-            const gameType = activeConfig.gameType;
-            const board = activeConfig.boardDimensions;
-            const time = activeConfig.timeLimit;
-            const configKey = `${gameType}|${board}|${time}`;
-            const ratings = window.currentUserConfigRatings || {};
-            const ratingObj = ratings[configKey];
-            if (ratingObj && ratingObj.rating !== undefined) {
-                userRating = ratingObj.rating;
-            } else {
-                if (gameType === 'fcfs' || gameType === 'split' || gameType === '3d') {
-                    userRating = 1200;
-                } else {
-                    userRating = window.lastPlayerRating || 1200;
-                }
-            }
+            const userRating = getUserConfigRating(
+                activeConfig.gameType,
+                activeConfig.boardDimensions,
+                activeConfig.timeLimit
+            );
             const input = document.getElementById('rating-filter');
             if (input) {
                 input.value = userRating;
@@ -968,7 +957,9 @@ function isOnLobby() {
 
 function getUserConfigRating(gameType, board, time) {
     const cleanType = String(gameType || '').replace('solo_', '');
-    const configKey = `${cleanType}|${board || '4x4'}|${time || 180}`;
+    const cleanBoard = String(board || '4x4');
+    const cleanTime = parseInt(time) || 45;
+    const configKey = `${cleanType}|${cleanBoard}|${cleanTime}`;
     const ratings = window.currentUserConfigRatings || {};
     const val = ratings[configKey];
     if (val !== undefined && val !== null) {
@@ -978,10 +969,6 @@ function getUserConfigRating(gameType, board, time) {
         if (typeof val === 'number' && val > 0) {
             return val;
         }
-    }
-    const overall = window.currentUserRating || window.lastPlayerRating;
-    if (overall !== undefined && overall !== null && Number(overall) > 0) {
-        return Number(overall);
     }
     return 1200;
 }

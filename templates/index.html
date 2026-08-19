@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33028">
-    <link rel="stylesheet" href="/css/lobby.css?v=33028">
-    <link rel="stylesheet" href="/css/play.css?v=33028">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33028">
-    <link rel="stylesheet" href="/css/forum.css?v=33028">
-    <link rel="stylesheet" href="/css/donate.css?v=33028">
-    <script src="/js/app.js?v=33028"></script>
-    <script src="/js/lobby.js?v=33028"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33029">
+    <link rel="stylesheet" href="/css/lobby.css?v=33029">
+    <link rel="stylesheet" href="/css/play.css?v=33029">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33029">
+    <link rel="stylesheet" href="/css/forum.css?v=33029">
+    <link rel="stylesheet" href="/css/donate.css?v=33029">
+    <script src="/js/app.js?v=33029"></script>
+    <script src="/js/lobby.js?v=33029"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -374,12 +374,14 @@
                 if (window.currentLobbyConfig) {
                     var getRating = window.getUserConfigRating || function(gt, b, t) {
                         var clean = String(gt || '').replace('solo_', '');
-                        var k = clean + '|' + (b || '4x4') + '|' + (t || 45);
+                        var cleanBoard = String(b || '4x4');
+                        var cleanTime = parseInt(t) || 45;
+                        var k = clean + '|' + cleanBoard + '|' + cleanTime;
                         var rMap = window.currentUserConfigRatings || {};
                         var v = rMap[k];
-                        if (v && typeof v === 'object' && v.rating) return Number(v.rating);
+                        if (v && typeof v === 'object' && v.rating !== undefined && v.rating !== null) return Number(v.rating) || 1200;
                         if (typeof v === 'number' && v > 0) return v;
-                        return Number(window.currentUserRating || window.lastPlayerRating || 1200);
+                        return 1200;
                     };
                     var exactRating = getRating(window.currentLobbyConfig.gameType, window.currentLobbyConfig.boardDimensions, window.currentLobbyConfig.timeLimit);
                     ratingBtn.textContent = 'My Rating (' + exactRating + ')';
@@ -404,9 +406,10 @@
             var realBtn = (rawBtn && typeof rawBtn.closest === 'function') ? (rawBtn.closest('.confirm-create-room-btn, button') || rawBtn) : rawBtn;
             var activeConfig = window.currentLobbyConfig;
             if (!activeConfig) {
-                showLobbyToast('Please select a game mode matrix square first.', 'error');
+                alert('Please select a game room first.');
                 return;
             }
+            realBtn.disabled = true;
             if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Creating Room...');
 
             var panel = (realBtn && typeof realBtn.closest === 'function') ? realBtn.closest('.create-room-panel') : null;
@@ -479,9 +482,14 @@
                 return;
             }
             var ratingInput = document.getElementById('rating-filter');
-            var myRatingBtn = document.getElementById('my-rating-btn');
             var rating = 1200;
-            if (myRatingBtn && myRatingBtn.dataset && myRatingBtn.dataset.rating) {
+            if (typeof window.getUserConfigRating === 'function') {
+                rating = window.getUserConfigRating(
+                    window.currentLobbyConfig.gameType,
+                    window.currentLobbyConfig.boardDimensions,
+                    window.currentLobbyConfig.timeLimit
+                );
+            } else if (myRatingBtn && myRatingBtn.dataset && myRatingBtn.dataset.rating) {
                 rating = parseInt(myRatingBtn.dataset.rating) || 1200;
             }
             if (ratingInput) {
@@ -5743,18 +5751,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33028"></script>
-    <script src="/js/forum.js?v=33028"></script>
-    <script src="/js/app.js?v=33028"></script>
-    <script src="/js/lobby.js?v=33028"></script>
-    <script src="/js/play.js?v=33028"></script>
-    <script src="/js/tournaments.js?v=33028"></script>
-    <script src="/js/leaderboard.js?v=33028"></script>
-    <script src="/js/tools.js?v=33028"></script>
-    <script src="/js/mouse_selection.js?v=33028"></script>
-    <script src="/js/mods.js?v=33028"></script>
-    <script src="/js/private_matches.js?v=33028"></script>
-    <script src="/js/donate.js?v=33028"></script>
+    <script src="/js/settings.js?v=33029"></script>
+    <script src="/js/forum.js?v=33029"></script>
+    <script src="/js/app.js?v=33029"></script>
+    <script src="/js/lobby.js?v=33029"></script>
+    <script src="/js/play.js?v=33029"></script>
+    <script src="/js/tournaments.js?v=33029"></script>
+    <script src="/js/leaderboard.js?v=33029"></script>
+    <script src="/js/tools.js?v=33029"></script>
+    <script src="/js/mouse_selection.js?v=33029"></script>
+    <script src="/js/mods.js?v=33029"></script>
+    <script src="/js/private_matches.js?v=33029"></script>
+    <script src="/js/donate.js?v=33029"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

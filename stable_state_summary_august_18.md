@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33028`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33029`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -112,6 +112,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### V. Combo Checker Mobile MP Tables Vertical Length Expansion (`static/css/play.css`)
 - Removed the legacy 250px fixed section height on `.result-section` and expanded mobile table container heights (`min-height: 400px; height: 420px;`) with inner table scroll areas (`min-height: 330px; height: 350px;`).
 - Gave MP tables (0MP, 1MP, 2MP, 3MP) the same generous vertical length as 5LIC/LIC tables on mobile devices, ensuring full word lists remain clearly visible and scrollable.
+
+### W. Lobby "My Rating" Configuration Rating Accuracy Fix (`static/js/lobby.js`, `templates/index.html`)
+- Fixed `getUserConfigRating` in `lobby.js` and `index.html` which previously fell back to the user's global overall rating (e.g. `1205`) for unplayed configurations instead of the default `1200`.
+- Ensured all "My Rating" button displays (`My Rating ([rating])`) and button clicks precisely reflect the specific configuration rating shown on the user's Profile page ratings grid (e.g., 1191 for FCFS 4x4 45s, and 1200 for unplayed configurations).
 
 ---
 
