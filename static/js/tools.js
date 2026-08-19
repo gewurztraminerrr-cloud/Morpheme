@@ -86,6 +86,14 @@ window.showTool = function(toolId) {
     if (toolId === 'find-count') {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
+    if (toolId === 'unscramble') {
+        const display = document.getElementById('unscramble-jumbled');
+        if (!unscrambleState.jumbled || !display || !display.innerText || display.innerText === 'Loading...' || display.innerText === 'Generating...' || display.innerText.trim() === '') {
+            if (typeof startNewUnscramble === 'function') {
+                startNewUnscramble();
+            }
+        }
+    }
 
     // Scroll tools content into view horizontally to the right pane on mobile with smooth sliding
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -4899,6 +4907,9 @@ function renderUnscrambleFound(revealMissed = false) {
 
     list.innerHTML = html;
 }
+
+window.startNewUnscramble = startNewUnscramble;
+window.unscrambleState = unscrambleState;
 
 // ==========================================
 // FIND COUNT
