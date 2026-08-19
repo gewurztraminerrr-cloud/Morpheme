@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33040`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33041`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -156,8 +156,8 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - Updated the description for **"MP (Microprocedures) v2.0"** to include made-up sequence facilitation with the illustrative example: *`LIVEE (LIVE + E)` -> append `W` -> reverse to forge `WEEVIL`*.
 
 ### EE. Intermission 0:45 Parameter Slow Gold Flash without Pulsation (`static/css/play.css`)
-- Replaced the previous `transform: scale(1.04)` keyframe pulsation with `@keyframes slowGoldFlash` and `transform: none !important`.
-- When parameters are revealed at 0:45 during intermission, the parameter labels smoothly and slowly flash gold (`#ffd700`) with soft gold text-shadow glow without any physical scale growth, zooming, or pulsation.
+- Restored the classic `fadeGoldToNormal` animation with `transform: none !important`.
+- When parameters are revealed at 0:45 during intermission, the parameter labels immediately snap to bright gold (`#ffd700`) with a gold text-shadow glow (`0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6)`), hold gold for a brief moment, and slowly fade back to normal color over 4 seconds without any physical scale growth, zooming, or pulsation.
 
 ---
 
