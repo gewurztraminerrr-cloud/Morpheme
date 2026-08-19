@@ -233,16 +233,16 @@
 .chat-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 6px 10px;
-    height: 120px; /* Comfortably sized chat box */
-    flex: 0 0 120px;
+    padding: 8px 10px;
+    height: 150px; /* Spacious, comfortable chat box */
+    flex: 0 0 150px;
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
     /* Protect chat */
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 #chat-history {
@@ -321,12 +321,12 @@
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 6px;
-    padding: 4px 8px;
+    padding: 5px 8px;
     color: var(--text-primary);
     font-size: 0.85rem;
     outline: none;
     transition: all 0.3s ease;
-    height: 26px;
+    height: 28px;
     box-sizing: border-box;
 }
 
@@ -593,10 +593,10 @@ body.theme-light-brown .player-score-val {
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 6px 12px;
-    flex: 0 0 105px !important; /* Comfortably sized definitions panel */
-    height: 105px !important;
-    max-height: 105px !important;
+    padding: 8px 12px;
+    flex: 0 0 130px !important; /* Spacious, comfortable definitions panel */
+    height: 130px !important;
+    max-height: 130px !important;
     border-top: none;
     margin-top: 0;
     display: flex;
@@ -609,8 +609,8 @@ body.theme-light-brown .player-score-val {
 
 .definition-header {
     flex-shrink: 0;
-    padding-bottom: 3px;
-    margin-bottom: 3px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -623,7 +623,7 @@ body.theme-light-brown .player-score-val {
     overflow-y: auto;
     overflow-x: hidden;
     font-size: 0.9em;
-    line-height: 1.35;
+    line-height: 1.4;
     color: var(--text-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -4974,22 +4974,22 @@ input[type=range]::-moz-range-track {
         max-height: none !important;
     }
     .chat-panel {
-        height: 110px !important; /* Compact to give more space to players list */
+        height: 140px !important;
         flex: none !important;
         max-height: none !important;
         margin-top: 10px !important;
-        padding: 6px 10px !important;
+        padding: 8px 10px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
     }
 
     .definitions-panel {
-        flex: 0 0 85px !important; /* Compact to give more space to words table */
-        height: 85px !important;
-        max-height: 85px !important;
+        flex: 0 0 125px !important;
+        height: 125px !important;
+        max-height: 125px !important;
         margin-top: 10px !important;
-        padding: 6px 12px !important;
+        padding: 8px 12px !important;
     }
 
 
