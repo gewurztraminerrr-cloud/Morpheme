@@ -421,7 +421,9 @@ let lastGameInteractionTime = Date.now();
 function resetIdleTimer() {
     lastGameInteractionTime = Date.now();
     try {
-        localStorage.setItem('morpheme_last_active_timestamp', Date.now().toString());
+        const now = Date.now().toString();
+        localStorage.setItem('morpheme_last_active_time', now);
+        localStorage.setItem('morpheme_last_active_timestamp', now);
     } catch(e) {}
 }
 
@@ -437,12 +439,16 @@ async function ejectToLobby(reason = "inactivity") {
 
     // Check if inactivity notice should be suppressed (e.g. absent > 1 hour)
     let shouldSuppressNotice = false;
-    try {
-        const lastActive = parseInt(localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-        const now = Date.now();
-        const exceededOneHour = (lastActive > 0) && ((now - lastActive) > 60 * 60 * 1000);
-        shouldSuppressNotice = (reason === "inactivity") && (exceededOneHour || window._suppressInactivityNotice);
-    } catch(e) {}
+    if (reason === "inactivity") {
+        try {
+            const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
+                                     (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
+            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+            const now = Date.now();
+            const exceededOneHour = (lastActive > 0) && ((now - lastActive) > 60 * 60 * 1000);
+            shouldSuppressNotice = isSuppressedFlag || exceededOneHour;
+        } catch(e) {}
+    }
 
     // 1. Notify server immediately so lobby counts decrease
     if (window.leaveCurrentRoom) {
