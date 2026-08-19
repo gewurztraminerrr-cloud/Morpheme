@@ -1783,6 +1783,9 @@ def init_db():
         conn.commit()
         if inserted:
             print(f"[init_db] Backfilled {inserted} board hashes from round_history into used_boards.")
+    except Exception as e:
+        print(f"[init_db] used_boards backfill error: {e}")
+
     # MIGRATION: Transfer email jeffbabiak@outlook.com to user jeffb and update moderators
     try:
         conn.execute("UPDATE users SET email = '' WHERE LOWER(email) = 'jeffbabiak@outlook.com' AND LOWER(username) != 'jeffb'")
