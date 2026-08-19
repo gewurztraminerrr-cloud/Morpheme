@@ -590,8 +590,8 @@ async function banUser() {
         return;
     }
 
-    if (username.toLowerCase() === 'jeffbabiak') {
-        alert("Action Prohibited: User 'JeffBabiak' cannot be banned.");
+    if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+        alert(`Action Prohibited: User '${username}' cannot be banned.`);
         return;
     }
 

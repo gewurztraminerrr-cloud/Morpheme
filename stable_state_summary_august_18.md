@@ -159,6 +159,12 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - Restored the classic `fadeGoldToNormal` animation with `transform: none !important`.
 - When parameters are revealed at 0:45 during intermission, the parameter labels immediately snap to bright gold (`#ffd700`) with a gold text-shadow glow (`0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6)`), hold gold for a brief moment, and slowly fade back to normal color over 4 seconds without any physical scale growth, zooming, or pulsation.
 
+### FF. User Email Migration to jeffb, Moderator Protections, and Ban Prohibition (`app.py`, `static/js/mods.js`)
+- **Email Transfer**: Added startup database migration transferring `jeffbabiak@outlook.com` exclusively to user `jeffb` while clearing it from any previous account (e.g. `username12`).
+- **Moderator Removal of JeffBabiak**: Removed `JeffBabiak` from `moderators` table and `dictionaries/mods.txt`.
+- **Permanent Moderator Status for jeffb**: Guaranteed `jeffb` is a root moderator with no removal `&times;` button rendered and backend blocking on removal attempts.
+- **Ban Prohibition for jeffb**: Explicitly prohibited banning user `jeffb` across frontend validation (`mods.js`) and backend API endpoint (`/api/mods/ban_user`).
+
 ---
 
 ## 3. Production Deployment Instructions
