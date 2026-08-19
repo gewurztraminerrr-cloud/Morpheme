@@ -36,7 +36,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33043`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33044`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -167,6 +167,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### GG. Lists Tool "View Full List" Word Selection Definition Lookup & Exact Spot Return (`static/js/tools.js`)
 - **Word Selection & Auto-Close**: When a user selects any word inside the "View Full List" modal, the exact scroll position is instantly captured (`window._savedFullListScrollTop`), the modal overlay automatically closes, and the app seamlessly navigates to the "Is Valid" tool in Tools, sets the dictionary to "ALL", inputs the word, and executes the validation check to display its lexicographical definition.
 - **Exact Spot Return on Reopening**: When the user navigates back to Lists and clicks "View Full List", the previously rendered list is preserved in the DOM without re-fetching or resetting to the top, and the scroll position is accurately restored to the exact same spot where the window was closed.
+
+### HH. Forum "Complaints" Category Addition (`app.py`, `static/js/forum.js`)
+- **Complaints Category Creation**: Added the `Complaints` category (*"Voice your feedback, grievances, or criticisms."*) to `forum_categories` in the SQLite database and automatic startup migrations.
+- **Canonical Ordering**: Guaranteed `Complaints` is ordered directly below `Suggestions/Ideas` (under Suggestions) and above `Bugs/Errors` across the Forum category navigation panel.
 
 ---
 

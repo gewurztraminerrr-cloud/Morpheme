@@ -1652,6 +1652,7 @@ def init_db():
             ("Introduce Yourself", "New here? Say hello!"),
             ("News", "Official news and updates from the developers."),
             ("Suggestions/Ideas", "Share your ideas for improving Morpheme."),
+            ("Complaints", "Voice your feedback, grievances, or criticisms."),
             ("Bugs/Errors", "Report bugs or technical issues encountered.")
         ]
         for name, desc in categories:
@@ -1660,6 +1661,7 @@ def init_db():
         # MIGRATION: Ensure Suggestions category is renamed to Suggestions/Ideas and clean up duplicates
         conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions' OR id = 6")
         conn.execute("DELETE FROM forum_categories WHERE name = 'Suggestions/Ideas' AND id != 6")
+        conn.execute("INSERT OR IGNORE INTO forum_categories (name, description) VALUES ('Complaints', 'Voice your feedback, grievances, or criticisms.')")
 
         conn.commit()
         print("Migrated DB: Added Forum tables and categories")
@@ -6151,6 +6153,20 @@ def get_forum_categories():
                 # Fallback to a very old date so new users don't see unread indicators for empty cats
                 d['last_content_at'] = '2000-01-01T00:00:00Z'
             categories.append(d)
+
+        # Canonical category ordering with Complaints placed under Suggestions
+        ORDER_MAP = {
+            'general': 1,
+            'tips, tricks, and strategies': 2,
+            'screenshots': 3,
+            'introduce yourself': 4,
+            'news': 5,
+            'suggestions/ideas': 6,
+            'suggestions': 6,
+            'complaints': 7,
+            'bugs/errors': 8,
+        }
+        categories.sort(key=lambda c: ORDER_MAP.get(str(c.get('name', '')).strip().lower(), 99))
         return jsonify({'categories': categories})
     finally:
         conn.close()
