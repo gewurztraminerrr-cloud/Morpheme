@@ -5062,31 +5062,55 @@ def load_tools_dictionary(dict_name):
     TOOLS_DICT_CACHE[cache_key] = result
     return result
 
-def get_lis(nums):
-    """Calculates Longest Increasing Subsequence length."""
-    if not nums:
-        return 0
-    # Standard O(n log n) or O(n^2) approach. Words are short, O(n^2) is negligible.
-    # Using DP (O(n^2)) for simplicity and correctness with small N.
-    dp = [1] * len(nums)
-    for i in range(len(nums)):
-        for j in range(i):
-            if nums[i] > nums[j]:
-                dp[i] = dp[j] + 1 if dp[j] + 1 > dp[i] else dp[i]
-    return max(dp) if dp else 0
-
+# --- HIGH-PERFORMANCE C-ACCELERATED MORPHEME METRIC ---
+import ctypes
+import bisect
 from functools import lru_cache
 
-@lru_cache(maxsize=16384)
-def calculate_morpheme_metric(source, target, limit=6):
+_c_morpheme_lib = None
+
+def _init_c_morpheme_metric():
+    global _c_morpheme_lib
+    if _c_morpheme_lib is not None:
+        return _c_morpheme_lib
+    
+    so_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.so')
+    c_src_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.c')
+    
+    # Auto-compile if .so missing
+    if not os.path.exists(so_path) and os.path.exists(c_src_path):
+        import subprocess
+        for comp in ['gcc', 'clang', 'cc']:
+            try:
+                cmd = [comp, '-O3', '-shared', '-fPIC', c_src_path, '-o', so_path]
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode == 0:
+                    print(f"[MorphemeEngine] Compiled morpheme_metric.so using {comp}")
+                    break
+            except Exception:
+                continue
+
+    if os.path.exists(so_path):
+        try:
+            lib = ctypes.CDLL(so_path)
+            lib.c_calculate_morpheme_metric.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+            lib.c_calculate_morpheme_metric.restype = ctypes.c_int
+            _c_morpheme_lib = lib
+            print("[MorphemeEngine] Native C Morpheme Engine initialized successfully.")
+            return _c_morpheme_lib
+        except Exception as e:
+            print(f"[MorphemeEngine] Failed to load morpheme_metric.so: {e}")
+            _c_morpheme_lib = False
+    else:
+        _c_morpheme_lib = False
+    return _c_morpheme_lib
+
+def calculate_morpheme_metric_py(source, target, limit=3):
     s_len, t_len = len(source), len(target)
     if s_len == 0 or t_len == 0: return 99, 0
-    
-    # 0. Quick substring check
-    if target in source:
-        return 0, t_len
-        
-    # 1. Optimized LCS (Linearity) using sliding row
+    if target in source: return 0, t_len
+
+    # LCS (Linearity)
     prev = [0] * (t_len + 1)
     curr = [0] * (t_len + 1)
     for char_s in source:
@@ -5100,63 +5124,67 @@ def calculate_morpheme_metric(source, target, limit=6):
         prev[:] = curr
     
     linearity = prev[t_len]
-    if linearity == 0: return 99, 0
-    
-    # Mathematical lower bound prune: cost >= t_len - linearity
-    if t_len - linearity > limit:
+    if linearity == 0 or t_len - linearity > limit:
         return 99, linearity
-        
-    best_mp = min(limit + 1, t_len + s_len)
-    
+
+    best_mp = limit + 1
+
     char_to_s_indices = {}
     for idx, char in enumerate(source):
         if char not in char_to_s_indices:
             char_to_s_indices[char] = []
         char_to_s_indices[char].append(idx)
-        
-    def backtrack(t_idx, used_mask, matched):
+
+    def backtrack(t_idx, used_mask, m_len, min_s, max_s, tails):
         nonlocal best_mp
-        
-        m_len = len(matched)
-        
-        # Extremely cheap insertion-bound check first to avoid lists allocations
-        if t_idx - m_len >= best_mp:
+
+        if (t_idx - m_len) >= best_mp:
             return
-            
+
         if m_len > 0:
-            sub_lis = get_lis(matched)
-            current_relocations = m_len - sub_lis
-            current_paid_deletions = (max(matched) - min(matched) + 1) - m_len
-        else:
-            current_relocations = 0
-            current_paid_deletions = 0
-            
-        # Lower bound on insertions is insertions made so far (t_idx - m_len)
-        min_possible_cost = current_relocations + current_paid_deletions + (t_idx - m_len)
-        
-        if min_possible_cost >= best_mp:
-            return
-            
+            relocations = m_len - len(tails)
+            paid_deletions = (max_s - min_s + 1) - m_len
+            min_cost = relocations + paid_deletions + (t_idx - m_len)
+            if min_cost >= best_mp:
+                return
+
         if t_idx == t_len:
-            actual_cost = current_relocations + current_paid_deletions + (t_len - m_len)
-            if actual_cost < best_mp:
-                best_mp = actual_cost
+            if m_len > 0:
+                relocations = m_len - len(tails)
+                paid_deletions = (max_s - min_s + 1) - m_len
+                actual_cost = relocations + paid_deletions + (t_len - m_len)
+                if actual_cost < best_mp:
+                    best_mp = actual_cost
             return
-            
+
         char = target[t_idx]
         if char in char_to_s_indices:
             for s_idx in char_to_s_indices[char]:
                 if not (used_mask & (1 << s_idx)):
-                    backtrack(t_idx + 1, used_mask | (1 << s_idx), matched + [s_idx])
-                    
-        backtrack(t_idx + 1, used_mask, matched)
+                    idx_b = bisect.bisect_left(tails, s_idx)
+                    if idx_b == len(tails):
+                        new_tails = tails + (s_idx,)
+                    else:
+                        new_tails = tails[:idx_b] + (s_idx,) + tails[idx_b+1:]
 
-    backtrack(0, 0, [])
-    
-    if best_mp > 6:
-        return 99, linearity
-        
+                    new_min = s_idx if m_len == 0 else (min_s if min_s < s_idx else s_idx)
+                    new_max = s_idx if m_len == 0 else (max_s if max_s > s_idx else s_idx)
+
+                    backtrack(t_idx + 1, used_mask | (1 << s_idx), m_len + 1, new_min, new_max, new_tails)
+
+        backtrack(t_idx + 1, used_mask, m_len, min_s, max_s, tails)
+
+    backtrack(0, 0, 0, 99, -1, ())
     return best_mp, linearity
+
+@lru_cache(maxsize=32768)
+def calculate_morpheme_metric(source, target, limit=3):
+    lib = _init_c_morpheme_metric()
+    if lib:
+        s_b = source.encode('ascii')
+        t_b = target.encode('ascii')
+        return lib.c_calculate_morpheme_metric(s_b, t_b, limit), 0
+    return calculate_morpheme_metric_py(source, target, limit)
 
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
@@ -5204,11 +5232,18 @@ def check_and_add_lic(lic_groups, count, target_len, word):
     if target_len <= count + 4:
         lic_groups[count].add(word)
 
+COMBO_QUERY_CACHE = {} # LRU cache of search results for instant return
+
 @app.route('/api/tools/combo', methods=['POST'])
 def tools_combo_check():
     data = request.json
     search_term = data.get('search_term', '').upper().strip()
     dict_name = data.get('dictionary', 'NWL')
+    
+    # Check server cache for instant response (< 1ms)
+    cache_key = (search_term, dict_name)
+    if cache_key in COMBO_QUERY_CACHE:
+        return jsonify(COMBO_QUERY_CACHE[cache_key])
     
     # Relaxed validation for 3/4 letter words
     if not search_term or len(search_term) < 3 or len(search_term) > 10:
@@ -5306,6 +5341,10 @@ def tools_combo_check():
             if sub2 in dict_data['set']:
                 mp_groups[0].add(sub2)
     
+    # Native C-accelerated evaluation or optimized Python fallback
+    c_engine = _init_c_morpheme_metric()
+    s_bytes = search_term.encode('ascii') if c_engine else None
+
     # --- OPTIMIZED SINGLE-THREADED LOOP ---
     for idx in sorted_candidates:
         word = word_list[idx]
@@ -5314,18 +5353,20 @@ def tools_combo_check():
             
         # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
-            # Calculate pure directional MP (search_term -> candidate) with lazy evaluation
-            # 4 combinations of forward and reversed search term / candidate:
-            best_mp, linearity = calculate_morpheme_metric(search_term, word, limit=max_mp)
-            if best_mp > 1:
-                m2_f, _ = calculate_morpheme_metric(search_term, word[::-1], limit=best_mp - 1)
-                best_mp = min(best_mp, m2_f)
-            if best_mp > 1:
-                m3_f, _ = calculate_morpheme_metric(search_term_rev, word, limit=best_mp - 1)
-                best_mp = min(best_mp, m3_f)
-            if best_mp > 1:
-                m4_f, _ = calculate_morpheme_metric(search_term_rev, word[::-1], limit=best_mp - 1)
-                best_mp = min(best_mp, m4_f)
+            if c_engine:
+                w_bytes = word.encode('ascii')
+                best_mp = c_engine.c_calculate_morpheme_metric(s_bytes, w_bytes, max_mp)
+                if best_mp > 1:
+                    w_rev_bytes = word[::-1].encode('ascii')
+                    m2 = c_engine.c_calculate_morpheme_metric(s_bytes, w_rev_bytes, best_mp - 1)
+                    if m2 < best_mp:
+                        best_mp = m2
+            else:
+                best_mp, _ = calculate_morpheme_metric_py(search_term, word, limit=max_mp)
+                if best_mp > 1:
+                    m2, _ = calculate_morpheme_metric_py(search_term, word[::-1], limit=best_mp - 1)
+                    if m2 < best_mp:
+                        best_mp = m2
 
             if best_mp <= max_mp:
                 check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
@@ -5341,10 +5382,17 @@ def tools_combo_check():
     for k in lic_groups:
         lic_groups[k] = sorted(list(lic_groups[k]), key=lambda x: (len(x), x))
     
-    return jsonify({
+    result_payload = {
         'mp_groups': mp_groups, 
         'lic_groups': lic_groups
-    })
+    }
+
+    # Store in query cache (prune if exceeds 4096 entries)
+    if len(COMBO_QUERY_CACHE) >= 4096:
+        COMBO_QUERY_CACHE.clear()
+    COMBO_QUERY_CACHE[cache_key] = result_payload
+
+    return jsonify(result_payload)
 
 LISTS_CACHE = {}
 

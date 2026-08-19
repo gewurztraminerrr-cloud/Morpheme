@@ -20,6 +20,8 @@ boggle-gen/instance/
 node_modules/
 .vscode/
 *.log
+*.so
+*.dylib
 
 # Generic home directory ignores
 /Desktop/

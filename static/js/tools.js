@@ -287,6 +287,8 @@ window.scrollContainerRight = function(containerId) {
     }
 };
 
+window._comboClientCache = window._comboClientCache || new Map();
+
 async function runComboSearch() {
     const inputEl = document.getElementById('combo-input');
     const dictEl = document.getElementById('combo-dict');
@@ -297,6 +299,18 @@ async function runComboSearch() {
 
     const mpContainer = document.getElementById('mp-container');
     const licContainer = document.getElementById('lic-container');
+
+    const cacheKey = `${searchTerm}_${dictEl.value}`;
+    if (window._comboClientCache.has(cacheKey)) {
+        const cachedData = window._comboClientCache.get(cacheKey);
+        resultsContainer.classList.remove('hidden');
+        if (mpContainer) mpContainer.innerHTML = '';
+        if (licContainer) licContainer.innerHTML = '';
+        renderGroups(cachedData.mp_groups, 'mp-container', 'MP');
+        renderGroups(cachedData.lic_groups, 'lic-container', 'LIC');
+        return;
+    }
+
     if (mpContainer) mpContainer.innerHTML = '<div class="loading-spinner">Searching...</div>';
     if (licContainer) licContainer.innerHTML = '';
 
@@ -314,6 +328,8 @@ async function runComboSearch() {
             alert(data.error);
             return;
         }
+
+        window._comboClientCache.set(cacheKey, data);
 
         if (mpContainer) mpContainer.innerHTML = '';
         renderGroups(data.mp_groups, 'mp-container', 'MP');
