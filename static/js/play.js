@@ -648,6 +648,13 @@ function clearGameUIAndCache() {
     stopBounceFormat();
     stopRotatingLetters();
     
+    if (typeof mouseState !== 'undefined' && mouseState) {
+        mouseState.isDown = false;
+        mouseState.selectedPath = [];
+        mouseState.visitedCells = new Set();
+    }
+    window._pendingBoardRender = null;
+    
     // Reset local module render caches to force re-render on next entry
     lastRenderedBoardJSON = null;
     lastRenderedGrayed = null;
@@ -4645,8 +4652,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         return;
     }
 
-    // GESTURE SAFETY: If user is actively holding down/swiping tiles, defer board DOM replacement until touch/mouse release
-    if (typeof mouseState !== 'undefined' && mouseState && mouseState.isDown && lastRenderedBoardJSON !== null) {
+    // GESTURE SAFETY: If user is actively holding down/swiping tiles with a path in progress, defer board DOM replacement until touch/mouse release
+    if (typeof mouseState !== 'undefined' && mouseState && mouseState.isDown && mouseState.selectedPath && mouseState.selectedPath.length > 0 && lastRenderedBoardJSON !== null) {
         console.log('[play.js] Deferring board re-render while user is actively swiping a word');
         window._pendingBoardRender = { board, grayed, is3D, state };
         return;

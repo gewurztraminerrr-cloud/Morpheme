@@ -2241,9 +2241,17 @@ window.showLoadingOverlay = function(message = 'Loading...') {
         if (msgEl) msgEl.textContent = message;
         overlay.style.display = 'flex';
     }
+    if (window._loadingOverlayTimeout) clearTimeout(window._loadingOverlayTimeout);
+    window._loadingOverlayTimeout = setTimeout(() => {
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    }, 4000);
 };
 
 window.hideLoadingOverlay = function() {
+    if (window._loadingOverlayTimeout) {
+        clearTimeout(window._loadingOverlayTimeout);
+        window._loadingOverlayTimeout = null;
+    }
     const overlay = document.getElementById('global-loading-overlay');
     if (overlay) overlay.style.display = 'none';
 };
