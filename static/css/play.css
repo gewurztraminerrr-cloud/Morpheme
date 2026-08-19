@@ -7327,4 +7327,15 @@ body .board-cell.tile-flash-purple * {
             min-height: calc(100dvh - 120px);
         }
     }
+
+    /* Hide 3D Cube Scale setting panel on mobile devices */
+    #setting-panel-cube-scale,
+    .desktop-only-setting {
+        display: none !important;
+    }
+}
+
+body.is-mobile #setting-panel-cube-scale,
+body.is-mobile .desktop-only-setting {
+    display: none !important;
 }

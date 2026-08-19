@@ -37,7 +37,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 - **Show Rooms Click**: Immediately fetches and renders active rooms in the right panel and updates the player count badge on that specific button. Completely removed legacy auto-create logic so viewing rooms never creates rooms.
 
 ### E. Client Asset Cache Busting (`templates/index.html`)
-- Incremented global asset version query string (`?v=33025`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
+- Incremented global asset version query string (`?v=33026`) across all CSS and JavaScript references in `index.html` to guarantee mobile and desktop clients load the latest scripts without stale cache interference.
 
 ### F. CPU Throttling & Server Usage Optimization (`board_generator.py`, `game_room.py`)
 - **Micro-Yield in Generation Loop**: Added a `5ms` micro-pause during board retry loops in `_generate_board_internal`, capping peak generation CPU below host alert thresholds.
@@ -104,6 +104,10 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 ### T. Lobby "My Rating" Initial State & Unselected Room Protection (`static/js/lobby.js`, `templates/index.html`)
 - Cleared the initial hardcoded config in `lobby.js` by setting `currentLobbyConfig = null` and `window.currentLobbyConfig = null` upon lobby entry.
 - Safeguarded `handleMyRatingButtonClick` and the `#my-rating-btn` click listener so that pressing "My Rating" when no room matrix configuration is selected leaves the "Sort rooms by proximity to average rating" textbox completely blank and performs no action.
+
+### U. Settings "Cube Scale (3D)" Mobile Device Removal & FAQ Update (`templates/index.html`, `static/css/play.css`, `static/js/settings.js`)
+- Completely hid the "Cube Scale (3D)" panel in Settings on mobile devices using CSS media queries (`max-width: 900px`), `body.is-mobile`, and runtime JavaScript detection (`applyMobileSettingsVisibility()`), restricting the setting exclusively to desktops and laptops.
+- Updated the FAQ section title and explanation to clarify why 3D Cube mode and Cube Scale are exclusive to desktops and laptops.
 
 ---
 

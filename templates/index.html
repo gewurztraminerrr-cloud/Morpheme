@@ -47,14 +47,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33025">
-    <link rel="stylesheet" href="/css/lobby.css?v=33025">
-    <link rel="stylesheet" href="/css/play.css?v=33025">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33025">
-    <link rel="stylesheet" href="/css/forum.css?v=33025">
-    <link rel="stylesheet" href="/css/donate.css?v=33025">
-    <script src="/js/app.js?v=33025"></script>
-    <script src="/js/lobby.js?v=33025"></script>
+    <link rel="stylesheet" href="/css/style.css?v=33026">
+    <link rel="stylesheet" href="/css/lobby.css?v=33026">
+    <link rel="stylesheet" href="/css/play.css?v=33026">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33026">
+    <link rel="stylesheet" href="/css/forum.css?v=33026">
+    <link rel="stylesheet" href="/css/donate.css?v=33026">
+    <script src="/js/app.js?v=33026"></script>
+    <script src="/js/lobby.js?v=33026"></script>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -3310,8 +3310,8 @@
                                 </div>
                             </div>
 
-                            <!-- 3D Cube Scale -->
-                            <div class="setting-panel">
+                            <!-- 3D Cube Scale (Desktops & Laptops Only) -->
+                            <div class="setting-panel desktop-only-setting" id="setting-panel-cube-scale">
                                 <div class="setting-header">
                                     <div>
                                         <div class="setting-title">Cube Scale (3D)</div>
@@ -3978,7 +3978,7 @@
                         <button class="faq-nav-link" data-target="faq-board-generation">How are boards generated?</button>
                         <button class="faq-nav-link" data-target="faq-2d-boards">Why are the 2D boards that are not 4x4 not a perfect square?</button>
                         <button class="faq-nav-link" data-target="faq-hidden-features">Are there any additional features in game rooms that aren’t obvious?</button>
-                        <button class="faq-nav-link" data-target="faq-cube-mobile">Why is a cube size adjustable when there are no playable cubes?</button>
+                        <button class="faq-nav-link" data-target="faq-cube-mobile">Why is 3D Cube mode and Cube Scale not available on mobile devices?</button>
                         <button class="faq-nav-link" data-target="faq-spinner-mismatch">The parameters indicated on the Spinner Set did not align with the parameters shown on the next round.</button>
                         <button class="faq-nav-link" data-target="faq-exit-fullscreen">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</button>
                         <button class="faq-nav-link" data-target="faq-qu-tile">How does the QU tile work?</button>
@@ -4513,11 +4513,9 @@
                     </div>
 
                     <div class="faq-item" id="faq-cube-mobile">
-                        <div class="faq-question">Why is the cube size adjustable when there are no playable cubes?</div>
+                        <div class="faq-question">Why is 3D Cube mode and Cube Scale not available on mobile devices?</div>
                         <div class="faq-answer">
-                            That would be because you are playing on your mobile device! Mobile devices are not capable of
-                            rendering the 3D cube board — but desktops and laptops can. The cube size setting is still shown
-                            in your preferences so that it is ready and waiting the moment you switch to a larger device.
+                            Mobile devices are not capable of rendering and navigating the interactive 3D cube board — only desktops and laptops support 3D Cube gameplay. As a result, 3D Cube modes in the lobby and the <strong>Cube Scale (3D)</strong> adjustment slider in Settings are hidden on mobile devices and are exclusively available when playing on a desktop or laptop.
                         </div>
                     </div>
 
@@ -5745,18 +5743,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33025"></script>
-    <script src="/js/forum.js?v=33025"></script>
-    <script src="/js/app.js?v=33025"></script>
-    <script src="/js/lobby.js?v=33025"></script>
-    <script src="/js/play.js?v=33025"></script>
-    <script src="/js/tournaments.js?v=33025"></script>
-    <script src="/js/leaderboard.js?v=33025"></script>
-    <script src="/js/tools.js?v=33025"></script>
-    <script src="/js/mouse_selection.js?v=33025"></script>
-    <script src="/js/mods.js?v=33025"></script>
-    <script src="/js/private_matches.js?v=33025"></script>
-    <script src="/js/donate.js?v=33025"></script>
+    <script src="/js/settings.js?v=33026"></script>
+    <script src="/js/forum.js?v=33026"></script>
+    <script src="/js/app.js?v=33026"></script>
+    <script src="/js/lobby.js?v=33026"></script>
+    <script src="/js/play.js?v=33026"></script>
+    <script src="/js/tournaments.js?v=33026"></script>
+    <script src="/js/leaderboard.js?v=33026"></script>
+    <script src="/js/tools.js?v=33026"></script>
+    <script src="/js/mouse_selection.js?v=33026"></script>
+    <script src="/js/mods.js?v=33026"></script>
+    <script src="/js/private_matches.js?v=33026"></script>
+    <script src="/js/donate.js?v=33026"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

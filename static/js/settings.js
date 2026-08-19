@@ -905,15 +905,27 @@ function debounce(func, wait) {
         const mobileBackBtn = document.getElementById('settings-mobile-back-btn');
         if (mobileBackBtn) {
             mobileBackBtn.addEventListener('click', () => {
-            const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
             });
         }
     }
+
+    // Check mobile settings visibility (hide 3D Cube Scale on mobile devices)
+    function applyMobileSettingsVisibility() {
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const cubeScalePanel = document.getElementById('setting-panel-cube-scale');
+        if (cubeScalePanel) {
+            cubeScalePanel.style.display = isMobile ? 'none' : '';
+        }
+    }
+    window.addEventListener('resize', applyMobileSettingsVisibility);
+    applyMobileSettingsVisibility();
 
     // Initialize navigation
     setupSettingsNavigation();
 
     window.loadSettings = loadSettings;
     window.applySettings = applySettings;
+    window.applyMobileSettingsVisibility = applyMobileSettingsVisibility;
 })();
