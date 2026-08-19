@@ -9,7 +9,7 @@ This document records the 'Start Over' stable point for **Morpheme** as of Augus
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 18, 2026
-* **Commit ID**: `ffd79581896aa70014a60dc1d7d0843486c476cb` (`ffd7958`)
+* **Commit ID**: `b2916c3f684c3116fc53bb1fa1db05a8f4c4a631` (`b2916c3`)
 
 ---
 
