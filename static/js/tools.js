@@ -5487,6 +5487,8 @@ function setupPersonalTimer() {
 
         if (defPanel) defPanel.classList.remove('timer-flash');
     });
+}
+
 // --- Global In-Place Word Definition Popover for Tools ---
 window._wordDefCache = window._wordDefCache || new Map();
 
