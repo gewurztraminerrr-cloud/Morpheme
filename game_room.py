@@ -280,6 +280,8 @@ class GameRoom:
         
         if self.time_limit >= 7200:
             self.current_word_count_range = '200-300'
+            self.state = 'active'
+            self.current_round = max(1, self.current_round)
         
         # Configuration-specific max players
         if self.game_type in ['accumulative', 'solo_accumulative']:
@@ -333,7 +335,7 @@ class GameRoom:
             print(f"[GameRoom] Cleared eviction flag for {username} on join.")
             
         # UNPAUSE: If human player joins a paused 'waiting' room, unpause it immediately
-        if self.state == 'waiting' and not is_ai:
+        if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
             print(f"[GameRoom] Human player {username} joined waiting room {self.room_id}. Unpausing room...")
             with self._state_lock:
                 self.state = 'intermission'
@@ -1702,7 +1704,7 @@ class GameRoom:
         now = time.time()
         
         # 0. WAKE UP PAUSED ROOMS
-        if self.state == 'waiting':
+        if self.state == 'waiting' and self.time_limit < 7200:
             humans = [p for p in self.players if not p.is_ai]
             if len(humans) > 0:
                 # ISSUE 6 FIX: Guard against re-entry. This block runs on every heartbeat tick

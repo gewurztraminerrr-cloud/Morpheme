@@ -472,11 +472,11 @@ async function ejectToLobby(reason = "inactivity") {
     }
 
     if (reason === "daily_reset") {
-        title = "Daily Reset";
+        title = "Daily Room Reset (12:00 AM)";
         message = `
-            The 24-hour Daily Room has reset for the new day!
+            The 24-hour Daily Room has concluded and reset for the new day!
             <br><br>
-            A fresh daily board has been generated. Head back in to start finding words!
+            A fresh daily board has been generated. Please rejoin the room from the lobby to start finding words on today's new board!
         `;
     }
 
@@ -1450,20 +1450,19 @@ async function updateGameState(incomingState = null) {
 
         const is24H = (state.time_limit >= 7200);
 
-        // COMBINED EVICTION / 24H RESET LOGIC
+        // 24H MIDNIGHT RESET EVICTION: If we are in a 24H room and midnight reset occurred (or 12AM rollover intermission/TR=0 reached), eject user to lobby with clear modal!
+        if (is24H && (state.midnight_reset_occurred || state.state === 'intermission' || (state.time_remaining !== undefined && state.time_remaining <= 0))) {
+            console.warn(`[play.js] 24H daily midnight reset detected (midnightReset: ${state.midnight_reset_occurred}, state: ${state.state}, TR: ${state.time_remaining}). Ejecting to lobby.`);
+            ejectToLobby("daily_reset");
+            return;
+        }
+
+        // COMBINED EVICTION LOGIC
         if (!amIPlayer && !amISpectator && currentUsername) {
             const wasInBefore = previousState && (
                 previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
-
-            // 24H RESET EVICTION: If we are in a 24H room and midnight reset occurred, eject the user to lobby!
-            const midnightReset = state.midnight_reset_occurred;
-            if (is24H && midnightReset) {
-                console.warn(`[play.js] Midnight daily reset detected in 24h room (midnightReset: ${midnightReset}). Ejecting to lobby.`);
-                ejectToLobby("daily_reset");
-                return;
-            }
 
             // INSTANTANEOUS EVICTION: If we were previously established in the roster in a non-24h room, kick immediately
             if (window._wasEverInRoster) {
@@ -2681,20 +2680,27 @@ function fetchDailyScoreSums(targetRoomId) {
     const roomId = targetRoomId || window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : '24h_4x4');
     const dims = (window.lastGameState && window.lastGameState.board_dimensions) || '';
     const listEl = document.getElementById('score-sum-list');
-    if (listEl) {
+    
+    // Only show "Loading rankings..." placeholder on initial cold load before data exists
+    if (listEl && (!window._dailyScoreSumsData || window._dailyScoreSumsData.length === 0)) {
         listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
     }
+    
+    if (window._isFetchingDailyScoreSums) return;
+    window._isFetchingDailyScoreSums = true;
     
     fetch(`/api/daily-score-sums?room_id=${encodeURIComponent(roomId)}&board_dimensions=${encodeURIComponent(dims)}`)
         .then(res => res.json())
         .then(data => {
+            window._isFetchingDailyScoreSums = false;
             window._dailyScoreSumsData = data.players || [];
             window._dailyScoreSumsRoomId = data.room_id || roomId;
             renderDailyScoreSums();
         })
         .catch(err => {
+            window._isFetchingDailyScoreSums = false;
             console.error('Error fetching score sums:', err);
-            if (listEl) {
+            if (listEl && (!window._dailyScoreSumsData || window._dailyScoreSumsData.length === 0)) {
                 listEl.innerHTML = '<p class="placeholder" style="color: var(--theme-danger);">Failed to load rankings</p>';
             }
         });
