@@ -9,17 +9,17 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `46d870e674f919f0b16addf43bff2f10534904b8` (`46d870e`)
-* **Asset Version**: `v=33060`
+* **Commit ID**: `56022d5bb650a6c626564f4b579d647bd396752c` (`56022d5`)
+* **Asset Version**: `v=33061`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Session Expired Notice Suppression on > 1 Hour Return (`static/js/app.js`, `static/js/play.js`, `templates/index.html`)
-- **Activity Timestamp Tracking**: Continuously tracks user interactions (`mousedown`, `keydown`, `touchstart`, `scroll`, heartbeat interval, and `beforeunload`) via `morpheme_last_active_timestamp` in `localStorage`.
-- **Silent Room Cleanup on Fresh Return**: If a user closes Morpheme while in a room and returns after more than an hour ($> 3600\text{s}$), the app silently clears stale room state (`localStorage.removeItem('last_joined_room')`, `window.currentRoomId = null`) and suppresses the "Session Expired" / inactivity ejection modal popup.
-- **Clean Inactivity Ejection Handling**: `ejectToLobby("inactivity")` in `play.js` verifies if the user's absence exceeded an hour; if so, it transitions silently to the lobby without presenting the popup notice.
+### A. Guaranteed Session Expired Notice Suppression on > 1 Hour Return (`templates/index.html`, `static/js/app.js`, `static/js/play.js`)
+- **Immediate Head Absence Check**: Evaluated in `<head>` before any stylesheet or script parses, immediately verifying if the last visit exceeded 1 hour ($> 3600\text{s}$). If so, sets `window._suppressInactivityNotice = true`, flags `sessionStorage`, and clears stale room references.
+- **Activity Timestamp Tracking**: Continuously tracks user interactions (`mousedown`, `keydown`, `touchstart`, `scroll`, heartbeat interval, and `beforeunload`) via `morpheme_last_active_time` in `localStorage`.
+- **Inactivity Ejection Suppression**: `ejectToLobby("inactivity")` in `play.js` verifies if the user's absence exceeded an hour or if suppression flags are active, returning silently to the lobby without presenting the "Session Expired" / inactivity popup notice.
 
 ### B. Accumulative Lobby Real-Time Auto-Polling & Live Count Synchronization (`static/js/lobby.js`, `static/js/app.js`, `templates/index.html`)
 - **Global Polling Lifecycle**: Added top-level `lobbyStatsInterval` reference and exported `window.startStatsPolling` / `window.stopStatsPolling`.
