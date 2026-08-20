@@ -268,11 +268,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (currentUser) {
-        // AUTHENTICATED: Show ENTER LOBBY immediately with 0ms delay!
-        if (privateActive || (hash === '#page-play' && window.currentRoomId)) {
+        // If the user already clicked ENTER LOBBY or entered a room while app.js was initializing, DO NOT reset them back to page-loading!
+        const activePageEl = document.querySelector('.page.active');
+        const activePageId = activePageEl ? activePageEl.id : '';
+        const alreadyInGameOrLobby = window._gatewayPassed || window.currentRoomId || (activePageId && activePageId !== 'page-loading');
+
+        if (privateActive || (hash === '#page-play' && window.currentRoomId) || activePageId === 'page-play') {
             showPage('page-play');
             const playBtn = document.querySelector('.nav-btn[data-page="play"]');
             if (playBtn) updateActiveNav(playBtn);
+        } else if (alreadyInGameOrLobby) {
+            showPage(activePageId || 'page-lobby');
+            const navBtn = document.querySelector(`.nav-btn[data-page="${(activePageId || 'page-lobby').replace('page-', '')}"]`);
+            if (navBtn) updateActiveNav(navBtn);
+            handleLobbyMusicState();
         } else {
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
             const spinnerCont = document.getElementById('loading-spinner-container');
