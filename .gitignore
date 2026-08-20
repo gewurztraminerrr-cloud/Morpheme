@@ -49,11 +49,11 @@ eclipse-workspace/
 .CFUserTextEncoding
 
 # Dynamic custom user dictionaries
-dictionaries/added_words.txt
+# dictionaries/added_words.txt
 dictionaries/added_words_config.json
 dictionaries/custom_nwl.txt
 dictionaries/custom_csw.txt
 dictionaries/new_NWL.txt
 dictionaries/new_CSW.txt
-dictionaries/wikdefs.txt
+# dictionaries/wikdefs.txt
 
