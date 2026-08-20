@@ -228,16 +228,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupMobileHeaderSwipe();
     }
 
-    // 2. Single Instance Validation (Non-blocking for UI)
-    const isSingle = await validateSingleInstance();
+    // 2. Parallel Session & Single-Instance Validation (Non-blocking for instant Gateway render)
+    const [isSingle] = await Promise.all([
+        validateSingleInstance(),
+        checkSession()
+    ]);
     if (!isSingle) return;
 
     // 3. Application Domain Logic
-    // Stub or existing system initializers
     if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
     if (typeof checkLobbyNotice === 'function') checkLobbyNotice();
     
-    // NEW: Proper setup for Global listeners
+    // Setup Global Profile listeners
     setupGlobalProfileLogic();
     
     // Initial State Check
@@ -246,38 +248,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof checkForumActivity === 'function') checkForumActivity();
     });
 
-    await checkSession();
-
-    // NEW: Handle initial navigation based on hash OR landing page
+    // Handle initial navigation based on hash OR landing page
     const hash = window.location.hash || '';
     const privateActive = localStorage.getItem('private_match_active');
 
-    // CLEAN UP any stale tournament_play_active left from a previous session.
-    // We always show ENTER LOBBY on fresh open — the user navigates to their
-    // tournament turn normally from the Tournaments page.
-    // The key is only used within the same session to resume via startGamePolling().
+    // Clean up any stale tournament_play_active left from a previous session
     const tournamentActive = localStorage.getItem('tournament_play_active');
     if (tournamentActive) {
         try {
             const tCheck = await fetch('/api/tournament/game-state', { cache: 'no-store' });
             const tData = await tCheck.json();
             if (tData.error) {
-                // Turn already submitted or expired — clear the stale key
                 console.log('[app.js] Clearing stale tournament_play_active:', tData.error);
                 localStorage.removeItem('tournament_play_active');
             }
-            // If turn IS still valid, we leave the key so startGamePolling()
-            // can resume the turn when the user manually navigates to Play.
         } catch (e) {
             console.warn('[app.js] Could not verify tournament turn on startup:', e);
         }
     }
 
     if (currentUser) {
-        // AUTHENTICATED: Always show ENTER LOBBY on a fresh app open.
-        // tournament_play_active is intentionally NOT a bypass here — the user
-        // reaches their tournament turn by entering the lobby and navigating to Tournaments.
-        // private_match_active IS a bypass because both players must be present simultaneously.
+        // AUTHENTICATED: Show ENTER LOBBY immediately with 0ms delay!
         if (privateActive || (hash === '#page-play' && window.currentRoomId)) {
             showPage('page-play');
             const playBtn = document.querySelector('.nav-btn[data-page="play"]');
@@ -287,53 +278,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const spinnerCont = document.getElementById('loading-spinner-container');
             const gatewayCont = document.getElementById('loading-gateway-container');
 
-            if (gatewayBtn && spinnerCont && gatewayCont) {
-                // Keep the page on loading screen and begin Lobby music
+            if (gatewayBtn && gatewayCont) {
+                // Ensure gateway container is active and visible
                 showPage('page-loading');
+                if (spinnerCont) spinnerCont.style.display = 'none';
+                gatewayCont.style.display = 'flex';
+                document.body.classList.remove('loading-active');
                 handleLobbyMusicState();
-                
-                // Show dictionary pre-caching status text
-                let loadingTextEl = document.getElementById('loading-status-text');
-                if (!loadingTextEl) {
-                    loadingTextEl = document.createElement('div');
-                    loadingTextEl.id = 'loading-status-text';
-                    loadingTextEl.style.color = '#a0aec0';
-                    loadingTextEl.style.marginTop = '15px';
-                    loadingTextEl.style.fontSize = '0.95rem';
-                    loadingTextEl.style.fontWeight = '500';
-                    loadingTextEl.style.textAlign = 'center';
-                    // Insert right above the gateway container
-                    gatewayCont.parentNode.insertBefore(loadingTextEl, gatewayCont);
-                }
-
-                // Poll /api/startup/status to make sure tools lists are fully pre-cached
-                const checkWarmup = async () => {
-                    try {
-                        const res = await fetch('/api/startup/status');
-                        const data = await res.json();
-                        if (data.warmed_up) {
-                            loadingTextEl.style.display = 'none';
-                            spinnerCont.style.display = 'none';
-                            gatewayCont.style.display = 'flex';
-                            document.body.classList.remove('loading-active');
-                        } else {
-                            loadingTextEl.textContent = 'Morpheme is loading dictionaries...';
-                            spinnerCont.style.display = 'flex';
-                            gatewayCont.style.display = 'none';
-                            document.body.classList.add('loading-active');
-                            setTimeout(checkWarmup, 300);
-                        }
-                    } catch (e) {
-                        // Fallback in case of endpoint failure
-                        loadingTextEl.style.display = 'none';
-                        spinnerCont.style.display = 'none';
-                        gatewayCont.style.display = 'flex';
-                        document.body.classList.remove('loading-active');
-                    }
-                };
-
-                document.body.classList.add('loading-active');
-                await checkWarmup();
 
                 // Customize button text based on destination
                 let targetPageId = 'page-lobby';
@@ -353,8 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
 
-                    // 1. Play the music inside a completely isolated, non-blocking try-catch block
-                    // Play it synchronously first, before any await, to preserve the user gesture context!
+                    // 1. Play audio synchronously first to preserve user gesture context on Safari
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
@@ -376,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
 
-                    // 3. Perform the page transition (ALWAYS runs independently of audio success)
+                    // 3. Perform the page transition
                     try {
                         showPage(targetPageId);
                         const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
@@ -390,14 +340,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
-                // Robust interaction handlers: Flatten and stay flattened when clicked / released
+                // Robust interaction handlers: Flatten immediately on touch/click and transition
                 let transitionTimeout = null;
                 const triggerTransition = (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
                     if (transitionTimeout) return;
                     transitionTimeout = setTimeout(() => {
                         handleGatewayTransition(e);
-                    }, 280);
+                    }, 180);
                 };
 
                 // Flatten immediately on click-down (pointerdown / mousedown / touchstart)
@@ -409,9 +359,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 gatewayBtn.addEventListener('touchstart', () => {
                     gatewayBtn.classList.add('pressed', 'flattened');
-                });
+                }, { passive: true });
 
-                // Trigger transition on release (mouseup / touchend / click) and stay flattened
+                // Trigger transition on release (mouseup / touchend / click)
                 gatewayBtn.addEventListener('mouseup', (e) => {
                     triggerTransition(e);
                 });

@@ -139,7 +139,7 @@ def compress(response):
         return response
 
     content_type = response.headers.get('Content-Type', '')
-    if 'json' not in content_type and 'text' not in content_type:
+    if not any(t in content_type.lower() for t in ['json', 'text', 'javascript', 'css', 'xml', 'svg']):
         return response
 
     response.direct_passthrough = False
@@ -460,9 +460,9 @@ def check_mod_status():
 
 @app.after_request
 def add_cache_headers(response):
-    # Allow caching for static files to improve performance and enable instant audio loading
-    if request.endpoint in ('static', 'static_files') or (request.path and any(request.path.endswith(ext) for ext in ('.mp3', '.wav', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.ico'))):
-        response.headers["Cache-Control"] = "public, max-age=604800"
+    # Allow aggressive caching for static files to improve performance and enable instant loading on Safari
+    if request.endpoint in ('static', 'static_files') or (request.path and any(request.path.endswith(ext) for ext in ('.mp3', '.wav', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff2', '.woff', '.ttf'))):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         if "Pragma" in response.headers:
             del response.headers["Pragma"]
         if "Expires" in response.headers:

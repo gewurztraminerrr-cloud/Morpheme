@@ -31,9 +31,7 @@
     <meta property="twitter:image" content="https://morpheme.games/static/images/morpheme.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <script>
         // Automatic cache buster: Purge stale browser CacheStorage if version is below 33000
         try {
@@ -58,14 +56,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=33070">
-    <link rel="stylesheet" href="/css/lobby.css?v=33070">
-    <link rel="stylesheet" href="/css/play.css?v=33070">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33070">
-    <link rel="stylesheet" href="/css/forum.css?v=33070">
-    <link rel="stylesheet" href="/css/donate.css?v=33070">
-    <script src="/js/app.js?v=33070"></script>
-    <script src="/js/lobby.js?v=33070"></script>
+    <link rel="preload" href="/css/style.css?v=33071" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33071" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33071">
+    <link rel="stylesheet" href="/css/lobby.css?v=33071">
+    <link rel="stylesheet" href="/css/play.css?v=33071">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33071">
+    <link rel="stylesheet" href="/css/forum.css?v=33071">
+    <link rel="stylesheet" href="/css/donate.css?v=33071">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -968,17 +966,28 @@
             }
         </style>
 
-        <!-- Loading Page -->
-        <div id="page-loading" class="page" style="color: #fff; font-family: 'Inter', sans-serif;">
-            <div id="loading-spinner-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div class="morpheme-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-color, #ff007f); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                <div style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
-            </div>
-            <div id="loading-gateway-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.5s ease-out forwards;">
+        <!-- Loading / Gateway Page (Instantly Visible) -->
+        <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
+            <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn">ENTER LOBBY</button>
                 </div>
             </div>
+            <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
+                <div class="morpheme-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-color, #ff007f); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+                <div style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
+            </div>
+            <script>
+                (function() {
+                    var gb = document.getElementById('btn-enter-lobby-gateway');
+                    if (gb) {
+                        var press = function() { gb.classList.add('pressed', 'flattened'); };
+                        gb.addEventListener('touchstart', press, { passive: true });
+                        gb.addEventListener('mousedown', press);
+                        gb.addEventListener('pointerdown', press);
+                    }
+                })();
+            </script>
         </div>
 
         <!-- Login Page -->
@@ -5793,18 +5802,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33070"></script>
-    <script src="/js/forum.js?v=33070"></script>
-    <script src="/js/app.js?v=33070"></script>
-    <script src="/js/lobby.js?v=33070"></script>
-    <script src="/js/play.js?v=33070"></script>
-    <script src="/js/tournaments.js?v=33070"></script>
-    <script src="/js/leaderboard.js?v=33070"></script>
-    <script src="/js/tools.js?v=33070"></script>
-    <script src="/js/mouse_selection.js?v=33070"></script>
-    <script src="/js/mods.js?v=33070"></script>
-    <script src="/js/private_matches.js?v=33070"></script>
-    <script src="/js/donate.js?v=33070"></script>
+    <script src="/js/settings.js?v=33071"></script>
+    <script src="/js/forum.js?v=33071"></script>
+    <script src="/js/app.js?v=33071"></script>
+    <script src="/js/lobby.js?v=33071"></script>
+    <script src="/js/play.js?v=33071"></script>
+    <script src="/js/tournaments.js?v=33071"></script>
+    <script src="/js/leaderboard.js?v=33071"></script>
+    <script src="/js/tools.js?v=33071"></script>
+    <script src="/js/mouse_selection.js?v=33071"></script>
+    <script src="/js/mods.js?v=33071"></script>
+    <script src="/js/private_matches.js?v=33071"></script>
+    <script src="/js/donate.js?v=33071"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
