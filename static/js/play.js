@@ -4106,7 +4106,7 @@ function updateParameters(state) {
                 el.classList.remove('reveal-new');
                 void el.offsetWidth; // Force reflow
                 el.classList.add('reveal-new');
-                setTimeout(() => el.classList.remove('reveal-new'), 4200);
+                setTimeout(() => el.classList.remove('reveal-new'), 4600);
             }
         });
     }

@@ -57,25 +57,26 @@
 }
 
 .game-params.reveal-new,
-.game-params.reveal-new span,
+.game-params.reveal-new *,
 .spinner-set-label.reveal-new,
-.spinner-set-label.reveal-new span,
+.spinner-set-label.reveal-new *,
 .header-meta.reveal-new,
-.header-meta.reveal-new span {
-    animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+.header-meta.reveal-new * {
+    animation: fadeGoldToNormal 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 @keyframes fadeGoldToNormal {
     0% {
         color: #ffd700 !important; /* Instant snap to gold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7) !important;
+        opacity: 1 !important;
     }
-    25% {
-        color: #ffd700 !important; /* Hold gold briefly */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
+    30% {
+        color: #ffd700 !important; /* Hold gold slowly */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7) !important;
+        opacity: 1 !important;
     }
     100% {
-        color: inherit;
         text-shadow: none !important;
     }
 }
