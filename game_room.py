@@ -325,169 +325,166 @@ class GameRoom:
     def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
         """Add player to room"""
         is_daily = self.time_limit >= 7200
+        uid_str = str(user_id)
+        uname_lower = str(username).lower()
         
-        # Always remove from spectators if adding as player
-        self.spectators = [s for s in self.spectators if str(s.user_id) != str(user_id)]
-        
-        # Clear eviction flag if they are re-joining
-        if str(user_id) in self.evicted_users:
-            del self.evicted_users[str(user_id)]
-            print(f"[GameRoom] Cleared eviction flag for {username} on join.")
+        with self._state_lock:
+            # Always remove from spectators if adding as player
+            self.spectators = [s for s in self.spectators if str(s.user_id) != uid_str]
             
-        # UNPAUSE: If human player joins a paused 'waiting' room, unpause it immediately
-        if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
-            print(f"[GameRoom] Human player {username} joined waiting room {self.room_id}. Unpausing room...")
-            with self._state_lock:
+            # Clear eviction flag if they are re-joining
+            if uid_str in self.evicted_users:
+                del self.evicted_users[uid_str]
+                print(f"[GameRoom] Cleared eviction flag for {username} on join.")
+                
+            # UNPAUSE: If human player joins a paused 'waiting' room, unpause it immediately
+            if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
+                print(f"[GameRoom] Human player {username} joined waiting room {self.room_id}. Unpausing room...")
                 self.state = 'intermission'
                 self.intermission_start_time = time.time() - 60
                 self.spinner_params_generated = False
                 self.board_search_started = False
+            
+            # Check if player already exists (PERSISTENCE / REUSE)
+            existing_player = self.get_player(user_id) or self.get_player(username)
+            if existing_player:
+                print(f"[GameRoom] Persistence: Reusing existing player {username} in room {self.room_id}")
+                # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
+                prior_last_active = getattr(existing_player, 'last_active', 0)
+                existing_player.last_active = time.time()
+                existing_player.country_flag = country_flag # Update flag
+                # CRITICAL: Always sync rating from DB even for persistent daily players
+                if rating is not None and not is_guest:
+                    existing_player.rating = rating
+                existing_player.is_guest = is_guest
+                # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
+                if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
+                    round_started_at = getattr(self, 'round_start_time', 0)
+                    was_present_at_start = (
+                        round_started_at > 0 and
+                        prior_last_active >= round_started_at - 30
+                    )
+                    if not was_present_at_start or manual_accessed:
+                        existing_player.joined_mid_round = True
+                        print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
+                # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
+                self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != uid_str and str(q.username).lower() != uname_lower]
+                if not getattr(existing_player, 'cell_density', None):
+                    self._initialize_player_density_grid(existing_player)
+                
+                # Deduplicate self.players list to ensure only one reference exists
+                self.players = [p for p in self.players if str(p.user_id) != str(existing_player.user_id) and str(p.username).lower() != str(existing_player.username).lower()]
+                self.players.append(existing_player)
+                self.players.sort(key=lambda p: p.rating, reverse=True)
+                
+                if is_daily:
+                    self.save_active_players()
+                return True
+            
+            # Check if player exists in round_quitters (RESTORE mid-round state)
+            quitter = next((q for q in self.round_quitters if str(q.user_id) == uid_str or str(q.username).lower() == uname_lower), None)
+            if quitter:
+                print(f"[GameRoom] Restoring quitter {username} ({user_id}) to active players with {len(quitter.submitted_words)} words, score={quitter.score}.")
+                quitter.last_active = time.time()
+                quitter.country_flag = country_flag
+                quitter.is_guest = is_guest
+                if not getattr(quitter, 'cell_density', None):
+                    self._initialize_player_density_grid(quitter)
+                self.players = [p for p in self.players if str(p.user_id) != uid_str and str(p.username).lower() != uname_lower]
+                self.players.append(quitter)
+                self.players.sort(key=lambda p: p.rating, reverse=True)
+                # CRITICAL: Remove from round_quitters so they aren't double-counted at round end
+                self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != uid_str and str(q.username).lower() != uname_lower]
+                # Reverse the abandonment bounty that was charged when they left
+                if self.abandonment_bounty >= 8:
+                    self.abandonment_bounty -= 8
+                    print(f"[GameRoom] Reversed abandonment bounty for returning player {username}. Pool now: {self.abandonment_bounty}")
+                if is_daily:
+                    self.save_active_players()
+                return True
 
+            # Check if player exists in past_players
+            existing_player = next((p for p in self.past_players.values() if str(p.user_id) == uid_str or str(p.username).lower() == uname_lower), None)
+            
+            if existing_player:
+                last_p_round = getattr(existing_player, '_last_round_seen', -1)
+                # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
+                prior_last_active = getattr(existing_player, 'last_active', 0)
+                if last_p_round != self.current_round:
+                    # NEW ROUND: Clear all round-specific activity
+                    existing_player.found_bonus_word = False
+                    existing_player.has_abandoned = False
+                    existing_player.submitted_words = []
+                    existing_player.invalid_words = []
+                    existing_player.score = 0
+                    existing_player.previous_round_score = 0
+                    existing_player.rating_change = 0
+                    existing_player.cell_density = []
+                    # MID-ROUND DETECTION for past_player joining a new round that is already active
+                    existing_player.joined_mid_round = (self.state == 'active')
+                
+                existing_player._last_round_seen = self.current_round
+                existing_player.last_active = time.time()  # Update AFTER snapshot above
+                existing_player.country_flag = country_flag
+                existing_player.games_played = games_played
+                # CRITICAL: Always sync rating from DB for rejoiners/refreshers
+                if rating is not None and not is_guest:
+                    existing_player.rating = rating
+                existing_player.is_guest = is_guest
+                
+                # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
+                if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
+                    round_started_at = getattr(self, 'round_start_time', 0)
+                    was_present_at_start = (
+                        round_started_at > 0 and
+                        prior_last_active >= round_started_at - 30
+                    )
+                    if not was_present_at_start or manual_accessed:
+                        existing_player.joined_mid_round = True
+                        print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
+                
+                if not getattr(existing_player, 'cell_density', None):
+                    self._initialize_player_density_grid(existing_player)
+                self.players = [p for p in self.players if str(p.user_id) != uid_str and str(p.username).lower() != uname_lower]
+                self.players.append(existing_player)
+                self.players.sort(key=lambda p: p.rating, reverse=True)
+                if is_daily:
+                    self.save_active_players()
+                return True
 
-        
-        # Check if player already exists (PERSISTENCE)
-        existing_player = self.get_player(user_id)
-        if existing_player:
-            print(f"[GameRoom] Persistence: Reusing existing player {username} in room {self.room_id}")
-            # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
-            prior_last_active = getattr(existing_player, 'last_active', 0)
-            existing_player.last_active = time.time()
-            existing_player.country_flag = country_flag # Update flag
-            # CRITICAL: Always sync rating from DB even for persistent daily players
-            if rating is not None and not is_guest:
-                existing_player.rating = rating
-            existing_player.is_guest = is_guest
-            # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-            # Players already in self.players are refreshing — do NOT flag them as mid-round.
-            # Only flag if they were gone before the round started.
-            if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
-                round_started_at = getattr(self, 'round_start_time', 0)
-                was_present_at_start = (
-                    round_started_at > 0 and
-                    prior_last_active >= round_started_at - 30
-                )
-                if not was_present_at_start or manual_accessed:
-                    existing_player.joined_mid_round = True
-                    print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
-            # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
-            self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
-            if not getattr(existing_player, 'cell_density', None):
-                self._initialize_player_density_grid(existing_player)
+            # Ensure player is not already in the room (prevent duplicates)
+            self.players = [p for p in self.players if str(p.user_id) != uid_str and str(p.username).lower() != uname_lower]
+            
+            # Check max players specific to room
+            if len(self.players) >= self.max_players:
+                return False # Room full
+                
+            player = Player(
+                user_id, 
+                username, 
+                rating, 
+                games_played=games_played, 
+                country_flag=country_flag, 
+                is_guest=is_guest,
+                is_ai=is_ai,
+                ai_rating=ai_rating
+            )
+            if manual_accessed:
+                player.joined_mid_round = True
+            elif (self.state == 'active' or getattr(self, 'starting_round', False)) and not is_daily:
+                player.joined_mid_round = True
+                
+            self._initialize_player_density_grid(player)
+            self.players.append(player)
+            self.past_players[uid_str] = player
+            self.players.sort(key=lambda p: p.rating, reverse=True)
+            
+            # System Notice
+            self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
+            
             if is_daily:
                 self.save_active_players()
-            return True
-        
-        # Track if they were already in the room (to avoid mid-round flag on refresh)
-        was_already_in_room = existing_player is not None
-        was_joined_mid_round = getattr(existing_player, 'joined_mid_round', False) if existing_player else False
-            
-        # Check if player exists in round_quitters (RESTORE mid-round state)
-        quitter = next((q for q in self.round_quitters if str(q.user_id) == str(user_id)), None)
-        if quitter:
-            print(f"[GameRoom] Restoring quitter {username} ({user_id}) to active players with {len(quitter.submitted_words)} words, score={quitter.score}.")
-            quitter.last_active = time.time()
-            quitter.country_flag = country_flag
-            quitter.is_guest = is_guest
-            # STARTER RETURN: Preserve the player's original joined_mid_round flag.
-            # If they started the round (joined_mid_round=False) and are coming back,
-            # they are still a starter — their score and words are fully restored.
-            # Do NOT mark them as mid-round; they deserve their proportional rating change at round end.
-            # (The abandonment bounty added when they left is reversed below.)
-            if not getattr(quitter, 'cell_density', None):
-                self._initialize_player_density_grid(quitter)
-            self.players.append(quitter)
-            # CRITICAL: Remove from round_quitters so they aren't double-counted at round end
-            self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != str(user_id)]
-            # Reverse the abandonment bounty that was charged when they left
-            if self.abandonment_bounty >= 8:
-                self.abandonment_bounty -= 8
-                print(f"[GameRoom] Reversed abandonment bounty for returning player {username}. Pool now: {self.abandonment_bounty}")
-            if is_daily:
-                self.save_active_players()
-            return True
-
-        # Check if player exists in past_players
-        # print(f"DEBUG: Checking past_players for {user_id}. Past players count: {len(self.past_players)}")
-        existing_player = next((p for p in self.past_players.values() if str(p.user_id) == str(user_id)), None)
-        
-        if existing_player:
-            last_p_round = getattr(existing_player, '_last_round_seen', -1)
-            # SNAPSHOT last_active BEFORE overwriting — needed for mid-round check below
-            prior_last_active = getattr(existing_player, 'last_active', 0)
-            if last_p_round != self.current_round:
-                # NEW ROUND: Clear all round-specific activity
-                existing_player.found_bonus_word = False
-                existing_player.has_abandoned = False
-                existing_player.submitted_words = []
-                existing_player.invalid_words = []
-                existing_player.score = 0
-                existing_player.previous_round_score = 0
-                existing_player.rating_change = 0
-                existing_player.cell_density = []
-                # MID-ROUND DETECTION for past_player joining a new round that is already active
-                existing_player.joined_mid_round = (self.state == 'active')
-            
-            existing_player._last_round_seen = self.current_round
-            existing_player.last_active = time.time()  # Update AFTER snapshot above
-            existing_player.country_flag = country_flag
-            existing_player.games_played = games_played
-            # CRITICAL: Always sync rating from DB for rejoiners/refreshers
-            if rating is not None and not is_guest:
-                existing_player.rating = rating
-            existing_player.is_guest = is_guest
-            
-            # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-            # Use prior_last_active (snapshotted before update) for an accurate comparison.
-            if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
-                round_started_at = getattr(self, 'round_start_time', 0)
-                was_present_at_start = (
-                    round_started_at > 0 and
-                    prior_last_active >= round_started_at - 30
-                )
-                if not was_present_at_start or manual_accessed:
-                    existing_player.joined_mid_round = True
-                    print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
-            
-            if not getattr(existing_player, 'cell_density', None):
-                self._initialize_player_density_grid(existing_player)
-            self.players.append(existing_player)
-            if is_daily:
-                self.save_active_players()
-            return True
-
-        # Ensure player is not already in the room (prevent duplicates)
-        self.remove_player(user_id)
-        
-        # Check max players specific to room
-        if len(self.players) >= self.max_players:
-            return False # Room full
-            
-        player = Player(
-            user_id, 
-            username, 
-            rating, 
-            games_played=games_played, 
-            country_flag=country_flag, 
-            is_guest=is_guest,
-            is_ai=is_ai,
-            ai_rating=ai_rating
-        )
-        if manual_accessed:
-            player.joined_mid_round = True
-        elif (self.state == 'active' or getattr(self, 'starting_round', False)) and not is_daily:
-            player.joined_mid_round = True
-            
-        self._initialize_player_density_grid(player)
-        self.players.append(player)
-        self.past_players[str(user_id)] = player
-        self.players.sort(key=lambda p: p.rating, reverse=True)
-        
-        # System Notice
-        self.add_chat_message("System", f"{username} has entered the room.", is_system=True)
-        
-        if is_daily:
-            self.save_active_players()
-        return True # Success
+            return True # Success
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
@@ -681,10 +678,10 @@ class GameRoom:
         return players_removed or specs_removed
     
     def get_player(self, user_id):
-        """Get player by ID"""
-        uid_str = str(user_id)
+        """Get player by ID or username"""
+        uid_str = str(user_id).lower()
         for p in self.players:
-            if str(p.user_id) == uid_str:
+            if str(p.user_id).lower() == uid_str or str(p.username).lower() == uid_str:
                 return p
         return None
 

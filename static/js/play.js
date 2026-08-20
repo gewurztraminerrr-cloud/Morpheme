@@ -2820,8 +2820,21 @@ function renderPlayers(players, currentUser = null, state = null) {
         return;
     }
 
+    // Deduplicate players list by user_id and username
+    const seenUserKeys = new Set();
+    const uniquePlayers = [];
+    (players || []).forEach(p => {
+        const uKey = String(p.user_id || p.username || '').toLowerCase();
+        const unameKey = String(p.username || '').toLowerCase();
+        if (!seenUserKeys.has(uKey) && !seenUserKeys.has(unameKey)) {
+            seenUserKeys.add(uKey);
+            seenUserKeys.add(unameKey);
+            uniquePlayers.push(p);
+        }
+    });
+
     // Sort players by score (Highest First), break ties with Rating
-    const sortedPlayers = [...players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
+    const sortedPlayers = [...uniquePlayers].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
 
     // Attach click handler via event delegation parent or recreate list
     // Recreating list is fine here
