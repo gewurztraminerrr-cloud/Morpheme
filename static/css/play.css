@@ -47,37 +47,78 @@
 }
 
 #param-bonus {
-    color: #32cd32 !important; /* Lime green */
+    color: #32cd32; /* Lime green */
     font-weight: 700;
 }
 
 #param-diff {
+    color: var(--diff-color, inherit);
     font-weight: 700;
     transition: color 0.3s ease;
 }
 
 .game-params.reveal-new,
-.game-params.reveal-new *,
+.game-params.reveal-new span,
 .spinner-set-label.reveal-new,
-.spinner-set-label.reveal-new *,
+.spinner-set-label.reveal-new span,
 .header-meta.reveal-new,
-.header-meta.reveal-new * {
+.header-meta.reveal-new span {
     animation: fadeGoldToNormal 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+.game-params.reveal-new #param-bonus {
+    animation: fadeGoldToLime 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+.game-params.reveal-new #param-diff {
+    animation: fadeGoldToDiff 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
 @keyframes fadeGoldToNormal {
     0% {
-        color: #ffd700 !important; /* Instant snap to gold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7) !important;
-        opacity: 1 !important;
+        color: #ffd700; /* Instant snap to gold */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+        transform: scale(1.02); /* Slight pop when turning gold */
     }
     30% {
-        color: #ffd700 !important; /* Hold gold slowly */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7) !important;
-        opacity: 1 !important;
+        color: #ffd700; /* Hold gold slowly */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+        transform: scale(1);
     }
     100% {
-        text-shadow: none !important;
+        color: var(--text-primary);
+        text-shadow: none;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeGoldToLime {
+    0% {
+        color: #ffd700;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+    }
+    30% {
+        color: #ffd700;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+    }
+    100% {
+        color: #32cd32;
+        text-shadow: none;
+    }
+}
+
+@keyframes fadeGoldToDiff {
+    0% {
+        color: #ffd700;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+    }
+    30% {
+        color: #ffd700;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7);
+    }
+    100% {
+        color: var(--diff-color, inherit);
+        text-shadow: none;
     }
 }
 

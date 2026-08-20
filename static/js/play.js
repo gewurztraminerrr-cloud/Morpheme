@@ -4078,17 +4078,18 @@ function updateParameters(state) {
             const diffEl = document.getElementById('param-diff');
             if (diffEl) {
                 diffEl.textContent = window._displayedParams.diff;
-                // Dynamically apply color based on difficulty (Easy -> emerald, Medium -> golden, Hard -> red)
+                // Dynamically apply color based on difficulty (Easy -> emerald, Medium -> blue, Hard -> red)
                 const lowerDiff = diffLabel.toLowerCase();
+                let targetColor = '';
                 if (lowerDiff.includes('easy') || lowerDiff.includes('beginner')) {
-                    diffEl.style.color = '#2ecc71'; // Dark green / emerald
+                    targetColor = '#2ecc71'; // Dark green / emerald
                 } else if (lowerDiff.includes('medium') || lowerDiff.includes('normal')) {
-                    diffEl.style.color = '#60a5fa'; // Blue (same as FAQ)
+                    targetColor = '#60a5fa'; // Blue (same as FAQ)
                 } else if (lowerDiff.includes('hard') || lowerDiff.includes('expert') || lowerDiff.includes('difficult')) {
-                    diffEl.style.color = '#ff4d4d'; // Red
-                } else {
-                    diffEl.style.color = ''; // Reset/Default
+                    targetColor = '#ff4d4d'; // Red
                 }
+                diffEl.style.removeProperty('color');
+                diffEl.style.setProperty('--diff-color', targetColor);
             }
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
