@@ -116,14 +116,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="preload" href="/css/style.css?v=33076" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33076" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33076">
-    <link rel="stylesheet" href="/css/lobby.css?v=33076">
-    <link rel="stylesheet" href="/css/play.css?v=33076">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33076">
-    <link rel="stylesheet" href="/css/forum.css?v=33076">
-    <link rel="stylesheet" href="/css/donate.css?v=33076">
+    <link rel="preload" href="/css/style.css?v=33077" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33077" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33077">
+    <link rel="stylesheet" href="/css/lobby.css?v=33077">
+    <link rel="stylesheet" href="/css/play.css?v=33077">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33077">
+    <link rel="stylesheet" href="/css/forum.css?v=33077">
+    <link rel="stylesheet" href="/css/donate.css?v=33077">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1015,7 +1015,7 @@
         <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn">ENTER LOBBY</button>
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onclick="window.handleEnterLobbyClick(this, event)">ENTER LOBBY</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -1023,15 +1023,35 @@
                 <div style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
             </div>
             <script>
-                (function() {
-                    var gb = document.getElementById('btn-enter-lobby-gateway');
+                window.handleEnterLobbyClick = function(btn, evt) {
+                    var gb = btn || document.getElementById('btn-enter-lobby-gateway');
                     if (gb) {
-                        var press = function() { gb.classList.add('pressed', 'flattened'); };
-                        gb.addEventListener('touchstart', press, { passive: true });
-                        gb.addEventListener('mousedown', press);
-                        gb.addEventListener('pointerdown', press);
+                        gb.classList.add('pressed', 'flattened');
                     }
-                })();
+                    try {
+                        var music = document.getElementById('lobby-music');
+                        if (music && typeof window.playLobbyMusicHelper === 'function') {
+                            window.playLobbyMusicHelper(music);
+                        } else if (music && typeof music.play === 'function') {
+                            music.play().catch(function() {});
+                        }
+                    } catch(e) {}
+                    
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('page-lobby');
+                    } else if (typeof showPage === 'function') {
+                        showPage('page-lobby');
+                    } else {
+                        var pLoad = document.getElementById('page-loading');
+                        var pLobby = document.getElementById('page-lobby');
+                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
+                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = 'block'; }
+                    }
+                    var navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                    if (navBtn && typeof window.updateActiveNav === 'function') {
+                        window.updateActiveNav(navBtn);
+                    }
+                };
             </script>
         </div>
 
@@ -5847,18 +5867,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33076"></script>
-    <script src="/js/forum.js?v=33076"></script>
-    <script src="/js/app.js?v=33076"></script>
-    <script src="/js/lobby.js?v=33076"></script>
-    <script src="/js/play.js?v=33076"></script>
-    <script src="/js/tournaments.js?v=33076"></script>
-    <script src="/js/leaderboard.js?v=33076"></script>
-    <script src="/js/tools.js?v=33076"></script>
-    <script src="/js/mouse_selection.js?v=33076"></script>
-    <script src="/js/mods.js?v=33076"></script>
-    <script src="/js/private_matches.js?v=33076"></script>
-    <script src="/js/donate.js?v=33076"></script>
+    <script src="/js/settings.js?v=33077"></script>
+    <script src="/js/forum.js?v=33077"></script>
+    <script src="/js/app.js?v=33077"></script>
+    <script src="/js/lobby.js?v=33077"></script>
+    <script src="/js/play.js?v=33077"></script>
+    <script src="/js/tournaments.js?v=33077"></script>
+    <script src="/js/leaderboard.js?v=33077"></script>
+    <script src="/js/tools.js?v=33077"></script>
+    <script src="/js/mouse_selection.js?v=33077"></script>
+    <script src="/js/mods.js?v=33077"></script>
+    <script src="/js/private_matches.js?v=33077"></script>
+    <script src="/js/donate.js?v=33077"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

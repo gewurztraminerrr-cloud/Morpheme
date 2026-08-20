@@ -341,13 +341,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 // Robust interaction handlers: Flatten immediately on touch/click and transition
-                let transitionTimeout = null;
                 const triggerTransition = (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
-                    if (transitionTimeout) return;
-                    transitionTimeout = setTimeout(() => {
-                        handleGatewayTransition(e);
-                    }, 180);
+                    handleGatewayTransition(e);
+                };
+                window.handleEnterLobbyClick = (btn, evt) => {
+                    triggerTransition(evt);
                 };
 
                 // Flatten immediately on click-down (pointerdown / mousedown / touchstart)
