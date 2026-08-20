@@ -699,6 +699,8 @@ class GameRoom:
         # PRIORITY: Intermission timer is always literal (60s)
         # 1. Intermission timer (Fixed 60s or 5s for Daily)
         if self.state == 'intermission':
+            if not self.intermission_start_time or self.intermission_start_time <= 0:
+                self.intermission_start_time = time.time()
             elapsed = time.time() - self.intermission_start_time
             intermission_limit = 2 if self.time_limit >= 7200 else 60
             return max(0.0, intermission_limit - elapsed)
@@ -745,6 +747,8 @@ class GameRoom:
     def intermission_end_time(self):
         """Get timestamp when intermission ends (for client sync)"""
         if self.state == 'intermission':
+            if not self.intermission_start_time or self.intermission_start_time <= 0:
+                self.intermission_start_time = time.time()
             limit = 5 if self.time_limit >= 7200 else 60
             return self.intermission_start_time + limit
         return 0
@@ -1454,6 +1458,8 @@ class GameRoom:
         # 1. Start Milestone: Trigger 0.5s early to ensure next round starts slightly early
         # and the new board is ready when the client timer hits 0:00.
         if self.state == 'intermission':
+            if not self.intermission_start_time or self.intermission_start_time <= 0:
+                self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
             intermission_limit = 2 if self.time_limit >= 7200 else 60
             if elapsed >= intermission_limit - 0.5:
@@ -1461,6 +1467,8 @@ class GameRoom:
             
         # 2. Parameter Reveal (15s into intermission)
         if self.state == 'intermission':
+            if not self.intermission_start_time or self.intermission_start_time <= 0:
+                self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
             intermission_duration = 2 if self.time_limit >= 7200 else 60
             reveal_threshold = 15.0 if intermission_duration >= 20 else 0.5
