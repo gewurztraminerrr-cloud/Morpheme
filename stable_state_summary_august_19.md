@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `9d1c249f09f4b388acd4470ef473ff91e74c0942` (`9d1c249`)
+* **Commit ID**: `ea96e220bb8469df5ab7f612874d83857c84606e` (`ea96e22`)
 * **Asset Version**: `v=33066`
 
 ---
