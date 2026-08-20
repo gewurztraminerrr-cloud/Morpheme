@@ -9,16 +9,16 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `c3b92503c4a2356fda8a9f1189081cd0df9bae43` (`c3b9250`)
+* **Commit ID**: `6325d2dbf6a445e9fa07f8cf28f420e6fdf245b7` (`6325d2d`)
 * **Asset Version**: `v=33069`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Automatic Root Word Definition Lookup & Bracket Expansion (`app.py`)
+### A. Automatic Root Word Definition Lookup & Bracket Appending (`app.py`)
 - **Recursive Root Resolution**: For any word defined with a pointer pattern (e.g. `third-person singular simple present indicative of [word]`, `plural of [word]`, `diminutive of [word]`, `synonym of [word]`, `alternative form of [word]`, `conjugation of [word]`, `comparative of [word]`, etc.), the definition engine automatically retrieves the full lexicographical definition of the referenced root word and appends it directly inside parentheses/brackets next to the root word.
-- **Examples**:
+- **Verified Examples**:
   - `BEHEDGES` $\rightarrow$ `third-person singular simple present indicative of behedge ((transitive) To hedge about; surround with or as with a hedge.)`
   - `MALAXER` $\rightarrow$ `Synonym of malaxator (one who, or that which, malaxates; esp. a machine for grinding, kneading, or stirring into a pasty or doughy mass [n -S])`
   - `MALAXERS` $\rightarrow$ `plural of malaxer (Synonym of malaxator (one who, or that which, malaxates; esp. a machine for grinding, kneading, or stirring into a pasty or doughy mass [n -S]))`
@@ -56,6 +56,9 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ### I. Unscramble Tool Desktop & Laptop Full-Width Panel Expansion (`templates/index.html`, `static/css/play.css`)
 - Expanded to `1200px` max-width with responsive font clamping so all 21-letter jumbled strings fit on a single line.
+
+### J. Permanent 24h Daily Room Score Sums & 12AM Rollover Preservation (`app.py`, `game_room.py`, `static/js/play.js`)
+- Fixed race condition for 12 AM midnight rollovers; cumulative daily scores persist properly in SQLite `daily_score_sums`.
 
 ---
 
