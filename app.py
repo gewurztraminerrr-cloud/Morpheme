@@ -6559,31 +6559,35 @@ def get_daily_score_sums():
               AND (rh.board_dimensions = ? OR rh.room_id LIKE ? OR rh.room_id = ?)
               AND (rh.round_duration >= 7200 OR rh.room_id LIKE '%86400%' OR rh.room_id LIKE '%24h%')
             GROUP BY rh.user_id
+            HAVING SUM(rh.total_score) > 0
         ''', (canonical_key, dims, f"%{dims}%", canonical_key))
         conn.commit()
 
-        # 2. Fetch all scores for this 24h room from daily_score_sums
+        # 2. Fetch all scores for this 24h room from daily_score_sums (only score_sum >= 1)
         cursor = conn.execute('''
             SELECT u.username, d.user_id, MAX(d.score_sum) as score_sum
             FROM daily_score_sums d
             JOIN users u ON d.user_id = u.id
-            WHERE d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?
+            WHERE (d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?)
+              AND d.score_sum > 0
             GROUP BY d.user_id, u.username
+            HAVING MAX(d.score_sum) > 0
             ORDER BY score_sum DESC
         ''', (canonical_key, raw_room_id, f"%{dims}%"))
         rows = cursor.fetchall()
         
-        scores_by_username = {row['username']: row['score_sum'] for row in rows}
+        scores_by_username = {row['username']: row['score_sum'] for row in rows if row['score_sum'] and row['score_sum'] > 0}
 
         # 3. Check active in-memory room for any players who have scored today in this 24h room
         for r in room_manager.rooms.values():
             if r.time_limit >= 7200 and (r.board_dimensions == dims or dims in str(r.room_id)):
                 for p in list(r.players) + list(r.past_players.values()):
                     if p.score > 0 and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and p.username:
-                        if p.username not in scores_by_username:
-                            scores_by_username[p.username] = p.score
+                        if p.username not in scores_by_username or p.score > scores_by_username[p.username]:
+                            scores_by_username[p.username] = max(scores_by_username.get(p.username, 0), p.score)
 
-        players = [{'username': uname, 'score_sum': ssum} for uname, ssum in sorted(scores_by_username.items(), key=lambda x: x[1], reverse=True)]
+        # Strictly exclude score of 0, only include players with score >= 1
+        players = [{'username': uname, 'score_sum': ssum} for uname, ssum in sorted(scores_by_username.items(), key=lambda x: x[1], reverse=True) if ssum > 0]
         return jsonify({'players': players, 'room_id': canonical_key})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

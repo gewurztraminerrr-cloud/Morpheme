@@ -2722,7 +2722,7 @@ function fetchDailyScoreSums(targetRoomId) {
         .then(res => res.json())
         .then(data => {
             window._isFetchingDailyScoreSums = false;
-            window._dailyScoreSumsData = data.players || [];
+            window._dailyScoreSumsData = (data.players || []).filter(p => (typeof p.score_sum === 'number' ? p.score_sum : parseInt(p.score_sum, 10)) > 0);
             window._dailyScoreSumsRoomId = data.room_id || roomId;
             renderDailyScoreSums();
         })
@@ -2739,7 +2739,8 @@ function renderDailyScoreSums() {
     const listEl = document.getElementById('score-sum-list');
     if (!listEl) return;
     
-    const players = window._dailyScoreSumsData || [];
+    // Strictly filter players with score >= 1
+    const players = (window._dailyScoreSumsData || []).filter(p => (typeof p.score_sum === 'number' ? p.score_sum : parseInt(p.score_sum, 10)) > 0);
     const searchInput = document.getElementById('score-sum-search');
     const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
     
