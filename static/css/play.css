@@ -56,18 +56,13 @@
     transition: color 0.3s ease;
 }
 
-.play-header.reveal-new,
-.play-header.reveal-new *,
 .game-params.reveal-new,
-.game-params.reveal-new *,
+.game-params.reveal-new span,
 .spinner-set-label.reveal-new,
-.spinner-set-label.reveal-new *,
+.spinner-set-label.reveal-new span,
 .header-meta.reveal-new,
-.header-meta.reveal-new *,
-.spinner-modal-card.reveal-new,
-.spinner-modal-card.reveal-new * {
+.header-meta.reveal-new span {
     animation: fadeGoldToNormal 4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-    transform: none !important;
 }
 
 @keyframes fadeGoldToNormal {
@@ -75,42 +70,12 @@
         color: #ffd700 !important; /* Instant snap to gold */
         text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
     }
-    20% {
+    25% {
         color: #ffd700 !important; /* Hold gold briefly */
         text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
     }
     100% {
-        color: var(--text-primary);
-        text-shadow: none !important;
-    }
-}
-
-@keyframes slowGoldFlash {
-    0% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
-    }
-    20% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
-    }
-    100% {
-        color: var(--text-primary);
-        text-shadow: none !important;
-    }
-}
-
-@keyframes slowGoldPulse {
-    0% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.6) !important;
-    }
-    20% {
-        color: #ffd700 !important;
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important;
-    }
-    100% {
-        color: var(--text-primary);
+        color: inherit;
         text-shadow: none !important;
     }
 }
