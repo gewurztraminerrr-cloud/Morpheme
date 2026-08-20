@@ -9,8 +9,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `0509539d09cce6d2524da57cbe84950cf39e7c5b` (`0509539`)
-* **Asset Version**: `v=33090`
+* **Commit ID**: `54ae45f0ba4fc5863c0a524a87268d067cff3e72` (`54ae45f`)
+* **Asset Version**: `v=33091`
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 
 ---
@@ -120,6 +120,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Added parent `:has(.loading-container)` and `grid-column: 1 / -1; width: 100% !important;` rules across desktop and mobile media queries in `play.css`.
   - Updated `ensureLoadingCardStyles()` and `renderBoard()` in `play.js` to strip `grid-template-columns`, `grid-template-rows`, `--board-cols`, and `--board-rows` whenever rendering a loading state.
   - Sized the loading container to full width and centered it cleanly on all screen sizes.
+
+### V. Unscramble Session History Fresh Start & High-Contrast Mobile Readability (`static/js/tools.js`, `templates/index.html`)
+- **Fresh Start on Tool Open**: Eliminated persistence of stale history rounds across sessions by purging `localStorage` unscramble history on tool launch. Unscramble now begins strictly with 0 completed rounds in Session History every time it is opened.
+- **High-Contrast Mobile Readability**:
+  - Replaced low-opacity, washed-out text with vibrant high-contrast badges: bold gold headers (`#ffd700`), crisp green found word badges (`#4ade80`, `rgba(46, 204, 113, 0.25)`), readable coral missed word badges (`#fca5a5`, `rgba(239, 68, 68, 0.2)`), and high-legibility timestamps (`#94a3b8`).
+  - Increased font sizes and padding across active round solution pills and session history cards for effortless touch selection and clarity on mobile devices.
 
 ---
 
