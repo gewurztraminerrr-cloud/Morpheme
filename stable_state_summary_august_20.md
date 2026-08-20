@@ -9,20 +9,20 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `a33aaf373a0e14a1db39276fa8fb6f5ca0872659` (`a33aaf3`)
-* **Asset Version**: `v=33079`
+* **Commit ID**: `0d82e621ecbf13b5d2c2cefe4123533ec6ef57a9` (`0d82e62`)
+* **Asset Version**: `v=33080`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Instant 0ms Lobby User Counts Pre-Hydration & Gateway DOM Hierarchy (`templates/index.html`, `static/js/lobby.js`)
+### A. Non-Reverting Gateway & Startup Initialization Flow (`templates/index.html`, `static/js/app.js`)
+- **Protected Gateway Passage**: Added `window._gatewayPassed` tracking and active page checks during `app.js` async bootstrap so that once a user clicks **ENTER LOBBY** or clicks **Start [N]**, the asynchronous startup sequence never resets the page back to `#page-loading`.
+- **Instant 1-Click Gateway**: Direct inline handling flattens the button visually, initializes lobby audio, and switches viewport to `#page-lobby` immediately on first tap.
+
+### B. Instant 0ms Lobby User Counts Pre-Hydration & Gateway DOM Hierarchy (`templates/index.html`, `static/js/lobby.js`)
 - **Immediate Frame 0 Hydration**: Automatically pre-populates all lobby room buttons (`Start [N]`, `Show Rooms [N]`) with last known player counts stored in `localStorage` on initial HTML parse, and fires an instant background fetch to `/api/lobby-stats` on startup to synchronize live counts without any visual lag.
 - **Fixed Gateway DOM Tag Hierarchy**: Properly closed `#loading-spinner-container` and `#page-loading` container `<div>` tags so that navigating from the gateway page to `#page-lobby` renders the full lobby panels cleanly.
-- **Auto-Sync on Entry**: Clicking **ENTER LOBBY** immediately triggers a full refresh of player counts across all modes (`Accumulative`, `FCFS`, `Split`), keeping counts live and accurate.
-
-### B. Instant Single-Press ENTER LOBBY Transition (`templates/index.html`, `static/js/app.js`)
-- **Direct 1-Click Gateway**: Wired `window.handleEnterLobbyClick` directly inline to the 3D **ENTER LOBBY** gateway button so the very first click or tap immediately flattens the button visually, plays lobby music, and transitions instantly to the main lobby without requiring a second click.
 
 ### C. Restored Desktop Lobby Panel Vertical Height & Top Alignment (`templates/index.html`, `static/css/lobby.css`)
 - **Eliminated Vertical Gap**: Scoped flex-centering strictly to `#page-loading.active` and set `.page.active` to `display: block;`. The lobby panels now sit immediately below the top menu bar (`margin-top: 0; height: calc(100vh - 100px);`), eliminating the unwanted vertical gap and restoring the full vertical length of the desktop lobby layout.
