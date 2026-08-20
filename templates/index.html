@@ -116,14 +116,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="preload" href="/css/style.css?v=33082" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33082" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33082">
-    <link rel="stylesheet" href="/css/lobby.css?v=33082">
-    <link rel="stylesheet" href="/css/play.css?v=33082">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33082">
-    <link rel="stylesheet" href="/css/forum.css?v=33082">
-    <link rel="stylesheet" href="/css/donate.css?v=33082">
+    <link rel="preload" href="/css/style.css?v=33083" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33083" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33083">
+    <link rel="stylesheet" href="/css/lobby.css?v=33083">
+    <link rel="stylesheet" href="/css/play.css?v=33083">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33083">
+    <link rel="stylesheet" href="/css/forum.css?v=33083">
+    <link rel="stylesheet" href="/css/donate.css?v=33083">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1050,28 +1050,16 @@
                     }
                 };
 
+                // Always purge stale cached stats
                 try {
-                    var cached = localStorage.getItem('morpheme_cached_lobby_stats');
-                    if (cached) {
-                        var parsed = JSON.parse(cached);
-                        if (parsed) {
-                            if (document.readyState === 'loading') {
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    window.applyLobbyStatsToButtons(parsed);
-                                });
-                            } else {
-                                window.applyLobbyStatsToButtons(parsed);
-                            }
-                        }
-                    }
+                    localStorage.removeItem('morpheme_cached_lobby_stats');
                 } catch(e) {}
 
-                // Fetch fresh stats immediately in the background on startup
+                // Fetch authoritative live stats immediately on startup
                 fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data && data.stats) {
-                            try { localStorage.setItem('morpheme_cached_lobby_stats', JSON.stringify(data.stats)); } catch(e) {}
                             window.applyLobbyStatsToButtons(data.stats);
                         }
                     })
@@ -5928,18 +5916,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33082"></script>
-    <script src="/js/forum.js?v=33082"></script>
-    <script src="/js/app.js?v=33082"></script>
-    <script src="/js/lobby.js?v=33082"></script>
-    <script src="/js/play.js?v=33082"></script>
-    <script src="/js/tournaments.js?v=33082"></script>
-    <script src="/js/leaderboard.js?v=33082"></script>
-    <script src="/js/tools.js?v=33082"></script>
-    <script src="/js/mouse_selection.js?v=33082"></script>
-    <script src="/js/mods.js?v=33082"></script>
-    <script src="/js/private_matches.js?v=33082"></script>
-    <script src="/js/donate.js?v=33082"></script>
+    <script src="/js/settings.js?v=33083"></script>
+    <script src="/js/forum.js?v=33083"></script>
+    <script src="/js/app.js?v=33083"></script>
+    <script src="/js/lobby.js?v=33083"></script>
+    <script src="/js/play.js?v=33083"></script>
+    <script src="/js/tournaments.js?v=33083"></script>
+    <script src="/js/leaderboard.js?v=33083"></script>
+    <script src="/js/tools.js?v=33083"></script>
+    <script src="/js/mouse_selection.js?v=33083"></script>
+    <script src="/js/mods.js?v=33083"></script>
+    <script src="/js/private_matches.js?v=33083"></script>
+    <script src="/js/donate.js?v=33083"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

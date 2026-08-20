@@ -939,10 +939,6 @@ function updateLobbyButtons(stats, mode = 'all') {
             btn.textContent = newNormalized;
         }
     });
-
-    if (stats) {
-        try { localStorage.setItem('morpheme_cached_lobby_stats', JSON.stringify(stats)); } catch(e) {}
-    }
 }
 
 function formatTime(seconds) {

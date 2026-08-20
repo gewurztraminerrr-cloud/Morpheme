@@ -3753,6 +3753,7 @@ def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     stats = {}
     config_humans = {}  # key -> set(user_id)
+    now = time.time()
     
     for room in list(room_manager.rooms.values()):
         try:
@@ -3760,14 +3761,23 @@ def get_lobby_stats():
             if room.is_solo or getattr(room, 'is_private', False):
                 continue
                 
-            humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
             try:
                 t_lim = int(room.time_limit)
             except (ValueError, TypeError):
                 t_lim = 45
-            # Count rooms with active human players only. 24h rooms are always counted.
-            # Skip any room that has no human players — it should not contribute to the button count.
             is_daily = (t_lim >= 7200)
+            
+            humans = []
+            for p in room.players:
+                if getattr(p, 'is_ai', False):
+                    continue
+                # For real-time rooms (non-24h), only count players actively polling within 15s
+                if not is_daily:
+                    p_active = getattr(p, 'last_active', 0)
+                    if (now - p_active) > 15:
+                        continue
+                humans.append(p)
+                
             if len(humans) == 0 and not is_daily:
                 continue
                 
