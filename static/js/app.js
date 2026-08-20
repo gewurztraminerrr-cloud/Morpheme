@@ -1162,6 +1162,12 @@ function showPage(pageId) {
         if (typeof window.loadCurrentUserConfigRatings === 'function') {
             window.loadCurrentUserConfigRatings();
         }
+        if (typeof window.fetchLobbyStats === 'function') {
+            window.fetchLobbyStats('all');
+        }
+        if (typeof window.startStatsPolling === 'function') {
+            window.startStatsPolling();
+        }
     }
 
     if (pageId === 'page-mods') {
