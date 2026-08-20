@@ -3545,7 +3545,14 @@ def create_room():
         else:
             print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
         
-        return jsonify({'success': True, 'room_id': room_id})
+        # Include initial room state for instant client hydration
+        state_dict = None
+        try:
+            state_dict = room.get_state(session['user_id'])
+        except Exception:
+            pass
+        
+        return jsonify({'success': True, 'room_id': room_id, 'state': state_dict})
     except Exception as e:
         import traceback
         print(f"[create_room] Error: {e}\n{traceback.format_exc()}")

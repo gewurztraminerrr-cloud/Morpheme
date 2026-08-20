@@ -72,99 +72,63 @@ async function enterLobbyRoom(rawBtn) {
         }
         window.currentRoomId = null;
 
-        if (window.showLoadingOverlay) window.showLoadingOverlay('Entering Room...');
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        let joinedId = null;
-        let initialState = null;
-        const listResp = await fetch(`/api/rooms?game_type=${gameType}&board_dimensions=${boardDimensions}&time_limit=${timeLimit}&_t=${Date.now()}`, { cache: 'no-store' });
-        if (listResp.ok) {
-            const listData = await listResp.json();
-            if (listData.rooms && listData.rooms.length > 0) {
-                const existingId = listData.rooms[0].room_id;
-                console.log('Found existing room, joining:', existingId);
-                const joinResp = await fetch(`/api/room/${existingId}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: false })
-                });
+        // Instant visual switch to play page
+        if (typeof window.clearGameUIAndCache === 'function') {
+            window.clearGameUIAndCache();
+        }
+        if (typeof window.showPage === 'function') {
+            window.showPage('page-play');
+        } else if (typeof showPage === 'function') {
+            showPage('page-play');
+        }
 
-                if (joinResp.ok) {
-                    const joinData = await joinResp.json();
-                    if (joinData.success) {
-                        joinedId = existingId;
-                        if (joinData.state) initialState = joinData.state;
+        const playBtn = document.getElementById('play-btn');
+        if (playBtn) {
+            playBtn.disabled = false;
+            playBtn.title = "";
+        }
+        if (window.updateManualToolState) window.updateManualToolState();
+
+        // 1 Single Direct Fast Roundtrip to join/create the room
+        const createResp = await fetch('/api/room/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                game_type: gameType,
+                time_limit: timeLimit,
+                board_dimensions: boardDimensions
+            })
+        });
+
+        if (createResp.ok) {
+            const data = await createResp.json();
+            if (data.success && data.room_id) {
+                window.currentRoomId = data.room_id;
+                localStorage.setItem('last_joined_room', data.room_id);
+                window.isSpectatorMode = false;
+
+                if (data.state && typeof window.updateGameState === 'function') {
+                    window.updateGameState(data.state);
+                }
+
+                setTimeout(() => {
+                    const input = document.getElementById('word-input');
+                    if (input) {
+                        input.disabled = false;
+                        input.focus();
                     }
-                }
-            }
-        }
+                }, 50);
 
-        if (!joinedId) {
-            console.log('Creating new room for config:', { gameType, timeLimit, boardDimensions });
-            const createResp = await fetch('/api/room/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    game_type: gameType,
-                    time_limit: timeLimit,
-                    board_dimensions: boardDimensions
-                })
-            });
-
-            if (createResp.ok) {
-                const data = await createResp.json();
-                if (data.success && data.room_id) {
-                    joinedId = data.room_id;
-                    if (data.state) initialState = data.state;
-                } else {
-                    showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
-                }
+                if (window.startGamePolling) window.startGamePolling();
+                showLobbyToast('Room joined successfully!', 'success');
             } else {
-                showLobbyToast('Server error creating room.', 'error');
+                showLobbyToast('Failed to join room: ' + (data.error || 'Unknown error'), 'error');
             }
-        }
-
-        if (joinedId) {
-            window.currentRoomId = joinedId;
-            localStorage.setItem('last_joined_room', joinedId);
-            window.isSpectatorMode = false;
-
-            const playBtn = document.getElementById('play-btn');
-            if (playBtn) {
-                playBtn.disabled = false;
-                playBtn.title = "";
-            }
-            if (window.updateManualToolState) window.updateManualToolState();
-            
-            // Clear any stale previous board / UI before displaying play page
-            if (typeof window.clearGameUIAndCache === 'function') {
-                window.clearGameUIAndCache();
-            }
-
-            // Immediately apply fresh authoritative server state if present
-            if (initialState && typeof window.updateGameState === 'function') {
-                window.updateGameState(initialState);
-            }
-
-            if (typeof window.showPage === 'function') {
-                window.showPage('page-play');
-            } else if (typeof showPage === 'function') {
-                showPage('page-play');
-            }
-
-            setTimeout(() => {
-                const input = document.getElementById('word-input');
-                if (input) {
-                    input.disabled = false;
-                    input.focus();
-                }
-            }, 100);
-
-            if (window.startGamePolling) window.startGamePolling();
-            showLobbyToast('Room joined successfully!', 'success');
         } else {
-            // No room joined — stay on lobby, user can retry
+            showLobbyToast('Server error entering room.', 'error');
         }
     } catch (error) {
         console.error('Error entering room:', error);

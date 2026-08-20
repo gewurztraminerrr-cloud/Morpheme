@@ -1532,9 +1532,9 @@ async function updateGameState(incomingState = null) {
             }
 
             window._emptyPlayersPollCount = (window._emptyPlayersPollCount || 0) + 1;
-            console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/3`);
+            console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/10`);
             
-            if (window._emptyPlayersPollCount >= 3) {
+            if (window._emptyPlayersPollCount >= 10) {
                 // Normal Eviction
                 ejectToLobby("inactivity");
                 return;

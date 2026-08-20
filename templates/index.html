@@ -115,14 +115,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="preload" href="/css/style.css?v=33074" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33074" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33074">
-    <link rel="stylesheet" href="/css/lobby.css?v=33074">
-    <link rel="stylesheet" href="/css/play.css?v=33074">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33074">
-    <link rel="stylesheet" href="/css/forum.css?v=33074">
-    <link rel="stylesheet" href="/css/donate.css?v=33074">
+    <link rel="preload" href="/css/style.css?v=33075" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33075" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33075">
+    <link rel="stylesheet" href="/css/lobby.css?v=33075">
+    <link rel="stylesheet" href="/css/play.css?v=33075">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33075">
+    <link rel="stylesheet" href="/css/forum.css?v=33075">
+    <link rel="stylesheet" href="/css/donate.css?v=33075">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -164,72 +164,57 @@
                 }
                 window.currentRoomId = null;
 
-                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Entering Room...');
                 localStorage.removeItem('tournament_play_active');
                 localStorage.removeItem('private_match_active');
 
-                var joinedId = null;
-                var listResp = await fetch('/api/rooms?game_type=' + gameType + '&board_dimensions=' + boardDimensions + '&time_limit=' + timeLimit + '&_t=' + Date.now(), { cache: 'no-store' });
-                if (listResp.ok) {
-                    var listData = await listResp.json();
-                    if (listData.rooms && listData.rooms.length > 0) {
-                        var existingId = listData.rooms[0].room_id;
-                        var joinResp = await fetch('/api/room/' + existingId + '/join', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ as_spectator: false })
-                        });
-                        if (joinResp.ok) {
-                            var joinData = await joinResp.json();
-                            if (joinData.success) joinedId = existingId;
-                        }
-                    }
+                // Instant visual switch to play page
+                if (typeof window.clearGameUIAndCache === 'function') {
+                    window.clearGameUIAndCache();
+                }
+                if (typeof window.showPage === 'function') {
+                    window.showPage('page-play');
+                } else if (typeof showPage === 'function') {
+                    showPage('page-play');
                 }
 
-                if (!joinedId) {
-                    var createResp = await fetch('/api/room/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            game_type: gameType,
-                            time_limit: timeLimit,
-                            board_dimensions: boardDimensions
-                        })
-                    });
-                    if (createResp.ok) {
-                        var data = await createResp.json();
-                        if (data.success && data.room_id) {
-                            joinedId = data.room_id;
-                        } else {
-                            showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
+                var playBtn = document.getElementById('play-btn');
+                if (playBtn) { playBtn.disabled = false; playBtn.title = ""; }
+                if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
+
+                // 1 Single Direct Fast Roundtrip to join/create room
+                var createResp = await fetch('/api/room/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game_type: gameType,
+                        time_limit: timeLimit,
+                        board_dimensions: boardDimensions
+                    })
+                });
+
+                if (createResp.ok) {
+                    var data = await createResp.json();
+                    if (data.success && data.room_id) {
+                        window.currentRoomId = data.room_id;
+                        localStorage.setItem('last_joined_room', data.room_id);
+                        window.isSpectatorMode = false;
+
+                        if (data.state && typeof window.updateGameState === 'function') {
+                            window.updateGameState(data.state);
                         }
+
+                        setTimeout(function() {
+                            var input = document.getElementById('word-input');
+                            if (input) { input.disabled = false; input.focus(); }
+                        }, 50);
+
+                        if (typeof window.startGamePolling === 'function') window.startGamePolling();
+                        showLobbyToast('Room joined successfully!', 'success');
                     } else {
-                        showLobbyToast('Server error creating room.', 'error');
+                        showLobbyToast('Failed to join room: ' + (data.error || 'Unknown error'), 'error');
                     }
-                }
-
-                if (joinedId) {
-                    window.currentRoomId = joinedId;
-                    localStorage.setItem('last_joined_room', joinedId);
-                    window.isSpectatorMode = false;
-
-                    var playBtn = document.getElementById('play-btn');
-                    if (playBtn) { playBtn.disabled = false; playBtn.title = ""; }
-                    if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
-
-                    if (typeof window.showPage === 'function') {
-                        window.showPage('page-play');
-                    } else if (typeof showPage === 'function') {
-                        showPage('page-play');
-                    }
-
-                    setTimeout(function() {
-                        var input = document.getElementById('word-input');
-                        if (input) { input.disabled = false; input.focus(); }
-                    }, 100);
-
-                    if (typeof window.startGamePolling === 'function') window.startGamePolling();
-                    showLobbyToast('Room joined successfully!', 'success');
+                } else {
+                    showLobbyToast('Server error entering room.', 'error');
                 }
             } catch (err) {
                 console.error('[LobbyClick] Error entering room:', err);
@@ -5861,18 +5846,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33074"></script>
-    <script src="/js/forum.js?v=33074"></script>
-    <script src="/js/app.js?v=33074"></script>
-    <script src="/js/lobby.js?v=33074"></script>
-    <script src="/js/play.js?v=33074"></script>
-    <script src="/js/tournaments.js?v=33074"></script>
-    <script src="/js/leaderboard.js?v=33074"></script>
-    <script src="/js/tools.js?v=33074"></script>
-    <script src="/js/mouse_selection.js?v=33074"></script>
-    <script src="/js/mods.js?v=33074"></script>
-    <script src="/js/private_matches.js?v=33074"></script>
-    <script src="/js/donate.js?v=33074"></script>
+    <script src="/js/settings.js?v=33075"></script>
+    <script src="/js/forum.js?v=33075"></script>
+    <script src="/js/app.js?v=33075"></script>
+    <script src="/js/lobby.js?v=33075"></script>
+    <script src="/js/play.js?v=33075"></script>
+    <script src="/js/tournaments.js?v=33075"></script>
+    <script src="/js/leaderboard.js?v=33075"></script>
+    <script src="/js/tools.js?v=33075"></script>
+    <script src="/js/mouse_selection.js?v=33075"></script>
+    <script src="/js/mods.js?v=33075"></script>
+    <script src="/js/private_matches.js?v=33075"></script>
+    <script src="/js/donate.js?v=33075"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
