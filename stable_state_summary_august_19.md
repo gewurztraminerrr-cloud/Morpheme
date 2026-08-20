@@ -9,23 +9,23 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 19, 2026
-* **Commit ID**: `8d39f53e6d23cf44ca4d5a9d80d226a27bc52cb0` (`8d39f53`)
-* **Asset Version**: `v=33072`
+* **Commit ID**: `a62b4ceafab9f139ee55bc451b6818037caef98b` (`a62b4ce`)
+* **Asset Version**: `v=33073`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Lobby Filter Bar Organization (`templates/index.html`, `static/css/lobby.css`)
+### A. Safari Instant 0ms First-Paint Engine (`templates/index.html`, `static/js/app.js`, `app.py`)
+- **Inlined Critical First-Paint CSS**: The core layout and 3D **ENTER LOBBY** button styles are embedded directly in `<head>`, allowing WebKit/Safari to paint the gateway screen on frame 0 without waiting for external stylesheets.
+- **Asynchronous Font Loading**: Decoupled external Google Fonts via `media="print" onload="this.media='all'"` with native Apple system font fallbacks (`-apple-system, BlinkMacSystemFont, 'SF Pro Display'`), eliminating Safari's render-blocking FOIT delay.
+- **Demand-Loaded Audio (`preload="none"`)**: Replaced blocking `preload="auto"` and `autoplay` on global audio elements with `preload="none"`, preventing Safari from stalling initial DOM rendering with MP3 HTTP range downloads.
+- **Parallelized Background Session Handshake**: Replaced sequential session checks with `Promise.all([validateSingleInstance(), checkSession()])` running concurrently without blocking the UI.
+- **Gzip & Immutable Static Cache**: Enabled automatic gzip compression for JS and CSS files, with `Cache-Control: public, max-age=31536000, immutable` headers for instant loads from memory cache.
+
+### B. Lobby Filter Bar Organization (`templates/index.html`, `static/css/lobby.css`)
 - **Desktop/Laptop Layout**: Positioned the **`My Rating`** button immediately to the right of the *"Sort rooms by proximity to average rating"* textbox, and to the left of the **`Open Rooms`** button (`[Proximity Input] [My Rating] [Open Rooms] [Closed Rooms] [🔄]`).
 - **Mobile/Compact Layout**: The rating proximity textbox spans the top full width, with **`My Rating`** positioned directly underneath on the left, to the left of **`Open Rooms`** (`[My Rating] [Open Rooms] [Closed Rooms] [🔄]`).
-
-### B. Safari Instant ENTER LOBBY Loading & High-Speed Asset Delivery (`templates/index.html`, `static/js/app.js`, `app.py`)
-- **Instant HTML/CSS First Paint (0ms Delay)**: The 3D **ENTER LOBBY** gateway button is set to `display: flex;` by default directly in initial HTML markup, rendering the gateway page on the very first frame without waiting for background network roundtrips.
-- **Elimination of Startup Polling Gate**: Removed the blocking `/api/startup/status` warmup polling loop that was gating the landing screen behind a loading wheel.
-- **Parallel Session Handshake**: Replaced sequential initialization waterfalls with `Promise.all([validateSingleInstance(), checkSession()])` so session validation occurs in parallel.
-- **Cleaned `<head>` & Preloaded CSS**: Removed duplicate synchronous scripts from `<head>` that were stalling Safari's DOM parser, added stylesheet preloading (`rel="preload"`), and enabled font rendering with `display=swap`.
-- **Gzip & Immutable Static Cache**: Enabled automatic gzip compression for JS and CSS files, with `Cache-Control: public, max-age=31536000, immutable` headers for instant subsequent loads from memory cache.
 
 ### C. Instant 24h Midnight Rollover & Elimination of Double Eviction (`game_room.py`, `static/js/play.js`)
 - **2-Second Midnight Transition**: Reduced the midnight rollover intermission in 24h rooms from 60 seconds down to **2 seconds**, pre-staging the new day's board instantly.
