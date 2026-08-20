@@ -11,7 +11,7 @@
 const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
-window.switchPlayPanel = function(panelId, smooth = true) {
+window.switchPlayPanel = function(panelId, smooth = false) {
     window._currentPlayPanel = panelId || 'board';
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
@@ -23,6 +23,10 @@ window.switchPlayPanel = function(panelId, smooth = true) {
     } else {
         playGrid.scrollLeft = targetLeft;
     }
+};
+
+window._restorePlayPanel = function() {
+    window.switchPlayPanel(window._currentPlayPanel || 'board', false);
 };
 
 // Track which panel the user swiped to so window._currentPlayPanel stays in sync.
@@ -44,8 +48,21 @@ window.switchPlayPanel = function(panelId, smooth = true) {
         
         playGrid.addEventListener('scroll', updateActivePanelTrack, { passive: true });
         if ('onscrollend' in window) {
-            playGrid.addEventListener('scrollend', updateActivePanelTrack, { passive: true });
+            playGrid.addEventListener('scrollend', () => {
+                updateActivePanelTrack();
+                window._restorePlayPanel();
+            }, { passive: true });
         }
+        playGrid.addEventListener('touchend', () => {
+            setTimeout(() => {
+                updateActivePanelTrack();
+                window._restorePlayPanel();
+            }, 60);
+        }, { passive: true });
+        playGrid.addEventListener('touchcancel', () => {
+            updateActivePanelTrack();
+            window._restorePlayPanel();
+        }, { passive: true });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _attachTracker);
@@ -54,12 +71,14 @@ window.switchPlayPanel = function(panelId, smooth = true) {
     }
 })();
 
-// Re-snap the game panels when the viewport changes (iOS "exit full screen" banner or orientation change).
+// Re-snap the game panels when the viewport changes (Android/iOS "exit full screen" banner or orientation change).
 window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
-    if (typeof window.switchPlayPanel === 'function') {
-        window.switchPlayPanel(window._currentPlayPanel || 'board', false);
+    if (typeof window.scheduleMobileViewportRecovery === 'function') {
+        window.scheduleMobileViewportRecovery();
+    } else if (typeof window._restorePlayPanel === 'function') {
+        window._restorePlayPanel();
     }
 });
 

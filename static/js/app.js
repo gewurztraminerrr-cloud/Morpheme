@@ -2085,54 +2085,87 @@ window.addEventListener('pagehide', (e) => {
     }
 });
 
-// === Mobile Viewport Recovery ===
-// Fixes the "half window / exit full screen banner" bug on iOS/Android PWA.
-// When the browser chrome (address bar, system banners) appears/disappears, the
-// actual visible height changes but 100vh does not adjust. We update a --vh CSS
-// variable and re-snap the Tools split layout to the correct panel.
+// === Mobile Viewport & Fullscreen Banner Recovery Engine ===
+// Fixes the "half window / split screen frozen midway" bug on iOS/Android PWA and mobile browsers.
+// When minimizing/returning to Morpheme or when the Android/iOS system banner
+// ("To exit full screen, drag from the top...") appears/disappears, the viewport dimensions
+// shift and can interrupt smooth scroll animations midway.
+// This engine forces an immediate multi-pass re-snap across all active mobile panel containers.
 
 function _updateVhVariable() {
-    // Set --vh = 1% of the TRUE visible height (not the frozen 100vh).
-    // CSS can use calc(var(--vh) * 100) as a drop-in for 100dvh on older devices.
     document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
 }
 
-function _restoreToolsLayout() {
+function _restoreAllMobilePanels() {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
+    
+    _updateVhVariable();
+
+    // 1. Play Page (.play-grid)
+    if (typeof window._restorePlayPanel === 'function') {
+        window._restorePlayPanel();
+    } else if (typeof window.switchPlayPanel === 'function') {
+        window.switchPlayPanel(window._currentPlayPanel || 'board', false);
+    }
+
+    // 2. Lobby Page (.lobby-grid)
+    const lobbyGrid = document.querySelector('.lobby-grid');
+    if (lobbyGrid) {
+        const mainPanel = document.getElementById('mobile-panel-main');
+        if (mainPanel) {
+            lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+        }
+    }
+
+    // 3. Tools / Settings / Mods (.tools-split-layout)
     document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
-        const activePane = layoutEl.querySelector('.tools-content .tool-pane.active');
+        const activePane = layoutEl.querySelector('.tools-content .tool-pane.active, .mod-details.active');
         const targetLeft = activePane ? (layoutEl.clientWidth || layoutEl.scrollWidth) : 0;
-        requestAnimationFrame(() => {
-            layoutEl.scrollLeft = targetLeft;
-        });
+        layoutEl.scrollLeft = targetLeft;
     });
+
+    // 4. Forum Page (.forum-container)
+    const forumContainer = document.querySelector('.forum-container');
+    if (forumContainer) {
+        const activeThread = document.querySelector('.thread-view:not(.hidden), .create-thread-view:not(.hidden)');
+        if (activeThread) {
+            const mainContent = forumContainer.querySelector('.forum-main');
+            if (mainContent) forumContainer.scrollLeft = mainContent.offsetLeft;
+        } else {
+            forumContainer.scrollLeft = 0;
+        }
+    }
 }
 
-// Initialize immediately and on every resize
-_updateVhVariable();
-window.addEventListener('resize', () => {
-    _updateVhVariable();
-    _restoreToolsLayout();
-});
+// Multi-phase recovery (immediate, next frame, 60ms, 150ms, 300ms, 500ms) to ensure layout locks accurately
+// throughout the entire Android/iOS system banner and window minimize/restore animations.
+window.scheduleMobileViewportRecovery = function() {
+    _restoreAllMobilePanels();
+    requestAnimationFrame(_restoreAllMobilePanels);
+    setTimeout(_restoreAllMobilePanels, 60);
+    setTimeout(_restoreAllMobilePanels, 150);
+    setTimeout(_restoreAllMobilePanels, 300);
+    setTimeout(_restoreAllMobilePanels, 500);
+};
 
-// Optional: Also notify on visibility hidden (but keep short timeout on server to be safe)
+// Initialize immediately and bind across all relevant system events
+_updateVhVariable();
+window.addEventListener('resize', window.scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('orientationchange', window.scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('focus', window.scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('pageshow', window.scheduleMobileViewportRecovery, { passive: true });
+document.addEventListener('fullscreenchange', window.scheduleMobileViewportRecovery, { passive: true });
+document.addEventListener('webkitfullscreenchange', window.scheduleMobileViewportRecovery, { passive: true });
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', window.scheduleMobileViewportRecovery, { passive: true });
+    window.visualViewport.addEventListener('scroll', window.scheduleMobileViewportRecovery, { passive: true });
+}
+
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && window.currentUser) {
-        // We don't necessarily want to mark offline just by switching tabs,
-        // but it's a good time to ensure the last_active is updated or beaconed if needed.
-    }
     if (document.visibilityState === 'visible') {
-        // App restored from background: browser chrome may have changed viewport.
-        // Give the browser 350ms to finish its layout before re-snapping.
-        _updateVhVariable();
-        setTimeout(() => {
-            _updateVhVariable();
-            _restoreToolsLayout();
-            if (typeof window.switchPlayPanel === 'function') {
-                window.switchPlayPanel(window._currentPlayPanel || 'board', false);
-            }
-        }, 350);
+        window.scheduleMobileViewportRecovery();
     }
 });
 

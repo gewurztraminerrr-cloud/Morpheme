@@ -1041,24 +1041,34 @@ body.theme-black .forum-action-btn {
         overflow-x: auto !important;
         scroll-snap-type: x mandatory !important;
         -webkit-overflow-scrolling: touch !important;
-        scroll-behavior: smooth !important;
+        scroll-behavior: auto !important;
         gap: 0 !important;
         width: 100% !important;
         height: calc(100vh - 120px) !important;
         box-sizing: border-box !important;
         border-radius: 0 !important;
         border: none !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .forum-container::-webkit-scrollbar {
+        display: none !important;
     }
     .forum-sidebar,
     .forum-main {
         flex: 0 0 100% !important;
         width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         height: 100% !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         border-top: none !important;
+        clip-path: inset(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
     .forum-sidebar {
         border-right: none !important;

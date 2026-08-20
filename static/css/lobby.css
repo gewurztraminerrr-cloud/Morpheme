@@ -1006,10 +1006,15 @@ body.theme-light-brown .field-hint {
         overflow-x: auto !important;
         scroll-snap-type: x mandatory !important;
         -webkit-overflow-scrolling: touch !important;
-        scroll-behavior: smooth !important;
+        scroll-behavior: auto !important;
         gap: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .lobby-grid::-webkit-scrollbar {
+        display: none !important;
     }
     
     .game-types-panel,
@@ -1017,12 +1022,17 @@ body.theme-light-brown .field-hint {
     .solo-friends-panel {
         flex: 0 0 100% !important;
         width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
         max-height: none !important;
         padding: 12px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        clip-path: inset(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
 
     .game-section,
