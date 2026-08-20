@@ -116,14 +116,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="preload" href="/css/style.css?v=33077" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33077" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33077">
-    <link rel="stylesheet" href="/css/lobby.css?v=33077">
-    <link rel="stylesheet" href="/css/play.css?v=33077">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33077">
-    <link rel="stylesheet" href="/css/forum.css?v=33077">
-    <link rel="stylesheet" href="/css/donate.css?v=33077">
+    <link rel="preload" href="/css/style.css?v=33078" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33078" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33078">
+    <link rel="stylesheet" href="/css/lobby.css?v=33078">
+    <link rel="stylesheet" href="/css/play.css?v=33078">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33078">
+    <link rel="stylesheet" href="/css/forum.css?v=33078">
+    <link rel="stylesheet" href="/css/donate.css?v=33078">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1020,9 +1020,59 @@
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="morpheme-spinner" style="width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-color, #ff007f); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                <div style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent-color, #ff007f); text-shadow: 0 0 10px rgba(255,0,127,0.4);">Loading...</div>
-            </div>
             <script>
+                // Immediate 0ms Lobby Stats Hydration
+                (function() {
+                    window.applyLobbyStatsToButtons = function(stats) {
+                        if (!stats) return;
+                        var buttons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
+                        for (var i = 0; i < buttons.length; i++) {
+                            var btn = buttons[i];
+                            var game = (btn.dataset.game || '').toLowerCase();
+                            var board = (btn.dataset.board || '').toLowerCase();
+                            var time = btn.dataset.time;
+                            if (!game || !board || !time) continue;
+                            var key = game + '|' + board + '|' + time;
+                            var count = (stats[key] !== undefined) ? stats[key] : 0;
+                            var rawText = btn.textContent || '';
+                            var normalizedText = rawText.replace(/\s+/g, ' ').trim();
+                            var newNormalized = /\[\d+\]/.test(normalizedText)
+                                ? normalizedText.replace(/\[\d+\]/, '[' + count + ']')
+                                : (normalizedText + ' [' + count + ']');
+                            if (normalizedText !== newNormalized) {
+                                btn.textContent = newNormalized;
+                            }
+                        }
+                    };
+
+                    try {
+                        var cached = localStorage.getItem('morpheme_cached_lobby_stats');
+                        if (cached) {
+                            var parsed = JSON.parse(cached);
+                            if (parsed) {
+                                if (document.readyState === 'loading') {
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        window.applyLobbyStatsToButtons(parsed);
+                                    });
+                                } else {
+                                    window.applyLobbyStatsToButtons(parsed);
+                                }
+                            }
+                        }
+                    } catch(e) {}
+
+                    // Fetch fresh stats immediately in the background on startup
+                    fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data && data.stats) {
+                                try { localStorage.setItem('morpheme_cached_lobby_stats', JSON.stringify(data.stats)); } catch(e) {}
+                                window.applyLobbyStatsToButtons(data.stats);
+                            }
+                        })
+                        .catch(function() {});
+                })();
+
                 window.handleEnterLobbyClick = function(btn, evt) {
                     var gb = btn || document.getElementById('btn-enter-lobby-gateway');
                     if (gb) {
@@ -1050,6 +1100,12 @@
                     var navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
                     if (navBtn && typeof window.updateActiveNav === 'function') {
                         window.updateActiveNav(navBtn);
+                    }
+                    if (typeof window.fetchLobbyStats === 'function') {
+                        window.fetchLobbyStats('all');
+                    }
+                    if (typeof window.startStatsPolling === 'function') {
+                        window.startStatsPolling();
                     }
                 };
             </script>
@@ -5867,18 +5923,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33077"></script>
-    <script src="/js/forum.js?v=33077"></script>
-    <script src="/js/app.js?v=33077"></script>
-    <script src="/js/lobby.js?v=33077"></script>
-    <script src="/js/play.js?v=33077"></script>
-    <script src="/js/tournaments.js?v=33077"></script>
-    <script src="/js/leaderboard.js?v=33077"></script>
-    <script src="/js/tools.js?v=33077"></script>
-    <script src="/js/mouse_selection.js?v=33077"></script>
-    <script src="/js/mods.js?v=33077"></script>
-    <script src="/js/private_matches.js?v=33077"></script>
-    <script src="/js/donate.js?v=33077"></script>
+    <script src="/js/settings.js?v=33078"></script>
+    <script src="/js/forum.js?v=33078"></script>
+    <script src="/js/app.js?v=33078"></script>
+    <script src="/js/lobby.js?v=33078"></script>
+    <script src="/js/play.js?v=33078"></script>
+    <script src="/js/tournaments.js?v=33078"></script>
+    <script src="/js/leaderboard.js?v=33078"></script>
+    <script src="/js/tools.js?v=33078"></script>
+    <script src="/js/mouse_selection.js?v=33078"></script>
+    <script src="/js/mods.js?v=33078"></script>
+    <script src="/js/private_matches.js?v=33078"></script>
+    <script src="/js/donate.js?v=33078"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
