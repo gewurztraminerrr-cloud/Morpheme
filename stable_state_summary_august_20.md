@@ -9,47 +9,47 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `a2a2f28b584fe3d100344d5db07e682ebaa5d87a` (`a2a2f28`)
-* **Asset Version**: `v=33086`
+* **Commit ID**: `38d0f9167e4113e6fa189c43ef74070a7587df1c` (`38d0f91`)
+* **Asset Version**: `v=33087`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Restored 3D Physical Flattening Animation on ENTER LOBBY Button (`templates/index.html`, `static/js/app.js`)
+### A. Restored Slow Gold Flash on Spinner Set Parameters (`static/css/play.css`, `static/js/play.js`)
+- **Slow Gold Glow & Hold**: When intermission reaches the 0:45 parameter reveal mark, `.game-params`, `.spinner-set-label`, and all child elements immediately snap to bright gold (`#ffd700`) with a radiant dual-layer text glow (`text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7)`), hold gold slowly across the first 30% of the animation, and smoothly fade back to default readable colors over 4.5 seconds.
+- **Universal Child Inheritance**: Applied animation directly to `.game-params.reveal-new *` and `.spinner-set-label.reveal-new *` so all difficulty, time, dimension, and dictionary labels inherit the full gold flash.
+
+### B. Restored 3D Physical Flattening Animation on ENTER LOBBY Button (`templates/index.html`, `static/js/app.js`)
 - **Instant Press Sinking**: Added `onpointerdown`, `onmousedown`, and `ontouchstart` handlers to `#btn-enter-lobby-gateway` that immediately sink and flatten the 3D button into its socket housing (`.pressed`, `.flattened`).
 - **280ms Tactile Transition**: Preserved the 280ms transition window so the physical flattening animation is visibly seen and felt while audio initiates before the viewport transitions smoothly into `#page-lobby`.
 
-### B. Thread-Safe Player Joining & Duplicate User Elimination (`game_room.py`, `static/js/play.js`, `app.py`)
+### C. Thread-Safe Player Joining & Duplicate User Elimination (`game_room.py`, `static/js/play.js`, `app.py`)
 - **Synchronized Roster Mutex**: Guarded `add_player` with `with self._state_lock:`, eliminating race conditions when parallel join/state polling requests arrive simultaneously.
 - **Strict User & Username Deduplication**: Pruned `self.players` against matching `user_id` or case-insensitive `username` across all persistence paths (rejoiners, past_players, quitters, and new players), preventing duplicate player rows and redundant `"has entered the room"` chat broadcasts.
 - **Client-Side Deduplication Layer**: Added deduplication directly into `play.js` (`updatePlayers`) before sorting and rendering, guaranteeing the active Players list displays exactly one row per player.
 
-### C. Instant 0ms Player Count Updates & Fast 1s Real-Time Auto-Polling (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`, `app.py`)
+### D. Instant 0ms Player Count Updates & Fast 1s Real-Time Auto-Polling (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`, `app.py`)
 - **Instant Gateway-to-Lobby Fetch**: Added immediate inline fetching on the initial **ENTER LOBBY** click and wired direct stats loading inside `showPage('page-lobby')` so player counts populate instantly without waiting for async script execution.
 - **1-Second Real-Time Auto-Polling**: Doubled the auto-polling frequency on the lobby page from 2s down to **1s**, synchronizing live player counts across devices with sub-second responsiveness.
 - **Active Polling Verification**: Updated `/api/lobby-stats` to only count players actively polling within 15s (`now - p.last_active <= 15`). Inactive or disconnected tabs that left without a clean exit handshake no longer linger in the lobby count.
 - **Eliminated Stale LocalStorage Stats**: Removed localStorage caching of player counts so buttons always reflect pure, authoritative live server data ($[0]$ on empty rooms, $[1]$ when 1 player is active).
 - **Deduplicated User Aggregation**: Aggregated unique human player IDs per game configuration (`set(user_id)`), guaranteeing that duplicate room instances or transient ghost states never inflate player counts.
 
-### D. Accelerated Room Join Handshake & Snappy Toast Feedback (`app.py`, `static/js/lobby.js`, `templates/index.html`)
+### E. Accelerated Room Join Handshake & Snappy Toast Feedback (`app.py`, `static/js/lobby.js`, `templates/index.html`)
 - **Sub-30ms Room Join Handshake**: Consolidated user rating, games played, and flag database queries into a single optimized SQLite transaction during `/api/room/create` and made previous room departure non-blocking in the background.
 - **Brisk Toast Notification**: Reduced the toast display duration from 3.5 seconds down to **1.5 seconds** (with 200ms smooth fade), delivering an immediate confirmation that dismisses cleanly without lingering or obstructing gameplay.
 
-### E. Non-Reverting Gateway & Startup Initialization Flow (`templates/index.html`, `static/js/app.js`)
+### F. Non-Reverting Gateway & Startup Initialization Flow (`templates/index.html`, `static/js/app.js`)
 - **Protected Gateway Passage**: Added `window._gatewayPassed` tracking and active page checks during `app.js` async bootstrap so that once a user clicks **ENTER LOBBY** or clicks **Start [N]**, the asynchronous startup sequence never resets the page back to `#page-loading`.
 
-### F. Restored Desktop Lobby Panel Vertical Height & Top Alignment (`templates/index.html`, `static/css/lobby.css`)
+### G. Restored Desktop Lobby Panel Vertical Height & Top Alignment (`templates/index.html`, `static/css/lobby.css`)
 - **Eliminated Vertical Gap**: Scoped flex-centering strictly to `#page-loading.active` and set `.page.active` to `display: block;`. The lobby panels now sit immediately below the top menu bar (`margin-top: 0; height: calc(100vh - 100px);`), eliminating the unwanted vertical gap and restoring the full vertical length of the desktop lobby layout.
 
-### G. Instant 0ms Room Entry & Direct Server Hydration (`app.py`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
+### H. Instant 0ms Room Entry & Direct Server Hydration (`app.py`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
 - **Direct 1-Roundtrip Handshake**: Replaced the previous 3-step serial waterfall (`/api/rooms` list query $\rightarrow$ wait $\rightarrow$ `/api/room/join` $\rightarrow$ wait $\rightarrow$ `/api/room/create`) with a direct, single-call endpoint that joins or creates the room immediately in $<30\text{ms}$.
 - **Immediate Visual Switch**: Clicking "Start" switches to the play page immediately, clearing stale match caches and pre-hydrating the board instantly from the response's embedded `state`.
 - **Eviction Race Condition Protection**: Expanded `_emptyPlayersPollCount` tolerance from 3 to 10 polls so transient initial roster handshakes never falsely kick a joining player back to the lobby.
-
-### H. Restored Clean Slow Gold Flash at 0:45 Intermission (`static/css/play.css`, `static/js/play.js`)
-- **Smooth Gold Flash (No Pulsating/Scaling)**: Removed all transform/scaling and pulsating keyframes. When the 0:45 intermission mark is reached, the parameter labels cleanly snap to bright gold (`#ffd700`) with a gold text shadow, hold gold for 1 second, and smoothly fade back to normal text color over 4 seconds (`fadeGoldToNormal`).
-- **Clean Selector Targeting**: Restricted `.reveal-new` strictly to parameter elements (`.game-params`, `.spinner-set-label`, `.header-meta`), avoiding entire page or modal flash.
 
 ### I. Safari Instant 0ms First-Paint Engine (`templates/index.html`, `static/js/app.js`, `app.py`)
 - **Inlined Critical First-Paint CSS**: Core page styling, background, layout, and 3D **ENTER LOBBY** gateway button styles are embedded directly in `<head>`, allowing WebKit/Safari to paint the gateway screen on frame 0 without waiting for external stylesheets.
