@@ -2089,83 +2089,78 @@ window.addEventListener('pagehide', (e) => {
 // Fixes the "half window / split screen frozen midway" bug on iOS/Android PWA and mobile browsers.
 // When minimizing/returning to Morpheme or when the Android/iOS system banner
 // ("To exit full screen, drag from the top...") appears/disappears, the viewport dimensions
-// shift and can interrupt smooth scroll animations midway.
-// This engine forces an immediate multi-pass re-snap across all active mobile panel containers.
+// shift and can leave horizontal panels misaligned.
+// This engine safely aligns panels when the app resumes, without interfering with active swipe gestures.
+
+let _isUserTouching = false;
+window.addEventListener('touchstart', () => { _isUserTouching = true; }, { passive: true, capture: true });
+window.addEventListener('touchend', () => { setTimeout(() => { _isUserTouching = false; }, 300); }, { passive: true, capture: true });
+window.addEventListener('touchcancel', () => { setTimeout(() => { _isUserTouching = false; }, 300); }, { passive: true, capture: true });
 
 function _updateVhVariable() {
     document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
 }
 
 function _restoreAllMobilePanels() {
+    // If the user is currently touching or swiping, never override their scroll position!
+    if (_isUserTouching) return;
+
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
     
     _updateVhVariable();
 
     // 1. Play Page (.play-grid)
-    if (typeof window._restorePlayPanel === 'function') {
+    const playGrid = document.querySelector('.play-grid');
+    if (playGrid && typeof window._restorePlayPanel === 'function') {
         window._restorePlayPanel();
-    } else if (typeof window.switchPlayPanel === 'function') {
-        window.switchPlayPanel(window._currentPlayPanel || 'board', false);
     }
 
-    // 2. Lobby Page (.lobby-grid)
-    const lobbyGrid = document.querySelector('.lobby-grid');
-    if (lobbyGrid) {
-        const mainPanel = document.getElementById('mobile-panel-main');
-        if (mainPanel) {
-            lobbyGrid.scrollLeft = mainPanel.offsetLeft;
-        }
-    }
-
-    // 3. Tools / Settings / Mods (.tools-split-layout)
+    // 2. Tools / Settings / Mods (.tools-split-layout)
     document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
         const activePane = layoutEl.querySelector('.tools-content .tool-pane.active, .mod-details.active');
         const targetLeft = activePane ? (layoutEl.clientWidth || layoutEl.scrollWidth) : 0;
         layoutEl.scrollLeft = targetLeft;
     });
 
-    // 4. Forum Page (.forum-container)
+    // 3. Forum Page (.forum-container)
     const forumContainer = document.querySelector('.forum-container');
     if (forumContainer) {
         const activeThread = document.querySelector('.thread-view:not(.hidden), .create-thread-view:not(.hidden)');
         if (activeThread) {
             const mainContent = forumContainer.querySelector('.forum-main');
             if (mainContent) forumContainer.scrollLeft = mainContent.offsetLeft;
-        } else {
-            forumContainer.scrollLeft = 0;
         }
     }
 }
 
-// Multi-phase recovery (immediate, next frame, 60ms, 150ms, 300ms, 500ms) to ensure layout locks accurately
-// throughout the entire Android/iOS system banner and window minimize/restore animations.
+let _viewportRecoveryTimers = [];
 window.scheduleMobileViewportRecovery = function() {
+    _viewportRecoveryTimers.forEach(clearTimeout);
+    _viewportRecoveryTimers = [];
+
     _restoreAllMobilePanels();
-    requestAnimationFrame(_restoreAllMobilePanels);
-    setTimeout(_restoreAllMobilePanels, 60);
-    setTimeout(_restoreAllMobilePanels, 150);
-    setTimeout(_restoreAllMobilePanels, 300);
-    setTimeout(_restoreAllMobilePanels, 500);
+    _viewportRecoveryTimers.push(setTimeout(_restoreAllMobilePanels, 100));
+    _viewportRecoveryTimers.push(setTimeout(_restoreAllMobilePanels, 350));
 };
 
-// Initialize immediately and bind across all relevant system events
+// Initialize immediately and bind across system lifecycle events
 _updateVhVariable();
-window.addEventListener('resize', window.scheduleMobileViewportRecovery, { passive: true });
-window.addEventListener('orientationchange', window.scheduleMobileViewportRecovery, { passive: true });
-window.addEventListener('focus', window.scheduleMobileViewportRecovery, { passive: true });
-window.addEventListener('pageshow', window.scheduleMobileViewportRecovery, { passive: true });
-document.addEventListener('fullscreenchange', window.scheduleMobileViewportRecovery, { passive: true });
-document.addEventListener('webkitfullscreenchange', window.scheduleMobileViewportRecovery, { passive: true });
-
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', window.scheduleMobileViewportRecovery, { passive: true });
-    window.visualViewport.addEventListener('scroll', window.scheduleMobileViewportRecovery, { passive: true });
-}
+window.addEventListener('resize', () => {
+    _updateVhVariable();
+    if (!_isUserTouching) {
+        scheduleMobileViewportRecovery();
+    }
+}, { passive: true });
+window.addEventListener('orientationchange', scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('focus', scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('pageshow', scheduleMobileViewportRecovery, { passive: true });
+document.addEventListener('fullscreenchange', scheduleMobileViewportRecovery, { passive: true });
+document.addEventListener('webkitfullscreenchange', scheduleMobileViewportRecovery, { passive: true });
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        window.scheduleMobileViewportRecovery();
+        scheduleMobileViewportRecovery();
     }
 });
 

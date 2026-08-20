@@ -48,21 +48,8 @@ window._restorePlayPanel = function() {
         
         playGrid.addEventListener('scroll', updateActivePanelTrack, { passive: true });
         if ('onscrollend' in window) {
-            playGrid.addEventListener('scrollend', () => {
-                updateActivePanelTrack();
-                window._restorePlayPanel();
-            }, { passive: true });
+            playGrid.addEventListener('scrollend', updateActivePanelTrack, { passive: true });
         }
-        playGrid.addEventListener('touchend', () => {
-            setTimeout(() => {
-                updateActivePanelTrack();
-                window._restorePlayPanel();
-            }, 60);
-        }, { passive: true });
-        playGrid.addEventListener('touchcancel', () => {
-            updateActivePanelTrack();
-            window._restorePlayPanel();
-        }, { passive: true });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _attachTracker);
