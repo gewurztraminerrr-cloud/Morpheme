@@ -47,12 +47,13 @@ function showLobbyToast(message, type = 'info') {
     toast.style.display = 'block';
 
     if (window._lobbyToastTimeout) clearTimeout(window._lobbyToastTimeout);
+    const duration = (type === 'error') ? 3000 : 1500;
     window._lobbyToastTimeout = setTimeout(() => {
         if (toast) {
             toast.style.opacity = '0';
-            setTimeout(() => { toast.style.display = 'none'; }, 300);
+            setTimeout(() => { toast.style.display = 'none'; }, 200);
         }
-    }, 3500);
+    }, duration);
 }
 window.showLobbyToast = showLobbyToast;
 
@@ -68,7 +69,7 @@ async function enterLobbyRoom(rawBtn) {
         showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
 
         if (window.currentRoomId && window.leaveCurrentRoom) {
-            try { await window.leaveCurrentRoom(); } catch (e) {}
+            try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
         }
         window.currentRoomId = null;
 

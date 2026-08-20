@@ -3489,46 +3489,35 @@ def create_room():
         # Use the actual ID (could be existing one if singleton)
         room_id = room.room_id
         
-        # Get configuration-specific rating
+        # Get configuration-specific rating & stats in 1 single connection
         config_key = f"{game_type}|{board_dimensions}|{time_limit}"
-        rating = 1200  # Default
+        rating = 1200
+        games_played = 0
+        country_flag = '🏳️'
         
         if session.get('is_guest', False):
             rating = 0
         else:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            # 24-hour rooms exception: load global rating from users table
-            is_24h = (int(time_limit) >= 7200)
-            if is_24h:
-                cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-                row = cursor.fetchone()
-                if row:
-                    rating = row[0]
-                else:
-                    rating = 1200
-            else:
-                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                    (session['user_id'], config_key))
-                row = cursor.fetchone()
-                if row:
-                    rating = row[0]
-                else:
-                    rating = 1200
-            conn.close()
-
-        # Get extra stats (games_played, country_flag)
-        games_played = 0
-        country_flag = '🏳️'
-        if not session.get('is_guest', False):
-            conn = sqlite3.connect(DB_PATH, timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=10)
             try:
-                 cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
-                 row = cur.fetchone()
-                 if row:
-                     games_played = row[0]
-                     if row[1]: country_flag = row[1]
-            except: pass
-            conn.close()
+                cur = conn.execute('SELECT rating, games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
+                u_row = cur.fetchone()
+                if u_row:
+                    rating = u_row[0] if u_row[0] is not None else 1200
+                    games_played = u_row[1] if u_row[1] is not None else 0
+                    if u_row[2]: country_flag = u_row[2]
+                
+                is_24h = (int(time_limit) >= 7200)
+                if not is_24h:
+                    r_cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
+                                         (session['user_id'], config_key))
+                    r_row = r_cur.fetchone()
+                    if r_row and r_row[0] is not None:
+                        rating = r_row[0]
+            except Exception as e:
+                print(f"[create_room] user stats query warning: {e}")
+            finally:
+                conn.close()
         
         room.add_player(session['user_id'], session['username'], rating, 
                         games_played=games_played, country_flag=country_flag, 
