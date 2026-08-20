@@ -3474,8 +3474,8 @@ def create_room():
             if min_rating > 0 or max_rating < 9999:
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
-        # 24h rooms are permanent singletons per dimension; custom rooms get unique IDs
-        if int(time_limit) >= 7200:
+        # Accumulative and 24h rooms are permanent singletons per dimension; custom FCFS/Split rooms get unique IDs
+        if str(game_type).lower() == 'accumulative' or int(time_limit) >= 7200:
             generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
         else:
             generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
@@ -3752,6 +3752,7 @@ def list_rooms():
 def get_lobby_stats():
     """Get aggregated player counts for all game configurations"""
     stats = {}
+    config_humans = {}  # key -> set(user_id)
     
     for room in list(room_manager.rooms.values()):
         try:
@@ -3773,11 +3774,15 @@ def get_lobby_stats():
             # Create a unique key for this configuration (case-insensitive)
             key = f"{str(room.game_type).lower()}|{str(room.board_dimensions).lower()}|{t_lim}"
             
-            if key not in stats:
-                stats[key] = 0
-            stats[key] += len(humans)
+            if key not in config_humans:
+                config_humans[key] = set()
+            for h in humans:
+                config_humans[key].add(str(h.user_id))
         except Exception as err:
             print(f"[get_lobby_stats] Error processing room {getattr(room, 'room_id', 'unknown')}: {err}")
+    
+    for key, user_set in config_humans.items():
+        stats[key] = len(user_set)
     
     return jsonify({'stats': stats})
 
