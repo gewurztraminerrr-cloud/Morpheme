@@ -651,15 +651,23 @@ function ensureLoadingCardStyles() {
         boardEl.style.flexDirection = 'column';
         boardEl.style.alignItems = 'center';
         boardEl.style.justifyContent = 'center';
-        boardEl.style.gridTemplateColumns = '';
-        boardEl.style.gridTemplateRows = '';
+        boardEl.style.gridTemplateColumns = 'none';
+        boardEl.style.gridTemplateRows = 'none';
+        boardEl.style.removeProperty('grid-template-columns');
+        boardEl.style.removeProperty('grid-template-rows');
+        boardEl.style.removeProperty('--board-cols');
+        boardEl.style.removeProperty('--board-rows');
         boardEl.style.width = '100%';
         boardEl.style.maxWidth = '100%';
         boardEl.style.margin = '0 auto';
-        boardEl.style.padding = '16px';
+        boardEl.style.padding = '16px 8px';
         boardEl.style.background = 'transparent';
         boardEl.style.border = 'none';
         boardEl.style.boxSizing = 'border-box';
+    }
+    const boardPanel = boardEl ? boardEl.closest('.board-panel') : null;
+    if (boardPanel) {
+        boardPanel.classList.remove('full-bleed-mobile');
     }
 }
 
@@ -4561,6 +4569,9 @@ function updateSpecialMatchTimer(seconds) {
 }
 
 function renderBoard(board, grayed = false, is3D = false, state = null) {
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return;
+
     if (!grayed) {
         window.intermissionTileFilter = null;
         const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
@@ -4569,25 +4580,38 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-    const boardEl = document.getElementById('game-board');
-    if (!boardEl || !board) return;
+    // Handle Empty/Loading State
+    // Check if board has any actual letter content
+    let hasLetters = false;
+    if (is3D) {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
+        }
+    } else {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
+        }
+    }
 
     // Determine dimensions early
     let rows = 0;
     let cols = 0;
-    if (board && board.length > 0) {
+    if (hasLetters && board && board.length > 0) {
         rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
         cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
     }
 
-    if (cols > 0 && rows > 0) {
+    if (hasLetters && cols > 0 && rows > 0) {
         boardEl.style.setProperty('--board-cols', cols);
         boardEl.style.setProperty('--board-rows', rows);
+    } else {
+        boardEl.style.removeProperty('--board-cols');
+        boardEl.style.removeProperty('--board-rows');
     }
 
     const boardPanel = boardEl.closest('.board-panel');
     if (boardPanel) {
-        if (is3D || !board || board.length === 0) {
+        if (is3D || !board || board.length === 0 || !hasLetters) {
             boardPanel.classList.remove('full-bleed-mobile');
         } else {
             boardPanel.classList.add('full-bleed-mobile');
@@ -4613,19 +4637,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         else transposeBtn.classList.remove('hidden');
     }
 
-    // Handle Empty/Loading State
-    // Check if board has any actual letter content
-    let hasLetters = false;
-    if (is3D) {
-        if (Array.isArray(board) && board.length > 0) {
-            hasLetters = board.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
-        }
-    } else {
-        if (Array.isArray(board) && board.length > 0) {
-            hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
-        }
-    }
-    
     // Clear loading interval if board has content
     if (hasLetters && window.boardLoadingInterval) {
         clearInterval(window.boardLoadingInterval);

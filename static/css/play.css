@@ -862,7 +862,11 @@ body.theme-light-brown .player-score-val {
 .board-panel #game-board.game-board-loading,
 .board-panel.full-bleed-mobile #game-board.game-board-loading,
 .board-panel .game-board-loading,
-.board-panel.full-bleed-mobile .game-board-loading {
+.board-panel.full-bleed-mobile .game-board-loading,
+#game-board:has(.loading-container),
+.game-board:has(.loading-container),
+.board-panel #game-board:has(.loading-container),
+.board-panel.full-bleed-mobile #game-board:has(.loading-container) {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -873,9 +877,9 @@ body.theme-light-brown .player-score-val {
     grid-row: 1 / -1 !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 320px !important;
+    min-height: 240px !important;
     height: auto !important;
-    padding: 16px !important;
+    padding: 16px 8px !important;
     background: transparent !important;
     border: none !important;
     box-sizing: border-box !important;
@@ -893,12 +897,14 @@ body.theme-light-brown .player-score-val {
     50%       { opacity: 1;   text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
 }
 .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 440px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 440px !important;
     min-height: 240px;
     color: var(--text-primary);
     background: rgba(10, 15, 30, 0.85);
@@ -906,11 +912,11 @@ body.theme-light-brown .player-score-val {
     border-radius: 16px;
     backdrop-filter: blur(10px);
     padding: 20px 16px;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    text-align: center;
+    text-align: center !important;
     overflow: hidden;
-    margin: 0 auto;
+    margin: 0 auto !important;
 }
 .glow-spinner {
     width: 42px;
@@ -976,13 +982,19 @@ body.theme-light-brown .player-score-val {
     .board-panel #game-board.game-board-loading,
     .board-panel.full-bleed-mobile #game-board.game-board-loading,
     .board-panel .game-board-loading,
-    .board-panel.full-bleed-mobile .game-board-loading {
+    .board-panel.full-bleed-mobile .game-board-loading,
+    #game-board:has(.loading-container),
+    .game-board:has(.loading-container),
+    .board-panel #game-board:has(.loading-container),
+    .board-panel.full-bleed-mobile #game-board:has(.loading-container) {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
+        grid-column: 1 / -1 !important;
+        grid-row: 1 / -1 !important;
         width: 100% !important;
         max-width: 100% !important;
         padding: 8px !important;
@@ -990,7 +1002,7 @@ body.theme-light-brown .player-score-val {
         margin: 0 auto !important;
         float: none !important;
     }
-    .loading-container { padding: 14px 10px; min-height: 190px; max-width: 100%; }
+    .loading-container { padding: 14px 10px; min-height: 190px; max-width: 100% !important; width: 100% !important; }
     .glow-spinner { width: 32px; height: 32px; border-width: 2px; margin-bottom: 10px; }
     .glow-title { font-size: 0.82rem; letter-spacing: 1px; white-space: normal; }
     .status-ticker { font-size: 0.62rem; margin-top: 8px; padding: 4px 8px; white-space: normal; max-width: 96%; }
