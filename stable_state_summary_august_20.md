@@ -9,15 +9,16 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `706b04a621bead91b97951a84f3ddb30e10b14ea` (`706b04a`)
-* **Asset Version**: `v=33078`
+* **Commit ID**: `a33aaf373a0e14a1db39276fa8fb6f5ca0872659` (`a33aaf3`)
+* **Asset Version**: `v=33079`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Instant 0ms Lobby User Counts Pre-Hydration (`templates/index.html`, `static/js/lobby.js`)
+### A. Instant 0ms Lobby User Counts Pre-Hydration & Gateway DOM Hierarchy (`templates/index.html`, `static/js/lobby.js`)
 - **Immediate Frame 0 Hydration**: Automatically pre-populates all lobby room buttons (`Start [N]`, `Show Rooms [N]`) with last known player counts stored in `localStorage` on initial HTML parse, and fires an instant background fetch to `/api/lobby-stats` on startup to synchronize live counts without any visual lag.
+- **Fixed Gateway DOM Tag Hierarchy**: Properly closed `#loading-spinner-container` and `#page-loading` container `<div>` tags so that navigating from the gateway page to `#page-lobby` renders the full lobby panels cleanly.
 - **Auto-Sync on Entry**: Clicking **ENTER LOBBY** immediately triggers a full refresh of player counts across all modes (`Accumulative`, `FCFS`, `Split`), keeping counts live and accurate.
 
 ### B. Instant Single-Press ENTER LOBBY Transition (`templates/index.html`, `static/js/app.js`)
