@@ -9,8 +9,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `33cbe54f59e95faea93d693f18e9c0c1b7e408ec` (`33cbe54`)
-* **Asset Version**: `v=33092`
+* **Commit ID**: `7ae287fe0a6b7d1e8c757dc71694f4cbeab92f58` (`7ae287f`)
+* **Asset Version**: `v=33093`
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 
 ---
@@ -127,11 +127,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Replaced low-opacity, washed-out text with vibrant high-contrast badges: bold gold headers (`#ffd700`), crisp green found word badges (`#4ade80`, `rgba(46, 204, 113, 0.25)`), readable coral missed word badges (`#fca5a5`, `rgba(239, 68, 68, 0.2)`), and high-legibility timestamps (`#94a3b8`).
   - Increased font sizes and padding across active round solution pills and session history cards for effortless touch selection and clarity on mobile devices.
 
-### W. Mobile Minimizing, Fullscreen Prompt & Split-Screen Freeze Resolution (`static/css/lobby.css`, `static/css/forum.css`, `static/css/play.css`, `static/js/app.js`, `static/js/play.js`, `templates/index.html`)
+### W. Mobile Minimizing, Fullscreen Prompt & Touch-Safe Panel Snapping (`static/css/lobby.css`, `static/css/forum.css`, `static/css/play.css`, `static/js/app.js`, `static/js/play.js`, `templates/index.html`)
 - **Root Cause**: When mobile devices minimized/restored the app or displayed Android's immersive fullscreen prompt banner ("*To exit full screen, drag from the top...*"), viewport resizes interrupted CSS smooth scroll animations midway, causing horizontal panel containers (`.play-grid`, `.lobby-grid`, `.tools-split-layout`, `.forum-container`) to get frozen halfway between two snap points.
 - **Resolution**:
   - Replaced `scroll-behavior: smooth` with `scroll-behavior: auto !important` and enforced strict `scroll-snap-stop: always`, `clip-path: inset(0)`, and hardware-accelerated backface culling across all mobile grid containers.
-  - Implemented a unified, multi-phase mobile viewport recovery engine (`scheduleMobileViewportRecovery()`) that immediately re-snaps active panels across `visibilitychange` (app resume), `focus`, `pageshow`, `resize`, `visualViewport`, `fullscreenchange`, and interrupted touch gestures (`touchcancel` / `touchend`).
+  - Implemented a unified mobile viewport recovery engine (`scheduleMobileViewportRecovery()`) that realigns active panels across `visibilitychange` (app resume), `focus`, `pageshow`, `resize`, `orientationchange`, and `fullscreenchange`.
+  - Added active touch-gesture guards (`_isUserTouching`) and disabled `visualViewport.scroll` overrides so programmatic snaps never fire during user swipes, guaranteeing 100% smooth, natural, and jitter-free horizontal sliding on mobile devices.
 
 ---
 
