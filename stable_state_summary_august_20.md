@@ -9,15 +9,17 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `f65615a97bc4aeb9cb384fdf5049cf1c26027a42` (`f65615a`)
-* **Asset Version**: `v=33083`
+* **Commit ID**: `01a1054b172a6e0339906ae9ae8b9e6ff8d4948a` (`01a1054`)
+* **Asset Version**: `v=33084`
 
 ---
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Live Actively-Polling Player Counts & Zero Stale Caching (`app.py`, `templates/index.html`, `static/js/lobby.js`)
-- **Active Polling Verification**: Updated `/api/lobby-stats` to only count players who are actively connected and polling within the last 15 seconds (`now - p.last_active <= 15`). Inactive or disconnected tabs that left without a clean exit handshake no longer linger in the lobby count.
+### A. Instant 0ms Player Count Updates & Fast 1s Real-Time Auto-Polling (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`, `app.py`)
+- **Instant Gateway-to-Lobby Fetch**: Added immediate inline fetching on the initial **ENTER LOBBY** click and wired direct stats loading inside `showPage('page-lobby')` so player counts populate instantly without waiting for async script execution.
+- **1-Second Real-Time Auto-Polling**: Doubled the auto-polling frequency on the lobby page from 2s down to **1s**, synchronizing live player counts across devices with sub-second responsiveness.
+- **Active Polling Verification**: Updated `/api/lobby-stats` to only count players actively polling within 15s (`now - p.last_active <= 15`). Inactive or disconnected tabs that left without a clean exit handshake no longer linger in the lobby count.
 - **Eliminated Stale LocalStorage Stats**: Removed localStorage caching of player counts so buttons always reflect pure, authoritative live server data ($[0]$ on empty rooms, $[1]$ when 1 player is active).
 - **Deduplicated User Aggregation**: Aggregated unique human player IDs per game configuration (`set(user_id)`), guaranteeing that duplicate room instances or transient ghost states never inflate player counts.
 
@@ -91,10 +93,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - Bare-metal C engine running LCS and bitmask backtracking in CPU registers, taking search times from ~45 seconds down to **0.06s – 0.25s**.
 - Guaranteed 0MP subword extraction and uncapped results tables.
 
-### Q. Accumulative Lobby Real-Time Auto-Polling & Live Count Synchronization (`static/js/lobby.js`)
-- 2-second background auto-polling on the lobby page ensuring active player counts (`Start [0]` $\rightarrow$ `Start [1]`) synchronize across all connected computers.
-
-### R. Unscramble Tool Desktop & Laptop Full-Width Panel Expansion (`templates/index.html`, `static/css/play.css`)
+### Q. Unscramble Tool Desktop & Laptop Full-Width Panel Expansion (`templates/index.html`, `static/css/play.css`)
 - Expanded to `1200px` max-width with responsive font clamping so all 21-letter jumbled strings fit on a single line.
 
 ---
