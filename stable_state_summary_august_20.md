@@ -9,8 +9,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `bb63294b93e3034a37b5603291e0a13a9c4ecdfb` (`bb63294`)
-* **Asset Version**: `v=33089`
+* **Commit ID**: `0509539d09cce6d2524da57cbe84950cf39e7c5b` (`0509539`)
+* **Asset Version**: `v=33090`
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 
 ---
@@ -18,6 +18,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
 ### A. Restored Slow Gold Flash on Spinner Set Parameters (`static/css/play.css`, `static/js/play.js`)
+- **Scoped Strictly to Spinner Set**: Restricted the slow gold reveal animation strictly to the dynamic Spinner Set (`.game-params`: Diff, Min, Dict, Words, Format, Bonus), ensuring that the static constant room header above the timer (e.g. `ACCUMULATIVE 4x4 45S`) does not flash gold with the round parameters.
 - **Keyframe Specificity & W3C Compliance**: Resolved an issue where keyframes with `!important` inside the `@keyframes` block are ignored by browser CSS parsers. Converted `#param-diff` to use a CSS variable (`var(--diff-color)`) and eliminated hardcoded inline style overrides, and removed `!important` from `#param-bonus` so the animation smoothly takes over.
 - **Dedicated Keyframes**: Implemented `fadeGoldToNormal`, `fadeGoldToLime`, and `fadeGoldToDiff` so that:
   - **0%–30% (First ~1.4s)**: All Spinner Set parameter labels and values (Difficulty, Time, Dimensions, Dictionary, Word Range, Format, and Bonus Letter) immediately turn gold (`#ffd700`) with a radiant dual-layer text glow (`text-shadow: 0 0 15px rgba(255, 215, 0, 0.95), 0 0 30px rgba(255, 215, 0, 0.7)`).
