@@ -463,6 +463,8 @@ async function ejectToLobby(reason = "inactivity") {
     // 2. Stop poll and clear state
     stopPolling();
     window.currentRoomId = null;
+    window._wasEverInRoster = false;
+    window._emptyPlayersPollCount = 0;
     try {
         localStorage.removeItem('last_joined_room');
     } catch(e) {}
@@ -1479,8 +1481,8 @@ async function updateGameState(incomingState = null) {
 
         const is24H = (state.time_limit >= 7200);
 
-        // 24H MIDNIGHT RESET EVICTION: If we are in a 24H room and midnight reset occurred (or 12AM rollover intermission/TR=0 reached), eject user to lobby with clear modal!
-        if (is24H && (state.midnight_reset_occurred || state.state === 'intermission' || (state.time_remaining !== undefined && state.time_remaining <= 0))) {
+        // 24H MIDNIGHT RESET EVICTION: If we were actively established in the room and midnight reset occurred, eject user to lobby with clear modal!
+        if (is24H && window._wasEverInRoster && (state.midnight_reset_occurred || (state.state === 'active' && state.time_remaining !== undefined && state.time_remaining <= 0))) {
             console.warn(`[play.js] 24H daily midnight reset detected (midnightReset: ${state.midnight_reset_occurred}, state: ${state.state}, TR: ${state.time_remaining}). Ejecting to lobby.`);
             ejectToLobby("daily_reset");
             return;
