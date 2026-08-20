@@ -4655,6 +4655,9 @@ def lookup_wiki_definition_from_db(word):
     return None
 
 def get_definition_cached_or_online(w):
+    global DEFINITIONS_CACHE
+    if not DEFINITIONS_CACHE:
+        load_definitions()
     d = DEFINITIONS_CACHE.get(w)
     if not d:
         d = lookup_wiki_definition_from_db(w)
@@ -4726,36 +4729,22 @@ def format_resolved_definition(word_upper, visited=None):
     # Strip any leading (noun) from raw
     raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
 
-    target = extract_target_word(raw)
-    is_plural_or_verb = False
-    if target:
-        if re.search(r'(?i)\b(?:plural|participle|past|tense|third-person|conjugation)\s+of', raw):
-            is_plural_or_verb = True
+    # Comprehensive pointer pattern: matches "plural of X", "diminutive of X", "synonym of X", etc.
+    pointer_pattern = re.compile(
+        r'(?i)\b((?:plural|present participle|past participle|simple past|past tense|past|third-person singular simple present indicative|third-person singular present|third-person singular|conjugation|gerund|alternative form|alternative spelling|variant form|variant spelling|variant|diminutive|diminutive form|synonym|synonym for|comparative form|comparative|superlative form|superlative|female equivalent|feminine form|masculine form|agent noun|frequentative|verbal noun|spelling)\s+(?:of|for)\s+)([a-zA-Z\-]+)',
+        re.DOTALL
+    )
 
-    if is_plural_or_verb:
-        resolved = format_resolved_definition(target, visited)
-        if resolved:
-            resolved = re.sub(r'^\s*\(noun\)\s*', '', resolved.strip(), flags=re.IGNORECASE)
-            m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', resolved, re.IGNORECASE)
-            if m:
-                pos = m.group(1).lower()
-                meaning = m.group(2).strip()
-                if pos == 'noun':
-                    if 'plural' in raw.lower():
-                        return f"plural of {target.upper()} ({meaning})"
-                    else:
-                        return f"conjugation of {target.upper()} ({meaning})"
-                else:
-                    if 'plural' in raw.lower():
-                        return f"({pos}) plural of {target.upper()} ({meaning})"
-                    else:
-                        return f"({pos}) conjugation of {target.upper()} ({meaning})"
-            else:
-                if 'plural' in raw.lower():
-                    return f"plural of {target.upper()} ({resolved})"
-                else:
-                    return f"conjugation of {target.upper()} ({resolved})"
-        return resolved
+    m = pointer_pattern.search(raw)
+    if m:
+        target = m.group(2).upper()
+        if target != word_upper:
+            target_resolved = format_resolved_definition(target, visited.copy())
+            if target_resolved:
+                target_clean = re.sub(r'^\s*\(noun\)\s*', '', target_resolved.strip(), flags=re.IGNORECASE)
+                if target_clean and f"({target_clean})" not in raw:
+                    end_idx = m.end(2)
+                    raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
 
     # Check if raw starts with leading parenthesis (e.g. (verb) meaning, (hawaiian) meaning)
     m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', raw, re.IGNORECASE)
