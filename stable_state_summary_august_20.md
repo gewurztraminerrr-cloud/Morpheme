@@ -9,8 +9,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `2a4f93dc58b299e5ee6f50b4ec7563fbbba7aa18` (`2a4f93d`)
-* **Asset Version**: `v=33088`
+* **Commit ID**: `1e4e7a8ff4518ba80f6559d8d8ec5504dd905e25` (`1e4e7a8`)
+* **Asset Version**: `v=33089`
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 
 ---
@@ -112,6 +112,13 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ### T. Unscramble Tool Desktop & Laptop Full-Width Panel Expansion (`templates/index.html`, `static/css/play.css`)
 - Expanded to `1200px` max-width with responsive font clamping so all 21-letter jumbled strings fit on a single line.
+
+### U. Full-Width Centered Board Loading Card & Grid Containment Fix (`static/css/play.css`, `static/js/play.js`, `templates/index.html`)
+- **Root Cause**: When navigating to a multi-column room (e.g. 5x7, 6x8) before the initial board letters loaded, `#game-board` retained CSS grid styles (`display: inline-grid`, `--board-cols: 5`). The browser CSS grid layout treated `.loading-container` as a single grid cell occupying only Column 1 (~50px wide), causing the text ("`[PROCESSING] Connecting to Morpheme server...`") to scrunch vertically into a narrow strip. Clicking "Rotate" previously realigned it because the rotate handler reset the board styles.
+- **Resolution**:
+  - Added parent `:has(.loading-container)` and `grid-column: 1 / -1; width: 100% !important;` rules across desktop and mobile media queries in `play.css`.
+  - Updated `ensureLoadingCardStyles()` and `renderBoard()` in `play.js` to strip `grid-template-columns`, `grid-template-rows`, `--board-cols`, and `--board-rows` whenever rendering a loading state.
+  - Sized the loading container to full width and centered it cleanly on all screen sizes.
 
 ---
 
