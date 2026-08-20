@@ -349,10 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
-                // Robust interaction handlers: Flatten immediately on touch/click and transition
+                // Robust interaction handlers: Flatten and stay flattened when clicked / released
+                let transitionTimeout = null;
                 const triggerTransition = (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
-                    handleGatewayTransition(e);
+                    if (transitionTimeout) return;
+                    transitionTimeout = setTimeout(() => {
+                        handleGatewayTransition(e);
+                    }, 280);
                 };
                 window.handleEnterLobbyClick = (btn, evt) => {
                     triggerTransition(evt);
@@ -369,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.classList.add('pressed', 'flattened');
                 }, { passive: true });
 
-                // Trigger transition on release (mouseup / touchend / click)
+                // Trigger transition on release (mouseup / touchend / click) and stay flattened
                 gatewayBtn.addEventListener('mouseup', (e) => {
                     triggerTransition(e);
                 });
