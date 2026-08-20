@@ -4557,6 +4557,9 @@ def extract_target_word(definition_text):
 
 def clean_def_text(def_text):
     pos = 'n'
+    # Strip any leading (noun) tag
+    def_text = re.sub(r'^\s*\(noun\)\s*', '', def_text.strip(), flags=re.IGNORECASE)
+    
     # Default POS detection based on leading tag
     m = re.match(r'^\s*\((noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection)\)\s*(.*)', def_text, re.IGNORECASE)
     if m:
@@ -4595,7 +4598,10 @@ def lookup_raw_definition_online(word_upper):
                     if defs:
                         first_def = defs[0].get('definition', '')
                         if first_def:
-                            def_parts.append(f"({part_of_speech}) {first_def}")
+                            if part_of_speech.lower() == 'noun':
+                                def_parts.append(first_def)
+                            else:
+                                def_parts.append(f"({part_of_speech}) {first_def}")
                 if def_parts:
                     return "; ".join(def_parts)
     except Exception as e:
@@ -4624,7 +4630,10 @@ def lookup_raw_definition_online(word_upper):
                         text = re.sub(r"\s+", " ", text).strip()
                         text = html.unescape(text)
                         if text:
-                            def_parts.append(f"({part_of_speech}) {text}")
+                            if part_of_speech.lower() == 'noun':
+                                def_parts.append(text)
+                            else:
+                                def_parts.append(f"({part_of_speech}) {text}")
                 if def_parts:
                     return "; ".join(def_parts)
     except Exception as e:
@@ -4665,14 +4674,14 @@ def get_definition_cached_or_online_with_guess(w):
         # Try stripping 'S'
         r = w[:-1]
         if get_definition_cached_or_online(r):
-            DEFINITIONS_CACHE[w] = f"(noun) plural of {r}"
+            DEFINITIONS_CACHE[w] = f"plural of {r}"
             return DEFINITIONS_CACHE[w]
             
         # Try stripping 'ES'
         if w.endswith('ES'):
             r2 = w[:-2]
             if get_definition_cached_or_online(r2):
-                DEFINITIONS_CACHE[w] = f"(noun) plural of {r2}"
+                DEFINITIONS_CACHE[w] = f"plural of {r2}"
                 return DEFINITIONS_CACHE[w]
                 
     if w.endswith('ED'):
@@ -4714,6 +4723,9 @@ def format_resolved_definition(word_upper, visited=None):
     if not raw:
         return None
 
+    # Strip any leading (noun) from raw
+    raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
+
     target = extract_target_word(raw)
     is_plural_or_verb = False
     if target:
@@ -4723,24 +4735,38 @@ def format_resolved_definition(word_upper, visited=None):
     if is_plural_or_verb:
         resolved = format_resolved_definition(target, visited)
         if resolved:
+            resolved = re.sub(r'^\s*\(noun\)\s*', '', resolved.strip(), flags=re.IGNORECASE)
             m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', resolved, re.IGNORECASE)
             if m:
                 pos = m.group(1).lower()
-                meaning = m.group(2)
-                if 'plural' in raw.lower():
-                    return f"({pos}) plural of {target.upper()} ({meaning})"
+                meaning = m.group(2).strip()
+                if pos == 'noun':
+                    if 'plural' in raw.lower():
+                        return f"plural of {target.upper()} ({meaning})"
+                    else:
+                        return f"conjugation of {target.upper()} ({meaning})"
                 else:
-                    return f"({pos}) conjugation of {target.upper()} ({meaning})"
-            return resolved
+                    if 'plural' in raw.lower():
+                        return f"({pos}) plural of {target.upper()} ({meaning})"
+                    else:
+                        return f"({pos}) conjugation of {target.upper()} ({meaning})"
+            else:
+                if 'plural' in raw.lower():
+                    return f"plural of {target.upper()} ({resolved})"
+                else:
+                    return f"conjugation of {target.upper()} ({resolved})"
+        return resolved
 
-    # Check if raw starts with leading parenthesis (e.g. (noun) meaning)
+    # Check if raw starts with leading parenthesis (e.g. (verb) meaning, (hawaiian) meaning)
     m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', raw, re.IGNORECASE)
     if m:
         pos = m.group(1).lower()
         meaning = m.group(2).strip()
+        if pos == 'noun':
+            return meaning
         return f"({pos}) {meaning}"
 
-    # Convert legacy format to new format
+    # Convert legacy format to clean format (no leading '(noun)')
     meaning, pos = clean_def_text(raw)
     pos_map = {
         'n': 'noun',
@@ -4753,6 +4779,8 @@ def format_resolved_definition(word_upper, visited=None):
         'conj': 'conjunction'
     }
     pos_full = pos_map.get(pos, pos)
+    if pos_full == 'noun':
+        return meaning
     return f"({pos_full}) {meaning}"
 
 def lookup_word_definition_and_pronunciation(word):
