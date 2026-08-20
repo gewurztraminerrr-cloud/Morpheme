@@ -31,21 +31,80 @@
     <meta property="twitter:image" content="https://morpheme.games/static/images/morpheme.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-    <script>
-        // Automatic cache buster: Purge stale browser CacheStorage if version is below 33000
-        try {
-            if (localStorage.getItem('morpheme_script_v') !== '33000') {
-                localStorage.setItem('morpheme_script_v', '33000');
-                if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                        names.forEach(function(name) { caches.delete(name); });
-                    });
-                }
-            }
-        } catch(e) {}
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    
+    <style>
+        /* Safari Instant First-Paint Critical CSS */
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d0411;
+            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page {
+            display: none;
+        }
+        .page.active,
+        #page-loading.active {
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+        }
+        .gateway-btn-housing {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            background: linear-gradient(180deg, #18091f 0%, #0d0411 100%);
+            border: 2px solid rgba(255, 0, 127, 0.35);
+            border-radius: 60px;
+            box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.85), inset 0 1px 2px rgba(0, 0, 0, 0.95), 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 0, 127, 0.2);
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .neon-gateway-btn {
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            padding: 18px 52px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 3.5px;
+            border-radius: 50px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            transform: translateY(-12px);
+            box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -2px 3px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(255, 255, 255, 0.2), 0 1px 0 #e60073, 0 2px 0 #d10069, 0 3px 0 #bd005e, 0 4px 0 #a80054, 0 5px 0 #94004a, 0 6px 0 #800040, 0 7px 0 #6b0035, 0 8px 0 #57002b, 0 9px 0 #420021, 0 10px 0 #2e0017, 0 11px 0 #1f0010, 0 12px 0 #120009, 0 14px 20px rgba(0, 0, 0, 0.65), 0 20px 35px rgba(255, 0, 127, 0.4);
+            text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(255, 255, 255, 0.4), 0 0 14px rgba(255, 255, 255, 0.7);
+            transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
+        }
+        .neon-gateway-btn:active,
+        .neon-gateway-btn.pressed,
+        .neon-gateway-btn.flattened {
+            transform: translateY(0px) scale(0.985) !important;
+            background: linear-gradient(180deg, #c40062 0%, #aa0055 45%, #8a0045 100%) !important;
+            border-color: rgba(255, 0, 127, 0.4) !important;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.95), 0 0px 0 #2e0017, 0 4px 15px rgba(255, 0, 127, 0.25) !important;
+        }
+    </style>
 
-        // Immediate Absence Check: If user returns after > 1 hour (3600s), suppress Session Expired notice
+    <script>
+        // Non-blocking absence check
         try {
             var lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
             var now = Date.now();
@@ -56,14 +115,14 @@
             }
         } catch(e) {}
     </script>
-    <link rel="preload" href="/css/style.css?v=33072" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33072" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33072">
-    <link rel="stylesheet" href="/css/lobby.css?v=33072">
-    <link rel="stylesheet" href="/css/play.css?v=33072">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33072">
-    <link rel="stylesheet" href="/css/forum.css?v=33072">
-    <link rel="stylesheet" href="/css/donate.css?v=33072">
+    <link rel="preload" href="/css/style.css?v=33073" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33073" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33073">
+    <link rel="stylesheet" href="/css/lobby.css?v=33073">
+    <link rel="stylesheet" href="/css/play.css?v=33073">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33073">
+    <link rel="stylesheet" href="/css/forum.css?v=33073">
+    <link rel="stylesheet" href="/css/donate.css?v=33073">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -925,9 +984,9 @@
                         </div>
         </div>
 
-        <!-- Global Audio Elements (Outside of SPA hidden containers) -->
-        <audio id="lobby-music" src="/music/lobby.mp3" autoplay preload="auto" loop></audio>
-        <audio id="triple-music" src="/music/triple.mp3" preload="auto" loop></audio>
+        <!-- Global Audio Elements (Loaded on Demand) -->
+        <audio id="lobby-music" src="/music/lobby.mp3" preload="none" loop></audio>
+        <audio id="triple-music" src="/music/triple.mp3" preload="none" loop></audio>
 
         <style>
             #page-loading.active {
@@ -5802,18 +5861,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33072"></script>
-    <script src="/js/forum.js?v=33072"></script>
-    <script src="/js/app.js?v=33072"></script>
-    <script src="/js/lobby.js?v=33072"></script>
-    <script src="/js/play.js?v=33072"></script>
-    <script src="/js/tournaments.js?v=33072"></script>
-    <script src="/js/leaderboard.js?v=33072"></script>
-    <script src="/js/tools.js?v=33072"></script>
-    <script src="/js/mouse_selection.js?v=33072"></script>
-    <script src="/js/mods.js?v=33072"></script>
-    <script src="/js/private_matches.js?v=33072"></script>
-    <script src="/js/donate.js?v=33072"></script>
+    <script src="/js/settings.js?v=33073"></script>
+    <script src="/js/forum.js?v=33073"></script>
+    <script src="/js/app.js?v=33073"></script>
+    <script src="/js/lobby.js?v=33073"></script>
+    <script src="/js/play.js?v=33073"></script>
+    <script src="/js/tournaments.js?v=33073"></script>
+    <script src="/js/leaderboard.js?v=33073"></script>
+    <script src="/js/tools.js?v=33073"></script>
+    <script src="/js/mouse_selection.js?v=33073"></script>
+    <script src="/js/mods.js?v=33073"></script>
+    <script src="/js/private_matches.js?v=33073"></script>
+    <script src="/js/donate.js?v=33073"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
