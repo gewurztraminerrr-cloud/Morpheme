@@ -58,11 +58,7 @@
 }
 
 .game-params.reveal-new,
-.game-params.reveal-new span,
-.spinner-set-label.reveal-new,
-.spinner-set-label.reveal-new span,
-.header-meta.reveal-new,
-.header-meta.reveal-new span {
+.game-params.reveal-new span {
     animation: fadeGoldToNormal 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
 
