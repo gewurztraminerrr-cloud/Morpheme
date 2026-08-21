@@ -4616,7 +4616,20 @@ input[type=range]::-moz-range-track {
     pointer-events: auto !important;
     -webkit-backface-visibility: hidden !important;
     backface-visibility: hidden !important;
+    text-shadow: none !important;
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
+    box-shadow: none !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform-style: flat !important;
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cube-cell * {
+    text-shadow: none !important;
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
 }
 
 .cube-cell:hover {
