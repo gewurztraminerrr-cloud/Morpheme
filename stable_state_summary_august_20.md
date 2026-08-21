@@ -134,6 +134,37 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Implemented a unified mobile viewport recovery engine (`scheduleMobileViewportRecovery()`) that realigns active panels across `visibilitychange` (app resume), `focus`, `pageshow`, `resize`, `orientationchange`, and `fullscreenchange`.
   - Added active touch-gesture guards (`_isUserTouching`) and disabled `visualViewport.scroll` overrides so programmatic snaps never fire during user swipes, guaranteeing 100% smooth, natural, and jitter-free horizontal sliding on mobile devices.
 
+### X. Firefox 3D Cube Black Bar & Opposite Plane Bleed-Through Elimination (`static/css/play.css`, `templates/index.html`)
+- **Root Cause**: In Firefox's Gecko rendering engine, 3D CSS transforms with transparent face backgrounds and `translateZ` micro-offsets caused opposing face borders and letters to bleed through coplanar front faces as black horizontal/vertical stripes.
+- **Resolution**:
+  - Enforced `-webkit-backface-visibility: hidden !important; backface-visibility: hidden !important;`, solid background `#ffffff !important;`, and `overflow: hidden` on `.cube-face` and `.cube-cell`.
+  - Replaced 3D `translateZ` hover/active transforms with 2D glowing inset/drop shadows (`box-shadow: 0 0 10px rgba(0, 210, 255, 0.6)`) and borders to prevent coplanar rendering conflicts in Gecko.
+
+### Y. Persistent Room Generation & Board Loading Overlay (`static/js/app.js`, `static/js/play.js`, `static/js/lobby.js`, `templates/index.html`)
+- **Root Cause**: `window.showLoadingOverlay()` previously had a 4000ms auto-hide timeout, and `renderBoard()` dismissed the loading overlay before tiles were fully populated with letters, causing users to see empty grids or premature dismissals during board generation.
+- **Resolution**:
+  - Removed the premature 4s auto-hide timeout from `showLoadingOverlay()`.
+  - Updated `renderBoard()` in `play.js` so that `hideLoadingOverlay()` is only called when `hasLetters === true` (tiles are actually populated with letters).
+  - Added fallback room configuration inference in `lobby.js` when clicking `+ Create Room`.
+
+### Z. Change Password / Email Management in Tools (`templates/index.html`, `static/js/tools.js`, `app.py`)
+- **Tools Sidebar Category**: Added the **“Change Password/Email”** navigation category in `#page-tools` positioned directly above **Store**.
+- **Dual-Card Responsive Layout**:
+  - **Change Password Card**: Fields for *Current Password*, *New Password*, and *Confirm New Password* (entered twice to guarantee matching). Validates current password against stored SQLite hashes (`pbkdf2:sha256`), enforces a 4-character minimum, and updates the database.
+  - **Change Email Card**: Displays the user's active *Current Email* fetched directly from the database and provides a *New Email Address* input with syntax regex validation and uniqueness checks.
+  - **Guest Session Safeguard**: Displays a warning notice for guest accounts with disabled inputs, prompting full account registration.
+- **Backend API Endpoints**:
+  - `GET /api/user/account-info`: Fetches authenticated username and email.
+  - `POST /api/user/change-password`: Validates session, verifies current password hash, and overwrites with the new hashed password.
+  - `POST /api/user/change-email`: Validates session, email format, and unique constraints, updating SQLite and active session.
+
+### AA. First Login CAPTCHA Race Condition Elimination (`app.py`, `static/js/app.js`, `templates/index.html`)
+- **Root Cause**: On initial page load, multiple asynchronous requests (`/api/session`, `/api/stats/*`, `/api/captcha`) executed concurrently. Sibling responses returning `Set-Cookie` headers without `captcha_text` stomped over the cookie set by `/api/captcha`, wiping the CAPTCHA string from the session. The first CAPTCHA entered by the user was rejected as expired.
+- **Resolution**:
+  - Implemented tokenized CAPTCHAs by generating a unique `captcha_id` on the client per form instance (`/api/captcha?id=<token>`).
+  - Added thread-safe server-side `_CAPTCHA_STORE` with mutex locking, automatic 10-minute expiry TTL, and immediate single-use consumption.
+  - Updated `handleSignIn`, `handleSignUp`, and `handleGuestLogin` in `app.js` to pass `captcha_id` with the submitted form. First-attempt CAPTCHA validation is now 100% reliable and immune to cookie race conditions.
+
 ---
 
 ## 3. Production Deployment Instructions
