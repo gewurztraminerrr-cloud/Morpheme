@@ -244,6 +244,7 @@ class WordValidator:
                     
         self.csw_loaded = True
         self._filter_added_words()
+        self.added_words_list = [w for w in self.added_words_list if w in self.added_words]
         # Recalculate full sets to include CSW
         self._recalculate_full_sets()
         print(f"[WordValidator] CSW loaded successfully! ({len(self.csw_words)} words)")

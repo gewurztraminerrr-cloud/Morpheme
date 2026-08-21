@@ -705,9 +705,11 @@ def add_added_word_api():
                 # 2. Sync with Global Tally stats file (heavy I/O)
                 _update_word_stats(w, "add")
                 
-                global LAST_ADDED_WORDS_LIST_MTIME
+                global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
                 if os.path.exists(ADDED_WORDS_FILE):
-                    LAST_ADDED_WORDS_LIST_MTIME = os.path.getmtime(ADDED_WORDS_FILE)
+                    curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+                    LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+                    LAST_ADDED_WORDS_MTIME = curr_mtime
                 print(f"[AsyncMods] Finished saving new word '{w}' to disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error saving '{w}' to disk: {e}")
@@ -770,9 +772,11 @@ def remove_added_word():
                 _update_word_stats(w, "remove")
                 
                 # Update the mtime to the actual new file mtime
-                global LAST_ADDED_WORDS_LIST_MTIME
+                global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
                 if os.path.exists(ADDED_WORDS_FILE):
-                    LAST_ADDED_WORDS_LIST_MTIME = os.path.getmtime(ADDED_WORDS_FILE)
+                    curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+                    LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+                    LAST_ADDED_WORDS_MTIME = curr_mtime
                 print(f"[AsyncMods] Finished removing word '{w}' from disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error removing '{w}' from disk: {e}")
