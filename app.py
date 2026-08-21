@@ -2128,6 +2128,37 @@ def index():
     return resp
 
 
+# Thread-safe CAPTCHA store to eliminate session-cookie race conditions
+_CAPTCHA_STORE = {}
+_CAPTCHA_LOCK = threading.Lock()
+
+def _store_captcha(captcha_id, captcha_text):
+    if not captcha_id:
+        return
+    now = time.time()
+    with _CAPTCHA_LOCK:
+        # Prune expired tokens (> 10 mins)
+        expired = [k for k, v in _CAPTCHA_STORE.items() if (now - v[1]) > 600]
+        for k in expired:
+            _CAPTCHA_STORE.pop(k, None)
+        _CAPTCHA_STORE[str(captcha_id)] = (captcha_text.upper(), now)
+
+def _validate_captcha(captcha_id, submitted_captcha):
+    if not submitted_captcha:
+        return False
+    submitted_upper = str(submitted_captcha).strip().upper()
+    expected = None
+    if captcha_id:
+        with _CAPTCHA_LOCK:
+            val = _CAPTCHA_STORE.pop(str(captcha_id), None)
+            if val:
+                text, created_at = val
+                if (time.time() - created_at) <= 600:
+                    expected = text
+    if not expected:
+        expected = session.pop('captcha_text', None)
+    return bool(expected and submitted_upper == expected)
+
 # Authentication endpoints
 @app.route('/api/captcha', methods=['GET'])
 def get_captcha():
@@ -2135,6 +2166,9 @@ def get_captcha():
     chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
     captcha_text = ''.join(random.choices(chars, k=5))
     
+    captcha_id = request.args.get('id')
+    if captcha_id:
+        _store_captcha(captcha_id, captcha_text)
     session['captcha_text'] = captcha_text.upper()
     
     width = 150
@@ -2371,11 +2405,9 @@ def register():
     flag = data.get('flag', '').strip()
     code = data.get('code', '').strip()
     captcha_val = data.get('captcha', '')
+    captcha_id = data.get('captcha_id')
     
-    session_captcha = session.get('captcha_text')
-    session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
-    
-    if not session_captcha or captcha_val.upper() != session_captcha:
+    if not _validate_captcha(captcha_id, captcha_val):
         return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
         
     # Username validation
@@ -2540,11 +2572,9 @@ def login():
         username = data.get('username')
         password = data.get('password')
         captcha_val = data.get('captcha', '')
+        captcha_id = data.get('captcha_id')
         
-        session_captcha = session.get('captcha_text')
-        session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
-        
-        if not session_captcha or captcha_val.upper() != session_captcha:
+        if not _validate_captcha(captcha_id, captcha_val):
             return jsonify({'success': False, 'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 200
             
         conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -2743,11 +2773,9 @@ def presence_leave():
 def guest_login():
     data = request.get_json() or {}
     captcha_val = data.get('captcha', '')
+    captcha_id = data.get('captcha_id')
     
-    session_captcha = session.get('captcha_text')
-    session.pop('captcha_text', None) # Clear immediately to prevent replay attacks
-    
-    if not session_captcha or captcha_val.upper() != session_captcha:
+    if not _validate_captcha(captcha_id, captcha_val):
         return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
 
     import random

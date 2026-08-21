@@ -1359,6 +1359,7 @@ async function handleSignIn() {
     const username = document.getElementById('signin-username').value;
     const password = document.getElementById('signin-password').value;
     const captcha = document.getElementById('signin-captcha').value;
+    const captcha_id = window._signinCaptchaId || '';
     const errorEl = document.getElementById('signin-error');
 
     try {
@@ -1367,7 +1368,7 @@ async function handleSignIn() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password, captcha })
+            body: JSON.stringify({ username, password, captcha, captcha_id })
         });
 
         const responseText = await response.text();
@@ -1426,6 +1427,7 @@ async function handleSignUp() {
     const confirmPassword = document.getElementById('signup-password-confirm').value;
     const code = document.getElementById('signup-verification-code').value.trim();
     const captcha = document.getElementById('signup-captcha').value.trim();
+    const captcha_id = window._signupCaptchaId || '';
     const flag = document.getElementById('signup-flag').value;
     const errorEl = document.getElementById('signup-error');
 
@@ -1456,7 +1458,7 @@ async function handleSignUp() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password, email, captcha, code, flag })
+            body: JSON.stringify({ username, password, email, captcha, captcha_id, code, flag })
         });
 
         const responseText = await response.text();
@@ -1496,6 +1498,7 @@ async function handleGuestLogin() {
     const captchaInput = document.getElementById('signin-captcha');
     const errorEl = document.getElementById('signin-error');
     const captcha = captchaInput ? captchaInput.value.trim() : '';
+    const captcha_id = window._signinCaptchaId || '';
     
     if (!captcha) {
         if (errorEl) errorEl.textContent = 'Please complete the CAPTCHA first to play as a guest.';
@@ -1509,7 +1512,7 @@ async function handleGuestLogin() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ captcha })
+            body: JSON.stringify({ captcha, captcha_id })
         });
 
         const data = await response.json();
@@ -1744,22 +1747,31 @@ function populateSignupFlagDropdown() {
 function setupAuth() {
     // CAPTCHA helper logic
     window.refreshCaptchas = function() {
-        const isSigninActive = document.getElementById('signin-form') && document.getElementById('signin-form').classList.contains('active');
-        const isSignupActive = document.getElementById('signup-form') && document.getElementById('signup-form').classList.contains('active');
-        const activeFormId = isSignupActive ? 'signup-form' : 'signin-form';
+        const generateCaptchaId = () => 'cap_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
         
-        const formEl = document.getElementById(activeFormId);
-        if (formEl) {
-            const img = formEl.querySelector('.captcha-img');
-            if (img) {
-                img.src = '/api/captcha?t=' + Date.now();
+        const signinForm = document.getElementById('signin-form');
+        if (signinForm) {
+            const signinImg = signinForm.querySelector('.captcha-img');
+            const signinId = generateCaptchaId();
+            window._signinCaptchaId = signinId;
+            if (signinImg) {
+                signinImg.src = '/api/captcha?id=' + encodeURIComponent(signinId) + '&t=' + Date.now();
             }
+            const signinCaptcha = document.getElementById('signin-captcha');
+            if (signinCaptcha) signinCaptcha.value = '';
         }
-        
-        const signinCaptcha = document.getElementById('signin-captcha');
-        const signupCaptcha = document.getElementById('signup-captcha');
-        if (signinCaptcha) signinCaptcha.value = '';
-        if (signupCaptcha) signupCaptcha.value = '';
+
+        const signupForm = document.getElementById('signup-form');
+        if (signupForm) {
+            const signupImg = signupForm.querySelector('.captcha-img');
+            const signupId = generateCaptchaId();
+            window._signupCaptchaId = signupId;
+            if (signupImg) {
+                signupImg.src = '/api/captcha?id=' + encodeURIComponent(signupId) + '&t=' + Date.now();
+            }
+            const signupInput = document.getElementById('signup-captcha');
+            if (signupInput) signupInput.value = '';
+        }
     };
 
     // Attach click handlers to refresh CAPTCHA on image container clicks
