@@ -5175,10 +5175,6 @@ def load_tools_dictionary(dict_name):
     so every tool/API route automatically includes long words."""
     global LAST_ADDED_WORDS_MTIME
 
-    # Force word validator to reload if added_words.txt changed on disk
-    if word_validator:
-        word_validator.get_use_added_words(force=True)
-
     # Check for cache invalidation based on added_words.txt modification time
     added_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
     curr_mtime = 0
@@ -5190,6 +5186,8 @@ def load_tools_dictionary(dict_name):
         TOOLS_DICT_CACHE.clear()
         global LISTS_CACHE
         LISTS_CACHE.clear()
+        if word_validator:
+            word_validator.get_use_added_words(force=True)
 
     LAST_ADDED_WORDS_MTIME = curr_mtime
 
