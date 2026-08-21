@@ -960,87 +960,86 @@ def add_definition_api():
         print(f"Error updating definitions: {e}")
         return jsonify({'error': str(e)}), 500
 
+_UNDEFINED_WORDS_CACHE = None
+_UNDEFINED_WORDS_LOCK = threading.Lock()
+
+def compute_undefined_words(force=False):
+    global _UNDEFINED_WORDS_CACHE
+    with _UNDEFINED_WORDS_LOCK:
+        if not force and _UNDEFINED_WORDS_CACHE is not None:
+            return _UNDEFINED_WORDS_CACHE
+            
+        try:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            added_words_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
+            raw_added = set()
+            if os.path.exists(added_words_path):
+                with open(added_words_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    for line in f:
+                        w = line.strip().upper()
+                        if w:
+                            raw_added.add(w)
+
+            # Definitions from DEFINITIONS_CACHE (or disk)
+            global DEFINITIONS_CACHE
+            if not DEFINITIONS_CACHE:
+                load_definitions()
+            defined_words = set(DEFINITIONS_CACHE.keys()) if DEFINITIONS_CACHE else set()
+
+            # Also load from wiktionary_definitions DB table
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=10)
+                cursor = conn.cursor()
+                cursor.execute("SELECT word FROM wiktionary_definitions;")
+                for row in cursor.fetchall():
+                    defined_words.add(row[0].strip().upper())
+                conn.close()
+            except Exception as db_err:
+                print(f"[Definition Management] Could not read wiktionary_definitions: {db_err}")
+
+            def _read_wordlist(path):
+                words = set()
+                if os.path.exists(path):
+                    with open(path, 'r', encoding='utf-8', errors='ignore') as fh:
+                        for ln in fh:
+                            w = ln.strip().upper()
+                            if w:
+                                words.add(w)
+                return words
+
+            dicts_dir = os.path.join(base_dir, 'dictionaries')
+            nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
+            csw_words   = _read_wordlist(os.path.join(dicts_dir, 'CSW.txt'))
+            long_words  = _read_wordlist(os.path.join(dicts_dir, '16plus.txt'))
+            standard    = nwl_words | csw_words | long_words
+            truly_added = raw_added - standard
+
+            undefined_words = sorted([w for w in truly_added if w not in defined_words])
+            _UNDEFINED_WORDS_CACHE = {
+                'success': True,
+                'words': undefined_words,
+                '_debug': {
+                    'raw_added_count': len(raw_added),
+                    'defined_count': len(defined_words),
+                    'standard_dict_count': len(standard),
+                    'truly_added_count': len(truly_added),
+                    'undefined_count': len(undefined_words),
+                }
+            }
+            return _UNDEFINED_WORDS_CACHE
+        except Exception as e:
+            print(f"Error computing undefined words: {e}")
+            return {'success': False, 'error': str(e), 'words': []}
+
 @app.route('/api/mods/definitions/undefined', methods=['GET'])
 @login_required
 def get_undefined_words_api():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
         
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # --- Read added_words.txt directly from disk ---
-        added_words_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
-        raw_added = set()
-        if os.path.exists(added_words_path):
-            with open(added_words_path, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    w = line.strip().upper()
-                    if w:
-                        raw_added.add(w)
-
-        # --- Read Definitions.txt directly from disk ---
-        defs_path = DEFINITIONS_PATH or os.path.join(base_dir, 'dictionaries', 'Definitions.txt')
-        defined_words = set()
-        if defs_path and os.path.exists(defs_path):
-            with open(defs_path, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        defined_words.add(parts[0].strip().upper())
-
-        # --- Also load from wiktionary_definitions DB table ---
-        # Custom Added Words definitions are stored here (imported via import_wikdefs.py),
-        # NOT in Definitions.txt. Must check both sources.
-        try:
-            conn = sqlite3.connect(DB_PATH, timeout=10)
-            cursor = conn.cursor()
-            cursor.execute("SELECT word FROM wiktionary_definitions;")
-            for row in cursor.fetchall():
-                defined_words.add(row[0].strip().upper())
-            conn.close()
-        except Exception as db_err:
-            print(f"[Definition Management] Could not read wiktionary_definitions: {db_err}")
-
-        # --- Read standard dictionaries directly from disk ---
-        # word_validator.nwl_words/csw_words are lazy-loaded and may be empty
-        # until a game runs; always read from disk to guarantee accuracy.
-        def _read_wordlist(path):
-            words = set()
-            if os.path.exists(path):
-                with open(path, 'r', encoding='utf-8', errors='ignore') as fh:
-                    for ln in fh:
-                        w = ln.strip().upper()
-                        if w:
-                            words.add(w)
-            return words
-
-        dicts_dir = os.path.join(base_dir, 'dictionaries')
-        nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
-        csw_words   = _read_wordlist(os.path.join(dicts_dir, 'CSW.txt'))
-        long_words  = _read_wordlist(os.path.join(dicts_dir, '16plus.txt'))
-        standard    = nwl_words | csw_words | long_words
-        truly_added = raw_added - standard
-
-        # --- Words with no definition entry ---
-        undefined_words = sorted([w for w in truly_added if w not in defined_words])
-
-        return jsonify({
-            'success': True,
-            'words': undefined_words,
-            '_debug': {
-                'raw_added_count': len(raw_added),
-                'defined_count': len(defined_words),
-                'standard_dict_count': len(standard),
-                'truly_added_count': len(truly_added),
-                'undefined_count': len(undefined_words),
-                'added_words_path': added_words_path,
-                'defs_path': defs_path,
-            }
-        })
-    except Exception as e:
-        print(f"Error fetching undefined words: {e}")
-        return jsonify({'error': str(e)}), 500
+    result = compute_undefined_words(force=False)
+    status_code = 200 if result.get('success') else 500
+    return jsonify(result), status_code
 
 @app.route('/api/mods/definitions/remove', methods=['POST'])
 @login_required
@@ -4725,7 +4724,7 @@ def lookup_raw_definition_online(word_upper):
             url, 
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=3.0) as response:
+        with urllib.request.urlopen(req, timeout=1.0) as response:
             api_data = json.loads(response.read().decode('utf-8'))
             if isinstance(api_data, list) and len(api_data) > 0:
                 meanings = api_data[0].get('meanings', [])
@@ -4756,7 +4755,7 @@ def lookup_raw_definition_online(word_upper):
             url, 
             headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
         )
-        with urllib.request.urlopen(req, timeout=3.0) as response:
+        with urllib.request.urlopen(req, timeout=1.0) as response:
             api_data = json.loads(response.read().decode('utf-8'))
             if isinstance(api_data, dict) and "en" in api_data:
                 def_parts = []
@@ -4810,44 +4809,50 @@ def get_definition_cached_or_online_with_guess(w):
     if d:
         return d
         
-    # Guess root words (strip suffixes)
+    def _local_lookup(root):
+        global DEFINITIONS_CACHE
+        if DEFINITIONS_CACHE and root in DEFINITIONS_CACHE:
+            return DEFINITIONS_CACHE[root]
+        return lookup_wiki_definition_from_db(root)
+
+    # Guess root words (strip suffixes) - checked locally to guarantee instant sub-millisecond response
     if w.endswith('S') and not w.endswith('SS') and not w.endswith('US') and not w.endswith('IS') and not w.endswith('AS'):
         # Try stripping 'S'
         r = w[:-1]
-        if get_definition_cached_or_online(r):
+        if _local_lookup(r):
             DEFINITIONS_CACHE[w] = f"plural of {r}"
             return DEFINITIONS_CACHE[w]
             
         # Try stripping 'ES'
         if w.endswith('ES'):
             r2 = w[:-2]
-            if get_definition_cached_or_online(r2):
+            if _local_lookup(r2):
                 DEFINITIONS_CACHE[w] = f"plural of {r2}"
                 return DEFINITIONS_CACHE[w]
                 
     if w.endswith('ED'):
         # Try stripping 'ED'
         r = w[:-2]
-        if get_definition_cached_or_online(r):
+        if _local_lookup(r):
             DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
             return DEFINITIONS_CACHE[w]
             
         # Try stripping 'D' (e.g. baked -> bake)
         r2 = w[:-1]
-        if get_definition_cached_or_online(r2):
+        if _local_lookup(r2):
             DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
             return DEFINITIONS_CACHE[w]
             
     if w.endswith('ING'):
         # Try stripping 'ING'
         r = w[:-3]
-        if get_definition_cached_or_online(r):
+        if _local_lookup(r):
             DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
             return DEFINITIONS_CACHE[w]
             
         # Try stripping 'ING' and adding 'E' (e.g. baking -> bake)
         r2 = w[:-3] + 'E'
-        if get_definition_cached_or_online(r2):
+        if _local_lookup(r2):
             DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
             return DEFINITIONS_CACHE[w]
             
@@ -5061,40 +5066,9 @@ def get_startup_status():
     global STARTUP_WARMUP_COMPLETE
     return jsonify({
         'warmed_up': STARTUP_WARMUP_COMPLETE,
-        'csw_loaded': word_validator.csw_words is not None and len(word_validator.csw_words) > 0
+        'csw_loaded': word_validator.csw_words is not None and len(word_validator.csw_words) > 0,
+        'definitions_loaded': DEFINITIONS_CACHE is not None and len(DEFINITIONS_CACHE) > 0
     })
-
-def warm_up_lists_cache():
-    global STARTUP_WARMUP_COMPLETE
-    try:
-        # Wait a few seconds to let Gunicorn master/workers start up completely without blocking
-        import time
-        time.sleep(2.0)
-        print("[Warmup] Starting Lists Cache pre-generation...")
-        
-        # 1. Authoritative pre-load of CSW dictionary to memory
-        word_validator.ensure_csw_loaded()
-        
-        # 2. Warm up tools lists by simulating requests using Flask test_client
-        with app.app_context():
-            client = app.test_client()
-            for lt in ['all', 'nwl', 'csw', 'added', 'likelihood', 'uniques']:
-                url = f'/api/tools/lists?list_type={lt}&length=all&starts_with=all'
-                print(f"[Warmup] Pre-caching lists for list_type={lt}...")
-                client.get(url)
-            
-            # Warm up Added Words list API
-            print(f"[Warmup] Pre-caching added words list...")
-            client.get('/api/added_words/list')
-            
-        STARTUP_WARMUP_COMPLETE = True
-        print("[Warmup] Lists Cache warming successfully complete!")
-    except Exception as warmup_err:
-        print(f"[Warmup] Error during warmup: {warmup_err}")
-        STARTUP_WARMUP_COMPLETE = True
-
-import threading
-threading.Thread(target=warm_up_lists_cache, daemon=True).start()
 
 # ---------------------------------------------------------------------------
 # NIGHTLY CLEANUP: Null out all_words_paths for rounds older than 90 days.
@@ -5107,7 +5081,8 @@ def _prune_old_word_paths():
     import time as _time
     while True:
         try:
-            with get_db() as conn:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            with conn:
                 result = conn.execute(
                     """UPDATE round_history
                           SET all_words_paths = NULL
@@ -5115,6 +5090,7 @@ def _prune_old_word_paths():
                           AND timestamp < datetime('now', '-90 days')"""
                 )
                 pruned = result.rowcount
+            conn.close()
             if pruned > 0:
                 print(f"[Nightly Cleanup] Nulled all_words_paths on {pruned} round_history row(s) older than 90 days.")
             else:
@@ -5259,6 +5235,68 @@ def _init_c_morpheme_metric():
     else:
         _c_morpheme_lib = False
     return _c_morpheme_lib
+
+def warm_up_server_resources():
+    global STARTUP_WARMUP_COMPLETE
+    try:
+        import time
+        time.sleep(1.0)
+        print("[Warmup] Starting comprehensive background pre-warming for Tools and Mods...")
+        
+        # 1. Authoritative pre-load of CSW dictionary into WordValidator
+        word_validator.ensure_csw_loaded()
+        
+        # 2. Authoritative pre-load of Definitions and Pronunciations into memory
+        print("[Warmup] Pre-loading Definitions and Pronunciations...")
+        load_definitions()
+        load_pronunciations()
+        
+        # 3. Pre-load and pre-compute NumPy matrices & bitmasks for all dictionaries used in Tools
+        print("[Warmup] Pre-building Tools dictionary caches (NWL, CSW, ALL, added_words)...")
+        for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
+            try:
+                load_tools_dictionary(dict_name)
+            except Exception as e:
+                print(f"[Warmup] Error pre-building tools dict {dict_name}: {e}")
+                
+        # 4. Pre-initialize native C morpheme metric engine
+        _init_c_morpheme_metric()
+        
+        # 5. Pre-compute Undefined Words for Mods Definition Management
+        print("[Warmup] Pre-computing Undefined Words cache for Mods...")
+        try:
+            compute_undefined_words(force=True)
+        except Exception as e:
+            print(f"[Warmup] Error pre-computing undefined words: {e}")
+
+        # 6. Warm up Tools Lists & Endpoint Routes via test_client
+        with app.app_context():
+            client = app.test_client()
+            for lt in ['all', 'nwl', 'csw', 'added', 'likelihood', 'uniques']:
+                url = f'/api/tools/lists?list_type={lt}&length=all&starts_with=all'
+                print(f"[Warmup] Pre-caching lists for list_type={lt}...")
+                client.get(url)
+            
+            print("[Warmup] Pre-caching added words list...")
+            client.get('/api/added_words/list')
+            
+            print("[Warmup] Priming Tools endpoint routes (Is Valid, WOTD, Unscramble, Find & Count, Sequence, Subanagrams, Combo)...")
+            for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
+                client.post('/api/tools/validate', json={'word': 'TEST', 'dictionary': dict_name})
+            client.get('/api/tools/wotd')
+            client.get('/api/tools/unscramble/random')
+            client.get('/api/tools/find-count')
+            client.post('/api/tools/sequence', json={'letters': 'TEST', 'dictionary': 'NWL'})
+            client.post('/api/tools/subanagrams', json={'letters': 'TESTING', 'dictionary': 'NWL'})
+            client.post('/api/tools/combo', json={'word': 'TEST', 'dictionary': 'NWL'})
+            
+        STARTUP_WARMUP_COMPLETE = True
+        print("[Warmup] Comprehensive Tools & Mods warming completed successfully!")
+    except Exception as warmup_err:
+        print(f"[Warmup] Error during warmup: {warmup_err}")
+        STARTUP_WARMUP_COMPLETE = True
+
+threading.Thread(target=warm_up_server_resources, daemon=True).start()
 
 def calculate_morpheme_metric_py(source, target, limit=3):
     s_len, t_len = len(source), len(target)
