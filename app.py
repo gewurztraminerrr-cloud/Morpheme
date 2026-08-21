@@ -5825,26 +5825,25 @@ def tools_sequence_search():
         
     results = []
     seq_rev = sequence[::-1]
-    for word in dictionary['words']:
-        # 1. Length Filter
-        if target_len is not None and len(word) != target_len:
+    word_list = dictionary['words']
+    lens = dictionary['lens']
+    
+    for i in range(len(word_list)):
+        if target_len is not None and lens[i] != target_len:
             continue
             
-        # 2. Mode Filter
+        word = word_list[i]
         matched = False
         if mode == 'starts':
             if word.startswith(sequence): matched = True
         elif mode == 'ends':
             if word.endswith(sequence): matched = True
         elif mode == 'contains':
-            # "Contains Sequence (Forwards or Backwards)"
             if sequence in word or seq_rev in word: matched = True
             
         if matched:
             results.append(word)
             
-    # Sort results: Length ASC, then Alphabetical (User preference from LIC applied here too for consistency? 
-    # Or just Alphabetical? Usually lists are Alpha. Let's do Length then Alpha as it's cleaner for lists)
     results.sort(key=lambda x: (len(x), x))
     
     return jsonify({
@@ -5867,12 +5866,26 @@ def tools_subanagrams():
         
     from collections import Counter
     input_counter = Counter(input_text)
+    input_len = len(input_text)
+    
+    input_mask = 0
+    for char in input_text:
+        if 'A' <= char <= 'Z':
+            input_mask |= (1 << (ord(char) - ord('A')))
+    input_inv_mask = (~input_mask) & 0xFFFFFFFF
+            
+    word_list = dictionary['words']
+    masks = dictionary['masks']
+    lens = dictionary['lens']
     
     results = []
-    for word in dictionary['words']:
-        if len(word) > len(input_text):
+    for i in range(len(word_list)):
+        if lens[i] > input_len:
+            continue
+        if (masks[i] & input_inv_mask) != 0:
             continue
             
+        word = word_list[i]
         word_counter = Counter(word)
         is_subanagram = True
         for char, count in word_counter.items():
