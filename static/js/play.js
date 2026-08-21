@@ -4581,7 +4581,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
             existingFilterBtn.remove();
         }
     }
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     // Handle Empty/Loading State
     // Check if board has any actual letter content
     let hasLetters = false;
@@ -4593,6 +4592,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         if (Array.isArray(board) && board.length > 0) {
             hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
         }
+    }
+
+    if (hasLetters) {
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }
 
     // Determine dimensions early

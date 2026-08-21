@@ -2251,7 +2251,7 @@ window.checkLobbyNotice = async function() {
 
 
 // UI Feedback Helpers
-window.showLoadingOverlay = function(message = 'Loading...') {
+window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) {
     let overlay = document.getElementById('global-loading-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -2264,10 +2264,15 @@ window.showLoadingOverlay = function(message = 'Loading...') {
         if (msgEl) msgEl.textContent = message;
         overlay.style.display = 'flex';
     }
-    if (window._loadingOverlayTimeout) clearTimeout(window._loadingOverlayTimeout);
-    window._loadingOverlayTimeout = setTimeout(() => {
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-    }, 4000);
+    if (window._loadingOverlayTimeout) {
+        clearTimeout(window._loadingOverlayTimeout);
+        window._loadingOverlayTimeout = null;
+    }
+    if (autoHideMs && typeof autoHideMs === 'number') {
+        window._loadingOverlayTimeout = setTimeout(() => {
+            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+        }, autoHideMs);
+    }
 };
 
 window.hideLoadingOverlay = function() {

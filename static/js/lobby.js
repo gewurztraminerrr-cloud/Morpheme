@@ -189,16 +189,41 @@ function setupLobbyEvents() {
         // Handle "Create Room" button click (inside the panel)
         const createBtn = target.closest('.confirm-create-room-btn');
         if (createBtn) {
-            const activeConfig = window.currentLobbyConfig || currentLobbyConfig;
-            console.log('Create Room clicked. Config:', activeConfig);
-
+            let activeConfig = window.currentLobbyConfig || currentLobbyConfig;
             if (!activeConfig) {
-                console.error('Create Room failed: Missing lobby config');
-                alert('Error: Game configuration not found. Please select a game type again.');
-                return;
+                const activeBtn = document.querySelector('.game-btn.active');
+                if (activeBtn && activeBtn.dataset) {
+                    activeConfig = {
+                        gameType: activeBtn.dataset.gameType || 'fcfs',
+                        timeLimit: parseInt(activeBtn.dataset.timeLimit || '45'),
+                        boardDimensions: activeBtn.dataset.boardDimensions || '4x4'
+                    };
+                    window.currentLobbyConfig = activeConfig;
+                    currentLobbyConfig = activeConfig;
+                } else if (createBtn.dataset && createBtn.dataset.gameType) {
+                    activeConfig = {
+                        gameType: createBtn.dataset.gameType || 'fcfs',
+                        timeLimit: parseInt(createBtn.dataset.timeLimit || '45'),
+                        boardDimensions: createBtn.dataset.boardDimensions || '4x4'
+                    };
+                    window.currentLobbyConfig = activeConfig;
+                    currentLobbyConfig = activeConfig;
+                }
             }
 
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating Room...');
+            if (!activeConfig) {
+                activeConfig = {
+                    gameType: 'fcfs',
+                    timeLimit: 45,
+                    boardDimensions: '4x4'
+                };
+                window.currentLobbyConfig = activeConfig;
+                currentLobbyConfig = activeConfig;
+            }
+
+            console.log('Create Room clicked. Config:', activeConfig);
+
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating & Generating Room...');
 
             // Read from embedded inputs
             const panel = createBtn.closest('.create-room-panel');
@@ -227,6 +252,10 @@ function setupLobbyEvents() {
             localStorage.removeItem('tournament_play_active');
             localStorage.removeItem('private_match_active');
 
+            if (window.showLoadingOverlay) {
+                window.showLoadingOverlay('Creating & Generating Room...');
+            }
+
             try {
                 const createResp = await fetch('/api/room/create', {
                     method: 'POST',
@@ -242,6 +271,7 @@ function setupLobbyEvents() {
                 
                 if (!createResp.ok) {
                     const createErr = await createResp.text();
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
                 }
 
@@ -282,13 +312,16 @@ function setupLobbyEvents() {
 
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     alert('Failed to create room: ' + data.error);
                 }
             } catch (e) {
+                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                 console.error('Creation error', e);
                 alert('Error creating room: ' + e.message);
             }
         }
+        window.createRoom = createRoom;
 
 
         // Handle Join Room logic (dynamic button inside rooms-list)
