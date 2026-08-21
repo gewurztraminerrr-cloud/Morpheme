@@ -86,6 +86,9 @@ window.showTool = function(toolId) {
     if (toolId === 'find-count') {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
+    if (toolId === 'change-account') {
+        if (typeof loadAccountCredentialsInfo === 'function') loadAccountCredentialsInfo();
+    }
     if (toolId === 'unscramble') {
         unscrambleState.history = [];
         try { localStorage.removeItem('morpheme_unscramble_history'); } catch(e) {}
@@ -5732,3 +5735,183 @@ window.highlightWordPathOnReplay = function(wordText) {
         }
     }
 };
+
+// Change Password / Email Account Settings Logic
+async function loadAccountCredentialsInfo() {
+    const emailDisplay = document.getElementById('email-current-display');
+    const guestBanner = document.getElementById('account-guest-banner');
+    const pwdForm = document.getElementById('form-change-password');
+    const emailForm = document.getElementById('form-change-email');
+
+    try {
+        const resp = await fetch('/api/user/account-info');
+        const data = await resp.json();
+        
+        if (data.is_guest || !data.success) {
+            if (guestBanner) guestBanner.classList.remove('hidden');
+            if (emailDisplay) emailDisplay.textContent = 'Guest (No email registered)';
+            if (pwdForm) {
+                pwdForm.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            }
+            if (emailForm) {
+                emailForm.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            }
+        } else {
+            if (guestBanner) guestBanner.classList.add('hidden');
+            if (emailDisplay) {
+                emailDisplay.textContent = data.email || 'None set';
+                emailDisplay.style.color = data.email ? '#38bdf8' : '#94a3b8';
+            }
+            if (pwdForm) {
+                pwdForm.querySelectorAll('input, button').forEach(el => el.disabled = false);
+            }
+            if (emailForm) {
+                emailForm.querySelectorAll('input, button').forEach(el => el.disabled = false);
+            }
+        }
+    } catch (e) {
+        console.error('[AccountSettings] Error fetching account info:', e);
+        if (emailDisplay) emailDisplay.textContent = 'Error loading email';
+    }
+}
+window.loadAccountCredentialsInfo = loadAccountCredentialsInfo;
+
+function setupAccountSettings() {
+    const pwdForm = document.getElementById('form-change-password');
+    const emailForm = document.getElementById('form-change-email');
+    
+    if (pwdForm) {
+        pwdForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPwd = document.getElementById('pwd-current')?.value.trim();
+            const newPwd = document.getElementById('pwd-new')?.value.trim();
+            const confirmPwd = document.getElementById('pwd-confirm')?.value.trim();
+            const alertEl = document.getElementById('password-alert');
+            const submitBtn = document.getElementById('btn-change-password');
+
+            const showAlert = (msg, isError) => {
+                if (!alertEl) return;
+                alertEl.style.display = 'block';
+                alertEl.style.background = isError ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+                alertEl.style.border = isError ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(34, 197, 94, 0.4)';
+                alertEl.style.color = isError ? '#fca5a5' : '#86efac';
+                alertEl.textContent = msg;
+            };
+
+            if (!currentPwd) {
+                showAlert('Please enter your current password.', true);
+                return;
+            }
+            if (!newPwd) {
+                showAlert('Please enter a new password.', true);
+                return;
+            }
+            if (newPwd.length < 4) {
+                showAlert('New password must be at least 4 characters long.', true);
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showAlert('New password entries do not match. Please re-enter.', true);
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating Password...';
+            }
+
+            try {
+                const resp = await fetch('/api/user/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: currentPwd,
+                        new_password: newPwd,
+                        confirm_password: confirmPwd
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showAlert('✓ ' + (data.message || 'Password successfully changed!'), false);
+                    pwdForm.reset();
+                } else {
+                    showAlert('✗ ' + (data.error || 'Failed to change password.'), true);
+                }
+            } catch (err) {
+                showAlert('✗ Connection error: ' + err.message, true);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Change Password';
+                }
+            }
+        });
+    }
+
+    if (emailForm) {
+        emailForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newEmail = document.getElementById('email-new')?.value.trim();
+            const emailDisplay = document.getElementById('email-current-display');
+            const alertEl = document.getElementById('email-alert');
+            const submitBtn = document.getElementById('btn-change-email');
+
+            const showAlert = (msg, isError) => {
+                if (!alertEl) return;
+                alertEl.style.display = 'block';
+                alertEl.style.background = isError ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+                alertEl.style.border = isError ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(34, 197, 94, 0.4)';
+                alertEl.style.color = isError ? '#fca5a5' : '#86efac';
+                alertEl.textContent = msg;
+            };
+
+            if (!newEmail) {
+                showAlert('Please enter a new email address.', true);
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(newEmail)) {
+                showAlert('Please enter a valid email address.', true);
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating Email...';
+            }
+
+            try {
+                const resp = await fetch('/api/user/change-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_email: newEmail })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showAlert('✓ ' + (data.message || 'Email successfully changed!'), false);
+                    if (emailDisplay) {
+                        emailDisplay.textContent = data.email || newEmail;
+                        emailDisplay.style.color = '#38bdf8';
+                    }
+                    emailForm.reset();
+                } else {
+                    showAlert('✗ ' + (data.error || 'Failed to change email.'), true);
+                }
+            } catch (err) {
+                showAlert('✗ Connection error: ' + err.message, true);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Change Email';
+                }
+            }
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAccountSettings);
+} else {
+    setupAccountSettings();
+}

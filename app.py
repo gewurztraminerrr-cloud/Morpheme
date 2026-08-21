@@ -2633,6 +2633,105 @@ def logout():
         
     return jsonify({'success': True})
 
+@app.route('/api/user/account-info', methods=['GET'])
+def get_account_info():
+    try:
+        user_id = session.get('user_id')
+        if not user_id or session.get('is_guest', False):
+            return jsonify({'success': False, 'is_guest': True, 'error': 'Not logged in as a registered user'}), 200
+        
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT username, email FROM users WHERE id = ?', (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if not row:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+            
+        return jsonify({
+            'success': True,
+            'username': row[0],
+            'email': row[1] or ''
+        })
+    except Exception as e:
+        print(f"[get_account_info] Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/user/change-password', methods=['POST'])
+def change_password():
+    try:
+        user_id = session.get('user_id')
+        if not user_id or session.get('is_guest', False):
+            return jsonify({'success': False, 'error': 'Please log in to a registered account to change your password.'}), 403
+        
+        data = request.get_json() or {}
+        current_password = data.get('current_password', '').strip()
+        new_password = data.get('new_password', '').strip()
+        confirm_password = data.get('confirm_password', '').strip()
+        
+        if not current_password:
+            return jsonify({'success': False, 'error': 'Please enter your current password.'}), 400
+        if not new_password:
+            return jsonify({'success': False, 'error': 'Please enter a new password.'}), 400
+        if len(new_password) < 4:
+            return jsonify({'success': False, 'error': 'New password must be at least 4 characters long.'}), 400
+        if new_password != confirm_password:
+            return jsonify({'success': False, 'error': 'New password and confirmation do not match.'}), 400
+            
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT password_hash FROM users WHERE id = ?', (user_id,))
+        row = cursor.fetchone()
+        
+        if not row or not check_password_hash(row[0], current_password):
+            conn.close()
+            return jsonify({'success': False, 'error': 'Current password is incorrect.'}), 400
+            
+        new_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+        conn.execute('UPDATE users SET password_hash = ? WHERE id = ?', (new_hash, user_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Password changed successfully!'})
+    except Exception as e:
+        print(f"[change_password] Error: {e}")
+        return jsonify({'success': False, 'error': f'Failed to change password: {str(e)}'}), 500
+
+@app.route('/api/user/change-email', methods=['POST'])
+def change_email():
+    try:
+        user_id = session.get('user_id')
+        if not user_id or session.get('is_guest', False):
+            return jsonify({'success': False, 'error': 'Please log in to a registered account to change your email.'}), 403
+        
+        data = request.get_json() or {}
+        new_email = data.get('new_email', '').strip()
+        
+        if not new_email:
+            return jsonify({'success': False, 'error': 'Please enter a new email address.'}), 400
+            
+        import re
+        email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
+        if not re.match(email_regex, new_email):
+            return jsonify({'success': False, 'error': 'Please enter a valid email address.'}), 400
+            
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT id FROM users WHERE email = ? COLLATE NOCASE AND id != ?', (new_email, user_id))
+        existing = cursor.fetchone()
+        if existing:
+            conn.close()
+            return jsonify({'success': False, 'error': 'This email address is already registered to another account.'}), 400
+            
+        conn.execute('UPDATE users SET email = ? WHERE id = ?', (new_email, user_id))
+        conn.commit()
+        conn.close()
+        
+        session['email'] = new_email
+        return jsonify({'success': True, 'message': 'Email address changed successfully!', 'email': new_email})
+    except Exception as e:
+        print(f"[change_email] Error: {e}")
+        return jsonify({'success': False, 'error': f'Failed to change email: {str(e)}'}), 500
+
+
 @app.route('/api/presence/leave', methods=['POST'])
 def presence_leave():
     """Beacon endpoint for browser close"""
