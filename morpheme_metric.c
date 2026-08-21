@@ -112,3 +112,27 @@ int c_calculate_morpheme_metric(const char *source, const char *target, int limi
 
     return best_mp;
 }
+
+void c_build_word_features(
+    const char *packed_words, const int *offsets, int count,
+    unsigned char *out_matrix, unsigned int *out_masks, unsigned char *out_lens
+) {
+    for (int i = 0; i < count; i++) {
+        const char *w = packed_words + offsets[i];
+        unsigned int mask = 0;
+        unsigned char *row = out_matrix + (i * 26);
+        int len = 0;
+        while (*w) {
+            char c = *w++;
+            if (c >= 'A' && c <= 'Z') {
+                int idx = c - 'A';
+                row[idx]++;
+                mask |= (1U << idx);
+            }
+            len++;
+        }
+        out_masks[i] = mask;
+        out_lens[i] = (unsigned char)len;
+    }
+}
+

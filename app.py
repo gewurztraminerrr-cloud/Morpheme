@@ -4634,13 +4634,13 @@ def load_definitions():
 
     try:
         print(f"Loading definitions from {definitions_path}...")
+        defs = {}
         with open(definitions_path, 'r', encoding='utf-8', errors='ignore') as f:
             for line in f:
-                parts = line.split(' - ', 1)
-                if len(parts) == 2:
-                    word = parts[0].strip().upper()
-                    definition = parts[1].strip()
-                    DEFINITIONS_CACHE[word] = definition
+                sep = line.find(' - ')
+                if sep != -1:
+                    defs[line[:sep].strip().upper()] = line[sep+3:].rstrip('\r\n').strip()
+        DEFINITIONS_CACHE = defs
         print(f"Loaded {len(DEFINITIONS_CACHE)} definitions")
     except Exception as e:
         print(f"Error loading definitions: {e}")
@@ -5116,6 +5116,59 @@ threading.Thread(target=_prune_old_word_paths, daemon=True).start()
 TOOLS_DICT_CACHE = {}
 LAST_ADDED_WORDS_MTIME = None
 
+# --- HIGH-PERFORMANCE C-ACCELERATED MORPHEME METRIC & FEATURE EXTRACTOR ---
+import ctypes
+import bisect
+from functools import lru_cache
+
+_c_morpheme_lib = None
+
+def _init_c_morpheme_metric():
+    global _c_morpheme_lib
+    if _c_morpheme_lib is not None:
+        return _c_morpheme_lib
+    
+    so_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.so')
+    c_src_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.c')
+    
+    # Auto-compile if .so missing
+    if not os.path.exists(so_path) and os.path.exists(c_src_path):
+        import subprocess
+        for comp in ['gcc', 'clang', 'cc']:
+            try:
+                cmd = [comp, '-O3', '-shared', '-fPIC', c_src_path, '-o', so_path]
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode == 0:
+                    print(f"[MorphemeEngine] Compiled morpheme_metric.so using {comp}")
+                    break
+            except Exception:
+                continue
+
+    if os.path.exists(so_path):
+        try:
+            lib = ctypes.CDLL(so_path)
+            lib.c_calculate_morpheme_metric.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+            lib.c_calculate_morpheme_metric.restype = ctypes.c_int
+            if hasattr(lib, 'c_build_word_features'):
+                lib.c_build_word_features.argtypes = [
+                    ctypes.c_char_p,
+                    ctypes.POINTER(ctypes.c_int),
+                    ctypes.c_int,
+                    ctypes.POINTER(ctypes.c_uint8),
+                    ctypes.POINTER(ctypes.c_uint32),
+                    ctypes.POINTER(ctypes.c_uint8)
+                ]
+                lib.c_build_word_features.restype = None
+            _c_morpheme_lib = lib
+            print("[MorphemeEngine] Native C Morpheme Engine initialized successfully.")
+            return _c_morpheme_lib
+        except Exception as e:
+            print(f"[MorphemeEngine] Failed to load morpheme_metric.so: {e}")
+            _c_morpheme_lib = False
+    else:
+        _c_morpheme_lib = False
+    return _c_morpheme_lib
+
 def load_tools_dictionary(dict_name):
     """Load dictionary for tools into memory cache.
     Always merges the 16+ supplementary word list (16plus.txt) into the result
@@ -5178,22 +5231,42 @@ def load_tools_dictionary(dict_name):
     except FileNotFoundError:
         print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
 
-    # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX ---
+    # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX & BITMASKS (C-ACCELERATED) ---
     import numpy as np
     word_list = sorted(list(words))
-    matrix = np.zeros((len(word_list), 26), dtype=np.uint8)
-    masks = np.zeros(len(word_list), dtype=np.uint32)
+    count = len(word_list)
     
-    for i, word in enumerate(word_list):
-        mask = 0
-        for char in word:
-            if 'A' <= char <= 'Z':
-                c_idx = ord(char) - ord('A')
-                matrix[i, c_idx] += 1
-                mask |= (1 << c_idx)
-        masks[i] = mask
+    matrix = np.zeros((count, 26), dtype=np.uint8)
+    masks = np.zeros(count, dtype=np.uint32)
+    lens = np.zeros(count, dtype=np.uint8)
     
-    lens = np.array([len(w) for w in word_list], dtype=np.uint8)
+    c_engine = _init_c_morpheme_metric()
+    if c_engine and hasattr(c_engine, 'c_build_word_features') and count > 0:
+        packed_bytes = ("\0".join(word_list) + "\0").encode('ascii', errors='ignore')
+        offsets = np.zeros(count, dtype=np.int32)
+        curr = 0
+        for i, w in enumerate(word_list):
+            offsets[i] = curr
+            curr += len(w) + 1
+            
+        c_engine.c_build_word_features(
+            ctypes.c_char_p(packed_bytes),
+            offsets.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+            ctypes.c_int(count),
+            matrix.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+            masks.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32)),
+            lens.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
+        )
+    else:
+        for i, word in enumerate(word_list):
+            mask = 0
+            for char in word:
+                if 'A' <= char <= 'Z':
+                    c_idx = ord(char) - ord('A')
+                    matrix[i, c_idx] += 1
+                    mask |= (1 << c_idx)
+            masks[i] = mask
+            lens[i] = len(word)
     
     result = {
         'words': word_list,
@@ -5204,49 +5277,6 @@ def load_tools_dictionary(dict_name):
     }
     TOOLS_DICT_CACHE[cache_key] = result
     return result
-
-# --- HIGH-PERFORMANCE C-ACCELERATED MORPHEME METRIC ---
-import ctypes
-import bisect
-from functools import lru_cache
-
-_c_morpheme_lib = None
-
-def _init_c_morpheme_metric():
-    global _c_morpheme_lib
-    if _c_morpheme_lib is not None:
-        return _c_morpheme_lib
-    
-    so_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.so')
-    c_src_path = os.path.join(os.path.dirname(__file__), 'morpheme_metric.c')
-    
-    # Auto-compile if .so missing
-    if not os.path.exists(so_path) and os.path.exists(c_src_path):
-        import subprocess
-        for comp in ['gcc', 'clang', 'cc']:
-            try:
-                cmd = [comp, '-O3', '-shared', '-fPIC', c_src_path, '-o', so_path]
-                res = subprocess.run(cmd, capture_output=True, text=True)
-                if res.returncode == 0:
-                    print(f"[MorphemeEngine] Compiled morpheme_metric.so using {comp}")
-                    break
-            except Exception:
-                continue
-
-    if os.path.exists(so_path):
-        try:
-            lib = ctypes.CDLL(so_path)
-            lib.c_calculate_morpheme_metric.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
-            lib.c_calculate_morpheme_metric.restype = ctypes.c_int
-            _c_morpheme_lib = lib
-            print("[MorphemeEngine] Native C Morpheme Engine initialized successfully.")
-            return _c_morpheme_lib
-        except Exception as e:
-            print(f"[MorphemeEngine] Failed to load morpheme_metric.so: {e}")
-            _c_morpheme_lib = False
-    else:
-        _c_morpheme_lib = False
-    return _c_morpheme_lib
 
 def warm_up_server_resources():
     global STARTUP_WARMUP_COMPLETE
