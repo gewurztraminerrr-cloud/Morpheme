@@ -5294,13 +5294,13 @@ def warm_up_server_resources():
             
             print("[Warmup] Priming Tools endpoint routes (Is Valid, WOTD, Unscramble, Find & Count, Sequence, Subanagrams, Combo)...")
             for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
-                client.post('/api/tools/validate', json={'word': 'TEST', 'dictionary': dict_name})
+                client.post('/api/tools/validate', json={'word': 'APPLE', 'dictionary': dict_name})
             client.get('/api/tools/wotd')
             client.get('/api/tools/unscramble/random')
             client.get('/api/tools/find-count')
-            client.post('/api/tools/sequence', json={'letters': 'TEST', 'dictionary': 'NWL'})
-            client.post('/api/tools/subanagrams', json={'letters': 'TESTING', 'dictionary': 'NWL'})
-            client.post('/api/tools/combo', json={'word': 'TEST', 'dictionary': 'NWL'})
+            client.post('/api/tools/sequence', json={'sequence': 'WORD', 'dictionary': 'NWL'})
+            client.post('/api/tools/subanagrams', json={'input': 'TESTING', 'dictionary': 'NWL'})
+            client.post('/api/tools/combo', json={'search_term': 'TEST', 'dictionary': 'NWL'})
             
         STARTUP_WARMUP_COMPLETE = True
         print("[Warmup] Comprehensive Tools & Mods warming completed successfully!")
