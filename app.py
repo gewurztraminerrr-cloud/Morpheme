@@ -1250,6 +1250,10 @@ def init_db():
             PRIMARY KEY (user_id, room_id),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS wiktionary_definitions (
+            word TEXT PRIMARY KEY,
+            definition TEXT
+        );
     ''')
     conn.commit()
     
@@ -4800,6 +4804,14 @@ def get_definition_cached_or_online(w):
         d = lookup_wiki_definition_from_db(w)
         if not d:
             d = lookup_raw_definition_online(w)
+            if d:
+                try:
+                    conn = sqlite3.connect(DB_PATH, timeout=5)
+                    with conn:
+                        conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w.upper(), d))
+                    conn.close()
+                except Exception as e:
+                    print(f"[Definitions] Error caching wiki definition to DB: {e}")
         if d:
             DEFINITIONS_CACHE[w] = d
     return d
