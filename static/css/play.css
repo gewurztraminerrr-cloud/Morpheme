@@ -4574,19 +4574,20 @@ input[type=range]::-moz-range-track {
     width: var(--cube-face-size);
     height: var(--cube-face-size);
     border: 3px solid rgba(0, 0, 0, 0.4); 
-    background: rgba(255, 255, 255, 0.98);
+    background: #ffffff !important;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 8px;
     padding: 10px;
     box-sizing: border-box;
-    backface-visibility: visible;
+    overflow: hidden;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
     /* Center the face dynamically in the container relative to actual container dimensions */
     left: calc((100% - var(--cube-face-size)) / 2);
     top: calc((100% - var(--cube-face-size)) / 2);
     transform-origin: 50% 50%;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.1), 0 5px 25px rgba(0,0,0,0.2);
 }
 
 /* Face positions using half-size for translation */
@@ -4598,7 +4599,7 @@ input[type=range]::-moz-range-track {
 .face-bottom { transform: rotateX(-90deg) translateZ(var(--cube-half-size)); }
 
 .cube-cell {
-    background: rgba(0, 0, 0, 0.03) !important;
+    background: #ffffff !important;
     border: 1px solid #000 !important;
     border-radius: 6px;
     display: flex !important;
@@ -4613,24 +4614,23 @@ input[type=range]::-moz-range-track {
     color: #111;
     cursor: pointer;
     pointer-events: auto !important;
-    transition: all 0.2s ease;
-    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000 !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cube-cell:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #ffd700;
-    transform: translateZ(5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    background: #f8fafc !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
 }
 
 .cube-cell.active {
-    background: linear-gradient(135deg, #ffd700, #ffb700);
-    color: #000;
-    border-color: #fff;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
-    transform: translateZ(10px);
-    text-shadow: none;
+    background: linear-gradient(135deg, #ffd700, #ffb700) !important;
+    color: #000 !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.75);
+    text-shadow: none !important;
 }
 
 .cube-cell.flash-valid {
@@ -4638,8 +4638,8 @@ input[type=range]::-moz-range-track {
 }
 
 @keyframes cube-success-pulse {
-    0% { background: #4ade80; transform: scale(1.1) translateZ(20px); box-shadow: 0 0 30px #4ade80; }
-    100% { background: rgba(255, 255, 255, 0.05); transform: scale(1) translateZ(0); }
+    0% { background: #4ade80 !important; box-shadow: 0 0 30px #4ade80; }
+    100% { background: #ffffff !important; }
 }
 
 /* Arrow controls helper text */
