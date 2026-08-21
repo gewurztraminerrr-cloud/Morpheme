@@ -4825,7 +4825,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                         densityStyle = '';
                     }
 
-                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}">${tileHtml}${tileValue}</div>`;
+                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}; border-radius: 0px !important; text-shadow: none !important; -webkit-text-stroke: 0 !important; box-shadow: none !important;">${tileHtml}${tileValue}</div>`;
                 });
             });
             html += `</div>`;
@@ -9517,13 +9517,63 @@ function renderPreviousBoard(board, container) {
 
 // --- 3D Morpheme Cube Rotation ---
 window.cubeRotationX = -25;
-window.cubeRotationY = 45;
+function updateCubeFaceCulling(rotX, rotY) {
+    const cube = document.getElementById('game-cube');
+    if (!cube) return;
+
+    const radX = (rotX || 0) * Math.PI / 180;
+    const radY = (rotY || 0) * Math.PI / 180;
+
+    const cosX = Math.cos(radX), sinX = Math.sin(radX);
+    const cosY = Math.cos(radY), sinY = Math.sin(radY);
+
+    const faceNormals = [
+        [0, 0, 1],   // front (f=0)
+        [0, 0, -1],  // back (f=1)
+        [-1, 0, 0],  // left (f=2)
+        [1, 0, 0],   // right (f=3)
+        [0, -1, 0],  // top (f=4)
+        [0, 1, 0]    // bottom (f=5)
+    ];
+
+    const faceClasses = ['.face-front', '.face-back', '.face-left', '.face-right', '.face-top', '.face-bottom'];
+
+    faceNormals.forEach((n, i) => {
+        const x0 = n[0], y0 = n[1], z0 = n[2];
+
+        // 1. Rotate Y by radY:
+        const x1 = x0 * cosY + z0 * sinY;
+        const y1 = y0;
+        const z1 = -x0 * sinY + z0 * cosY;
+
+        // 2. Rotate X by radX:
+        const z2 = y1 * sinX + z1 * cosX;
+
+        const el = cube.querySelector(faceClasses[i]);
+        if (el) {
+            // If z2 <= 0.05, the normal is facing away from camera -> completely cull it
+            if (z2 <= 0.05) {
+                el.style.display = 'none';
+                el.style.visibility = 'hidden';
+            } else {
+                el.style.display = 'grid';
+                el.style.visibility = 'visible';
+            }
+        }
+    });
+}
 
 function setupCubeRotation() {
     // We bind a global keydown for arrows to rotate the current active cube
     // This listener is idempotent; only one global listener is needed.
-    if (window.cubeListenerAdded) return;
+    if (window.cubeListenerAdded) {
+        updateCubeFaceCulling(window.cubeRotationX, window.cubeRotationY);
+        return;
+    }
     window.cubeListenerAdded = true;
+
+    // Initial culling call
+    updateCubeFaceCulling(window.cubeRotationX, window.cubeRotationY);
 
     document.addEventListener('keydown', (e) => {
         const cube = document.getElementById('game-cube');
@@ -9533,7 +9583,7 @@ function setupCubeRotation() {
         let changed = false;
 
         // Initialize if first time
-        if (window.cubeRotationX === undefined) window.cubeRotationX = -30;
+        if (window.cubeRotationX === undefined) window.cubeRotationX = -25;
         if (window.cubeRotationY === undefined) window.cubeRotationY = 45;
 
         if (e.key === 'ArrowUp') { 
@@ -9556,6 +9606,7 @@ function setupCubeRotation() {
         if (changed) {
             e.preventDefault();
             cube.style.transform = `rotateX(${window.cubeRotationX}deg) rotateY(${window.cubeRotationY}deg)`;
+            updateCubeFaceCulling(window.cubeRotationX, window.cubeRotationY);
         }
     });
 }

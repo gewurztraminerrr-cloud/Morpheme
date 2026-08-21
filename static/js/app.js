@@ -3,6 +3,25 @@ if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
 }
 
+// Client Auto-Sync Version Check
+const CURRENT_APP_BUILD = '33110';
+(function() {
+    try {
+        const lastBuild = localStorage.getItem('morpheme_build_version');
+        if (lastBuild && lastBuild !== CURRENT_APP_BUILD) {
+            localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
+            if (!sessionStorage.getItem('morpheme_reload_done')) {
+                sessionStorage.setItem('morpheme_reload_done', '1');
+                window.location.reload(true);
+                return;
+            }
+        } else {
+            localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
+        }
+        sessionStorage.removeItem('morpheme_reload_done');
+    } catch(e) {}
+})();
+
 // Navigation system
 const pages = {
     'nav-login-btn': 'page-login',

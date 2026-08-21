@@ -4581,7 +4581,7 @@ input[type=range]::-moz-range-track {
     gap: 8px;
     padding: 10px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible !important;
     -webkit-backface-visibility: hidden !important;
     backface-visibility: hidden !important;
     /* Center the face dynamically in the container relative to actual container dimensions */
@@ -4598,10 +4598,11 @@ input[type=range]::-moz-range-track {
 .face-top    { transform: rotateX( 90deg) translateZ(var(--cube-half-size)); }
 .face-bottom { transform: rotateX(-90deg) translateZ(var(--cube-half-size)); }
 
-.cube-cell {
+.cube-cell,
+.cube-face .board-cell {
     background: #ffffff !important;
     border: 1px solid #000 !important;
-    border-radius: 6px;
+    border-radius: 0px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -4620,16 +4621,19 @@ input[type=range]::-moz-range-track {
     -webkit-text-stroke: 0 !important;
     text-stroke: 0 !important;
     box-shadow: none !important;
+    transform: none !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transform-style: flat !important;
-    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.cube-cell * {
+.cube-cell *,
+.cube-face .board-cell * {
     text-shadow: none !important;
     -webkit-text-stroke: 0 !important;
     text-stroke: 0 !important;
+    box-shadow: none !important;
 }
 
 .cube-cell:hover {
