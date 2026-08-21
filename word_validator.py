@@ -250,13 +250,13 @@ class WordValidator:
         print(f"[WordValidator] CSW loaded successfully! ({len(self.csw_words)} words)")
     
     def reload_added_words(self):
-        """Reload custom added words from file and rebuild their trie"""
+        """Reload custom added words from file and rebuild their trie thread-safely"""
         base_dir = os.path.dirname(__file__)
         added_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
         
-        self.added_words = set()
-        self.added_words_list = []
-        self.added_trie = TrieNode()
+        new_added_words = set()
+        new_added_words_list = []
+        new_added_trie = TrieNode()
         
         if os.path.exists(added_path):
             with open(added_path, 'r') as f:
@@ -265,17 +265,26 @@ class WordValidator:
                 for w in raw_lines:
                     if w not in seen:
                         seen.add(w)
-                        self.added_words_list.append(w)
-                        self.added_words.add(w)
+                        new_added_words_list.append(w)
+                        new_added_words.add(w)
 
-            print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
-            self._filter_added_words()
-            self.added_words_list = [w for w in self.added_words_list if w in self.added_words]
-            self._recalculate_full_sets()
-            
-            # Now build added_trie strictly using the filtered self.added_words!
-            for w in self.added_words:
-                self._add_to_trie(self.added_trie, w)
+            # Filter out standard words
+            if self.nwl_words:
+                new_added_words = new_added_words - self.nwl_words
+            if self.long_words:
+                new_added_words = new_added_words - self.long_words
+            if getattr(self, 'csw_loaded', False) and self.csw_words:
+                new_added_words = new_added_words - self.csw_words
+
+            new_added_words_list = [w for w in new_added_words_list if w in new_added_words]
+            for w in new_added_words_list:
+                self._add_to_trie(new_added_trie, w)
+
+        self.added_words = new_added_words
+        self.added_words_list = new_added_words_list
+        self.added_trie = new_added_trie
+        self._recalculate_full_sets()
+        print(f"Loaded {len(self.added_words)} custom added words as standalone trie")
 
     def add_word_in_memory(self, word):
         """Add a word to the in-memory structures instantly and thread-safely."""
