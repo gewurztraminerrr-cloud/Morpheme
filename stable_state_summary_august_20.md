@@ -9,8 +9,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 20, 2026
-* **Commit ID**: `cf0d33fa446fb3ebdf69df6d38e078326e033100` (`cf0d33f`)
-* **Asset Version**: `v=33093`
+* **Commit ID**: `d3d0ffd11995cf6f81e35a1da6e3fe8705663dc9` (`d3d0ffd`)
+* **Asset Version**: `v=33094`
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 
 ---
