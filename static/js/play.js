@@ -9517,6 +9517,7 @@ function renderPreviousBoard(board, container) {
 
 // --- 3D Morpheme Cube Rotation ---
 window.cubeRotationX = -25;
+window.cubeRotationY = 45; // Must match CSS default: rotateX(-25deg) rotateY(45deg)
 function updateCubeFaceCulling(rotX, rotY) {
     const cube = document.getElementById('game-cube');
     if (!cube) return;
