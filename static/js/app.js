@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33121';
+const CURRENT_APP_BUILD = '33122';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -602,16 +602,54 @@ function setupContactForm() {
 
 // Check if user is already logged in
 async function checkSession() {
-    if (localStorage.getItem('morpheme_logged_out') === 'true') {
-        console.info('[Auth] User explicitly logged out. Skipping session check.');
-        updateAuthUI();
-        return;
-    }
     try {
         let response = await fetch('/api/session');
         let data = await response.json();
 
-        if (!data.authenticated) {
+        // If server says authenticated, always trust it and clear any stale logged-out flag
+        if (data.authenticated) {
+            localStorage.removeItem('morpheme_logged_out');
+        } else if (localStorage.getItem('morpheme_logged_out') === 'true') {
+            // Server says not authenticated AND user explicitly logged out — respect logout intent.
+            // Still try auto-login via stored token as a last resort.
+            const token = localStorage.getItem('morpheme_auth_token');
+            if (token) {
+                console.info('[Auth] Logged-out flag set, but attempting auto-login via stored token...');
+                try {
+                    const autoLoginRes = await fetch('/api/auth/auto-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ auth_token: token })
+                    });
+                    const autoLoginData = await autoLoginRes.json();
+                    if (autoLoginData.success) {
+                        console.info('[Auth] Auto-login succeeded (overriding logged-out flag).');
+                        localStorage.removeItem('morpheme_logged_out');
+                        data = {
+                            authenticated: true,
+                            username: autoLoginData.username,
+                            email: autoLoginData.email,
+                            rating: autoLoginData.rating,
+                            is_guest: false,
+                            is_mod: autoLoginData.is_mod
+                        };
+                    } else {
+                        console.info('[Auth] User explicitly logged out, no valid token. Staying on login page.');
+                        updateAuthUI();
+                        return;
+                    }
+                } catch (e) {
+                    console.error('[Auth] Auto-login error:', e);
+                    updateAuthUI();
+                    return;
+                }
+            } else {
+                console.info('[Auth] User explicitly logged out, no token. Staying on login page.');
+                updateAuthUI();
+                return;
+            }
+        } else if (!data.authenticated) {
+            // Not logged out intentionally, but no server session — try auto-login
             const token = localStorage.getItem('morpheme_auth_token');
             if (token) {
                 console.info('[Auth] Session empty. Attempting auto-login via stored token...');
