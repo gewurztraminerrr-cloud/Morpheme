@@ -4825,7 +4825,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                         densityStyle = '';
                     }
 
-                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}; border-radius: 0px !important; text-shadow: none !important; -webkit-text-stroke: 0 !important; box-shadow: none !important;">${tileHtml}${tileValue}</div>`;
+                    html += `<div class="cube-cell board-cell tile-cell${bonusClass}" data-f="${f}" data-r="${r}" data-c="${c}" data-letter="${char}" style="${densityStyle}">${tileHtml}${tileValue}</div>`;
                 });
             });
             html += `</div>`;
