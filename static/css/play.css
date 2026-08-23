@@ -4693,6 +4693,40 @@ input[type=range]::-moz-range-track {
     100% { background: #ffffff !important; }
 }
 
+/* ── Cube highlight overrides ──────────────────────────────────────────────────
+   These MUST appear after the cube base rule (background: #ffffff !important)
+   and use higher-specificity selectors so the highlight colours are not
+   overridden by the cube white-tile rule.
+   transform: scale() is replaced with a brightness filter because scale() on
+   a child of a CSS 3D face can produce z-fighting / geometry distortion.
+───────────────────────────────────────────────────────────────────────────── */
+.cube-face .board-cell.typing-highlight,
+.cube-cell.typing-highlight {
+    background: var(--highlight-typing-color, #ffcc00) !important;
+    color: #000 !important;
+    filter: brightness(1.05);
+    box-shadow: none !important;   /* box-shadows bleed through 3D faces */
+    transform: none !important;    /* no scale — keeps face geometry intact */
+    z-index: 3;
+    transition: background 0.1s ease;
+}
+
+.cube-face .board-cell.review-highlight,
+.cube-cell.review-highlight {
+    background: #ffd700 !important;
+    color: #000 !important;
+    filter: brightness(1.1);
+    box-shadow: none !important;
+    transform: none !important;
+    z-index: 4;
+    animation: cubeReviewPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cubeReviewPulse {
+    0%, 100% { background: #ffd700 !important; filter: brightness(1.05); }
+    50%       { background: #ffe84d !important; filter: brightness(1.2);  }
+}
+
 /* Arrow controls helper text */
 .cube-hint {
     display: none;
