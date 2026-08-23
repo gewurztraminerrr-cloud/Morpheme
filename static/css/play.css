@@ -4630,7 +4630,7 @@ input[type=range]::-moz-range-track {
     height: auto !important;
     margin: 0 !important;
     color: #111;
-    cursor: pointer;
+    cursor: default;          /* clicking disabled on cube — type words in the textbox */
     pointer-events: auto !important;
     -webkit-backface-visibility: hidden !important;
     backface-visibility: hidden !important;
@@ -4671,8 +4671,9 @@ input[type=range]::-moz-range-track {
     }
 }
 
+/* Cube cell hover: no tint — clicking is disabled on the cube, so no pointer affordance */
 .cube-cell:hover {
-    background: #f0f8ff !important;
+    background: #ffffff !important; /* same as default — no hover highlight */
     box-shadow: none !important;
 }
 

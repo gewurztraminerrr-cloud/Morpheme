@@ -8030,7 +8030,18 @@ function handleIntermissionTilePress(cell, r, c, f, letter) {
     }
 }
 
+// Returns true when the active game board is a 3D cube (3×3×3).
+// On cube boards, tile interaction is disabled — words must be typed in the textbox.
+function isCubeBoard() {
+    const gs = window.lastGameState;
+    if (!gs) return false;
+    if (gs.board_dimensions === '3x3x3') return true;
+    const b = gs.board;
+    return Array.isArray(b) && b.length === 6 && Array.isArray(b[0]) && Array.isArray(b[0][0]);
+}
+
 function handleCellMouseDown(e) {
+    if (isCubeBoard()) return; // Cube: typing-only, no mouse tile selection
     if (window.isPopupVisible) return;
     if (e.button !== 0) return; // Only left click
     if (Date.now() - lastTouchTime < 1500) return; // Ignore simulated mouse events on touch devices
@@ -8107,6 +8118,7 @@ function getLetterFromCellAndEvent(cell, e) {
 }
 
 function handleCellMouseOver(e) {
+    if (isCubeBoard()) return; // Cube: typing-only
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
@@ -8121,6 +8133,7 @@ function handleCellMouseOver(e) {
 }
 
 function handleCellMouseMove(e) {
+    if (isCubeBoard()) return; // Cube: typing-only
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
@@ -8146,6 +8159,8 @@ function handleCellTouchStart(e) {
     if (e.cancelable !== false) {
         e.preventDefault();
     }
+
+    if (isCubeBoard()) return; // Cube: typing-only, no touch tile selection
 
     const touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
     let cell = e.target.closest('.board-cell');
@@ -8196,6 +8211,7 @@ function handleCellTouchMove(e) {
         e.preventDefault();
     }
 
+    if (isCubeBoard()) return; // Cube: typing-only, no touch tile selection
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
