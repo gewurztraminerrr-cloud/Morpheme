@@ -6792,22 +6792,6 @@ body .board-cell.tile-flash-purple * {
         padding: 0 !important;
     }
 
-    #tool-sequence .tool-header h2,
-    #tool-subanagrams .tool-header h2,
-    #tool-lists .tool-header h2 {
-        font-size: 1.05rem !important;
-        margin: 0 0 1px 0 !important;
-    }
-
-    #tool-sequence .tool-header p,
-    #tool-subanagrams .tool-header p,
-    #tool-lists .tool-header p {
-        font-size: 0.75rem !important;
-        margin: 0 !important;
-        line-height: 1.15 !important;
-        opacity: 0.75 !important;
-    }
-
     #tool-sequence .combo-control-panel,
     #tool-subanagrams .combo-control-panel,
     #tool-lists .combo-control-panel {
@@ -7371,15 +7355,6 @@ body .board-cell.tile-flash-purple * {
         margin-bottom: 6px !important;
         padding: 0 4px !important;
         touch-action: pan-y !important;
-    }
-    #tool-store .tool-header h2 {
-        font-size: 1.15rem !important;
-        margin: 0 0 2px 0 !important;
-    }
-    #tool-store .tool-header p {
-        font-size: 0.78rem !important;
-        margin: 0 !important;
-        opacity: 0.7 !important;
     }
     #tool-store .store-grid {
         display: flex !important;
