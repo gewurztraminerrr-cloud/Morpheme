@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33125';
+const CURRENT_APP_BUILD = '33126';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -730,13 +730,31 @@ async function checkSession() {
             } catch (e) { console.warn('Error checking current room', e); }
 
         } else {
-            localStorage.removeItem('morpheme_logged_in');
-            updateAuthUI();
+            // Server says not authenticated and auto-login did not succeed.
+            // Check if localStorage still marks the user as logged in — this can happen
+            // transiently during a server restart when the new Flask process has no session
+            // and the auto-login endpoint is still unavailable.
+            const prevLoggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
+            const prevUsername = localStorage.getItem('morpheme_username');
+            if (prevLoggedIn && prevUsername) {
+                // Optimistically keep the user in their current page.
+                // The next checkSession (or any API call) will catch a genuine logout.
+                console.warn('[Auth] Server returned !authenticated but localStorage shows prior session. Keeping current UI (server may be restarting).');
+                currentUser = prevUsername;
+                window.currentUser = currentUser;
+                updateAuthUI();
+            } else {
+                localStorage.removeItem('morpheme_logged_in');
+                updateAuthUI();
+            }
         }
     } catch (error) {
-        console.error('Session check failed:', error);
-        localStorage.removeItem('morpheme_logged_in');
-        updateAuthUI();
+        // Network error or invalid JSON (e.g. server restarting and Nginx is serving the
+        // splash page instead of JSON). This is NOT a logout — it is a transient server
+        // unavailability. Do NOT clear the session or redirect to login; just keep the
+        // current UI state so the user stays where they are until the server comes back.
+        console.warn('[Auth] Session check failed (server may be restarting):', error.message || error);
+        // Leave currentUser, localStorage.morpheme_logged_in, and the current page untouched.
     }
 }
 
