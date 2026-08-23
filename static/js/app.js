@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33122';
+const CURRENT_APP_BUILD = '33123';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -608,8 +608,9 @@ async function checkSession() {
 
         // If server says authenticated, always trust it and clear any stale logged-out flag
         if (data.authenticated) {
+            sessionStorage.removeItem('morpheme_logged_out');
             localStorage.removeItem('morpheme_logged_out');
-        } else if (localStorage.getItem('morpheme_logged_out') === 'true') {
+        } else if (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true') {
             // Server says not authenticated AND user explicitly logged out — respect logout intent.
             // Still try auto-login via stored token as a last resort.
             const token = localStorage.getItem('morpheme_auth_token');
@@ -624,6 +625,7 @@ async function checkSession() {
                     const autoLoginData = await autoLoginRes.json();
                     if (autoLoginData.success) {
                         console.info('[Auth] Auto-login succeeded (overriding logged-out flag).');
+                        sessionStorage.removeItem('morpheme_logged_out');
                         localStorage.removeItem('morpheme_logged_out');
                         data = {
                             authenticated: true,
@@ -648,6 +650,7 @@ async function checkSession() {
                 updateAuthUI();
                 return;
             }
+
         } else if (!data.authenticated) {
             // Not logged out intentionally, but no server session — try auto-login
             const token = localStorage.getItem('morpheme_auth_token');
@@ -1440,7 +1443,9 @@ async function handleSignIn() {
         }
 
         if (data.success) {
+            sessionStorage.removeItem('morpheme_logged_out');
             localStorage.removeItem('morpheme_logged_out');
+
             localStorage.setItem('morpheme_logged_in', 'true');
             if (data.auth_token) {
                 localStorage.setItem('morpheme_auth_token', data.auth_token);
@@ -1575,7 +1580,9 @@ async function handleGuestLogin() {
         const data = await response.json();
 
         if (data.success) {
+            sessionStorage.removeItem('morpheme_logged_out');
             localStorage.removeItem('morpheme_logged_out');
+
             localStorage.setItem('morpheme_logged_in', 'true');
             currentUser = data.username;
             window.currentUser = currentUser;
@@ -1721,8 +1728,10 @@ async function handleLogout() {
         sessionStorage.clear();
         window.currentUserConfigRatings = {};
         
-        // Set logged out flag to prevent auto-login on mobile
-        localStorage.setItem('morpheme_logged_out', 'true');
+        // Set logged out flag to prevent auto-login on mobile — use sessionStorage so it only
+        // applies to this tab/session and never bleeds into a future visit to morpheme.games
+        sessionStorage.setItem('morpheme_logged_out', 'true');
+        localStorage.removeItem('morpheme_logged_out'); // Clear any legacy localStorage copy
         
         // Restore non-sensitive global markers
         if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);

@@ -7290,6 +7290,9 @@ def get_tournament_status():
                 params['uniqueness_ratio'] = 0.0
     conn.close()
 
+    from tournament_logic import GRACE_PERIOD as _GRACE_PERIOD
+    grace_end_time = (t['completed_at'] + _GRACE_PERIOD) if t.get('completed_at') else 0
+
     return jsonify({
         'status': t['status'],
         'id': t['id'],
@@ -7297,6 +7300,7 @@ def get_tournament_status():
         'parameters': params,
         'current_round': t['current_round'],
         'completed_at': t['completed_at'],
+        'grace_end_time': grace_end_time,
         'round_end_time': round_end_time,
         'user_status': user_status,
         'history': history,

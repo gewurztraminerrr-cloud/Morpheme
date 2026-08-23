@@ -496,9 +496,21 @@ function updateCountdown(data) {
     if (countdownInterval) clearInterval(countdownInterval);
 
     let targetTime = 0;
-    if (data.status === 'signup') targetTime = data.start_date;
-    else if (data.status === 'active') targetTime = data.round_end_time;
-    else if (data.status === 'completed') targetTime = data.completed_at + 604800; // 1 week
+    let label = '';
+    if (data.status === 'signup') {
+        targetTime = data.start_date;
+        label = 'Tournament starts in: ';
+    } else if (data.status === 'active') {
+        targetTime = data.round_end_time;
+        label = 'Round ends in: ';
+    } else if (data.status === 'completed') {
+        // Count down to the end of the grace period (when next signup begins)
+        targetTime = data.grace_end_time || (data.completed_at + 432000); // fallback: 5 days
+        label = 'Next signup begins in: ';
+    }
+
+    const labelEl = document.getElementById('tournament-countdown-label');
+    if (labelEl) labelEl.textContent = label;
 
     if (!targetTime) return;
 
@@ -506,12 +518,16 @@ function updateCountdown(data) {
         const current = Date.now() / 1000;
         let diff = targetTime - current;
 
-        if (diff < 0) {
+        if (diff <= 0) {
             diff = 0;
-            if (currentTournamentState && currentTournamentState.status !== 'completed') {
-                // Potential state change triggered by time
-                fetchTournamentStatus();
-            }
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            const el = document.getElementById('tournament-countdown');
+            if (el) el.textContent = '00:00:00';
+            // Always re-fetch on timer expiry — this triggers the backend to advance the cycle
+            console.log('[Tournament] Countdown expired, re-fetching status...');
+            setTimeout(() => fetchTournamentStatus(), 1500);
+            return;
         }
 
         const d = Math.floor(diff / 86400);
@@ -519,7 +535,7 @@ function updateCountdown(data) {
         const m = Math.floor((diff % 3600) / 60);
         const s = Math.floor(diff % 60);
 
-        const str = diff > 0 ? `${d}d ${h}h ${m}m ${s}s` : "00:00:00";
+        const str = d > 0 ? `${d}d ${h}h ${m}m ${s}s` : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         const el = document.getElementById('tournament-countdown');
         if (el) el.textContent = str;
     };

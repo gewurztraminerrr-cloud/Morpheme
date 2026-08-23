@@ -6,11 +6,13 @@ import random
 from spinner_set import SpinnerSet
 from word_validator import word_validator
 
+GRACE_PERIOD = 5 * 24 * 60 * 60  # 5 days displayed as "Tournament Finalized" before next signup
+
 class TournamentManager:
     def __init__(self, db_path='morpheme.db'):
         self.db_path = db_path
-        self.signup_duration = 7 * 24 * 60 * 60  # 1 week
-        self.turn_duration = 2 * 24 * 60 * 60    # 2 days
+        self.signup_duration = 7 * 24 * 60 * 60  # 1 week signup period
+        self.turn_duration = 2 * 24 * 60 * 60    # 2 days per round
 
     def get_db(self):
         conn = sqlite3.connect(self.db_path, timeout=30)
@@ -23,35 +25,39 @@ class TournamentManager:
 
     def get_current_tournament(self):
         conn = self.get_db()
-        # Get the most recent tournament that is not fully completed or the latest completed one for history
-        row = conn.execute('SELECT * FROM tournaments ORDER BY id DESC LIMIT 1').fetchone()
-        conn.close()
-        
+        # Prefer any non-completed tournament first (signup or active)
+        row = conn.execute(
+            "SELECT * FROM tournaments WHERE status IN ('signup','active') ORDER BY id DESC LIMIT 1"
+        ).fetchone()
         if not row:
-            # Initialize the first tournament if none exist
+            # Fall back to the most recent completed tournament (shown during grace period)
+            row = conn.execute(
+                "SELECT * FROM tournaments WHERE status = 'completed' ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+        conn.close()
+
+        if not row:
+            # No tournament at all — create the first one
             return self.create_new_tournament()
-            
+
         return dict(row)
 
     def create_new_tournament(self):
         conn = self.get_db()
         params = SpinnerSet.generate_tournament_params()
-        
-        # Ensure 'difficulty' and word count range are included in the params as requested
-        # SpinnerSet.generate_tournament_params() already includes them based on my check of spinner_set.py
-        
+
         now = time.time()
-        start_time = now + self.signup_duration
-        
+        start_date = now + self.signup_duration
+
         cursor = conn.execute('''
-            INSERT INTO tournaments (status, created_at, start_time, parameters)
+            INSERT INTO tournaments (status, created_at, start_date, parameters)
             VALUES (?, ?, ?, ?)
-        ''', ('signup', now, start_time, json.dumps(params)))
-        
+        ''', ('signup', now, start_date, json.dumps(params)))
+
         tid = cursor.lastrowid
         conn.commit()
         conn.close()
-        
+
         return self.get_tournament_by_id(tid)
 
     def get_tournament_by_id(self, tid):
@@ -64,15 +70,22 @@ class TournamentManager:
         current = self.get_current_tournament()
         if not current:
             return
-            
+
         now = time.time()
         status = current['status']
-        
-        if status == 'signup' and now >= current['start_time']:
+
+        if status == 'signup' and now >= current['start_date']:
             self.start_tournament(current['id'])
         elif status == 'active':
             self.update_matchup_winners(current['id'], current['current_round'])
             self.check_round_advancement(current['id'])
+        elif status == 'completed':
+            # Grace period: show "Tournament Finalized" for GRACE_PERIOD seconds after completion,
+            # then automatically start a new signup period.
+            completed_at = current.get('completed_at') or 0
+            if completed_at and (now - completed_at) >= GRACE_PERIOD:
+                print(f"[Tournament] Grace period over for tournament {current['id']}. Creating next tournament.")
+                self.create_new_tournament()
 
     def update_matchup_winners(self, tid, round_number):
         conn = self.get_db()
