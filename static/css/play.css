@@ -5331,13 +5331,17 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
         border-right: none !important;
         border-bottom: none !important;
-        padding: 12px !important;
+        padding: 12px 12px 70px 12px !important;
         gap: 8px !important;
         background: var(--bg-panel, #181920) !important;
         border-radius: 16px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scroll-behavior: smooth !important;
     }
 
     .tool-nav-btn,

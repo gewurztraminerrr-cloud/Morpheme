@@ -205,10 +205,66 @@ function setupToolsNavigation() {
             });
         });
     }
+// High-sensitivity kinetic scroll for mobile Tools category sidebars
+(function setupSidebarFlickSensitivity() {
+    function initSidebarSensitivity(sidebar) {
+        if (!sidebar || sidebar._flickSensitivityInit) return;
+        sidebar._flickSensitivityInit = true;
+
+        let startY = 0;
+        let lastY = 0;
+        let lastTime = 0;
+        let velocity = 0;
+        let isTouching = false;
+
+        sidebar.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            isTouching = true;
+            startY = e.touches[0].clientY;
+            lastY = startY;
+            lastTime = performance.now();
+            velocity = 0;
+        }, { passive: true });
+
+        sidebar.addEventListener('touchmove', (e) => {
+            if (!isTouching || e.touches.length !== 1) return;
+            const currentY = e.touches[0].clientY;
+            const currentTime = performance.now();
+            const dt = currentTime - lastTime;
+            if (dt > 8) {
+                const dy = currentY - lastY;
+                velocity = dy / dt; // px/ms
+                lastY = currentY;
+                lastTime = currentTime;
+            }
+        }, { passive: true });
+
+        sidebar.addEventListener('touchend', () => {
+            if (!isTouching) return;
+            isTouching = false;
+            
+            // If user flicked with noticeable velocity (> 0.15 px/ms)
+            if (Math.abs(velocity) > 0.15) {
+                // Generous momentum multiplier so light flick glides to bottom
+                const boost = velocity * 650;
+                const targetScroll = Math.max(0, Math.min(sidebar.scrollHeight - sidebar.clientHeight, sidebar.scrollTop - boost));
+                
+                sidebar.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth'
+                });
+            }
+        }, { passive: true });
+    }
+
+    function _initAllSidebars() {
+        document.querySelectorAll('.tools-sidebar').forEach(initSidebarSensitivity);
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', _attachSnapListeners);
+        document.addEventListener('DOMContentLoaded', _initAllSidebars);
     } else {
-        _attachSnapListeners();
+        _initAllSidebars();
     }
 })();
 
