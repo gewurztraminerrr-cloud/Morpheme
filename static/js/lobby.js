@@ -252,6 +252,9 @@ function setupLobbyEvents() {
 
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     showPage('page-play');
+                    if (typeof window.switchPlayPanel === 'function') {
+                        window.switchPlayPanel('board', false);
+                    }
 
                     // Force focus
                     setTimeout(() => {
