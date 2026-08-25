@@ -3629,6 +3629,8 @@ class RoomManager:
 
                             room.bonus_word = str(bw_candidate or '').upper().strip()
                             room.previous_bonus_word = room.bonus_word
+                            room.board = r_board
+                            room.bonus_cell = r_bonus_c
                             room.total_words_count = len(room.all_words)
                             room.initial_total_words = room.total_words_count
 
