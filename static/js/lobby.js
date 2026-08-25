@@ -248,12 +248,18 @@ function setupLobbyEvents() {
         }
 
         async function createRoom(config, minRating, maxRating) {
+            if (window._isCreatingRoom) {
+                console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
+                return;
+            }
+            window._isCreatingRoom = true;
+
             // CLEAR SPECIAL MODES: We are entering a normal room
             localStorage.removeItem('tournament_play_active');
             localStorage.removeItem('private_match_active');
 
             if (window.showLoadingOverlay) {
-                window.showLoadingOverlay('Creating & Generating Room...');
+                window.showLoadingOverlay('Creating & Generating Room...', 6000);
             }
 
             try {
@@ -271,7 +277,6 @@ function setupLobbyEvents() {
                 
                 if (!createResp.ok) {
                     const createErr = await createResp.text();
-                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
                 }
 
@@ -299,6 +304,7 @@ function setupLobbyEvents() {
                         window.updateGameState(data.state);
                     }
 
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     showPage('page-play');
 
                     // Force focus
@@ -327,6 +333,12 @@ function setupLobbyEvents() {
                 } else {
                     alert('Error creating room: ' + e.message);
                 }
+            } finally {
+                window._isCreatingRoom = false;
+                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+                document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
             }
         }
         window.createRoom = createRoom;

@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33143" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33143" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33143">
-    <link rel="stylesheet" href="/css/lobby.css?v=33143">
-    <link rel="stylesheet" href="/css/play.css?v=33143">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33143">
-    <link rel="stylesheet" href="/css/forum.css?v=33143">
-    <link rel="stylesheet" href="/css/donate.css?v=33143">
+    <link rel="preload" href="/css/style.css?v=33144" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33144" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33144">
+    <link rel="stylesheet" href="/css/lobby.css?v=33144">
+    <link rel="stylesheet" href="/css/play.css?v=33144">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33144">
+    <link rel="stylesheet" href="/css/forum.css?v=33144">
+    <link rel="stylesheet" href="/css/donate.css?v=33144">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -511,11 +511,24 @@
             var realBtn = (rawBtn && typeof rawBtn.closest === 'function') ? (rawBtn.closest('.confirm-create-room-btn, button') || rawBtn) : rawBtn;
             var activeConfig = window.currentLobbyConfig;
             if (!activeConfig) {
-                alert('Please select a game room first.');
+                var activeBtn = document.querySelector('.game-btn.active') || document.querySelector('.fcfs-btn.active, .split-btn.active');
+                if (activeBtn && activeBtn.dataset) {
+                    activeConfig = {
+                        gameType: activeBtn.dataset.game || activeBtn.dataset.gameType || 'fcfs',
+                        timeLimit: parseInt(activeBtn.dataset.time || activeBtn.dataset.timeLimit || '45'),
+                        boardDimensions: activeBtn.dataset.board || activeBtn.dataset.boardDimensions || '4x4'
+                    };
+                    window.currentLobbyConfig = activeConfig;
+                }
+            }
+            if (!activeConfig) {
+                if (window.showAlertModal) {
+                    window.showAlertModal('Notice', 'Please select a game room format first.');
+                } else {
+                    alert('Please select a game room first.');
+                }
                 return;
             }
-            realBtn.disabled = true;
-            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Creating Room...');
 
             var panel = (realBtn && typeof realBtn.closest === 'function') ? realBtn.closest('.create-room-panel') : null;
             var minInput = panel ? panel.querySelector('.min-rating-input') : null;
@@ -525,6 +538,15 @@
             var maxRating = (maxInput && maxInput.value.trim() !== '') ? parseInt(maxInput.value) : 9999;
             if (isNaN(minRating)) minRating = 0;
             if (isNaN(maxRating)) maxRating = 9999;
+
+            if (typeof window.createRoom === 'function') {
+                return window.createRoom(activeConfig, minRating, maxRating);
+            }
+
+            if (window._isCreatingRoom) return;
+            window._isCreatingRoom = true;
+            if (realBtn) realBtn.disabled = true;
+            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Creating & Generating Room...', 6000);
 
             showLobbyToast('Creating custom room (' + minRating + ' - ' + (maxRating < 9999 ? maxRating : '∞') + ')...');
 
@@ -546,16 +568,29 @@
                     localStorage.setItem('last_joined_room', data.room_id);
                     window.isSpectatorMode = false;
                     if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
+                    if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (typeof window.showPage === 'function') window.showPage('page-play');
                     if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     showLobbyToast('Room created successfully!', 'success');
                 } else {
-                    showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
+                    if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
+                    } else {
+                        showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
+                    }
                 }
             } catch (err) {
-                showLobbyToast('Error creating room: ' + err.message, 'error');
-            } finally {
                 if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+                if (window.showAlertModal) {
+                    window.showAlertModal('Creation Error', 'Error creating room: ' + err.message);
+                } else {
+                    showLobbyToast('Error creating room: ' + err.message, 'error');
+                }
+            } finally {
+                window._isCreatingRoom = false;
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+                if (realBtn) realBtn.disabled = false;
             }
         }
         window.handleCreateRoomButtonClick = handleCreateRoomButtonClick;
@@ -6193,16 +6228,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33127"></script>
-    <script src="/js/lobby.js?v=33143"></script>
-    <script src="/js/play.js?v=33143"></script>
-    <script src="/js/tournaments.js?v=33143"></script>
-    <script src="/js/leaderboard.js?v=33143"></script>
-    <script src="/js/tools.js?v=33143"></script>
-    <script src="/js/mouse_selection.js?v=33143"></script>
-    <script src="/js/mods.js?v=33143"></script>
-    <script src="/js/private_matches.js?v=33143"></script>
-    <script src="/js/donate.js?v=33143"></script>
+    <script src="/js/app.js?v=33144"></script>
+    <script src="/js/lobby.js?v=33144"></script>
+    <script src="/js/play.js?v=33144"></script>
+    <script src="/js/tournaments.js?v=33144"></script>
+    <script src="/js/leaderboard.js?v=33144"></script>
+    <script src="/js/tools.js?v=33144"></script>
+    <script src="/js/mouse_selection.js?v=33144"></script>
+    <script src="/js/mods.js?v=33144"></script>
+    <script src="/js/private_matches.js?v=33144"></script>
+    <script src="/js/donate.js?v=33144"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

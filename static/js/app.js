@@ -2393,7 +2393,7 @@ window.checkLobbyNotice = async function() {
 
 
 // UI Feedback Helpers
-window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) {
+window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = 6000) {
     let overlay = document.getElementById('global-loading-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -2410,11 +2410,10 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
     }
-    if (autoHideMs && typeof autoHideMs === 'number') {
-        window._loadingOverlayTimeout = setTimeout(() => {
-            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-        }, autoHideMs);
-    }
+    const timeoutVal = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 6000;
+    window._loadingOverlayTimeout = setTimeout(() => {
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    }, timeoutVal);
 };
 
 window.hideLoadingOverlay = function() {
