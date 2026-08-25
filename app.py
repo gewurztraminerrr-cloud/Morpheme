@@ -1219,10 +1219,20 @@ DEFINITIONS_CACHE = None
 PRONUNCIATIONS_CACHE = None
 ADDED_WORDS_CACHE = None
 
+def normalize_24h_room_key(room_id, board_dimensions=None):
+    if board_dimensions and board_dimensions != 'all':
+        return f"24h_{board_dimensions}"
+    s = str(room_id or '').lower()
+    for dim in ['4x4', '4x6', '5x7', '6x8', '3x3x3', '2x2x2', '3x3']:
+        if dim in s:
+            return f"24h_{dim}"
+    if s.startswith('24h_'):
+        return s
+    return f"24h_{s}"
 
 # Initialize database
 def init_db():
-    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn = get_db_connection(DB_PATH, timeout=60.0)
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1284,6 +1294,32 @@ def init_db():
             print("Migrated DB: Upgraded daily_score_sums table to include room_id composite key")
     except Exception as e:
         print(f"Migration check for daily_score_sums info: {e}")
+
+    # MIGRATION: Consolidate legacy daily_score_sums keys to canonical formats
+    try:
+        table_info = conn.execute("PRAGMA table_info(daily_score_sums)").fetchall()
+        column_names = [col[1] for col in table_info]
+        if 'room_id' in column_names:
+            rows = conn.execute("SELECT user_id, room_id, score_sum FROM daily_score_sums").fetchall()
+            consolidated = {}
+            needs_migration = False
+            for r in rows:
+                uid, rid, ssum = r[0], r[1], r[2]
+                can_id = normalize_24h_room_key(rid)
+                if can_id != rid:
+                    needs_migration = True
+                key = (uid, can_id)
+                consolidated[key] = consolidated.get(key, 0) + (ssum or 0)
+            
+            if needs_migration:
+                conn.execute("DELETE FROM daily_score_sums")
+                for (uid, can_id), total_s in consolidated.items():
+                    if total_s > 0:
+                        conn.execute("INSERT INTO daily_score_sums (user_id, room_id, score_sum) VALUES (?, ?, ?)", (uid, can_id, total_s))
+                conn.commit()
+                print(f"[init_db] Consolidated legacy daily_score_sums keys into {len(consolidated)} canonical records.")
+    except Exception as e:
+        print(f"[init_db] Migration error for daily_score_sums consolidation: {e}")
 
     conn.commit()
     
@@ -6779,17 +6815,6 @@ def create_forum_comment():
     finally:
         conn.close()
 
-def normalize_24h_room_key(room_id, board_dimensions=None):
-    if board_dimensions and board_dimensions != 'all':
-        return f"24h_{board_dimensions}"
-    s = str(room_id or '').lower()
-    for dim in ['4x4', '4x6', '5x7', '6x8', '3x3x3', '2x2x2', '3x3']:
-        if dim in s:
-            return f"24h_{dim}"
-    if s.startswith('24h_'):
-        return s
-    return f"24h_{s}"
-
 @app.route('/api/daily-score-sums', methods=['GET'])
 def get_daily_score_sums():
     raw_room_id = request.args.get('room_id', '24h_4x4')
@@ -6797,52 +6822,39 @@ def get_daily_score_sums():
     canonical_key = normalize_24h_room_key(raw_room_id, board_dimensions)
     dims = canonical_key.replace('24h_', '')
 
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
     try:
-        # 1. Automatic backfill / recovery from historical round_history if needed
-        conn.execute('''
-            INSERT OR IGNORE INTO daily_score_sums (user_id, room_id, score_sum)
-            SELECT rh.user_id, ?, SUM(rh.total_score)
-            FROM round_history rh
-            WHERE rh.user_id > 0 
-              AND (rh.board_dimensions = ? OR rh.room_id LIKE ? OR rh.room_id = ?)
-              AND (rh.round_duration >= 7200 OR rh.room_id LIKE '%86400%' OR rh.room_id LIKE '%24h%')
-            GROUP BY rh.user_id
-            HAVING SUM(rh.total_score) > 0
-        ''', (canonical_key, dims, f"%{dims}%", canonical_key))
-        conn.commit()
+        with get_db(row_factory=sqlite3.Row) as conn:
+            # 1. Automatic backfill / recovery from historical round_history if missing
+            conn.execute('''
+                INSERT INTO daily_score_sums (user_id, room_id, score_sum)
+                SELECT rh.user_id, ?, SUM(rh.total_score)
+                FROM round_history rh
+                WHERE rh.user_id > 0 
+                  AND (rh.board_dimensions = ? OR rh.room_id LIKE ? OR rh.room_id = ?)
+                  AND (rh.round_duration >= 7200 OR rh.room_id LIKE '%86400%' OR rh.room_id LIKE '%24h%')
+                GROUP BY rh.user_id
+                HAVING SUM(rh.total_score) > 0
+                ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = MAX(daily_score_sums.score_sum, excluded.score_sum)
+            ''', (canonical_key, dims, f"%{dims}%", canonical_key))
 
-        # 2. Fetch all scores for this 24h room from daily_score_sums (only score_sum >= 1)
-        cursor = conn.execute('''
-            SELECT u.username, d.user_id, MAX(d.score_sum) as score_sum
-            FROM daily_score_sums d
-            JOIN users u ON d.user_id = u.id
-            WHERE (d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?)
-              AND d.score_sum > 0
-            GROUP BY d.user_id, u.username
-            HAVING MAX(d.score_sum) > 0
-            ORDER BY score_sum DESC
-        ''', (canonical_key, raw_room_id, f"%{dims}%"))
-        rows = cursor.fetchall()
-        
-        scores_by_username = {row['username']: row['score_sum'] for row in rows if row['score_sum'] and row['score_sum'] > 0}
-
-        # 3. Check active in-memory room for any players who have scored today in this 24h room
-        for r in room_manager.rooms.values():
-            if r.time_limit >= 7200 and (r.board_dimensions == dims or dims in str(r.room_id)):
-                for p in list(r.players) + list(r.past_players.values()):
-                    if p.score > 0 and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and p.username:
-                        if p.username not in scores_by_username or p.score > scores_by_username[p.username]:
-                            scores_by_username[p.username] = max(scores_by_username.get(p.username, 0), p.score)
-
-        # Strictly exclude score of 0, only include players with score >= 1
-        players = [{'username': uname, 'score_sum': ssum} for uname, ssum in sorted(scores_by_username.items(), key=lambda x: x[1], reverse=True) if ssum > 0]
-        return jsonify({'players': players, 'room_id': canonical_key})
+            # 2. Fetch all scores for this 24h room from daily_score_sums (only score_sum >= 1)
+            cursor = conn.execute('''
+                SELECT u.username, d.user_id, SUM(d.score_sum) as score_sum
+                FROM daily_score_sums d
+                JOIN users u ON d.user_id = u.id
+                WHERE (d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?)
+                  AND d.score_sum > 0
+                GROUP BY d.user_id, u.username
+                HAVING SUM(d.score_sum) > 0
+                ORDER BY score_sum DESC
+            ''', (canonical_key, raw_room_id, f"%{dims}%"))
+            rows = cursor.fetchall()
+            
+            # Score Sum reflects finalized round totals summed at 12 AM boundary and is never overwritten during ongoing rounds
+            players = [{'username': row['username'], 'score_sum': row['score_sum']} for row in rows if row['score_sum'] and row['score_sum'] > 0]
+            return jsonify({'players': players, 'room_id': canonical_key})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        conn.close()
 
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard_data():
