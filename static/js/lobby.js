@@ -728,35 +728,62 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         const savedContainerScroll = roomsContainer ? roomsContainer.scrollTop : 0;
 
         // Classify each room as Open or Closed for the current user
+        const currentUser = window.currentUser || '';
+        const currentUserId = window.currentUserId ? String(window.currentUserId) : '';
+        const savedRoomId = localStorage.getItem('last_joined_room') || '';
+
         rooms.forEach(room => {
+            const rId = String(room.room_id || '');
             const pCountVal = Number(room.player_count) || (room.players ? room.players.length : 0);
             const isFull = pCountVal >= (Number(room.max_players) || 8);
             const roomMin = Number(room.min_rating) || 0;
             const roomMax = Number(room.max_rating) || 9999;
             const hasLimits = roomMin > 0 || roomMax < 9999;
             const userRating = getUserConfigRating(room.game_type, room.board_dimensions, room.time_limit);
-            const currentUser = window.currentUser || '';
             const isCurrentUserGuest = !currentUser || currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
             const isRatingOutOfRange = hasLimits && (userRating < roomMin || userRating > roomMax || isCurrentUserGuest);
 
-            // Open Room: within rating limits AND less than 8 players
-            room._isOpen = !isRatingOutOfRange && !isFull;
+            // Check if current user is an active player inside this room
+            const isUserInRoom = (room.players && Array.isArray(room.players) && room.players.some(p => {
+                const uname = (p && p.username) ? String(p.username).trim().toLowerCase() : '';
+                const myUname = (currentUser || '').trim().toLowerCase();
+                const uid = (p && p.user_id) ? String(p.user_id) : '';
+                return (uname && myUname && uname === myUname) || (uid && currentUserId && uid === currentUserId);
+            })) || (window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId));
+
+            room._isUserInRoom = isUserInRoom;
+
+            if (isUserInRoom) {
+                // Instantly synchronize current room state in memory and storage
+                window.currentRoomId = rId;
+                localStorage.setItem('last_joined_room', rId);
+                room._isOpen = true; // User's active room is ALWAYS accessible and open to them
+            } else {
+                // Open Room: within rating limits AND less than 8 players
+                room._isOpen = !isRatingOutOfRange && !isFull;
+            }
         });
 
-        // Filter based on active tab ('open' vs 'closed')
+        // Filter based on active tab ('open' vs 'closed') - user's own room is always kept
         const activeTab = window.currentRoomFilterTab || 'open';
-        let filteredRooms = rooms.filter(room => activeTab === 'open' ? room._isOpen : !room._isOpen);
+        let filteredRooms = rooms.filter(room => {
+            if (room._isUserInRoom) return true;
+            return activeTab === 'open' ? room._isOpen : !room._isOpen;
+        });
 
-        // Apply Authoritative Rating Proximity Filter/Sort if "Enter" or input has been executed
-        const targetRating = window.activeRatingFilterValue;
-        if (targetRating !== null && !isNaN(targetRating)) {
-            // Sort rooms by closeness to entered average value (closest first)
-            filteredRooms.sort((a, b) => {
+        // Sort: Place active room with current user AT THE TOP, followed by rating filter/proximity
+        filteredRooms.sort((a, b) => {
+            if (a._isUserInRoom && !b._isUserInRoom) return -1;
+            if (!a._isUserInRoom && b._isUserInRoom) return 1;
+
+            const targetRating = window.activeRatingFilterValue;
+            if (targetRating !== null && !isNaN(targetRating)) {
                 const diffA = Math.abs(a.display_average_rating - targetRating);
                 const diffB = Math.abs(b.display_average_rating - targetRating);
                 return diffA - diffB;
-            });
-        }
+            }
+            return 0;
+        });
 
         if (filteredRooms.length === 0) {
             if (roomsContainer) {
@@ -792,8 +819,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
                 let actionButtons = '';
 
-                if (rId && rId === window.currentRoomId) {
-                    actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" onclick="handleJoinRoomInline(this)" style="background: #e67e22;">Return to Game</button>`;
+                if (room._isUserInRoom || (rId && (rId === window.currentRoomId || rId === savedRoomId))) {
+                    actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" onclick="handleJoinRoomInline(this)" style="background: #e67e22; color: #ffffff; font-weight: 700;">Return to Game</button>`;
                 } else if (activeTab === 'closed' || !room._isOpen) {
                     // Closed Rooms: ONLY allow Spectate button to be visible
                     actionButtons = `<button class="join-room-btn watch-mode" data-room="${rId}" data-spectator="true" onclick="handleJoinRoomInline(this)" style="background: #34495e;">Spectate</button>`;

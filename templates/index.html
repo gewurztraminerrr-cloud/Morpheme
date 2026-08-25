@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33139" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33139" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33139">
-    <link rel="stylesheet" href="/css/lobby.css?v=33139">
-    <link rel="stylesheet" href="/css/play.css?v=33139">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33139">
-    <link rel="stylesheet" href="/css/forum.css?v=33139">
-    <link rel="stylesheet" href="/css/donate.css?v=33139">
+    <link rel="preload" href="/css/style.css?v=33140" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33140" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33140">
+    <link rel="stylesheet" href="/css/lobby.css?v=33140">
+    <link rel="stylesheet" href="/css/play.css?v=33140">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33140">
+    <link rel="stylesheet" href="/css/forum.css?v=33140">
+    <link rel="stylesheet" href="/css/donate.css?v=33140">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -328,9 +328,37 @@
                             if (rooms.length === 0) {
                                 targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
                             } else {
+                                var currentUser = window.currentUser || '';
+                                var savedRoomId = localStorage.getItem('last_joined_room') || '';
+
+                                // Classify and sort rooms
+                                rooms.forEach(function(r) {
+                                    var rId = String(r.room_id || '');
+                                    var isUserInRoom = (r.players && Array.isArray(r.players) && r.players.some(function(p) {
+                                        var uname = (p && p.username) ? String(p.username).trim().toLowerCase() : '';
+                                        var myUname = (currentUser || '').trim().toLowerCase();
+                                        return uname && myUname && uname === myUname;
+                                    })) || (window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId));
+                                    r._isUserInRoom = isUserInRoom;
+                                    if (isUserInRoom) {
+                                        window.currentRoomId = rId;
+                                        localStorage.setItem('last_joined_room', rId);
+                                    }
+                                });
+
+                                rooms.sort(function(a, b) {
+                                    if (a._isUserInRoom && !b._isUserInRoom) return -1;
+                                    if (!a._isUserInRoom && b._isUserInRoom) return 1;
+                                    return 0;
+                                });
+
                                 targetContainer.innerHTML = rooms.map(function(r) {
                                     var rState = String(r.state || 'active').toUpperCase();
                                     var rId = String(r.room_id || '');
+                                    var btnHtml = r._isUserInRoom
+                                        ? '<button class="join-room-btn return-mode" data-room="' + rId + '" onclick="handleJoinRoomInline(this)" style="background: #e67e22; color: #fff; font-weight: 700;">Return to Game</button>'
+                                        : '<button class="join-room-btn" data-room="' + rId + '" onclick="handleJoinRoomInline(this)">Join</button>';
+
                                     var playersHtml = (r.players || []).map(function(p) {
                                         var uname = (p && p.username) ? String(p.username) : 'Player';
                                         var isGuest = uname.startsWith('Guest_');
@@ -343,7 +371,7 @@
                                     return '<div class="room-item">' +
                                            '<div class="room-header-row"><div class="room-status ' + r.state + '">' + rState + '</div><div class="room-meta">Avg Rating: ' + (r.average_rating || 0) + '</div></div>' +
                                            '<div class="room-players-row" style="margin:6px 0;">' + playersHtml + '</div>' +
-                                           '<button class="join-room-btn" data-room="' + rId + '" onclick="handleJoinRoomInline(this)">Join</button>' +
+                                           btnHtml +
                                            '</div>';
                                 }).join('');
                             }
@@ -362,9 +390,10 @@
                 if (!btn) return;
                 var roomId = btn.getAttribute('data-room');
                 if (!roomId) return;
+                var isReturn = btn.classList.contains('return-mode') || (window.currentRoomId && roomId === window.currentRoomId);
                 btn.style.opacity = '0.5';
                 btn.style.pointerEvents = 'none';
-                if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
+                if (window.showLoadingOverlay) window.showLoadingOverlay(isReturn ? 'Returning to Game...' : 'Joining Room...');
                 try {
                     var isSpectator = btn.getAttribute('data-spectator') === 'true';
                     var response = await fetch('/api/room/' + roomId + '/join', {
@@ -6049,15 +6078,15 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
     <script src="/js/app.js?v=33127"></script>
-    <script src="/js/lobby.js?v=33139"></script>
-    <script src="/js/play.js?v=33139"></script>
-    <script src="/js/tournaments.js?v=33139"></script>
-    <script src="/js/leaderboard.js?v=33139"></script>
-    <script src="/js/tools.js?v=33139"></script>
-    <script src="/js/mouse_selection.js?v=33139"></script>
-    <script src="/js/mods.js?v=33139"></script>
-    <script src="/js/private_matches.js?v=33139"></script>
-    <script src="/js/donate.js?v=33139"></script>
+    <script src="/js/lobby.js?v=33140"></script>
+    <script src="/js/play.js?v=33140"></script>
+    <script src="/js/tournaments.js?v=33140"></script>
+    <script src="/js/leaderboard.js?v=33140"></script>
+    <script src="/js/tools.js?v=33140"></script>
+    <script src="/js/mouse_selection.js?v=33140"></script>
+    <script src="/js/mods.js?v=33140"></script>
+    <script src="/js/private_matches.js?v=33140"></script>
+    <script src="/js/donate.js?v=33140"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
