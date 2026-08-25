@@ -189,61 +189,7 @@ function setupLobbyEvents() {
         // Handle "Create Room" button click (inside the panel)
         const createBtn = target.closest('.confirm-create-room-btn');
         if (createBtn) {
-            let activeConfig = window.currentLobbyConfig || currentLobbyConfig;
-            if (!activeConfig) {
-                const activeBtn = document.querySelector('.game-btn.active');
-                if (activeBtn && activeBtn.dataset) {
-                    activeConfig = {
-                        gameType: activeBtn.dataset.gameType || 'fcfs',
-                        timeLimit: parseInt(activeBtn.dataset.timeLimit || '45'),
-                        boardDimensions: activeBtn.dataset.boardDimensions || '4x4'
-                    };
-                    window.currentLobbyConfig = activeConfig;
-                    currentLobbyConfig = activeConfig;
-                } else if (createBtn.dataset && createBtn.dataset.gameType) {
-                    activeConfig = {
-                        gameType: createBtn.dataset.gameType || 'fcfs',
-                        timeLimit: parseInt(createBtn.dataset.timeLimit || '45'),
-                        boardDimensions: createBtn.dataset.boardDimensions || '4x4'
-                    };
-                    window.currentLobbyConfig = activeConfig;
-                    currentLobbyConfig = activeConfig;
-                }
-            }
-
-            if (!activeConfig) {
-                activeConfig = {
-                    gameType: 'fcfs',
-                    timeLimit: 45,
-                    boardDimensions: '4x4'
-                };
-                window.currentLobbyConfig = activeConfig;
-                currentLobbyConfig = activeConfig;
-            }
-
-            console.log('Create Room clicked. Config:', activeConfig);
-
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Creating & Generating Room...');
-
-            // Read from embedded inputs
-            const panel = createBtn.closest('.create-room-panel');
-            const minInput = panel ? panel.querySelector('.min-rating-input') : null;
-            const maxInput = panel ? panel.querySelector('.max-rating-input') : null;
-
-            let minRating = 0;
-            let maxRating = 9999;
-
-            if (minInput && minInput.value.trim() !== '') {
-                minRating = parseInt(minInput.value);
-            }
-            if (maxInput && maxInput.value.trim() !== '') {
-                maxRating = parseInt(maxInput.value);
-            }
-
-            if (isNaN(minRating)) minRating = 0;
-            if (isNaN(maxRating)) maxRating = 9999;
-
-            createRoom(activeConfig, minRating, maxRating);
+            // Handled directly by inline onclick window.handleCreateRoomButtonClick
             return;
         }
 
