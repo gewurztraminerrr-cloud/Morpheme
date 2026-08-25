@@ -16,6 +16,7 @@ import random
 from contextlib import contextmanager
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "morpheme.db")
+_raw_sqlite3_connect = sqlite3.connect
 
 def get_db_connection(db_path=None, timeout=60.0, row_factory=None):
     """
@@ -25,7 +26,7 @@ def get_db_connection(db_path=None, timeout=60.0, row_factory=None):
     if db_path is None:
         db_path = DB_PATH
         
-    conn = sqlite3.connect(db_path, timeout=timeout, check_same_thread=False)
+    conn = _raw_sqlite3_connect(db_path, timeout=timeout, check_same_thread=False)
     if row_factory is not None:
         conn.row_factory = row_factory
         
