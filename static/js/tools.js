@@ -365,14 +365,14 @@ function renderGroups(groupsData, containerId, type) {
         colDiv.className = 'group-column';
         colDiv.innerHTML = `
             <div class="group-header">${label}</div>
-            <div class="group-table-container-wrapper" style="position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
-                <div class="group-table-container" id="${colId}-scroll" style="flex: 1 1 auto; overflow-y: auto; position: relative;">
+            <div class="list-scroll-area-wrapper" style="position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; width: 100%;">
+                <div class="list-scroll-area group-table-container" id="${colId}-scroll" style="height: 100%; overflow-y: auto; padding: 5px 10px;">
                     <div class="group-word-list">
                         ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
                     </div>
                 </div>
-                <div class="custom-scrollbar-track combo-scrollbar-track" id="${colId}-track">
-                    <div class="custom-scrollbar-thumb combo-scrollbar-thumb" id="${colId}-thumb"></div>
+                <div class="custom-scrollbar-track" id="${colId}-track">
+                    <div class="custom-scrollbar-thumb" id="${colId}-thumb"></div>
                 </div>
             </div>
         `;
@@ -3345,139 +3345,152 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     const thumb = typeof thumbId === 'string' ? document.getElementById(thumbId) : thumbId;
     if (!scrollArea || !track || !thumb) return;
 
-    if (scrollArea._customScrollbarInitialized) {
-        if (typeof scrollArea._customScrollbarUpdate === 'function') {
-            scrollArea._customScrollbarUpdate();
-        }
-        return;
-    }
-    scrollArea._customScrollbarInitialized = true;
-
-    function getTrackHeight() {
-        return track.clientHeight || scrollArea.clientHeight;
-    }
-
     function updateThumb() {
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight;
         const scrollTop = scrollArea.scrollTop;
-        const trackHeight = getTrackHeight();
 
         // Show scrollbar only if list content overflows
-        if (scrollHeight <= clientHeight + 5 || trackHeight <= 0) {
+        if (scrollHeight <= clientHeight + 5) {
             track.style.display = 'none';
             return;
         }
         track.style.display = 'block';
 
         const ratio = clientHeight / scrollHeight;
-        const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+        const thumbHeight = Math.max(40, clientHeight * ratio);
         thumb.style.height = `${thumbHeight}px`;
 
         const maxScrollTop = scrollHeight - clientHeight;
-        const maxThumbTop = trackHeight - thumbHeight;
+        const maxThumbTop = clientHeight - thumbHeight;
         const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
-        thumb.style.top = `${Math.max(0, Math.min(maxThumbTop, thumbTop))}px`;
+        thumb.style.top = `${thumbTop}px`;
     }
 
-    scrollArea._customScrollbarUpdate = updateThumb;
-
     // Bind event listeners for scroll and resize
-    scrollArea.addEventListener('scroll', updateThumb, { passive: true });
-    window.addEventListener('resize', updateThumb, { passive: true });
+    scrollArea.addEventListener('scroll', updateThumb);
+    window.addEventListener('resize', updateThumb);
 
     // Watch for dynamic content changes inside the scroll area to auto-update
     const observer = new MutationObserver(updateThumb);
     observer.observe(scrollArea, { childList: true, subtree: true });
 
-    // Pointer Event Dragging with Pointer Capture
+    // Dragging state tracking
     let isDragging = false;
-    let startPointerY = 0;
+    let startY = 0;
     let startThumbTop = 0;
 
-    function onThumbPointerDown(e) {
-        if (e.button !== 0 && e.pointerType === 'mouse') return;
-        e.preventDefault();
-        e.stopPropagation();
-
+    function onDragStart(e) {
         isDragging = true;
         thumb.classList.add('dragging');
-        try { thumb.setPointerCapture(e.pointerId); } catch (_) {}
-
-        startPointerY = e.clientY;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startY = clientY;
         startThumbTop = parseFloat(thumb.style.top) || 0;
         document.body.style.userSelect = 'none';
-
-        const onPointerMove = (ev) => {
-            if (!isDragging) return;
-            ev.preventDefault();
-            ev.stopPropagation();
-
-            const trackHeight = getTrackHeight();
-            const thumbHeight = thumb.offsetHeight;
-            const maxThumbTop = trackHeight - thumbHeight;
-            if (maxThumbTop <= 0) return;
-
-            const deltaY = ev.clientY - startPointerY;
-            let newThumbTop = startThumbTop + deltaY;
-            newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
-
-            thumb.style.top = `${newThumbTop}px`;
-
-            const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
-            if (maxScrollTop > 0) {
-                scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
-            }
-        };
-
-        const onPointerUp = (ev) => {
-            if (!isDragging) return;
-            isDragging = false;
-            thumb.classList.remove('dragging');
-            document.body.style.userSelect = '';
-            try { thumb.releasePointerCapture(ev.pointerId); } catch (_) {}
-
-            window.removeEventListener('pointermove', onPointerMove, true);
-            window.removeEventListener('pointerup', onPointerUp, true);
-            window.removeEventListener('pointercancel', onPointerUp, true);
-        };
-
-        window.addEventListener('pointermove', onPointerMove, { capture: true, passive: false });
-        window.addEventListener('pointerup', onPointerUp, { capture: true, passive: false });
-        window.addEventListener('pointercancel', onPointerUp, { capture: true, passive: false });
+        
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
     }
 
-    thumb.addEventListener('pointerdown', onThumbPointerDown, { passive: false });
+    function onDragMove(e) {
+        if (!isDragging) return;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = clientY - startY;
 
-    // Track click / tap to jump and drag
-    track.addEventListener('pointerdown', (e) => {
-        if (e.target === thumb) return;
-        e.preventDefault();
-        e.stopPropagation();
-
-        const trackRect = track.getBoundingClientRect();
-        const trackHeight = trackRect.height || getTrackHeight();
+        const clientHeight = scrollArea.clientHeight;
         const thumbHeight = thumb.offsetHeight;
-        const maxThumbTop = trackHeight - thumbHeight;
-        if (maxThumbTop <= 0) return;
+        const maxThumbTop = clientHeight - thumbHeight;
 
-        const clickY = e.clientY - trackRect.top;
-        let newThumbTop = clickY - thumbHeight / 2;
+        let newThumbTop = startThumbTop + deltaY;
         newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
 
         thumb.style.top = `${newThumbTop}px`;
 
-        const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
-        if (maxScrollTop > 0) {
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        if (maxThumbTop > 0) {
             scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
         }
 
-        onThumbPointerDown(e);
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
+    }
+
+    function onDragEnd() {
+        if (isDragging) {
+            isDragging = false;
+            thumb.classList.remove('dragging');
+            document.body.style.userSelect = '';
+        }
+    }
+
+    // Mouse events for thumb
+    thumb.addEventListener('mousedown', onDragStart);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+
+    // Touch events for thumb
+    thumb.addEventListener('touchstart', onDragStart, { passive: false });
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
+    document.addEventListener('touchcancel', onDragEnd);
+
+    // Click/tap on track to jump and drag
+    track.addEventListener('mousedown', (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const clientHeight = scrollArea.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+
+        let newThumbTop = clickY - thumbHeight / 2;
+        const maxThumbTop = clientHeight - thumbHeight;
+        newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
+
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
+
+        // Directly start drag session
+        isDragging = true;
+        thumb.classList.add('dragging');
+        startY = e.clientY;
+        startThumbTop = newThumbTop;
+        e.preventDefault();
+    });
+
+    track.addEventListener('touchstart', (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const touchY = e.touches[0].clientY - rect.top;
+        const clientHeight = scrollArea.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+
+        let newThumbTop = touchY - thumbHeight / 2;
+        const maxThumbTop = clientHeight - thumbHeight;
+        newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
+
+        const scrollHeight = scrollArea.scrollHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
+
+        isDragging = true;
+        thumb.classList.add('dragging');
+        startY = e.touches[0].clientY;
+        startThumbTop = newThumbTop;
+        if (e.cancelable !== false) {
+            e.preventDefault();
+        }
     }, { passive: false });
 
     // Initial position trigger
-    requestAnimationFrame(updateThumb);
-    setTimeout(updateThumb, 50);
+    updateThumb();
 }
 
 function initCustomScrollbar() {
