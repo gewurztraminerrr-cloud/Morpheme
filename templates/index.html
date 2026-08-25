@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33141" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33141" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33141">
-    <link rel="stylesheet" href="/css/lobby.css?v=33141">
-    <link rel="stylesheet" href="/css/play.css?v=33141">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33141">
-    <link rel="stylesheet" href="/css/forum.css?v=33141">
-    <link rel="stylesheet" href="/css/donate.css?v=33141">
+    <link rel="preload" href="/css/style.css?v=33142" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33142" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33142">
+    <link rel="stylesheet" href="/css/lobby.css?v=33142">
+    <link rel="stylesheet" href="/css/play.css?v=33142">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33142">
+    <link rel="stylesheet" href="/css/forum.css?v=33142">
+    <link rel="stylesheet" href="/css/donate.css?v=33142">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -404,7 +404,11 @@
                     var data = await response.json();
                     if (data && data.success) {
                         if (!isSpectator && data.role === 'spectator') {
-                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            } else {
+                                alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            }
                             if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                                 window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
                             }
@@ -426,23 +430,39 @@
                     } else {
                         var errMsg = (data && data.error) ? data.error : 'Unknown error';
                         if (errMsg.toLowerCase().includes('full') || response.status === 409) {
-                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            } else {
+                                alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                            }
                             if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                                 window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
                             }
                         } else if (errMsg.toLowerCase().includes('not found') || response.status === 404) {
-                            alert('This room has ended or is no longer active.');
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Room Closed', 'This room has ended or is no longer active.');
+                            } else {
+                                alert('This room has ended or is no longer active.');
+                            }
                             if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                                 window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
                             }
                         } else {
-                            alert('Failed to join room: ' + errMsg);
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Unable to Join', 'Failed to join room: ' + errMsg);
+                            } else {
+                                alert('Failed to join room: ' + errMsg);
+                            }
                         }
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'auto';
                     }
                 } catch(err) {
-                    alert('Network error joining room: ' + err.message);
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Network Error', 'Network error joining room: ' + err.message);
+                    } else {
+                        alert('Network error joining room: ' + err.message);
+                    }
                     btn.style.opacity = '1';
                     btn.style.pointerEvents = 'auto';
                 } finally {
@@ -638,6 +658,57 @@
                         refreshBtn.disabled = false;
                     }, 200);
                 }
+            }
+        };
+
+        window.showAlertModal = function(title, message, priority) {
+            var modal = document.getElementById('generic-info-modal');
+            var titleEl = document.getElementById('generic-modal-title');
+            var bodyEl = document.getElementById('generic-modal-body');
+            var okBtn = document.getElementById('generic-modal-ok-btn');
+            var closeBtn = document.getElementById('close-generic-modal');
+
+            if (window._hasPriorityModal && !priority) {
+                return;
+            }
+
+            if (modal && titleEl && bodyEl) {
+                if (priority) window._hasPriorityModal = true;
+                titleEl.textContent = title || 'Notice';
+                bodyEl.innerHTML = '<div style="text-align: center; font-size: 1.05rem; line-height: 1.6; color: var(--text-primary, #ffffff);">' + message + '</div>';
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '100001';
+
+                var closeModal = function(e) {
+                    if (e) {
+                        try { e.preventDefault(); e.stopPropagation(); } catch(err) {}
+                    }
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                    window._hasPriorityModal = false;
+                };
+
+                if (okBtn) okBtn.onclick = closeModal;
+                if (closeBtn) closeBtn.onclick = closeModal;
+                modal.onclick = function(e) {
+                    if (e.target === modal) closeModal(e);
+                };
+            } else if (window._nativeAlert) {
+                window._nativeAlert(message);
+            } else {
+                alert(message);
+            }
+        };
+
+        if (!window._nativeAlert) {
+            window._nativeAlert = window.alert;
+        }
+        window.alert = function(message) {
+            if (typeof window.showAlertModal === 'function') {
+                window.showAlertModal('Notice', message);
+            } else if (window._nativeAlert) {
+                window._nativeAlert(message);
             }
         };
     </script>
@@ -6066,18 +6137,23 @@
     </style>
 
     <!-- Generic Info Modal -->
-    <div id="generic-info-modal" class="modal-overlay hidden">
+    <div id="generic-info-modal" class="modal-overlay hidden" style="z-index: 100001; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: none;">
         <div class="achievement-card"
-            style="max-width: 400px; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            style="max-width: 440px; width: 90%; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-panel, #1e293b); border: 1px solid var(--border-color, #334155); border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
             <div class="modal-header"
-                style="padding: 20px; border-bottom: 1px solid var(--input-border); display: flex; justify-content: space-between; align-items: center; background: var(--input-bg);">
-                <h2 id="generic-modal-title" style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Info</h2>
+                style="padding: 16px 20px; border-bottom: 1px solid var(--input-border, #334155); display: flex; justify-content: space-between; align-items: center; background: var(--input-bg, rgba(15, 23, 42, 0.6));">
+                <h2 id="generic-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-primary, #ffffff);">Notice</h2>
                 <button class="close-overlay" id="close-generic-modal"
-                    style="position: static; transform: none;">&times;</button>
+                    style="position: static; transform: none; background: transparent; border: none; color: var(--text-secondary, #94a3b8); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0;">&times;</button>
             </div>
             <div id="generic-modal-body"
-                style="max-height: 400px; overflow-y: auto; padding: 10px; flex: 1; scrollbar-width: thin;">
+                style="max-height: 60vh; overflow-y: auto; padding: 24px 20px; text-align: center; color: var(--text-primary, #ffffff); font-size: 1.05rem; line-height: 1.6; flex: 1; scrollbar-width: thin;">
                 <!-- Content injected here -->
+            </div>
+            <div class="modal-footer"
+                style="padding: 14px 20px; display: flex; justify-content: center; background: var(--input-bg, rgba(15, 23, 42, 0.4)); border-top: 1px solid var(--input-border, #334155);">
+                <button id="generic-modal-ok-btn" class="sf-action-btn"
+                    style="padding: 9px 36px; background: #3b82f6; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">OK</button>
             </div>
         </div>
     </div>
@@ -6118,15 +6194,15 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
     <script src="/js/app.js?v=33127"></script>
-    <script src="/js/lobby.js?v=33141"></script>
-    <script src="/js/play.js?v=33141"></script>
-    <script src="/js/tournaments.js?v=33141"></script>
-    <script src="/js/leaderboard.js?v=33141"></script>
-    <script src="/js/tools.js?v=33141"></script>
-    <script src="/js/mouse_selection.js?v=33141"></script>
-    <script src="/js/mods.js?v=33141"></script>
-    <script src="/js/private_matches.js?v=33141"></script>
-    <script src="/js/donate.js?v=33141"></script>
+    <script src="/js/lobby.js?v=33142"></script>
+    <script src="/js/play.js?v=33142"></script>
+    <script src="/js/tournaments.js?v=33142"></script>
+    <script src="/js/leaderboard.js?v=33142"></script>
+    <script src="/js/tools.js?v=33142"></script>
+    <script src="/js/mouse_selection.js?v=33142"></script>
+    <script src="/js/mods.js?v=33142"></script>
+    <script src="/js/private_matches.js?v=33142"></script>
+    <script src="/js/donate.js?v=33142"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

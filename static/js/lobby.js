@@ -313,12 +313,20 @@ function setupLobbyEvents() {
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-                    alert('Failed to create room: ' + data.error);
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
+                    } else {
+                        alert('Failed to create room: ' + data.error);
+                    }
                 }
             } catch (e) {
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                 console.error('Creation error', e);
-                alert('Error creating room: ' + e.message);
+                if (window.showAlertModal) {
+                    window.showAlertModal('Creation Error', 'Error creating room: ' + e.message);
+                } else {
+                    alert('Error creating room: ' + e.message);
+                }
             }
         }
         window.createRoom = createRoom;
@@ -372,7 +380,11 @@ function setupLobbyEvents() {
 
                 if (data.success) {
                     if (!isSpectator && data.role === 'spectator') {
-                        alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        } else {
+                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        }
                         if (currentLobbyConfig) {
                             fetchAndRenderRooms(currentLobbyConfig.gameType, currentLobbyConfig.timeLimit, currentLobbyConfig.boardDimensions, false);
                         }
@@ -415,22 +427,38 @@ function setupLobbyEvents() {
                 } else {
                     const errMsg = data.error || 'Unknown error';
                     if (errMsg.toLowerCase().includes('full')) {
-                        alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        } else {
+                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        }
                         if (currentLobbyConfig) {
                             fetchAndRenderRooms(currentLobbyConfig.gameType, currentLobbyConfig.timeLimit, currentLobbyConfig.boardDimensions, false);
                         }
                     } else if (errMsg.toLowerCase().includes('not found')) {
-                        alert('This room has ended or is no longer active.');
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Room Closed', 'This room has ended or is no longer active.');
+                        } else {
+                            alert('This room has ended or is no longer active.');
+                        }
                         if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                             window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
                         }
                     } else {
-                        alert('Failed to join room: ' + errMsg);
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Unable to Join', 'Failed to join room: ' + errMsg);
+                        } else {
+                            alert('Failed to join room: ' + errMsg);
+                        }
                     }
                 }
             } catch (error) {
                 console.error('Error joining room:', error);
-                alert('Network error joining room: ' + error.message);
+                if (window.showAlertModal) {
+                    window.showAlertModal('Network Error', 'Network error joining room: ' + error.message);
+                } else {
+                    alert('Network error joining room: ' + error.message);
+                }
             }
             return; // Handled
         }

@@ -2037,6 +2037,8 @@ window.showAlertModal = function (title, message, priority = false) {
     const modal = document.getElementById('generic-info-modal');
     const titleEl = document.getElementById('generic-modal-title');
     const bodyEl = document.getElementById('generic-modal-body');
+    const okBtn = document.getElementById('generic-modal-ok-btn');
+    const closeBtn = document.getElementById('close-generic-modal');
     
     // If a priority modal is already showing (e.g. Inactivity Kick), 
     // don't let a normal notice (e.g. Lobby Notice) overwrite it immediately.
@@ -2047,15 +2049,42 @@ window.showAlertModal = function (title, message, priority = false) {
 
     if (modal && titleEl && bodyEl) {
         if (priority) window._hasPriorityModal = true;
-        titleEl.textContent = title;
-        bodyEl.innerHTML = `<p style="padding: 30px; text-align: center; font-size: 1.2rem; line-height: 1.6; color: var(--text-primary);">${message}</p>`;
+        titleEl.textContent = title || 'Notice';
+        bodyEl.innerHTML = `<div style="text-align: center; font-size: 1.05rem; line-height: 1.6; color: var(--text-primary, #ffffff);">${message}</div>`;
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
+        modal.style.zIndex = '100001';
         
-        // Reset priority flag when modal is manually closed or after a long timeout
-        // (Close listener is in setupModalListeners)
+        const closeModal = (e) => {
+            if (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch(err) {}
+            }
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            window._hasPriorityModal = false;
+        };
+
+        if (okBtn) okBtn.onclick = closeModal;
+        if (closeBtn) closeBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal(e);
+        };
+    } else if (window._nativeAlert) {
+        window._nativeAlert(message);
     } else {
         alert(message);
+    }
+};
+
+// Global intercept for native alerts so all popup messages use the styled modal layout
+if (!window._nativeAlert) {
+    window._nativeAlert = window.alert;
+}
+window.alert = function (message) {
+    if (typeof window.showAlertModal === 'function') {
+        window.showAlertModal('Notice', message);
+    } else if (window._nativeAlert) {
+        window._nativeAlert(message);
     }
 };
 
