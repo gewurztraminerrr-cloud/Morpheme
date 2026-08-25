@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33148" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33148" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33148">
-    <link rel="stylesheet" href="/css/lobby.css?v=33148">
-    <link rel="stylesheet" href="/css/play.css?v=33148">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33148">
-    <link rel="stylesheet" href="/css/forum.css?v=33148">
-    <link rel="stylesheet" href="/css/donate.css?v=33148">
+    <link rel="preload" href="/css/style.css?v=33149" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33149" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33149">
+    <link rel="stylesheet" href="/css/lobby.css?v=33149">
+    <link rel="stylesheet" href="/css/play.css?v=33149">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33149">
+    <link rel="stylesheet" href="/css/forum.css?v=33149">
+    <link rel="stylesheet" href="/css/donate.css?v=33149">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -568,8 +568,11 @@
                     localStorage.setItem('last_joined_room', data.room_id);
                     window.isSpectatorMode = false;
                     if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
+                    if (typeof window.clearGameUIAndCache === 'function') window.clearGameUIAndCache();
+                    if (data.state && typeof window.updateGameState === 'function') window.updateGameState(data.state);
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (typeof window.showPage === 'function') window.showPage('page-play');
+                    if (typeof window.switchPlayPanel === 'function') window.switchPlayPanel('board', false);
                     if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     showLobbyToast('Room created successfully!', 'success');
                 } else {
@@ -6228,16 +6231,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33148"></script>
-    <script src="/js/lobby.js?v=33148"></script>
-    <script src="/js/play.js?v=33148"></script>
-    <script src="/js/tournaments.js?v=33148"></script>
-    <script src="/js/leaderboard.js?v=33148"></script>
-    <script src="/js/tools.js?v=33148"></script>
-    <script src="/js/mouse_selection.js?v=33148"></script>
-    <script src="/js/mods.js?v=33148"></script>
-    <script src="/js/private_matches.js?v=33148"></script>
-    <script src="/js/donate.js?v=33148"></script>
+    <script src="/js/app.js?v=33149"></script>
+    <script src="/js/lobby.js?v=33149"></script>
+    <script src="/js/play.js?v=33149"></script>
+    <script src="/js/tournaments.js?v=33149"></script>
+    <script src="/js/leaderboard.js?v=33149"></script>
+    <script src="/js/tools.js?v=33149"></script>
+    <script src="/js/mouse_selection.js?v=33149"></script>
+    <script src="/js/mods.js?v=33149"></script>
+    <script src="/js/private_matches.js?v=33149"></script>
+    <script src="/js/donate.js?v=33149"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

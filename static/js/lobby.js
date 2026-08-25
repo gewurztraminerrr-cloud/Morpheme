@@ -165,6 +165,105 @@ function handleLobbyButtonClickCore(btn, evt) {
 window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
 window.handleLobbyButtonClick = handleLobbyButtonClickCore;
 
+async function createRoom(config, minRating, maxRating) {
+    if (window._isCreatingRoom) {
+        console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
+        return;
+    }
+    window._isCreatingRoom = true;
+
+    // CLEAR SPECIAL MODES: We are entering a normal room
+    localStorage.removeItem('tournament_play_active');
+    localStorage.removeItem('private_match_active');
+
+    if (window.showLoadingOverlay) {
+        window.showLoadingOverlay('Creating & Generating Room...', 6000);
+    }
+
+    try {
+        const createResp = await fetch('/api/room/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                game_type: config.gameType,
+                time_limit: config.timeLimit,
+                board_dimensions: config.boardDimensions,
+                min_rating: minRating,
+                max_rating: maxRating
+            })
+        });
+        
+        if (!createResp.ok) {
+            const createErr = await createResp.text();
+            throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
+        }
+
+        const data = await createResp.json();
+
+        if (data.success) {
+            console.log('Room Created, Joining:', data.room_id);
+            // Join and go to play page
+            window.currentRoomId = data.room_id;
+            localStorage.setItem('last_joined_room', data.room_id);
+            window.isSpectatorMode = false; // Creator is always player
+            stopLobbyPolling();
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
+            
+            // Clear stale UI and apply initial state before showing play page
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
+            }
+            if (data.state && typeof window.updateGameState === 'function') {
+                window.updateGameState(data.state);
+            }
+
+            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+            showPage('page-play');
+            if (typeof window.switchPlayPanel === 'function') {
+                window.switchPlayPanel('board', false);
+            }
+
+            // Force focus
+            setTimeout(() => {
+                const input = document.getElementById('word-input');
+                if (input) {
+                    input.disabled = false;
+                    input.focus();
+                }
+            }, 100);
+
+            if (window.startGamePolling) window.startGamePolling();
+        } else {
+            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+            if (window.showAlertModal) {
+                window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
+            } else {
+                alert('Failed to create room: ' + data.error);
+            }
+        }
+    } catch (e) {
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+        console.error('Creation error', e);
+        if (window.showAlertModal) {
+            window.showAlertModal('Creation Error', 'Error creating room: ' + e.message);
+        } else {
+            alert('Error creating room: ' + e.message);
+        }
+    } finally {
+        window._isCreatingRoom = false;
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+        document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
+            btn.disabled = false;
+        });
+    }
+}
+window.createRoom = createRoom;
+
 // Use event delegation on document as fallback
 function setupLobbyEvents() {
     console.log('Setting up Lobby event delegation');
@@ -192,105 +291,6 @@ function setupLobbyEvents() {
             // Handled directly by inline onclick window.handleCreateRoomButtonClick
             return;
         }
-
-        async function createRoom(config, minRating, maxRating) {
-            if (window._isCreatingRoom) {
-                console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
-                return;
-            }
-            window._isCreatingRoom = true;
-
-            // CLEAR SPECIAL MODES: We are entering a normal room
-            localStorage.removeItem('tournament_play_active');
-            localStorage.removeItem('private_match_active');
-
-            if (window.showLoadingOverlay) {
-                window.showLoadingOverlay('Creating & Generating Room...', 6000);
-            }
-
-            try {
-                const createResp = await fetch('/api/room/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        game_type: config.gameType,
-                        time_limit: config.timeLimit,
-                        board_dimensions: config.boardDimensions,
-                        min_rating: minRating,
-                        max_rating: maxRating
-                    })
-                });
-                
-                if (!createResp.ok) {
-                    const createErr = await createResp.text();
-                    throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
-                }
-
-                const data = await createResp.json();
-
-                if (data.success) {
-                    console.log('Room Created, Joining:', data.room_id);
-                    // Join and go to play page
-                    window.currentRoomId = data.room_id;
-                    localStorage.setItem('last_joined_room', data.room_id);
-                    window.isSpectatorMode = false; // Creator is always player
-                    stopLobbyPolling();
-                    const playBtn = document.getElementById('play-btn');
-                    if (playBtn) {
-                        playBtn.disabled = false;
-                        playBtn.title = "";
-                    }
-                    if (window.updateManualToolState) window.updateManualToolState();
-                    
-                    // Clear stale UI and apply initial state before showing play page
-                    if (typeof window.clearGameUIAndCache === 'function') {
-                        window.clearGameUIAndCache();
-                    }
-                    if (data.state && typeof window.updateGameState === 'function') {
-                        window.updateGameState(data.state);
-                    }
-
-                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-                    showPage('page-play');
-                    if (typeof window.switchPlayPanel === 'function') {
-                        window.switchPlayPanel('board', false);
-                    }
-
-                    // Force focus
-                    setTimeout(() => {
-                        const input = document.getElementById('word-input');
-                        if (input) {
-                            input.disabled = false;
-                            input.focus();
-                        }
-                    }, 100);
-
-                    if (window.startGamePolling) window.startGamePolling();
-                } else {
-                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-                    if (window.showAlertModal) {
-                        window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
-                    } else {
-                        alert('Failed to create room: ' + data.error);
-                    }
-                }
-            } catch (e) {
-                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-                console.error('Creation error', e);
-                if (window.showAlertModal) {
-                    window.showAlertModal('Creation Error', 'Error creating room: ' + e.message);
-                } else {
-                    alert('Error creating room: ' + e.message);
-                }
-            } finally {
-                window._isCreatingRoom = false;
-                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-                document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
-                    btn.disabled = false;
-                });
-            }
-        }
-        window.createRoom = createRoom;
 
 
         // Handle Join Room logic (dynamic button inside rooms-list)
