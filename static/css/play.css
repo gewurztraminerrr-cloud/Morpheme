@@ -7029,6 +7029,55 @@ body .board-cell.tile-flash-purple * {
     left: 1px;
 }
 
+/* Combo Checker Column Scrollbar Track & Thumb */
+.group-table-container-wrapper {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    width: 100% !important;
+}
+
+.combo-scrollbar-track {
+    position: absolute !important;
+    top: 4px !important;
+    bottom: 4px !important;
+    right: 2px !important;
+    width: 14px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 7px !important;
+    z-index: 50 !important;
+    backdrop-filter: blur(2px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: none;
+    touch-action: none !important;
+}
+
+.combo-scrollbar-thumb {
+    position: absolute !important;
+    top: 0 !important;
+    left: 2px !important;
+    width: 10px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.75), rgba(58, 123, 213, 0.75)) !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(0, 210, 255, 0.5) !important;
+    box-shadow: 0 0 6px rgba(0, 210, 255, 0.4) !important;
+    touch-action: none !important;
+    min-height: 30px !important;
+}
+
+.combo-scrollbar-thumb:active,
+.combo-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
+    border: 1px solid rgba(0, 210, 255, 0.8) !important;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.7) !important;
+    width: 11px !important;
+    left: 1px !important;
+}
+
 #full-list-modal-results::-webkit-scrollbar,
 #full-list-modal-results::-webkit-scrollbar-thumb,
 #full-list-modal-results::-webkit-scrollbar-track {

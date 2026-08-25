@@ -359,18 +359,26 @@ function renderGroups(groupsData, containerId, type) {
         foundAny = true;
 
         const label = type === 'MP' ? `${key}MP` : `${key}LIC`;
+        const colId = `combo-${type.toLowerCase()}-${key}`;
         
         const colDiv = document.createElement('div');
         colDiv.className = 'group-column';
         colDiv.innerHTML = `
             <div class="group-header">${label}</div>
-            <div class="group-table-container">
-                <div class="group-word-list">
-                    ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
+            <div class="group-table-container-wrapper" style="position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+                <div class="group-table-container" id="${colId}-scroll" style="flex: 1 1 auto; overflow-y: auto; position: relative;">
+                    <div class="group-word-list">
+                        ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
+                    </div>
+                </div>
+                <div class="custom-scrollbar-track combo-scrollbar-track" id="${colId}-track">
+                    <div class="custom-scrollbar-thumb combo-scrollbar-thumb" id="${colId}-thumb"></div>
                 </div>
             </div>
         `;
         container.appendChild(colDiv);
+
+        initCustomScrollbarForElement(`${colId}-scroll`, `${colId}-track`, `${colId}-thumb`);
     });
 
     if (!foundAny) {
