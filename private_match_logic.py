@@ -5,6 +5,7 @@ import random
 from typing import List, Dict
 from scoring import calculate_word_score
 from rating_logic import calculate_proportional_rating_change
+from db import get_db, get_db_connection, DB_PATH
 
 # Module-level cache for human stats by rating bracket
 # Refreshed dynamically to reflect real human player abilities over time.
@@ -16,161 +17,155 @@ _human_stats_cache = {
 class PrivateMatchManager:
     def __init__(self, db_path=None):
         if db_path is None:
-            import os
-            self.db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+            self.db_path = DB_PATH
         else:
             self.db_path = db_path
+        self._last_cleanup = 0.0
         self._init_db()
 
     def _init_db(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.executescript('''
-            CREATE TABLE IF NOT EXISTS private_matches (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                creator_id INTEGER NOT NULL,
-                match_type TEXT NOT NULL, -- 'solo', 'with_friends'
-                parameters TEXT NOT NULL, -- JSON
-                status TEXT DEFAULT 'active', -- 'active', 'completed', 'expired'
-                created_at REAL,
-                last_activity REAL,
-                current_round INTEGER DEFAULT 0,
-                FOREIGN KEY(creator_id) REFERENCES users(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS private_match_players (
-                match_id INTEGER,
-                user_id INTEGER,
-                username TEXT, -- Cache for AI bots or invited users
-                is_ai INTEGER DEFAULT 0,
-                ai_rating INTEGER,
-                status TEXT DEFAULT 'accepted', -- 'invited', 'accepted', 'declined'
-                PRIMARY KEY(match_id, user_id),
-                FOREIGN KEY(match_id) REFERENCES private_matches(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS private_match_rounds (
-                match_id INTEGER,
-                round_number INTEGER,
-                board_data TEXT, -- JSON
-                bonus_word TEXT,
-                bonus_cell TEXT, -- NEW: (r, c) or (f, r, c)
-                word_count_range TEXT, -- NEW: Specifically selected range
-                all_words TEXT, -- JSON of all valid words on board
-                start_time REAL,
-                end_time REAL,
-                PRIMARY KEY(match_id, round_number)
-            );
-
-            CREATE TABLE IF NOT EXISTS private_match_turns (
-                match_id INTEGER,
-                round_number INTEGER,
-                user_id INTEGER,
-                score INTEGER DEFAULT 0,
-                submitted_words TEXT, -- JSON list of objects {word, points, timestamp}
-                submitted_at REAL,
-                PRIMARY KEY(match_id, round_number, user_id)
-            );
-            
-            CREATE TABLE IF NOT EXISTS match_invites (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                match_id INTEGER,
-                sender_id INTEGER,
-                recipient_username TEXT,
-                status TEXT DEFAULT 'pending',
-                created_at REAL
-            );
-
-            CREATE TABLE IF NOT EXISTS private_match_starts (
-                match_id INTEGER,
-                round_number INTEGER,
-                user_id INTEGER,
-                start_time REAL,
-                PRIMARY KEY(match_id, round_number, user_id)
-            );
-
-            CREATE TABLE IF NOT EXISTS active_boards (
-                room_id TEXT PRIMARY KEY,
-                board_data TEXT, -- JSON
-                all_words TEXT, -- JSON
-                dictionary TEXT,
-                min_length INTEGER,
-                updated_at REAL,
-                bonus_word TEXT,
-                bonus_cell_json TEXT,
-                board_format TEXT,
-                uniqueness REAL,
-                word_count_range TEXT,
-                active_players_json TEXT
-            );
-        ''')
-        conn.commit()
-        
-        # MIGRATION: Add word_count_range column if it doesn't exist
         try:
-            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN word_count_range TEXT')
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass # Column likely already exists
-            
-        try:
-            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN bonus_cell TEXT')
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass # Column likely already exists
+            with get_db(self.db_path) as conn:
+                conn.executescript('''
+                    CREATE TABLE IF NOT EXISTS private_matches (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        creator_id INTEGER NOT NULL,
+                        match_type TEXT NOT NULL, -- 'solo', 'with_friends'
+                        parameters TEXT NOT NULL, -- JSON
+                        status TEXT DEFAULT 'active', -- 'active', 'completed', 'expired'
+                        created_at REAL,
+                        last_activity REAL,
+                        current_round INTEGER DEFAULT 0,
+                        FOREIGN KEY(creator_id) REFERENCES users(id)
+                    );
 
-        try:
-            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN board_format TEXT')
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass # Column likely already exists
-            
-        try:
-            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN dictionary TEXT')
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass # Column likely already exists
+                    CREATE TABLE IF NOT EXISTS private_match_players (
+                        match_id INTEGER,
+                        user_id INTEGER,
+                        username TEXT, -- Cache for AI bots or invited users
+                        is_ai INTEGER DEFAULT 0,
+                        ai_rating INTEGER,
+                        status TEXT DEFAULT 'accepted', -- 'invited', 'accepted', 'declined'
+                        PRIMARY KEY(match_id, user_id),
+                        FOREIGN KEY(match_id) REFERENCES private_matches(id)
+                    );
 
-        try:
-            conn.execute('ALTER TABLE private_match_rounds ADD COLUMN difficulty TEXT')
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass # Column likely already exists
-            
-        conn.close()
+                    CREATE TABLE IF NOT EXISTS private_match_rounds (
+                        match_id INTEGER,
+                        round_number INTEGER,
+                        board_data TEXT, -- JSON
+                        bonus_word TEXT,
+                        bonus_cell TEXT, -- NEW: (r, c) or (f, r, c)
+                        word_count_range TEXT, -- NEW: Specifically selected range
+                        all_words TEXT, -- JSON of all valid words on board
+                        start_time REAL,
+                        end_time REAL,
+                        PRIMARY KEY(match_id, round_number)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS private_match_turns (
+                        match_id INTEGER,
+                        round_number INTEGER,
+                        user_id INTEGER,
+                        score INTEGER DEFAULT 0,
+                        submitted_words TEXT, -- JSON list of objects {word, points, timestamp}
+                        submitted_at REAL,
+                        PRIMARY KEY(match_id, round_number, user_id)
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS match_invites (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        match_id INTEGER,
+                        sender_id INTEGER,
+                        recipient_username TEXT,
+                        status TEXT DEFAULT 'pending',
+                        created_at REAL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS private_match_starts (
+                        match_id INTEGER,
+                        round_number INTEGER,
+                        user_id INTEGER,
+                        start_time REAL,
+                        PRIMARY KEY(match_id, round_number, user_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS active_boards (
+                        room_id TEXT PRIMARY KEY,
+                        board_data TEXT, -- JSON
+                        all_words TEXT, -- JSON
+                        dictionary TEXT,
+                        min_length INTEGER,
+                        updated_at REAL,
+                        bonus_word TEXT,
+                        bonus_cell_json TEXT,
+                        board_format TEXT,
+                        uniqueness REAL,
+                        word_count_range TEXT,
+                        active_players_json TEXT
+                    );
+                ''')
+                
+                # MIGRATION: Add word_count_range column if it doesn't exist
+                try:
+                    conn.execute('ALTER TABLE private_match_rounds ADD COLUMN word_count_range TEXT')
+                except sqlite3.OperationalError:
+                    pass # Column likely already exists
+                    
+                try:
+                    conn.execute('ALTER TABLE private_match_rounds ADD COLUMN bonus_cell TEXT')
+                except sqlite3.OperationalError:
+                    pass # Column likely already exists
+
+                try:
+                    conn.execute('ALTER TABLE private_match_rounds ADD COLUMN board_format TEXT')
+                except sqlite3.OperationalError:
+                    pass # Column likely already exists
+                    
+                try:
+                    conn.execute('ALTER TABLE private_match_rounds ADD COLUMN dictionary TEXT')
+                except sqlite3.OperationalError:
+                    pass # Column likely already exists
+
+                try:
+                    conn.execute('ALTER TABLE private_match_rounds ADD COLUMN difficulty TEXT')
+                except sqlite3.OperationalError:
+                    pass # Column likely already exists
+        except Exception as e:
+            print(f"[PrivateMatchManager] Init DB warning: {e}")
 
     def get_db(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return get_db_connection(self.db_path, timeout=60.0, row_factory=sqlite3.Row)
 
-    def cleanup_old_data(self):
-        """Delete matches and invites older than 7 days"""
+    def cleanup_old_data(self, force=False):
+        """Delete matches and invites older than 7 days (throttled to once per 6 hours)"""
+        now = time.time()
+        if not force and (now - self._last_cleanup < 21600):
+            return
+            
+        self._last_cleanup = now
         try:
-            conn = sqlite3.connect(self.db_path)
-            now = time.time()
-            seven_days_ago = now - (7 * 24 * 60 * 60)
-            
-            # 1. Get IDs of matches older than 7 days (based on created_at and last_activity)
-            old_matches = conn.execute("SELECT id FROM private_matches WHERE created_at < ? OR (last_activity IS NOT NULL AND last_activity < ?)", 
-                                       (seven_days_ago, seven_days_ago)).fetchall()
-            match_ids = [m[0] for m in old_matches]
-            
-            if match_ids:
-                placeholders = ','.join(['?'] * len(match_ids))
-                conn.execute(f"DELETE FROM private_match_players WHERE match_id IN ({placeholders})", match_ids)
-                conn.execute(f"DELETE FROM private_match_rounds WHERE match_id IN ({placeholders})", match_ids)
-                conn.execute(f"DELETE FROM private_match_turns WHERE match_id IN ({placeholders})", match_ids)
-                conn.execute(f"DELETE FROM match_invites WHERE match_id IN ({placeholders})", match_ids)
-                conn.execute(f"DELETE FROM private_match_starts WHERE match_id IN ({placeholders})", match_ids) # Added for new table
-                conn.execute(f"DELETE FROM private_matches WHERE id IN ({placeholders})", match_ids)
+            with get_db(self.db_path) as conn:
+                seven_days_ago = now - (7 * 24 * 60 * 60)
                 
-            # 2. Cleanup stale standalone invites
-            conn.execute("DELETE FROM match_invites WHERE created_at < ?", (seven_days_ago,))
-            
-            conn.commit()
-            conn.close()
+                # 1. Get IDs of matches older than 7 days (based on created_at and last_activity)
+                old_matches = conn.execute("SELECT id FROM private_matches WHERE created_at < ? OR (last_activity IS NOT NULL AND last_activity < ?)", 
+                                           (seven_days_ago, seven_days_ago)).fetchall()
+                match_ids = [m[0] for m in old_matches]
+                
+                if match_ids:
+                    placeholders = ','.join(['?'] * len(match_ids))
+                    conn.execute(f"DELETE FROM private_match_players WHERE match_id IN ({placeholders})", match_ids)
+                    conn.execute(f"DELETE FROM private_match_rounds WHERE match_id IN ({placeholders})", match_ids)
+                    conn.execute(f"DELETE FROM private_match_turns WHERE match_id IN ({placeholders})", match_ids)
+                    conn.execute(f"DELETE FROM match_invites WHERE match_id IN ({placeholders})", match_ids)
+                    conn.execute(f"DELETE FROM private_match_starts WHERE match_id IN ({placeholders})", match_ids)
+                    conn.execute(f"DELETE FROM private_matches WHERE id IN ({placeholders})", match_ids)
+                    
+                # 2. Cleanup stale standalone invites
+                conn.execute("DELETE FROM match_invites WHERE created_at < ?", (seven_days_ago,))
         except Exception as e:
-            print(f"Cleanup Error: {e}")
+            print(f"[PrivateMatchManager] Cleanup Warning: {e}")
 
     def create_match(self, creator_id, match_type, parameters, participants=None):
         """

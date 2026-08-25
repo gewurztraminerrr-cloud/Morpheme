@@ -5,23 +5,21 @@ import json
 import random
 from spinner_set import SpinnerSet
 from word_validator import word_validator
+from db import get_db, get_db_connection, DB_PATH
 
 GRACE_PERIOD = 5 * 24 * 60 * 60  # 5 days displayed as "Tournament Finalized" before next signup
 
 class TournamentManager:
-    def __init__(self, db_path='morpheme.db'):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        if db_path is None:
+            self.db_path = DB_PATH
+        else:
+            self.db_path = db_path
         self.signup_duration = 7 * 24 * 60 * 60  # 1 week signup period
         self.turn_duration = 2 * 24 * 60 * 60    # 2 days per round
 
     def get_db(self):
-        conn = sqlite3.connect(self.db_path, timeout=30)
-        conn.row_factory = sqlite3.Row
-        try:
-            conn.execute('PRAGMA journal_mode=WAL;')
-            conn.execute('PRAGMA busy_timeout=30000;')
-        except: pass
-        return conn
+        return get_db_connection(self.db_path, timeout=60.0, row_factory=sqlite3.Row)
 
     def get_current_tournament(self):
         conn = self.get_db()

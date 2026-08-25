@@ -18,6 +18,16 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import base64
 import requests
+from db import get_db, get_db_connection, DB_PATH, execute_with_retry
+
+# Safely route all legacy/direct sqlite3.connect calls through centralized WAL connection manager
+_orig_sqlite3_connect = sqlite3.connect
+def _safe_sqlite3_connect(*args, **kwargs):
+    db_file = args[0] if args else DB_PATH
+    timeout = kwargs.get('timeout', 60.0)
+    row_factory = kwargs.get('row_factory', None)
+    return get_db_connection(db_file, timeout=timeout, row_factory=row_factory)
+sqlite3.connect = _safe_sqlite3_connect
 
 # Load environment variables from .env file
 load_dotenv()
@@ -428,11 +438,9 @@ def ensure_guest_session():
             guest_username = f'Guest_{guest_id}'
             dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
             password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (guest_username, password_hash))
-            new_user_id = cursor.lastrowid
-            conn.commit()
-            conn.close()
+            with get_db() as conn:
+                cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (guest_username, password_hash))
+                new_user_id = cursor.lastrowid
             session['user_id'] = new_user_id
             session['username'] = guest_username
             session['is_guest'] = True
@@ -1803,10 +1811,13 @@ def init_db():
         conn.execute("DELETE FROM moderators WHERE LOWER(username) = 'jeffbabiak'")
         conn.execute("INSERT OR IGNORE INTO moderators (username, added_at) VALUES ('jeffb', 1700000000.0)")
         conn.commit()
-        print("[init_db] Migrated email jeffbabiak@outlook.com to jeffb and updated moderators.")
     except Exception as e:
         print(f"[init_db] Error migrating email and moderators: {e}")
 
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
+    except Exception:
+        pass
     conn.close()
 
 init_db()
@@ -5097,8 +5108,7 @@ def _prune_old_word_paths():
     import time as _time
     while True:
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            with conn:
+            with get_db() as conn:
                 result = conn.execute(
                     """UPDATE round_history
                           SET all_words_paths = NULL
@@ -5106,7 +5116,6 @@ def _prune_old_word_paths():
                           AND timestamp < datetime('now', '-90 days')"""
                 )
                 pruned = result.rowcount
-            conn.close()
             if pruned > 0:
                 print(f"[Nightly Cleanup] Nulled all_words_paths on {pruned} round_history row(s) older than 90 days.")
             else:

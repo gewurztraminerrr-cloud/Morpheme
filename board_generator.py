@@ -10,6 +10,7 @@ import sqlite3
 import json
 import threading
 from word_validator import word_validator, use_added_words_ctx
+from db import get_db, get_db_connection, DB_PATH
 
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
@@ -198,41 +199,45 @@ def get_board_hash(board):
                 chars.append(str(cell))
         return "".join(chars).upper()
 
-def is_board_hash_used(board_hash):
+def is_board_hash_used(board_hash, conn=None):
     if not board_hash:
         return False
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM used_boards WHERE board_hash = ? LIMIT 1;", (board_hash,))
-        row = cursor.fetchone()
-        conn.close()
-        return row is not None
+        if conn is not None:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM used_boards WHERE board_hash = ? LIMIT 1;", (board_hash,))
+            row = cursor.fetchone()
+            return row is not None
+        else:
+            with get_db() as c:
+                cursor = c.cursor()
+                cursor.execute("SELECT 1 FROM used_boards WHERE board_hash = ? LIMIT 1;", (board_hash,))
+                row = cursor.fetchone()
+                return row is not None
     except Exception as e:
         print(f"[BoardGen] Error checking used board hash: {e}")
         return False
 
-def mark_board_hash_used(board_hash):
+def mark_board_hash_used(board_hash, conn=None):
     if not board_hash:
         return False
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
-        conn.commit()
-        conn.close()
-        return True
+        if conn is not None:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
+            conn.commit()
+            return True
+        else:
+            with get_db() as c:
+                cursor = c.cursor()
+                cursor.execute("INSERT INTO used_boards (board_hash, used_at) VALUES (?, ?);", (board_hash, time.time()))
+                c.commit()
+                return True
     except sqlite3.IntegrityError:
         # Already inserted by another thread/process (true duplicate)
-        try: conn.close()
-        except: pass
         return False
     except Exception as e:
         print(f"[BoardGen] Error marking board hash as used (database locked/error): {e}")
-        try: conn.close()
-        except: pass
         # Database lock or other system errors should NOT trigger infinite regeneration loop!
         # Return True so the generator accepts the board and moves on.
         return True
@@ -247,15 +252,12 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
     elif dimensions:
         dimensions = str(dimensions)
 
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=5)
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
         while True:
-            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
             dim_pattern = f'%"dimensions": "{dimensions}"%'
             if exclude_format and str(exclude_format).lower() != 'normal':
                 clean_ex = str(exclude_format).split()[0].strip()
@@ -268,7 +270,6 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
                 cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
                 row = cursor.fetchone()
             if not row:
-                cursor.execute("COMMIT;")
                 break
                 
             cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
@@ -287,7 +288,7 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
                 continue
 
             board_hash = get_board_hash(board)
-            if not mark_board_hash_used(board_hash):
+            if not mark_board_hash_used(board_hash, conn=conn):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
                 
@@ -335,11 +336,9 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
     - bonus_word_len (if provided)
     Allows difficulty and word_count_range to be relaxed to avoid cache misses while keeping spinner selections stable.
     """
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=5)
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
         # Select lightweight param_key keys (exclude heavy board_json blob until matching ID is found)
@@ -386,23 +385,21 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                 break
             
         if matched_row:
-            # Pop this specific board by ID in an atomic transaction
-            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
             cursor.execute("SELECT board_json FROM pregenerated_boards WHERE id = ?;", (matched_row['id'],))
             check_row = cursor.fetchone()
             if check_row:
                 cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (matched_row['id'],))
                 conn.commit()
-                try: conn.close()
-                except: pass
-                conn = None
                 
                 data = json.loads(check_row['board_json'])
                 board = data["board"]
                 
                 board_hash = get_board_hash(board)
-                if not mark_board_hash_used(board_hash):
+                if not mark_board_hash_used(board_hash, conn=conn):
                     print(f"[BoardGen] Discarding compatible cached board (layout already used: {board_hash})")
+                    try: conn.close()
+                    except: pass
+                    conn = None
                     # Try again
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
 
@@ -411,6 +408,9 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                 matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
                 if matching_min_words < 5:
                     print(f"[BoardGen] Discarding compatible cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 5)")
+                    try: conn.close()
+                    except: pass
+                    conn = None
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
                 bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
                 board_format_ret = data["board_format_ret"]
@@ -425,10 +425,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                 params_obj = json.loads(matched_row['param_key'])
                 print(f"[BoardGen] Serving COMPATIBLE CACHED board: {matched_row['param_key'][:120]}...")
                 return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params_obj)
-            else:
-                cursor.execute("COMMIT;")
         
-        conn.close()
     except Exception as e:
         print(f"[BoardGen] Error popping compatible cached board: {e}")
     finally:
@@ -438,19 +435,15 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
     return None
 
 def pop_cached_board(param_key_str):
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
     conn = None
     try:
-        conn = sqlite3.connect(db_path, timeout=5)
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
         while True:
-            cursor.execute("BEGIN IMMEDIATE TRANSACTION;")
             cursor.execute("SELECT id, board_json FROM pregenerated_boards WHERE param_key = ? ORDER BY id ASC LIMIT 1;", (param_key_str,))
             row = cursor.fetchone()
             if not row:
-                cursor.execute("COMMIT;")
                 break
                 
             cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
@@ -461,11 +454,9 @@ def pop_cached_board(param_key_str):
             board = data["board"]
             
             board_hash = get_board_hash(board)
-            if not mark_board_hash_used(board_hash):
+            if not mark_board_hash_used(board_hash, conn=conn):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
-            conn.close()
-            conn = None
             
             all_words = data["all_words"]
             bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
@@ -481,7 +472,6 @@ def pop_cached_board(param_key_str):
             print(f"[BoardGen] Serving CACHED board for param_key: {param_key_str[:120]}...")
             return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word)
             
-        conn.close()
     except Exception as e:
         print(f"[BoardGen] Error checking/popping cached board: {e}")
     finally:
@@ -539,11 +529,16 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
             attempts = 0
             while True:
                 # Check current count
-                conn = sqlite3.connect(db_path, timeout=30)
-                cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM pregenerated_boards WHERE param_key = ?;", (param_key_str,))
-                current_count = cursor.fetchone()[0]
-                conn.close()
+                current_count = 0
+                try:
+                    with get_db() as conn:
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT COUNT(*) FROM pregenerated_boards WHERE param_key = ?;", (param_key_str,))
+                        row = cursor.fetchone()
+                        if row:
+                            current_count = row[0]
+                except Exception as e:
+                    print(f"[BoardGen] [Refill] Count query warning: {e}")
                 
                 if current_count >= target_count:
                     break
@@ -637,13 +632,11 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     continue  # Loop back and generate a different board
                 
                 try:
-                    conn = sqlite3.connect(db_path, timeout=30)
-                    conn.execute(
-                        "INSERT OR IGNORE INTO pregenerated_boards (param_key, board_json, created_at, board_hash) VALUES (?, ?, ?, ?);",
-                        (param_key_str, json.dumps(board_data), time.time(), board_hash)
-                    )
-                    conn.commit()
-                    conn.close()
+                    with get_db() as conn:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO pregenerated_boards (param_key, board_json, created_at, board_hash) VALUES (?, ?, ?, ?);",
+                            (param_key_str, json.dumps(board_data), time.time(), board_hash)
+                        )
                 except Exception as e:
                     print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
                     time.sleep(1.0)
@@ -720,54 +713,46 @@ class BoardGenerator:
         
         # Initialize the SQLite table for pre-generated boards
         try:
-            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
-            conn = sqlite3.connect(db_path, timeout=30)
-            # Enable WAL mode: allows concurrent readers + one writer without blocking each other.
-            # This eliminates SQLite lock contention between board-cache reads and writes.
-            conn.execute('PRAGMA journal_mode=WAL')
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS pregenerated_boards (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    param_key TEXT NOT NULL,
-                    board_json TEXT NOT NULL,
-                    created_at REAL NOT NULL,
-                    board_hash TEXT
-                );
-            ''')
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS used_boards (
-                    board_hash TEXT PRIMARY KEY,
-                    used_at REAL NOT NULL
-                );
-            ''')
-            # MIGRATION FIRST: Add board_hash column if it doesn't exist yet
-            try:
-                conn.execute('ALTER TABLE pregenerated_boards ADD COLUMN board_hash TEXT')
-                conn.commit()
-            except Exception:
-                pass  # Column already exists
-                
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
-            # Unique index on board_hash — database-level guard against duplicate boards in cache
-            conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_pregenerated_board_hash ON pregenerated_boards(board_hash);')
+            with get_db() as conn:
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS pregenerated_boards (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        param_key TEXT NOT NULL,
+                        board_json TEXT NOT NULL,
+                        created_at REAL NOT NULL,
+                        board_hash TEXT
+                    );
+                ''')
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS used_boards (
+                        board_hash TEXT PRIMARY KEY,
+                        used_at REAL NOT NULL
+                    );
+                ''')
+                # MIGRATION FIRST: Add board_hash column if it doesn't exist yet
+                try:
+                    conn.execute('ALTER TABLE pregenerated_boards ADD COLUMN board_hash TEXT')
+                except Exception:
+                    pass  # Column already exists
+                    
+                conn.execute('CREATE INDEX IF NOT EXISTS idx_param_key ON pregenerated_boards(param_key);')
+                # Unique index on board_hash — database-level guard against duplicate boards in cache
+                conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_pregenerated_board_hash ON pregenerated_boards(board_hash);')
 
-            # MIGRATION: Backfill board_hash for any existing rows that lack it
-            try:
-                rows = conn.execute('SELECT id, board_json FROM pregenerated_boards WHERE board_hash IS NULL').fetchall()
-                for row_id, board_json in rows:
-                    try:
-                        data = json.loads(board_json)
-                        h = get_board_hash(data['board'])
-                        conn.execute('UPDATE pregenerated_boards SET board_hash = ? WHERE id = ?', (h, row_id))
-                    except Exception:
-                        pass
-                if rows:
-                    conn.commit()
-                    print(f"[BoardGen] Backfilled board_hash for {len(rows)} pregenerated rows.")
-            except Exception as mig_e:
-                print(f"[BoardGen] board_hash backfill error: {mig_e}")
-            conn.commit()
-            conn.close()
+                # MIGRATION: Backfill board_hash for any existing rows that lack it
+                try:
+                    rows = conn.execute('SELECT id, board_json FROM pregenerated_boards WHERE board_hash IS NULL').fetchall()
+                    for row_id, board_json in rows:
+                        try:
+                            data = json.loads(board_json)
+                            h = get_board_hash(data['board'])
+                            conn.execute('UPDATE pregenerated_boards SET board_hash = ? WHERE id = ?', (h, row_id))
+                        except Exception:
+                            pass
+                    if rows:
+                        print(f"[BoardGen] Backfilled board_hash for {len(rows)} pregenerated rows.")
+                except Exception as mig_e:
+                    print(f"[BoardGen] board_hash backfill error: {mig_e}")
         except Exception as e:
             print(f"[BoardGen] Error initializing pre-generated boards table: {e}")
 

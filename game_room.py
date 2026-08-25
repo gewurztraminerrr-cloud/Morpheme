@@ -21,6 +21,7 @@ DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debu
 WORD_DEBUG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_debug.log')
 WORD_TALLY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_tally.log')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
+from db import get_db, get_db_connection
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
@@ -788,15 +789,10 @@ class GameRoom:
                 })
             players_json = json.dumps(players_data)
             
-            db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
-            conn = sqlite3.connect(db_file)
-            try:
+            with get_db() as conn:
                 conn.execute('''
                     UPDATE active_boards SET active_players_json = ? WHERE room_id = ?
                 ''', (players_json, self.room_id))
-                conn.commit()
-            finally:
-                conn.close()
         except Exception as e:
             print(f"[GameRoom] Error saving active players to DB for {self.room_id}: {e}")
     
@@ -2122,82 +2118,78 @@ class GameRoom:
                                 ]
                                 rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
                                 
-                                import sqlite3
-                                conn_p = sqlite3.connect(DB_PATH, timeout=30)
-                                for p in self.players + quitters_snapshot:
-                                    if p.user_id in rating_changes:
-                                         p.rating_change = rating_changes[p.user_id]
-                                         p.rating += p.rating_change
-                                         # Update Global Rating
-                                         conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                         
-                                         # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
-                                         display_game_type = self.game_type.replace('solo_', '')
-                                         config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
-                                         conn_p.execute('''
-                                             INSERT INTO user_ratings (user_id, config_key, rating)
-                                             VALUES (?, ?, MAX(400, 1200 + ?))
-                                             ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
-                                         ''', (p.user_id, config_key, p.rating_change, p.rating_change))
-                                    else:
-                                         p.rating_change = 0
-
-                                # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
-                                if self.abandonment_bounty > 0:
-                                    eligible_receivers = [p for p in self.players if not p.is_ai and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False)]
-                                    if eligible_receivers:
-                                        count = len(eligible_receivers)
-                                        share = self.abandonment_bounty // count
-                                        remainder = self.abandonment_bounty % count
-
-                                        # Determine the per-format rating cap so bounty never busts the ceiling
-                                        fmt = (self.current_board_format or '').lower()
-                                        if 'triple' in fmt:
-                                            rating_cap = 48
-                                        elif 'double' in fmt:
-                                            rating_cap = 32
+                                with get_db() as conn_p:
+                                    for p in self.players + quitters_snapshot:
+                                        if p.user_id in rating_changes:
+                                             p.rating_change = rating_changes[p.user_id]
+                                             p.rating += p.rating_change
+                                             # Update Global Rating
+                                             conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                             
+                                             # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
+                                             display_game_type = self.game_type.replace('solo_', '')
+                                             config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
+                                             conn_p.execute('''
+                                                 INSERT INTO user_ratings (user_id, config_key, rating)
+                                                 VALUES (?, ?, MAX(400, 1200 + ?))
+                                                 ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
+                                             ''', (p.user_id, config_key, p.rating_change, p.rating_change))
                                         else:
-                                            rating_cap = 16
+                                             p.rating_change = 0
 
-                                        config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+                                    # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
+                                    if self.abandonment_bounty > 0:
+                                        eligible_receivers = [p for p in self.players if not p.is_ai and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False)]
+                                        if eligible_receivers:
+                                            count = len(eligible_receivers)
+                                            share = self.abandonment_bounty // count
+                                            remainder = self.abandonment_bounty % count
 
-                                        for i, target in enumerate(eligible_receivers):
-                                            bonus = share + (1 if i < remainder else 0)
-                                            if bonus <= 0: continue
+                                            # Determine the per-format rating cap so bounty never busts the ceiling
+                                            fmt = (self.current_board_format or '').lower()
+                                            if 'triple' in fmt:
+                                                rating_cap = 48
+                                            elif 'double' in fmt:
+                                                rating_cap = 32
+                                            else:
+                                                rating_cap = 16
 
-                                            # Cap: only give as much bonus as keeps total_change <= rating_cap
-                                            current_change = getattr(target, 'rating_change', 0)
-                                            headroom = max(0, rating_cap - current_change)
-                                            bonus = min(bonus, headroom)
-                                            if bonus <= 0:
+                                            config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+
+                                            for i, target in enumerate(eligible_receivers):
+                                                bonus = share + (1 if i < remainder else 0)
+                                                if bonus <= 0: continue
+
+                                                # Cap: only give as much bonus as keeps total_change <= rating_cap
+                                                current_change = getattr(target, 'rating_change', 0)
+                                                headroom = max(0, rating_cap - current_change)
+                                                bonus = min(bonus, headroom)
+                                                if bonus <= 0:
+                                                    with open(RATING_AUDIT_PATH, 'a') as log:
+                                                        log.write(f"[{time.time()}] Round-End Bounty SKIPPED for {target.username}: already at cap ({current_change}/{rating_cap})\n")
+                                                    continue
+
+                                                # Apply to DB
+                                                conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
+                                                conn_p.execute('''
+                                                    INSERT INTO user_ratings (user_id, config_key, rating)
+                                                    VALUES (?, ?, 1200 + ?)
+                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                                                ''', (target.user_id, config_key, bonus, bonus))
+
+                                                # Apply in-memory
+                                                target.rating += bonus
+                                                if not hasattr(target, 'rating_change'): target.rating_change = 0
+                                                target.rating_change = getattr(target, 'rating_change', 0) + bonus
+
+                                                if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
+                                                target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
+
                                                 with open(RATING_AUDIT_PATH, 'a') as log:
-                                                    log.write(f"[{time.time()}] Round-End Bounty SKIPPED for {target.username}: already at cap ({current_change}/{rating_cap})\n")
-                                                continue
+                                                    log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty}, Cap: {rating_cap})\n")
 
-                                            # Apply to DB
-                                            conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
-                                            conn_p.execute('''
-                                                INSERT INTO user_ratings (user_id, config_key, rating)
-                                                VALUES (?, ?, 1200 + ?)
-                                                ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
-                                            ''', (target.user_id, config_key, bonus, bonus))
-
-                                            # Apply in-memory
-                                            target.rating += bonus
-                                            if not hasattr(target, 'rating_change'): target.rating_change = 0
-                                            target.rating_change = getattr(target, 'rating_change', 0) + bonus
-
-                                            if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
-                                            target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
-
-                                            with open(RATING_AUDIT_PATH, 'a') as log:
-                                                log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty}, Cap: {rating_cap})\n")
-
-                                        # Reset pool AFTER successful distribution
-                                        self.abandonment_bounty = 0
-                                        
-                                conn_p.commit()
-                                conn_p.close()
+                                            # Reset pool AFTER successful distribution
+                                            self.abandonment_bounty = 0
                         except Exception as e:
                             import traceback
                             traceback.print_exc()
@@ -3038,24 +3030,22 @@ class RoomManager:
         if getattr(room, 'previous_board', None) and getattr(room, 'previous_day_history', None):
             return # Already has in-memory data
             
-        import sqlite3
         import json
         
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.cursor()
         try:
-            # 1. Find the last completed round number
-            if room.current_round <= 2:
-                # On server startup/reset (round <= 2), find the absolute latest round in history
-                cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room.room_id,))
-            else:
-                cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ? AND round_number < ?", (room.room_id, room.current_round))
-            row = cursor.fetchone()
-            if not row or row[0] is None:
-                conn.close()
-                return
-                
-            last_round = row[0]
+            with get_db() as conn:
+                cursor = conn.cursor()
+                # 1. Find the last completed round number
+                if room.current_round <= 2:
+                    # On server startup/reset (round <= 2), find the absolute latest round in history
+                    cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room.room_id,))
+                else:
+                    cursor.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ? AND round_number < ?", (room.room_id, room.current_round))
+                row = cursor.fetchone()
+                if not row or row[0] is None:
+                    return
+                    
+                last_round = row[0]
             
             # 2. Query all player entries for this round
             cursor.execute('''
@@ -3201,8 +3191,6 @@ class RoomManager:
         except Exception as ex:
             import traceback
             print(f"[RoomManager] Error restoring previous day data: {ex}\n{traceback.format_exc()}")
-        finally:
-            conn.close()
 
     def create_room(self, room_id, game_type, time_limit, board_dimensions, min_rating=0, max_rating=9999, is_private=False, is_solo=False, initial_solo_params=None):
         """Create a new game room or return an existing singleton for the configuration"""
@@ -3327,19 +3315,15 @@ class RoomManager:
                 
                 # Chronological sequence synchronization: Query absolute max completed round from history
                 max_round = 0
-                import sqlite3
-                import os
-                conn_r = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
                 try:
-                    cursor_r = conn_r.cursor()
-                    cursor_r.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room_id,))
-                    last_round_row = cursor_r.fetchone()
-                    if last_round_row and last_round_row[0] is not None:
-                        max_round = last_round_row[0]
+                    with get_db() as conn_r:
+                        cursor_r = conn_r.cursor()
+                        cursor_r.execute("SELECT MAX(round_number) FROM round_history WHERE room_id = ?", (room_id,))
+                        last_round_row = cursor_r.fetchone()
+                        if last_round_row and last_round_row[0] is not None:
+                            max_round = last_round_row[0]
                 except Exception as r_err:
                     print(f"[RoomManager] Error querying max round for initialization: {r_err}")
-                finally:
-                    conn_r.close()
 
                 room.current_round = max_round
                 
@@ -3349,22 +3333,20 @@ class RoomManager:
                 is_split = (room.game_type == 'split')
                 
                 if is_24h:
-                    import sqlite3
                     import json
-                    import os
                     import datetime
                     from zoneinfo import ZoneInfo
                     tz = ZoneInfo("America/Chicago")
                     
-                    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
                     try:
-                        cursor = conn.execute('''
-                            SELECT board_data, all_words, dictionary, min_length, updated_at,
-                                   bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
-                                   active_players_json
-                            FROM active_boards WHERE room_id = ?
-                        ''', (room_id,))
-                        row = cursor.fetchone()
+                        with get_db() as conn:
+                            cursor = conn.execute('''
+                                SELECT board_data, all_words, dictionary, min_length, updated_at,
+                                       bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                       active_players_json
+                                FROM active_boards WHERE room_id = ?
+                            ''', (room_id,))
+                            row = cursor.fetchone()
                         if row:
                             board_data_json, all_words_json, dictionary, min_length, updated_at, bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range, active_players_json = row
                             
@@ -3798,12 +3780,11 @@ class RoomManager:
         if room.previous_day_history and len(room.previous_day_history) > 0:
             return room.previous_day_history
             
-        import sqlite3
         import json
         import datetime
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            room_id = room.room_id
+            with get_db() as conn:
+                room_id = room.room_id
             
             # ROBUST HISTORY FETCH: Find the most recent round for this room that is NOT the current one
             # We search for the highest round_number < current_round, or just the most recent if current is 0/1.
@@ -3932,8 +3913,6 @@ class RoomManager:
                     for p in room.players:
                         if p.user_id == uid:
                             p.previous_submitted_words = history[uid_str]['found_words']
-
-            conn.close()
             
             # 2. POPULATE ROOM STATE: Reconstruct full previous round state if board recovered
             if recovered_board:
@@ -4683,11 +4662,7 @@ class RoomManager:
                     # For 24h rooms, save the generated board to the database immediately
                     if is_24h:
                         try:
-                            import sqlite3
                             import json
-                            import os
-                            conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
-                            
                             # Serialize active players
                             players_data = []
                             for p in room.players:
@@ -4714,29 +4689,28 @@ class RoomManager:
                                 })
                             players_json = json.dumps(players_data)
                             
-                            conn.execute('''
-                                INSERT OR REPLACE INTO active_boards (
-                                    room_id, board_data, all_words, dictionary, min_length, updated_at,
-                                    bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
-                                    active_players_json
-                                )
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ''', (
-                                room.room_id,
-                                json.dumps(room.board),
-                                json.dumps(list(room.all_words)),
-                                room.current_dictionary,
-                                room.current_min_length,
-                                time.time(),
-                                room.bonus_word or '',
-                                json.dumps(room.bonus_cell) if room.bonus_cell else None,
-                                room.current_board_format or 'Normal',
-                                room.current_uniqueness or 0.0,
-                                room.current_word_count_range or '200-300',
-                                players_json
-                            ))
-                            conn.commit()
-                            conn.close()
+                            with get_db() as conn:
+                                conn.execute('''
+                                    INSERT OR REPLACE INTO active_boards (
+                                        room_id, board_data, all_words, dictionary, min_length, updated_at,
+                                        bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                        active_players_json
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ''', (
+                                    room.room_id,
+                                    json.dumps(room.board),
+                                    json.dumps(list(room.all_words)),
+                                    room.current_dictionary,
+                                    room.current_min_length,
+                                    time.time(),
+                                    room.bonus_word or '',
+                                    json.dumps(room.bonus_cell) if room.bonus_cell else None,
+                                    room.current_board_format or 'Normal',
+                                    room.current_uniqueness or 0.0,
+                                    room.current_word_count_range or '200-300',
+                                    players_json
+                                ))
                             print(f"[RoomManager] Reconstructed 24h room {room.room_id} board saved to active_boards DB successfully.")
                         except Exception as db_err:
                             print(f"[RoomManager] Error saving reconstructed 24h room board to DB: {db_err}")
@@ -5663,20 +5637,16 @@ class RoomManager:
                     # Database board check to prevent duplicate boards across restarts
                     recent_boards = []
                     try:
-                        import sqlite3
-                        import json
-                        import os
-                        conn_b = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
-                        cursor_b = conn_b.cursor()
-                        cursor_b.execute("SELECT board_json FROM round_history WHERE room_id = ? ORDER BY id DESC LIMIT 5", (room_id,))
-                        rows_b = cursor_b.fetchall()
-                        for row_b in rows_b:
-                            if row_b[0]:
-                                try:
-                                    recent_boards.append(json.loads(row_b[0]))
-                                except:
-                                    pass
-                        conn_b.close()
+                        with get_db() as conn_b:
+                            cursor_b = conn_b.cursor()
+                            cursor_b.execute("SELECT board_json FROM round_history WHERE room_id = ? ORDER BY id DESC LIMIT 5", (room_id,))
+                            rows_b = cursor_b.fetchall()
+                            for row_b in rows_b:
+                                if row_b[0]:
+                                    try:
+                                        recent_boards.append(json.loads(row_b[0]))
+                                    except:
+                                        pass
                     except Exception as db_err:
                         print(f"[RoomManager] Error querying recent boards: {db_err}")
 
@@ -6684,8 +6654,7 @@ class RoomManager:
                 if room.board and len(room.board) > 0:
                     def save_board_db_async():
                         try:
-                            import sqlite3, json, time, os
-                            conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db'))
+                            import json, time
                             players_data = []
                             for p in room.players:
                                 players_data.append({
@@ -6699,23 +6668,22 @@ class RoomManager:
                                     'is_guest': p.is_guest, 'is_ai': p.is_ai, 'ai_rating': p.ai_rating, 'has_abandoned': p.has_abandoned
                                 })
                             players_json = json.dumps(players_data)
-                            conn.execute('''
-                                INSERT OR REPLACE INTO active_boards (
-                                    room_id, board_data, all_words, dictionary, min_length, updated_at,
-                                    bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
-                                    active_players_json
-                                )
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ''', (
-                                room.room_id, json.dumps(room.board), json.dumps(list(room.all_words)),
-                                room.current_dictionary, room.current_min_length, time.time(),
-                                room.bonus_word or '', json.dumps(room.bonus_cell) if room.bonus_cell else None,
-                                room.current_board_format or 'Normal', room.current_uniqueness or 0.0,
-                                room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
-                                players_json
-                            ))
-                            conn.commit()
-                            conn.close()
+                            with get_db() as conn:
+                                conn.execute('''
+                                    INSERT OR REPLACE INTO active_boards (
+                                        room_id, board_data, all_words, dictionary, min_length, updated_at,
+                                        bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range,
+                                        active_players_json
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ''', (
+                                    room.room_id, json.dumps(room.board), json.dumps(list(room.all_words)),
+                                    room.current_dictionary, room.current_min_length, time.time(),
+                                    room.bonus_word or '', json.dumps(room.bonus_cell) if room.bonus_cell else None,
+                                    room.current_board_format or 'Normal', room.current_uniqueness or 0.0,
+                                    room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
+                                    players_json
+                                ))
                         except Exception as db_err:
                             print(f"[RoomManager] Error saving board to DB async: {db_err}")
 
@@ -6975,7 +6943,6 @@ class RoomManager:
                 f.write(f"{debug_log} - ABORT (Solo)\n")
             return
             
-        import sqlite3
         import json
         
         # Guard against double saving (Exact match check)
@@ -6986,157 +6953,152 @@ class RoomManager:
             return
         
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            with open(DEBUG_FLOW_PATH, 'a') as f:
-                f.write(f"{debug_log} - DB CONNECTED\n")
-            
-            # Use passed-in snapshots if provided (prevents stale data from being saved)
-            actual_board = board if board is not None else room.board
-            board_json = json.dumps(actual_board)
-            
-            # Robust Timestamping for 24h rooms in America/Chicago timezone
-            from zoneinfo import ZoneInfo
-            tz = ZoneInfo("America/Chicago")
-            now = datetime.datetime.now(tz)
-            # If a daily room ended just after midnight, the results belong to "Yesterday"
-            if room.time_limit >= 7200 and now.hour == 0 and now.minute < 10:
-                yesterday = now - datetime.timedelta(days=1)
-                timestamp = yesterday.strftime('%Y-%m-%d 23:59:59')
-            else:
-                timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
-            
-            board_format = board_format if board_format is not None else room.current_board_format
-            wc_range = room.spinner_params.get('word_count_range', (0, 0))
-            wc_tuple = room._get_wc_tuple(wc_range)
-            is_500plus = wc_tuple[0] >= 500
-            
-            # Board formats (Normal, Cube, Mania, etc.) are allowed for history
-            # (Validation for rank/stats can be done at display time if needed)
-            if is_500plus:
-                 print(f"[RoomManager] SKIPPING history save for room {room.room_id} - 500+ is unranked.")
-                 conn.close()
-                 return
-                 
-            # Determine best data source (Room state might have already advanced to Next Round)
-            actual_all_words = all_words if all_words is not None else room.all_words
-            actual_bonus_word = bonus_word if bonus_word is not None else getattr(room, 'bonus_word', '')
-            actual_all_words_paths = all_words_paths if all_words_paths is not None else getattr(room, 'all_words_paths', {})
-            
-            # Identify registered players who actually made any attempt
-            # Use snapshots if available, otherwise fallback to current room players
-            if player_snapshots is not None:
-                participating_registered = player_snapshots
-            else:
-                participating_registered = [p for p in room.players if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words)]
-            
-            if not participating_registered:
-                if room.time_limit >= 7200:
-                    print(f"[RoomManager] No registered players participated in 24h room {room.room_id}. Creating system placeholder to preserve board & solutions.")
-                    participating_registered = [{
-                        'user_id': -1,
-                        'username': 'System',
-                        'score': 0,
-                        'submitted_words': [],
-                        'rating': 1200,
-                        'performance_efficiency': 0.0
-                    }]
+            with get_db() as conn:
+                with open(DEBUG_FLOW_PATH, 'a') as f:
+                    f.write(f"{debug_log} - DB CONNECTED\n")
+                
+                # Use passed-in snapshots if provided (prevents stale data from being saved)
+                actual_board = board if board is not None else room.board
+                board_json = json.dumps(actual_board)
+                
+                # Robust Timestamping for 24h rooms in America/Chicago timezone
+                from zoneinfo import ZoneInfo
+                tz = ZoneInfo("America/Chicago")
+                now = datetime.datetime.now(tz)
+                # If a daily room ended just after midnight, the results belong to "Yesterday"
+                if room.time_limit >= 7200 and now.hour == 0 and now.minute < 10:
+                    yesterday = now - datetime.timedelta(days=1)
+                    timestamp = yesterday.strftime('%Y-%m-%d 23:59:59')
                 else:
-                    print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
-                    with open(DEBUG_FLOW_PATH, 'a') as f:
-                        p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
-                        f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
-                    conn.close()
-                    return
-
-            print(f"[RoomManager] Saving history for room {room.room_id} Round {target_round} ({len(participating_registered)} players)")
-
-            solutions_saved = False
-            for p in participating_registered:
-                # p is either a Player object or a dictionary snapshot
-                u_id = p.user_id if hasattr(p, 'user_id') else p['user_id']
-                u_name = p.username if hasattr(p, 'username') else p['username']
-                u_score = p.score if hasattr(p, 'score') else p['score']
-
-                # If a user gets a score of 0, do not save their round results in round_history
-                # (Unless it is the System placeholder for 24-hour rooms)
-                if u_score <= 0 and u_id != -1 and u_name != 'System':
-                    print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score}")
-                    continue
-
-                u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
-                u_rating = getattr(p, 'rating', 1200) if hasattr(p, 'rating') else p.get('rating', 1200)
-                u_perf = getattr(p, 'performance_efficiency', 0) if hasattr(p, 'performance_efficiency') else p.get('performance_efficiency', 0)
+                    timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
                 
-                # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
-                words_data = []
-                actual_start_time = round_start_time if round_start_time is not None else (room.round_start_time or time.time())
-                for w in u_submitted:
-                    # Get raw time or fallback
-                    raw_time = w.get('time')
-                    if not raw_time or isinstance(raw_time, str):
-                        raw_time = actual_start_time
+                board_format = board_format if board_format is not None else room.current_board_format
+                wc_range = room.spinner_params.get('word_count_range', (0, 0))
+                wc_tuple = room._get_wc_tuple(wc_range)
+                is_500plus = wc_tuple[0] >= 500
+                
+                # Board formats (Normal, Cube, Mania, etc.) are allowed for history
+                # (Validation for rank/stats can be done at display time if needed)
+                if is_500plus:
+                     print(f"[RoomManager] SKIPPING history save for room {room.room_id} - 500+ is unranked.")
+                     return
+                     
+                # Determine best data source (Room state might have already advanced to Next Round)
+                actual_all_words = all_words if all_words is not None else room.all_words
+                actual_bonus_word = bonus_word if bonus_word is not None else getattr(room, 'bonus_word', '')
+                actual_all_words_paths = all_words_paths if all_words_paths is not None else getattr(room, 'all_words_paths', {})
+                
+                # Identify registered players who actually made any attempt
+                # Use snapshots if available, otherwise fallback to current room players
+                if player_snapshots is not None:
+                    participating_registered = player_snapshots
+                else:
+                    participating_registered = [p for p in room.players if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words)]
+                
+                if not participating_registered:
+                    if room.time_limit >= 7200:
+                        print(f"[RoomManager] No registered players participated in 24h room {room.room_id}. Creating system placeholder to preserve board & solutions.")
+                        participating_registered = [{
+                            'user_id': -1,
+                            'username': 'System',
+                            'score': 0,
+                            'submitted_words': [],
+                            'rating': 1200,
+                            'performance_efficiency': 0.0
+                        }]
+                    else:
+                        print(f"[RoomManager] SKIPPING history save for room {room.room_id} Round {target_round} - no participating registered users.")
+                        with open(DEBUG_FLOW_PATH, 'a') as f:
+                            p_details = [{'name': (p.username if hasattr(p, 'username') else p.get('username')), 'uid': (p.user_id if hasattr(p, 'user_id') else p.get('user_id')), 'score': (p.score if hasattr(p, 'score') else p.get('score'))} for p in room.players]
+                            f.write(f"{debug_log} - ABORT (No registered players). Details: {p_details}\n")
+                        return
+
+                print(f"[RoomManager] Saving history for room {room.room_id} Round {target_round} ({len(participating_registered)} players)")
+
+                solutions_saved = False
+                for p in participating_registered:
+                    # p is either a Player object or a dictionary snapshot
+                    u_id = p.user_id if hasattr(p, 'user_id') else p['user_id']
+                    u_name = p.username if hasattr(p, 'username') else p['username']
+                    u_score = p.score if hasattr(p, 'score') else p['score']
+
+                    # If a user gets a score of 0, do not save their round results in round_history
+                    # (Unless it is the System placeholder for 24-hour rooms)
+                    if u_score <= 0 and u_id != -1 and u_name != 'System':
+                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score}")
+                        continue
+
+                    u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
+                    u_rating = getattr(p, 'rating', 1200) if hasattr(p, 'rating') else p.get('rating', 1200)
+                    u_perf = getattr(p, 'performance_efficiency', 0) if hasattr(p, 'performance_efficiency') else p.get('performance_efficiency', 0)
                     
-                    words_data.append({
-                        'word': w['word'],
-                        'points': w.get('points', 0),
-                        'timestamp': raw_time
-                    })
-                
-                # Calculate Best Word
-                best_w_entry = max(u_submitted, key=lambda x: x.get('points', 0)) if u_submitted else None
-                best_word_text = best_w_entry['word'] if best_w_entry else None
-                best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
+                    # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
+                    words_data = []
+                    actual_start_time = round_start_time if round_start_time is not None else (room.round_start_time or time.time())
+                    for w in u_submitted:
+                        # Get raw time or fallback
+                        raw_time = w.get('time')
+                        if not raw_time or isinstance(raw_time, str):
+                            raw_time = actual_start_time
+                        
+                        words_data.append({
+                            'word': w['word'],
+                            'points': w.get('points', 0),
+                            'timestamp': raw_time
+                        })
+                    
+                    # Calculate Best Word
+                    best_w_entry = max(u_submitted, key=lambda x: x.get('points', 0)) if u_submitted else None
+                    best_word_text = best_w_entry['word'] if best_w_entry else None
+                    best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
 
-                # Calculate WPM (Words Per Minute)
-                final_wpm = 0.0
-                if len(words_data) >= 5:
-                    sorted_entries = sorted(words_data, key=lambda x: x['timestamp'])
-                    if len(sorted_entries) >= 20:
-                        peak_wpm = 0.0
-                        for i in range(len(sorted_entries) - 19):
-                            t_first = sorted_entries[i]['timestamp']
-                            t_last = sorted_entries[i+19]['timestamp']
+                    # Calculate WPM (Words Per Minute)
+                    final_wpm = 0.0
+                    if len(words_data) >= 5:
+                        sorted_entries = sorted(words_data, key=lambda x: x['timestamp'])
+                        if len(sorted_entries) >= 20:
+                            peak_wpm = 0.0
+                            for i in range(len(sorted_entries) - 19):
+                                t_first = sorted_entries[i]['timestamp']
+                                t_last = sorted_entries[i+19]['timestamp']
+                                dt = t_last - t_first
+                                if dt > 0.001:
+                                    current_burst_wpm = (20.0 * 60.0) / dt
+                                    peak_wpm = max(peak_wpm, current_burst_wpm)
+                            final_wpm = peak_wpm
+                        else:
+                            t_first = sorted_entries[0]['timestamp']
+                            t_last = sorted_entries[-1]['timestamp']
                             dt = t_last - t_first
                             if dt > 0.001:
-                                current_burst_wpm = (20.0 * 60.0) / dt
-                                peak_wpm = max(peak_wpm, current_burst_wpm)
-                        final_wpm = peak_wpm
-                    else:
-                        t_first = sorted_entries[0]['timestamp']
-                        t_last = sorted_entries[-1]['timestamp']
-                        dt = t_last - t_first
-                        if dt > 0.001:
-                            final_wpm = (len(sorted_entries) * 60.0) / dt
-                
-                # 2. SAVE: Optimization - Only store full solutions/paths for the FIRST player saved in the batch
-                is_first_saved = not solutions_saved
-                solutions_payload = json.dumps(list(actual_all_words)) if is_first_saved else None
-                paths_payload = json.dumps(actual_all_words_paths) if is_first_saved else None 
-                if is_first_saved:
-                    solutions_saved = True
+                                final_wpm = (len(sorted_entries) * 60.0) / dt
+                    
+                    # 2. SAVE: Optimization - Only store full solutions/paths for the FIRST player saved in the batch
+                    is_first_saved = not solutions_saved
+                    solutions_payload = json.dumps(list(actual_all_words)) if is_first_saved else None
+                    paths_payload = json.dumps(actual_all_words_paths) if is_first_saved else None 
+                    if is_first_saved:
+                        solutions_saved = True
 
-                conn.execute('''
-                    INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    u_id, room.room_id, room.game_type, target_round, board_json, 
-                    json.dumps(words_data), u_score, actual_start_time, room.time_limit, 
-                    timestamp, u_rating, u_perf, best_word_text, best_word_val,
-                    room.board_dimensions, final_wpm, len(actual_all_words), 
-                    actual_bonus_word, json.dumps(room.bonus_cell), board_format,
-                    solutions_payload, paths_payload
-                ))
-
-                if room.time_limit >= 7200 and u_id != -1 and u_name != 'System' and u_score > 0:
-                    canonical_id = f"24h_{room.board_dimensions}"
                     conn.execute('''
-                        INSERT INTO daily_score_sums (user_id, room_id, score_sum)
-                        VALUES (?, ?, ?)
-                        ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
-                    ''', (u_id, canonical_id, u_score))
-                
-            conn.commit()
-            conn.close()
+                        INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        u_id, room.room_id, room.game_type, target_round, board_json, 
+                        json.dumps(words_data), u_score, actual_start_time, room.time_limit, 
+                        timestamp, u_rating, u_perf, best_word_text, best_word_val,
+                        room.board_dimensions, final_wpm, len(actual_all_words), 
+                        actual_bonus_word, json.dumps(room.bonus_cell), board_format,
+                        solutions_payload, paths_payload
+                    ))
+
+                    if room.time_limit >= 7200 and u_id != -1 and u_name != 'System' and u_score > 0:
+                        canonical_id = f"24h_{room.board_dimensions}"
+                        conn.execute('''
+                            INSERT INTO daily_score_sums (user_id, room_id, score_sum)
+                            VALUES (?, ?, ?)
+                            ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
+                        ''', (u_id, canonical_id, u_score))
             
             # Also mark this board's hash as permanently used (survives PM2 restarts)
             try:
