@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33127" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33127" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33127">
-    <link rel="stylesheet" href="/css/lobby.css?v=33127">
-    <link rel="stylesheet" href="/css/play.css?v=33127">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33127">
-    <link rel="stylesheet" href="/css/forum.css?v=33127">
-    <link rel="stylesheet" href="/css/donate.css?v=33127">
+    <link rel="preload" href="/css/style.css?v=33129" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33129" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33129">
+    <link rel="stylesheet" href="/css/lobby.css?v=33129">
+    <link rel="stylesheet" href="/css/play.css?v=33129">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33129">
+    <link rel="stylesheet" href="/css/forum.css?v=33129">
+    <link rel="stylesheet" href="/css/donate.css?v=33129">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2940,8 +2940,8 @@
                             </div>
                         </div>
 
-                        <div class="lists-container" id="lists-container">
-                            <div class="list-column" id="main-list-column" style="flex: 1;">
+                        <div class="lists-container" id="lists-container" onselectstart="return false;" ondragstart="return false;">
+                            <div class="list-column" id="main-list-column" style="flex: 1;" onselectstart="return false;">
                                 <h3 id="list-column-header-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; user-select: none;" title="Click to scroll back to top filter options">
                                     <span><span id="list-display-title">NWL</span> <span class="list-count" id="main-list-count"></span></span>
                                     <span style="display: flex; gap: 6px; align-items: center;">
@@ -2949,8 +2949,8 @@
                                         <button id="list-scroll-top-btn" class="mod-refresh-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #a5b4fc; cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; transition: all 0.2s;">▲ Top Options</button>
                                     </span>
                                 </h3>
-                                <div class="list-scroll-area-wrapper">
-                                    <div class="list-scroll-area" id="main-list-results">Loading...</div>
+                                <div class="list-scroll-area-wrapper" onselectstart="return false;">
+                                    <div class="list-scroll-area" id="main-list-results" onselectstart="return false;" ondragstart="return false;" oncopy="return false;" oncontextmenu="return false;">Loading...</div>
                                     <div class="custom-scrollbar-track" id="list-scrollbar-track">
                                         <div class="custom-scrollbar-thumb" id="list-scrollbar-thumb"></div>
                                     </div>
@@ -6027,15 +6027,15 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
     <script src="/js/app.js?v=33127"></script>
-    <script src="/js/lobby.js?v=33127"></script>
-    <script src="/js/play.js?v=33127"></script>
-    <script src="/js/tournaments.js?v=33127"></script>
-    <script src="/js/leaderboard.js?v=33127"></script>
-    <script src="/js/tools.js?v=33127"></script>
-    <script src="/js/mouse_selection.js?v=33127"></script>
-    <script src="/js/mods.js?v=33127"></script>
-    <script src="/js/private_matches.js?v=33127"></script>
-    <script src="/js/donate.js?v=33127"></script>
+    <script src="/js/lobby.js?v=33129"></script>
+    <script src="/js/play.js?v=33129"></script>
+    <script src="/js/tournaments.js?v=33129"></script>
+    <script src="/js/leaderboard.js?v=33129"></script>
+    <script src="/js/tools.js?v=33129"></script>
+    <script src="/js/mouse_selection.js?v=33129"></script>
+    <script src="/js/mods.js?v=33129"></script>
+    <script src="/js/private_matches.js?v=33129"></script>
+    <script src="/js/donate.js?v=33129"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

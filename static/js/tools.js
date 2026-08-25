@@ -2972,6 +2972,18 @@ function setupListsTool() {
         });
     }
 
+    const mainListEl = document.getElementById('main-list-results');
+    if (mainListEl) {
+        mainListEl.addEventListener('selectstart', (e) => e.preventDefault());
+        mainListEl.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+
+    const listsContEl = document.getElementById('lists-container');
+    if (listsContEl) {
+        listsContEl.addEventListener('selectstart', (e) => e.preventDefault());
+        listsContEl.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+
     function scrollListsToTopOptions() {
         const scrollArea = document.getElementById('main-list-results');
         if (scrollArea) {

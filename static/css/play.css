@@ -7748,12 +7748,19 @@ body .board-cell.tile-flash-purple * {
 #full-list-modal-results *,
 .full-list-item,
 .full-list-item *,
+#tool-lists,
 #tool-lists .lists-container,
 #tool-lists .lists-container *,
 #main-list-results,
 #main-list-results *,
+.list-scroll-area-wrapper,
+.list-scroll-area-wrapper *,
 .list-scroll-area,
 .list-scroll-area *,
+.lists-container,
+.lists-container *,
+.list-column,
+.list-column *,
 .list-item,
 .list-item *,
 #tool-lists .list-item,
@@ -7765,6 +7772,19 @@ body .board-cell.tile-flash-purple * {
     -ms-user-select: none !important;
     user-select: none !important;
     -webkit-touch-callout: none !important;
+    -webkit-user-drag: none !important;
+}
+
+#tool-lists .lists-container ::selection,
+#tool-lists .list-scroll-area ::selection,
+#tool-lists .list-item ::selection,
+#tool-lists .clickable-word-link ::selection,
+#main-list-results ::selection,
+#full-list-modal ::selection,
+#full-list-modal-results ::selection,
+.full-list-item ::selection {
+    background: transparent !important;
+    color: inherit !important;
 }
 
 .full-list-item {
