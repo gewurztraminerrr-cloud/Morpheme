@@ -4616,6 +4616,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     const boardPanel = boardEl.closest('.board-panel');
     if (boardPanel) {
+        boardPanel.classList.remove('has-split-notepads');
         if (is3D || !board || board.length === 0 || !hasLetters) {
             boardPanel.classList.remove('full-bleed-mobile');
         } else {
@@ -6057,6 +6058,11 @@ function renderSplitNotepads(players, state) {
 
     // Set container style for notepads
     boardEl.className = 'split-notepads-container';
+    const boardPanel = boardEl.closest('.board-panel');
+    if (boardPanel) {
+        boardPanel.classList.add('has-split-notepads');
+        boardPanel.classList.remove('full-bleed-mobile');
+    }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
     boardEl.style.gridTemplateRows = '';
@@ -6317,6 +6323,11 @@ function renderFCFSNotepads(players, state) {
 
     // Reuse Split Points container styles
     boardEl.className = 'split-notepads-container fcfs-mode';
+    const boardPanel = boardEl.closest('.board-panel');
+    if (boardPanel) {
+        boardPanel.classList.add('has-split-notepads');
+        boardPanel.classList.remove('full-bleed-mobile');
+    }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
     boardEl.style.gridTemplateRows = '';

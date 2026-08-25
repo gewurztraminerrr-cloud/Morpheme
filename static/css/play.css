@@ -3209,6 +3209,7 @@ body.theme-light-brown .word-item.missed {
     min-height: 0;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+    touch-action: pan-y;
     box-sizing: border-box;
 }
 
@@ -3218,39 +3219,48 @@ body.theme-light-brown .word-item.missed {
         display: none !important;
     }
 
+    #game-board.split-notepads-container,
+    .game-board.split-notepads-container,
     .split-notepads-container {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100vh - 110px) !important;
+        height: calc(100dvh - 110px) !important;
+        max-height: calc(100vh - 110px) !important;
+        max-height: calc(100dvh - 110px) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
-        gap: 16px !important;
-        padding: 10px 10px 80px 10px !important;
+        gap: 14px !important;
+        padding: 10px 10px 140px 10px !important;
+        margin: 0 !important;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
         box-sizing: border-box !important;
     }
     .user-notepad {
         height: auto !important;
-        min-height: 160px !important;
+        min-height: 140px !important;
         max-height: none !important;
         touch-action: pan-y !important;
         flex-shrink: 0 !important;
         width: 100% !important;
+        box-sizing: border-box !important;
     }
     .notepad-main-content {
         height: auto !important;
+        touch-action: pan-y !important;
     }
     .notepad-list {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        max-height: 220px !important;
+        max-height: 200px !important;
         flex: 1 !important;
     }
 }
@@ -4969,7 +4979,7 @@ input[type=range]::-moz-range-track {
     .play-grid::-webkit-scrollbar {
         display: none !important;
     }
-    #game-board, .game-board {
+    #game-board:not(.split-notepads-container), .game-board:not(.split-notepads-container) {
         touch-action: none !important;
     }
 
