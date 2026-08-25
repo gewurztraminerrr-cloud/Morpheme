@@ -2225,6 +2225,52 @@ body.theme-light-brown .word-item.missed {
         box-sizing: border-box !important;
     }
 
+    /* Uniform Title & Description Sizes across all Content Panels in Tools */
+    #page-tools .tool-pane .tool-header,
+    #page-tools .tool-header {
+        margin-bottom: 20px !important;
+        text-align: left !important;
+        padding-left: 0 !important;
+        padding-right: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools .tool-pane .tool-header h2,
+    #page-tools .tool-header h2 {
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        margin: 0 0 5px 0 !important;
+        background: linear-gradient(to right, var(--text-primary), #666) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    #page-tools .tool-pane .tool-header p,
+    #page-tools .tool-header p {
+        font-size: 0.95rem !important;
+        color: var(--muted-text) !important;
+        margin: 0 0 20px 0 !important;
+        line-height: 1.4 !important;
+        opacity: 0.9 !important;
+    }
+
+    /* All sidebar buttons in Tools */
+    #page-tools .tools-sidebar .tool-nav-btn .tool-btn-title {
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0 !important;
+    }
+
+    #page-tools .tools-sidebar .tool-nav-btn .tool-btn-desc {
+        font-size: 0.75rem !important;
+        line-height: 1.3 !important;
+        margin-top: 0 !important;
+    }
+
     /* Store: remove the tool-pane's own padding so only tools-content's 30px applies */
     #tool-store {
         padding: 0 !important;
