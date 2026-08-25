@@ -20,15 +20,6 @@ import base64
 import requests
 from db import get_db, get_db_connection, DB_PATH, execute_with_retry
 
-# Safely route all legacy/direct sqlite3.connect calls through centralized WAL connection manager
-_orig_sqlite3_connect = sqlite3.connect
-def _safe_sqlite3_connect(*args, **kwargs):
-    db_file = args[0] if args else DB_PATH
-    timeout = kwargs.get('timeout', 60.0)
-    row_factory = kwargs.get('row_factory', None)
-    return get_db_connection(db_file, timeout=timeout, row_factory=row_factory)
-sqlite3.connect = _safe_sqlite3_connect
-
 # Load environment variables from .env file
 load_dotenv()
 
