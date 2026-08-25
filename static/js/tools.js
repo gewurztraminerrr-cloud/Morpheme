@@ -3345,13 +3345,18 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     const thumb = typeof thumbId === 'string' ? document.getElementById(thumbId) : thumbId;
     if (!scrollArea || !track || !thumb) return;
 
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+
     function updateThumb() {
+        if (isDragging) return; // Never override position while user is actively dragging
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight;
         const scrollTop = scrollArea.scrollTop;
 
         // Show scrollbar only if list content overflows
-        if (scrollHeight <= clientHeight + 5) {
+        if (scrollHeight <= clientHeight + 5 || clientHeight <= 0) {
             track.style.display = 'none';
             return;
         }
@@ -3368,17 +3373,17 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     }
 
     // Bind event listeners for scroll and resize
-    scrollArea.addEventListener('scroll', updateThumb);
-    window.addEventListener('resize', updateThumb);
+    scrollArea.addEventListener('scroll', updateThumb, { passive: true });
+    window.addEventListener('resize', updateThumb, { passive: true });
 
     // Watch for dynamic content changes inside the scroll area to auto-update
     const observer = new MutationObserver(updateThumb);
     observer.observe(scrollArea, { childList: true, subtree: true });
 
-    // Dragging state tracking
-    let isDragging = false;
-    let startY = 0;
-    let startThumbTop = 0;
+    if (window.ResizeObserver) {
+        const ro = new ResizeObserver(updateThumb);
+        ro.observe(scrollArea);
+    }
 
     function onDragStart(e) {
         isDragging = true;
@@ -3423,6 +3428,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
             isDragging = false;
             thumb.classList.remove('dragging');
             document.body.style.userSelect = '';
+            updateThumb();
         }
     }
 
@@ -3489,8 +3495,10 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         }
     }, { passive: false });
 
-    // Initial position trigger
-    updateThumb();
+    // Initial position triggers with RAF and timeouts to guarantee execution post-layout
+    requestAnimationFrame(updateThumb);
+    setTimeout(updateThumb, 50);
+    setTimeout(updateThumb, 200);
 }
 
 function initCustomScrollbar() {
