@@ -4,7 +4,11 @@ async function checkModStatus() {
         const response = await fetch('/api/mods/status');
         const data = await response.json();
         
-        window.currentUserIsMod = data.is_mod;
+        window.currentUserIsMod = Boolean(data.is_mod);
+        window.currentUserIsRootMod = Boolean(data.is_root);
+        if (data.username) {
+            window.currentUser = data.username;
+        }
         
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
@@ -25,7 +29,6 @@ async function checkModStatus() {
 function showModStatus(message, isError = false, targetId = 'mod-status-area') {
     const statusArea = document.getElementById(targetId);
     if (!statusArea) {
-        // Fallback to alert if status area not found
         alert(message);
         return;
     }
@@ -52,6 +55,19 @@ async function loadModList() {
     const listEl = document.getElementById('mod-list-container');
     if (!listEl) return;
 
+    const isJeffb = Boolean(window.currentUserIsRootMod) || 
+                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+
+    const addSection = document.querySelector('.mod-add-section');
+    if (addSection) {
+        addSection.style.display = isJeffb ? 'flex' : 'none';
+    }
+
+    const descEl = document.querySelector('#mod-tab-access .tool-header p');
+    if (descEl && !isJeffb) {
+        descEl.textContent = "View active moderators. Only jeffb can add or remove moderators.";
+    }
+
     try {
         const response = await fetch('/api/mods/list');
         const data = await response.json();
@@ -59,7 +75,7 @@ async function loadModList() {
             listEl.innerHTML = data.mods.map(m => `
                 <div class="mod-item">
                     <span class="mod-name">${m}</span>
-                    ${['jeffb', 'system'].includes(m.toLowerCase()) ? '' : `<button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>`}
+                    ${isJeffb && !['jeffb', 'system'].includes(m.toLowerCase()) ? `<button class="remove-mod-btn" onclick="removeModerator('${m}')" title="Remove Moderator">&times;</button>` : ''}
                 </div>
             `).join('');
         }
@@ -70,6 +86,13 @@ async function loadModList() {
 
 
 async function addModerator() {
+    const isJeffb = Boolean(window.currentUserIsRootMod) || 
+                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+    if (!isJeffb) {
+        showModStatus("Unauthorized: Only jeffb can add moderators.", true);
+        return;
+    }
+
     const input = document.getElementById('new-mod-username');
     const username = input ? input.value.trim() : '';
     if (!username) return;
@@ -95,6 +118,13 @@ async function addModerator() {
 }
 
 async function removeModerator(username) {
+    const isJeffb = Boolean(window.currentUserIsRootMod) || 
+                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+    if (!isJeffb) {
+        showModStatus("Unauthorized: Only jeffb can remove moderators.", true);
+        return;
+    }
+
     if (!confirm(`Are you sure you want to remove ${username} as moderator?`)) return;
 
     try {

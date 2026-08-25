@@ -320,11 +320,9 @@ def save_moderator(username):
         print(f"[Mods] Error saving to {MODS_FILE}: {e}")
 
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        conn.execute("CREATE TABLE IF NOT EXISTS moderators (username TEXT PRIMARY KEY, added_at REAL)")
-        conn.execute("INSERT OR REPLACE INTO moderators (username, added_at) VALUES (?, ?)", (username, time.time()))
-        conn.commit()
-        conn.close()
+        with get_db() as conn:
+            conn.execute("CREATE TABLE IF NOT EXISTS moderators (username TEXT PRIMARY KEY, added_at REAL)")
+            conn.execute("INSERT OR REPLACE INTO moderators (username, added_at) VALUES (?, ?)", (username, time.time()))
     except Exception as e:
         print(f"[Mods] Error saving to DB: {e}")
 
@@ -348,10 +346,8 @@ def remove_moderator(username):
             print(f"[Mods] Error removing from {MODS_FILE}: {e}")
 
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            conn.execute("DELETE FROM moderators WHERE username = ?", (username,))
-            conn.commit()
-            conn.close()
+            with get_db() as conn:
+                conn.execute("DELETE FROM moderators WHERE username = ?", (username,))
         except Exception as e:
             print(f"[Mods] Error removing from DB: {e}")
 
@@ -477,8 +473,13 @@ def add_cache_headers(response):
 @app.route('/api/mods/status')
 def get_mod_status():
     if 'username' not in session:
-        return jsonify({'is_mod': False})
-    return jsonify({'is_mod': is_mod(session['username'])})
+        return jsonify({'is_mod': False, 'is_root': False, 'username': ''})
+    u = session['username']
+    return jsonify({
+        'is_mod': is_mod(u),
+        'is_root': u.strip().lower() == 'jeffb',
+        'username': u
+    })
 
 @app.route('/api/mods/list', methods=['GET'])
 @login_required
@@ -490,36 +491,37 @@ def list_mods():
 @app.route('/api/mods/add', methods=['POST'])
 @login_required
 def add_mod():
-    # USER REQUEST: "any user that jeffy allow to be a mod ... gets added"
-    # This implies jeffy (and existing mods) can add others.
-    if not is_mod(session['username']):
-        return jsonify({'error': 'Unauthorized'}), 403
+    current_user = (session.get('username') or '').strip().lower()
+    if current_user != 'jeffb':
+        return jsonify({'error': 'Unauthorized: Only jeffb can add moderators.'}), 403
     
-    data = request.json
-    new_mod = data.get('username')
+    data = request.json or {}
+    new_mod = data.get('username', '').strip()
     if not new_mod:
         return jsonify({'error': 'Username required'}), 400
     
     if save_moderator(new_mod):
-        print(f"[Mods] User {session['username']} added {new_mod} as moderator")
+        print(f"[Mods] Root user jeffb added {new_mod} as moderator")
         return jsonify({'success': True})
     return jsonify({'error': 'Failed to save mod'}), 500
 
 @app.route('/api/mods/remove', methods=['POST'])
 @login_required
 def delete_mod():
-    if not is_mod(session['username']):
-        return jsonify({'error': 'Unauthorized'}), 403
+    current_user = (session.get('username') or '').strip().lower()
+    if current_user != 'jeffb':
+        return jsonify({'error': 'Unauthorized: Only jeffb can remove moderators.'}), 403
     
-    # Do not allow removing jeffy if you ARE jeffy?
-    # Or maybe allow anything if you are jeffy.
-    data = request.json
-    target = data.get('username')
+    data = request.json or {}
+    target = data.get('username', '').strip()
     if not target:
         return jsonify({'error': 'Username required'}), 400
+        
+    if target.lower() in ('jeffb', 'system'):
+        return jsonify({'error': 'Cannot remove root administrator.'}), 400
     
     if remove_moderator(target):
-        print(f"[Mods] User {session['username']} removed {target} from moderators")
+        print(f"[Mods] Root user jeffb removed {target} from moderators")
         return jsonify({'success': True})
     return jsonify({'error': 'Failed to remove mod'}), 500
 
