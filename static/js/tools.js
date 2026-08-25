@@ -2930,20 +2930,20 @@ function renderNextWordsPage() {
     let html = '';
     if (currentWordsType === 'likelihood') {
         html = nextPageWords.map(item => `
-            <div class="list-item">
-                <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span>
+            <div class="list-item" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;">
+                <span class="likelihood-score" style="-webkit-user-select: none; user-select: none;">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;">${item.word}</span>
             </div>
         `).join('');
     } else if (currentWordsType === 'added') {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(w => `
-            <div class="list-item added-word" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="display: flex; justify-content: space-between; align-items: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">
-                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">${w}</span>
+            <div class="list-item added-word" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="display: flex; justify-content: space-between; align-items: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;">
+                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;">${w}</span>
                 ${isMod ? `<button onclick="removeAddedWordFromTools('${w}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
             </div>
         `).join('');
     } else {
-        html = nextPageWords.map(w => `<div class="list-item"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('');
+        html = nextPageWords.map(w => `<div class="list-item" oncopy="return false;" oncut="return false;" oncontextmenu="return false;" ondragstart="return false;" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;">${w}</span></div>`).join('');
     }
 
     if (currentWordsRenderedCount === 0) {

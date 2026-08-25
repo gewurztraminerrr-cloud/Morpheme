@@ -7740,14 +7740,26 @@ body .board-cell.tile-flash-purple * {
 
 /* ================================================
 /* ============================================================
-   FULL LIST MODAL — word item styles & anti-copy protections
+   LISTS TOOL & FULL LIST MODAL — word item styles & anti-highlight/anti-copy protections
    ============================================================ */
 #full-list-modal,
 #full-list-modal *,
 #full-list-modal-results,
 #full-list-modal-results *,
 .full-list-item,
-.full-list-item * {
+.full-list-item *,
+#tool-lists .lists-container,
+#tool-lists .lists-container *,
+#main-list-results,
+#main-list-results *,
+.list-scroll-area,
+.list-scroll-area *,
+.list-item,
+.list-item *,
+#tool-lists .list-item,
+#tool-lists .list-item *,
+#tool-lists .clickable-word-link,
+#tool-lists .clickable-word-link * {
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
