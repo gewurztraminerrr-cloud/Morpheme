@@ -177,7 +177,7 @@ async function createRoom(config, minRating, maxRating) {
     localStorage.removeItem('private_match_active');
 
     if (window.showLoadingOverlay) {
-        window.showLoadingOverlay('Creating & Generating Room...', 6000);
+        window.showLoadingOverlay('Creating & Generating Room...');
     }
 
     try {
@@ -222,7 +222,6 @@ async function createRoom(config, minRating, maxRating) {
                 window.updateGameState(data.state);
             }
 
-            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
             showPage('page-play');
             if (typeof window.switchPlayPanel === 'function') {
                 window.switchPlayPanel('board', false);
@@ -256,7 +255,6 @@ async function createRoom(config, minRating, maxRating) {
         }
     } finally {
         window._isCreatingRoom = false;
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
         document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
             btn.disabled = false;
         });
