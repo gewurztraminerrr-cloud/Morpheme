@@ -205,6 +205,14 @@ function setupToolsNavigation() {
             });
         });
     }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _attachSnapListeners);
+    } else {
+        _attachSnapListeners();
+    }
+})();
+
 // High-sensitivity kinetic scroll for mobile Tools category sidebars
 (function setupSidebarFlickSensitivity() {
     function initSidebarSensitivity(sidebar) {
