@@ -2193,13 +2193,20 @@ window.addEventListener('touchstart', () => { _isUserTouching = true; }, { passi
 window.addEventListener('touchend', () => { setTimeout(() => { _isUserTouching = false; }, 300); }, { passive: true, capture: true });
 window.addEventListener('touchcancel', () => { setTimeout(() => { _isUserTouching = false; }, 300); }, { passive: true, capture: true });
 
+function _isKeyboardOpen() {
+    const el = document.activeElement;
+    return !!(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT'));
+}
+
 function _updateVhVariable() {
+    // Skip updating --vh if the soft keyboard is open, preventing DOM-wide style invalidation & blackouts
+    if (_isKeyboardOpen()) return;
     document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
 }
 
 function _restoreAllMobilePanels() {
-    // If the user is currently touching or swiping, never override their scroll position!
-    if (_isUserTouching) return;
+    // If the user is currently touching, swiping, or typing in an input, never override scroll or styles!
+    if (_isUserTouching || _isKeyboardOpen()) return;
 
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
@@ -2232,6 +2239,7 @@ function _restoreAllMobilePanels() {
 
 let _viewportRecoveryTimers = [];
 window.scheduleMobileViewportRecovery = function() {
+    if (_isKeyboardOpen()) return;
     _viewportRecoveryTimers.forEach(clearTimeout);
     _viewportRecoveryTimers = [];
 
@@ -2243,13 +2251,22 @@ window.scheduleMobileViewportRecovery = function() {
 // Initialize immediately and bind across system lifecycle events
 _updateVhVariable();
 window.addEventListener('resize', () => {
+    if (_isKeyboardOpen()) return;
     _updateVhVariable();
     if (!_isUserTouching) {
         scheduleMobileViewportRecovery();
     }
 }, { passive: true });
-window.addEventListener('orientationchange', scheduleMobileViewportRecovery, { passive: true });
-window.addEventListener('focus', scheduleMobileViewportRecovery, { passive: true });
+window.addEventListener('orientationchange', () => {
+    _updateVhVariable();
+    scheduleMobileViewportRecovery();
+}, { passive: true });
+window.addEventListener('focus', (e) => {
+    if (_isKeyboardOpen() || (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT'))) {
+        return;
+    }
+    scheduleMobileViewportRecovery();
+}, { passive: true });
 window.addEventListener('pageshow', scheduleMobileViewportRecovery, { passive: true });
 document.addEventListener('fullscreenchange', scheduleMobileViewportRecovery, { passive: true });
 document.addEventListener('webkitfullscreenchange', scheduleMobileViewportRecovery, { passive: true });

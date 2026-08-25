@@ -198,6 +198,7 @@ function setupToolsNavigation() {
 
     function _attachSnapListeners() {
         window.addEventListener('resize', () => {
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
             const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (!isMobile) return;
             document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
