@@ -5318,9 +5318,6 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        clip-path: inset(0);
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
     }
 
     .tools-sidebar,

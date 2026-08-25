@@ -355,6 +355,7 @@ async function runComboSearch() {
     const dictEl = document.getElementById('combo-dict');
     const resultsContainer = document.getElementById('combo-results');
 
+    if (inputEl) inputEl.blur(); // Dismiss virtual keyboard before re-rendering results
     const searchTerm = inputEl.value.trim().toUpperCase();
     if (!searchTerm || searchTerm.length < 3) return;
 
@@ -3100,6 +3101,7 @@ function setupListsTool() {
 
     function handleFullListWordJump() {
         if (!fullListJumpInput || !fullListResults) return;
+        fullListJumpInput.blur(); // Dismiss virtual keyboard immediately to prevent mobile viewport glitching
         const query = fullListJumpInput.value.trim().toUpperCase();
         if (!query) return;
 
@@ -3127,8 +3129,16 @@ function setupListsTool() {
                 el.classList.remove('jump-target-pulse');
             });
 
-            // Scroll directly to the word centered in the container without highlighting or copying text
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Compute relative offset directly within the container instead of window-level scrollIntoView
+            const containerRect = fullListResults.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            const relativeOffset = targetRect.top - containerRect.top + fullListResults.scrollTop;
+            const centerOffset = relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
+
+            fullListResults.scrollTo({
+                top: Math.max(0, centerOffset),
+                behavior: 'smooth'
+            });
 
             // Apply pulse effect to the element container without text selection
             targetEl.classList.add('jump-target-pulse');
