@@ -7040,42 +7040,64 @@ body .board-cell.tile-flash-purple * {
     width: 100% !important;
 }
 
+#tool-combo .group-table-container {
+    padding-right: 18px !important;
+}
+
 .combo-scrollbar-track {
     position: absolute !important;
     top: 4px !important;
     bottom: 4px !important;
     right: 2px !important;
-    width: 14px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 7px !important;
-    z-index: 50 !important;
-    backdrop-filter: blur(2px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    width: 18px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-radius: 9px !important;
+    z-index: 100 !important;
+    backdrop-filter: blur(3px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     display: none;
     touch-action: none !important;
+    user-select: none !important;
+    cursor: pointer !important;
 }
 
 .combo-scrollbar-thumb {
     position: absolute !important;
     top: 0 !important;
     left: 2px !important;
-    width: 10px !important;
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.75), rgba(58, 123, 213, 0.75)) !important;
-    border-radius: 5px !important;
-    cursor: pointer !important;
-    border: 1px solid rgba(0, 210, 255, 0.5) !important;
-    box-shadow: 0 0 6px rgba(0, 210, 255, 0.4) !important;
+    width: 12px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.8), rgba(58, 123, 213, 0.8)) !important;
+    border-radius: 6px !important;
+    cursor: grab !important;
+    border: 1px solid rgba(0, 210, 255, 0.6) !important;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4) !important;
     touch-action: none !important;
-    min-height: 30px !important;
+    user-select: none !important;
+    min-height: 28px !important;
+    pointer-events: auto !important;
+}
+
+.combo-scrollbar-thumb::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -6px !important;
+    bottom: -6px !important;
+    left: -12px !important;
+    right: -12px !important;
+    touch-action: none !important;
+}
+
+.combo-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.6) !important;
 }
 
 .combo-scrollbar-thumb:active,
 .combo-scrollbar-thumb.dragging {
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
-    border: 1px solid rgba(0, 210, 255, 0.8) !important;
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.7) !important;
-    width: 11px !important;
-    left: 1px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 1), rgba(58, 123, 213, 1)) !important;
+    border: 1px solid rgba(0, 210, 255, 0.9) !important;
+    box-shadow: 0 0 16px rgba(0, 210, 255, 0.8) !important;
+    cursor: grabbing !important;
 }
 
 #full-list-modal-results::-webkit-scrollbar,
