@@ -3194,29 +3194,63 @@ body.theme-light-brown .word-item.missed {
 /* Split Points Logic Styles */
 
 /* Container for notepads replacing the board */
-.split-notepads-container {
+.board-panel.has-split-notepads {
+    padding: 10px !important;
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+.board-panel.has-split-notepads .validation-status,
+.board-panel.has-split-notepads .word-input-section,
+.board-panel.has-split-notepads .cube-rotate-hint,
+.board-panel.has-split-notepads .mobile-nav-indicators {
+    display: none !important;
+}
+
+.split-notepads-container,
+#game-board.split-notepads-container,
+.game-board.split-notepads-container {
     padding: 12px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     width: 100%;
     max-width: 100%;
     height: 100%;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    max-height: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
     gap: 16px;
     min-height: 0;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     box-sizing: border-box;
+    margin: 0 !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
 }
 
 @media (max-width: 992px) {
     .play-header .header-title-group,
     .play-header #return-lobby-btn {
         display: none !important;
+    }
+
+    .board-panel.has-split-notepads {
+        padding: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
     }
 
     #game-board.split-notepads-container,
@@ -3226,11 +3260,12 @@ body.theme-light-brown .word-item.missed {
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: calc(100vh - 110px) !important;
-        height: calc(100dvh - 110px) !important;
-        max-height: calc(100vh - 110px) !important;
-        max-height: calc(100dvh - 110px) !important;
-        overflow-y: auto !important;
+        height: calc(100vh - 100px) !important;
+        height: calc(100dvh - 100px) !important;
+        max-height: calc(100vh - 100px) !important;
+        max-height: calc(100dvh - 100px) !important;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;

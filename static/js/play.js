@@ -6062,6 +6062,7 @@ function renderSplitNotepads(players, state) {
     if (boardPanel) {
         boardPanel.classList.add('has-split-notepads');
         boardPanel.classList.remove('full-bleed-mobile');
+        boardPanel.scrollTop = 0;
     }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
@@ -6298,7 +6299,11 @@ function renderSplitNotepads(players, state) {
     });
 
     // Restore container scroll position
-    boardEl.scrollTop = containerScrollTop;
+    if (containerScrollTop > 0) {
+        boardEl.scrollTop = containerScrollTop;
+    } else {
+        boardEl.scrollTop = 0;
+    }
 }
 
 function renderFCFSNotepads(players, state) {
@@ -6327,6 +6332,7 @@ function renderFCFSNotepads(players, state) {
     if (boardPanel) {
         boardPanel.classList.add('has-split-notepads');
         boardPanel.classList.remove('full-bleed-mobile');
+        boardPanel.scrollTop = 0;
     }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
@@ -6465,7 +6471,11 @@ function renderFCFSNotepads(players, state) {
     });
 
     // Restore container scroll position
-    boardEl.scrollTop = containerScrollTop;
+    if (containerScrollTop > 0) {
+        boardEl.scrollTop = containerScrollTop;
+    } else {
+        boardEl.scrollTop = 0;
+    }
 }
 
 
@@ -8301,8 +8311,11 @@ function finishDragSelection(e) {
 
     boardEl.addEventListener('mouseover', handleCellMouseOver);
     document.addEventListener('mousemove', handleCellMouseMove, { passive: true });
-    // Unconditionally prevent board touches from starting page/panel horizontal scrolling
+    // Prevent board touches from starting page/panel scrolling ONLY during active board gameplay (not notepads)
     boardEl.addEventListener('touchstart', (e) => {
+        if (boardEl.classList.contains('split-notepads-container') || (e.target && e.target.closest && e.target.closest('.user-notepad, .split-notepads-container'))) {
+            return; // Allow native touch scrolling for notepads
+        }
         if (e.cancelable !== false) {
             e.preventDefault();
         }
@@ -8310,6 +8323,9 @@ function finishDragSelection(e) {
     }, { passive: false });
 
     boardEl.addEventListener('touchmove', (e) => {
+        if (boardEl.classList.contains('split-notepads-container') || (e.target && e.target.closest && e.target.closest('.user-notepad, .split-notepads-container'))) {
+            return; // Allow native touch scrolling for notepads
+        }
         if (e.cancelable !== false) {
             e.preventDefault();
         }
