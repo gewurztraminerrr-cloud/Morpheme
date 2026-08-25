@@ -787,10 +787,14 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
         if (filteredRooms.length === 0) {
             if (roomsContainer) {
-                const emptyMsg = (activeTab === 'open')
-                    ? 'No open rooms currently available for your rating. Click <strong>+ Create Room</strong> above to start one!'
-                    : 'No closed or full rooms currently active in this configuration.';
-                roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">${emptyMsg}</p>`;
+                if (activeTab === 'open' && rooms.length > 0) {
+                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No open rooms currently match your rating.<br><span style="color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 700; display: inline-block; margin-top: 8px;" onclick="window.setRoomFilterTab('closed')">View ${rooms.length} Closed / Rated Room(s)</span></p>`;
+                } else {
+                    const emptyMsg = (activeTab === 'open')
+                        ? 'No open rooms currently available for your rating. Click <strong>+ Create Room</strong> above to start one!'
+                        : 'No closed or full rooms currently active in this configuration.';
+                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">${emptyMsg}</p>`;
+                }
             }
         } else {
             const html = filteredRooms.map(room => {
@@ -857,7 +861,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 `;
             }).join('');
 
-            if (roomsContainer && roomsContainer.innerHTML !== html) {
+            if (roomsContainer) {
                 roomsContainer.innerHTML = html;
             }
         }
@@ -936,31 +940,46 @@ window.fetchLobbyStats = fetchLobbyStats;
 // Lobby Refresh button handler
 async function handleLobbyRefresh(btn) {
     const refreshBtn = btn || document.getElementById('lobby-refresh-btn');
-    if (!refreshBtn) return;
-
-    // Spin the icon
-    refreshBtn.classList.add('refreshing');
-    refreshBtn.disabled = true;
+    if (refreshBtn) {
+        refreshBtn.classList.add('refreshing');
+        refreshBtn.disabled = true;
+    }
 
     try {
-        // Refresh FCFS and SP buttons only (Accumulative is updated automatically on player enter/exit)
-        await fetchLobbyStats('fcfs_sp_only');
-
-        // If a room panel is open, also re-fetch the room list
-        if (window.currentLobbyConfig) {
-            const { gameType, timeLimit, boardDimensions } = window.currentLobbyConfig;
-            if (typeof window.fetchAndRenderRooms === 'function') {
-                await window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false);
+        let activeConfig = window.currentLobbyConfig || currentLobbyConfig;
+        if (!activeConfig) {
+            const activeBtn = document.querySelector('.game-btn.active') || document.querySelector('.fcfs-btn.active, .split-btn.active');
+            if (activeBtn && activeBtn.dataset) {
+                activeConfig = {
+                    gameType: activeBtn.dataset.game || activeBtn.dataset.gameType || 'fcfs',
+                    timeLimit: parseInt(activeBtn.dataset.time || activeBtn.dataset.timeLimit || '45'),
+                    boardDimensions: activeBtn.dataset.board || activeBtn.dataset.boardDimensions || '4x4'
+                };
+                window.currentLobbyConfig = activeConfig;
+                currentLobbyConfig = activeConfig;
             }
         }
+
+        const statsPromise = fetchLobbyStats('all');
+        let roomsPromise = null;
+        if (activeConfig && typeof window.fetchAndRenderRooms === 'function') {
+            const { gameType, timeLimit, boardDimensions } = activeConfig;
+            roomsPromise = window.fetchAndRenderRooms(gameType, timeLimit, boardDimensions, false, 0, 9999, true);
+        }
+
+        await Promise.all([statsPromise, roomsPromise].filter(Boolean));
+    } catch (err) {
+        console.error('Error in handleLobbyRefresh:', err);
     } finally {
-        // Stop spinning after a short minimum duration so the animation is visible
-        setTimeout(() => {
-            refreshBtn.classList.remove('refreshing');
-            refreshBtn.disabled = false;
-        }, 600);
+        if (refreshBtn) {
+            setTimeout(() => {
+                refreshBtn.classList.remove('refreshing');
+                refreshBtn.disabled = false;
+            }, 200);
+        }
     }
 }
+window.handleLobbyRefresh = handleLobbyRefresh;
 window.handleLobbyRefresh = handleLobbyRefresh;
 
 function updateLobbyButtons(stats, mode = 'all') {
