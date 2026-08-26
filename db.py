@@ -43,6 +43,19 @@ def get_db_connection(db_path=None, timeout=60.0, row_factory=None):
         
     return conn
 
+def init_db_indexes():
+    """Ensures all necessary indexes exist across tables for sub-millisecond query execution."""
+    try:
+        with get_db() as conn:
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_rh_user_time ON round_history(user_id, timestamp DESC, id DESC);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_rh_room_round ON round_history(room_id, round_number, timestamp);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_rh_user_cfg ON round_history(user_id, game_type, board_dimensions, round_duration);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_rh_user_dur ON round_history(user_id, round_duration);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_ur_user ON user_ratings(user_id);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username COLLATE NOCASE);")
+    except Exception as e:
+        print(f"[init_db_indexes] Warning: {e}")
+
 @contextmanager
 def get_db(db_path=None, timeout=60.0, row_factory=None, auto_commit=True):
     """

@@ -3358,16 +3358,37 @@ def get_public_profile(username):
         seen_rounds.add(g_id)
         clean_rows.append(r)
 
+    # Batch fetch all room entries in a single query to eliminate N+1 database queries
+    room_entries_map = {}
+    if clean_rows:
+        # Extract unique room_id, round_number, timestamp tuples
+        unique_round_keys = list(set((r[0], r[2], r[8]) for r in clean_rows))
+        # Batch query matching room participants
+        room_ids = list(set(k[0] for k in unique_round_keys))
+        if room_ids:
+            # Query in chunks of 500 room_ids if needed
+            all_participants = []
+            for i in range(0, len(room_ids), 500):
+                chunk = room_ids[i:i+500]
+                placeholders = ','.join(['?'] * len(chunk))
+                cursor_part = conn.execute(f'''
+                    SELECT rh.room_id, rh.round_number, rh.timestamp, rh.total_score, rh.user_rating, u.username
+                    FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.room_id IN ({placeholders})
+                ''', chunk)
+                all_participants.extend(cursor_part.fetchall())
+                
+            for p_row in all_participants:
+                r_key = (p_row[0], p_row[1], p_row[2])
+                if r_key not in room_entries_map:
+                    room_entries_map[r_key] = []
+                room_entries_map[r_key].append((p_row[3], p_row[4], p_row[5]))
+
     # helper to process a row
-    def process_round_row(row, db_conn):
+    def process_round_row(row):
         room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa, saved_dims, b_fmt = row
-        c_room = db_conn.execute('''
-            SELECT rh.total_score, rh.user_rating, u.username
-            FROM round_history rh
-            JOIN users u ON rh.user_id = u.id
-            WHERE rh.room_id = ? AND rh.round_number = ? AND rh.timestamp = ?
-        ''', (room_id, rnum, ts))
-        r_entries = c_room.fetchall()
+        r_entries = room_entries_map.get((room_id, rnum, ts), [])
         if not pe_ratio or pe_ratio <= 0.0:
             if len(r_entries) > 1:
                 r_score_sum = sum(e[0] for e in r_entries)
@@ -3409,7 +3430,7 @@ def get_public_profile(username):
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
 
-    processed_all = [process_round_row(r, conn) for r in clean_rows]
+    processed_all = [process_round_row(r) for r in clean_rows]
     
     # Config Stats (Averages for the period)
     config_stats = {}

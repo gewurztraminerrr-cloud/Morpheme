@@ -1083,12 +1083,28 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
         return;
     }
 
-    // Check if we are refreshing the current user (e.g. changing tabs/periods)
-    const currentDisplayed = document.getElementById('profile-username')?.innerText || '';
-    const isRefresh = currentDisplayed === username;
+    // Fast client-side profile cache for instant tab transitions and re-renders
+    if (!window._profileMemoryCache) {
+        window._profileMemoryCache = new Map();
+    }
+    const cacheKey = `${username.toLowerCase()}|${period}`;
+    const cachedEntry = window._profileMemoryCache.get(cacheKey);
+    const now = Date.now();
+    let hasRenderedCache = false;
 
-    if (container && !isRefresh) {
-        container.classList.add('hidden');
+    if (cachedEntry && (now - cachedEntry.time < 30000)) {
+        // Render instantly from cache (0ms latency)
+        await renderProfile(cachedEntry.data);
+        if (container) container.classList.remove('hidden');
+        hasRenderedCache = true;
+    } else {
+        // Check if we are refreshing the current user (e.g. changing tabs/periods)
+        const currentDisplayed = document.getElementById('profile-username')?.innerText || '';
+        const isRefresh = currentDisplayed === username;
+
+        if (container && !isRefresh) {
+            container.classList.add('hidden');
+        }
     }
 
     try {
@@ -1104,6 +1120,9 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
             }
             return;
         }
+
+        // Cache the fresh profile
+        window._profileMemoryCache.set(cacheKey, { data, time: Date.now() });
 
         await renderProfile(data);
         if (container) container.classList.remove('hidden');
