@@ -1077,6 +1077,8 @@ async function uploadAvatar(file) {
     }
 }
 
+let _currentProfileSearchSeq = 0;
+
 async function performProfileSearch(username, activeTab = null, period = 'all') {
     const errorEl = document.getElementById('profile-search-error');
     if (errorEl) {
@@ -1087,6 +1089,7 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
     if (!username || !username.trim()) return;
 
     username = username.trim();
+    const searchSeq = ++_currentProfileSearchSeq;
     const container = document.getElementById('profile-display-container');
     const input = document.getElementById('profile-search-input');
     if (input) input.value = username;
@@ -1101,6 +1104,10 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
         return;
     }
 
+    // Check if the current displayed user is different from the requested user
+    const currentDisplayed = document.getElementById('profile-username')?.innerText || '';
+    const isSameUser = currentDisplayed && currentDisplayed.toLowerCase() === username.toLowerCase();
+
     // Fast client-side profile cache for instant tab transitions and re-renders
     if (!window._profileMemoryCache) {
         window._profileMemoryCache = new Map();
@@ -1108,19 +1115,14 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
     const cacheKey = `${username.toLowerCase()}|${period}`;
     const cachedEntry = window._profileMemoryCache.get(cacheKey);
     const now = Date.now();
-    let hasRenderedCache = false;
 
     if (cachedEntry && (now - cachedEntry.time < 30000)) {
         // Render instantly from cache (0ms latency)
         await renderProfile(cachedEntry.data);
         if (container) container.classList.remove('hidden');
-        hasRenderedCache = true;
     } else {
-        // Check if we are refreshing the current user (e.g. changing tabs/periods)
-        const currentDisplayed = document.getElementById('profile-username')?.innerText || '';
-        const isRefresh = currentDisplayed === username;
-
-        if (container && !isRefresh) {
+        // Immediately hide container if switching to a different user to prevent flashing previous user
+        if (container && !isSameUser) {
             container.classList.add('hidden');
         }
     }
@@ -1128,6 +1130,11 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
     try {
         const response = await fetch(`/api/profile/${encodeURIComponent(username)}?period=${period}&t=${Date.now()}`);
         const data = await response.json();
+
+        // If another search was started while this fetch was in-flight, discard this result
+        if (searchSeq !== _currentProfileSearchSeq) {
+            return;
+        }
 
         if (data.error) {
             // User not found, just don't show the profile
