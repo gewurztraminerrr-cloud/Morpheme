@@ -3531,12 +3531,13 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         }
         track.style.display = 'block';
 
-        const ratio = clientHeight / scrollHeight;
-        const thumbHeight = Math.max(40, clientHeight * ratio);
+        const trackHeight = track.clientHeight || clientHeight;
+        const ratio = Math.min(1, clientHeight / scrollHeight);
+        const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
         thumb.style.height = `${thumbHeight}px`;
 
         const maxScrollTop = scrollHeight - clientHeight;
-        const maxThumbTop = clientHeight - thumbHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
         thumb.style.top = `${thumbTop}px`;
     }
@@ -3569,9 +3570,9 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const deltaY = clientY - startY;
 
-        const clientHeight = scrollArea.clientHeight;
+        const trackHeight = track.clientHeight || scrollArea.clientHeight;
         const thumbHeight = thumb.offsetHeight;
-        const maxThumbTop = clientHeight - thumbHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
 
         let newThumbTop = startThumbTop + deltaY;
         newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
@@ -3579,6 +3580,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         thumb.style.top = `${newThumbTop}px`;
 
         const scrollHeight = scrollArea.scrollHeight;
+        const clientHeight = scrollArea.clientHeight;
         const maxScrollTop = scrollHeight - clientHeight;
         if (maxThumbTop > 0) {
             scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
