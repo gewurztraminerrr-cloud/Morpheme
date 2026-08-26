@@ -2147,27 +2147,31 @@ body.theme-light-brown .word-item.missed {
     #page-tools,
     #page-settings,
     #page-mods {
-        height: calc(100vh - 40px) !important;
-        max-height: calc(100vh - 40px) !important;
+        height: calc(100vh - 80px) !important;
+        max-height: calc(100vh - 80px) !important;
         overflow: hidden !important;
         padding-top: 6px !important;
-        padding-bottom: 6px !important;
+        padding-bottom: 10px !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
         box-sizing: border-box !important;
     }
     #page-tools .page-title-header,
     #page-settings .page-title-header,
     #page-mods .page-title-header {
-        margin: 4px 0 10px 0 !important;
+        margin: 0 0 8px 0 !important;
         padding: 0 !important;
         line-height: 1.15 !important;
+        flex-shrink: 0 !important;
     }
     .tools-split-layout {
         width: 100% !important;
-        max-width: 99% !important;
-        flex: 1 1 auto !important;
-        height: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 0 !important;
+        height: auto !important;
         min-height: 0 !important;
-        max-height: 100% !important;
+        max-height: calc(100% - 38px) !important;
+        overflow: hidden !important;
     }
     .tools-sidebar {
         flex: 0 0 280px !important;
@@ -2176,6 +2180,8 @@ body.theme-light-brown .word-item.missed {
         max-width: 280px !important;
         padding: 8px 6px !important;
         gap: 4px !important;
+        overflow-y: auto !important;
+        height: 100% !important;
     }
     .tool-nav-btn {
         height: auto !important;
