@@ -2118,6 +2118,8 @@ class GameRoom:
                                     break
                         
                         if max_score > 0:
+                            # Ensure exactly one entry per round number by removing any prior entry for self.current_round
+                            self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
                             self.winners_history.insert(0, {
                                 'round': self.current_round,
                                 'winners': winners_data,

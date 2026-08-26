@@ -2703,7 +2703,18 @@ async function updateGameState(incomingState = null) {
         // --- ROOM HISTORY TAB ---
         const historyListEl = document.getElementById('winners-list');
         if (historyListEl && activeWordsTab === 'history') {
-            const history = state.winners_history || [];
+            const rawHistory = state.winners_history || [];
+            // Deduplicate by round number so each round has exactly one distinct winner entry
+            const seenRounds = new Set();
+            const history = [];
+            for (const h of rawHistory) {
+                const rNum = h.round;
+                if (!seenRounds.has(rNum)) {
+                    seenRounds.add(rNum);
+                    history.push(h);
+                }
+            }
+
             if (history.length === 0) {
                 historyListEl.innerHTML = '<p class="placeholder" style="text-align:center; margin-top:20px;">No winners recorded yet.</p>';
             } else {
@@ -2722,6 +2733,7 @@ async function updateGameState(incomingState = null) {
                         `;
                     }).join('');
 
+                    const tStamp = h.timestamp || 0;
                     return `
                         <div class="history-item" style="padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
                             <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -2730,7 +2742,7 @@ async function updateGameState(incomingState = null) {
                             </div>
                             <div style="background: rgba(255,215, 0, 0.1); border: 1px solid rgba(255,215, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-weight: 900; color: #ffd700; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
                                 <span>${h.score}<span style="font-size: 0.65rem; opacity: 0.8; font-weight: 800; margin-left: 3px;">PTS</span></span>
-                                <button title="Watch Replay" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, false)" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.3rem; padding:0; display:flex; align-items:center;">▶</button>
+                                <button title="Watch Replay" onclick="event.stopPropagation(); watchRoundHistory('${state.room_id}', ${h.round}, false, null, ${tStamp})" style="background:none; border:none; color:#ffd700; cursor:pointer; font-size:1.3rem; padding:0; display:flex; align-items:center;">▶</button>
                             </div>
                         </div>
                     `;

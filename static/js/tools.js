@@ -1711,8 +1711,8 @@ function findWordPathOnCube(word, board) {
 }
 
 // Global function to review a round (Legitimacy Walkthrough)
-window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameId = null) {
-    console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId})`);
+window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameId = null, timestamp = null) {
+    console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId}, Timestamp: ${timestamp})`);
 
     // 1. Find Round Data
     let rounds = window.lastRenderedRounds || [];
@@ -1732,7 +1732,13 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     //    Profile rounds are matched only by room_id+round_number and can span multiple sessions
     //    of the same room, returning stale data from a previous game.
     if (!round && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
-        const foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
+        let foundInLobby = null;
+        if (timestamp) {
+            foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum && Math.abs((h.timestamp || 0) - timestamp) < 5000);
+        }
+        if (!foundInLobby) {
+            foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum);
+        }
         if (foundInLobby && foundInLobby.board) {
             console.log(`[Review] Using Round ${roundNum} from Lobby winners_history (current session)`);
 
