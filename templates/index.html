@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33154" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33154" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33154">
-    <link rel="stylesheet" href="/css/lobby.css?v=33154">
-    <link rel="stylesheet" href="/css/play.css?v=33154">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33154">
-    <link rel="stylesheet" href="/css/forum.css?v=33154">
-    <link rel="stylesheet" href="/css/donate.css?v=33154">
+    <link rel="preload" href="/css/style.css?v=33155" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33155" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33155">
+    <link rel="stylesheet" href="/css/lobby.css?v=33155">
+    <link rel="stylesheet" href="/css/play.css?v=33155">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33155">
+    <link rel="stylesheet" href="/css/forum.css?v=33155">
+    <link rel="stylesheet" href="/css/donate.css?v=33155">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1163,6 +1163,20 @@
                 var audio = document.getElementById('lobby-music');
                 if (!audio) return;
                 audio.volume = 0.5;
+                audio.loop = true;
+
+                window.playLobbyAudioImmediate = function() {
+                    if (audio && audio.paused) {
+                        try {
+                            var p = audio.play();
+                            if (p !== undefined) {
+                                p.then(function() {
+                                    console.log('[LobbyMusic] Playback started via immediate trigger.');
+                                }).catch(function(e) {});
+                            }
+                        } catch (e) {}
+                    }
+                };
 
                 // 1. Attempt immediate programmatic play (for permissive browsers, PWAs, Electron, WebViews)
                 function tryAutoplay() {
@@ -1180,27 +1194,9 @@
                 tryAutoplay();
 
                 // 2. Immediate capture listener on first user interaction (touch, tap, hover, click, keydown)
-                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'mousemove', 'keydown', 'click'];
+                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'mousemove', 'keydown', 'click', 'focus'];
                 function unlockAndPlayAudio() {
-                    if (audio && audio.paused) {
-                        try {
-                            var p = audio.play();
-                            if (p !== undefined) {
-                                p.then(function() {
-                                    console.log('[LobbyMusic] Playback started via user interaction.');
-                                    interactionEvents.forEach(function(evt) {
-                                        window.removeEventListener(evt, unlockAndPlayAudio, true);
-                                        document.removeEventListener(evt, unlockAndPlayAudio, true);
-                                    });
-                                }).catch(function() {});
-                            }
-                        } catch (e) {}
-                    } else if (audio && !audio.paused) {
-                        interactionEvents.forEach(function(evt) {
-                            window.removeEventListener(evt, unlockAndPlayAudio, true);
-                            document.removeEventListener(evt, unlockAndPlayAudio, true);
-                        });
-                    }
+                    window.playLobbyAudioImmediate();
                 }
 
                 interactionEvents.forEach(function(evt) {
@@ -1251,7 +1247,7 @@
         <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="this.classList.add('pressed','flattened')" onmousedown="this.classList.add('pressed','flattened')" ontouchstart="this.classList.add('pressed','flattened')" onclick="window.handleEnterLobbyClick(this, event)">ENTER LOBBY</button>
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="this.classList.add('pressed','flattened'); if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onmousedown="this.classList.add('pressed','flattened'); if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" ontouchstart="this.classList.add('pressed','flattened'); if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onclick="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate(); window.handleEnterLobbyClick(this, event)">ENTER LOBBY</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -6292,16 +6288,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33154"></script>
-    <script src="/js/lobby.js?v=33154"></script>
-    <script src="/js/play.js?v=33154"></script>
-    <script src="/js/tournaments.js?v=33154"></script>
-    <script src="/js/leaderboard.js?v=33154"></script>
-    <script src="/js/tools.js?v=33154"></script>
-    <script src="/js/mouse_selection.js?v=33154"></script>
-    <script src="/js/mods.js?v=33154"></script>
-    <script src="/js/private_matches.js?v=33154"></script>
-    <script src="/js/donate.js?v=33154"></script>
+    <script src="/js/app.js?v=33155"></script>
+    <script src="/js/lobby.js?v=33155"></script>
+    <script src="/js/play.js?v=33155"></script>
+    <script src="/js/tournaments.js?v=33155"></script>
+    <script src="/js/leaderboard.js?v=33155"></script>
+    <script src="/js/tools.js?v=33155"></script>
+    <script src="/js/mouse_selection.js?v=33155"></script>
+    <script src="/js/mods.js?v=33155"></script>
+    <script src="/js/private_matches.js?v=33155"></script>
+    <script src="/js/donate.js?v=33155"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

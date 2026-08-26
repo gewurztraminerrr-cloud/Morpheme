@@ -372,6 +372,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let transitionTimeout = null;
                 const triggerTransition = (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
+                    // Synchronously trigger audio in user gesture context before any timer delay
+                    try {
+                        const lobbyMusic = document.getElementById('lobby-music');
+                        if (lobbyMusic) {
+                            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
+                        }
+                    } catch (audioErr) {
+                        console.error('[LobbyMusic] Synchronous play error:', audioErr);
+                    }
                     if (transitionTimeout) return;
                     transitionTimeout = setTimeout(() => {
                         handleGatewayTransition(e);
@@ -381,15 +390,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     triggerTransition(evt);
                 };
 
-                // Flatten immediately on click-down (pointerdown / mousedown / touchstart)
-                gatewayBtn.addEventListener('pointerdown', () => {
+                // Flatten immediately on click-down and start audio in direct user gesture context
+                gatewayBtn.addEventListener('pointerdown', (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
+                    const lobbyMusic = document.getElementById('lobby-music');
+                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
                 });
-                gatewayBtn.addEventListener('mousedown', () => {
+                gatewayBtn.addEventListener('mousedown', (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
+                    const lobbyMusic = document.getElementById('lobby-music');
+                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
                 });
-                gatewayBtn.addEventListener('touchstart', () => {
+                gatewayBtn.addEventListener('touchstart', (e) => {
                     gatewayBtn.classList.add('pressed', 'flattened');
+                    const lobbyMusic = document.getElementById('lobby-music');
+                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
                 }, { passive: true });
 
                 // Trigger transition on release (mouseup / touchend / click) and stay flattened
