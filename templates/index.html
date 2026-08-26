@@ -468,10 +468,31 @@
                 }
                 var roomId = btn.getAttribute('data-room');
                 if (!roomId) return;
-                var isReturn = btn.classList.contains('return-mode') || (window.currentRoomId && roomId === window.currentRoomId);
+
+                // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
+                window._isEnteringRoom = true;
+                if (typeof window.clearGameUIAndCache === 'function') {
+                    window.clearGameUIAndCache();
+                }
+                if (typeof showPage === 'function') {
+                    showPage('page-play');
+                } else if (typeof window.showPage === 'function') {
+                    window.showPage('page-play');
+                }
+                if (typeof window.switchPlayPanel === 'function') {
+                    window.switchPlayPanel('board', false);
+                }
+
+                var playBtn = document.getElementById('play-btn');
+                if (playBtn) {
+                    playBtn.disabled = false;
+                    playBtn.title = "";
+                }
+                if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
+
                 btn.style.opacity = '0.5';
                 btn.style.pointerEvents = 'none';
-                if (window.showLoadingOverlay) window.showLoadingOverlay(isReturn ? 'Returning to Game...' : 'Joining Room...');
+
                 try {
                     var isSpectator = btn.getAttribute('data-spectator') === 'true';
                     var response = await fetch('/api/room/' + roomId + '/join', {
@@ -480,8 +501,11 @@
                         body: JSON.stringify({ as_spectator: isSpectator })
                     });
                     var data = await response.json();
+                    window._isEnteringRoom = false;
+
                     if (data && data.success) {
                         if (!isSpectator && data.role === 'spectator') {
+                            if (typeof showPage === 'function') showPage('page-lobby');
                             if (window.showAlertModal) {
                                 window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
                             } else {
@@ -497,15 +521,13 @@
                         window.currentRoomId = roomId;
                         localStorage.setItem('last_joined_room', roomId);
                         window.isSpectatorMode = (data.role === 'spectator' || isSpectator);
-                        var playBtn = document.getElementById('play-btn');
-                        if (playBtn) {
-                            playBtn.disabled = false;
-                            playBtn.title = "";
+
+                        if (data.state && typeof window.updateGameState === 'function') {
+                            window.updateGameState(data.state);
                         }
-                        if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
-                        if (typeof showPage === 'function') showPage('page-play');
                         if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     } else {
+                        if (typeof showPage === 'function') showPage('page-lobby');
                         var errMsg = (data && data.error) ? data.error : 'Unknown error';
                         if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                             var durTxt = data.remaining || 'your timeout expires';
