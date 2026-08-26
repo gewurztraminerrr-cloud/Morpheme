@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33153" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33153" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33153">
-    <link rel="stylesheet" href="/css/lobby.css?v=33153">
-    <link rel="stylesheet" href="/css/play.css?v=33153">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33153">
-    <link rel="stylesheet" href="/css/forum.css?v=33153">
-    <link rel="stylesheet" href="/css/donate.css?v=33153">
+    <link rel="preload" href="/css/style.css?v=33154" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33154" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33154">
+    <link rel="stylesheet" href="/css/lobby.css?v=33154">
+    <link rel="stylesheet" href="/css/play.css?v=33154">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33154">
+    <link rel="stylesheet" href="/css/forum.css?v=33154">
+    <link rel="stylesheet" href="/css/donate.css?v=33154">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1153,9 +1153,62 @@
                         </div>
         </div>
 
-        <!-- Global Audio Elements (Loaded on Demand) -->
-        <audio id="lobby-music" src="/music/lobby.mp3" preload="none" loop></audio>
+        <!-- Global Audio Elements (Loaded on Demand / Preloaded for Instant Playback) -->
+        <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" playsinline webkit-playsinline loop></audio>
         <audio id="triple-music" src="/music/triple.mp3" preload="none" loop></audio>
+
+        <script>
+            // Immediate Cross-Platform Lobby Music Initiation (when ENTER LOBBY button is present)
+            (function() {
+                var audio = document.getElementById('lobby-music');
+                if (!audio) return;
+                audio.volume = 0.5;
+
+                // 1. Attempt immediate programmatic play (for permissive browsers, PWAs, Electron, WebViews)
+                function tryAutoplay() {
+                    try {
+                        var p = audio.play();
+                        if (p !== undefined) {
+                            p.then(function() {
+                                console.log('[LobbyMusic] Initial autoplay succeeded.');
+                            }).catch(function(err) {
+                                console.log('[LobbyMusic] Autoplay waiting for user interaction:', err ? err.name : '');
+                            });
+                        }
+                    } catch (e) {}
+                }
+                tryAutoplay();
+
+                // 2. Immediate capture listener on first user interaction (touch, tap, hover, click, keydown)
+                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'mousemove', 'keydown', 'click'];
+                function unlockAndPlayAudio() {
+                    if (audio && audio.paused) {
+                        try {
+                            var p = audio.play();
+                            if (p !== undefined) {
+                                p.then(function() {
+                                    console.log('[LobbyMusic] Playback started via user interaction.');
+                                    interactionEvents.forEach(function(evt) {
+                                        window.removeEventListener(evt, unlockAndPlayAudio, true);
+                                        document.removeEventListener(evt, unlockAndPlayAudio, true);
+                                    });
+                                }).catch(function() {});
+                            }
+                        } catch (e) {}
+                    } else if (audio && !audio.paused) {
+                        interactionEvents.forEach(function(evt) {
+                            window.removeEventListener(evt, unlockAndPlayAudio, true);
+                            document.removeEventListener(evt, unlockAndPlayAudio, true);
+                        });
+                    }
+                }
+
+                interactionEvents.forEach(function(evt) {
+                    window.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
+                    document.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
+                });
+            })();
+        </script>
 
         <style>
             #page-loading.active {
@@ -6239,16 +6292,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33153"></script>
-    <script src="/js/lobby.js?v=33153"></script>
-    <script src="/js/play.js?v=33153"></script>
-    <script src="/js/tournaments.js?v=33153"></script>
-    <script src="/js/leaderboard.js?v=33153"></script>
-    <script src="/js/tools.js?v=33153"></script>
-    <script src="/js/mouse_selection.js?v=33153"></script>
-    <script src="/js/mods.js?v=33153"></script>
-    <script src="/js/private_matches.js?v=33153"></script>
-    <script src="/js/donate.js?v=33153"></script>
+    <script src="/js/app.js?v=33154"></script>
+    <script src="/js/lobby.js?v=33154"></script>
+    <script src="/js/play.js?v=33154"></script>
+    <script src="/js/tournaments.js?v=33154"></script>
+    <script src="/js/leaderboard.js?v=33154"></script>
+    <script src="/js/tools.js?v=33154"></script>
+    <script src="/js/mouse_selection.js?v=33154"></script>
+    <script src="/js/mods.js?v=33154"></script>
+    <script src="/js/private_matches.js?v=33154"></script>
+    <script src="/js/donate.js?v=33154"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

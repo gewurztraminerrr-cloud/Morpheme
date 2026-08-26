@@ -451,6 +451,11 @@ async function fetchUserCount() {
 
 // Helper to play lobby music safely across all platforms (desktops, laptops, tablets, mobile).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
+    if (!lobbyMusic) return;
+    lobbyMusic.loop = true;
+    if (typeof lobbyMusic.volume === 'number' && lobbyMusic.volume === 1) {
+        lobbyMusic.volume = 0.5;
+    }
     // If already playing smoothly, continue playback without restarting!
     if (!lobbyMusic.paused) {
         console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
@@ -458,16 +463,19 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
         return;
     }
 
-    console.log('[LobbyMusic] Playing cropped lobby music.');
-    lobbyMusic.play()
-        .then(() => {
-            console.log('[LobbyMusic] Play succeeded.');
-            if (onSuccess) onSuccess();
-        })
-        .catch(err => {
-            console.warn('[LobbyMusic] Play failed:', err);
-            setupFirstInteractionMusic();
-        });
+    console.log('[LobbyMusic] Playing lobby music.');
+    const playPromise = lobbyMusic.play();
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
+                console.log('[LobbyMusic] Play succeeded.');
+                if (onSuccess) onSuccess();
+            })
+            .catch(err => {
+                console.warn('[LobbyMusic] Play failed / waiting for user interaction:', err ? err.name : '');
+                setupFirstInteractionMusic();
+            });
+    }
 }
 
 // Helper to start/stop music based on Page AND Setting
