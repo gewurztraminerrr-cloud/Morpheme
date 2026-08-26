@@ -519,12 +519,22 @@ async function ejectToLobby(reason = "inactivity") {
 
     if (reason === "timeout" || reason.startsWith("timeout:") || reason.startsWith("timeout")) {
         let durationText = "10 minutes";
+        let reasonText = "Moderator timeout";
         if (reason.startsWith("timeout:")) {
-            durationText = reason.substring(8).trim();
+            const raw = reason.substring(8).trim();
+            if (raw.includes('|')) {
+                const parts = raw.split('|');
+                durationText = parts[0].trim();
+                reasonText = parts[1].trim();
+            } else {
+                durationText = raw;
+            }
         }
         title = "Account Timed Out";
         message = `
-            You have been kicked from the room and placed on a temporary timeout from all game rooms.
+            You have been returned to the lobby because your account is temporarily timed out from all game rooms.
+            <br><br>
+            <strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${reasonText}</span>
             <br><br>
             <strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span>
             <br><br>
@@ -1535,7 +1545,17 @@ async function updateGameState(incomingState = null) {
 
             // INSTANTANEOUS EVICTION: If we were previously established in the roster in a non-24h room, kick immediately
             if (window._wasEverInRoster) {
-                console.warn('[play.js] Authoritative eviction detected: User missing from roster. Ejecting instantaneously.');
+                console.warn('[play.js] Authoritative eviction detected: User missing from roster. Checking timeout...');
+                try {
+                    const toResp = await fetch('/api/user/my_timeout_status');
+                    const toData = await toResp.json();
+                    if (toData && toData.timed_out) {
+                        const durText = toData.remaining || 'your timeout expires';
+                        const rText = toData.reason || 'Moderator timeout';
+                        ejectToLobby(`timeout:${durText}|${rText}`);
+                        return;
+                    }
+                } catch(e) {}
                 ejectToLobby("inactivity");
                 return;
             }
@@ -1560,6 +1580,11 @@ async function updateGameState(incomingState = null) {
                             setTimeout(updateGameState, 100);
                         } else {
                             console.error(`[play.js] Silent auto-rejoin failed: ${data.error}`);
+                            if (data.timed_out) {
+                                const durText = data.remaining || 'your timeout expires';
+                                const rText = data.timeout_reason || 'Moderator timeout';
+                                ejectToLobby(`timeout:${durText}|${rText}`);
+                            }
                         }
                     })
                     .catch(err => {
@@ -1573,6 +1598,16 @@ async function updateGameState(incomingState = null) {
             console.warn(`[play.js] EVICTION WARNING: User not found in state.players or state.spectators! Count: ${window._emptyPlayersPollCount}/10`);
             
             if (window._emptyPlayersPollCount >= 10) {
+                try {
+                    const toResp = await fetch('/api/user/my_timeout_status');
+                    const toData = await toResp.json();
+                    if (toData && toData.timed_out) {
+                        const durText = toData.remaining || 'your timeout expires';
+                        const rText = toData.reason || 'Moderator timeout';
+                        ejectToLobby(`timeout:${durText}|${rText}`);
+                        return;
+                    }
+                } catch(e) {}
                 // Normal Eviction
                 ejectToLobby("inactivity");
                 return;

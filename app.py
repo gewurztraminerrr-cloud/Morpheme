@@ -1219,10 +1219,10 @@ def parse_timeout_datetime(dt_str):
 def check_user_timeout(user_id):
     """
     Checks if a user is currently under timeout.
-    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count)
+    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count, timeout_reason)
     """
     if not user_id or user_id <= 0:
-        return False, 0, "", None, 0
+        return False, 0, "", None, 0, None
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
@@ -1232,7 +1232,7 @@ def check_user_timeout(user_id):
                 (user_id,)
             ).fetchone()
             if not row or not row['timeout_until']:
-                return False, 0, "", None, (row['timeout_offense_count'] if row else 0)
+                return False, 0, "", None, (row['timeout_offense_count'] if row else 0), None
             
             timeout_until_str = row['timeout_until']
             dt_until = parse_timeout_datetime(timeout_until_str)
@@ -1242,12 +1242,13 @@ def check_user_timeout(user_id):
                 if diff_sec > 0:
                     mins = max(1, int(math.ceil(diff_sec / 60.0)))
                     rem_str = format_duration_string(mins)
-                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0)
+                    reason_val = row['timeout_reason'] or 'Temporary restriction'
+                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0), reason_val
         finally:
             conn.close()
     except Exception as e:
         print(f"[check_user_timeout] DB error: {e}")
-    return False, 0, "", None, 0
+    return False, 0, "", None, 0, None
 
 
 @app.route('/api/mods/timeout_user', methods=['POST'])
@@ -1344,14 +1345,15 @@ def timeout_user_api():
 def get_my_timeout_status():
     user_id = session.get('user_id')
     if not user_id:
-        return jsonify({'timed_out': False, 'remaining': '', 'remaining_seconds': 0})
-    is_to, diff_sec, rem_str, to_until, count = check_user_timeout(user_id)
+        return jsonify({'timed_out': False, 'remaining': '', 'remaining_seconds': 0, 'reason': ''})
+    is_to, diff_sec, rem_str, to_until, count, reason_val = check_user_timeout(user_id)
     return jsonify({
         'timed_out': is_to,
         'remaining': rem_str,
         'remaining_seconds': diff_sec,
         'timeout_until': to_until,
-        'offense_count': count
+        'offense_count': count,
+        'reason': reason_val or ''
     })
 
 
@@ -3927,9 +3929,16 @@ def create_room():
             return jsonify({'error': 'Not authenticated'}), 401
         
         # Timeout check
-        is_to, _, rem_str, _, _ = check_user_timeout(session.get('user_id'))
+        is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id'))
         if is_to:
-            return jsonify({'error': f'You are temporarily timed out and cannot create or join rooms for another {rem_str}.', 'timed_out': True}), 403
+            r_text = reason_val or 'Moderator timeout'
+            return jsonify({
+                'error': f'You are temporarily timed out for another {rem_str}.',
+                'timed_out': True,
+                'remaining': rem_str,
+                'timeout_reason': r_text,
+                'reason': f'timeout:{rem_str}|{r_text}'
+            }), 403
         
         data = request.get_json() or {}
         game_type = data.get('game_type', 'standard')
@@ -4032,9 +4041,16 @@ def join_room(room_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     # Timeout check
-    is_to, _, rem_str, _, _ = check_user_timeout(session.get('user_id'))
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id'))
     if is_to:
-        return jsonify({'error': f'You are temporarily timed out and cannot play in any rooms for another {rem_str}.', 'timed_out': True}), 403
+        r_text = reason_val or 'Moderator timeout'
+        return jsonify({
+            'error': f'You are temporarily timed out for another {rem_str}.',
+            'timed_out': True,
+            'remaining': rem_str,
+            'timeout_reason': r_text,
+            'reason': f'timeout:{rem_str}|{r_text}'
+        }), 403
     
     user_id = session['user_id']
     room = room_manager.get_room(room_id)
@@ -4309,10 +4325,18 @@ def get_room_state(room_id):
                 return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
             
             # Timeout check during room state polling
-            is_to, _, rem_str, _, _ = check_user_timeout(uid)
+            is_to, _, rem_str, _, _, reason_val = check_user_timeout(uid)
             if is_to:
                 room.remove_player(uid)
-                return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'evicted': True, 'timed_out': True, 'reason': f'timeout:{rem_str}'}), 403
+                r_text = reason_val or 'Moderator timeout'
+                return jsonify({
+                    'error': f'You are currently timed out for another {rem_str}.',
+                    'evicted': True,
+                    'timed_out': True,
+                    'remaining': rem_str,
+                    'timeout_reason': r_text,
+                    'reason': f'timeout:{rem_str}|{r_text}'
+                }), 403
             
             # Fetch user's rating for this room's configuration
             rating = 1200
@@ -4846,9 +4870,10 @@ def submit_chat_message(room_id):
         return jsonify({'error': 'Not authenticated'}), 401
         
     # Timeout check
-    is_to, _, rem_str, _, _ = check_user_timeout(user_id)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id)
     if is_to:
-        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str}), 403
+        r_text = reason_val or 'Moderator timeout'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str, 'timeout_reason': r_text, 'reason': f'timeout:{rem_str}|{r_text}'}), 403
         
     rating = None
     player = room.get_player(user_id)
@@ -4887,9 +4912,10 @@ def submit_word(room_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     # Timeout check
-    is_to, _, rem_str, _, _ = check_user_timeout(user_id)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id)
     if is_to:
-        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str}), 403
+        r_text = reason_val or 'Moderator timeout'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str, 'timeout_reason': r_text, 'reason': f'timeout:{rem_str}|{r_text}'}), 403
     
     room = room_manager.get_room(room_id)
     if not room:

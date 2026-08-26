@@ -1277,9 +1277,10 @@ function showPage(pageId) {
         history.replaceState(null, null, "#" + pageId);
     }
 
-    // Auto-hide modals/overlays when navigating pages
+    // Auto-hide modals/overlays when navigating pages (except active priority alert modals)
     const overlays = document.querySelectorAll('.modal-window, .mini-profile-overlay, .review-overlay, .overlay');
     overlays.forEach(o => {
+        if (o.id === 'generic-info-modal' && window._hasPriorityModal) return;
         o.classList.remove('forced-show');
         o.classList.add('hidden');
     });

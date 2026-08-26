@@ -133,11 +133,11 @@ def parse_timeout_datetime(dt_str):
 def check_user_timeout(user_id):
     """
     Checks if a user is currently under timeout.
-    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count)
+    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count, timeout_reason)
     """
     import datetime, math
     if not user_id or user_id <= 0:
-        return False, 0, "", None, 0
+        return False, 0, "", None, 0, None
     try:
         with get_db(timeout=10.0, row_factory=sqlite3.Row, auto_commit=False) as conn:
             row = conn.execute(
@@ -145,7 +145,7 @@ def check_user_timeout(user_id):
                 (user_id,)
             ).fetchone()
             if not row or not row['timeout_until']:
-                return False, 0, "", None, (row['timeout_offense_count'] if row else 0)
+                return False, 0, "", None, (row['timeout_offense_count'] if row else 0), None
             
             timeout_until_str = row['timeout_until']
             dt_until = parse_timeout_datetime(timeout_until_str)
@@ -155,7 +155,8 @@ def check_user_timeout(user_id):
                 if diff_sec > 0:
                     mins = max(1, int(math.ceil(diff_sec / 60.0)))
                     rem_str = format_duration_string(mins)
-                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0)
+                    reason_val = row['timeout_reason'] or 'Temporary restriction'
+                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0), reason_val
     except Exception as e:
         print(f"[check_user_timeout] Error: {e}")
-    return False, 0, "", None, 0
+    return False, 0, "", None, 0, None

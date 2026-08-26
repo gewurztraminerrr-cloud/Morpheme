@@ -135,7 +135,8 @@ async function enterLobbyRoom(rawBtn) {
             const errMsg = (data && data.error) ? data.error : 'Server error entering room.';
             if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                 const durationText = data.remaining || "your timeout expires";
-                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+                const reasonText = data.timeout_reason || "Moderator timeout";
+                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${reasonText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
                 if (window.showAlertModal) {
                     window.showAlertModal('Account Timed Out', msg, true);
                 } else {
@@ -263,7 +264,8 @@ async function createRoom(config, minRating, maxRating) {
             const errMsg = data.error || 'Unknown error';
             if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                 const durationText = data.remaining || "your timeout expires";
-                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+                const reasonText = data.timeout_reason || "Moderator timeout";
+                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${reasonText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
                 if (window.showAlertModal) {
                     window.showAlertModal('Account Timed Out', msg, true);
                 } else {
@@ -374,7 +376,8 @@ function setupLobbyEvents() {
                     const errMsg = (data && data.error) ? data.error : `Join failed (${response.status})`;
                     if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                         const durationText = data.remaining || "your timeout expires";
-                        const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+                        const reasonText = data.timeout_reason || "Moderator timeout";
+                        const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${reasonText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
                         if (window.showAlertModal) {
                             window.showAlertModal('Account Timed Out', msg, true);
                         } else {
