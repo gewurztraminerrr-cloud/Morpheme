@@ -1475,7 +1475,7 @@ async function renderProfile(user) {
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
 
             <!-- Board: dimension + time -->
-            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; text-align: center;">
+            <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-start; justify-content: center; text-align: left;">
                 <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${dims}</span>
                 <span style="font-size: 0.62rem; color: rgba(255,255,255,0.35); font-weight: 600;">${timeStr}</span>
             </div>
@@ -1498,7 +1498,7 @@ async function renderProfile(user) {
     window.roundGridHeader = `
         <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Mode</div>
-            <div style="text-align: center;">Board</div>
+            <div style="text-align: left;">Board</div>
             <div>Score</div>
             <div>PE</div>
             <div>Stats</div>
