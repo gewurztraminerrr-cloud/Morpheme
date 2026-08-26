@@ -1154,10 +1154,12 @@ function formatTime(seconds) {
 }
 
 function isOnLobby() {
-    if (window.currentPageId === 'page-lobby') return true;
+    if (window.currentPageId === 'page-lobby' || window.currentPageId === 'lobby') return true;
     const el = document.getElementById('page-lobby');
     if (!el) return false;
-    return el.classList.contains('active') || (el.style.display && el.style.display !== 'none');
+    if (el.classList.contains('active')) return true;
+    if (el.style.display && el.style.display !== 'none') return true;
+    return !el.classList.contains('hidden') && getComputedStyle(el).display !== 'none';
 }
 window.isOnLobby = isOnLobby;
 
