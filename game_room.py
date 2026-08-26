@@ -4095,7 +4095,7 @@ class RoomManager:
              self.delete_room(ri)
 
     def find_user_session(self, user_id):
-        """Find user's current room and online status"""
+        """Find user's current room and online status. Prioritizes non-24h active rooms."""
         uid_str = str(user_id)
         now = time.time()
         
@@ -4103,42 +4103,60 @@ class RoomManager:
         last_seen = self.user_presence.get(uid_str, 0)
         is_online = (now - last_seen) < 75 # 75 seconds (reduced for better accuracy)
         
-        # Search for active room - Priority to most recently active
+        # Search for active room - Priority to non-24h rooms and most recently active
         best_match = None
         max_active = -1
         
         for room in self.rooms.values():
+            is_24h = (getattr(room, 'time_limit', 0) >= 7200)
+
             # Check players
             for p in room.players:
                 if str(p.user_id) == uid_str:
-                    if p.last_active > max_active:
-                        max_active = p.last_active
+                    # In 24h rooms, players are permanently persisted. If the user hasn't interacted
+                    # with the 24h room within 120 seconds, treat their 24h presence as inactive/standby
+                    # so they are not falsely reported as being "in" the 24h room when they leave it.
+                    p_active = p.last_active
+                    if is_24h and (now - p_active > 120):
+                        continue
+
+                    # Give substantial priority score to non-24h active rooms over 24h rooms
+                    score = p_active + (0 if is_24h else 1000000000)
+                    if score > max_active:
+                        max_active = score
                         best_match = {
                             'room_id': room.room_id,
                             'is_online': True,
                             'is_spectator': False,
                             'game_type': room.game_type,
                             'board_dimensions': room.board_dimensions,
-                            'time_limit': room.time_limit
+                            'time_limit': room.time_limit,
+                            'is_24h': is_24h
                         }
             # Check spectators
             for s in room.spectators:
                 if str(s.user_id) == uid_str:
-                    if s.last_active > max_active:
-                        max_active = s.last_active
+                    s_active = s.last_active
+                    if is_24h and (now - s_active > 120):
+                        continue
+
+                    score = s_active + (0 if is_24h else 1000000000)
+                    if score > max_active:
+                        max_active = score
                         best_match = {
                             'room_id': room.room_id,
                             'is_online': True,
                             'is_spectator': True,
                             'game_type': room.game_type,
                             'board_dimensions': room.board_dimensions,
-                            'time_limit': room.time_limit
+                            'time_limit': room.time_limit,
+                            'is_24h': is_24h
                         }
         
         if best_match:
             return best_match
         
-        # Not in a room, but might still be online (Lobby/Profile)
+        # Not in an active room, but might still be online (Lobby/Profile)
         if is_online:
             return {
                 'room_id': None,
