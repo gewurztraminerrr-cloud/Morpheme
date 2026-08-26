@@ -716,10 +716,11 @@ window.showMiniProfile = async function (username) {
 function setupProfileTool() {
     const searchBtn = document.getElementById('profile-search-btn');
     const myProfileBtn = document.getElementById('profile-my-profile-btn');
+    const input = document.getElementById('profile-search-input');
 
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
-            performProfileSearch(input.value);
+            if (input) performProfileSearch(input.value);
         });
     }
 
