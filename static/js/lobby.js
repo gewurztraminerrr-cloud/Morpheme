@@ -1118,7 +1118,7 @@ window.handleLobbyRefresh = handleLobbyRefresh;
 function updateLobbyButtons(stats, mode = 'all') {
     // Stats format: "game_type|board|time": count
     // mode = 'all'               → update all buttons (FCFS, SP, Accumulative)
-    // mode = 'accumulative_only' → only update Accumulative buttons (auto 2s poll)
+    // mode = 'accumulative_only' → only update Accumulative buttons (auto 1s poll)
     // mode = 'fcfs_sp_only'      → only update FCFS and SP buttons (Refresh button click)
     const buttons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     buttons.forEach(btn => {
@@ -1134,21 +1134,12 @@ function updateLobbyButtons(stats, mode = 'all') {
         const key = `${game}|${board}|${time}`;
         const count = (stats && stats[key] !== undefined) ? stats[key] : 0;
 
-        // Normalize whitespace
-        const rawText = btn.textContent;
-        const normalizedText = rawText.replace(/\s+/g, ' ').trim();
+        const rawText = btn.textContent || '';
+        const baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
+        const targetText = `${baseText} [${count}]`;
 
-        // Replace any existing count pattern or append count
-        let newNormalized;
-        if (/\[\d+\]/.test(normalizedText)) {
-            newNormalized = normalizedText.replace(/\[\d+\]/g, `[${count}]`);
-        } else {
-            newNormalized = `${normalizedText} [${count}]`;
-        }
-
-        // Only write back if the displayed text actually changed
-        if (btn.textContent.trim() !== newNormalized) {
-            btn.textContent = newNormalized;
+        if (rawText.trim() !== targetText) {
+            btn.textContent = targetText;
         }
     });
 }
@@ -1167,7 +1158,7 @@ function isOnLobby() {
     if (!el) return false;
     if (el.classList.contains('active')) return true;
     if (el.style.display && el.style.display !== 'none') return true;
-    return !el.classList.contains('hidden') && getComputedStyle(el).display !== 'none';
+    return window.location.hash === '#page-lobby' || window.location.hash === '#lobby';
 }
 window.isOnLobby = isOnLobby;
 
