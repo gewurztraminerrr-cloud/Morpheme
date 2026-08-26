@@ -1267,6 +1267,7 @@ def timeout_user_api():
     data = request.json or {}
     username = (data.get('username') or '').strip()
     reason = (data.get('reason') or 'Moderator timeout').strip()
+    custom_hours = data.get('hours')
     
     if not username:
         return jsonify({'error': 'Username required'}), 400
@@ -1300,9 +1301,22 @@ def timeout_user_api():
                 curr_offenses = max(0, curr_offenses - decay_levels)
                 
         new_offenses = curr_offenses + 1
-        duration_minutes = 10 * (2 ** (new_offenses - 1))
-        # Cap duration at 7 days (10,080 minutes)
-        duration_minutes = min(10080, duration_minutes)
+        
+        # If moderator specified explicit hours, calculate duration from hours
+        if custom_hours is not None and str(custom_hours).strip() != '':
+            try:
+                parsed_hours = float(custom_hours)
+                if parsed_hours <= 0:
+                    return jsonify({'error': 'Timeout hours must be greater than 0'}), 400
+                duration_minutes = int(round(parsed_hours * 60))
+                # Cap duration at 30 days (43,200 minutes)
+                duration_minutes = min(43200, duration_minutes)
+            except ValueError:
+                return jsonify({'error': 'Invalid hours format'}), 400
+        else:
+            duration_minutes = 10 * (2 ** (new_offenses - 1))
+            # Cap default exponential duration at 7 days (10,080 minutes)
+            duration_minutes = min(10080, duration_minutes)
         
         duration_str = format_duration_string(duration_minutes)
         timeout_until_dt = now_utc + datetime.timedelta(minutes=duration_minutes)

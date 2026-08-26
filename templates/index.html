@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33171" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33171" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33171">
-    <link rel="stylesheet" href="/css/lobby.css?v=33171">
-    <link rel="stylesheet" href="/css/play.css?v=33171">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33171">
-    <link rel="stylesheet" href="/css/forum.css?v=33171">
-    <link rel="stylesheet" href="/css/donate.css?v=33171">
+    <link rel="preload" href="/css/style.css?v=33172" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33172" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33172">
+    <link rel="stylesheet" href="/css/lobby.css?v=33172">
+    <link rel="stylesheet" href="/css/play.css?v=33172">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
+    <link rel="stylesheet" href="/css/forum.css?v=33172">
+    <link rel="stylesheet" href="/css/donate.css?v=33172">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -3529,11 +3529,15 @@
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
                                 Kicks user from their current room and blocks them from playing in all rooms. Offense timeouts start at <strong>10 minutes</strong> and increase exponentially for repeat offenses (20m, 40m, 80m...). Decay restores timeout duration back towards 10 minutes over offense-free time.
                             </p>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                                <input type="text" id="timeout-username-input" placeholder="Enter username to timeout..." style="flex: 1; min-width: 200px;">
-                                <button id="timeout-user-btn" class="mod-full-btn add" style="background: #d97706; border-color: #b45309; min-width: 140px;">⏱️ Timeout User</button>
-                                <button id="check-timeout-btn" class="mod-full-btn" style="min-width: 130px; background: var(--bg-surface); border: 1px solid var(--input-border);">🔍 Check Status</button>
-                                <button id="lift-timeout-btn" class="mod-full-btn" style="min-width: 130px; background: #059669; border-color: #047857;">🔓 Lift Timeout</button>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
+                                <input type="text" id="timeout-username-input" placeholder="Enter username to timeout..." style="flex: 1; min-width: 180px;">
+                                <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-surface); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <label for="timeout-hours-input" style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0;">Duration (Hours):</label>
+                                    <input type="number" id="timeout-hours-input" placeholder="Auto" min="0.1" max="168" step="0.5" style="width: 70px; padding: 4px 6px; text-align: center;" title="Leave blank for automatic offense-based duration, or specify hours (e.g. 1, 2, 24)">
+                                </div>
+                                <button id="timeout-user-btn" class="mod-full-btn add" style="background: #d97706; border-color: #b45309; min-width: 130px;">⏱️ Timeout User</button>
+                                <button id="check-timeout-btn" class="mod-full-btn" style="min-width: 120px; background: var(--bg-surface); border: 1px solid var(--input-border);">🔍 Check Status</button>
+                                <button id="lift-timeout-btn" class="mod-full-btn" style="min-width: 120px; background: #059669; border-color: #047857;">🔓 Lift Timeout</button>
                             </div>
                             <div style="margin-bottom: 10px;">
                                 <textarea id="timeout-reason-input" placeholder="Reason for timeout... (e.g. Chat harassment, Unsportsmanlike conduct, Spamming)" style="width: 100%; min-height: 60px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
@@ -6434,16 +6438,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33171"></script>
-    <script src="/js/lobby.js?v=33171"></script>
-    <script src="/js/play.js?v=33171"></script>
-    <script src="/js/tournaments.js?v=33171"></script>
-    <script src="/js/leaderboard.js?v=33171"></script>
-    <script src="/js/tools.js?v=33171"></script>
-    <script src="/js/mouse_selection.js?v=33171"></script>
-    <script src="/js/mods.js?v=33171"></script>
-    <script src="/js/private_matches.js?v=33171"></script>
-    <script src="/js/donate.js?v=33171"></script>
+    <script src="/js/app.js?v=33172"></script>
+    <script src="/js/lobby.js?v=33172"></script>
+    <script src="/js/play.js?v=33172"></script>
+    <script src="/js/tournaments.js?v=33172"></script>
+    <script src="/js/leaderboard.js?v=33172"></script>
+    <script src="/js/tools.js?v=33172"></script>
+    <script src="/js/mouse_selection.js?v=33172"></script>
+    <script src="/js/mods.js?v=33172"></script>
+    <script src="/js/private_matches.js?v=33172"></script>
+    <script src="/js/donate.js?v=33172"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

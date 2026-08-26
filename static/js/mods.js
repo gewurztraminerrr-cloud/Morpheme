@@ -638,13 +638,17 @@ async function timeoutUser() {
     const reasonInput = document.getElementById('timeout-reason-input');
     const reason = reasonInput ? reasonInput.value.trim() : '';
 
+    const hoursInput = document.getElementById('timeout-hours-input');
+    const hoursVal = hoursInput ? hoursInput.value.trim() : '';
+
     if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
         alert(`Action Prohibited: User '${username}' cannot be timed out.`);
         return;
     }
 
+    const durPrompt = hoursVal ? `\nDuration: ${hoursVal} hour(s)` : '';
     const reasonPrompt = reason ? `\nReason: "${reason}"` : '';
-    if (!confirm(`Are you sure you want to timeout user "${username}"?${reasonPrompt}\n\nThey will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
+    if (!confirm(`Are you sure you want to timeout user "${username}"?${durPrompt}${reasonPrompt}\n\nThey will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
         return;
     }
 
@@ -652,7 +656,11 @@ async function timeoutUser() {
         const response = await fetch('/api/mods/timeout_user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, reason: reason || 'Moderator timeout' })
+            body: JSON.stringify({ 
+                username, 
+                reason: reason || 'Moderator timeout',
+                hours: hoursVal || null
+            })
         });
         const data = await response.json();
         if (data.success) {
