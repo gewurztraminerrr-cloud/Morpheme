@@ -2197,16 +2197,18 @@ class GameRoom:
                                             # Reset pool AFTER successful distribution
                                             self.abandonment_bounty = 0
                         except Exception as e:
-                            import traceback
-                            traceback.print_exc()
-                            print(f"[GameRoom] Rating error: {e}")
-
-
                         # Save history and word tally immediately at the start of intermission
                         global _room_manager_instance
-                        if _room_manager_instance:
+                        rm = _room_manager_instance
+                        if not rm:
                             try:
-                                _room_manager_instance.save_round_history(
+                                import app
+                                rm = getattr(app, 'room_manager', None)
+                            except Exception:
+                                pass
+                        if rm:
+                            try:
+                                rm.save_round_history(
                                     self,
                                     board=[list(row) for row in self.board] if self.board else None,
                                     all_words=list(self.complete_words) if (getattr(self, 'complete_words', None) and len(self.complete_words) > 0) else list(self.all_words),
@@ -2220,7 +2222,7 @@ class GameRoom:
                                 
                                 # Log word tally
                                 player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in intermission_player_snapshots}
-                                _room_manager_instance.log_word_tally(self, player_words)
+                                rm.log_word_tally(self, player_words)
                             except Exception as db_save_err:
                                 print(f"[GameRoom] Error in immediate database save: {db_save_err}")
 
@@ -6958,8 +6960,9 @@ class RoomManager:
             
         import json
         
-        # Guard against double saving (Exact match check)
-        if getattr(room, 'last_saved_round', 0) == target_round:
+        # Guard against double saving (Exact match check based on room, round, and start timestamp)
+        save_key = (room.room_id, target_round, round_start_time or getattr(room, 'round_start_time', 0))
+        if getattr(room, '_last_saved_round_key', None) == save_key:
             print(f"[RoomManager] History for {room.room_id} Round {target_round} already saved. Skipping.")
             with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - ABORT (Already saved)\n")
@@ -7034,11 +7037,12 @@ class RoomManager:
                     u_id = p.user_id if hasattr(p, 'user_id') else p['user_id']
                     u_name = p.username if hasattr(p, 'username') else p['username']
                     u_score = p.score if hasattr(p, 'score') else p['score']
+                    u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p.get('submitted_words', [])
 
-                    # If a user gets a score of 0, do not save their round results in round_history
+                    # If a user gets a score of 0 and submitted no words, do not save
                     # (Unless it is the System placeholder for 24-hour rooms)
-                    if u_score <= 0 and u_id != -1 and u_name != 'System':
-                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score}")
+                    if u_score <= 0 and not u_submitted and u_id != -1 and u_name != 'System':
+                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score} and no words submitted")
                         continue
 
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
@@ -7134,6 +7138,7 @@ class RoomManager:
             except Exception as _bh_err:
                 print(f"[RoomManager] Non-fatal: Could not mark board hash after save_round_history: {_bh_err}")
             
+            room._last_saved_round_key = save_key
             room.last_saved_round = target_round
             print(f"[RoomManager] SUCCESS: Saved round history for room {room.room_id} Round {target_round}")
 

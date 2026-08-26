@@ -3046,17 +3046,16 @@ def get_public_profile(username):
     ''', (user_id,))
     all_rows = cursor_all.fetchall()
     
-    # Filter and Deduplicate
+    # Filter and Deduplicate (Ensure all distinct rounds are included)
     seen_rounds = set()
     clean_rows = []
     for r in all_rows:
-        room_id, r_num, wjson = r[0], r[2], r[4]
-        round_key = (room_id, r_num)
-        if round_key in seen_rounds: continue
+        g_id, wjson = r[11], r[4]
+        if g_id in seen_rounds: continue
         try:
             if wjson == '[]' or not json.loads(wjson): continue
         except: continue
-        seen_rounds.add(round_key)
+        seen_rounds.add(g_id)
         clean_rows.append(r)
 
     # helper to process a row
@@ -3213,14 +3212,22 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     user_id = user[0]
     config_key = f"{game_type}|{board_dimensions}|{time_limit}"
     
-    # 1. Get Matching Rounds (using the board_dimensions column)
-    query_all = '''
+    canonical_game_types = [game_type]
+    if game_type in ('classic', 'accumulative'):
+        canonical_game_types = ['classic', 'accumulative']
+    elif game_type in ('3d', 'cube'):
+        canonical_game_types = ['3d', 'cube']
+
+    placeholders = ','.join(['?'] * len(canonical_game_types))
+
+    # 1. Get Matching Rounds (using canonical game types and board_dimensions)
+    query_all = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ?
-        ORDER BY timestamp DESC
+        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ?
+        ORDER BY timestamp DESC, id DESC
     '''
-    cursor_all = conn.execute(query_all, (user_id, game_type, board_dimensions, time_limit))
+    cursor_all = conn.execute(query_all, (user_id, *canonical_game_types, board_dimensions, time_limit))
     global_matching = cursor_all.fetchall()
     
     # Calculate Global Best (All-Time)
@@ -3265,10 +3272,10 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
         FROM round_history
-        WHERE user_id = ? AND game_type = ? AND board_dimensions = ? AND round_duration = ? {time_filter}
-        ORDER BY timestamp DESC
+        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? {time_filter}
+        ORDER BY timestamp DESC, id DESC
     '''
-    cursor = conn.execute(query, (user_id, game_type, board_dimensions, time_limit))
+    cursor = conn.execute(query, (user_id, *canonical_game_types, board_dimensions, time_limit))
     period_rows = cursor.fetchall()
     
     # Only count rounds where the player actually scored points (> 0)
@@ -3299,7 +3306,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         if my_score <= 0 or len(words) == 0:
             continue
             
-        round_key = f"{r_id}_{r_num}_{g_id}"
+        round_key = g_id
         if round_key in seen_rounds:
             continue
         seen_rounds.add(round_key)
