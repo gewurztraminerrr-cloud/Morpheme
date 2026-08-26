@@ -1324,10 +1324,10 @@ def timeout_user_api():
                 kicked_from_room = True
                 # Broadcast notice to everyone in the game room
                 room.add_chat_message("System", f"{actual_username} has been kicked from all rooms for {duration_str}.", is_system=True)
-                # Set eviction tag for user
+                # Set eviction tag for user with duration and custom reason
                 if not hasattr(room, 'evicted_users'):
                     room.evicted_users = {}
-                room.evicted_users[str(user_id)] = f"timeout:{duration_str}"
+                room.evicted_users[str(user_id)] = f"timeout:{duration_str}|{reason}"
                 room.remove_player(user_id, force=True)
                 
         cleanup_user_rooms_entirely(user_id)

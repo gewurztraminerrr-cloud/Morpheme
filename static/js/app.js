@@ -2230,18 +2230,35 @@ window.checkAccountTimeoutAndAlert = async function() {
         });
 
         if (isTimedOut) {
-            const durTxt = toData.remaining || 'your timeout expires';
-            const rTxt = toData.reason || 'Moderator timeout';
-            const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-            if (window.showAlertModal) {
-                window.showAlertModal('Account Timed Out', msg, true);
+            if (typeof window.showTimeoutBanModal === 'function') {
+                window.showTimeoutBanModal(toData);
             } else {
-                alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
+                const durTxt = toData.remaining || 'your timeout expires';
+                const rTxt = toData.reason || 'Moderator timeout';
+                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+                if (window.showAlertModal) {
+                    window.showAlertModal('Account Timed Out', msg, true);
+                } else {
+                    alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
+                }
             }
             return true;
         }
     } catch(e) {}
     return false;
+};
+
+// Global showTimeoutBanModal definition
+window.showTimeoutBanModal = function(toData) {
+    const data = toData || window._userTimeoutInfo || {};
+    const rText = data.reason || data.timeout_reason || 'Moderator timeout';
+    const dText = data.remaining || 'a temporary timeout';
+    const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+    if (typeof window.showAlertModal === 'function') {
+        window.showAlertModal('Account Timed Out', msg, true);
+    } else {
+        alert(`Account Timed Out\n\nReason: ${rText}\nTime Remaining: ${dText}`);
+    }
 };
 
 // Capture-phase global click interceptor for all game entry buttons while on active timeout
@@ -2254,20 +2271,12 @@ document.addEventListener('click', (e) => {
     const lockedBtn = target.closest('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
     if (!lockedBtn) return;
 
-    if (window._userTimeoutInfo && window._userTimeoutInfo.timed_out) {
+    if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        const toData = window._userTimeoutInfo;
-        const durTxt = toData.remaining || 'your timeout expires';
-        const rTxt = toData.reason || 'Moderator timeout';
-        const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-        if (window.showAlertModal) {
-            window.showAlertModal('Account Timed Out', msg, true);
-        } else {
-            alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
-        }
+        window.showTimeoutBanModal(window._userTimeoutInfo);
         return false;
     }
 }, true);
