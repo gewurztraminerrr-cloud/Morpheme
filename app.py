@@ -3039,7 +3039,7 @@ def get_public_profile(username):
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
-               wpm, total_words_avail, board_dimensions
+               wpm, total_words_avail, board_dimensions, board_format
         FROM round_history
         WHERE user_id = ? AND round_duration < 7200 {time_filter}
         ORDER BY timestamp DESC, id DESC
@@ -3060,7 +3060,7 @@ def get_public_profile(username):
 
     # helper to process a row
     def process_round_row(row, db_conn):
-        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa, saved_dims = row
+        room_id, gtype, rnum, bjson, wjson, score, rstart, rdur, ts, urat, pe_ratio, g_id, wpm, twa, saved_dims, b_fmt = row
         c_room = db_conn.execute('''
             SELECT rh.total_score, rh.user_rating, u.username
             FROM round_history rh
@@ -3105,6 +3105,7 @@ def get_public_profile(username):
             'performance_value': perf_val, 'room_strength': room_strength,
             'round_start_time': rstart, 'round_duration': rdur, 'timestamp': format_chicago_to_utc(ts),
             'wpm': wpm or 0, 'total_words_avail': twa or 0,
+            'board_format': b_fmt or 'Normal',
             'all_players': sorted([{'username': e[2], 'score': e[0], 'rating': e[1]} for e in r_entries], key=lambda x: x['score'], reverse=True)
         }
 
@@ -3118,6 +3119,7 @@ def get_public_profile(username):
             if int(dur) >= 7200:
                 rating = user[2]
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
+            matching_standard = [p for p in matching if 'valued' not in str(p.get('board_format', '')).lower()]
             matching_valid = [p for p in matching if p.get('total_words_avail', 0) > 0]
             avg_pct_found = round(sum(p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
             max_pct_found = round(max([p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid]) if matching_valid else 0, 1)
@@ -3126,10 +3128,10 @@ def get_public_profile(username):
                 'rating': rating,
                 'games_played': len(matching),
                 'wins': sum(1 for p in matching if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score']),
-                'point_sum': sum(p['total_score'] for p in matching),
+                'point_sum': sum(p['total_score'] for p in matching_standard),
                 'avg_pct_found': avg_pct_found,
                 'max_pct_found': max_pct_found,
-                'avg_score': round(sum(p['total_score'] for p in matching) / len(matching), 1) if matching else 0,
+                'avg_score': round(sum(p['total_score'] for p in matching_standard) / len(matching_standard), 1) if matching_standard else 0,
                 'avg_words': round(sum(p['num_words'] for p in matching) / len(matching), 1) if matching else 0,
                 'avg_perf': round(sum(p['performance_value'] for p in matching) / len(matching), 1) if matching else 0
             }
@@ -3151,8 +3153,9 @@ def get_public_profile(username):
     wpm_games = [p['wpm'] for p in processed_all if p['total_words_avail'] >= 50 and p['wpm'] > 0]
     avg_wpm = round(sum(wpm_games) / len(wpm_games), 1) if wpm_games else 0
 
-    # Best Score in Period
-    best_score_period = max([p['total_score'] for p in processed_all]) if processed_all else 0
+    # Best Score in Period (Strictly exclude Valued Letters)
+    standard_rounds = [p for p in processed_all if 'valued' not in str(p.get('board_format', '')).lower()]
+    best_score_period = max([p['total_score'] for p in standard_rounds]) if standard_rounds else 0
 
     # Sort recent and exceptional
     recent_rounds = sorted(processed_all, key=lambda x: x['timestamp'], reverse=True)[:50]
@@ -3222,7 +3225,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
 
     # 1. Get Matching Rounds (using canonical game types and board_dimensions)
     query_all = f'''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
         FROM round_history
         WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ?
         ORDER BY timestamp DESC, id DESC
@@ -3230,7 +3233,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     cursor_all = conn.execute(query_all, (user_id, *canonical_game_types, board_dimensions, time_limit))
     global_matching = cursor_all.fetchall()
     
-    # Calculate Global Best (All-Time)
+    # Calculate Global Best (All-Time) - Strictly exclude Valued Letters from high score and best word records
     global_stats = {
         "high_score": 0, "max_words": 0, "longest_word": "", 
         "best_word": {"word": "", "points": 0},
@@ -3241,14 +3244,20 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         try:
             words = json.loads(row[0])
             score = row[1]
-            global_stats["total_score"] += score
+            b_fmt = row[10] if len(row) > 10 else 'Normal'
+            is_valued = 'valued' in str(b_fmt).lower()
+
+            if not is_valued:
+                global_stats["total_score"] += score
+                if score > global_stats["high_score"]: global_stats["high_score"] = score
+                for w in words:
+                    if w.get('points', 0) > global_stats["best_word"]["points"]:
+                        global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
+
             global_stats["total_words"] += len(words)
-            if score > global_stats["high_score"]: global_stats["high_score"] = score
             if len(words) > global_stats["max_words"]: global_stats["max_words"] = len(words)
             for w in words:
                 if len(w['word']) > len(global_stats["longest_word"]): global_stats["longest_word"] = w['word']
-                if w.get('points', 0) > global_stats["best_word"]["points"]:
-                    global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
         except: continue
 
     # 2. Filter by Period for the lists - Enforce Calendar Day logic
@@ -3270,7 +3279,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         time_filter = f"AND timestamp >= '{chicago_year_ago_str}'"
         
     query = f'''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail
+        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
         FROM round_history
         WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? {time_filter}
         ORDER BY timestamp DESC, id DESC
@@ -3301,6 +3310,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         r_id = row[3]
         r_num = row[4]
         g_id = row[6]
+        b_fmt = row[10] if len(row) > 10 else 'Normal'
+        is_valued = 'valued' in str(b_fmt).lower()
         
         # User Request: Filter out 0 points or 0 words, AND Deduplicate
         if my_score <= 0 or len(words) == 0:
@@ -3311,11 +3322,12 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             continue
         seen_rounds.add(round_key)
         
-        total_period_score += my_score
+        if not is_valued:
+            total_period_score += my_score
+            for w in words:
+                w.update({'timestamp': format_chicago_to_utc(ts), 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
+                all_period_words.append(w)
         total_period_words += len(words)
-        for w in words:
-            w.update({'timestamp': format_chicago_to_utc(ts), 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
-            all_period_words.append(w)
 
         # Context fetch
         cursor_room = conn.execute('''
@@ -3379,6 +3391,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             'all_players': room_entries,
             'words': words,
             'board': json.loads(row[5]),
+            'board_format': b_fmt,
             'pct_found': pct_found,
             'obscure_count': obscure_count
         }
@@ -3390,8 +3403,8 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     # Winning: by Timestamp DESC
     winning = sorted([r for r in performance_list if r['is_win']], key=lambda x: x['timestamp'], reverse=True)[:50]
     
-    # Best Scores: Score DESC, then Timestamp DESC
-    best_scores = sorted(performance_list, key=lambda x: (int(x['total_score']), x['timestamp']), reverse=True)[:50]
+    # Best Scores: Score DESC, then Timestamp DESC (Strictly exclude Valued Letters)
+    best_scores = sorted([r for r in performance_list if 'valued' not in str(r.get('board_format', '')).lower()], key=lambda x: (int(x['total_score']), x['timestamp']), reverse=True)[:50]
     
     # Best Word Counts: Count DESC, then Timestamp DESC
     best_counts = sorted(performance_list, key=lambda x: (int(x['num_words']), x['timestamp']), reverse=True)[:50]
@@ -3399,20 +3412,20 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     # Games Played: Timestamp DESC (True Recency)
     recent = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50] 
     
-    # Best Words: Points DESC (Unique words only)
+    # Best Words: Points DESC (Unique words only, standard scoring)
     unique_words = {}
     for w in all_period_words:
         word_text = w.get('word')
         points = int(w.get('points', 0))
         if word_text not in unique_words or points >= unique_words[word_text]['points']:
-             unique_words[word_text] = {
-                 'word': word_text, 
-                 'points': points, 
-                 'timestamp': w.get('timestamp'), 
-                 'game_id': w.get('game_id'),
-                 'room_id': w.get('room_id'),
-                 'round_number': w.get('round_number')
-             }
+            unique_words[word_text] = {
+                'word': word_text, 
+                'points': points, 
+                'timestamp': w.get('timestamp'), 
+                'game_id': w.get('game_id'),
+                'room_id': w.get('room_id'),
+                'round_number': w.get('round_number')
+            }
     
     unique_word_list = list(unique_words.values())
     best_words = sorted(unique_word_list, key=lambda x: (x['points'], x['timestamp']), reverse=True)[:50]
