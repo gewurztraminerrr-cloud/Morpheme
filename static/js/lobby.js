@@ -59,6 +59,9 @@ window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
     if (!rawBtn) return;
+    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+        return;
+    }
     const btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
     try {
         if (typeof stopLobbyPolling === 'function') stopLobbyPolling();
@@ -66,7 +69,8 @@ async function enterLobbyRoom(rawBtn) {
         const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
         const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
-        showLobbyToast(`Entering ${gameType.toUpperCase()} (${boardDimensions}, ${formatLobbyTime(timeLimit)})...`);
+        const timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
+        showLobbyToast('Entering ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
 
         if (window.currentRoomId && window.leaveCurrentRoom) {
             try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
@@ -167,6 +171,9 @@ async function handleAccumulativeClick(accBtn) {
 window.handleAccumulativeClick = handleAccumulativeClick;
 
 async function handleShowRoomsClick(listBtn) {
+    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+        return;
+    }
     if (typeof window.handleShowRoomsInline === 'function') {
         return window.handleShowRoomsInline(listBtn);
     }
@@ -174,8 +181,11 @@ async function handleShowRoomsClick(listBtn) {
 }
 window.handleShowRoomsClick = handleShowRoomsClick;
 
-function handleLobbyButtonClickCore(btn, evt) {
+async function handleLobbyButtonClickCore(btn, evt) {
     if (!btn) return;
+    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+        return;
+    }
     const realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
     const gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
     if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
@@ -188,6 +198,9 @@ window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
 window.handleLobbyButtonClick = handleLobbyButtonClickCore;
 
 async function createRoom(config, minRating, maxRating) {
+    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+        return;
+    }
     if (window._isCreatingRoom) {
         console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
         return;
@@ -328,6 +341,9 @@ function setupLobbyEvents() {
         // Handle Join Room logic (dynamic button inside rooms-list)
         const joinBtn = target.closest('.join-room-btn');
         if (joinBtn) {
+            if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+                return;
+            }
             if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
             joinBtn.style.opacity = '0.5';
             joinBtn.style.pointerEvents = 'none';

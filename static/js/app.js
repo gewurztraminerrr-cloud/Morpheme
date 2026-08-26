@@ -1103,6 +1103,12 @@ function setupNavigation() {
                 }
             }
 
+            if (pageTarget === 'play') {
+                if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+                    return;
+                }
+            }
+
             // Default Page Navigation
             const pageId = 'page-' + pageTarget;
             showPage(pageId);
@@ -2183,6 +2189,25 @@ window.showAlertModal = function (title, message, priority = false) {
     } else {
         alert(message);
     }
+};
+
+window.checkAccountTimeoutAndAlert = async function() {
+    try {
+        const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
+        const toData = await toResp.json();
+        if (toData && toData.timed_out) {
+            const durTxt = toData.remaining || 'your timeout expires';
+            const rTxt = toData.reason || 'Moderator timeout';
+            const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+            if (window.showAlertModal) {
+                window.showAlertModal('Account Timed Out', msg, true);
+            } else {
+                alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
+            }
+            return true;
+        }
+    } catch(e) {}
+    return false;
 };
 
 // Global intercept for native alerts so all popup messages use the styled modal layout

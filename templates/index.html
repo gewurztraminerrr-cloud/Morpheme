@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33165" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33165" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33165">
-    <link rel="stylesheet" href="/css/lobby.css?v=33165">
-    <link rel="stylesheet" href="/css/play.css?v=33165">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33165">
-    <link rel="stylesheet" href="/css/forum.css?v=33165">
-    <link rel="stylesheet" href="/css/donate.css?v=33165">
+    <link rel="preload" href="/css/style.css?v=33166" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33166" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33166">
+    <link rel="stylesheet" href="/css/lobby.css?v=33166">
+    <link rel="stylesheet" href="/css/play.css?v=33166">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33166">
+    <link rel="stylesheet" href="/css/forum.css?v=33166">
+    <link rel="stylesheet" href="/css/donate.css?v=33166">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -150,8 +150,30 @@
         }
         window.showLobbyToast = showLobbyToast;
 
+        window.checkAccountTimeoutAndAlert = async function() {
+            try {
+                var toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
+                var toData = await toResp.json();
+                if (toData && toData.timed_out) {
+                    var durTxt = toData.remaining || 'your timeout expires';
+                    var rTxt = toData.reason || 'Moderator timeout';
+                    var msg = 'You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">' + rTxt + '</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">' + durTxt + '</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!';
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Account Timed Out', msg, true);
+                    } else {
+                        alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
+                    }
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        };
+
         async function enterLobbyRoomInline(rawBtn) {
             if (!rawBtn) return;
+            if (await window.checkAccountTimeoutAndAlert()) {
+                return;
+            }
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             try {
                 if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
@@ -249,8 +271,11 @@
             }
         }
 
-        function handleShowRoomsInline(rawBtn) {
+        async function handleShowRoomsInline(rawBtn) {
             if (!rawBtn) return;
+            if (await window.checkAccountTimeoutAndAlert()) {
+                return;
+            }
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'fcfs';
             var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
@@ -410,6 +435,9 @@
 
             window.handleJoinRoomInline = async function(btn) {
                 if (!btn) return;
+                if (await window.checkAccountTimeoutAndAlert()) {
+                    return;
+                }
                 var roomId = btn.getAttribute('data-room');
                 if (!roomId) return;
                 var isReturn = btn.classList.contains('return-mode') || (window.currentRoomId && roomId === window.currentRoomId);
@@ -538,6 +566,9 @@
         async function handleCreateRoomButtonClick(rawBtn, evt) {
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+            }
+            if (await window.checkAccountTimeoutAndAlert()) {
+                return;
             }
             var realBtn = (rawBtn && typeof rawBtn.closest === 'function') ? (rawBtn.closest('.confirm-create-room-btn, button') || rawBtn) : rawBtn;
             var activeConfig = window.currentLobbyConfig;
@@ -673,9 +704,12 @@
             }
         };
 
-        window.handleLobbyButtonClick = function(btn, evt) {
+        window.handleLobbyButtonClick = async function(btn, evt) {
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+            }
+            if (await window.checkAccountTimeoutAndAlert()) {
+                return;
             }
             var realBtn = (btn && typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
             var gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
@@ -6355,16 +6389,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33165"></script>
-    <script src="/js/lobby.js?v=33165"></script>
-    <script src="/js/play.js?v=33165"></script>
-    <script src="/js/tournaments.js?v=33165"></script>
-    <script src="/js/leaderboard.js?v=33165"></script>
-    <script src="/js/tools.js?v=33165"></script>
-    <script src="/js/mouse_selection.js?v=33165"></script>
-    <script src="/js/mods.js?v=33165"></script>
-    <script src="/js/private_matches.js?v=33165"></script>
-    <script src="/js/donate.js?v=33165"></script>
+    <script src="/js/app.js?v=33166"></script>
+    <script src="/js/lobby.js?v=33166"></script>
+    <script src="/js/play.js?v=33166"></script>
+    <script src="/js/tournaments.js?v=33166"></script>
+    <script src="/js/leaderboard.js?v=33166"></script>
+    <script src="/js/tools.js?v=33166"></script>
+    <script src="/js/mouse_selection.js?v=33166"></script>
+    <script src="/js/mods.js?v=33166"></script>
+    <script src="/js/private_matches.js?v=33166"></script>
+    <script src="/js/donate.js?v=33166"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
