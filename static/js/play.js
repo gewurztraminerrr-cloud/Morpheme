@@ -6641,8 +6641,8 @@ document.addEventListener('keydown', (e) => {
             if (chatInput && !isMobile) setTimeout(() => chatInput.focus(), 150);
         }
 
-        // Fast path: if empty or too short, clear highlight instantly and cancel any pending search
-        if (!word || word.length < 3) {
+        // Fast path: if empty, clear highlight instantly and cancel any pending search
+        if (!word) {
             if (typingHighlightTimeout) {
                 clearTimeout(typingHighlightTimeout);
                 typingHighlightTimeout = null;
