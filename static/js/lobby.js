@@ -69,8 +69,26 @@ async function enterLobbyRoom(rawBtn) {
         const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
         const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
-        const timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
-        showLobbyToast('Entering ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
+        // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
+        window._isEnteringRoom = true;
+        if (typeof window.clearGameUIAndCache === 'function') {
+            window.clearGameUIAndCache();
+        }
+        if (typeof window.showPage === 'function') {
+            window.showPage('page-play');
+        } else if (typeof showPage === 'function') {
+            showPage('page-play');
+        }
+        if (typeof window.switchPlayPanel === 'function') {
+            window.switchPlayPanel('board', false);
+        }
+
+        const playBtn = document.getElementById('play-btn');
+        if (playBtn) {
+            playBtn.disabled = false;
+            playBtn.title = "";
+        }
+        if (window.updateManualToolState) window.updateManualToolState();
 
         if (window.currentRoomId && window.leaveCurrentRoom) {
             try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
@@ -80,7 +98,7 @@ async function enterLobbyRoom(rawBtn) {
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        // 1 Single Direct Fast Roundtrip to join/create the room
+        // 2. Perform room creation and loading inside the game room in the background
         const createResp = await fetch('/api/room/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -99,10 +117,13 @@ async function enterLobbyRoom(rawBtn) {
             data = { error: txt };
         }
 
+        window._isEnteringRoom = false;
+
         if (createResp.status === 403 && data && data.timed_out) {
             const rText = data.timeout_reason || 'Moderator timeout';
             const dText = data.remaining || 'a temporary timeout';
             const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+            if (typeof window.showPage === 'function') window.showPage('page-lobby');
             if (window.showAlertModal) {
                 window.showAlertModal('Account Timed Out', msg, true);
             } else {
@@ -115,23 +136,6 @@ async function enterLobbyRoom(rawBtn) {
             window.currentRoomId = data.room_id;
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false;
-
-            // Instant visual switch to play page ONLY after confirmed success
-            if (typeof window.clearGameUIAndCache === 'function') {
-                window.clearGameUIAndCache();
-            }
-            if (typeof window.showPage === 'function') {
-                window.showPage('page-play');
-            } else if (typeof showPage === 'function') {
-                showPage('page-play');
-            }
-
-            const playBtn = document.getElementById('play-btn');
-            if (playBtn) {
-                playBtn.disabled = false;
-                playBtn.title = "";
-            }
-            if (window.updateManualToolState) window.updateManualToolState();
 
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
@@ -146,9 +150,9 @@ async function enterLobbyRoom(rawBtn) {
             }, 50);
 
             if (window.startGamePolling) window.startGamePolling();
-            showLobbyToast('Room joined successfully!', 'success');
         } else {
             const errMsg = (data && data.error) ? data.error : 'Server error entering room.';
+            if (typeof window.showPage === 'function') window.showPage('page-lobby');
             if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                 const durationText = data.remaining || "your timeout expires";
                 const reasonText = data.timeout_reason || "Moderator timeout";
@@ -165,12 +169,11 @@ async function enterLobbyRoom(rawBtn) {
                     alert(errMsg);
                 }
             }
-            if (typeof window.showPage === 'function') {
-                window.showPage('page-lobby');
-            }
         }
     } catch (error) {
+        window._isEnteringRoom = false;
         console.error('Error entering room:', error);
+        if (typeof window.showPage === 'function') window.showPage('page-lobby');
         showLobbyToast('Network error: ' + error.message, 'error');
     } finally {
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
@@ -223,9 +226,26 @@ async function createRoom(config, minRating, maxRating) {
     localStorage.removeItem('tournament_play_active');
     localStorage.removeItem('private_match_active');
 
-    if (window.showLoadingOverlay) {
-        window.showLoadingOverlay('Creating & Generating Room...');
+    // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
+    window._isEnteringRoom = true;
+    if (typeof window.clearGameUIAndCache === 'function') {
+        window.clearGameUIAndCache();
     }
+    if (typeof window.showPage === 'function') {
+        window.showPage('page-play');
+    } else if (typeof showPage === 'function') {
+        showPage('page-play');
+    }
+    if (typeof window.switchPlayPanel === 'function') {
+        window.switchPlayPanel('board', false);
+    }
+
+    const playBtn = document.getElementById('play-btn');
+    if (playBtn) {
+        playBtn.disabled = false;
+        playBtn.title = "";
+    }
+    if (window.updateManualToolState) window.updateManualToolState();
 
     try {
         const createResp = await fetch('/api/room/create', {
@@ -240,8 +260,11 @@ async function createRoom(config, minRating, maxRating) {
             })
         });
         
+        window._isEnteringRoom = false;
+
         if (!createResp.ok) {
             const createErr = await createResp.text();
+            if (typeof window.showPage === 'function') window.showPage('page-lobby');
             throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
         }
 
@@ -254,24 +277,9 @@ async function createRoom(config, minRating, maxRating) {
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false; // Creator is always player
             stopLobbyPolling();
-            const playBtn = document.getElementById('play-btn');
-            if (playBtn) {
-                playBtn.disabled = false;
-                playBtn.title = "";
-            }
-            if (window.updateManualToolState) window.updateManualToolState();
             
-            // Clear stale UI and apply initial state before showing play page
-            if (typeof window.clearGameUIAndCache === 'function') {
-                window.clearGameUIAndCache();
-            }
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
-            }
-
-            showPage('page-play');
-            if (typeof window.switchPlayPanel === 'function') {
-                window.switchPlayPanel('board', false);
             }
 
             // Force focus
@@ -285,35 +293,17 @@ async function createRoom(config, minRating, maxRating) {
 
             if (window.startGamePolling) window.startGamePolling();
         } else {
-            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-            const errMsg = data.error || 'Unknown error';
-            if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
-                const durationText = data.remaining || "your timeout expires";
-                const reasonText = data.timeout_reason || "Moderator timeout";
-                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${reasonText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-                if (window.showAlertModal) {
-                    window.showAlertModal('Account Timed Out', msg, true);
-                } else {
-                    alert(errMsg);
-                }
-            } else {
-                if (window.showAlertModal) {
-                    window.showAlertModal('Room Creation Error', 'Failed to create room: ' + errMsg);
-                } else {
-                    alert('Failed to create room: ' + errMsg);
-                }
-            }
+            if (typeof window.showPage === 'function') window.showPage('page-lobby');
+            alert(data.error || 'Unable to create room');
         }
-    } catch (e) {
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-        console.error('Creation error', e);
-        if (window.showAlertModal) {
-            window.showAlertModal('Creation Error', 'Error creating room: ' + e.message);
-        } else {
-            alert('Error creating room: ' + e.message);
-        }
+    } catch (err) {
+        window._isEnteringRoom = false;
+        if (typeof window.showPage === 'function') window.showPage('page-lobby');
+        console.error('Error creating room:', err);
+        alert(err.message || 'Error creating room');
     } finally {
         window._isCreatingRoom = false;
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
         document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
             btn.disabled = false;
         });
@@ -369,6 +359,27 @@ function setupLobbyEvents() {
                 return;
             }
 
+            // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
+            window._isEnteringRoom = true;
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
+            }
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-play');
+            } else if (typeof showPage === 'function') {
+                showPage('page-play');
+            }
+            if (typeof window.switchPlayPanel === 'function') {
+                window.switchPlayPanel('board', false);
+            }
+
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
+
             // Stop lobby polling
             stopLobbyPolling();
 
@@ -400,7 +411,10 @@ function setupLobbyEvents() {
                     data = { error: txt };
                 }
 
+                window._isEnteringRoom = false;
+
                 if (!response.ok) {
+                    if (typeof window.showPage === 'function') window.showPage('page-lobby');
                     const errMsg = (data && data.error) ? data.error : `Join failed (${response.status})`;
                     if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
                         const durationText = data.remaining || "your timeout expires";
@@ -441,6 +455,7 @@ function setupLobbyEvents() {
 
                 if (data.success) {
                     if (!isSpectator && data.role === 'spectator') {
+                        if (typeof window.showPage === 'function') window.showPage('page-lobby');
                         if (window.showAlertModal) {
                             window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
                         } else {
@@ -459,22 +474,10 @@ function setupLobbyEvents() {
                         window.isSpectatorMode = false;
                     }
 
-                    const playBtn = document.getElementById('play-btn');
-                    if (playBtn) {
-                        playBtn.disabled = false;
-                        playBtn.title = "";
-                    }
-                    if (window.updateManualToolState) window.updateManualToolState();
-
-                    // Clear stale UI and apply initial state before showing play page
-                    if (typeof window.clearGameUIAndCache === 'function') {
-                        window.clearGameUIAndCache();
-                    }
                     if (data.state && typeof window.updateGameState === 'function') {
                         window.updateGameState(data.state);
                     }
 
-                    showPage('page-play');
                     // FORCE FOCUS
                     setTimeout(() => {
                         const input = document.getElementById('word-input');
@@ -486,6 +489,7 @@ function setupLobbyEvents() {
 
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
+                    if (typeof window.showPage === 'function') window.showPage('page-lobby');
                     const errMsg = data.error || 'Unknown error';
                     if (errMsg.toLowerCase().includes('full')) {
                         if (window.showAlertModal) {
@@ -513,14 +517,20 @@ function setupLobbyEvents() {
                         }
                     }
                 }
-            } catch (error) {
-                console.error('Error joining room:', error);
+            } catch (err) {
+                window._isEnteringRoom = false;
+                if (typeof window.showPage === 'function') window.showPage('page-lobby');
+                console.error('Join error:', err);
                 if (window.showAlertModal) {
-                    window.showAlertModal('Network Error', 'Network error joining room: ' + error.message);
+                    window.showAlertModal('Error', 'Failed to join room: ' + err.message);
                 } else {
-                    alert('Network error joining room: ' + error.message);
+                    alert('Failed to join room: ' + err.message);
                 }
-            }
+            } finally {
+                joinBtn.style.opacity = '1';
+                joinBtn.style.pointerEvents = 'auto';
+                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+            }    }
             return; // Handled
         }
     });

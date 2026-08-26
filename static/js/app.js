@@ -1280,7 +1280,7 @@ function showPage(pageId) {
             } else if (typeof window.checkAccountTimeoutAndAlert === 'function') {
                 window.checkAccountTimeoutAndAlert();
             }
-        } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room')) {
+        } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room') && !window._isEnteringRoom) {
             console.warn('[Navigation] No active room found. Redirecting to lobby.');
             pageId = 'page-lobby';
         }
