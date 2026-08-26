@@ -4307,10 +4307,10 @@ def get_lobby_stats():
             for p in room.players:
                 if getattr(p, 'is_ai', False):
                     continue
-                # For real-time rooms (non-24h), only count players actively polling within 15s
+                # For real-time rooms (non-24h), only count players actively present within 30s
                 if not is_daily:
                     p_active = getattr(p, 'last_active', 0)
-                    if (now - p_active) > 15:
+                    if (now - p_active) > 30:
                         continue
                 humans.append(p)
                 
