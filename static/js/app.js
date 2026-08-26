@@ -1253,6 +1253,12 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    if (pageId === 'page-play') {
+        if (!window.currentRoomId && !localStorage.getItem('last_joined_room')) {
+            console.warn('[Navigation] No active room found. Redirecting to lobby.');
+            pageId = 'page-lobby';
+        }
+    }
     window.currentPageId = pageId;
     // Intercept leaving tournament play mid-round
     if (pageId !== 'page-play' && window.isTournamentPlay && localStorage.getItem('tournament_play_active')) {
