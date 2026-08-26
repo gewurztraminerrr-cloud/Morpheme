@@ -89,3 +89,73 @@ def execute_with_retry(query_func, max_retries=5, initial_delay=0.05):
             
     if last_exception:
         raise last_exception
+
+
+def format_duration_string(minutes):
+    """Formats minute count into human-readable duration (e.g. '10 minutes', '1 hour 20 minutes')"""
+    if minutes < 60:
+        return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+    hours = minutes // 60
+    rem_mins = minutes % 60
+    h_str = f"{hours} hour" if hours == 1 else f"{hours} hours"
+    if rem_mins == 0:
+        return h_str
+    m_str = f"{rem_mins} minute" if rem_mins == 1 else f"{rem_mins} minutes"
+    return f"{h_str} {m_str}"
+
+
+def parse_timeout_datetime(dt_str):
+    """Safely parses timeout timestamp strings or epoch floats into UTC datetime objects."""
+    import datetime
+    if not dt_str:
+        return None
+    try:
+        ts = float(dt_str)
+        return datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+    except (ValueError, TypeError):
+        pass
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S.%f'):
+        try:
+            dt = datetime.datetime.strptime(str(dt_str).replace('Z', '').split('+')[0].strip(), fmt)
+            return dt.replace(tzinfo=datetime.timezone.utc)
+        except Exception:
+            pass
+    try:
+        dt = datetime.datetime.fromisoformat(str(dt_str).replace(' ', 'T').replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt
+    except Exception:
+        pass
+    return None
+
+
+def check_user_timeout(user_id):
+    """
+    Checks if a user is currently under timeout.
+    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count)
+    """
+    import datetime, math
+    if not user_id or user_id <= 0:
+        return False, 0, "", None, 0
+    try:
+        with get_db(timeout=10.0, row_factory=sqlite3.Row, auto_commit=False) as conn:
+            row = conn.execute(
+                "SELECT timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ?",
+                (user_id,)
+            ).fetchone()
+            if not row or not row['timeout_until']:
+                return False, 0, "", None, (row['timeout_offense_count'] if row else 0)
+            
+            timeout_until_str = row['timeout_until']
+            dt_until = parse_timeout_datetime(timeout_until_str)
+            if dt_until:
+                now_utc = datetime.datetime.now(datetime.timezone.utc)
+                diff_sec = (dt_until - now_utc).total_seconds()
+                if diff_sec > 0:
+                    mins = max(1, int(math.ceil(diff_sec / 60.0)))
+                    rem_str = format_duration_string(mins)
+                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0)
+    except Exception as e:
+        print(f"[check_user_timeout] Error: {e}")
+    return False, 0, "", None, 0

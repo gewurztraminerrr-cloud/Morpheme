@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33163" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33163" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33163">
-    <link rel="stylesheet" href="/css/lobby.css?v=33163">
-    <link rel="stylesheet" href="/css/play.css?v=33163">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33163">
-    <link rel="stylesheet" href="/css/forum.css?v=33163">
-    <link rel="stylesheet" href="/css/donate.css?v=33163">
+    <link rel="preload" href="/css/style.css?v=33164" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33164" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33164">
+    <link rel="stylesheet" href="/css/lobby.css?v=33164">
+    <link rel="stylesheet" href="/css/play.css?v=33164">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33164">
+    <link rel="stylesheet" href="/css/forum.css?v=33164">
+    <link rel="stylesheet" href="/css/donate.css?v=33164">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -190,6 +190,10 @@
                 }
 
                 if (createResp.ok && data && data.success && data.room_id) {
+                    window.currentRoomId = data.room_id;
+                    localStorage.setItem('last_joined_room', data.room_id);
+                    window.isSpectatorMode = false;
+
                     // Instant visual switch to play page ONLY after confirmed success
                     if (typeof window.clearGameUIAndCache === 'function') {
                         window.clearGameUIAndCache();
@@ -203,10 +207,6 @@
                     var playBtn = document.getElementById('play-btn');
                     if (playBtn) { playBtn.disabled = false; playBtn.title = ""; }
                     if (typeof window.updateManualToolState === 'function') window.updateManualToolState();
-
-                    window.currentRoomId = data.room_id;
-                    localStorage.setItem('last_joined_room', data.room_id);
-                    window.isSpectatorMode = false;
 
                     if (data.state && typeof window.updateGameState === 'function') {
                         window.updateGameState(data.state);
@@ -6353,16 +6353,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33163"></script>
-    <script src="/js/lobby.js?v=33163"></script>
-    <script src="/js/play.js?v=33163"></script>
-    <script src="/js/tournaments.js?v=33163"></script>
-    <script src="/js/leaderboard.js?v=33163"></script>
-    <script src="/js/tools.js?v=33163"></script>
-    <script src="/js/mouse_selection.js?v=33163"></script>
-    <script src="/js/mods.js?v=33163"></script>
-    <script src="/js/private_matches.js?v=33163"></script>
-    <script src="/js/donate.js?v=33163"></script>
+    <script src="/js/app.js?v=33164"></script>
+    <script src="/js/lobby.js?v=33164"></script>
+    <script src="/js/play.js?v=33164"></script>
+    <script src="/js/tournaments.js?v=33164"></script>
+    <script src="/js/leaderboard.js?v=33164"></script>
+    <script src="/js/tools.js?v=33164"></script>
+    <script src="/js/mouse_selection.js?v=33164"></script>
+    <script src="/js/mods.js?v=33164"></script>
+    <script src="/js/private_matches.js?v=33164"></script>
+    <script src="/js/donate.js?v=33164"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

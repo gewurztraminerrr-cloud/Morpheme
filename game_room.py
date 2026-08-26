@@ -21,7 +21,7 @@ DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debu
 WORD_DEBUG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_debug.log')
 WORD_TALLY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'word_tally.log')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
-from db import get_db, get_db_connection
+from db import get_db, get_db_connection, check_user_timeout
 # STATS_LOCK (Memory-based) is insufficient for multi-worker environments. 
 # We use file-based locking (fcntl) inside the I/O methods instead.
 from spinner_set import SpinnerSet
@@ -332,8 +332,7 @@ class GameRoom:
         # Guard: Check user timeout
         if not is_ai and user_id:
             try:
-                import app
-                is_to, _, rem_str, _, _ = app.check_user_timeout(user_id)
+                is_to, _, rem_str, _, _ = check_user_timeout(user_id)
                 if is_to:
                     print(f"[GameRoom] BLOCKED add_player: User {username} (ID: {user_id}) is timed out for {rem_str}")
                     return False
@@ -502,8 +501,7 @@ class GameRoom:
         """Add spectator to room"""
         if user_id:
             try:
-                import app
-                is_to, _, rem_str, _, _ = app.check_user_timeout(user_id)
+                is_to, _, rem_str, _, _ = check_user_timeout(user_id)
                 if is_to:
                     print(f"[GameRoom] BLOCKED add_spectator: User {username} (ID: {user_id}) is timed out for {rem_str}")
                     return False

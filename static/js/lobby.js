@@ -76,23 +76,6 @@ async function enterLobbyRoom(rawBtn) {
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        // Instant visual switch to play page
-        if (typeof window.clearGameUIAndCache === 'function') {
-            window.clearGameUIAndCache();
-        }
-        if (typeof window.showPage === 'function') {
-            window.showPage('page-play');
-        } else if (typeof showPage === 'function') {
-            showPage('page-play');
-        }
-
-        const playBtn = document.getElementById('play-btn');
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.title = "";
-        }
-        if (window.updateManualToolState) window.updateManualToolState();
-
         // 1 Single Direct Fast Roundtrip to join/create the room
         const createResp = await fetch('/api/room/create', {
             method: 'POST',
@@ -104,32 +87,70 @@ async function enterLobbyRoom(rawBtn) {
             })
         });
 
-        if (createResp.ok) {
-            const data = await createResp.json();
-            if (data.success && data.room_id) {
-                window.currentRoomId = data.room_id;
-                localStorage.setItem('last_joined_room', data.room_id);
-                window.isSpectatorMode = false;
+        let data = null;
+        try {
+            data = await createResp.json();
+        } catch(e) {
+            const txt = await createResp.text().catch(() => '');
+            data = { error: txt };
+        }
 
-                if (data.state && typeof window.updateGameState === 'function') {
-                    window.updateGameState(data.state);
-                }
+        if (createResp.ok && data && data.success && data.room_id) {
+            window.currentRoomId = data.room_id;
+            localStorage.setItem('last_joined_room', data.room_id);
+            window.isSpectatorMode = false;
 
-                setTimeout(() => {
-                    const input = document.getElementById('word-input');
-                    if (input) {
-                        input.disabled = false;
-                        input.focus();
-                    }
-                }, 50);
-
-                if (window.startGamePolling) window.startGamePolling();
-                showLobbyToast('Room joined successfully!', 'success');
-            } else {
-                showLobbyToast('Failed to join room: ' + (data.error || 'Unknown error'), 'error');
+            // Instant visual switch to play page ONLY after confirmed success
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
             }
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-play');
+            } else if (typeof showPage === 'function') {
+                showPage('page-play');
+            }
+
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
+
+            if (data.state && typeof window.updateGameState === 'function') {
+                window.updateGameState(data.state);
+            }
+
+            setTimeout(() => {
+                const input = document.getElementById('word-input');
+                if (input) {
+                    input.disabled = false;
+                    input.focus();
+                }
+            }, 50);
+
+            if (window.startGamePolling) window.startGamePolling();
+            showLobbyToast('Room joined successfully!', 'success');
         } else {
-            showLobbyToast('Server error entering room.', 'error');
+            const errMsg = (data && data.error) ? data.error : 'Server error entering room.';
+            if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
+                const durationText = data.remaining || "your timeout expires";
+                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+                if (window.showAlertModal) {
+                    window.showAlertModal('Account Timed Out', msg, true);
+                } else {
+                    alert(errMsg);
+                }
+            } else {
+                if (window.showAlertModal) {
+                    window.showAlertModal('Unable to Enter Room', errMsg);
+                } else {
+                    alert(errMsg);
+                }
+            }
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-lobby');
+            }
         }
     } catch (error) {
         console.error('Error entering room:', error);
