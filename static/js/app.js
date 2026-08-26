@@ -368,11 +368,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 };
 
-                // Robust interaction handlers: Flatten and stay flattened when clicked / released
+                // Robust interaction handlers: Outer socket click + Drag-out cancellation back to 3D
+                const housingEl = document.getElementById('gateway-housing') || gatewayBtn.parentElement;
+                let isPointerDown = false;
                 let transitionTimeout = null;
-                const triggerTransition = (e) => {
+
+                function getCoords(e) {
+                    if (e.touches && e.touches.length > 0) {
+                        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    }
+                    if (e.changedTouches && e.changedTouches.length > 0) {
+                        return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+                    }
+                    return { x: e.clientX, y: e.clientY };
+                }
+
+                function isInsideButton(e) {
+                    const targetEl = housingEl || gatewayBtn;
+                    const rect = targetEl.getBoundingClientRect();
+                    const coords = getCoords(e);
+                    return (
+                        coords.x >= (rect.left - 4) &&
+                        coords.x <= (rect.right + 4) &&
+                        coords.y >= (rect.top - 4) &&
+                        coords.y <= (rect.bottom + 4)
+                    );
+                }
+
+                const handlePressStart = (e) => {
+                    if (gatewayClicked) return;
+                    isPointerDown = true;
                     gatewayBtn.classList.add('pressed', 'flattened');
-                    // Synchronously trigger audio in user gesture context before any timer delay
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
@@ -381,41 +407,82 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } catch (audioErr) {
                         console.error('[LobbyMusic] Synchronous play error:', audioErr);
                     }
-                    if (transitionTimeout) return;
-                    transitionTimeout = setTimeout(() => {
-                        handleGatewayTransition(e);
-                    }, 280);
                 };
+
+                const handlePressMove = (e) => {
+                    if (!isPointerDown || gatewayClicked) return;
+                    if (isInsideButton(e)) {
+                        gatewayBtn.classList.add('pressed', 'flattened');
+                    } else {
+                        // User dragged across and out of the button: bring back to 3D standing position
+                        gatewayBtn.classList.remove('pressed', 'flattened');
+                        if (transitionTimeout) {
+                            clearTimeout(transitionTimeout);
+                            transitionTimeout = null;
+                        }
+                    }
+                };
+
+                const handlePressEnd = (e) => {
+                    if (!isPointerDown || gatewayClicked) return;
+                    isPointerDown = false;
+
+                    if (isInsideButton(e)) {
+                        // Released inside button or outer housing: keep flattened and trigger transition
+                        gatewayBtn.classList.add('pressed', 'flattened');
+                        if (transitionTimeout) return;
+                        transitionTimeout = setTimeout(() => {
+                            handleGatewayTransition(e);
+                        }, 200);
+                    } else {
+                        // Released OUTSIDE: bring back to 3D standing position and do not enter Lobby
+                        gatewayBtn.classList.remove('pressed', 'flattened');
+                        if (transitionTimeout) {
+                            clearTimeout(transitionTimeout);
+                            transitionTimeout = null;
+                        }
+                    }
+                };
+
+                const handlePressCancel = () => {
+                    if (gatewayClicked) return;
+                    isPointerDown = false;
+                    gatewayBtn.classList.remove('pressed', 'flattened');
+                    if (transitionTimeout) {
+                        clearTimeout(transitionTimeout);
+                        transitionTimeout = null;
+                    }
+                };
+
+                // Attach to button AND outer housing socket
+                const interactiveElements = [gatewayBtn, housingEl].filter(Boolean);
+                interactiveElements.forEach(el => {
+                    el.addEventListener('pointerdown', handlePressStart);
+                    el.addEventListener('mousedown', handlePressStart);
+                    el.addEventListener('touchstart', handlePressStart, { passive: true });
+                });
+
+                // Global window drag and release tracking
+                window.addEventListener('pointermove', handlePressMove, { passive: true });
+                window.addEventListener('touchmove', handlePressMove, { passive: true });
+                window.addEventListener('mousemove', handlePressMove, { passive: true });
+
+                window.addEventListener('pointerup', handlePressEnd);
+                window.addEventListener('touchend', handlePressEnd);
+                window.addEventListener('mouseup', handlePressEnd);
+
+                window.addEventListener('pointercancel', handlePressCancel);
+                window.addEventListener('touchcancel', handlePressCancel);
+
                 window.handleEnterLobbyClick = (btn, evt) => {
-                    triggerTransition(evt);
-                };
-
-                // Flatten immediately on click-down and start audio in direct user gesture context
-                gatewayBtn.addEventListener('pointerdown', (e) => {
-                    gatewayBtn.classList.add('pressed', 'flattened');
-                    const lobbyMusic = document.getElementById('lobby-music');
-                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-                });
-                gatewayBtn.addEventListener('mousedown', (e) => {
-                    gatewayBtn.classList.add('pressed', 'flattened');
-                    const lobbyMusic = document.getElementById('lobby-music');
-                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-                });
-                gatewayBtn.addEventListener('touchstart', (e) => {
-                    gatewayBtn.classList.add('pressed', 'flattened');
-                    const lobbyMusic = document.getElementById('lobby-music');
-                    if (lobbyMusic) playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-                }, { passive: true });
-
-                // Trigger transition on release (mouseup / touchend / click) and stay flattened
-                gatewayBtn.addEventListener('mouseup', (e) => {
-                    triggerTransition(e);
-                });
-                gatewayBtn.addEventListener('touchend', (e) => {
-                    triggerTransition(e);
-                });
-                gatewayBtn.onclick = (e) => {
-                    triggerTransition(e);
+                    if (!gatewayClicked) {
+                        gatewayBtn.classList.add('pressed', 'flattened');
+                        if (!transitionTimeout) {
+                            transitionTimeout = setTimeout(() => {
+                                handleGatewayTransition(evt);
+                            }, 200);
+                        }
+                    }
                 };
             } else {
                 // Fallback if elements not in DOM

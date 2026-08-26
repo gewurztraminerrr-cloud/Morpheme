@@ -6645,6 +6645,8 @@ select option,
     position: relative;
     user-select: none;
     -webkit-user-select: none;
+    cursor: pointer;
+    touch-action: none;
 }
 
 .neon-gateway-btn {
