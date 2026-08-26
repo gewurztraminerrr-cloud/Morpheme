@@ -1178,6 +1178,231 @@ def ban_user_api():
     return jsonify({'success': True, 'message': f'User {username} successfully banned and all traces erased.'})
 
 
+def format_duration_string(minutes):
+    """Formats minute count into human-readable duration (e.g. '10 minutes', '1 hour 20 minutes')"""
+    if minutes < 60:
+        return f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+    hours = minutes // 60
+    rem_mins = minutes % 60
+    h_str = f"{hours} hour" if hours == 1 else f"{hours} hours"
+    if rem_mins == 0:
+        return h_str
+    m_str = f"{rem_mins} minute" if rem_mins == 1 else f"{rem_mins} minutes"
+    return f"{h_str} {m_str}"
+
+
+def check_user_timeout(user_id):
+    """
+    Checks if a user is currently under timeout.
+    Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count)
+    """
+    if not user_id or user_id <= 0:
+        return False, 0, "", None, 0
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.row_factory = sqlite3.Row
+        try:
+            row = conn.execute(
+                "SELECT timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ?",
+                (user_id,)
+            ).fetchone()
+            if not row or not row['timeout_until']:
+                return False, 0, "", None, (row['timeout_offense_count'] if row else 0)
+            
+            timeout_until_str = row['timeout_until']
+            try:
+                dt_until = datetime.datetime.fromisoformat(timeout_until_str.replace('Z', '+00:00'))
+                if dt_until.tzinfo is None:
+                    dt_until = dt_until.replace(tzinfo=datetime.timezone.utc)
+                now_utc = datetime.datetime.now(datetime.timezone.utc)
+                diff_sec = (dt_until - now_utc).total_seconds()
+                if diff_sec > 0:
+                    mins = max(1, int(math.ceil(diff_sec / 60.0)))
+                    rem_str = format_duration_string(mins)
+                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0)
+            except Exception as ex:
+                print(f"[check_user_timeout] Date parse error: {ex}")
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"[check_user_timeout] DB error: {e}")
+    return False, 0, "", None, 0
+
+
+@app.route('/api/mods/timeout_user', methods=['POST'])
+@login_required
+def timeout_user_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json or {}
+    username = (data.get('username') or '').strip()
+    reason = (data.get('reason') or 'Moderator timeout').strip()
+    
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+        
+    if username.lower() in ('jeffbabiak', 'jeffb'):
+        return jsonify({'error': 'Cannot timeout protected moderator'}), 403
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        user_row = conn.execute(
+            "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at FROM users WHERE username = ? COLLATE NOCASE",
+            (username,)
+        ).fetchone()
+        if not user_row:
+            return jsonify({'error': 'User not found'}), 404
+            
+        user_id = user_row['id']
+        actual_username = user_row['username']
+        curr_offenses = user_row['timeout_offense_count'] or 0
+        last_to_str = user_row['last_timeout_at']
+        
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        
+        # Calculate decay: 1 offense level reduction per 24 hours elapsed without an offense
+        if last_to_str:
+            try:
+                last_dt = datetime.datetime.fromisoformat(last_to_str.replace('Z', '+00:00'))
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=datetime.timezone.utc)
+                elapsed_hours = (now_utc - last_dt).total_seconds() / 3600.0
+                decay_levels = int(elapsed_hours // 24)
+                curr_offenses = max(0, curr_offenses - decay_levels)
+            except Exception as ex:
+                print(f"[timeout_user_api] Decay calculation error: {ex}")
+                
+        new_offenses = curr_offenses + 1
+        duration_minutes = 10 * (2 ** (new_offenses - 1))
+        # Cap duration at 7 days (10,080 minutes)
+        duration_minutes = min(10080, duration_minutes)
+        
+        duration_str = format_duration_string(duration_minutes)
+        timeout_until_dt = now_utc + datetime.timedelta(minutes=duration_minutes)
+        timeout_until_str = timeout_until_dt.strftime('%Y-%m-%d %H:%M:%S')
+        now_str = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+        
+        conn.execute("""
+            UPDATE users 
+            SET timeout_until = ?, timeout_offense_count = ?, last_timeout_at = ?, timeout_reason = ?
+            WHERE id = ?
+        """, (timeout_until_str, new_offenses, now_str, reason, user_id))
+        conn.commit()
+        
+        # In-memory kick from active rooms + broadcast notice in game room
+        kicked_from_room = False
+        for room in list(room_manager.rooms.values()):
+            is_in_room = any(str(p.user_id) == str(user_id) for p in room.players)
+            if is_in_room:
+                kicked_from_room = True
+                # Broadcast notice to everyone in the game room
+                room.add_chat_message("System", f"{actual_username} has been kicked from all rooms for {duration_str}.", is_system=True)
+                # Set eviction tag for user
+                if not hasattr(room, 'evicted_users'):
+                    room.evicted_users = {}
+                room.evicted_users[str(user_id)] = f"timeout:{duration_str}"
+                room.remove_player(user_id)
+                
+        room_manager.leave_room(user_id)
+        
+        return jsonify({
+            'success': True,
+            'message': f"User {actual_username} timed out for {duration_str} (Offense #{new_offenses}).",
+            'duration': duration_str,
+            'duration_minutes': duration_minutes,
+            'offense_count': new_offenses,
+            'timeout_until': timeout_until_str,
+            'kicked_from_room': kicked_from_room
+        })
+    except Exception as e:
+        print(f"[timeout_user_api] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/mods/lift_timeout', methods=['POST'])
+@login_required
+def lift_timeout_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    username = (data.get('username') or '').strip()
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        cursor = conn.execute("SELECT id, username FROM users WHERE username = ? COLLATE NOCASE", (username,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'User not found'}), 404
+        user_id, actual_name = row[0], row[1]
+        conn.execute("UPDATE users SET timeout_until = NULL WHERE id = ?", (user_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': f"Timeout lifted for {actual_name}."})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/mods/user_timeout_status/<username>', methods=['GET'])
+@login_required
+def get_user_timeout_status(username):
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    username = username.strip()
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE username = ? COLLATE NOCASE",
+            (username,)
+        ).fetchone()
+        if not row:
+            return jsonify({'error': 'User not found'}), 404
+            
+        user_id = row['id']
+        actual_name = row['username']
+        offenses = row['timeout_offense_count'] or 0
+        last_to = row['last_timeout_at']
+        to_until = row['timeout_until']
+        
+        # Calculate decayed current offenses
+        decayed_offenses = offenses
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        if last_to:
+            try:
+                last_dt = datetime.datetime.fromisoformat(last_to.replace('Z', '+00:00'))
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=datetime.timezone.utc)
+                elapsed_hours = (now_utc - last_dt).total_seconds() / 3600.0
+                decay_levels = int(elapsed_hours // 24)
+                decayed_offenses = max(0, offenses - decay_levels)
+            except Exception:
+                pass
+                
+        next_duration_mins = 10 * (2 ** max(0, decayed_offenses))
+        next_duration_str = format_duration_string(next_duration_mins)
+        
+        is_to, diff_sec, rem_str, _, _ = check_user_timeout(user_id)
+        return jsonify({
+            'username': actual_name,
+            'is_timed_out': is_to,
+            'remaining': rem_str,
+            'timeout_until': to_until,
+            'offense_count': offenses,
+            'effective_offenses': decayed_offenses,
+            'next_duration': next_duration_str,
+            'last_timeout_at': last_to,
+            'reason': row['timeout_reason']
+        })
+    finally:
+        conn.close()
+
+
 @app.route('/api/mods/lobby-notice', methods=['GET'])
 def get_lobby_notice():
     notice_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'lobby_notice.txt')
@@ -1526,6 +1751,20 @@ def init_db():
         print("Migrated DB: Added created_at column to users")
     except sqlite3.OperationalError:
         pass
+
+    # MIGRATION: Add timeout columns to users table
+    for col_def in [
+        ('timeout_until', 'DATETIME'),
+        ('timeout_offense_count', 'INTEGER DEFAULT 0'),
+        ('last_timeout_at', 'DATETIME'),
+        ('timeout_reason', 'TEXT')
+    ]:
+        try:
+            conn.execute(f'ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}')
+            conn.commit()
+            print(f"Migrated DB: Added {col_def[0]} column to users")
+        except sqlite3.OperationalError:
+            pass
 
     # MIGRATION: Add user_rating to round_history
     try:
@@ -3659,6 +3898,11 @@ def create_room():
         if 'user_id' not in session:
             return jsonify({'error': 'Not authenticated'}), 401
         
+        # Timeout check
+        is_to, _, rem_str, _, _ = check_user_timeout(session.get('user_id'))
+        if is_to:
+            return jsonify({'error': f'You are temporarily timed out and cannot create or join rooms for another {rem_str}.', 'timed_out': True}), 403
+        
         data = request.get_json() or {}
         game_type = data.get('game_type', 'standard')
         time_limit = int(data.get('time_limit') or 45)
@@ -3758,6 +4002,11 @@ def join_room(room_id):
         ensure_guest_session()
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Timeout check
+    is_to, _, rem_str, _, _ = check_user_timeout(session.get('user_id'))
+    if is_to:
+        return jsonify({'error': f'You are temporarily timed out and cannot play in any rooms for another {rem_str}.', 'timed_out': True}), 403
     
     user_id = session['user_id']
     room = room_manager.get_room(room_id)
@@ -4029,7 +4278,13 @@ def get_room_state(room_id):
             if str(uid) in getattr(room, 'evicted_users', {}):
                 reason = room.evicted_users.pop(str(uid), 'inactivity')
                 print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
-                return jsonify({'error': f'You have been evicted for inactivity: {reason}', 'evicted': True, 'reason': reason}), 403
+                return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
+            
+            # Timeout check during room state polling
+            is_to, _, rem_str, _, _ = check_user_timeout(uid)
+            if is_to:
+                room.remove_player(uid)
+                return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'evicted': True, 'timed_out': True, 'reason': f'timeout:{rem_str}'}), 403
             
             # Fetch user's rating for this room's configuration
             rating = 1200

@@ -543,7 +543,22 @@ document.addEventListener('DOMContentLoaded', () => {
         undefSearchInput.addEventListener('input', renderUndefinedWords);
     }
 
-    // Ban User
+    // Ban / Timeout User
+    const timeoutUserBtn = document.getElementById('timeout-user-btn');
+    if (timeoutUserBtn) {
+        timeoutUserBtn.addEventListener('click', timeoutUser);
+    }
+
+    const checkTimeoutBtn = document.getElementById('check-timeout-btn');
+    if (checkTimeoutBtn) {
+        checkTimeoutBtn.addEventListener('click', checkTimeoutStatus);
+    }
+
+    const liftTimeoutBtn = document.getElementById('lift-timeout-btn');
+    if (liftTimeoutBtn) {
+        liftTimeoutBtn.addEventListener('click', liftTimeout);
+    }
+
     const banUserBtn = document.getElementById('ban-user-btn');
     if (banUserBtn) {
         banUserBtn.addEventListener('click', banUser);
@@ -611,6 +626,116 @@ document.addEventListener('DOMContentLoaded', () => {
         dictSubmitBtn.addEventListener('click', submitDictionaryToDatabase);
     }
 });
+
+async function timeoutUser() {
+    const input = document.getElementById('timeout-username-input');
+    const username = input ? input.value.trim() : '';
+    if (!username) {
+        alert("Please enter a username to timeout.");
+        return;
+    }
+
+    if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+        alert(`Action Prohibited: User '${username}' cannot be timed out.`);
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to timeout user "${username}"? They will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/timeout_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus(data.message, false, 'ban-status-area');
+            const infoEl = document.getElementById('timeout-info-display');
+            if (infoEl) {
+                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count}). Until: ${data.timeout_until} UTC`;
+            }
+            alert(`User "${username}" has been timed out for ${data.duration}.`);
+        } else {
+            showModStatus(data.error || "Failed to timeout user.", true, 'ban-status-area');
+            alert("Error: " + (data.error || "Failed to timeout user."));
+        }
+    } catch (err) {
+        console.error("Error timing out user:", err);
+        showModStatus("Network error timing out user.", true, 'ban-status-area');
+    }
+}
+
+async function checkTimeoutStatus() {
+    const input = document.getElementById('timeout-username-input');
+    const username = input ? input.value.trim() : '';
+    if (!username) {
+        alert("Please enter a username to check timeout status.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/mods/user_timeout_status/${encodeURIComponent(username)}`);
+        const data = await response.json();
+        const infoEl = document.getElementById('timeout-info-display');
+        if (data.error) {
+            showModStatus(data.error, true, 'ban-status-area');
+            if (infoEl) infoEl.innerHTML = `<span style="color: #f43f5e;">❌ ${data.error}</span>`;
+            return;
+        }
+
+        let statusHtml = `<strong>Status for ${data.username}:</strong><br>`;
+        if (data.is_timed_out) {
+            statusHtml += `<span style="color: #f59e0b;">⏱️ CURRENTLY TIMED OUT</span> — Remaining: <strong>${data.remaining}</strong> (Until: ${data.timeout_until} UTC)<br>`;
+        } else {
+            statusHtml += `<span style="color: #10b981;">✅ Active (Not timed out)</span><br>`;
+        }
+        statusHtml += `Total Offenses on Record: <strong>${data.offense_count}</strong> | Effective Offense Level (after decay): <strong>${data.effective_offenses}</strong><br>`;
+        statusHtml += `Next Offense Timeout Duration: <strong>${data.next_duration}</strong>`;
+
+        if (infoEl) infoEl.innerHTML = statusHtml;
+        showModStatus(`Status fetched for ${data.username}`, false, 'ban-status-area');
+    } catch (err) {
+        console.error("Error checking timeout status:", err);
+        showModStatus("Network error checking timeout status.", true, 'ban-status-area');
+    }
+}
+
+async function liftTimeout() {
+    const input = document.getElementById('timeout-username-input');
+    const username = input ? input.value.trim() : '';
+    if (!username) {
+        alert("Please enter a username to lift timeout.");
+        return;
+    }
+
+    if (!confirm(`Lift active timeout for "${username}"?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/lift_timeout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus(data.message, false, 'ban-status-area');
+            const infoEl = document.getElementById('timeout-info-display');
+            if (infoEl) infoEl.innerHTML = `🔓 <strong>${username}</strong> timeout has been lifted.`;
+            alert(data.message);
+        } else {
+            showModStatus(data.error || "Failed to lift timeout.", true, 'ban-status-area');
+            alert("Error: " + (data.error || "Failed to lift timeout."));
+        }
+    } catch (err) {
+        console.error("Error lifting timeout:", err);
+        showModStatus("Network error lifting timeout.", true, 'ban-status-area');
+    }
+}
 
 async function banUser() {
     const input = document.getElementById('ban-username-input');

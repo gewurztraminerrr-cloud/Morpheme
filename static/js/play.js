@@ -517,6 +517,21 @@ async function ejectToLobby(reason = "inactivity") {
         `;
     }
 
+    if (reason === "timeout" || reason.startsWith("timeout:") || reason.startsWith("timeout")) {
+        let durationText = "10 minutes";
+        if (reason.startsWith("timeout:")) {
+            durationText = reason.substring(8).trim();
+        }
+        title = "Account Timed Out";
+        message = `
+            You have been kicked from the room and placed on a timeout for <strong>${durationText}</strong>.
+            <br><br>
+            During this period, you are temporarily unable to join or play in any game rooms.
+            <br><br>
+            Please wait until your timeout expires before joining another match.
+        `;
+    }
+
     // 5. SHOW MODAL FIRST — over whatever page the user is currently on (Tools, Profile, etc.)
     //    so they always see the notice regardless of which tab they were in.
     if (window.showAlertModal) {
@@ -1130,10 +1145,17 @@ async function updateGameState(incomingState = null) {
             if (!response.ok) {
                 if (response.status === 404 || response.status === 403 || response.status === 401) {
                     let errorMsg = "";
+                    let errData = {};
                     try {
-                        const errData = await response.json();
+                        errData = await response.json();
                         errorMsg = errData.error || "";
                     } catch(e) {}
+
+                    if (errData && (errData.timed_out || (errData.reason && errData.reason.startsWith('timeout')) || errorMsg.toLowerCase().includes('timed out'))) {
+                        const reason = errData.reason || (errorMsg ? 'timeout:' + errorMsg : 'timeout');
+                        ejectToLobby(reason);
+                        return;
+                    }
 
                     const isDescriptiveInactivity = errorMsg.toLowerCase().includes('inactivity') || 
                                                     errorMsg.toLowerCase().includes('removed') || 
