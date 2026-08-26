@@ -3316,21 +3316,6 @@ def get_public_profile(username):
     games_played_period = games_played_period or 0
     pt_sum_period = pt_sum_period or 0
 
-    # Calculate Wins in Period (Optimized single query, excluding 24h rooms)
-    cursor_wins = conn.execute(f'''
-        SELECT COUNT(*) FROM (
-            SELECT rh.room_id, rh.round_number, rh.timestamp, MAX(rh.total_score) as max_s
-            FROM round_history rh
-            WHERE rh.room_id IN (SELECT room_id FROM round_history WHERE user_id = ? AND round_duration < 7200 {time_filter})
-            GROUP BY rh.room_id, rh.round_number, rh.timestamp
-        ) as room_winners
-        JOIN round_history rh2 ON rh2.room_id = room_winners.room_id 
-            AND rh2.round_number = room_winners.round_number 
-            AND rh2.timestamp = room_winners.timestamp
-        WHERE rh2.user_id = ? AND rh2.total_score >= room_winners.max_s AND room_winners.max_s > 0 AND rh2.round_duration < 7200
-    ''', (user_id, user_id))
-    wins_period = cursor_wins.fetchone()[0] or 0
-
     # Get config-specific ratings (Current ratings are ALWAYS current/lifetime)
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
@@ -3431,6 +3416,7 @@ def get_public_profile(username):
         }
 
     processed_all = [process_round_row(r) for r in clean_rows]
+    wins_period = sum(1 for p in processed_all if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score'])
     
     # Config Stats (Averages for the period)
     config_stats = {}
