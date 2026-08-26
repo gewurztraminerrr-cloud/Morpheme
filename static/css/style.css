@@ -1489,35 +1489,16 @@ body {
     line-height: 1.6;
     min-height: 60px;
     max-height: 160px;
-    overflow-y: scroll;                 /* scroll when content overflows */
+    overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-word;
-    padding-right: 6px;                 /* room for scrollbar */
+    padding-right: 20px;
     -webkit-overflow-scrolling: touch;
-    /* Firefox scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(var(--text-primary-rgb), 0.08);
+    scrollbar-width: none; /* Custom scrollbar track & thumb used */
 }
 
-/* Webkit scrollbar — full profile About Me */
 .description-text::-webkit-scrollbar {
-    width: 4px;
-}
-.description-text::-webkit-scrollbar-track {
-    background: rgba(var(--text-primary-rgb), 0.08);
-    border-radius: 10px;
-    margin: 4px 0;
-}
-.description-text::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-primary-rgb), 0.35);
-    border-radius: 10px;
-    transition: background 0.2s ease;
-}
-.description-text::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color);
-}
-.description-text::-webkit-scrollbar-thumb:active {
-    background: var(--accent-color);
+    display: none;
 }
 
 .profile-stats-grid {
@@ -2413,38 +2394,17 @@ body {
     background: rgba(var(--text-primary-rgb), 0.05);
     border-radius: 12px;
     padding: 12px;
-    padding-right: 8px;             /* room for scrollbar */
+    padding-right: 20px;
     margin-bottom: 24px;
     height: 140px;
-    overflow-y: scroll;             /* always show track so thumb is visible */
+    overflow-y: auto;
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
-/* Styled scrollbar thumb for About Me — all screen sizes */
 .mini-profile-description::-webkit-scrollbar {
-    width: 4px;
-}
-.mini-profile-description::-webkit-scrollbar-track {
-    background: rgba(var(--text-primary-rgb), 0.08);
-    border-radius: 10px;
-    margin: 4px 0;
-}
-.mini-profile-description::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-primary-rgb), 0.35);
-    border-radius: 10px;
-    transition: background 0.2s ease;
-}
-.mini-profile-description::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color);
-}
-.mini-profile-description::-webkit-scrollbar-thumb:active {
-    background: var(--accent-color);
-}
-/* Firefox scrollbar — mini-profile About Me */
-.mini-profile-description {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(var(--text-primary-rgb), 0.08);
+    display: none;
 }
 
 .mini-profile-actions {

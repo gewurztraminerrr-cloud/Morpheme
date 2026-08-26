@@ -613,7 +613,14 @@ window.showMiniProfile = async function (username) {
         const quoteEl = document.getElementById('mini-profile-quote');
         const descEl = document.getElementById('mini-profile-description');
         if (quoteEl) quoteEl.innerText = data.quote ? `"${data.quote}"` : 'No personal quote available.';
-        if (descEl) descEl.innerText = data.description || 'No description provided.';
+        if (descEl) {
+            descEl.innerText = data.description || 'No description provided.';
+            setTimeout(() => {
+                if (typeof initCustomScrollbarForElement === 'function') {
+                    initCustomScrollbarForElement('mini-profile-description', 'mini-desc-scrollbar-track', 'mini-desc-scrollbar-thumb');
+                }
+            }, 50);
+        }
 
         // Avatar
         const avatar = document.getElementById('mini-profile-avatar');
@@ -1242,7 +1249,14 @@ async function renderProfile(user) {
     if (genderEl) genderEl.innerText = user.gender || '-';
     if (locationEl) locationEl.innerText = user.location || '-';
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
-    if (descriptionEl) descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
+    if (descriptionEl) {
+        descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
+        setTimeout(() => {
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
+            }
+        }, 50);
+    }
 
     // Registration Date
     const joinedValEl = document.getElementById('profile-joined-val');
@@ -2878,7 +2892,17 @@ function setupProfileEditing(isOwner) {
             const newEl = el.cloneNode(true);
             el.parentNode.replaceChild(newEl, el);
 
-            newEl.addEventListener('blur', () => saveProfileField(field.key, newEl.innerText.trim()));
+            newEl.addEventListener('blur', () => {
+                saveProfileField(field.key, newEl.innerText.trim());
+                if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
+                    initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
+                }
+            });
+            newEl.addEventListener('input', () => {
+                if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
+                    initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
+                }
+            });
             newEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && field.key !== 'description') {
                     e.preventDefault();

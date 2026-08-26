@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33152" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33152" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33152">
-    <link rel="stylesheet" href="/css/lobby.css?v=33152">
-    <link rel="stylesheet" href="/css/play.css?v=33152">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33152">
-    <link rel="stylesheet" href="/css/forum.css?v=33152">
-    <link rel="stylesheet" href="/css/donate.css?v=33152">
+    <link rel="preload" href="/css/style.css?v=33153" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33153" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33153">
+    <link rel="stylesheet" href="/css/lobby.css?v=33153">
+    <link rel="stylesheet" href="/css/play.css?v=33153">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33153">
+    <link rel="stylesheet" href="/css/forum.css?v=33153">
+    <link rel="stylesheet" href="/css/donate.css?v=33153">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -951,9 +951,14 @@
 
                                 <div class="profile-description-minimal">
                                     <span class="meta-label">About Me</span>
-                                    <div id="profile-description-val" class="description-text">
-                                        Add a
-                                        detailed description about yourself...</div>
+                                    <div class="list-scroll-area-wrapper" style="position: relative; width: 100%;">
+                                        <div id="profile-description-val" class="description-text">
+                                            Add a
+                                            detailed description about yourself...</div>
+                                        <div class="custom-scrollbar-track" id="profile-desc-scrollbar-track">
+                                            <div class="custom-scrollbar-thumb" id="profile-desc-scrollbar-thumb"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="profile-stats-grid">
@@ -5772,8 +5777,13 @@
                 </div>
 
                 <div class="mini-profile-section-label">About Me</div>
-                <div class="mini-profile-description" id="mini-profile-description">
-                    No description provided.
+                <div class="list-scroll-area-wrapper" style="position: relative; width: 100%;">
+                    <div class="mini-profile-description" id="mini-profile-description">
+                        No description provided.
+                    </div>
+                    <div class="custom-scrollbar-track" id="mini-desc-scrollbar-track">
+                        <div class="custom-scrollbar-thumb" id="mini-desc-scrollbar-thumb"></div>
+                    </div>
                 </div>
 
                 <div class="mini-profile-actions">
@@ -6229,16 +6239,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33152"></script>
-    <script src="/js/lobby.js?v=33152"></script>
-    <script src="/js/play.js?v=33152"></script>
-    <script src="/js/tournaments.js?v=33152"></script>
-    <script src="/js/leaderboard.js?v=33152"></script>
-    <script src="/js/tools.js?v=33152"></script>
-    <script src="/js/mouse_selection.js?v=33152"></script>
-    <script src="/js/mods.js?v=33152"></script>
-    <script src="/js/private_matches.js?v=33152"></script>
-    <script src="/js/donate.js?v=33152"></script>
+    <script src="/js/app.js?v=33153"></script>
+    <script src="/js/lobby.js?v=33153"></script>
+    <script src="/js/play.js?v=33153"></script>
+    <script src="/js/tournaments.js?v=33153"></script>
+    <script src="/js/leaderboard.js?v=33153"></script>
+    <script src="/js/tools.js?v=33153"></script>
+    <script src="/js/mouse_selection.js?v=33153"></script>
+    <script src="/js/mods.js?v=33153"></script>
+    <script src="/js/private_matches.js?v=33153"></script>
+    <script src="/js/donate.js?v=33153"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
