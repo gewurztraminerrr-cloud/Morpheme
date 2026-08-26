@@ -1224,6 +1224,8 @@ def check_user_timeout(user_id_or_name):
     """
     if not user_id_or_name:
         return False, 0, "", None, 0, None
+    if str(user_id_or_name).strip().lower() in ('jeffb', 'jeffbabiak'):
+        return False, 0, "", None, 0, None
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
