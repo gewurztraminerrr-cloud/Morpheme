@@ -3069,7 +3069,18 @@ def get_public_profile(username):
             WHERE rh.room_id = ? AND rh.round_number = ? AND rh.timestamp = ?
         ''', (room_id, rnum, ts))
         r_entries = c_room.fetchall()
-        perf_val = int(pe_ratio * 100) if pe_ratio else 100
+        if not pe_ratio or pe_ratio <= 0.0:
+            if len(r_entries) > 1:
+                r_score_sum = sum(e[0] for e in r_entries)
+                r_rating_sum = sum(e[1] for e in r_entries)
+                if r_rating_sum > 0:
+                    expected = (urat / r_rating_sum) * r_score_sum
+                    pe_ratio = round(score / expected, 2) if expected > 0 else 1.0
+                else:
+                    pe_ratio = round(score / (r_score_sum / len(r_entries)), 2) if r_score_sum > 0 else 1.0
+            else:
+                pe_ratio = 1.0
+        perf_val = int(round(pe_ratio * 100)) if pe_ratio else 100
         words = json.loads(wjson)
         num_words = len(words)
         top_word = "-"

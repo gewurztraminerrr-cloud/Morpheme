@@ -290,6 +290,24 @@ function setupComboChecker() {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
         });
+        input.addEventListener('focus', () => {
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                if (layoutEl) {
+                    layoutEl.scrollLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
+                }
+                const toolsContent = document.querySelector('#page-tools .tools-content');
+                if (toolsContent) {
+                    toolsContent.scrollTop = 0;
+                }
+                const toolPane = document.getElementById('tool-combo');
+                if (toolPane) {
+                    toolPane.scrollTop = 0;
+                }
+                window.scrollTo(0, 0);
+            }
+        });
     }
 
     // Prevent horizontal scroll/swipe chaining to the parent .tools-split-layout and enable direct touch dragging across tables
@@ -1476,10 +1494,11 @@ async function renderProfile(user) {
             // Limits to 50 rows as requested
             const displayRounds = user.exceptional_rounds.slice(0, 50);
             const greatestPE = user.max_pe || 0;
+            const peFormatted = greatestPE ? (greatestPE / 100).toFixed(2) + 'x' : '0.00x';
             const peHeader = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
-                    <span style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">Greatest PE: <span style="color: #fff;">${greatestPE}%</span></span>
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">Greatest PE: <span style="color: #fff;">${peFormatted}</span></span>
                 </div>
             `;
             exceptionalList.innerHTML = peHeader + window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');

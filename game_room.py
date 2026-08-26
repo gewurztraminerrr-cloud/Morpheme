@@ -2049,6 +2049,12 @@ class GameRoom:
                 for p in self.past_players.values():
                     if p.user_id not in existing_uids:
                         all_candidate_players.append(p)
+                
+                try:
+                    self.update_live_pe()
+                except Exception as _pe_err:
+                    print(f"[GameRoom] Error updating live PE on intermission: {_pe_err}")
+
                 for p in all_candidate_players:
                     if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words):
                         intermission_player_snapshots.append({
@@ -6264,6 +6270,11 @@ class RoomManager:
                 if p.user_id not in existing_uids:
                     all_candidate_players.append(p)
                     
+            try:
+                room.update_live_pe()
+            except Exception as _pe_err:
+                print(f"[RoomManager] Error updating live PE before snapshot: {_pe_err}")
+
             for p in all_candidate_players:
                 if (p.is_registered or p.is_guest) and (p.score > 0 or p.submitted_words or p.invalid_words):
                     ghost_player_snapshots.append({
@@ -7033,6 +7044,18 @@ class RoomManager:
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']
                     u_rating = getattr(p, 'rating', 1200) if hasattr(p, 'rating') else p.get('rating', 1200)
                     u_perf = getattr(p, 'performance_efficiency', 0) if hasattr(p, 'performance_efficiency') else p.get('performance_efficiency', 0)
+                    if not u_perf or u_perf <= 0.0:
+                        reg_pool = [pl for pl in participating_registered if (getattr(pl, 'score', 0) if hasattr(pl, 'score') else pl.get('score', 0)) > 0]
+                        if len(reg_pool) > 1:
+                            tot_s = sum((pl.score if hasattr(pl, 'score') else pl.get('score', 0)) for pl in reg_pool)
+                            tot_r = sum((getattr(pl, 'rating', 1200) if hasattr(pl, 'rating') else pl.get('rating', 1200)) for pl in reg_pool)
+                            if tot_r > 0:
+                                exp_s = (u_rating / tot_r) * tot_s
+                                u_perf = round(u_score / exp_s, 2) if exp_s > 0 else 1.0
+                            else:
+                                u_perf = round(u_score / (tot_s / len(reg_pool)), 2) if tot_s > 0 else 1.0
+                        else:
+                            u_perf = 1.0
                     
                     # NORMALIZE TIMESTAMPS: Ensure numeric s for replay
                     words_data = []
