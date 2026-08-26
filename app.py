@@ -6419,6 +6419,13 @@ def tools_unscramble_random():
 def send_private_message():
     if 'username' not in session:
         return jsonify({'error': 'Login required'}), 401
+
+    # Block timed out users from sending private messages
+    user_id = session.get('user_id') or session.get('username')
+    is_to, diff_sec, rem_str, to_until, count, reason_val = check_user_timeout(user_id)
+    if is_to:
+        r_msg = f" Reason: {reason_val}" if reason_val else ""
+        return jsonify({'error': f"Your account is currently timed out ({rem_str} remaining).{r_msg} Private messaging is temporarily restricted."}), 403
     
     data = request.json
     target_username = data.get('recipient')

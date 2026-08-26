@@ -4607,6 +4607,23 @@ function closePrivateChat() {
 }
 
 async function openPrivateChat(username, clearHistory = false) {
+    // Check if current user is timed out before opening private chat
+    try {
+        const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
+        const toData = await toResp.json();
+        if (toData && toData.timed_out) {
+            if (typeof window.showTimeoutBanModal === 'function') {
+                window.showTimeoutBanModal(toData);
+            } else {
+                const rText = toData.timeout_reason || 'Moderator timeout';
+                alert(`Action Restricted: Your account is currently timed out (${toData.remaining} remaining).\nReason: ${rText}\n\nPrivate messaging is temporarily disabled.`);
+            }
+            return;
+        }
+    } catch (e) {
+        console.warn("[PM] Could not check timeout status:", e);
+    }
+
     currentChatTarget = username;
 
     if (clearHistory) {
