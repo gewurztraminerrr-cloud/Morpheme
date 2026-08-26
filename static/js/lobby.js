@@ -1035,6 +1035,7 @@ window.syncLobbyTimeoutState = async function() {
         const toData = await toResp.json();
         const isTimedOut = !!(toData && toData.timed_out);
         window._userTimeoutInfo = isTimedOut ? toData : null;
+        window._userIsTimedOut = isTimedOut;
         
         const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
         lobbyButtons.forEach(btn => {

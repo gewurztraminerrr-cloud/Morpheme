@@ -2206,12 +2206,73 @@ window.showAlertModal = function (title, message, priority = false) {
     }
 };
 
+let _timeoutCountdownInterval = null;
+
+// Global showTimeoutBanModal definition with live real-time dynamic countdown
+window.showTimeoutBanModal = function(toData) {
+    const data = toData || window._userTimeoutInfo || {};
+    const rText = data.reason || data.timeout_reason || 'Moderator timeout';
+    const serverRemSec = typeof data.remaining_seconds === 'number' ? data.remaining_seconds : 0;
+    const fetchTime = Date.now();
+
+    function getLiveRemainingText() {
+        if (!serverRemSec || serverRemSec <= 0) {
+            return data.remaining || 'a temporary timeout';
+        }
+        const elapsedSec = Math.floor((Date.now() - fetchTime) / 1000);
+        const currentRemSec = Math.max(0, serverRemSec - elapsedSec);
+        if (currentRemSec <= 0) {
+            return 'Expired (Lifting...)';
+        }
+        const totalMins = Math.ceil(currentRemSec / 60);
+        if (totalMins >= 60) {
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            const hStr = h === 1 ? '1 hour' : `${h} hours`;
+            if (m === 0) return hStr;
+            const mStr = m === 1 ? '1 minute' : `${m} minutes`;
+            return `${hStr} ${mStr}`;
+        }
+        return totalMins === 1 ? '1 minute' : `${totalMins} minutes`;
+    }
+
+    const dText = getLiveRemainingText();
+    const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span id="active-timeout-countdown-display" style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+    
+    if (typeof window.showAlertModal === 'function') {
+        window.showAlertModal('Account Timed Out', msg, true);
+    } else {
+        alert(`Account Timed Out\n\nReason: ${rText}\nTime Remaining: ${dText}`);
+    }
+
+    if (_timeoutCountdownInterval) {
+        clearInterval(_timeoutCountdownInterval);
+        _timeoutCountdownInterval = null;
+    }
+
+    _timeoutCountdownInterval = setInterval(async () => {
+        const countDisplay = document.getElementById('active-timeout-countdown-display');
+        const liveText = getLiveRemainingText();
+        if (countDisplay) {
+            countDisplay.textContent = liveText;
+        }
+        if (liveText.startsWith('Expired')) {
+            clearInterval(_timeoutCountdownInterval);
+            _timeoutCountdownInterval = null;
+            if (typeof window.syncLobbyTimeoutState === 'function') {
+                await window.syncLobbyTimeoutState();
+            }
+        }
+    }, 1000);
+};
+
 window.checkAccountTimeoutAndAlert = async function() {
     try {
         const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
         const toData = await toResp.json();
         const isTimedOut = !!(toData && toData.timed_out);
         window._userTimeoutInfo = isTimedOut ? toData : null;
+        window._userIsTimedOut = isTimedOut;
         
         const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
         lobbyButtons.forEach(btn => {
@@ -2227,15 +2288,6 @@ window.checkAccountTimeoutAndAlert = async function() {
         if (isTimedOut) {
             if (typeof window.showTimeoutBanModal === 'function') {
                 window.showTimeoutBanModal(toData);
-            } else {
-                const durTxt = toData.remaining || 'your timeout expires';
-                const rTxt = toData.reason || 'Moderator timeout';
-                const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-                if (window.showAlertModal) {
-                    window.showAlertModal('Account Timed Out', msg, true);
-                } else {
-                    alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
-                }
             }
             return true;
         }
@@ -2243,21 +2295,8 @@ window.checkAccountTimeoutAndAlert = async function() {
     return false;
 };
 
-// Global showTimeoutBanModal definition
-window.showTimeoutBanModal = function(toData) {
-    const data = toData || window._userTimeoutInfo || {};
-    const rText = data.reason || data.timeout_reason || 'Moderator timeout';
-    const dText = data.remaining || 'a temporary timeout';
-    const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-    if (typeof window.showAlertModal === 'function') {
-        window.showAlertModal('Account Timed Out', msg, true);
-    } else {
-        alert(`Account Timed Out\n\nReason: ${rText}\nTime Remaining: ${dText}`);
-    }
-};
-
 // Capture-phase global click interceptor for all game entry buttons while on active timeout
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
     const rawTarget = e.target;
     if (!rawTarget) return;
     const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
@@ -2271,7 +2310,14 @@ document.addEventListener('click', (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        window.showTimeoutBanModal(window._userTimeoutInfo);
+        // Re-verify immediately with server on click so expiration is recognized instantaneously without app reload
+        const isStillTimedOut = await window.checkAccountTimeoutAndAlert();
+        if (!isStillTimedOut) {
+            // Timeout expired! Simulate click to trigger original button action smoothly
+            setTimeout(() => {
+                lockedBtn.click();
+            }, 50);
+        }
         return false;
     }
 }, true);
