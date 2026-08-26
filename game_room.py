@@ -4095,7 +4095,7 @@ class RoomManager:
              self.delete_room(ri)
 
     def find_user_session(self, user_id):
-        """Find user's current room and online status. Prioritizes non-24h active rooms."""
+        """Find user's current room and online status. Strictly prioritizes non-24h rooms."""
         uid_str = str(user_id)
         now = time.time()
         
@@ -4103,9 +4103,14 @@ class RoomManager:
         last_seen = self.user_presence.get(uid_str, 0)
         is_online = (now - last_seen) < 75 # 75 seconds (reduced for better accuracy)
         
-        # Search for active room - Priority to non-24h rooms and most recently active
-        best_match = None
-        max_active = -1
+        # Search for active room:
+        # 1. Non-24h standard active room (highest priority)
+        # 2. 24h room (only if user is in NO other room)
+        non_24h_match = None
+        non_24h_max_active = -1
+        
+        fallback_24h_match = None
+        fallback_24h_max_active = -1
         
         for room in self.rooms.values():
             is_24h = (getattr(room, 'time_limit', 0) >= 7200)
@@ -4113,48 +4118,64 @@ class RoomManager:
             # Check players
             for p in room.players:
                 if str(p.user_id) == uid_str:
-                    # In 24h rooms, players are permanently persisted. If the user hasn't interacted
-                    # with the 24h room within 120 seconds, treat their 24h presence as inactive/standby
-                    # so they are not falsely reported as being "in" the 24h room when they leave it.
-                    p_active = p.last_active
-                    if is_24h and (now - p_active > 120):
-                        continue
+                    if is_24h:
+                        if p.last_active > fallback_24h_max_active:
+                            fallback_24h_max_active = p.last_active
+                            fallback_24h_match = {
+                                'room_id': room.room_id,
+                                'is_online': True,
+                                'is_spectator': False,
+                                'game_type': room.game_type,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'is_24h': True
+                            }
+                    else:
+                        if p.last_active > non_24h_max_active:
+                            non_24h_max_active = p.last_active
+                            non_24h_match = {
+                                'room_id': room.room_id,
+                                'is_online': True,
+                                'is_spectator': False,
+                                'game_type': room.game_type,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'is_24h': False
+                            }
 
-                    # Give substantial priority score to non-24h active rooms over 24h rooms
-                    score = p_active + (0 if is_24h else 1000000000)
-                    if score > max_active:
-                        max_active = score
-                        best_match = {
-                            'room_id': room.room_id,
-                            'is_online': True,
-                            'is_spectator': False,
-                            'game_type': room.game_type,
-                            'board_dimensions': room.board_dimensions,
-                            'time_limit': room.time_limit,
-                            'is_24h': is_24h
-                        }
             # Check spectators
             for s in room.spectators:
                 if str(s.user_id) == uid_str:
-                    s_active = s.last_active
-                    if is_24h and (now - s_active > 120):
-                        continue
-
-                    score = s_active + (0 if is_24h else 1000000000)
-                    if score > max_active:
-                        max_active = score
-                        best_match = {
-                            'room_id': room.room_id,
-                            'is_online': True,
-                            'is_spectator': True,
-                            'game_type': room.game_type,
-                            'board_dimensions': room.board_dimensions,
-                            'time_limit': room.time_limit,
-                            'is_24h': is_24h
-                        }
+                    if is_24h:
+                        if s.last_active > fallback_24h_max_active:
+                            fallback_24h_max_active = s.last_active
+                            fallback_24h_match = {
+                                'room_id': room.room_id,
+                                'is_online': True,
+                                'is_spectator': True,
+                                'game_type': room.game_type,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'is_24h': True
+                            }
+                    else:
+                        if s.last_active > non_24h_max_active:
+                            non_24h_max_active = s.last_active
+                            non_24h_match = {
+                                'room_id': room.room_id,
+                                'is_online': True,
+                                'is_spectator': True,
+                                'game_type': room.game_type,
+                                'board_dimensions': room.board_dimensions,
+                                'time_limit': room.time_limit,
+                                'is_24h': False
+                            }
         
-        if best_match:
-            return best_match
+        if non_24h_match:
+            return non_24h_match
+            
+        if fallback_24h_match:
+            return fallback_24h_match
         
         # Not in an active room, but might still be online (Lobby/Profile)
         if is_online:
