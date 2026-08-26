@@ -2851,7 +2851,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
                 onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
                 onmouseleave="this.style.background='transparent'" 
-                onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true, ${r.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true, ${r.game_id || 'null'});">
                 ${cols.map(c => `<td style="padding: 10px 15px; ${c.style || ''}">${c.val}</td>`).join('')}
                 <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
             </tr>`;
@@ -2958,7 +2958,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
                     onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
                     onmouseleave="this.style.background='transparent'" 
-                    onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'}); document.getElementById('room-achievements-modal').classList.add('hidden');">
+                    onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'});">
                     <td style="padding: 10px 15px; font-weight: 800; color: #fff; text-transform: uppercase;">${w.word}</td>
                     <td style="padding: 10px 15px; font-weight: 700; color: #ffd700;">${w.points}</td>
                     <td style="padding: 10px 15px; color: rgba(255,255,255,0.5);">${w.word.length}</td>
