@@ -4278,7 +4278,7 @@ async function updateWotd() {
     displayEl.innerHTML = '<span style="font-size: 1.5rem; opacity: 0.5;">Loading...</span>';
 
     try {
-        const response = await fetch('/api/tools/wotd');
+        const response = await fetch(`/api/tools/wotd?_t=${Date.now()}`);
         const data = await response.json();
 
         if (data.error) {

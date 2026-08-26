@@ -6638,13 +6638,14 @@ def tools_random_word():
 
 @app.route('/api/tools/wotd', methods=['GET'])
 def tools_wotd():
-    """Returns a deterministic Word of the Day based on the current date."""
+    """Returns a deterministic Word of the Day based on the current date in Chicago timezone."""
     from datetime import datetime
+    from zoneinfo import ZoneInfo
     import hashlib
     
-    # Use UTC date string as seed for consistency across timezones if needed, 
-    # but local server date is standard for most apps.
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    # Standardize to Chicago timezone matching the rest of the game platform
+    chicago_tz = ZoneInfo("America/Chicago")
+    today_str = datetime.now(chicago_tz).strftime('%Y-%m-%d')
     
     # Load NWL dictionary (default for WOTD)
     dictionary = load_tools_dictionary('NWL')
@@ -6667,13 +6668,15 @@ def tools_wotd():
         definition = "No definition available for this word."
     image_url = lookup_definition_image(wotd)
     
-    return jsonify({
+    response = jsonify({
         'word': wotd,
         'date': today_str,
         'definition': definition,
         'pronunciation': pronunciation,
         'image_url': image_url
     })
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 @app.route('/api/tools/find-count', methods=['GET'])
 @login_required
