@@ -1126,23 +1126,20 @@ function updateLobbyButtons(stats, mode = 'all') {
         const key = `${game}|${board}|${time}`;
         const count = (stats && stats[key] !== undefined) ? stats[key] : 0;
 
-        // Normalize whitespace: collapse newlines/spaces from multi-line HTML text content
+        // Normalize whitespace
         const rawText = btn.textContent;
         const normalizedText = rawText.replace(/\s+/g, ' ').trim();
 
-        // Replace existing count [N] or append new count
-        const countRegex = /\s*\[\d+\]\s*$/;
+        // Replace any existing count pattern or append count
         let newNormalized;
-        if (countRegex.test(normalizedText)) {
-            newNormalized = normalizedText.replace(countRegex, ` [${count}]`);
-        } else if (/\[\d+\]/.test(normalizedText)) {
-            newNormalized = normalizedText.replace(/\[\d+\]/, `[${count}]`);
+        if (/\[\d+\]/.test(normalizedText)) {
+            newNormalized = normalizedText.replace(/\[\d+\]/g, `[${count}]`);
         } else {
             newNormalized = `${normalizedText} [${count}]`;
         }
 
         // Only write back if the displayed text actually changed
-        if (normalizedText !== newNormalized) {
+        if (btn.textContent.trim() !== newNormalized) {
             btn.textContent = newNormalized;
         }
     });
