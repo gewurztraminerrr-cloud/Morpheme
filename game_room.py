@@ -329,6 +329,17 @@ class GameRoom:
         uid_str = str(user_id)
         uname_lower = str(username).lower()
         
+        # Guard: Check user timeout
+        if not is_ai and user_id:
+            try:
+                import app
+                is_to, _, rem_str, _, _ = app.check_user_timeout(user_id)
+                if is_to:
+                    print(f"[GameRoom] BLOCKED add_player: User {username} (ID: {user_id}) is timed out for {rem_str}")
+                    return False
+            except Exception as ex:
+                pass
+        
         with self._state_lock:
             # Always remove from spectators if adding as player
             self.spectators = [s for s in self.spectators if str(s.user_id) != uid_str]
@@ -489,6 +500,16 @@ class GameRoom:
 
     def add_spectator(self, user_id, username, rating):
         """Add spectator to room"""
+        if user_id:
+            try:
+                import app
+                is_to, _, rem_str, _, _ = app.check_user_timeout(user_id)
+                if is_to:
+                    print(f"[GameRoom] BLOCKED add_spectator: User {username} (ID: {user_id}) is timed out for {rem_str}")
+                    return False
+            except Exception as ex:
+                pass
+        
         # Always remove from active players if adding as spectator
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
         

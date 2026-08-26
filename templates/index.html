@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33160" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33160" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33160">
-    <link rel="stylesheet" href="/css/lobby.css?v=33160">
-    <link rel="stylesheet" href="/css/play.css?v=33160">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33160">
-    <link rel="stylesheet" href="/css/forum.css?v=33160">
-    <link rel="stylesheet" href="/css/donate.css?v=33160">
+    <link rel="preload" href="/css/style.css?v=33161" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33161" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33161">
+    <link rel="stylesheet" href="/css/lobby.css?v=33161">
+    <link rel="stylesheet" href="/css/play.css?v=33161">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33161">
+    <link rel="stylesheet" href="/css/forum.css?v=33161">
+    <link rel="stylesheet" href="/css/donate.css?v=33161">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -429,7 +429,15 @@
                         if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     } else {
                         var errMsg = (data && data.error) ? data.error : 'Unknown error';
-                        if (errMsg.toLowerCase().includes('full') || response.status === 409) {
+                        if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
+                            var durTxt = data.remaining || 'your timeout expires';
+                            var msg = 'You are currently under timeout and cannot join or play in any rooms for another <strong>' + durTxt + '</strong>.<br><br>Please wait until your timeout expires before joining another match.';
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Account Timed Out', msg, true);
+                            } else {
+                                alert(errMsg);
+                            }
+                        } else if (errMsg.toLowerCase().includes('full') || response.status === 409) {
                             if (window.showAlertModal) {
                                 window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
                             } else {
@@ -6324,16 +6332,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33160"></script>
-    <script src="/js/lobby.js?v=33160"></script>
-    <script src="/js/play.js?v=33160"></script>
-    <script src="/js/tournaments.js?v=33160"></script>
-    <script src="/js/leaderboard.js?v=33160"></script>
-    <script src="/js/tools.js?v=33160"></script>
-    <script src="/js/mouse_selection.js?v=33160"></script>
-    <script src="/js/mods.js?v=33160"></script>
-    <script src="/js/private_matches.js?v=33160"></script>
-    <script src="/js/donate.js?v=33160"></script>
+    <script src="/js/app.js?v=33161"></script>
+    <script src="/js/lobby.js?v=33161"></script>
+    <script src="/js/play.js?v=33161"></script>
+    <script src="/js/tournaments.js?v=33161"></script>
+    <script src="/js/leaderboard.js?v=33161"></script>
+    <script src="/js/tools.js?v=33161"></script>
+    <script src="/js/mouse_selection.js?v=33161"></script>
+    <script src="/js/mods.js?v=33161"></script>
+    <script src="/js/private_matches.js?v=33161"></script>
+    <script src="/js/donate.js?v=33161"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

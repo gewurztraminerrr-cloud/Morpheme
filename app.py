@@ -4827,6 +4827,14 @@ def submit_chat_message(room_id):
         return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
         
     user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    # Timeout check
+    is_to, _, rem_str, _, _ = check_user_timeout(user_id)
+    if is_to:
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str}), 403
+        
     rating = None
     player = room.get_player(user_id)
     if player:
