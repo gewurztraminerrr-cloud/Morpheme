@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33169" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33169" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33169">
-    <link rel="stylesheet" href="/css/lobby.css?v=33169">
-    <link rel="stylesheet" href="/css/play.css?v=33169">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33169">
-    <link rel="stylesheet" href="/css/forum.css?v=33169">
-    <link rel="stylesheet" href="/css/donate.css?v=33169">
+    <link rel="preload" href="/css/style.css?v=33170" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33170" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33170">
+    <link rel="stylesheet" href="/css/lobby.css?v=33170">
+    <link rel="stylesheet" href="/css/play.css?v=33170">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33170">
+    <link rel="stylesheet" href="/css/forum.css?v=33170">
+    <link rel="stylesheet" href="/css/donate.css?v=33170">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -148,21 +148,34 @@
                 }
             }, duration);
         }
-        window.showLobbyToast = showLobbyToast;
+        window.showTimeoutBanModal = function(toData) {
+            var data = toData || window._userTimeoutInfo || {};
+            var rText = data.reason || data.timeout_reason || 'Moderator timeout';
+            var dText = data.remaining || 'a temporary timeout';
+            var msg = 'You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">' + rText + '</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">' + dText + '</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!';
+            if (window.showAlertModal) {
+                window.showAlertModal('Account Timed Out', msg, true);
+            } else {
+                alert('Account Timed Out\n\nReason: ' + rText + '\nTime Remaining: ' + dText);
+            }
+        };
 
         window.checkAccountTimeoutAndAlert = async function() {
+            if (window._userIsTimedOut && window._userTimeoutInfo) {
+                window.showTimeoutBanModal(window._userTimeoutInfo);
+                return true;
+            }
             try {
                 var toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
                 var toData = await toResp.json();
-                if (toData && toData.timed_out) {
-                    var durTxt = toData.remaining || 'your timeout expires';
-                    var rTxt = toData.reason || 'Moderator timeout';
-                    var msg = 'You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">' + rTxt + '</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">' + durTxt + '</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!';
-                    if (window.showAlertModal) {
-                        window.showAlertModal('Account Timed Out', msg, true);
-                    } else {
-                        alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
-                    }
+                var isTimedOut = !!(toData && toData.timed_out);
+                window._userIsTimedOut = isTimedOut;
+                window._userTimeoutInfo = isTimedOut ? toData : null;
+                if (typeof window.syncLobbyTimeoutState === 'function') {
+                    window.syncLobbyTimeoutState();
+                }
+                if (isTimedOut) {
+                    window.showTimeoutBanModal(toData);
                     return true;
                 }
             } catch(e) {}
@@ -171,6 +184,10 @@
 
         async function enterLobbyRoomInline(rawBtn) {
             if (!rawBtn) return;
+            if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+                window.showTimeoutBanModal(window._userTimeoutInfo);
+                return;
+            }
             if (await window.checkAccountTimeoutAndAlert()) {
                 return;
             }
@@ -182,7 +199,6 @@
                 var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
                 var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
-                showLobbyToast('Entering ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
 
                 if (window.currentRoomId && typeof window.leaveCurrentRoom === 'function') {
                     try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
@@ -3519,6 +3535,9 @@
                                 <button id="check-timeout-btn" class="mod-full-btn" style="min-width: 130px; background: var(--bg-surface); border: 1px solid var(--input-border);">🔍 Check Status</button>
                                 <button id="lift-timeout-btn" class="mod-full-btn" style="min-width: 130px; background: #059669; border-color: #047857;">🔓 Lift Timeout</button>
                             </div>
+                            <div style="margin-bottom: 10px;">
+                                <textarea id="timeout-reason-input" placeholder="Reason for timeout... (e.g. Chat harassment, Unsportsmanlike conduct, Spamming)" style="width: 100%; min-height: 60px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
+                            </div>
                             <div id="timeout-info-display" style="font-size: 0.85rem; color: var(--text-primary); margin-top: 8px;"></div>
                         </div>
 
@@ -6415,16 +6434,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33169"></script>
-    <script src="/js/lobby.js?v=33169"></script>
-    <script src="/js/play.js?v=33169"></script>
-    <script src="/js/tournaments.js?v=33169"></script>
-    <script src="/js/leaderboard.js?v=33169"></script>
-    <script src="/js/tools.js?v=33169"></script>
-    <script src="/js/mouse_selection.js?v=33169"></script>
-    <script src="/js/mods.js?v=33169"></script>
-    <script src="/js/private_matches.js?v=33169"></script>
-    <script src="/js/donate.js?v=33169"></script>
+    <script src="/js/app.js?v=33170"></script>
+    <script src="/js/lobby.js?v=33170"></script>
+    <script src="/js/play.js?v=33170"></script>
+    <script src="/js/tournaments.js?v=33170"></script>
+    <script src="/js/leaderboard.js?v=33170"></script>
+    <script src="/js/tools.js?v=33170"></script>
+    <script src="/js/mouse_selection.js?v=33170"></script>
+    <script src="/js/mods.js?v=33170"></script>
+    <script src="/js/private_matches.js?v=33170"></script>
+    <script src="/js/donate.js?v=33170"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

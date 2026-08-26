@@ -635,12 +635,16 @@ async function timeoutUser() {
         return;
     }
 
+    const reasonInput = document.getElementById('timeout-reason-input');
+    const reason = reasonInput ? reasonInput.value.trim() : '';
+
     if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
         alert(`Action Prohibited: User '${username}' cannot be timed out.`);
         return;
     }
 
-    if (!confirm(`Are you sure you want to timeout user "${username}"? They will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
+    const reasonPrompt = reason ? `\nReason: "${reason}"` : '';
+    if (!confirm(`Are you sure you want to timeout user "${username}"?${reasonPrompt}\n\nThey will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
         return;
     }
 
@@ -648,14 +652,15 @@ async function timeoutUser() {
         const response = await fetch('/api/mods/timeout_user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({ username, reason: reason || 'Moderator timeout' })
         });
         const data = await response.json();
         if (data.success) {
             showModStatus(data.message, false, 'ban-status-area');
             const infoEl = document.getElementById('timeout-info-display');
             if (infoEl) {
-                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count}). Until: ${data.timeout_until} UTC`;
+                const rDisplay = reason ? ` | Reason: <em>${reason}</em>` : '';
+                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count})${rDisplay}. Until: ${data.timeout_until} UTC`;
             }
             alert(`User "${username}" has been timed out for ${data.duration}.`);
         } else {
@@ -689,6 +694,9 @@ async function checkTimeoutStatus() {
         let statusHtml = `<strong>Status for ${data.username}:</strong><br>`;
         if (data.is_timed_out) {
             statusHtml += `<span style="color: #f59e0b;">⏱️ CURRENTLY TIMED OUT</span> — Remaining: <strong>${data.remaining}</strong> (Until: ${data.timeout_until} UTC)<br>`;
+            if (data.reason) {
+                statusHtml += `Reason: <strong>${data.reason}</strong><br>`;
+            }
         } else {
             statusHtml += `<span style="color: #10b981;">✅ Active (Not timed out)</span><br>`;
         }

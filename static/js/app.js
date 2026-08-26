@@ -799,6 +799,10 @@ async function checkSession() {
             window.currentUserRating = data.rating;
             updateAuthUI(data.rating); // Update UI for logged in state
 
+            // Check and sync timeout state immediately
+            if (typeof window.syncLobbyTimeoutState === 'function') {
+                window.syncLobbyTimeoutState().catch(function() {});
+            }
 
             // LOAD ALL SETTINGS
             if (window.loadSettings) {
@@ -1104,6 +1108,14 @@ function setupNavigation() {
             }
 
             if (pageTarget === 'play') {
+                if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+                    if (typeof window.showTimeoutBanModal === 'function') {
+                        window.showTimeoutBanModal(window._userTimeoutInfo);
+                    } else if (typeof window.checkAccountTimeoutAndAlert === 'function') {
+                        window.checkAccountTimeoutAndAlert();
+                    }
+                    return;
+                }
                 if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
                     return;
                 }
@@ -1260,10 +1272,12 @@ function setupModalListeners() {
 
 function showPage(pageId) {
     if (pageId === 'page-play') {
-        if (window._userTimeoutInfo && window._userTimeoutInfo.timed_out) {
+        if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
             console.warn('[Navigation] User is timed out. Preventing navigation to page-play.');
             pageId = 'page-lobby';
-            if (typeof window.checkAccountTimeoutAndAlert === 'function') {
+            if (typeof window.showTimeoutBanModal === 'function') {
+                window.showTimeoutBanModal(window._userTimeoutInfo);
+            } else if (typeof window.checkAccountTimeoutAndAlert === 'function') {
                 window.checkAccountTimeoutAndAlert();
             }
         } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room')) {
