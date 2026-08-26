@@ -1000,9 +1000,35 @@ function stopStatsPolling() {
 }
 window.stopStatsPolling = stopStatsPolling;
 
+window.syncLobbyTimeoutState = async function() {
+    try {
+        const toResp = await fetch(`/api/user/my_timeout_status?_t=${Date.now()}`, { cache: 'no-store' });
+        const toData = await toResp.json();
+        const isTimedOut = !!(toData && toData.timed_out);
+        window._userTimeoutInfo = isTimedOut ? toData : null;
+        
+        const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
+        lobbyButtons.forEach(btn => {
+            if (isTimedOut) {
+                btn.classList.add('timeout-locked');
+                btn.title = "Account Timed Out: Click for details";
+            } else {
+                btn.classList.remove('timeout-locked');
+                if (btn.title === "Account Timed Out: Click for details") btn.title = "";
+            }
+        });
+        return isTimedOut;
+    } catch(e) {
+        return false;
+    }
+};
+
 // mode: 'all' (initial/entry) | 'accumulative_only' (auto-poll) | 'fcfs_sp_only' (Refresh click)
 async function fetchLobbyStats(mode = 'all') {
     try {
+        if (typeof window.syncLobbyTimeoutState === 'function') {
+            window.syncLobbyTimeoutState().catch(() => {});
+        }
         const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
         if (data.stats) {

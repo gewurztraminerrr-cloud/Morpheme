@@ -1358,3 +1358,22 @@ body.theme-light-brown .field-hint {
         }
     }
 }
+
+/* ============================================================
+   LOBBY TIMEOUT / BAN LOCK STYLING
+   ============================================================ */
+.game-btn.timeout-locked,
+.confirm-create-room-btn.timeout-locked,
+.join-room-btn.timeout-locked,
+.nav-btn[data-page="play"].timeout-locked {
+    opacity: 0.45 !important;
+    filter: grayscale(0.85) !important;
+    cursor: not-allowed !important;
+}
+
+.game-btn.timeout-locked:hover,
+.confirm-create-room-btn.timeout-locked:hover,
+.join-room-btn.timeout-locked:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}

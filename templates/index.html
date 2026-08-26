@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33166" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33166" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33166">
-    <link rel="stylesheet" href="/css/lobby.css?v=33166">
-    <link rel="stylesheet" href="/css/play.css?v=33166">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33166">
-    <link rel="stylesheet" href="/css/forum.css?v=33166">
-    <link rel="stylesheet" href="/css/donate.css?v=33166">
+    <link rel="preload" href="/css/style.css?v=33167" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33167" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33167">
+    <link rel="stylesheet" href="/css/lobby.css?v=33167">
+    <link rel="stylesheet" href="/css/play.css?v=33167">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33167">
+    <link rel="stylesheet" href="/css/forum.css?v=33167">
+    <link rel="stylesheet" href="/css/donate.css?v=33167">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -729,6 +729,9 @@
                 refreshBtn.disabled = true;
             }
             try {
+                if (typeof window.syncLobbyTimeoutState === 'function') {
+                    window.syncLobbyTimeoutState().catch(function() {});
+                }
                 var activeConfig = window.currentLobbyConfig;
                 if (!activeConfig) {
                     var activeBtn = document.querySelector('.game-btn.active') || document.querySelector('.fcfs-btn.active, .split-btn.active');
@@ -812,6 +815,17 @@
                 window._nativeAlert(message);
             }
         };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.syncLobbyTimeoutState === 'function') {
+                window.syncLobbyTimeoutState().catch(function() {});
+            }
+        });
+        window.addEventListener('load', function() {
+            if (typeof window.syncLobbyTimeoutState === 'function') {
+                window.syncLobbyTimeoutState().catch(function() {});
+            }
+        });
     </script>
     <style>
         .board-cell.bonus-highlight {
@@ -6389,16 +6403,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33166"></script>
-    <script src="/js/lobby.js?v=33166"></script>
-    <script src="/js/play.js?v=33166"></script>
-    <script src="/js/tournaments.js?v=33166"></script>
-    <script src="/js/leaderboard.js?v=33166"></script>
-    <script src="/js/tools.js?v=33166"></script>
-    <script src="/js/mouse_selection.js?v=33166"></script>
-    <script src="/js/mods.js?v=33166"></script>
-    <script src="/js/private_matches.js?v=33166"></script>
-    <script src="/js/donate.js?v=33166"></script>
+    <script src="/js/app.js?v=33167"></script>
+    <script src="/js/lobby.js?v=33167"></script>
+    <script src="/js/play.js?v=33167"></script>
+    <script src="/js/tournaments.js?v=33167"></script>
+    <script src="/js/leaderboard.js?v=33167"></script>
+    <script src="/js/tools.js?v=33167"></script>
+    <script src="/js/mouse_selection.js?v=33167"></script>
+    <script src="/js/mods.js?v=33167"></script>
+    <script src="/js/private_matches.js?v=33167"></script>
+    <script src="/js/donate.js?v=33167"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
