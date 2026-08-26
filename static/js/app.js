@@ -1260,7 +1260,13 @@ function setupModalListeners() {
 
 function showPage(pageId) {
     if (pageId === 'page-play') {
-        if (!window.currentRoomId && !localStorage.getItem('last_joined_room')) {
+        if (window._userTimeoutInfo && window._userTimeoutInfo.timed_out) {
+            console.warn('[Navigation] User is timed out. Preventing navigation to page-play.');
+            pageId = 'page-lobby';
+            if (typeof window.checkAccountTimeoutAndAlert === 'function') {
+                window.checkAccountTimeoutAndAlert();
+            }
+        } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room')) {
             console.warn('[Navigation] No active room found. Redirecting to lobby.');
             pageId = 'page-lobby';
         }
@@ -2195,7 +2201,21 @@ window.checkAccountTimeoutAndAlert = async function() {
     try {
         const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
         const toData = await toResp.json();
-        if (toData && toData.timed_out) {
+        const isTimedOut = !!(toData && toData.timed_out);
+        window._userTimeoutInfo = isTimedOut ? toData : null;
+        
+        const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
+        lobbyButtons.forEach(btn => {
+            if (isTimedOut) {
+                btn.classList.add('timeout-locked');
+                btn.title = "Account Timed Out: Click for details";
+            } else {
+                btn.classList.remove('timeout-locked');
+                if (btn.title === "Account Timed Out: Click for details") btn.title = "";
+            }
+        });
+
+        if (isTimedOut) {
             const durTxt = toData.remaining || 'your timeout expires';
             const rTxt = toData.reason || 'Moderator timeout';
             const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
@@ -2209,6 +2229,34 @@ window.checkAccountTimeoutAndAlert = async function() {
     } catch(e) {}
     return false;
 };
+
+// Capture-phase global click interceptor for all game entry buttons while on active timeout
+document.addEventListener('click', (e) => {
+    const rawTarget = e.target;
+    if (!rawTarget) return;
+    const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+    if (!target || typeof target.closest !== 'function') return;
+
+    const lockedBtn = target.closest('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
+    if (!lockedBtn) return;
+
+    if (window._userTimeoutInfo && window._userTimeoutInfo.timed_out) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const toData = window._userTimeoutInfo;
+        const durTxt = toData.remaining || 'your timeout expires';
+        const rTxt = toData.reason || 'Moderator timeout';
+        const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rTxt}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durTxt}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+        if (window.showAlertModal) {
+            window.showAlertModal('Account Timed Out', msg, true);
+        } else {
+            alert('Account Timed Out\n\nReason: ' + rTxt + '\nTime Remaining: ' + durTxt);
+        }
+        return false;
+    }
+}, true);
 
 // Global intercept for native alerts so all popup messages use the styled modal layout
 if (!window._nativeAlert) {
