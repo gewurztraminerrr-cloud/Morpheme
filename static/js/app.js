@@ -1478,12 +1478,7 @@ function showPage(pageId) {
             window.initDonatePage();
         }
     } else if (pageId === 'page-lobby') {
-        if (typeof window.fetchLobbyStats === 'function') {
-            window.fetchLobbyStats('all');
-        }
-        if (typeof window.startStatsPolling === 'function') {
-            window.startStatsPolling();
-        }
+        // Handled in top branch
     } else {
         if (window.stopGamePolling) {
             window.stopGamePolling();

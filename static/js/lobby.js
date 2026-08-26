@@ -1014,6 +1014,15 @@ function startStatsPolling() {
 }
 window.startStatsPolling = startStatsPolling;
 
+// Also initiate immediate polling on load if on lobby
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (isOnLobby()) startStatsPolling();
+    });
+} else {
+    if (isOnLobby()) startStatsPolling();
+}
+
 function stopStatsPolling() {
     if (lobbyStatsInterval) {
         clearInterval(lobbyStatsInterval);
