@@ -6645,8 +6645,12 @@ select option,
     position: relative;
     user-select: none;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     cursor: pointer;
     touch-action: none;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
 }
 
 .neon-gateway-btn {
@@ -6666,8 +6670,9 @@ select option,
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    outline: none !important;
 
     /* Realistic 3D Elevated Resting State */
     transform: translateY(-12px);
