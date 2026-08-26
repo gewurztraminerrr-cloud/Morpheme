@@ -882,7 +882,7 @@ const Forum = {
                     </div>
                 </div>
             </div>
-            <div class="post-content">${this.escapeHtml(post.content)}</div>
+            <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
             ${postImagesHtml}
         `;
 
@@ -937,7 +937,7 @@ const Forum = {
                                     <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: auto; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
                                 ` : ''}
                             </div>
-                            <div class="comment-content">${this.escapeHtml(c.content)}</div>
+                            <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
                             ${cImagesHtml}
                         </div>
                     </div>
@@ -1205,9 +1205,20 @@ const Forum = {
     },
 
     escapeHtml: function (text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    renderContentWithLinks: function (text) {
+        if (!text) return '';
+        const escaped = this.escapeHtml(text);
+        // Regex to auto-link URLs (YouTube, HTTP, HTTPS)
+        const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/gi;
+        return escaped.replace(urlRegex, function (match) {
+            return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="forum-clickable-link" onclick="event.stopPropagation();">${match}</a>`;
+        });
     }
 };
 

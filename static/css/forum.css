@@ -411,6 +411,29 @@
     white-space: pre-wrap;
     margin-bottom: 25px;
     color: var(--text-primary);
+    word-break: break-word;
+}
+
+.forum-clickable-link {
+    color: var(--accent-color, #38bdf8);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 500;
+    transition: color 0.15s ease, opacity 0.15s ease;
+    word-break: break-all;
+}
+
+.forum-clickable-link:hover {
+    opacity: 0.8;
+    color: #60a5fa;
+}
+
+.comment-content {
+    line-height: 1.4;
+    opacity: 0.9;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .post-image-container {
