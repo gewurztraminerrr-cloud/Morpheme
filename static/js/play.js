@@ -9685,7 +9685,17 @@ function setupCubeRotation() {
         if (changed) {
             e.preventDefault();
             cube.style.transform = `rotateX(${window.cubeRotationX}deg) rotateY(${window.cubeRotationY}deg)`;
-            updateCubeFaceCulling(window.cubeRotationX, window.cubeRotationY);
+            
+            // Allow all faces to remain visible during the 0.6s CSS transition so rotating faces never flash/blink
+            cube.querySelectorAll('.cube-face').forEach(face => {
+                face.style.display = 'grid';
+                face.style.visibility = 'visible';
+            });
+
+            if (window._cubeCullTimeout) clearTimeout(window._cubeCullTimeout);
+            window._cubeCullTimeout = setTimeout(() => {
+                updateCubeFaceCulling(window.cubeRotationX, window.cubeRotationY);
+            }, 600);
         }
     });
 }
