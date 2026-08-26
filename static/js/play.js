@@ -524,11 +524,13 @@ async function ejectToLobby(reason = "inactivity") {
         }
         title = "Account Timed Out";
         message = `
-            You have been kicked from the room and placed on a timeout for <strong>${durationText}</strong>.
+            You have been kicked from the room and placed on a temporary timeout from all game rooms.
             <br><br>
-            During this period, you are temporarily unable to join or play in any game rooms.
+            <strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${durationText}</span>
             <br><br>
-            Please wait until your timeout expires before joining another match.
+            To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.
+            <br><br>
+            Please wait until your timeout expires before joining another match!
         `;
     }
 

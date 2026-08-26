@@ -1340,6 +1340,21 @@ def timeout_user_api():
         conn.close()
 
 
+@app.route('/api/user/my_timeout_status', methods=['GET'])
+def get_my_timeout_status():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'timed_out': False, 'remaining': '', 'remaining_seconds': 0})
+    is_to, diff_sec, rem_str, to_until, count = check_user_timeout(user_id)
+    return jsonify({
+        'timed_out': is_to,
+        'remaining': rem_str,
+        'remaining_seconds': diff_sec,
+        'timeout_until': to_until,
+        'offense_count': count
+    })
+
+
 @app.route('/api/mods/lift_timeout', methods=['POST'])
 @login_required
 def lift_timeout_api():
