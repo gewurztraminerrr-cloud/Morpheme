@@ -239,10 +239,21 @@ async function createRoom(config, minRating, maxRating) {
             if (window.startGamePolling) window.startGamePolling();
         } else {
             if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-            if (window.showAlertModal) {
-                window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
+            const errMsg = data.error || 'Unknown error';
+            if (data.timed_out || errMsg.toLowerCase().includes('timed out')) {
+                const durationText = data.remaining || "your timeout expires";
+                const msg = `You are currently under timeout and cannot create or play in any rooms for another <strong>${durationText}</strong>.<br><br>Please wait until your timeout expires before joining another match.`;
+                if (window.showAlertModal) {
+                    window.showAlertModal('Account Timed Out', msg, true);
+                } else {
+                    alert(errMsg);
+                }
             } else {
-                alert('Failed to create room: ' + data.error);
+                if (window.showAlertModal) {
+                    window.showAlertModal('Room Creation Error', 'Failed to create room: ' + errMsg);
+                } else {
+                    alert('Failed to create room: ' + errMsg);
+                }
             }
         }
     } catch (e) {
@@ -330,12 +341,51 @@ function setupLobbyEvents() {
                     body: JSON.stringify({ as_spectator: isSpectator })
                 });
                 
-                if (!response.ok) {
-                    const err = await response.text();
-                    throw new Error(`Join failed (${response.status}): ${err}`);
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch(e) {
+                    const txt = await response.text().catch(() => '');
+                    data = { error: txt };
                 }
-                
-                const data = await response.json();
+
+                if (!response.ok) {
+                    const errMsg = (data && data.error) ? data.error : `Join failed (${response.status})`;
+                    if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
+                        const durationText = data.remaining || "your timeout expires";
+                        const msg = `You are currently under timeout and cannot join or play in any rooms for another <strong>${durationText}</strong>.<br><br>Please wait until your timeout expires before joining another match.`;
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Account Timed Out', msg, true);
+                        } else {
+                            alert(errMsg);
+                        }
+                    } else if (errMsg.toLowerCase().includes('full')) {
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        } else {
+                            alert('This room is now full. Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
+                        }
+                        if (currentLobbyConfig) {
+                            fetchAndRenderRooms(currentLobbyConfig.gameType, currentLobbyConfig.timeLimit, currentLobbyConfig.boardDimensions, false);
+                        }
+                    } else if (errMsg.toLowerCase().includes('not found')) {
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Room Closed', 'This room has ended or is no longer active.');
+                        } else {
+                            alert('This room has ended or is no longer active.');
+                        }
+                        if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
+                            window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions);
+                        }
+                    } else {
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Unable to Join', errMsg);
+                        } else {
+                            alert(errMsg);
+                        }
+                    }
+                    return;
+                }
 
                 if (data.success) {
                     if (!isSpectator && data.role === 'spectator') {

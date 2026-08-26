@@ -1191,6 +1191,31 @@ def format_duration_string(minutes):
     return f"{h_str} {m_str}"
 
 
+def parse_timeout_datetime(dt_str):
+    """Safely parses timeout timestamp strings or epoch floats into UTC datetime objects."""
+    if not dt_str:
+        return None
+    try:
+        ts = float(dt_str)
+        return datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+    except (ValueError, TypeError):
+        pass
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S.%f'):
+        try:
+            dt = datetime.datetime.strptime(str(dt_str).replace('Z', '').split('+')[0].strip(), fmt)
+            return dt.replace(tzinfo=datetime.timezone.utc)
+        except Exception:
+            pass
+    try:
+        dt = datetime.datetime.fromisoformat(str(dt_str).replace(' ', 'T').replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt
+    except Exception:
+        pass
+    return None
+
+
 def check_user_timeout(user_id):
     """
     Checks if a user is currently under timeout.
@@ -1210,18 +1235,14 @@ def check_user_timeout(user_id):
                 return False, 0, "", None, (row['timeout_offense_count'] if row else 0)
             
             timeout_until_str = row['timeout_until']
-            try:
-                dt_until = datetime.datetime.fromisoformat(timeout_until_str.replace('Z', '+00:00'))
-                if dt_until.tzinfo is None:
-                    dt_until = dt_until.replace(tzinfo=datetime.timezone.utc)
+            dt_until = parse_timeout_datetime(timeout_until_str)
+            if dt_until:
                 now_utc = datetime.datetime.now(datetime.timezone.utc)
                 diff_sec = (dt_until - now_utc).total_seconds()
                 if diff_sec > 0:
                     mins = max(1, int(math.ceil(diff_sec / 60.0)))
                     rem_str = format_duration_string(mins)
                     return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0)
-            except Exception as ex:
-                print(f"[check_user_timeout] Date parse error: {ex}")
         finally:
             conn.close()
     except Exception as e:
@@ -1264,15 +1285,11 @@ def timeout_user_api():
         
         # Calculate decay: 1 offense level reduction per 24 hours elapsed without an offense
         if last_to_str:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last_to_str.replace('Z', '+00:00'))
-                if last_dt.tzinfo is None:
-                    last_dt = last_dt.replace(tzinfo=datetime.timezone.utc)
+            last_dt = parse_timeout_datetime(last_to_str)
+            if last_dt:
                 elapsed_hours = (now_utc - last_dt).total_seconds() / 3600.0
                 decay_levels = int(elapsed_hours // 24)
                 curr_offenses = max(0, curr_offenses - decay_levels)
-            except Exception as ex:
-                print(f"[timeout_user_api] Decay calculation error: {ex}")
                 
         new_offenses = curr_offenses + 1
         duration_minutes = 10 * (2 ** (new_offenses - 1))
@@ -1303,9 +1320,9 @@ def timeout_user_api():
                 if not hasattr(room, 'evicted_users'):
                     room.evicted_users = {}
                 room.evicted_users[str(user_id)] = f"timeout:{duration_str}"
-                room.remove_player(user_id)
+                room.remove_player(user_id, force=True)
                 
-        room_manager.leave_room(user_id)
+        cleanup_user_rooms_entirely(user_id)
         
         return jsonify({
             'success': True,
@@ -1374,15 +1391,11 @@ def get_user_timeout_status(username):
         decayed_offenses = offenses
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         if last_to:
-            try:
-                last_dt = datetime.datetime.fromisoformat(last_to.replace('Z', '+00:00'))
-                if last_dt.tzinfo is None:
-                    last_dt = last_dt.replace(tzinfo=datetime.timezone.utc)
+            last_dt = parse_timeout_datetime(last_to)
+            if last_dt:
                 elapsed_hours = (now_utc - last_dt).total_seconds() / 3600.0
                 decay_levels = int(elapsed_hours // 24)
                 decayed_offenses = max(0, offenses - decay_levels)
-            except Exception:
-                pass
                 
         next_duration_mins = 10 * (2 ** max(0, decayed_offenses))
         next_duration_str = format_duration_string(next_duration_mins)
@@ -4849,6 +4862,11 @@ def submit_word(room_id):
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Timeout check
+    is_to, _, rem_str, _, _ = check_user_timeout(user_id)
+    if is_to:
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str}), 403
     
     room = room_manager.get_room(room_id)
     if not room:
