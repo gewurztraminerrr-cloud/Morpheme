@@ -1001,26 +1001,24 @@ function stopLobbyPolling() {
 function startStatsPolling() {
     stopStatsPolling();
 
-    // Immediately do a FULL update (all buttons) when entering lobby
+    // Immediately do a FULL update (all buttons)
     fetchLobbyStats('all');
 
-    // Auto-poll every 1 second — updates Accumulative buttons automatically.
-    // FCFS/SP buttons update on: lobby entry, Refresh button click, or "Show Rooms" click.
+    // Auto-poll every 1 second — continuously updates Accumulative buttons
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
-            fetchLobbyStats('accumulative_only'); // accumulative only
+            fetchLobbyStats('accumulative_only');
         }
     }, 1000);
 }
 window.startStatsPolling = startStatsPolling;
 
-// Also initiate immediate polling on load if on lobby
+// Immediately trigger full stats fetch & continuous polling
+startStatsPolling();
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        if (isOnLobby()) startStatsPolling();
+        startStatsPolling();
     });
-} else {
-    if (isOnLobby()) startStatsPolling();
 }
 
 function stopStatsPolling() {
