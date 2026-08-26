@@ -2425,6 +2425,103 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function updateRankingsFilterDropdowns(selectedMode) {
+    const dimsSelect = document.getElementById('rankings-filter-dims');
+    const timeSelect = document.getElementById('rankings-filter-time');
+    if (!dimsSelect || !timeSelect) return;
+
+    // Define valid dimensions and times per game mode matching the Lobby exactly
+    const modeConfig = {
+        'all': {
+            dims: [
+                { value: '4x4', text: '4x4' },
+                { value: '4x6', text: '4x6' },
+                { value: '5x7', text: '5x7' },
+                { value: '6x8', text: '6x8' },
+                { value: '3x3x3', text: '3x3x3 Cube' }
+            ],
+            times: [
+                { value: '45', text: '45 Seconds' },
+                { value: '180', text: '3 Minutes' },
+                { value: '300', text: '5 Minutes' },
+                { value: '600', text: '10 Minutes' },
+                { value: '86400', text: '24 Hours' }
+            ]
+        },
+        'accumulative': {
+            dims: [
+                { value: '4x4', text: '4x4' },
+                { value: '4x6', text: '4x6' },
+                { value: '5x7', text: '5x7' },
+                { value: '6x8', text: '6x8' }
+            ],
+            times: [
+                { value: '45', text: '45 Seconds' },
+                { value: '180', text: '3 Minutes' },
+                { value: '600', text: '10 Minutes' },
+                { value: '86400', text: '24 Hours' }
+            ]
+        },
+        'fcfs': {
+            dims: [
+                { value: '4x4', text: '4x4' },
+                { value: '4x6', text: '4x6' },
+                { value: '5x7', text: '5x7' },
+                { value: '6x8', text: '6x8' }
+            ],
+            times: [
+                { value: '45', text: '45 Seconds' },
+                { value: '180', text: '3 Minutes' }
+            ]
+        },
+        'split': {
+            dims: [
+                { value: '4x4', text: '4x4' },
+                { value: '4x6', text: '4x6' },
+                { value: '5x7', text: '5x7' },
+                { value: '6x8', text: '6x8' }
+            ],
+            times: [
+                { value: '45', text: '45 Seconds' },
+                { value: '180', text: '3 Minutes' }
+            ]
+        },
+        '3d': {
+            dims: [
+                { value: '3x3x3', text: '3x3x3 Cube' }
+            ],
+            times: [
+                { value: '180', text: '3 Minutes' },
+                { value: '300', text: '5 Minutes' },
+                { value: '600', text: '10 Minutes' }
+            ]
+        }
+    };
+
+    const cfg = modeConfig[selectedMode] || modeConfig['all'];
+
+    // Update Dimensions dropdown
+    const currentDim = dimsSelect.value;
+    dimsSelect.innerHTML = '<option value="all">All Sizes</option>' + 
+        cfg.dims.map(d => `<option value="${d.value}">${d.text}</option>`).join('');
+    if (cfg.dims.some(d => d.value === currentDim) || currentDim === 'all') {
+        dimsSelect.value = currentDim;
+    } else {
+        dimsSelect.value = 'all';
+    }
+
+    // Update Time Limit dropdown
+    const currentTime = timeSelect.value;
+    timeSelect.innerHTML = '<option value="all">All Times</option>' + 
+        cfg.times.map(t => `<option value="${t.value}">${t.text}</option>`).join('');
+    if (cfg.times.some(t => t.value === currentTime) || currentTime === 'all') {
+        timeSelect.value = currentTime;
+    } else {
+        timeSelect.value = 'all';
+    }
+}
+window.updateRankingsFilterDropdowns = updateRankingsFilterDropdowns;
+
 function renderRatingsGrid(configRatings, user = null) {
     const grid = document.getElementById('profile-ratings-grid');
     if (!grid) {
@@ -2441,20 +2538,21 @@ function renderRatingsGrid(configRatings, user = null) {
 
     grid.innerHTML = '';
 
-    const filterMode = document.getElementById('rankings-filter-mode')?.value || 'all';
+    const modeSelect = document.getElementById('rankings-filter-mode');
+    const filterMode = modeSelect?.value || 'all';
     const filterDims = document.getElementById('rankings-filter-dims')?.value || 'all';
     const filterTime = document.getElementById('rankings-filter-time')?.value || 'all';
 
     const modes = ['accumulative', 'fcfs', 'split', '3d'];
     const boards = ['4x4', '4x6', '5x7', '6x8', '3x3x3'];
-    const accTimes = [45, 180, 300, 600];
-    const otherTimes = [45, 180, 300, 600];
+    const allTimes = [45, 180, 300, 600, 86400];
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
         if (s === 180) return '3m';
         if (s === 300) return '5m';
         if (s === 600) return '10m';
+        if (s === 86400) return '24h';
         return s + 's';
     };
 
@@ -2463,7 +2561,6 @@ function renderRatingsGrid(configRatings, user = null) {
     modes.forEach(mode => {
         if (filterMode !== 'all' && mode !== filterMode) return;
 
-        const times = (mode === 'accumulative' || mode === '3d') ? accTimes : otherTimes;
         boards.forEach(board => {
             if (filterDims !== 'all' && board !== filterDims) return;
 
@@ -2471,17 +2568,17 @@ function renderRatingsGrid(configRatings, user = null) {
             if (mode === '3d' && board !== '3x3x3') return;
             if (mode !== '3d' && board === '3x3x3') return;
 
-            times.forEach(time => {
+            allTimes.forEach(time => {
                 if (filterTime !== 'all' && String(time) !== filterTime) return;
 
-                // COMPATIBILITY FILTER: No 45s for Cube
-                if (mode === '3d' && time === 45) return;
+                // COMPATIBILITY FILTER: Cube supports 3m (180), 5m (300), 10m (600)
+                if (mode === '3d' && time !== 180 && time !== 300 && time !== 600) return;
 
-                // COMPATIBILITY FILTER: FCFS and Split do not support 5m (300) and 10m (600)
-                if ((mode === 'fcfs' || mode === 'split') && (time === 300 || time === 600)) return;
+                // COMPATIBILITY FILTER: Accumulative supports 45s (45), 3m (180), 10m (600), 24h (86400)
+                if (mode === 'accumulative' && time !== 45 && time !== 180 && time !== 600 && time !== 86400) return;
 
-                // COMPATIBILITY FILTER: 2D rooms do not support 5m (300)
-                if (mode !== '3d' && time === 300) return;
+                // COMPATIBILITY FILTER: FCFS and Split support 45s (45) and 3m (180)
+                if ((mode === 'fcfs' || mode === 'split') && time !== 45 && time !== 180) return;
 
                 const configKey = `${mode}|${board}|${time}`;
                 const configData = ratings[configKey] || { rating: 1200, games_played: 0, wins: 0, point_sum: 0, avg_score: 0, avg_words: 0, avg_pct_found: 0 };
@@ -2524,11 +2621,20 @@ function renderRatingsGrid(configRatings, user = null) {
 
     // Setup filter listeners once
     if (!grid._filtersInitialized) {
+        const modeSelectEl = document.getElementById('rankings-filter-mode');
+        if (modeSelectEl) {
+            modeSelectEl.onchange = () => {
+                updateRankingsFilterDropdowns(modeSelectEl.value);
+                renderRatingsGrid();
+            };
+        }
         const selects = ['rankings-filter-mode', 'rankings-filter-dims', 'rankings-filter-time'];
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                el.onchange = () => renderRatingsGrid();
+                if (id !== 'rankings-filter-mode') {
+                    el.onchange = () => renderRatingsGrid();
+                }
                 // Hover effect for select
                 el.onmouseenter = () => el.style.borderColor = 'rgba(255,255,255,0.3)';
                 el.onmouseleave = () => el.style.borderColor = 'rgba(255,255,255,0.1)';
