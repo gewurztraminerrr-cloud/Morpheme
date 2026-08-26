@@ -715,11 +715,28 @@ window.showMiniProfile = async function (username) {
 
 function setupProfileTool() {
     const searchBtn = document.getElementById('profile-search-btn');
-    const input = document.getElementById('profile-search-input');
+    const myProfileBtn = document.getElementById('profile-my-profile-btn');
 
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
             performProfileSearch(input.value);
+        });
+    }
+
+    if (myProfileBtn) {
+        myProfileBtn.addEventListener('click', () => {
+            const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+            if (globalUser) {
+                const name = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+                if (name && !name.startsWith('Guest_')) {
+                    if (input) input.value = name;
+                    performProfileSearch(name);
+                    return;
+                }
+            }
+            if (typeof window.refreshProfileTool === 'function') {
+                window.refreshProfileTool(true);
+            }
         });
     }
 
