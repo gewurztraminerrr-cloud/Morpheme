@@ -1417,7 +1417,9 @@ def get_user_timeout_status(username):
         next_duration_mins = 10 * (2 ** max(0, decayed_offenses))
         next_duration_str = format_duration_string(next_duration_mins)
         
-        is_to, diff_sec, rem_str, _, _ = check_user_timeout(user_id)
+        to_res = check_user_timeout(user_id)
+        is_to = to_res[0] if to_res else False
+        rem_str = to_res[2] if to_res and len(to_res) > 2 else ''
         return jsonify({
             'username': actual_name,
             'is_timed_out': is_to,

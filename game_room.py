@@ -332,12 +332,13 @@ class GameRoom:
         # Guard: Check user timeout
         if not is_ai and user_id:
             try:
-                is_to, _, rem_str, _, _ = check_user_timeout(user_id)
-                if is_to:
+                to_res = check_user_timeout(user_id)
+                if to_res and to_res[0]:
+                    rem_str = to_res[2] if len(to_res) > 2 else ''
                     print(f"[GameRoom] BLOCKED add_player: User {username} (ID: {user_id}) is timed out for {rem_str}")
                     return False
             except Exception as ex:
-                pass
+                print(f"[GameRoom] Error checking timeout in add_player: {ex}")
         
         with self._state_lock:
             # Always remove from spectators if adding as player
@@ -501,12 +502,13 @@ class GameRoom:
         """Add spectator to room"""
         if user_id:
             try:
-                is_to, _, rem_str, _, _ = check_user_timeout(user_id)
-                if is_to:
+                to_res = check_user_timeout(user_id)
+                if to_res and to_res[0]:
+                    rem_str = to_res[2] if len(to_res) > 2 else ''
                     print(f"[GameRoom] BLOCKED add_spectator: User {username} (ID: {user_id}) is timed out for {rem_str}")
                     return False
             except Exception as ex:
-                pass
+                print(f"[GameRoom] Error checking timeout in add_spectator: {ex}")
         
         # Always remove from active players if adding as spectator
         self.players = [p for p in self.players if str(p.user_id) != str(user_id)]
