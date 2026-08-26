@@ -1395,9 +1395,16 @@ def lift_timeout_api():
         if not row:
             return jsonify({'error': 'User not found'}), 404
         user_id, actual_name = row[0], row[1]
-        conn.execute("UPDATE users SET timeout_until = NULL WHERE id = ?", (user_id,))
+        conn.execute("""
+            UPDATE users 
+            SET timeout_until = NULL, timeout_offense_count = 0, last_timeout_at = NULL, timeout_reason = NULL 
+            WHERE id = ?
+        """, (user_id,))
         conn.commit()
-        return jsonify({'success': True, 'message': f"Timeout lifted for {actual_name}."})
+        return jsonify({
+            'success': True, 
+            'message': f"Timeout lifted for {actual_name}. Timeout offense history has been reset back to 10 minutes."
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

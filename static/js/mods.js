@@ -727,7 +727,7 @@ async function liftTimeout() {
         return;
     }
 
-    if (!confirm(`Lift active timeout for "${username}"?`)) {
+    if (!confirm(`Lift timeout for "${username}" and reset their offense record back to 10 minutes?`)) {
         return;
     }
 
@@ -741,7 +741,7 @@ async function liftTimeout() {
         if (data.success) {
             showModStatus(data.message, false, 'ban-status-area');
             const infoEl = document.getElementById('timeout-info-display');
-            if (infoEl) infoEl.innerHTML = `🔓 <strong>${username}</strong> timeout has been lifted.`;
+            if (infoEl) infoEl.innerHTML = `🔓 <strong>${username}</strong> timeout has been lifted and reset back to <strong>10 minutes</strong>.`;
             alert(data.message);
         } else {
             showModStatus(data.error || "Failed to lift timeout.", true, 'ban-status-area');
