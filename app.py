@@ -1216,21 +1216,28 @@ def parse_timeout_datetime(dt_str):
     return None
 
 
-def check_user_timeout(user_id):
+def check_user_timeout(user_id_or_name):
     """
     Checks if a user is currently under timeout.
     Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count, timeout_reason)
     """
-    if not user_id or user_id <= 0:
+    if not user_id_or_name:
         return False, 0, "", None, 0, None
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
         try:
-            row = conn.execute(
-                "SELECT timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ?",
-                (user_id,)
-            ).fetchone()
+            if str(user_id_or_name).isdigit():
+                row = conn.execute(
+                    "SELECT id, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ? OR username = ? COLLATE NOCASE",
+                    (int(user_id_or_name), str(user_id_or_name))
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT id, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE username = ? COLLATE NOCASE",
+                    (str(user_id_or_name),)
+                ).fetchone()
+
             if not row or not row['timeout_until']:
                 return False, 0, "", None, (row['timeout_offense_count'] if row else 0), None
             
@@ -1343,7 +1350,7 @@ def timeout_user_api():
 
 @app.route('/api/user/my_timeout_status', methods=['GET'])
 def get_my_timeout_status():
-    user_id = session.get('user_id')
+    user_id = session.get('user_id') or session.get('username')
     if not user_id:
         return jsonify({'timed_out': False, 'remaining': '', 'remaining_seconds': 0, 'reason': ''})
     is_to, diff_sec, rem_str, to_until, count, reason_val = check_user_timeout(user_id)
@@ -3931,7 +3938,7 @@ def create_room():
             return jsonify({'error': 'Not authenticated'}), 401
         
         # Timeout check
-        is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id'))
+        is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id') or session.get('username'))
         if is_to:
             r_text = reason_val or 'Moderator timeout'
             return jsonify({
@@ -4043,7 +4050,7 @@ def join_room(room_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     # Timeout check
-    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id'))
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id') or session.get('username'))
     if is_to:
         r_text = reason_val or 'Moderator timeout'
         return jsonify({

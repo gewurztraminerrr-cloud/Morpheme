@@ -99,6 +99,18 @@ async function enterLobbyRoom(rawBtn) {
             data = { error: txt };
         }
 
+        if (createResp.status === 403 && data && data.timed_out) {
+            const rText = data.timeout_reason || 'Moderator timeout';
+            const dText = data.remaining || 'a temporary timeout';
+            const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
+            if (window.showAlertModal) {
+                window.showAlertModal('Account Timed Out', msg, true);
+            } else {
+                alert('Account Timed Out\n\nReason: ' + rText + '\nTime Remaining: ' + dText);
+            }
+            return;
+        }
+
         if (createResp.ok && data && data.success && data.room_id) {
             window.currentRoomId = data.room_id;
             localStorage.setItem('last_joined_room', data.room_id);
