@@ -117,14 +117,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33156" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33156" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33156">
-    <link rel="stylesheet" href="/css/lobby.css?v=33156">
-    <link rel="stylesheet" href="/css/play.css?v=33156">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33156">
-    <link rel="stylesheet" href="/css/forum.css?v=33156">
-    <link rel="stylesheet" href="/css/donate.css?v=33156">
+    <link rel="preload" href="/css/style.css?v=33157" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33157" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=33157">
+    <link rel="stylesheet" href="/css/lobby.css?v=33157">
+    <link rel="stylesheet" href="/css/play.css?v=33157">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33157">
+    <link rel="stylesheet" href="/css/forum.css?v=33157">
+    <link rel="stylesheet" href="/css/donate.css?v=33157">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -1158,7 +1158,7 @@
         <audio id="triple-music" src="/music/triple.mp3" preload="none" loop></audio>
 
         <script>
-            // Immediate Cross-Platform Lobby Music Initiation (when ENTER LOBBY button is present)
+            // Immediate Cross-Platform Lobby Music Initiation (only on ENTER LOBBY screen or in Main Lobby)
             (function() {
                 var audio = document.getElementById('lobby-music');
                 if (!audio) return;
@@ -1166,28 +1166,39 @@
                 audio.loop = true;
 
                 window.playLobbyAudioImmediate = function() {
-                    if (audio && audio.paused) {
-                        try {
-                            var p = audio.play();
-                            if (p !== undefined) {
-                                p.then(function() {
-                                    console.log('[LobbyMusic] Playback started via immediate trigger.');
-                                }).catch(function(e) {});
-                            }
-                        } catch (e) {}
+                    if (!audio) return;
+                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
+                    var onLobby = (activePage === 'page-lobby');
+                    var onLoading = (activePage === 'page-loading');
+                    var onPlay = (activePage === 'page-play');
+                    var inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+                    
+                    if ((onLobby || onLoading) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
+                        if (audio.paused) {
+                            try {
+                                var p = audio.play();
+                                if (p !== undefined) {
+                                    p.catch(function(e) {});
+                                }
+                            } catch (e) {}
+                        }
+                    } else {
+                        if (!audio.paused) {
+                            audio.pause();
+                        }
                     }
                 };
 
-                // 1. Attempt immediate programmatic play (for permissive browsers, PWAs, Electron, WebViews)
+                // 1. Attempt immediate programmatic play ONLY on initial page load if loading / gateway is active
                 function tryAutoplay() {
                     try {
-                        var p = audio.play();
-                        if (p !== undefined) {
-                            p.then(function() {
-                                console.log('[LobbyMusic] Initial autoplay succeeded.');
-                            }).catch(function(err) {
-                                console.log('[LobbyMusic] Autoplay waiting for user interaction:', err ? err.name : '');
-                            });
+                        var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
+                        var inGameRoom = (activePage === 'page-play') || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+                        if ((activePage === 'page-loading' || activePage === 'page-lobby' || !activePage) && !inGameRoom) {
+                            var p = audio.play();
+                            if (p !== undefined) {
+                                p.catch(function(err) {});
+                            }
                         }
                     } catch (e) {}
                 }
@@ -6288,16 +6299,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33127"></script>
-    <script src="/js/app.js?v=33156"></script>
-    <script src="/js/lobby.js?v=33156"></script>
-    <script src="/js/play.js?v=33156"></script>
-    <script src="/js/tournaments.js?v=33156"></script>
-    <script src="/js/leaderboard.js?v=33156"></script>
-    <script src="/js/tools.js?v=33156"></script>
-    <script src="/js/mouse_selection.js?v=33156"></script>
-    <script src="/js/mods.js?v=33156"></script>
-    <script src="/js/private_matches.js?v=33156"></script>
-    <script src="/js/donate.js?v=33156"></script>
+    <script src="/js/app.js?v=33157"></script>
+    <script src="/js/lobby.js?v=33157"></script>
+    <script src="/js/play.js?v=33157"></script>
+    <script src="/js/tournaments.js?v=33157"></script>
+    <script src="/js/leaderboard.js?v=33157"></script>
+    <script src="/js/tools.js?v=33157"></script>
+    <script src="/js/mouse_selection.js?v=33157"></script>
+    <script src="/js/mods.js?v=33157"></script>
+    <script src="/js/private_matches.js?v=33157"></script>
+    <script src="/js/donate.js?v=33157"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

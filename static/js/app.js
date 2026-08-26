@@ -573,11 +573,18 @@ function handleLobbyMusicState() {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onLobby = (activePage === 'page-lobby');
     const onLoading = (activePage === 'page-loading');
+    const onPlay = (activePage === 'page-play');
+    const inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
-    const shouldPlay = (onLobby || onLoading) && lobbyMusicSetting;
+    
+    // STRICT REQUIREMENT: Only play the Lobby music if the user is on the ENTER LOBBY screen or in the Main Lobby!
+    const shouldPlay = (onLobby || onLoading) && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
+        activePage,
         onLobby,
+        onLoading,
+        inGameRoom,
         lobbyMusicSetting,
         shouldPlay,
         paused: lobbyMusic.paused,
@@ -590,7 +597,7 @@ function handleLobbyMusicState() {
             playLobbyMusicHelper(lobbyMusic, null);
         }
     } else {
-        console.log('[LobbyMusic] shouldPlay is false, ensuring audio is paused.');
+        console.log('[LobbyMusic] shouldPlay is false (not on ENTER LOBBY or Main Lobby), ensuring audio is paused.');
         if (!lobbyMusic.paused) {
             lobbyMusic.pause();
             console.log('[LobbyMusic] Paused active playback.');
@@ -604,19 +611,19 @@ function playMusicOnFirstInteraction() {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onLobby = (activePage === 'page-lobby');
     const onLoading = (activePage === 'page-loading');
-    const onLogin = (activePage === 'page-login');
+    const onPlay = (activePage === 'page-play');
+    const inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
-    const shouldPlay = (onLobby || onLoading) && !onLogin && lobbyMusicSetting;
+    const shouldPlay = (onLobby || onLoading) && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] Gesture state evaluation:', {
         onLobby,
         onLoading,
-        onLogin,
+        inGameRoom,
         lobbyMusicSetting,
         shouldPlay
     });
 
-    // Only attempt to play if we are in the lobby or loading, but NOT on the login page!
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
@@ -624,6 +631,11 @@ function playMusicOnFirstInteraction() {
             playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
         } else {
             console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
+        }
+    } else {
+        const lobbyMusic = document.getElementById('lobby-music');
+        if (lobbyMusic && !lobbyMusic.paused) {
+            lobbyMusic.pause();
         }
     }
 }
