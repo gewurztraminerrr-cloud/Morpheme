@@ -2197,6 +2197,8 @@ class GameRoom:
                                             # Reset pool AFTER successful distribution
                                             self.abandonment_bounty = 0
                         except Exception as e:
+                            print(f"[GameRoom] Rating error: {e}")
+
                         # Save history and word tally immediately at the start of intermission
                         global _room_manager_instance
                         rm = _room_manager_instance
