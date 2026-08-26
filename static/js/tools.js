@@ -679,7 +679,7 @@ window.showMiniProfile = async function (username) {
                 msgBtn.onclick = () => {
                     modal.classList.add('hidden');
                     modal.classList.remove('forced-show');
-                    window.openPrivateChat(data.username, true);
+                    window.openPrivateChat(data.username, false);
                 };
                 const friendBtn = document.getElementById('mini-profile-friend');
                 if (friendBtn) {
@@ -1403,7 +1403,7 @@ async function renderProfile(user) {
             const newMsgBtn = messageBtn.cloneNode(true);
             messageBtn.parentNode.replaceChild(newMsgBtn, messageBtn);
             newMsgBtn.addEventListener('click', () => {
-                openPrivateChat(user.username, true);
+                openPrivateChat(user.username, false);
             });
         } else {
             messageBtn.classList.add('hidden');
@@ -4592,7 +4592,6 @@ async function openPrivateChat(username, clearHistory = false) {
     currentChatTarget = username;
 
     if (clearHistory) {
-        // Aggressively clear messages before loading to ensure a fresh session
         try {
             await fetch(`/api/pm/clear/${encodeURIComponent(username)}`, { method: 'POST' });
         } catch (err) {
@@ -4606,13 +4605,17 @@ async function openPrivateChat(username, clearHistory = false) {
         history.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Loading conversation...</div>';
     }
 
-    document.getElementById('pm-target-name').innerText = username;
-    document.getElementById('private-chat-modal').classList.remove('hidden');
+    const targetNameEl = document.getElementById('pm-target-name');
+    if (targetNameEl) targetNameEl.innerText = username;
+
+    const chatModal = document.getElementById('private-chat-modal');
+    if (chatModal) {
+        chatModal.classList.remove('hidden');
+        chatModal.style.display = 'block';
+    }
 
     // Update synchronized state to reflect we've interacted with this
     const pmState = getPMState();
-    // We don't know the exact count yet, but we've seen the "latest" notification for this person
-    // Incrementing or just setting context to something that won't trigger a re-notify
     pmState.lastNotifiedContext = `OPEN:${username}`;
     pmState.activeChat = username;
     setPMState(pmState);
@@ -4621,7 +4624,8 @@ async function openPrivateChat(username, clearHistory = false) {
     startPMPolling();
 
     // Auto-focus input
-    document.getElementById('pm-input').focus();
+    const pmInput = document.getElementById('pm-input');
+    if (pmInput) pmInput.focus();
 }
 
 async function refreshConversation() {
@@ -4640,21 +4644,31 @@ async function refreshConversation() {
             return;
         }
 
-        if (data.messages && data.messages.length > 0) {
+        if (data && Array.isArray(data.messages)) {
             renderPMHistory(data.messages);
 
             // Update high-water mark for notifications
-            const latest = data.messages[data.messages.length - 1];
-            if (latest && latest.timestamp) {
-                const pmState = getPMState();
-                if (!pmState.lastTimestamp || latest.timestamp > pmState.lastTimestamp) {
-                    pmState.lastTimestamp = latest.timestamp;
-                    setPMState(pmState);
+            if (data.messages.length > 0) {
+                const latest = data.messages[data.messages.length - 1];
+                if (latest && latest.timestamp) {
+                    const pmState = getPMState();
+                    if (!pmState.lastTimestamp || latest.timestamp > pmState.lastTimestamp) {
+                        pmState.lastTimestamp = latest.timestamp;
+                        setPMState(pmState);
+                    }
                 }
             }
+        } else if (data && data.error) {
+            history.innerHTML = `<div style="text-align:center; color:#ef4444; opacity:0.8; padding:20px;">${data.error}</div>`;
+        } else {
+            renderPMHistory([]);
         }
     } catch (err) {
         console.error("Failed to fetch conversation:", err);
+        const history = document.getElementById('pm-history');
+        if (history && history.dataset.chatTarget === targetAtStart) {
+            history.innerHTML = '<div style="text-align:center; opacity:0.4; padding:20px;">No messages yet. Say hello!</div>';
+        }
     }
 }
 
