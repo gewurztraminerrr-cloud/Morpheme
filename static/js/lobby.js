@@ -1130,9 +1130,12 @@ function updateLobbyButtons(stats, mode = 'all') {
         const rawText = btn.textContent;
         const normalizedText = rawText.replace(/\s+/g, ' ').trim();
 
-        // Replace [N] with current count — always, so counts go down as well as up
+        // Replace existing count [N] or append new count
+        const countRegex = /\s*\[\d+\]\s*$/;
         let newNormalized;
-        if (/\[\d+\]/.test(normalizedText)) {
+        if (countRegex.test(normalizedText)) {
+            newNormalized = normalizedText.replace(countRegex, ` [${count}]`);
+        } else if (/\[\d+\]/.test(normalizedText)) {
             newNormalized = normalizedText.replace(/\[\d+\]/, `[${count}]`);
         } else {
             newNormalized = `${normalizedText} [${count}]`;
