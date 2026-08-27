@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `cf14e03038676d1e4348fa45464fb566e133e9d8` (`cf14e03`)
+* **Latest Commit ID**: `54791771142fc7d6205845c43d8376997b5f1f9d` (`5479177`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,15 +17,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. PE $\ge 2.0$ Trophy Award & Immediate Intermission Removal Lifecycle (`game_room.py`, `static/js/play.js`, `templates/index.html`)
+### A. PE $\ge 2.0$ Trophy Award & Next-Round Removal Lifecycle (`game_room.py`, `static/js/play.js`, `templates/index.html`)
 - **Direct PE $\ge 2.0$ Threshold**:
-  - Configured trophy icon 🏆 award to trigger when a player's Performance Efficiency ($\text{PE}$) is **2.0 or greater** ($\text{PE} \ge 2.0$).
-  - $\text{PE}$ is computed as the player's actual round score divided by their expected score based on ratings across active round participants.
-- **Trophy Persistence & Start-of-Intermission Removal**:
-  - Trophies awarded during an intermission remain visible in the bottom-left corner of the player card throughout the subsequent active round.
-  - At the exact start of the following intermission, the round is evaluated:
-    - If the user's $\text{PE}$ in that round was $< 2.0$, or if the user did not play (DNP / score 0), the trophy icon is **immediately removed at the start of that intermission**.
-    - If the user achieves $\text{PE} \ge 2.0$ again, the trophy icon remains active for the new intermission and following round.
+  - Configured trophy icon 🏆 award to trigger when a player's Performance Efficiency ($\text{PE}$) is **2.0 or greater** ($\text{PE} \ge 2.0$) in a multi-player round.
+- **Intermission Display & Start-of-Round Removal**:
+  - Trophies awarded are displayed during that round's **intermission** in the bottom-left corner of the player card.
+  - At the **start of the next round**, the trophy icon is automatically cleared from every user who had it displayed during the previous intermission.
 
 ### B. Level Alignment for Rotate & Transpose Buttons on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Fixed Button Offset / Vertical Shifting on Press**:
