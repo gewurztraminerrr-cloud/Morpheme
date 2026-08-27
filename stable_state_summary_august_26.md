@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `0c21fca9d3ce1c8d3eead5c2a13ba51dc8b45dc7` (`0c21fca`)
+* **Latest Commit ID**: `b0a2ca7d75df0aa49339e1a8a25c7fa35606d203` (`b0a2ca7`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Combo Checker Input Re-Focus & Throttled Scrollbar Layout Optimization (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
-- **Eliminated Black Screen on Textbox Re-Focus**:
-  - Removed synchronous layout-thrashing `MutationObserver` loops across all 20+ MP and LIC result column scrollbars and throttled thumb updates through `requestAnimationFrame()`.
-  - Added GPU composite layer containment (`contain: content; transform: translateZ(0);`) on `.combo-results-container` and `contain: layout paint;` on `#tool-combo.tool-pane.active`.
-  - Set `font-size: 16px !important;` on `#combo-input` to eliminate iOS Safari auto-zoom recalculations upon tapping into the input.
+### A. Combo Checker Virtualized Column Rendering & Infinite Scrolling (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Eliminated 3-Second Mobile Viewport Freeze on Re-Focus**:
+  - Replaced dumping 30,000–50,000 simultaneous DOM nodes in MP and LIC result columns with a fast, chunked rendering architecture (100 words initially rendered per column) and smooth infinite scrolling upon reaching the bottom of a column.
+  - Added `content-visibility: auto; contain-intrinsic-size: 0 28px;` to `.group-row` to bypass layout calculation for off-screen table rows.
+  - Throttled custom scrollbars with `requestAnimationFrame()` and removed deep DOM mutation observers.
+  - Kept `#combo-input` font-size at `16px` to prevent iOS Safari auto-zoom recalculations.
 
 ### B. Combo Checker Textbox & Button Height Sizing on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Uniform 46px Height Matching the "Check" Button**:
