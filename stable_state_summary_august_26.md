@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `ee0d81c5d0ce13d7890b0e271eb5b21ea7f7223b` (`ee0d81c`)
+* **Latest Commit ID**: `74b32463e2643a6d713c7dbba67035659fb2ee1c` (`74b3246`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -21,6 +21,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - **Resolved Firefox & Safari Audio Gatekeeper Block**:
   - Corrected state evaluation so historical `localStorage.getItem('last_joined_room')` keys no longer falsely flag the user as actively in a game room during the loading/gateway phase.
   - Attached eager capture triggers (`pointerenter`, `pointerdown`, `touchstart`, `mouseover`, `click`) directly to `#btn-enter-lobby-gateway` and the gateway container to immediately unlock and play Lobby music on any user gesture across Safari, Firefox, and Chrome.
+  - Added Web Audio Context unlock (`AudioContext.resume()`) and multi-lifecycle event triggers (`canplay`, `loadeddata`, `DOMContentLoaded`, `load`, `focus`, `visibilitychange`) so Safari and Firefox immediately engage music playback upon presentation of the "ENTER LOBBY" button.
 
 ### B. Desktop Color Chart Repositioning & Downward Mini-Popups (`static/css/style.css`, `templates/index.html`)
 - **Color Chart Relocation**:
