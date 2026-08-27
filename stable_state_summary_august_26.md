@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `e6bcfc90558b09335ea202970c6bc1e285d0fe8a` (`e6bcfc9`)
+* **Latest Commit ID**: `a0b6a2829ea5b83983226a0b940a454d6f6e80b2` (`a0b6a28`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Windowed Chunk Rendering in Tools Full List Modal (`static/js/tools.js`, `templates/index.html`)
-- **Eliminated Mobile Black Screen / GPU Compositor Crash on Search**:
-  - Replaced the batch appending mechanism with **Windowed Chunk Rendering** in the **View Full List** modal.
-  - Previously, searching a word deep in lists of 100,000–250,000 words attempted to synchronously create and insert up to 200,000 DOM elements in a single tick, causing mobile WebKit/Blink GPU compositor out-of-memory crashes and temporary black screens.
-  - Now renders a focused window of ~500 items around the searched word instantly (< 2ms), supporting bidirectional infinite scrolling (up and down) and instant pulse highlighting with zero memory spikes.
+### A. Windowed Chunk Rendering & Seamless Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Eliminated Mobile Black Screen & Flash on Word Search**:
+  - Replaced bulk DOM wipes with seamless near-range appending (`appendNextFullListBatch` / `prependPrevFullListBatch`) and windowed focused chunks (~500 words) for distant queries.
+  - Isolated virtual keyboard dismissal from container scrolling by executing smooth scroll jumps inside `requestAnimationFrame`, preventing iOS Safari viewport height collision flashes.
+  - Added CSS layout and paint containment (`contain: content; transform: translateZ(0);`) on `#full-list-modal-results` to retain GPU compositing surfaces without dropping frames.
+  - Optimized the `.jump-target-pulse` animation to use GPU-friendly background/outline transitions instead of intensive multi-layer box shadows.
 
 ### B. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
 - **Animated Panel Sliding**:
