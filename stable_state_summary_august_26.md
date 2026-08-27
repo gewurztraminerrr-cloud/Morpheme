@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `604db6449176378e8749f74a88f7c9e0cfd17ebf` (`604db64`)
+* **Latest Commit ID**: `7024a4eccd281699709214736f8664ea0e9fcaea` (`7024a4e`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -20,8 +20,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 ### A. Cross-Browser Lobby Music on "ENTER LOBBY" Gateway (`static/js/app.js`, `templates/index.html`)
 - **Resolved Firefox & Safari Audio Gatekeeper Block**:
   - Added native `autoplay` attribute directly to the `#lobby-music` `<audio>` element so browsers with native media autoplay policies initiate playback immediately during HTML parsing.
-  - Corrected state evaluation so historical `localStorage.getItem('last_joined_room')` keys no longer falsely flag the user as actively in a game room during the loading/gateway phase.
-  - Attached eager capture triggers (`pointerenter`, `pointerdown`, `touchstart`, `mouseover`, `click`) directly to `#btn-enter-lobby-gateway` and the gateway container to immediately unlock and play Lobby music on any user gesture across Safari, Firefox, and Chrome.
+  - Attached eager capture triggers (`pointerenter`, `pointerdown`, `touchstart`, `mouseover`, `click`) directly to `#btn-enter-lobby-gateway`, `#gateway-housing`, and the `#page-loading` container to immediately unlock and play Lobby music on any user gesture across Safari, Firefox, and Chrome.
   - Added Web Audio Context unlock (`AudioContext.resume()`) and multi-lifecycle event triggers (`canplay`, `loadeddata`, `DOMContentLoaded`, `load`, `focus`, `visibilitychange`) so Safari and Firefox immediately engage music playback upon presentation of the "ENTER LOBBY" button.
 
 ### B. Desktop Color Chart Repositioning & Downward Mini-Popups (`static/css/style.css`, `templates/index.html`)
