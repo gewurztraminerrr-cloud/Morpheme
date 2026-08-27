@@ -314,6 +314,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.classList.remove('loading-active');
                 handleLobbyMusicState();
 
+                // Trigger playback on any pointer/touch/hover event on the gateway button or container for Safari/Firefox
+                const audioTriggers = ['pointerenter', 'pointerdown', 'touchstart', 'mousedown', 'mouseover', 'focus', 'click'];
+                audioTriggers.forEach(evt => {
+                    gatewayBtn.addEventListener(evt, () => {
+                        if (typeof window.playLobbyAudioImmediate === 'function') {
+                            window.playLobbyAudioImmediate();
+                        } else {
+                            handleLobbyMusicState();
+                        }
+                    }, { passive: true });
+                    gatewayCont.addEventListener(evt, () => {
+                        if (typeof window.playLobbyAudioImmediate === 'function') {
+                            window.playLobbyAudioImmediate();
+                        } else {
+                            handleLobbyMusicState();
+                        }
+                    }, { passive: true });
+                });
+
                 // Customize button text based on destination
                 let targetPageId = 'page-lobby';
                 let targetNavName = 'lobby';
@@ -574,11 +593,11 @@ function handleLobbyMusicState() {
     const onLobby = (activePage === 'page-lobby');
     const onLoading = (activePage === 'page-loading');
     const onPlay = (activePage === 'page-play');
-    const inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+    const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
     // STRICT REQUIREMENT: Only play the Lobby music if the user is on the ENTER LOBBY screen or in the Main Lobby!
-    const shouldPlay = (onLobby || onLoading) && !inGameRoom && lobbyMusicSetting;
+    const shouldPlay = (onLobby || onLoading || !activePage) && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         activePage,
@@ -612,9 +631,9 @@ function playMusicOnFirstInteraction() {
     const onLobby = (activePage === 'page-lobby');
     const onLoading = (activePage === 'page-loading');
     const onPlay = (activePage === 'page-play');
-    const inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+    const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
-    const shouldPlay = (onLobby || onLoading) && !inGameRoom && lobbyMusicSetting;
+    const shouldPlay = (onLobby || onLoading || !activePage) && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] Gesture state evaluation:', {
         onLobby,

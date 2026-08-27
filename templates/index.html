@@ -1304,9 +1304,9 @@
                     var onLobby = (activePage === 'page-lobby');
                     var onLoading = (activePage === 'page-loading');
                     var onPlay = (activePage === 'page-play');
-                    var inGameRoom = onPlay || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+                    var inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
                     
-                    if ((onLobby || onLoading) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
+                    if ((onLobby || onLoading || !activePage) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
                         if (audio.paused) {
                             try {
                                 var p = audio.play();
@@ -1315,18 +1315,18 @@
                                 }
                             } catch (e) {}
                         }
-                    } else {
+                    } else if (inGameRoom || (!onLobby && !onLoading && activePage)) {
                         if (!audio.paused) {
                             audio.pause();
                         }
                     }
                 };
 
-                // 1. Attempt immediate programmatic play ONLY on initial page load if loading / gateway is active
+                // 1. Attempt immediate programmatic play on initial page load if loading / gateway is active
                 function tryAutoplay() {
                     try {
                         var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
-                        var inGameRoom = (activePage === 'page-play') || !!window.currentRoomId || !!localStorage.getItem('last_joined_room') || !!localStorage.getItem('private_match_active') || !!localStorage.getItem('tournament_play_active');
+                        var inGameRoom = (activePage === 'page-play') || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
                         if ((activePage === 'page-loading' || activePage === 'page-lobby' || !activePage) && !inGameRoom) {
                             var p = audio.play();
                             if (p !== undefined) {
@@ -1337,8 +1337,8 @@
                 }
                 tryAutoplay();
 
-                // 2. Immediate capture listener on first user interaction (touch, tap, hover, click, keydown)
-                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'mousemove', 'keydown', 'click', 'focus'];
+                // 2. Immediate capture listener on first user interaction across Safari/Firefox/Chrome
+                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'pointerenter', 'mousemove', 'keydown', 'click', 'focus'];
                 function unlockAndPlayAudio() {
                     window.playLobbyAudioImmediate();
                 }
@@ -6478,7 +6478,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
-    <script src="/js/app.js?v=33180"></script>
+    <script src="/js/app.js?v=33181"></script>
     <script src="/js/lobby.js?v=33189"></script>
     <script src="/js/play.js?v=33181"></script>
     <script src="/js/tournaments.js?v=33172"></script>
