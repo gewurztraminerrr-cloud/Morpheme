@@ -2443,12 +2443,13 @@ body.theme-light-brown .word-item.missed {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.15);
     color: var(--text-primary);
-    padding: 14px 20px;
-    border-radius: 12px;
-    font-size: 1.2rem;
+    padding: 10px 18px;
+    height: 46px;
+    border-radius: 8px;
+    font-size: 1.05rem;
     text-transform: uppercase;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     box-sizing: border-box;
 }
 
@@ -2526,9 +2527,10 @@ body.theme-light-brown .word-item.missed {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     color: var(--text-primary);
-    padding: 14px 18px;
-    border-radius: 12px;
-    font-size: 1.1rem;
+    padding: 10px 16px;
+    height: 46px;
+    border-radius: 8px;
+    font-size: 1rem;
     cursor: pointer;
     box-sizing: border-box;
 }
@@ -2537,13 +2539,17 @@ body.theme-light-brown .word-item.missed {
     background: linear-gradient(135deg, #4ade80, #22c55e);
     border: none;
     color: var(--text-primary);
-    padding: 14px 24px;
+    padding: 0 24px;
+    height: 46px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     transition: transform 0.1s;
     box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #combo-search-btn:active {
@@ -5693,10 +5699,18 @@ input[type=range]::-moz-range-track {
         margin-top: 15px !important;
     }
 
-    /* Combo input padding fix */
-    #combo-input {
-        padding: 12px 15px !important;
-        font-size: 1.1rem !important;
+    /* Combo Checker inputs mobile sizing fix */
+    #combo-input,
+    #combo-dict,
+    #combo-search-btn {
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        padding: 10px 16px !important;
+        font-size: 1rem !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     /* Combo Checker MP and LIC Tables Vertical Height Fix for Mobile */
