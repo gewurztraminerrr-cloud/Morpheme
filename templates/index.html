@@ -392,12 +392,14 @@
                         // Client-side safety: never show rooms with no players
                         rooms = rooms.filter(function(r) { return r.players && r.players.length > 0; });
                         // Update the Show Rooms [N] button count directly from rooms data
-                        var totalPlayers = rooms.reduce(function(sum, r) { return sum + (r.players ? r.players.length : 0); }, 0);
-                        document.querySelectorAll('.game-btn[data-game="' + gameType + '"][data-board="' + boardDimensions + '"][data-time="' + timeLimit + '"]').forEach(function(btn) {
-                            var cur = btn.textContent;
-                            var upd = cur.replace(/\[\d+\]/, '[' + totalPlayers + ']');
-                            if (cur !== upd) btn.textContent = upd;
-                        });
+                        if (gameType !== 'accumulative') {
+                            var totalPlayers = rooms.reduce(function(sum, r) { return sum + (r.players ? r.players.length : 0); }, 0);
+                            document.querySelectorAll('.game-btn[data-game="' + gameType + '"][data-board="' + boardDimensions + '"][data-time="' + timeLimit + '"]').forEach(function(btn) {
+                                var cur = btn.textContent;
+                                var upd = cur.replace(/\[\d+\]/, '[' + totalPlayers + ']');
+                                if (cur !== upd) btn.textContent = upd;
+                            });
+                        }
                         var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
                         if (targetContainer) {
                             if (rooms.length === 0) {
@@ -1399,7 +1401,7 @@
         </div>
 
         <script>
-            // Immediate 0ms Lobby Stats Hydration
+            // Immediate 0ms Lobby Stats Hydration & DOM-Ready Handler
             (function() {
                 window.applyLobbyStatsToButtons = function(stats) {
                     if (!stats) return;
@@ -1413,12 +1415,13 @@
                         var key = game + '|' + board + '|' + time;
                         var count = (stats[key] !== undefined) ? stats[key] : 0;
                         var rawText = btn.textContent || '';
-                        var normalizedText = rawText.replace(/\s+/g, ' ').trim();
-                        var newNormalized = /\[\d+\]/.test(normalizedText)
-                            ? normalizedText.replace(/\[\d+\]/, '[' + count + ']')
-                            : (normalizedText + ' [' + count + ']');
-                        if (normalizedText !== newNormalized) {
-                            btn.textContent = newNormalized;
+                        var baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
+                        if (!baseText) {
+                            baseText = (game === 'accumulative') ? 'Start' : 'Show Rooms';
+                        }
+                        var targetText = baseText + ' [' + count + ']';
+                        if (rawText.trim() !== targetText) {
+                            btn.textContent = targetText;
                         }
                     }
                 };
@@ -1428,15 +1431,21 @@
                     localStorage.removeItem('morpheme_cached_lobby_stats');
                 } catch(e) {}
 
-                // Fetch authoritative live stats immediately on startup
-                fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data && data.stats) {
-                            window.applyLobbyStatsToButtons(data.stats);
-                        }
-                    })
-                    .catch(function() {});
+                function fetchInitialStats() {
+                    fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data && data.stats) {
+                                window.applyLobbyStatsToButtons(data.stats);
+                            }
+                        })
+                        .catch(function() {});
+                }
+
+                fetchInitialStats();
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fetchInitialStats);
+                }
             })();
 
             window.handleEnterLobbyClick = function(btn, evt) {
@@ -4685,12 +4694,11 @@
                         <button class="faq-nav-link" data-target="faq-tools-position">Does using Tools tab while in a room affect your position in the room?</button>
                         <button class="faq-nav-link" data-target="faq-zoom">The features seem to be oversized or undersized.</button>
                         <button class="faq-nav-link" data-target="faq-active-rooms-guide">How do Active Rooms (Open Rooms, Closed Rooms, Spectating, Refresh, and My Rating) work in the Lobby?</button>
+                        <button class="faq-nav-link" data-target="faq-slide-neighboring-windows">It's difficult to slide over to neighboring windows in game rooms. Is there an easier way to do this?</button>
                     </div>
                 </div>
 
                 <div class="faq-container">
-                    <!-- Q_counts -->
-                    <div class="faq-item" id="faq-registered-online">
                     <!-- Q_counts -->
                     <div class="faq-item" id="faq-registered-online">
                         <div class="faq-question">How many players are currently registered and online?</div>
@@ -5436,6 +5444,13 @@
                                 <li><strong>Room Full Notification:</strong> If an open room reaches maximum capacity (8 players) right before you click Join, a notification will inform you that the room has become full and prompt you to press Refresh to update the list of Open Rooms and Closed Rooms.</li>
                                 <li><strong>Proximity & Average Ratings:</strong> You can sort rooms by closeness to an average rating using the search input, or click <strong>My Rating</strong> to sort active rooms closest to your rating in that specific configuration.</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-slide-neighboring-windows">
+                        <div class="faq-question">It's difficult to slide over to neighboring windows in game rooms. Is there an easier way to do this?</div>
+                        <div class="faq-answer">
+                            <p>The grey bar along the bottom not only is pressable, but swipeable as well. Get into the habit of swiping across or pressing on the text on it and the navigation eventually becomes instinctual!</p>
                         </div>
                     </div>
                 </div>
@@ -6464,7 +6479,7 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
     <script src="/js/app.js?v=33180"></script>
-    <script src="/js/lobby.js?v=33188"></script>
+    <script src="/js/lobby.js?v=33189"></script>
     <script src="/js/play.js?v=33180"></script>
     <script src="/js/tournaments.js?v=33172"></script>
     <script src="/js/leaderboard.js?v=33172"></script>

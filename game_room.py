@@ -1410,7 +1410,7 @@ class GameRoom:
                 _diff     = self.spinner_params.get('difficulty', 'Medium')    if isinstance(self.spinner_params, dict) else 'Medium'
                 _bw_len   = self.spinner_params.get('bonus_word_length', 8)    if isinstance(self.spinner_params, dict) else 8
                 _dims     = self.board_dimensions
-                _bg       = self.board_generator
+                _bg       = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
                 _room_ref = self
 
                 def _stage_board(popped):
@@ -1839,7 +1839,7 @@ class GameRoom:
                 
                 # Set up active round variables
                 self.current_board_format = new_sp['board_format']
-                self.current_word_count_range = wc_lbl
+                self.current_word_count_range = wc_label
                 self.current_difficulty = new_sp['difficulty']
                 self.current_dictionary = new_sp['dictionary']
                 self.current_min_length = new_sp['min_word_length']

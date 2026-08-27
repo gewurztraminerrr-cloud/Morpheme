@@ -530,7 +530,7 @@ function setupLobbyEvents() {
                 joinBtn.style.opacity = '1';
                 joinBtn.style.pointerEvents = 'auto';
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-            }    }
+            }
             return; // Handled
         }
     });
@@ -809,16 +809,18 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         rooms = rooms.filter(room => room.players && room.players.length > 0);
 
         // Directly update the Show Rooms [N] button for this config from the rooms data we already have.
-        // This is more reliable than a separate stats polling interval.
-        const totalPlayers = rooms.reduce((sum, r) => sum + (r.players ? r.players.length : 0), 0);
-        document.querySelectorAll(
-            `.game-btn[data-game="${gameType}"][data-board="${boardDimensions}"][data-time="${timeLimit}"]`
-        ).forEach(btn => {
-            const rawText = btn.textContent;
-            const normalizedText = rawText.replace(/\s+/g, ' ').trim();
-            const newNormalized = normalizedText.replace(/\[\d+\]/, `[${totalPlayers}]`);
-            if (normalizedText !== newNormalized) btn.textContent = newNormalized;
-        });
+        // This is more reliable than a separate stats polling interval for custom non-accumulative rooms.
+        if (gameType !== 'accumulative') {
+            const totalPlayers = rooms.reduce((sum, r) => sum + (r.players ? r.players.length : 0), 0);
+            document.querySelectorAll(
+                `.game-btn[data-game="${gameType}"][data-board="${boardDimensions}"][data-time="${timeLimit}"]`
+            ).forEach(btn => {
+                const rawText = btn.textContent;
+                const normalizedText = rawText.replace(/\s+/g, ' ').trim();
+                const newNormalized = normalizedText.replace(/\[\d+\]/, `[${totalPlayers}]`);
+                if (normalizedText !== newNormalized) btn.textContent = newNormalized;
+            });
+        }
 
         // Ensure we target the fresh active container element right before DOM mutation
         roomsContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
@@ -1135,7 +1137,10 @@ function updateLobbyButtons(stats, mode = 'all') {
         const count = (stats && stats[key] !== undefined) ? stats[key] : 0;
 
         const rawText = btn.textContent || '';
-        const baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
+        let baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
+        if (!baseText) {
+            baseText = (game === 'accumulative') ? 'Start' : 'Show Rooms';
+        }
         const targetText = `${baseText} [${count}]`;
 
         if (rawText.trim() !== targetText) {

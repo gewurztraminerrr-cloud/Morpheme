@@ -420,23 +420,27 @@ def enforce_one_month_session():
 
 def ensure_guest_session():
     if 'user_id' not in session:
-        try:
-            import random, string
-            guest_id = random.randint(10000, 99999)
-            guest_username = f'Guest_{guest_id}'
-            dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-            password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
-            with get_db() as conn:
-                cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (guest_username, password_hash))
-                new_user_id = cursor.lastrowid
-            session['user_id'] = new_user_id
-            session['username'] = guest_username
-            session['is_guest'] = True
-            session['_morpheme_login_time'] = time.time()
-            session.permanent = True
-            print(f"[AutoGuest] Automatically initialized guest session for user: {guest_username}")
-        except Exception as e:
-            print(f"[AutoGuest] Error creating guest session: {e}")
+        import random, string
+        for attempt in range(10):
+            try:
+                guest_id = random.randint(10000, 99999)
+                guest_username = f'Guest_{guest_id}'
+                dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+                password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
+                with get_db() as conn:
+                    cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (guest_username, password_hash))
+                    new_user_id = cursor.lastrowid
+                session['user_id'] = new_user_id
+                session['username'] = guest_username
+                session['is_guest'] = True
+                session['_morpheme_login_time'] = time.time()
+                session.permanent = True
+                print(f"[AutoGuest] Automatically initialized guest session for user: {guest_username}")
+                break
+            except Exception as e:
+                if 'UNIQUE' in str(e) and attempt < 9:
+                    continue
+                print(f"[AutoGuest] Error creating guest session (attempt {attempt}): {e}")
 
 @app.before_request
 def load_user():
@@ -3129,33 +3133,36 @@ def guest_login():
 
     import random
     import string
-    # Generate unique guest username
-    guest_id = random.randint(10000, 99999)
-    guest_username = f'Guest_{guest_id}'
     
-    # Create DB entry for guest so PMs work (they need a real ID in the users table)
-    # Give them a random password hash that they'll never know/need
-    dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-    password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
-    
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    try:
-        cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
-                             (guest_username, password_hash))
-        new_user_id = cursor.lastrowid
-        conn.commit()
+    for attempt in range(10):
+        guest_id = random.randint(10000, 99999)
+        guest_username = f'Guest_{guest_id}'
         
-        session['user_id'] = new_user_id
-        session['username'] = guest_username
-        session['is_guest'] = True
-        session['_morpheme_login_time'] = time.time()
-        session.permanent = True
+        # Create DB entry for guest so PMs work (they need a real ID in the users table)
+        # Give them a random password hash that they'll never know/need
+        dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+        password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
         
-        return jsonify({'success': True, 'username': guest_username})
-    except Exception as e:
-        return jsonify({'error': f'Guest login failed: {str(e)}'}), 500
-    finally:
-        conn.close()
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        try:
+            cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                                 (guest_username, password_hash))
+            new_user_id = cursor.lastrowid
+            conn.commit()
+            
+            session['user_id'] = new_user_id
+            session['username'] = guest_username
+            session['is_guest'] = True
+            session['_morpheme_login_time'] = time.time()
+            session.permanent = True
+            
+            return jsonify({'success': True, 'username': guest_username})
+        except Exception as e:
+            if 'UNIQUE' in str(e) and attempt < 9:
+                continue
+            return jsonify({'error': f'Guest login failed: {str(e)}'}), 500
+        finally:
+            conn.close()
 
 @app.route('/api/session', methods=['GET'])
 def get_session():
@@ -4305,14 +4312,22 @@ def get_lobby_stats():
                 t_lim = 45
             is_daily = (t_lim >= 7200)
             
+            # Aggregate all active players (and daily archives for 24h rooms)
+            all_candidate_players = list(room.players)
+            if is_daily and hasattr(room, 'past_players') and isinstance(room.past_players, dict):
+                seen_uids = {str(p.user_id) for p in room.players if getattr(p, 'user_id', None)}
+                for pp in room.past_players.values():
+                    if pp and str(getattr(pp, 'user_id', '')) not in seen_uids:
+                        all_candidate_players.append(pp)
+            
             humans = []
-            for p in room.players:
+            for p in all_candidate_players:
                 if getattr(p, 'is_ai', False):
                     continue
-                # For real-time rooms (non-24h), only count players actively present within 30s
+                # For real-time rooms (non-24h), count players active within 60s or freshly joined
                 if not is_daily:
                     p_active = getattr(p, 'last_active', 0)
-                    if (now - p_active) > 30:
+                    if p_active > 0 and (now - p_active) > 60:
                         continue
                 humans.append(p)
                 
@@ -4325,7 +4340,9 @@ def get_lobby_stats():
             if key not in config_humans:
                 config_humans[key] = set()
             for h in humans:
-                config_humans[key].add(str(h.user_id))
+                uid = str(getattr(h, 'user_id', None) or getattr(h, 'username', ''))
+                if uid:
+                    config_humans[key].add(uid)
         except Exception as err:
             print(f"[get_lobby_stats] Error processing room {getattr(room, 'room_id', 'unknown')}: {err}")
     
