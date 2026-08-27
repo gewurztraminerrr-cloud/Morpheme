@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `7024a4eccd281699709214736f8664ea0e9fcaea` (`7024a4e`)
+* **Latest Commit ID**: `da98e3d81b857ba0b852ae9283fa74df751aa5aa` (`da98e3d`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -20,8 +20,10 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 ### A. Cross-Browser Lobby Music on "ENTER LOBBY" Gateway (`static/js/app.js`, `templates/index.html`)
 - **Resolved Firefox & Safari Audio Gatekeeper Block**:
   - Added native `autoplay` attribute directly to the `#lobby-music` `<audio>` element so browsers with native media autoplay policies initiate playback immediately during HTML parsing.
-  - Attached eager capture triggers (`pointerenter`, `pointerdown`, `touchstart`, `mouseover`, `click`) directly to `#btn-enter-lobby-gateway`, `#gateway-housing`, and the `#page-loading` container to immediately unlock and play Lobby music on any user gesture across Safari, Firefox, and Chrome.
+  - Implemented muted buffer fallback (`audio.muted = true; audio.play()`) so Safari and Firefox immediately buffer and start playback without engine rejection, and instantaneously unmute upon any gesture (`pointermove`, `pointerdown`, `touchstart`, `focus`, `click`).
+  - Attached eager capture triggers directly to `#btn-enter-lobby-gateway`, `#gateway-housing`, and the `#page-loading` container.
   - Added Web Audio Context unlock (`AudioContext.resume()`) and multi-lifecycle event triggers (`canplay`, `loadeddata`, `DOMContentLoaded`, `load`, `focus`, `visibilitychange`) so Safari and Firefox immediately engage music playback upon presentation of the "ENTER LOBBY" button.
+  - Integrated `handleLobbyMusicState()` into `showPage()` for seamless audio continuity during SPA page transitions.
 
 ### B. Desktop Color Chart Repositioning & Downward Mini-Popups (`static/css/style.css`, `templates/index.html`)
 - **Color Chart Relocation**:
