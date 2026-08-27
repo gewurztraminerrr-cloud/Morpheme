@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `65e15217983ea1824cb7fb8c65f97300c7320c2b` (`65e1521`)
+* **Latest Commit ID**: `b090bb70be1e39a3f2537f59d287bb2d348a4747` (`b090bb7`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,10 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Instant Zero-Latency Room Navigation & Backdrop-Blurred "Loading..." Overlay (`static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
-- **Instant SPA Navigation to Game Room Page**:
-  - Pressing any room button in the Lobby (e.g. 4x4, 5x5, 6x6, 3D, FCFS, Split Points, Accumulative, or in the Open/Closed rooms list and modal) instantly switches directly to `page-play` in 0ms while loading the room and board state.
-  - Removed full-viewport `pointerdown` overlay blocking that previously intercepted subsequent button click events.
+### A. Solid Room Creation & Join Sequence with Blurred "Loading..." Overlay (`static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
+- **Proper Asynchronous Room Initiation**:
+  - When clicking any room button (Accumulative, FCFS, Split Points, 3D/Cube, or Join), the `"Loading..."` overlay with glassmorphism backdrop blur appears immediately.
+  - The server request (`/api/room/create` or `/api/room/join`) completes and returns the assigned `room_id`.
+  - `window.currentRoomId` is established and recorded in storage before triggering `showPage('page-play')` and `startGamePolling()`, preventing premature null-room redirects back to the lobby.
 - **Glassmorphism Backdrop Blur**:
   - Features an atmospheric semi-transparent dark backdrop (`rgba(10, 15, 30, 0.65)`) with native cross-browser background blurring (`backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);`), glowing cyan spinner, and centered `"Loading..."` typography.
 - **Guaranteed Immediate Dismissal on Board Render**:
