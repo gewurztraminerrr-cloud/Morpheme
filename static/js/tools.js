@@ -3549,20 +3549,10 @@ function setupListsTool() {
         });
     }
 
-    const scrollTopBtn = document.getElementById('list-scroll-top-btn');
-    if (scrollTopBtn) {
-        scrollTopBtn.addEventListener('click', () => {
-            const filterRow = document.querySelector('.list-filter-row');
-            if (filterRow) {
-                filterRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    }
-
     const colHeaderTitle = document.getElementById('list-column-header-title');
     if (colHeaderTitle) {
         colHeaderTitle.addEventListener('click', (e) => {
-            if (e.target.closest('#list-view-full-btn') || e.target.closest('#list-scroll-top-btn')) {
+            if (e.target.closest('#list-view-full-btn')) {
                 return;
             }
             const filterRow = document.querySelector('.list-filter-row');
