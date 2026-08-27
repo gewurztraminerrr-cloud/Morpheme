@@ -571,8 +571,12 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
         }
     } catch(e) {}
 
-    // If already playing smoothly, continue playback without restarting!
-    if (!lobbyMusic.paused) {
+    try {
+        lobbyMusic.muted = false;
+    } catch(e) {}
+
+    // If already playing smoothly and unmuted, continue playback without restarting!
+    if (!lobbyMusic.paused && !lobbyMusic.muted) {
         console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
         if (onSuccess) onSuccess();
         return;
@@ -587,7 +591,11 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
                 if (onSuccess) onSuccess();
             })
             .catch(err => {
-                console.warn('[LobbyMusic] Play failed / waiting for user interaction:', err ? err.name : '');
+                console.warn('[LobbyMusic] Play failed / trying muted buffer fallback:', err ? err.name : '');
+                try {
+                    lobbyMusic.muted = true;
+                    lobbyMusic.play().catch(() => {});
+                } catch(mErr) {}
                 setupFirstInteractionMusic();
             });
     }
@@ -1368,6 +1376,9 @@ function showPage(pageId) {
         document.body.classList.remove('loading-active');
     }
     window.scrollTo(0, 0);
+    if (typeof handleLobbyMusicState === 'function') {
+        handleLobbyMusicState();
+    }
 
     // Standardize: Rating color bar ONLY appears on the Play page
     const colorBar = document.getElementById('game-color-bar');

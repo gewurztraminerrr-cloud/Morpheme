@@ -1321,15 +1321,22 @@
                     var inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
                     
                     if ((onLobby || onLoading || !activePage) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
-                        if (audio.paused) {
-                            try {
-                                unlockWebAudio();
+                        try {
+                            unlockWebAudio();
+                            audio.muted = false;
+                            if (audio.paused) {
                                 var p = audio.play();
                                 if (p !== undefined) {
-                                    p.catch(function(e) {});
+                                    p.catch(function(e) {
+                                        // If unmuted playback was blocked by browser policy, buffer muted first so it is immediately ready
+                                        try {
+                                            audio.muted = true;
+                                            audio.play().catch(function() {});
+                                        } catch(mErr) {}
+                                    });
                                 }
-                            } catch (e) {}
-                        }
+                            }
+                        } catch (e) {}
                     } else if (inGameRoom || (!onLobby && !onLoading && activePage)) {
                         if (!audio.paused) {
                             audio.pause();
@@ -1346,16 +1353,21 @@
                 audio.addEventListener('loadeddata', tryAutoplay);
                 document.addEventListener('DOMContentLoaded', tryAutoplay);
                 window.addEventListener('load', tryAutoplay);
-                window.addEventListener('focus', tryAutoplay);
+                window.addEventListener('focus', function() {
+                    try { audio.muted = false; } catch(e) {}
+                    window.playLobbyAudioImmediate();
+                });
                 document.addEventListener('visibilitychange', function() {
                     if (document.visibilityState === 'visible') {
-                        tryAutoplay();
+                        try { audio.muted = false; } catch(e) {}
+                        window.playLobbyAudioImmediate();
                     }
                 });
 
                 // 2. Immediate capture listener on first user interaction across Safari/Firefox/Chrome
-                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'pointerenter', 'pointermove', 'mousemove', 'keydown', 'click', 'focus', 'wheel', 'scroll'];
+                var interactionEvents = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerover', 'pointerenter', 'pointermove', 'mousemove', 'keydown', 'keyup', 'click', 'focus', 'wheel', 'scroll'];
                 function unlockAndPlayAudio() {
+                    try { audio.muted = false; } catch(e) {}
                     unlockWebAudio();
                     window.playLobbyAudioImmediate();
                 }
@@ -6495,7 +6507,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
-    <script src="/js/app.js?v=33182"></script>
+    <script src="/js/app.js?v=33183"></script>
     <script src="/js/lobby.js?v=33189"></script>
     <script src="/js/play.js?v=33181"></script>
     <script src="/js/tournaments.js?v=33172"></script>
