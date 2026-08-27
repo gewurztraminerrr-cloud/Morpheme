@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `7ea94e4604d412c0aa782782bf6b9b3294cfa72b` (`7ea94e4`)
+* **Latest Commit ID**: `0c3e329ca13b48227b686d1bf431b997c02b1bf4` (`0c3e329`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,10 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Lobby Room "Loading..." Message & Overlay on Room Click (`static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
-- **Instant Visual Loading Feedback**:
+### A. Backdrop-Blurred "Loading..." Overlay on Lobby Room Clicks (`static/css/style.css`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
+- **Glassmorphism Backdrop Blur**:
   - Whenever a user clicks any room button in the lobby (e.g. 4x4, 5x5, 6x6, 3D, FCFS, Split Points, Accumulative, or in the Open/Closed rooms list and modal), `showLoadingOverlay('Loading...')` is immediately engaged.
-  - The semi-transparent backdrop and animated loading spinner with `"Loading..."` display continuously until the room state is retrieved and the game board, timer, player list, and word feeds are fully rendered on screen (`updateGameState`), providing clear, seamless visual feedback.
+  - Features an atmospheric semi-transparent dark backdrop (`rgba(10, 15, 30, 0.65)`) with native cross-browser background blurring (`backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);`), glowing cyan spinner, and centered `"Loading..."` typography.
+  - The overlay displays continuously until the room state is retrieved and the game board, timer, player list, and word feeds are fully rendered on screen (`updateGameState`), providing clear, seamless visual feedback.
 
 ### B. Performance Efficiency (PE) Calibration & Dominant Score Trophy Awards (`game_room.py`, `app.py`, `static/js/play.js`, `templates/index.html`)
 - **Mathematical PE Calibration**:
