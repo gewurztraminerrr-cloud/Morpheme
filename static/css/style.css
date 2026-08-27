@@ -685,6 +685,9 @@ body {
     background: rgba(0, 0, 0, 0.2);
     position: relative;
     z-index: 1000;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    overflow: visible;
 }
 
 .color-bar-segment {
@@ -728,11 +731,11 @@ body {
     100% { transform: scaleY(1); opacity: 0.8; }
 }
 
-/* Color Bar Tooltips */
+/* Color Bar Tooltips (Appear Downward) */
 .color-bar-segment::before {
     content: attr(data-name) "\A" attr(data-label);
     position: absolute;
-    bottom: 140%;
+    top: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
     background: #000 !important;
@@ -757,12 +760,12 @@ body {
 .color-bar-segment::after {
     content: '';
     position: absolute;
-    bottom: 120%;
+    top: calc(100% - 6px);
     left: 50%;
     transform: translateX(-50%);
     border-width: 6px;
     border-style: solid;
-    border-color: #000 transparent transparent transparent;
+    border-color: transparent transparent #000 transparent;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -770,11 +773,36 @@ body {
     z-index: 100000 !important;
 }
 
-.color-bar-segment:hover::before,
+.color-bar-segment:hover::before {
+    opacity: 1;
+    visibility: visible;
+    top: calc(100% + 7px);
+}
+
 .color-bar-segment:hover::after {
     opacity: 1;
     visibility: visible;
-    bottom: 160%;
+    top: calc(100% - 1px);
+}
+
+.color-bar-segment:first-child::before {
+    left: 0;
+    transform: translateX(0);
+}
+.color-bar-segment:first-child::after {
+    left: 15px;
+    transform: translateX(-50%);
+}
+
+.color-bar-segment:last-child::before {
+    left: auto;
+    right: 0;
+    transform: translateX(0);
+}
+.color-bar-segment:last-child::after {
+    left: auto;
+    right: 15px;
+    transform: translateX(50%);
 }
 
 .header {

@@ -117,9 +117,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33182" as="style">
+    <link rel="preload" href="/css/style.css?v=33183" as="style">
     <link rel="preload" href="/css/lobby.css?v=33172" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33182">
+    <link rel="stylesheet" href="/css/style.css?v=33183">
     <link rel="stylesheet" href="/css/lobby.css?v=33172">
     <link rel="stylesheet" href="/css/play.css?v=33197">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
@@ -2039,6 +2039,7 @@
 
         <!-- Play Page -->
         <div id="page-play" class="page">
+            <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
 
             <div class="play-header">
                 <div class="header-title-group">
@@ -2075,7 +2076,6 @@
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
 
-                    <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
                         <div class="player-actions-row">
@@ -6657,9 +6657,9 @@
                 if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
                     wordInputSection.appendChild(timerControlsGroup);
                 }
-                // Move Color Chart (Color Bar) below the header (above the 3 columns)
-                if (colorBar && header && colorBar.parentElement !== pagePlay) {
-                    header.insertAdjacentElement('afterend', colorBar);
+                // Move Color Chart (Color Bar) above header and below top menu
+                if (colorBar && header) {
+                    header.insertAdjacentElement('beforebegin', colorBar);
                 }
             }
         }
