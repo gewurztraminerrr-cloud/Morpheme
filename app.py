@@ -4056,25 +4056,16 @@ def create_room():
                         games_played=games_played, country_flag=country_flag, 
                         is_guest=session.get('is_guest', False))
         
-        # Start first round immediately in background for faster loading
+        # Start first round immediately if room does not have a board
         if not room.board:
             print(f"[app.py] Kickstarting first round for NEW room {room_id}")
             room.starting_round = True
             room._round_start_init_time = time.time()
-            import threading
-            thread = threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True)
-            thread.start()
+            room_manager.start_round(room_id)
         else:
             print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
         
-        # Include initial room state for instant client hydration
-        state_dict = None
-        try:
-            state_dict = room.get_state(session['user_id'])
-        except Exception:
-            pass
-        
-        return jsonify({'success': True, 'room_id': room_id, 'state': state_dict})
+        return jsonify({'success': True, 'room_id': room_id})
     except Exception as e:
         import traceback
         print(f"[create_room] Error: {e}\n{traceback.format_exc()}")
