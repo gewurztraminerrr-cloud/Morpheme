@@ -194,6 +194,7 @@
             }
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             try {
+                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
                 if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
                 var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
                 var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
@@ -471,6 +472,8 @@
                 }
                 var roomId = btn.getAttribute('data-room');
                 if (!roomId) return;
+
+                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
 
                 // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
                 window._isEnteringRoom = true;
@@ -6510,8 +6513,8 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
     <script src="/js/app.js?v=33183"></script>
-    <script src="/js/lobby.js?v=33189"></script>
-    <script src="/js/play.js?v=33183"></script>
+    <script src="/js/lobby.js?v=33190"></script>
+    <script src="/js/play.js?v=33184"></script>
     <script src="/js/tournaments.js?v=33172"></script>
     <script src="/js/leaderboard.js?v=33172"></script>
     <script src="/js/tools.js?v=33194"></script>

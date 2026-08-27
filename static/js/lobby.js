@@ -64,6 +64,7 @@ async function enterLobbyRoom(rawBtn) {
     }
     const btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
     try {
+        if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
         if (typeof stopLobbyPolling === 'function') stopLobbyPolling();
         const gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
         const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
@@ -228,6 +229,7 @@ async function createRoom(config, minRating, maxRating) {
 
     // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
     window._isEnteringRoom = true;
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (typeof window.clearGameUIAndCache === 'function') {
         window.clearGameUIAndCache();
     }

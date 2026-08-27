@@ -2789,6 +2789,9 @@ async function updateGameState(incomingState = null) {
         if (!incomingState) {
             isFetchingState = false;
         }
+        if (typeof window.hideLoadingOverlay === 'function') {
+            window.hideLoadingOverlay();
+        }
     }
 }
 
