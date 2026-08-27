@@ -114,6 +114,7 @@
             }
         } catch(e) {}
     </script>
+    <meta http-equiv="Permissions-Policy" content="autoplay=(self)">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -1287,6 +1288,7 @@
         </div>
 
         <!-- Global Audio Elements (Loaded on Demand / Preloaded for Instant Playback) -->
+        <iframe src="about:blank" allow="autoplay" style="display:none;position:absolute;width:0;height:0;border:0;"></iframe>
         <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" autoplay playsinline webkit-playsinline loop></audio>
         <audio id="triple-music" src="/music/triple.mp3" preload="none" loop></audio>
 
