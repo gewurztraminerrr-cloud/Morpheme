@@ -314,18 +314,6 @@ async function createRoom(config, minRating, maxRating) {
 }
 window.createRoom = createRoom;
 
-// Instant 0ms pointerdown feedback for all lobby game room buttons
-document.addEventListener('pointerdown', (e) => {
-    const rawTarget = e.target;
-    if (!rawTarget) return;
-    const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
-    if (!target || typeof target.closest !== 'function') return;
-    const roomBtn = target.closest('.game-btn, .join-room-btn, .acc-btn');
-    if (roomBtn && typeof window.showLoadingOverlay === 'function') {
-        window.showLoadingOverlay('Loading...');
-    }
-}, { passive: true });
-
 // Use event delegation on document as fallback
 function setupLobbyEvents() {
     console.log('Setting up Lobby event delegation');
