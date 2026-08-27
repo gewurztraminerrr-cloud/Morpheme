@@ -60,8 +60,9 @@ window.showLobbyToast = showLobbyToast;
 async function enterLobbyRoom(rawBtn) {
     if (!rawBtn) return;
     if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
-    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+    if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+        if (typeof window.showTimeoutBanModal === 'function') window.showTimeoutBanModal(window._userTimeoutInfo);
         return;
     }
     const btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;

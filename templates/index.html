@@ -230,10 +230,6 @@
                 window.showTimeoutBanModal(window._userTimeoutInfo);
                 return;
             }
-            if (await window.checkAccountTimeoutAndAlert()) {
-                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
-                return;
-            }
 
             try {
                 if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
@@ -498,8 +494,9 @@
             window.handleJoinRoomInline = async function(btn) {
                 if (!btn) return;
                 if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
-                if (await window.checkAccountTimeoutAndAlert()) {
+                if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+                    window.showTimeoutBanModal(window._userTimeoutInfo);
                     return;
                 }
                 var roomId = btn.getAttribute('data-room');
@@ -6544,7 +6541,7 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
     <script src="/js/app.js?v=33186"></script>
-    <script src="/js/lobby.js?v=33192"></script>
+    <script src="/js/lobby.js?v=33193"></script>
     <script src="/js/play.js?v=33185"></script>
     <script src="/js/tournaments.js?v=33172"></script>
     <script src="/js/leaderboard.js?v=33172"></script>
