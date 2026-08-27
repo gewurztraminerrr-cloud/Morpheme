@@ -51,6 +51,7 @@ class Player:
     country_flag: str = '🏳️'
     joined_mid_round: bool = False
     has_exceptional_round: bool = False
+    trophy_rounds_left: int = 0
     performance_efficiency: float = 0.0
     is_guest: bool = False
     is_ai: bool = False
@@ -1104,48 +1105,66 @@ class GameRoom:
         return True, f"{final_word} VALID", points, final_word
 
     def update_live_pe(self):
-        """Calculates performance efficiency in real-time for UI trophy"""
-        # Split into Registered and Guest pools to ensure isolation
-        reg_players = [p for p in self.players if p.is_registered and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
-        guest_players = [p for p in self.players if not p.is_registered and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        """Calculates performance efficiency in real-time for UI trophy and awards sensitive exceptional badges."""
+        # Pool all participating players (from self.players and self.past_players if applicable)
+        all_candidate_players = list(self.players)
+        existing_uids = {p.user_id for p in self.players}
+        if hasattr(self, 'past_players') and isinstance(self.past_players, dict):
+            for p in self.past_players.values():
+                if p.user_id not in existing_uids:
+                    all_candidate_players.append(p)
         
-        # 1. Registered Players: Compete only against other registered players
-        reg_score_sum = sum(p.score for p in reg_players)
-        reg_rating_sum = sum(p.rating for p in reg_players)
+        # Active participants in this round
+        active_players = [p for p in all_candidate_players if not getattr(p, 'is_ai', False) and (p.score > 0 or len(p.submitted_words) > 0 or len(p.invalid_words) > 0)]
+        multiple_players = len(active_players) > 1
         
-        # Room must have more than 1 player to earn a trophy
-        multiple_players = (len(reg_players) + len(guest_players)) > 1
+        tot_score = sum(p.score for p in active_players)
+        tot_rating = sum(getattr(p, 'rating', 1200) for p in active_players)
+        max_score = max((p.score for p in active_players), default=0)
 
-        # Determine dynamic PE threshold based on active players count (Registered + Guests)
-        num_players = len(reg_players) + len(guest_players)
+        num_players = len(active_players)
         if num_players <= 2:
-            pe_threshold = 1.4
-        elif num_players == 3:
-            pe_threshold = 1.6
-        elif num_players == 4:
-            pe_threshold = 1.8
-        elif num_players == 5:
-            pe_threshold = 2.0
+            pe_threshold = 1.20
+        elif num_players <= 4:
+            pe_threshold = 1.25
         elif num_players <= 10:
-            pe_threshold = 2.5
-        elif num_players <= 20:
-            pe_threshold = 3.0
+            pe_threshold = 1.35
         else:
-            pe_threshold = 4.0
+            pe_threshold = 1.50
 
-        max_score = max(p.score for p in self.players) if self.players else 0
-        if reg_rating_sum > 0:
-            for p in reg_players:
-                expected = (p.rating / reg_rating_sum) * reg_score_sum
-                p.performance_efficiency = p.score / expected if expected > 0 else 0.0
-                # Remarkable: Winner AND (Unusually high dynamic PE threshold & Score >= 40, or raw excellence Score >= 100)
-                p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and \
-                                         ((p.performance_efficiency >= pe_threshold and p.score >= 40) or p.score >= 100)
+        for p in self.players:
+            if getattr(p, 'is_ai', False):
+                p.has_exceptional_round = False
+                p.trophy_rounds_left = 0
+                continue
 
-        # 2. Guests: Use solo baseline (PE=1.0) so they don't affect pool but can still earn trophies on raw score
-        for p in guest_players:
-            p.performance_efficiency = 1.0
-            p.has_exceptional_round = multiple_players and p.score > 0 and p.score == max_score and (p.score >= 100)
+            earned_this_round = False
+            if multiple_players and tot_score > 0 and tot_rating > 0 and p.score > 0:
+                p_rating = getattr(p, 'rating', 1200)
+                expected = (p_rating / tot_rating) * tot_score
+                p.performance_efficiency = round(p.score / expected, 2) if expected > 0 else 1.0
+
+                # Sensitive criteria:
+                # 1. PE exceeds dynamic threshold with meaningful score (score >= 10)
+                # 2. Or round winner with PE >= 1.10 and score >= 20
+                # 3. Or standout high score (score >= 50)
+                is_high_pe = (p.performance_efficiency >= pe_threshold and p.score >= 10)
+                is_winner_excel = (p.score == max_score and p.performance_efficiency >= 1.10 and p.score >= 20)
+                is_high_score = (p.score >= 50)
+
+                if is_high_pe or is_winner_excel or is_high_score:
+                    earned_this_round = True
+            elif p.score >= 50:
+                p.performance_efficiency = 1.0
+                earned_this_round = True
+
+            if earned_this_round:
+                p.trophy_rounds_left = 2  # Active during this intermission AND throughout the following round
+                p.has_exceptional_round = True
+            else:
+                # Decrement trophy lifetime if not re-earned this round
+                p.trophy_rounds_left = max(0, getattr(p, 'trophy_rounds_left', 0) - 1)
+                p.has_exceptional_round = (p.trophy_rounds_left > 0)
     
     def initialize_player_densities(self):
         """Initializes or resets player-specific cell densities from the room's initial density grid."""
@@ -4820,8 +4839,15 @@ class RoomManager:
                 p.score = 0
                 p.found_bonus_word = False
                 p.joined_mid_round = False
-                p.has_exceptional_round = False
-                p.performance_efficiency = 0.0
+                # User Request: Preserve trophy during the round following the award!
+                if getattr(p, 'trophy_rounds_left', 0) > 1:
+                    p.trophy_rounds_left = 1
+                    p.has_exceptional_round = True
+                elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                    p.has_exceptional_round = True
+                else:
+                    p.has_exceptional_round = False
+                    p.trophy_rounds_left = 0
                 p.has_abandoned = False # Reset penalty flag for new round
                 p._last_round_seen = room.current_round
                 
@@ -6389,8 +6415,14 @@ class RoomManager:
                         p.score = 0
                         p.found_bonus_word = False
                         p.joined_mid_round = False
-                        p.has_exceptional_round = False
-                        p.performance_efficiency = 0.0
+                        if getattr(p, 'trophy_rounds_left', 0) > 1:
+                            p.trophy_rounds_left = 1
+                            p.has_exceptional_round = True
+                        elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                            p.has_exceptional_round = True
+                        else:
+                            p.has_exceptional_round = False
+                            p.trophy_rounds_left = 0
                         p.has_abandoned = False
                         p._last_round_seen = next_round_val
                         p.rating_change = 0
@@ -6405,8 +6437,14 @@ class RoomManager:
                         p.score = 0
                         p.found_bonus_word = False
                         p.joined_mid_round = False
-                        p.has_exceptional_round = False
-                        p.performance_efficiency = 0.0
+                        if getattr(p, 'trophy_rounds_left', 0) > 1:
+                            p.trophy_rounds_left = 1
+                            p.has_exceptional_round = True
+                        elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                            p.has_exceptional_round = True
+                        else:
+                            p.has_exceptional_round = False
+                            p.trophy_rounds_left = 0
                         p.has_abandoned = False
                         p._last_round_seen = next_round_val
                         p.rating_change = 0

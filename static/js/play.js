@@ -2996,8 +2996,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (p.input_method === 'touch') inputIcon = '📱';
 
         // Trophy Logic (Exceptional Performance)
-        const peVal = p.performance_efficiency || 1.0;
-        const trophyHtml = (p.has_exceptional_round && players.length > 1 && !p.is_ai) ? `<span title="Exceptional Performance (PE: ${peVal.toFixed(2)}x)" class="trophy-icon">🏆</span>` : '';
+        const peVal = (typeof p.performance_efficiency === 'number' && p.performance_efficiency > 0) ? p.performance_efficiency : 0;
+        const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
+        const trophyHtml = (p.has_exceptional_round && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
