@@ -1159,12 +1159,12 @@ class GameRoom:
                 earned_this_round = True
 
             if earned_this_round:
-                p.trophy_rounds_left = 2  # Active during this intermission AND throughout the following round
+                p.trophy_rounds_left = 1  # Active during this intermission AND throughout the following active round
                 p.has_exceptional_round = True
             else:
-                # Decrement trophy lifetime if not re-earned this round
-                p.trophy_rounds_left = max(0, getattr(p, 'trophy_rounds_left', 0) - 1)
-                p.has_exceptional_round = (p.trophy_rounds_left > 0)
+                # User Request: At the start of intermission, if not worthy of another trophy icon or did not play, remove it immediately!
+                p.trophy_rounds_left = 0
+                p.has_exceptional_round = False
     
     def initialize_player_densities(self):
         """Initializes or resets player-specific cell densities from the room's initial density grid."""
@@ -4839,11 +4839,8 @@ class RoomManager:
                 p.score = 0
                 p.found_bonus_word = False
                 p.joined_mid_round = False
-                # User Request: Preserve trophy during the round following the award!
-                if getattr(p, 'trophy_rounds_left', 0) > 1:
-                    p.trophy_rounds_left = 1
-                    p.has_exceptional_round = True
-                elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                # User Request: If awarded in the previous round, keep trophy during this following active round
+                if getattr(p, 'trophy_rounds_left', 0) > 0:
                     p.has_exceptional_round = True
                 else:
                     p.has_exceptional_round = False
@@ -6415,10 +6412,7 @@ class RoomManager:
                         p.score = 0
                         p.found_bonus_word = False
                         p.joined_mid_round = False
-                        if getattr(p, 'trophy_rounds_left', 0) > 1:
-                            p.trophy_rounds_left = 1
-                            p.has_exceptional_round = True
-                        elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                        if getattr(p, 'trophy_rounds_left', 0) > 0:
                             p.has_exceptional_round = True
                         else:
                             p.has_exceptional_round = False
@@ -6437,10 +6431,7 @@ class RoomManager:
                         p.score = 0
                         p.found_bonus_word = False
                         p.joined_mid_round = False
-                        if getattr(p, 'trophy_rounds_left', 0) > 1:
-                            p.trophy_rounds_left = 1
-                            p.has_exceptional_round = True
-                        elif getattr(p, 'trophy_rounds_left', 0) == 1:
+                        if getattr(p, 'trophy_rounds_left', 0) > 0:
                             p.has_exceptional_round = True
                         else:
                             p.has_exceptional_round = False
