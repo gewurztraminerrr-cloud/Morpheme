@@ -1298,6 +1298,20 @@
                 audio.volume = 0.5;
                 audio.loop = true;
 
+                function unlockWebAudio() {
+                    try {
+                        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) {
+                            if (!window._morphemeAudioCtx) {
+                                window._morphemeAudioCtx = new AudioCtx();
+                            }
+                            if (window._morphemeAudioCtx.state === 'suspended') {
+                                window._morphemeAudioCtx.resume();
+                            }
+                        }
+                    } catch(e) {}
+                }
+
                 window.playLobbyAudioImmediate = function() {
                     if (!audio) return;
                     var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
@@ -1309,6 +1323,7 @@
                     if ((onLobby || onLoading || !activePage) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
                         if (audio.paused) {
                             try {
+                                unlockWebAudio();
                                 var p = audio.play();
                                 if (p !== undefined) {
                                     p.catch(function(e) {});
@@ -1322,24 +1337,26 @@
                     }
                 };
 
-                // 1. Attempt immediate programmatic play on initial page load if loading / gateway is active
+                // 1. Attempt immediate programmatic play on page lifecycle events
                 function tryAutoplay() {
-                    try {
-                        var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
-                        var inGameRoom = (activePage === 'page-play') || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
-                        if ((activePage === 'page-loading' || activePage === 'page-lobby' || !activePage) && !inGameRoom) {
-                            var p = audio.play();
-                            if (p !== undefined) {
-                                p.catch(function(err) {});
-                            }
-                        }
-                    } catch (e) {}
+                    window.playLobbyAudioImmediate();
                 }
                 tryAutoplay();
+                audio.addEventListener('canplay', tryAutoplay);
+                audio.addEventListener('loadeddata', tryAutoplay);
+                document.addEventListener('DOMContentLoaded', tryAutoplay);
+                window.addEventListener('load', tryAutoplay);
+                window.addEventListener('focus', tryAutoplay);
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible') {
+                        tryAutoplay();
+                    }
+                });
 
                 // 2. Immediate capture listener on first user interaction across Safari/Firefox/Chrome
-                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'pointerenter', 'mousemove', 'keydown', 'click', 'focus'];
+                var interactionEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'pointerover', 'pointerenter', 'pointermove', 'mousemove', 'keydown', 'click', 'focus', 'wheel', 'scroll'];
                 function unlockAndPlayAudio() {
+                    unlockWebAudio();
                     window.playLobbyAudioImmediate();
                 }
 
