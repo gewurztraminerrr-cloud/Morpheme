@@ -5458,10 +5458,10 @@ function renderUnscrambleFound(revealMissed = false) {
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: wrap; gap: 6px;">
                         <span style="font-weight: 800; color: #ffd700; font-size: 1.1rem; letter-spacing: 2px;">${h.jumbled.toUpperCase()}</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 0.85rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 3px 8px; border-radius: 6px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'};">
-                                ${isPerfect ? 'All ' + totalCount + ' Found! 🎉' : foundCount + '/' + totalCount + ' Found'}
+                            <span style="font-size: 0.85rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 3px 8px; border-radius: 6px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'}; white-space: nowrap;">
+                                ${foundCount}/${totalCount} Found
                             </span>
-                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; font-family: monospace;">${h.timestamp}</span>
+                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; font-family: monospace; white-space: nowrap;">${h.timestamp}</span>
                         </div>
                     </div>
                     <!-- Full-width, generous space for every single word -->
