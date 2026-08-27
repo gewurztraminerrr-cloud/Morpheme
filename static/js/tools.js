@@ -3359,8 +3359,8 @@ function setupListsTool() {
 
     function handleFullListWordJump() {
         if (!fullListJumpInput || !fullListResults) return;
-        fullListJumpInput.blur(); // Dismiss virtual keyboard immediately to prevent mobile viewport glitching
         const query = fullListJumpInput.value.trim().toUpperCase();
+        fullListJumpInput.blur(); // Dismiss virtual keyboard immediately to prevent mobile viewport glitching
         if (!query) return;
 
         if (!_fullListAllWords || _fullListAllWords.length === 0) {
@@ -3391,8 +3391,24 @@ function setupListsTool() {
             } catch (e) {}
         }
 
-        // If not in currently rendered window, render a lightweight window centered on targetIdx
-        if (!targetEl) {
+        // If target is just ahead of current rendered window (within 3000 words), append smoothly without clearing DOM
+        if (!targetEl && targetIdx >= _fullListRenderedEnd && targetIdx < _fullListRenderedEnd + 3000) {
+            const needed = (targetIdx - _fullListRenderedEnd) + 300;
+            appendNextFullListBatch(needed);
+            try {
+                targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+            } catch (e) {}
+        }
+        // If target is just behind current rendered window (within 3000 words), prepend smoothly without clearing DOM
+        else if (!targetEl && targetIdx < _fullListRenderedStart && targetIdx > _fullListRenderedStart - 3000) {
+            const needed = (_fullListRenderedStart - targetIdx) + 300;
+            prependPrevFullListBatch(needed);
+            try {
+                targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+            } catch (e) {}
+        }
+        // If target is far away, render a focused window centered on targetIdx
+        else if (!targetEl) {
             const windowStart = Math.max(0, targetIdx - 40);
             renderFullListWindow(windowStart, 500);
             try {
@@ -3401,32 +3417,34 @@ function setupListsTool() {
         }
 
         if (targetEl) {
-            // Remove previous jump pulses
-            fullListResults.querySelectorAll('.full-list-item.jump-target-pulse').forEach(el => {
-                el.classList.remove('jump-target-pulse');
+            requestAnimationFrame(() => {
+                // Remove previous jump pulses
+                fullListResults.querySelectorAll('.full-list-item.jump-target-pulse').forEach(el => {
+                    el.classList.remove('jump-target-pulse');
+                });
+
+                // Compute relative offset directly within the container instead of window-level scrollIntoView
+                const containerRect = fullListResults.getBoundingClientRect();
+                const targetRect = targetEl.getBoundingClientRect();
+                const relativeOffset = targetRect.top - containerRect.top + fullListResults.scrollTop;
+                const centerOffset = relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
+
+                fullListResults.scrollTo({
+                    top: Math.max(0, centerOffset),
+                    behavior: 'smooth'
+                });
+
+                // Apply pulse effect to the element container without text selection
+                targetEl.classList.add('jump-target-pulse');
+                setTimeout(() => {
+                    targetEl.classList.remove('jump-target-pulse');
+                }, 2500);
+
+                // Ensure no text selection is active
+                if (window.getSelection) {
+                    window.getSelection().removeAllRanges();
+                }
             });
-
-            // Compute relative offset directly within the container instead of window-level scrollIntoView
-            const containerRect = fullListResults.getBoundingClientRect();
-            const targetRect = targetEl.getBoundingClientRect();
-            const relativeOffset = targetRect.top - containerRect.top + fullListResults.scrollTop;
-            const centerOffset = relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
-
-            fullListResults.scrollTo({
-                top: Math.max(0, centerOffset),
-                behavior: 'smooth'
-            });
-
-            // Apply pulse effect to the element container without text selection
-            targetEl.classList.add('jump-target-pulse');
-            setTimeout(() => {
-                targetEl.classList.remove('jump-target-pulse');
-            }, 2500);
-
-            // Ensure no text selection is active
-            if (window.getSelection) {
-                window.getSelection().removeAllRanges();
-            }
         }
     }
 

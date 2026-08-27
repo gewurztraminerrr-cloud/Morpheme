@@ -8052,31 +8052,35 @@ body .board-cell.tile-flash-purple * {
     margin-right: 3px;
 }
 
+#full-list-modal {
+    contain: layout paint;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+#full-list-modal-results {
+    contain: content;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+}
+
 /* Word jump pulse animation without text selection */
 @keyframes jumpTargetGlow {
     0% {
-        background: rgba(167, 139, 250, 0.5);
-        box-shadow: 0 0 14px rgba(167, 139, 250, 0.85);
-        outline: 1.5px solid #c4b5fd;
-        transform: scale(1.12);
+        background: rgba(167, 139, 250, 0.65);
+        outline: 2px solid #c4b5fd;
     }
     35% {
-        background: rgba(167, 139, 250, 0.4);
-        box-shadow: 0 0 20px rgba(167, 139, 250, 0.7);
-        outline: 1.5px solid #a78bfa;
-        transform: scale(1.08);
+        background: rgba(167, 139, 250, 0.45);
+        outline: 2px solid #a78bfa;
     }
     70% {
         background: rgba(167, 139, 250, 0.25);
-        box-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
-        outline: 1px solid rgba(167, 139, 250, 0.4);
-        transform: scale(1.02);
+        outline: 1.5px solid rgba(167, 139, 250, 0.5);
     }
     100% {
         background: rgba(167, 139, 250, 0.12);
-        box-shadow: none;
-        outline: none;
-        transform: scale(1);
+        outline: 1px solid transparent;
     }
 }
 
@@ -8085,6 +8089,7 @@ body .board-cell.tile-flash-purple * {
     border-radius: 4px;
     position: relative;
     z-index: 5;
+    will-change: background-color, outline;
 }
 
 #full-list-jump-input:focus {
