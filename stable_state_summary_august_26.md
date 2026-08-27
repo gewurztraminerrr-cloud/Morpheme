@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `a6ce6b677a2889ee1d3319089063259bda207c45` (`a6ce6b6`)
+* **Latest Commit ID**: `b4b0151f122851a7051d95393b48227b686d1bf4` (`b4b0151`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,18 +17,18 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Dynamic Room-Scaled PE & Dominant Score Trophy Award Rules (`game_room.py`, `static/js/play.js`, `templates/index.html`)
+### A. Strict Intermission-Only Trophy Display & Dynamic PE Thresholds (`app.py`, `game_room.py`, `static/js/play.js`, `templates/index.html`)
 - **Mathematical PE Calibration**:
-  - In a 3-player match with similar ratings (e.g. 1256, 1177, 1193) where the winner scores more than double the opponents (e.g. 63 vs 26 & 25), the winner's actual performance efficiency ($\text{PE} = 1.60\text{x}$) represents a decisive blowout.
+  - In matches with similar ratings where the winner scores more than double the opponents, the winner's performance efficiency represents a decisive blowout.
   - Dynamically scaled room-size thresholds:
-    - **2 players**: $\text{PE} \ge 1.30$ (corresponding to doubling opponent's score)
-    - **3 players**: $\text{PE} \ge 1.45$ (corresponding to doubling opponents' scores)
+    - **2 players**: $\text{PE} \ge 1.30$ (corresponds to doubling opponent's score)
+    - **3 players**: $\text{PE} \ge 1.45$ (corresponds to doubling opponents' scores)
     - **4–5 players**: $\text{PE} \ge 1.55$
     - **6+ players**: $\text{PE} \ge 1.60$
-  - Added explicit domination award: $\text{score} == \text{max\_score}$ and $\text{score} \ge 1.75 \times \text{second\_score}$ ($\text{score} \ge 15$).
-- **Intermission Display & Next-Round Removal Lifecycle**:
-  - Trophies awarded are displayed during that round's **intermission** in the bottom-left corner of the player card.
-  - At the **start of the next round**, the trophy icon is automatically cleared from every user who had it displayed during the previous intermission.
+  - Added direct domination award: $\text{score} == \text{max\_score}$ and $\text{score} \ge 1.75 \times \text{second\_score}$ ($\text{score} \ge 15$).
+- **Strict Intermission-Bound Display**:
+  - Enforced on both frontend (`renderPlayers`) and backend (`get_room_state`) that the trophy icon 🏆 is **strictly rendered only during `state.state === 'intermission'`**.
+  - As soon as the active round starts (`state.state === 'active'`), the trophy icon automatically disappears from all players.
 
 ### B. Level Alignment for Rotate & Transpose Buttons on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Fixed Button Offset / Vertical Shifting on Press**:
