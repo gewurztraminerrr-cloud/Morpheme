@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `b053e1aeb0cfb8d4f40f065538e1db4e5b2bb569` (`b053e1a`)
+* **Latest Commit ID**: `0c21fca9d3ce1c8d3eead5c2a13ba51dc8b45dc7` (`0c21fca`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,10 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Combo Checker Input Re-Focus Black Screen Resolution (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
-- **Eliminated Viewport Collision on Textbox Re-Focus**:
-  - Removed an obsolete `focus` listener on `#combo-input` that previously forced simultaneous scroll resets on 4 parent containers (`window.scrollTo(0,0)`, `toolsContent.scrollTop = 0`, `toolPane.scrollTop = 0`, `layoutEl.scrollLeft = ...`) while the virtual keyboard and results tables were active.
-  - Set `font-size: 16px !important;` on `#combo-input` to prevent iOS Safari auto-zoom recalculations and GPU compositor crashes when tapping into the textbox to search subsequent words.
+### A. Combo Checker Input Re-Focus & Throttled Scrollbar Layout Optimization (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Eliminated Black Screen on Textbox Re-Focus**:
+  - Removed synchronous layout-thrashing `MutationObserver` loops across all 20+ MP and LIC result column scrollbars and throttled thumb updates through `requestAnimationFrame()`.
+  - Added GPU composite layer containment (`contain: content; transform: translateZ(0);`) on `.combo-results-container` and `contain: layout paint;` on `#tool-combo.tool-pane.active`.
+  - Set `font-size: 16px !important;` on `#combo-input` to eliminate iOS Safari auto-zoom recalculations upon tapping into the input.
 
 ### B. Combo Checker Textbox & Button Height Sizing on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Uniform 46px Height Matching the "Check" Button**:
