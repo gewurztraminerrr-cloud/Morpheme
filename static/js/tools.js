@@ -5447,11 +5447,13 @@ function renderUnscrambleFound(revealMissed = false) {
     if (unscrambleState.history.length === 0) {
         html += `<div style="text-align: center; color: #94a3b8; font-size: 0.92rem; font-style: italic; padding: 18px 10px;">No rounds completed yet this session. Solve words or click Reveal to build your history!</div>`;
     } else {
-        html += `<div class="unscramble-history-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">`;
+        html += `
+            <div class="unscramble-history-scroll-wrapper" style="position: relative; width: 100%;">
+                <div id="unscramble-history-scroll" class="unscramble-history-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-height: 380px; overflow-y: auto; box-sizing: border-box; padding-right: 22px;">`;
         unscrambleState.history.forEach((h) => {
             const foundCount = h.found.length;
             const totalCount = h.solutions.length;
-            const isPerfect = foundCount === totalCount;
+            const isPerfect = (foundCount === totalCount && totalCount > 0);
 
             html += `
                 <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box;">
@@ -5477,11 +5479,22 @@ function renderUnscrambleFound(revealMissed = false) {
                 </div>
             `;
         });
-        html += `</div>`;
+        html += `
+                </div>
+                <div class="custom-scrollbar-track" id="unscramble-history-scrollbar-track" style="right: 2px; top: 2px; bottom: 2px;">
+                    <div class="custom-scrollbar-thumb" id="unscramble-history-scrollbar-thumb"></div>
+                </div>
+            </div>`;
     }
     html += `</div>`;
 
     list.innerHTML = html;
+
+    if (unscrambleState.history.length > 0) {
+        requestAnimationFrame(() => {
+            initCustomScrollbarForElement('unscramble-history-scroll', 'unscramble-history-scrollbar-track', 'unscramble-history-scrollbar-thumb');
+        });
+    }
 }
 
 window.startNewUnscramble = startNewUnscramble;

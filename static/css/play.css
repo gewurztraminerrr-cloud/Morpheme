@@ -5714,8 +5714,10 @@ input[type=range]::-moz-range-track {
     }
     .unscramble-history-list {
         width: 100% !important;
-        max-height: none !important;
-        overflow: visible !important;
+        max-height: 350px !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        padding-right: 18px !important;
     }
     .unscramble-history-item {
         width: 100% !important;
@@ -7362,6 +7364,63 @@ body .board-cell.tile-flash-purple * {
 #full-list-modal-results {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
+}
+
+/* Unscramble Session History Custom Scrollbar */
+.unscramble-history-scroll-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.unscramble-history-list {
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    box-sizing: border-box !important;
+}
+
+.unscramble-history-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+#unscramble-history-scrollbar-track {
+    position: absolute !important;
+    top: 2px !important;
+    bottom: 2px !important;
+    right: 2px !important;
+    width: 14px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 7px !important;
+    z-index: 10 !important;
+    backdrop-filter: blur(2px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: none;
+    touch-action: none !important;
+}
+
+#unscramble-history-scrollbar-thumb {
+    position: absolute !important;
+    top: 0 !important;
+    left: 2px !important;
+    width: 10px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.7), rgba(58, 123, 213, 0.7)) !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(0, 210, 255, 0.5) !important;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3) !important;
+    touch-action: none !important;
+    min-height: 28px !important;
+}
+
+#unscramble-history-scrollbar-thumb:active,
+#unscramble-history-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
+    border: 1px solid rgba(0, 210, 255, 0.8) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.6) !important;
 }
 
 /* Find Count Tool Styles */
