@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `de3b3f81e370f1a91e52dbbfa97950dcdd387c95` (`de3b3f8`)
+* **Latest Commit ID**: `15c848a9010e9f64bf50567a50feea5521b44747` (`15c848a`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,7 +17,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Sensitive PE Trophy Award & 1-Round Persistence Lifecycle (`game_room.py`, `static/js/play.js`, `templates/index.html`)
+### A. Sensitive PE Trophy Award & Immediate Intermission Removal Lifecycle (`game_room.py`, `static/js/play.js`, `templates/index.html`)
 - **Sensitive Dynamic PE Thresholds**:
   - Calibrated performance efficiency (PE) evaluation so players achieving high output relative to rating expectations reliably earn the trophy icon:
     - 2 players: PE >= 1.20 (score >= 10)
@@ -26,9 +26,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
     - >10 players: PE >= 1.50 (score >= 10)
     - Round winner with PE >= 1.10 and score >= 20, or standout score >= 50.
   - Enabled PE calculation for guest participants with 1200 rating baseline.
-- **Trophy Persistence & Lifecycle**:
-  - Trophies awarded during intermission persist through the following active round in the bottom left corner of the player card.
-  - After that following round concludes, the trophy icon is automatically cleared from the bottom left corner if not re-earned in the new round.
+- **Trophy Persistence & Start-of-Intermission Removal**:
+  - Trophies awarded during an intermission remain visible throughout the subsequent active round in the bottom left corner of the player card.
+  - At the exact start of the following intermission, the round is evaluated:
+    - If the user played and is not worthy of another trophy icon, or if the user did not play (DNP / score 0), the trophy icon is **immediately removed at the start of that intermission**.
+    - If the user played and earned an exceptional performance again, the trophy icon remains active for the new intermission and following round.
 
 ### B. Level Alignment for Rotate & Transpose Buttons on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Fixed Button Offset / Vertical Shifting on Press**:
