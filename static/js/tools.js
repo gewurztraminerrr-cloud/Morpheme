@@ -3375,6 +3375,9 @@ function setupListsTool() {
 
         fullListResults.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
         _fullListRenderedEnd += slice.length;
+        if (typeof fullListResults._updateCustomScrollbar === 'function') {
+            fullListResults._updateCustomScrollbar();
+        }
     }
 
     function prependPrevFullListBatch(count = 500) {
@@ -3390,6 +3393,9 @@ function setupListsTool() {
         fullListResults.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
 
         _fullListRenderedStart = start;
+        if (typeof fullListResults._updateCustomScrollbar === 'function') {
+            fullListResults._updateCustomScrollbar();
+        }
     }
 
     if (fullListResults) {
@@ -3655,6 +3661,9 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         });
     }
 
+    // Expose update function directly on the scrollArea DOM element
+    scrollArea._updateCustomScrollbar = scheduleUpdate;
+
     // Cleanup previous observers on this scrollArea if re-initialized
     if (scrollArea._customScrollbarRO) {
         try { scrollArea._customScrollbarRO.disconnect(); } catch (_) {}
@@ -3673,6 +3682,13 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         scrollArea._customScrollbarRO = ro;
     } else {
         window.addEventListener('resize', scheduleUpdate, { passive: true });
+    }
+
+    // Watch with MutationObserver so newly appended/prepended children dynamically resize & reposition thumb
+    if (window.MutationObserver) {
+        const mo = new MutationObserver(scheduleUpdate);
+        mo.observe(scrollArea, { childList: true });
+        scrollArea._customScrollbarMO = mo;
     }
 
     function onDragMove(e) {
