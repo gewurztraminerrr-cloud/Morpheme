@@ -1120,17 +1120,6 @@ class GameRoom:
         
         tot_score = sum(p.score for p in active_players)
         tot_rating = sum(getattr(p, 'rating', 1200) for p in active_players)
-        max_score = max((p.score for p in active_players), default=0)
-
-        num_players = len(active_players)
-        if num_players <= 2:
-            pe_threshold = 1.20
-        elif num_players <= 4:
-            pe_threshold = 1.25
-        elif num_players <= 10:
-            pe_threshold = 1.35
-        else:
-            pe_threshold = 1.50
 
         for p in self.players:
             if getattr(p, 'is_ai', False):
@@ -1144,19 +1133,11 @@ class GameRoom:
                 expected = (p_rating / tot_rating) * tot_score
                 p.performance_efficiency = round(p.score / expected, 2) if expected > 0 else 1.0
 
-                # Sensitive criteria:
-                # 1. PE exceeds dynamic threshold with meaningful score (score >= 10)
-                # 2. Or round winner with PE >= 1.10 and score >= 20
-                # 3. Or standout high score (score >= 50)
-                is_high_pe = (p.performance_efficiency >= pe_threshold and p.score >= 10)
-                is_winner_excel = (p.score == max_score and p.performance_efficiency >= 1.10 and p.score >= 20)
-                is_high_score = (p.score >= 50)
-
-                if is_high_pe or is_winner_excel or is_high_score:
+                # User Directive: Display a trophy icon when PE is 2.0 or greater!
+                if p.performance_efficiency >= 2.0:
                     earned_this_round = True
-            elif p.score >= 50:
-                p.performance_efficiency = 1.0
-                earned_this_round = True
+            else:
+                p.performance_efficiency = 1.0 if (p.score > 0 and not multiple_players) else 0.0
 
             if earned_this_round:
                 p.trophy_rounds_left = 1  # Active during this intermission AND throughout the following active round
