@@ -5456,7 +5456,7 @@ function renderUnscrambleFound(revealMissed = false) {
             const isPerfect = (foundCount === totalCount && totalCount > 0);
 
             html += `
-                <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box;">
+                <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 12px 14px 14px 14px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box; min-height: fit-content; overflow: visible;">
                     <div class="unscramble-history-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: nowrap; gap: 6px; width: 100%;">
                         <span class="unscramble-history-jumbled" style="font-weight: 800; color: #ffd700; font-size: 1.05rem; letter-spacing: 1.5px; white-space: nowrap; flex-shrink: 0;">${h.jumbled.toUpperCase()}</span>
                         <div class="unscramble-history-meta" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
@@ -5467,13 +5467,13 @@ function renderUnscrambleFound(revealMissed = false) {
                         </div>
                     </div>
                     <!-- Full-width, generous space for every single word -->
-                    <div class="unscramble-history-words" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-start; width: 100%; align-items: center;">
+                    <div class="unscramble-history-words" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-start; width: 100%; align-items: center; min-height: 36px; box-sizing: border-box; overflow: visible;">
                         ${h.solutions.map(s => {
                             const wereFound = h.found.includes(s);
                             const color = wereFound ? '#4ade80' : '#fca5a5';
                             const bg = wereFound ? 'rgba(46, 204, 113, 0.22)' : 'rgba(239, 68, 68, 0.18)';
                             const bdr = wereFound ? 'rgba(46, 204, 113, 0.5)' : 'rgba(239, 68, 68, 0.4)';
-                            return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.9rem; font-weight: 700; background: ${bg}; padding: 6px 12px; border-radius: 8px; color: ${color}; border: 1.5px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.25); min-height: 32px; box-sizing: border-box;">${s}</span>`;
+                            return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.9rem; font-weight: 700; background: ${bg}; padding: 6px 12px; border-radius: 8px; color: ${color}; border: 1.5px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.25); min-height: 34px; height: auto; line-height: 1.2; box-sizing: border-box; text-decoration: none; overflow: visible;">${s}</span>`;
                         }).join('')}
                     </div>
                 </div>

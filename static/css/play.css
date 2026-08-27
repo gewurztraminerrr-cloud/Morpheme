@@ -5718,11 +5718,18 @@ input[type=range]::-moz-range-track {
         overflow-y: auto !important;
         box-sizing: border-box !important;
         padding-right: 18px !important;
+        padding-bottom: 4px !important;
     }
     .unscramble-history-item {
         width: 100% !important;
+        height: auto !important;
+        min-height: fit-content !important;
         box-sizing: border-box !important;
-        padding: 10px 12px !important;
+        padding: 12px 14px 14px 14px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        overflow: visible !important;
     }
     .unscramble-history-header {
         display: flex !important;
@@ -5759,16 +5766,32 @@ input[type=range]::-moz-range-track {
     }
     .unscramble-history-words {
         width: 100% !important;
+        height: auto !important;
+        min-height: 36px !important;
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: flex-start !important;
+        align-items: center !important;
         gap: 8px !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
     }
     .unscramble-history-words .clickable-word-link {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
         padding: 6px 12px !important;
         font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        min-height: 34px !important;
+        height: auto !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+        text-decoration: none !important;
+        overflow: visible !important;
     }
     .unscramble-game-area {
         width: 100% !important;
@@ -7455,6 +7478,49 @@ body .board-cell.tile-flash-purple * {
     background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
     border: 1px solid rgba(0, 210, 255, 0.8) !important;
     box-shadow: 0 0 12px rgba(0, 210, 255, 0.6) !important;
+}
+
+.unscramble-history-item {
+    width: 100% !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    box-sizing: border-box !important;
+    padding: 12px 14px 14px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    overflow: visible !important;
+}
+
+.unscramble-history-words {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 36px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 8px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+}
+
+.unscramble-history-words .clickable-word-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    padding: 6px 12px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    min-height: 34px !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    text-decoration: none !important;
+    overflow: visible !important;
 }
 
 /* Find Count Tool Styles */
