@@ -1405,10 +1405,10 @@
         </style>
 
         <!-- Loading / Gateway Page (Instantly Visible) -->
-        <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
-            <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div class="gateway-btn-housing" id="gateway-housing" onclick="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate(); if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(document.getElementById('btn-enter-lobby-gateway'), event);">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onclick="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate(); if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event)">ENTER LOBBY</button>
+        <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;" onpointerdown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" ontouchstart="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onmousedown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onmousemove="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();">
+            <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;" onpointerdown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" ontouchstart="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onmousedown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();">
+                <div class="gateway-btn-housing" id="gateway-housing" onpointerenter="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onpointerdown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onclick="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate(); if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(document.getElementById('btn-enter-lobby-gateway'), event);">
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerenter="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onpointerdown="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate();" onclick="if(window.playLobbyAudioImmediate) window.playLobbyAudioImmediate(); if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event)">ENTER LOBBY</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -6495,7 +6495,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
-    <script src="/js/app.js?v=33181"></script>
+    <script src="/js/app.js?v=33182"></script>
     <script src="/js/lobby.js?v=33189"></script>
     <script src="/js/play.js?v=33181"></script>
     <script src="/js/tournaments.js?v=33172"></script>

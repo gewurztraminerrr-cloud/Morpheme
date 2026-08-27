@@ -557,6 +557,20 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     if (typeof lobbyMusic.volume === 'number' && lobbyMusic.volume === 1) {
         lobbyMusic.volume = 0.5;
     }
+
+    // Unlock Web Audio Context for Safari/Firefox
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            if (!window._morphemeAudioCtx) {
+                window._morphemeAudioCtx = new AudioCtx();
+            }
+            if (window._morphemeAudioCtx.state === 'suspended') {
+                window._morphemeAudioCtx.resume();
+            }
+        }
+    } catch(e) {}
+
     // If already playing smoothly, continue playback without restarting!
     if (!lobbyMusic.paused) {
         console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
@@ -660,17 +674,19 @@ function playMusicOnFirstInteraction() {
 }
 
 function removeInteractionListeners() {
-    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
+    const events = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'mousemove', 'pointermove'];
     events.forEach(evt => {
+        window.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
         document.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
 
 function setupFirstInteractionMusic() {
     // Add event listeners without once: true so we don't prematurely delete them on early loading clicks!
-    const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointerdown'];
+    const events = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'mousemove', 'pointermove'];
     events.forEach(evt => {
-        document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true });
+        window.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
+        document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
     });
 }
 
