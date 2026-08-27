@@ -427,14 +427,17 @@ function renderGroups(groupsData, containerId, type) {
         const label = type === 'MP' ? `${key}MP` : `${key}LIC`;
         const colId = `combo-${type.toLowerCase()}-${key}`;
         
+        const initialBatch = words.slice(0, 100);
+        let renderedCount = initialBatch.length;
+
         const colDiv = document.createElement('div');
         colDiv.className = 'group-column';
         colDiv.innerHTML = `
             <div class="group-header">${label}</div>
             <div class="list-scroll-area-wrapper" style="position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; width: 100%;">
                 <div class="list-scroll-area group-table-container" id="${colId}-scroll" style="height: 100%; overflow-y: auto; padding: 5px 10px;">
-                    <div class="group-word-list">
-                        ${words.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
+                    <div class="group-word-list" id="${colId}-list">
+                        ${initialBatch.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('')}
                     </div>
                 </div>
                 <div class="custom-scrollbar-track" id="${colId}-track">
@@ -443,6 +446,20 @@ function renderGroups(groupsData, containerId, type) {
             </div>
         `;
         container.appendChild(colDiv);
+
+        const scrollEl = colDiv.querySelector(`#${colId}-scroll`);
+        const listEl = colDiv.querySelector(`#${colId}-list`);
+
+        if (scrollEl && listEl && words.length > renderedCount) {
+            scrollEl.addEventListener('scroll', () => {
+                if (renderedCount < words.length && scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 350) {
+                    const nextBatch = words.slice(renderedCount, renderedCount + 100);
+                    renderedCount += nextBatch.length;
+                    const html = nextBatch.map(w => `<div class="group-row"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></div>`).join('');
+                    listEl.insertAdjacentHTML('beforeend', html);
+                }
+            }, { passive: true });
+        }
 
         initCustomScrollbarForElement(`${colId}-scroll`, `${colId}-track`, `${colId}-thumb`);
     });

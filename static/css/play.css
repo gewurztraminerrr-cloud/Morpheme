@@ -2817,6 +2817,8 @@ body.theme-light-brown .word-item.missed {
         padding: 5px 8px !important;
         font-size: 0.86rem !important;
         line-height: 1.3 !important;
+        content-visibility: auto;
+        contain-intrinsic-size: 0 28px;
     }
 }
 
