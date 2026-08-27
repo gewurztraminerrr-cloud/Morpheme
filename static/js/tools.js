@@ -3284,8 +3284,9 @@ function setupListsTool() {
 
     window.isFullListLoading = false;
     let _fullListAllWords = [];
-    let _fullListRenderedCount = 0;
-    const FULL_LIST_BATCH_SIZE = 1200;
+    let _fullListRenderedStart = 0;
+    let _fullListRenderedEnd = 0;
+    const FULL_LIST_BATCH_SIZE = 600;
 
     function showFullListToast(msg, isError = false) {
         if (!fullListJumpToast) return;
@@ -3301,25 +3302,57 @@ function setupListsTool() {
         }, 2800);
     }
 
-    function renderFullListBatch(count = FULL_LIST_BATCH_SIZE) {
-        if (!fullListResults || !_fullListAllWords || _fullListRenderedCount >= _fullListAllWords.length) return;
-        const slice = _fullListAllWords.slice(_fullListRenderedCount, _fullListRenderedCount + count);
+    function generateFullListItemsHtml(slice) {
+        if (!slice || slice.length === 0) return '';
+        if (currentWordsType === 'likelihood') {
+            return slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`).join('');
+        } else {
+            return slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></span>`).join('');
+        }
+    }
+
+    function renderFullListWindow(startIndex = 0, count = FULL_LIST_BATCH_SIZE) {
+        if (!fullListResults || !_fullListAllWords || _fullListAllWords.length === 0) return;
+        const start = Math.max(0, Math.min(startIndex, _fullListAllWords.length - 1));
+        const end = Math.min(_fullListAllWords.length, start + count);
+        const slice = _fullListAllWords.slice(start, end);
         if (slice.length === 0) return;
 
-        let html = '';
-        if (currentWordsType === 'likelihood') {
-            html = slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`).join('');
-        } else {
-            html = slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></span>`).join('');
-        }
-        fullListResults.insertAdjacentHTML('beforeend', html);
-        _fullListRenderedCount += slice.length;
+        fullListResults.innerHTML = generateFullListItemsHtml(slice);
+        _fullListRenderedStart = start;
+        _fullListRenderedEnd = end;
+    }
+
+    function appendNextFullListBatch(count = 400) {
+        if (!fullListResults || !_fullListAllWords || _fullListRenderedEnd >= _fullListAllWords.length) return;
+        const slice = _fullListAllWords.slice(_fullListRenderedEnd, _fullListRenderedEnd + count);
+        if (slice.length === 0) return;
+
+        fullListResults.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
+        _fullListRenderedEnd += slice.length;
+    }
+
+    function prependPrevFullListBatch(count = 400) {
+        if (!fullListResults || !_fullListAllWords || _fullListRenderedStart <= 0) return;
+        const start = Math.max(0, _fullListRenderedStart - count);
+        const slice = _fullListAllWords.slice(start, _fullListRenderedStart);
+        if (slice.length === 0) return;
+
+        const prevScrollHeight = fullListResults.scrollHeight;
+        const prevScrollTop = fullListResults.scrollTop;
+        fullListResults.insertAdjacentHTML('afterbegin', generateFullListItemsHtml(slice));
+        const newScrollHeight = fullListResults.scrollHeight;
+        fullListResults.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
+
+        _fullListRenderedStart = start;
     }
 
     if (fullListResults) {
         fullListResults.addEventListener('scroll', () => {
-            if (fullListResults.scrollTop + fullListResults.clientHeight >= fullListResults.scrollHeight - 600) {
-                renderFullListBatch();
+            if (fullListResults.scrollTop + fullListResults.clientHeight >= fullListResults.scrollHeight - 400) {
+                appendNextFullListBatch();
+            } else if (fullListResults.scrollTop <= 150 && _fullListRenderedStart > 0) {
+                prependPrevFullListBatch();
             }
         }, { passive: true });
     }
@@ -3350,17 +3383,22 @@ function setupListsTool() {
             return;
         }
 
-        // Render batches up to the target word
-        if (targetIdx >= _fullListRenderedCount) {
-            const needed = (targetIdx - _fullListRenderedCount) + 300;
-            renderFullListBatch(needed);
+        // Try finding if target is already in currently rendered DOM
+        let targetEl = null;
+        if (targetIdx >= _fullListRenderedStart && targetIdx < _fullListRenderedEnd) {
+            try {
+                targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+            } catch (e) {}
         }
 
-        // Try exact match by data-word attribute or child link text
-        let targetEl = null;
-        try {
-            targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-        } catch (e) {}
+        // If not in currently rendered window, render a lightweight window centered on targetIdx
+        if (!targetEl) {
+            const windowStart = Math.max(0, targetIdx - 40);
+            renderFullListWindow(windowStart, 500);
+            try {
+                targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+            } catch (e) {}
+        }
 
         if (targetEl) {
             // Remove previous jump pulses
@@ -3417,7 +3455,8 @@ function setupListsTool() {
         // Otherwise, new list or first time: clear and render from scratch
         window._lastFullListFilterKey = currentFilterKey;
         window._savedFullListScrollTop = 0;
-        _fullListRenderedCount = 0;
+        _fullListRenderedStart = 0;
+        _fullListRenderedEnd = 0;
         _fullListAllWords = currentWordsList || [];
         if (fullListCount) fullListCount.textContent = `Loading…`;
         fullListResults.innerHTML = '';
@@ -3426,7 +3465,7 @@ function setupListsTool() {
         document.body.style.overflow = 'hidden';
         window.isFullListLoading = true;
         
-        renderFullListBatch(FULL_LIST_BATCH_SIZE);
+        renderFullListWindow(0, FULL_LIST_BATCH_SIZE);
         initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
 
         if (window.listsServerTruncated) {
