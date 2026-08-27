@@ -2995,10 +2995,11 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (p.input_method === 'keyboard') inputIcon = '⌨️';
         if (p.input_method === 'touch') inputIcon = '📱';
 
-        // Trophy Logic (Exceptional Performance)
+        // Trophy Logic (Exceptional Performance) - User Directive: Displayed strictly during intermission
+        const isIntermission = (state && state.state === 'intermission') || (window.lastGameState && window.lastGameState.state === 'intermission');
         const peVal = (typeof p.performance_efficiency === 'number' && p.performance_efficiency > 0) ? p.performance_efficiency : 0;
         const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
-        const trophyHtml = (p.has_exceptional_round && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
+        const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">

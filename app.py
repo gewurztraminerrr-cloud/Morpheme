@@ -4827,7 +4827,7 @@ def get_room_state(room_id):
                         'games_played': p.games_played,
                         'country_flag': p.country_flag,
                         'joined_mid_round': getattr(p, 'joined_mid_round', False),
-                        'has_exceptional_round': getattr(p, 'has_exceptional_round', False),
+                        'has_exceptional_round': (getattr(room, 'state', '') == 'intermission' and getattr(p, 'has_exceptional_round', False)),
                         'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
                     } for p, data in sorted(
                         [(p, get_incremental_data(p)) for p in room.players], 
