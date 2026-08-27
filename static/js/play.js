@@ -11,7 +11,7 @@
 const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
-window.switchPlayPanel = function(panelId, smooth = false) {
+window.switchPlayPanel = function(panelId, smooth = true) {
     window._currentPlayPanel = panelId || 'board';
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
