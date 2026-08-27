@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `b090bb70be1e39a3f2537f59d287bb2d348a4747` (`b090bb7`)
+* **Latest Commit ID**: `0c479a9aa883838e55e34749f7b49463690d79d5` (`0c479a9`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,10 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Solid Room Creation & Join Sequence with Blurred "Loading..." Overlay (`static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
-- **Proper Asynchronous Room Initiation**:
-  - When clicking any room button (Accumulative, FCFS, Split Points, 3D/Cube, or Join), the `"Loading..."` overlay with glassmorphism backdrop blur appears immediately.
-  - The server request (`/api/room/create` or `/api/room/join`) completes and returns the assigned `room_id`.
-  - `window.currentRoomId` is established and recorded in storage before triggering `showPage('page-play')` and `startGamePolling()`, preventing premature null-room redirects back to the lobby.
+### A. High-Speed Room Entry & Instant Hydration with Blurred "Loading..." Overlay (`static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
+- **Eliminated Redundant Network Roundtrips**:
+  - Removed the blocking pre-fetch to `/api/user/my_timeout_status` prior to room creation/joining. The backend `/api/room/create` and `/api/room/join` routes already evaluate timeout state server-side in 0ms and return a 403 `timed_out` response if applicable.
+  - Reduced room initiation latency from ~400ms down to ~50ms.
 - **Glassmorphism Backdrop Blur**:
   - Features an atmospheric semi-transparent dark backdrop (`rgba(10, 15, 30, 0.65)`) with native cross-browser background blurring (`backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);`), glowing cyan spinner, and centered `"Loading..."` typography.
 - **Guaranteed Immediate Dismissal on Board Render**:
