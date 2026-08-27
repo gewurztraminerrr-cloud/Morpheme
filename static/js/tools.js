@@ -5326,7 +5326,10 @@ function checkUnscrambleGuess() {
     }
 
     input.value = '';
-    input.focus();
+    const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) {
+        input.focus();
+    }
 }
 
 let unscrambleNextTimeout = null;
@@ -5400,7 +5403,7 @@ function renderUnscrambleFound(revealMissed = false) {
 
         html += `<div style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
                     <div style="font-size: 0.85rem; text-transform: uppercase; color: #ffd700; letter-spacing: 2px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Active: ${unscrambleState.jumbled.toUpperCase()} (${unscrambleState.found.length}/${solutions.length} Found)</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">`;
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%;">`;
 
         solutions.forEach(w => {
             const isFound = unscrambleState.found.includes(w);
@@ -5419,15 +5422,15 @@ function renderUnscrambleFound(revealMissed = false) {
             }
 
             if (isClickable) {
-                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: 7px 14px; border-radius: 8px; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">${displayWord}</div>`;
+                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${displayWord}</div>`;
             } else {
-                html += `<div style="${style} padding: 7px 14px; border-radius: 8px; font-weight: 700; font-size: 1rem; letter-spacing: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none;">${displayWord}</div>`;
+                html += `<div style="${style} padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 1rem; letter-spacing: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${displayWord}</div>`;
             }
         });
 
         // Incorrect Guesses for current round
         unscrambleState.incorrect.forEach(w => {
-            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: 6px 12px; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: 0.95rem; text-decoration: line-through;">${w}</div>`;
+            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: 7px 14px; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: 0.95rem; text-decoration: line-through; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${w}</div>`;
         });
 
         html += `   </div>
@@ -5444,31 +5447,32 @@ function renderUnscrambleFound(revealMissed = false) {
     if (unscrambleState.history.length === 0) {
         html += `<div style="text-align: center; color: #94a3b8; font-size: 0.92rem; font-style: italic; padding: 18px 10px;">No rounds completed yet this session. Solve words or click Reveal to build your history!</div>`;
     } else {
-        html += `<div style="display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; padding-right: 4px;">`;
+        html += `<div class="unscramble-history-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">`;
         unscrambleState.history.forEach((h) => {
             const foundCount = h.found.length;
             const totalCount = h.solutions.length;
             const isPerfect = foundCount === totalCount;
 
             html += `
-                <div style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 12px 16px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.35);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
-                        <span style="font-weight: 800; color: #ffd700; font-size: 1.05rem; letter-spacing: 2px;">${h.jumbled.toUpperCase()}</span>
-                        <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; font-family: monospace;">${h.timestamp}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <span style="font-size: 0.85rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; white-space: nowrap;">
-                            ${foundCount}/${totalCount} Words
-                        </span>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
-                            ${h.solutions.map(s => {
-                                const wereFound = h.found.includes(s);
-                                const color = wereFound ? '#4ade80' : '#fca5a5';
-                                const bg = wereFound ? 'rgba(46, 204, 113, 0.22)' : 'rgba(239, 68, 68, 0.18)';
-                                const bdr = wereFound ? 'rgba(46, 204, 113, 0.5)' : 'rgba(239, 68, 68, 0.4)';
-                                return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.82rem; font-weight: 700; background: ${bg}; padding: 3px 9px; border-radius: 5px; color: ${color}; border: 1px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">${s}</span>`;
-                            }).join('')}
+                <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-weight: 800; color: #ffd700; font-size: 1.1rem; letter-spacing: 2px;">${h.jumbled.toUpperCase()}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 0.85rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 3px 8px; border-radius: 6px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'};">
+                                ${isPerfect ? 'All ' + totalCount + ' Found! 🎉' : foundCount + '/' + totalCount + ' Found'}
+                            </span>
+                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; font-family: monospace;">${h.timestamp}</span>
                         </div>
+                    </div>
+                    <!-- Full-width, generous space for every single word -->
+                    <div class="unscramble-history-words" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-start; width: 100%; align-items: center;">
+                        ${h.solutions.map(s => {
+                            const wereFound = h.found.includes(s);
+                            const color = wereFound ? '#4ade80' : '#fca5a5';
+                            const bg = wereFound ? 'rgba(46, 204, 113, 0.22)' : 'rgba(239, 68, 68, 0.18)';
+                            const bdr = wereFound ? 'rgba(46, 204, 113, 0.5)' : 'rgba(239, 68, 68, 0.4)';
+                            return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.9rem; font-weight: 700; background: ${bg}; padding: 6px 12px; border-radius: 8px; color: ${color}; border: 1.5px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.25); min-height: 32px; box-sizing: border-box;">${s}</span>`;
+                        }).join('')}
                     </div>
                 </div>
             `;

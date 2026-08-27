@@ -5691,11 +5691,48 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
         height: auto !important;
         gap: 20px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
     }
     #unscramble-found-container {
         width: 100% !important;
+        max-width: 100% !important;
         height: auto !important;
         max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+        padding: 14px 16px !important;
+    }
+    #unscramble-found-list {
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .unscramble-history-list {
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .unscramble-history-item {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .unscramble-history-words {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+    .unscramble-history-words .clickable-word-link {
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        padding: 6px 12px !important;
+        font-size: 0.9rem !important;
     }
     .unscramble-game-area {
         width: 100% !important;
@@ -5709,20 +5746,17 @@ input[type=range]::-moz-range-track {
         transition: font-size 0.3s ease, margin-bottom 0.3s ease;
     }
     .unscramble-game-area:focus-within {
-        padding: 10px 15px !important;
-        gap: 8px !important;
+        padding: 14px 18px !important;
+        gap: 12px !important;
     }
     .unscramble-game-area:focus-within #unscramble-jumbled {
-        font-size: 1.8rem !important;
-        margin-bottom: 0 !important;
-        letter-spacing: 3px !important;
-    }
-    .unscramble-game-area:focus-within #unscramble-count-info {
-        display: none !important;
+        font-size: 2.2rem !important;
+        margin-bottom: 2px !important;
+        letter-spacing: 4px !important;
     }
     .unscramble-game-area:focus-within .input-dashboard {
-        margin-top: 5px !important;
-        gap: 8px !important;
+        margin-top: 8px !important;
+        gap: 10px !important;
     }
 
     /* Word of the Day Mobile Fixes */
