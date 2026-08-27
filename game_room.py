@@ -1120,6 +1120,22 @@ class GameRoom:
         
         tot_score = sum(p.score for p in active_players)
         tot_rating = sum(getattr(p, 'rating', 1200) for p in active_players)
+        sorted_scores = sorted([p.score for p in active_players], reverse=True)
+        max_score = sorted_scores[0] if sorted_scores else 0
+        second_score = sorted_scores[1] if len(sorted_scores) > 1 else 0
+        num_players = len(active_players)
+
+        # Dynamic PE threshold scaled by room size:
+        # In a 2-player room, doubling opponent's score corresponds to PE = 1.33x
+        # In a 3-player room, doubling opponents' scores corresponds to PE = 1.60x
+        if num_players <= 2:
+            pe_threshold = 1.30
+        elif num_players == 3:
+            pe_threshold = 1.45
+        elif num_players <= 5:
+            pe_threshold = 1.55
+        else:
+            pe_threshold = 1.60
 
         for p in self.players:
             if getattr(p, 'is_ai', False):
@@ -1133,8 +1149,15 @@ class GameRoom:
                 expected = (p_rating / tot_rating) * tot_score
                 p.performance_efficiency = round(p.score / expected, 2) if expected > 0 else 1.0
 
-                # User Directive: Display a trophy icon when PE is 2.0 or greater!
-                if p.performance_efficiency >= 2.0:
+                # Award trophy if:
+                # 1. Player meets the dynamic PE threshold (e.g. 1.45 for 3 players, where 1.60 gets it)
+                # 2. OR player doubled the score of opponents (p.score == max_score and p.score >= 1.75 * second_score and p.score >= 15)
+                # 3. OR raw exceptional PE >= 2.0
+                is_high_pe = (p.performance_efficiency >= pe_threshold and p.score >= 10)
+                is_doubled_opponent = (p.score == max_score and p.score >= 1.75 * second_score and p.score >= 15)
+                is_raw_domination = (p.performance_efficiency >= 2.0)
+
+                if is_high_pe or is_doubled_opponent or is_raw_domination:
                     earned_this_round = True
             else:
                 p.performance_efficiency = 1.0 if (p.score > 0 and not multiple_players) else 0.0
