@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `da98e3d81b857ba0b852ae9283fa74df751aa5aa` (`da98e3d`)
+* **Latest Commit ID**: `e97c1a88b5ea5f6e8c751241199341ea2221b643` (`e97c1a8`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -20,6 +20,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 ### A. Cross-Browser Lobby Music on "ENTER LOBBY" Gateway (`static/js/app.js`, `templates/index.html`)
 - **Resolved Firefox & Safari Audio Gatekeeper Block**:
   - Added native `autoplay` attribute directly to the `#lobby-music` `<audio>` element so browsers with native media autoplay policies initiate playback immediately during HTML parsing.
+  - Added `Permissions-Policy: autoplay=(self)` meta tag and hidden `allow="autoplay"` frame delegation for browser engines requiring explicit policy declarations.
   - Implemented muted buffer fallback (`audio.muted = true; audio.play()`) so Safari and Firefox immediately buffer and start playback without engine rejection, and instantaneously unmute upon any gesture (`pointermove`, `pointerdown`, `touchstart`, `focus`, `click`).
   - Attached eager capture triggers directly to `#btn-enter-lobby-gateway`, `#gateway-housing`, and the `#page-loading` container.
   - Added Web Audio Context unlock (`AudioContext.resume()`) and multi-lifecycle event triggers (`canplay`, `loadeddata`, `DOMContentLoaded`, `load`, `focus`, `visibilitychange`) so Safari and Firefox immediately engage music playback upon presentation of the "ENTER LOBBY" button.
