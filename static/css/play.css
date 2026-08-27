@@ -2350,15 +2350,13 @@ body.theme-light-brown .word-item.missed {
     /* Essential for flex inner shrinkage */
 }
 
-.tool-header,
-.combo-control-panel {
-    padding-left: 0 !important;
-    padding-right: 15px;
-}
-
 .tool-header {
+    padding-left: 0;
+    padding-right: 15px;
     margin-bottom: 20px;
     text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tool-pane {
@@ -2390,6 +2388,7 @@ body.theme-light-brown .word-item.missed {
 #unscramble-found-container {
     width: 100%;
     max-width: 1200px;
+    box-sizing: border-box;
 }
 
 .tool-header h2 {
@@ -2407,42 +2406,63 @@ body.theme-light-brown .word-item.missed {
     font-size: 0.95rem;
 }
 
-/* Combo Checker Controls */
+/* Combo Checker Controls & Shared Tools Control Panel */
 .combo-control-panel {
     background: rgba(var(--text-primary-rgb), 0.05);
-    padding: 20px 20px 20px 0;
-    border-radius: 10px;
+    padding: 20px 24px;
+    border-radius: 12px;
     margin-bottom: 25px;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .input-row {
     display: flex;
     gap: 12px;
-    justify-content: flex-start;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-row > input,
+.input-row > select,
+.input-row > button {
+    box-sizing: border-box;
 }
 
 #combo-input {
-    flex: 1;
+    flex: 0 1 350px;
+    max-width: 350px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.15);
     color: var(--text-primary);
-    padding: 15px 22px;
+    padding: 14px 20px;
     border-radius: 12px;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 1.5px;
+    box-sizing: border-box;
 }
 
 #profile-search-input {
-    flex: 1;
+    flex: 0 1 360px;
+    max-width: 360px;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    padding: 12px 16px;
+    padding: 12px 18px;
     border-radius: 8px;
     font-size: 1rem;
+    height: 46px;
+    box-sizing: border-box;
     transition: all 0.3s ease;
 }
 
@@ -2455,17 +2475,49 @@ body.theme-light-brown .word-item.missed {
 
 #profile-search-btn {
     padding: 0 24px;
+    height: 46px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: var(--text-primary);
     border: none;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #profile-search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+#profile-my-profile-btn {
+    padding: 0 20px !important;
+    height: 46px !important;
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#profile-my-profile-btn:hover {
+    background: rgba(255,255,255,0.15) !important;
+    border-color: rgba(255,255,255,0.3) !important;
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
@@ -2474,22 +2526,24 @@ body.theme-light-brown .word-item.missed {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     color: var(--text-primary);
-    padding: 15px;
+    padding: 14px 18px;
     border-radius: 12px;
     font-size: 1.1rem;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 #combo-search-btn {
     background: linear-gradient(135deg, #4ade80, #22c55e);
     border: none;
     color: var(--text-primary);
-    padding: 0 24px;
-    border-radius: 6px;
-    font-weight: 600;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 700;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     transition: transform 0.1s;
+    box-sizing: border-box;
 }
 
 #combo-search-btn:active {
@@ -5507,20 +5561,34 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
-    /* Responsive input rows for all tools */
-    .input-row {
+    /* Responsive input rows for all tools and profile */
+    .combo-control-panel,
+    #page-profile .combo-control-panel {
+        padding: 14px 16px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    .input-row,
+    #page-profile .input-row {
         flex-direction: column !important;
         align-items: stretch !important;
         width: 100% !important;
-        gap: 8px !important;
+        gap: 10px !important;
+        box-sizing: border-box !important;
     }
     .input-row > input,
     .input-row > select,
-    .input-row > button {
+    .input-row > button,
+    #page-profile .input-row > input,
+    #page-profile .input-row > button {
         width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
-        padding: 12px !important;
+        padding: 12px 14px !important;
         height: auto !important;
+        min-height: 44px !important;
+        margin: 0 !important;
     }
 
     /* Random Word / Is Valid Mobile Fixes */
@@ -6920,8 +6988,10 @@ body .board-cell.tile-flash-purple * {
     #tool-subanagrams .combo-control-panel,
     #tool-lists .combo-control-panel {
         flex: 0 0 auto !important;
-        margin-bottom: 2px !important;
-        padding: 2px 6px !important;
+        margin-bottom: 8px !important;
+        padding: 12px 16px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
     }
 
     #tool-sequence .seq-results-container,
