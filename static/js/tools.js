@@ -3429,10 +3429,15 @@ function setupListsTool() {
                 const relativeOffset = targetRect.top - containerRect.top + fullListResults.scrollTop;
                 const centerOffset = relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
 
-                fullListResults.scrollTo({
-                    top: Math.max(0, centerOffset),
-                    behavior: 'smooth'
-                });
+                const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    fullListResults.scrollTop = Math.max(0, centerOffset);
+                } else {
+                    fullListResults.scrollTo({
+                        top: Math.max(0, centerOffset),
+                        behavior: 'smooth'
+                    });
+                }
 
                 // Apply pulse effect to the element container without text selection
                 targetEl.classList.add('jump-target-pulse');

@@ -8053,6 +8053,14 @@ body .board-cell.tile-flash-purple * {
 }
 
 #full-list-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 99999 !important;
+    background: var(--bg-primary, #12131c) !important;
     contain: layout paint;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
