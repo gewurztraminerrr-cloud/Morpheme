@@ -290,24 +290,6 @@ function setupComboChecker() {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
         });
-        input.addEventListener('focus', () => {
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                if (layoutEl) {
-                    layoutEl.scrollLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
-                }
-                const toolsContent = document.querySelector('#page-tools .tools-content');
-                if (toolsContent) {
-                    toolsContent.scrollTop = 0;
-                }
-                const toolPane = document.getElementById('tool-combo');
-                if (toolPane) {
-                    toolPane.scrollTop = 0;
-                }
-                window.scrollTo(0, 0);
-            }
-        });
     }
 
     // Prevent horizontal scroll/swipe chaining to the parent .tools-split-layout and enable direct touch dragging across tables
