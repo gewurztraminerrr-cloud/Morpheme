@@ -3275,8 +3275,7 @@ body.theme-light-brown .word-item.missed {
 
 .board-panel.has-split-notepads .validation-status,
 .board-panel.has-split-notepads .word-input-section,
-.board-panel.has-split-notepads .cube-rotate-hint,
-.board-panel.has-split-notepads .mobile-nav-indicators {
+.board-panel.has-split-notepads .cube-rotate-hint {
     display: none !important;
 }
 
@@ -3318,6 +3317,9 @@ body.theme-light-brown .word-item.missed {
         height: 100% !important;
         max-height: 100% !important;
         overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
     }
 
     #game-board.split-notepads-container,
@@ -3327,20 +3329,33 @@ body.theme-light-brown .word-item.missed {
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: calc(100vh - 100px) !important;
-        height: calc(100dvh - 100px) !important;
-        max-height: calc(100vh - 100px) !important;
-        max-height: calc(100dvh - 100px) !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: calc(100% - 44px) !important;
+        max-height: calc(100% - 44px) !important;
         overflow-y: scroll !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
         gap: 14px !important;
-        padding: 10px 10px 140px 10px !important;
+        padding: 10px 10px 30px 10px !important;
         margin: 0 !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
+        box-sizing: border-box !important;
+    }
+
+    .board-panel.has-split-notepads .mobile-nav-indicators {
+        display: flex !important;
+        flex-shrink: 0 !important;
+        height: 44px !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        position: relative !important;
+        bottom: 0 !important;
+        z-index: 100 !important;
         box-sizing: border-box !important;
     }
     .user-notepad {
