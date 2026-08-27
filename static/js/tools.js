@@ -5457,13 +5457,13 @@ function renderUnscrambleFound(revealMissed = false) {
 
             html += `
                 <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                        <span style="font-weight: 800; color: #ffd700; font-size: 1.1rem; letter-spacing: 2px;">${h.jumbled.toUpperCase()}</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 0.85rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 3px 8px; border-radius: 6px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'}; white-space: nowrap;">
+                    <div class="unscramble-history-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: nowrap; gap: 6px; width: 100%;">
+                        <span class="unscramble-history-jumbled" style="font-weight: 800; color: #ffd700; font-size: 1.05rem; letter-spacing: 1.5px; white-space: nowrap; flex-shrink: 0;">${h.jumbled.toUpperCase()}</span>
+                        <div class="unscramble-history-meta" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <span class="unscramble-history-pill" style="font-size: 0.8rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 2px 7px; border-radius: 5px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'}; white-space: nowrap;">
                                 ${foundCount}/${totalCount} Found
                             </span>
-                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; font-family: monospace; white-space: nowrap;">${h.timestamp}</span>
+                            <span class="unscramble-history-time" style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; font-family: monospace; white-space: nowrap;">${h.timestamp}</span>
                         </div>
                     </div>
                     <!-- Full-width, generous space for every single word -->

@@ -5722,6 +5722,40 @@ input[type=range]::-moz-range-track {
     .unscramble-history-item {
         width: 100% !important;
         box-sizing: border-box !important;
+        padding: 10px 12px !important;
+    }
+    .unscramble-history-header {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .unscramble-history-jumbled {
+        font-size: 0.95rem !important;
+        letter-spacing: 1px !important;
+        white-space: nowrap !important;
+        flex-shrink: 1 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .unscramble-history-meta {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 5px !important;
+        flex-shrink: 0 !important;
+    }
+    .unscramble-history-pill {
+        font-size: 0.72rem !important;
+        padding: 2px 6px !important;
+        white-space: nowrap !important;
+    }
+    .unscramble-history-time {
+        font-size: 0.7rem !important;
+        white-space: nowrap !important;
     }
     .unscramble-history-words {
         width: 100% !important;
