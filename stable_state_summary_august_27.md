@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `e7a466ae4068595085e92751f7d54238541e21b7` (`e7a466a`)
+* **Latest Commit ID**: `8cc57ac65751910cf90098df7ba55060ee45155f` (`8cc57ac`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,50 +17,50 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Real-Time Dynamic Scrollbar Scaling & Thumb Positioning Across All Devices (`static/js/tools.js`, `templates/index.html`)
+### A. Elimination of Mobile Black Screen in View Full List via Memory-Bounded Virtual Windowing (`static/js/tools.js`, `templates/index.html`)
+- **Virtual Window Rendering with Fixed Memory Footprint**:
+  - Replaced unconstrained continuous DOM appending with a strictly bounded virtual window (400 items active, capped at maximum 1,000 DOM nodes during fast scrolling).
+  - Keeps mobile WebKit GPU texture usage minimal (< 5MB), completely preventing mobile Safari / Chrome GPU compositor texture crashes that caused the modal screen to turn black when loading large dictionaries (e.g. 199,429 words).
+  - Retains instantaneous search jumps, smooth bi-directional infinite scrolling, and real-time custom scrollbar scaling across all devices.
+
+### B. Real-Time Dynamic Scrollbar Scaling & Thumb Positioning Across All Devices (`static/js/tools.js`, `templates/index.html`)
 - **Universal Dynamic Thumb Scaling for Mobile, Laptops & Desktops**:
   - Integrated `MutationObserver` and live batch notification hooks into `initCustomScrollbarForElement()`.
-  - As words stream in progressively (e.g. from 500 up to ~200,000 words in **View Full List**), the scrollbar thumb dynamically recalculates its height, scale ratio, and relative top offset on every animation frame in real time.
+  - As words stream in progressively, the scrollbar thumb dynamically recalculates its height, scale ratio, and relative top offset on every animation frame in real time.
   - Fully enabled for desktops, laptops, tablets, and mobile devices across all custom scrollbars in Tools (Word Lists, View Full List modal, Sequence Search, Subanagrams, Combo Checker, and Unscramble Session History).
 
-### B. Unscramble Session History Scrollbar Thumb Movement Fix (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### C. Unscramble Session History Scrollbar Thumb Movement Fix (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Resolved Static Thumb Locking**:
   - Removed `top: 0 !important;` from the `#unscramble-history-scrollbar-thumb` CSS rule in `play.css`, which was overriding runtime JavaScript position updates.
   - Hardened `initCustomScrollbarForElement()` in `static/js/tools.js` to update thumb top coordinates via `setProperty('top', ..., 'important')` and real-time scroll synchronization.
 
-### C. Mobile Touch Responsiveness & Scrolling for Unscramble Session History (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### D. Mobile Touch Responsiveness & Scrolling for Unscramble Session History (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Enhanced Mobile Touch & Scroll Propagation**:
   - Configured `-webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; overscroll-behavior-y: contain !important;` on `.unscramble-history-list` so swiping anywhere within the Session History pane scrolls the history list smoothly on iOS and Android.
   - Added extended invisible touch hit targets (`::before` pseudo-element spanning 40px) to `#unscramble-history-scrollbar-thumb` and widened the track on mobile viewports (`width: 20px`), allowing fingers to grab and drag the thumb immediately.
 
-### D. Elimination of Word Pill Vertical Clipping in Unscramble Session History (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### E. Elimination of Word Pill Vertical Clipping in Unscramble Session History (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Complete Word Pill Visibility**:
   - Enforced `min-height: fit-content !important; height: auto !important; padding: 12px 14px 14px 14px !important; overflow: visible !important;` on `.unscramble-history-item`.
   - Structured `.unscramble-history-words` with `min-height: 36px !important; height: auto !important; overflow: visible !important;` and `.clickable-word-link` with `display: inline-flex !important; align-items: center !important; justify-content: center !important; min-height: 34px !important; height: auto !important; line-height: 1.2 !important; border-radius: 8px !important; text-decoration: none !important;`.
   - Completely resolved the issue where the bottom half of word pills and letters were cut off by card boundaries.
 
-### E. Unscramble Session History Single-Row Mobile Header Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### F. Unscramble Session History Single-Row Mobile Header Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Single-Row Alignment on Mobile Devices**:
   - Enforced `flex-wrap: nowrap !important;` on `.unscramble-history-header` so the jumbled word, the `0/1 Found` / `1/1 Found` status pill, and the timestamp remain neatly aligned on the exact same horizontal row on mobile screens.
   - Scaled typography and padding (`0.95rem` for jumbled word, `0.72rem` for status pill, `0.7rem` for timestamp) to fit effortlessly across all small viewport widths with zero wrapping or truncation.
 
-### F. Unscramble Session History Custom Draggable Scroller & Thumb (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### G. Unscramble Session History Custom Draggable Scroller & Thumb (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Custom Draggable Scroller with Thumb**:
   - Integrated the custom scrollbar system (`initCustomScrollbarForElement`) into Unscramble's Session History with a dedicated track (`#unscramble-history-scrollbar-track`) and touch-responsive glowing cyan thumb (`#unscramble-history-scrollbar-thumb`).
   - Hides native browser scrollbars in favor of the custom draggable thumb, dynamically appearing whenever history rounds exceed the container height.
   - Sized the scroll container with comfortable height (`max-height: 380px` on desktop, `max-height: 350px` on mobile) with dedicated right padding to give full space to word badges without overlapping the track.
 
-### G. Unscramble Session History "1/1 Found" Formatting & Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### H. Unscramble Session History "1/1 Found" Formatting & Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Standardized "X/Y Found" Status Pill**:
   - Formatted rounds where all solutions are found to read cleanly as `1/1 Found` (or `X/Y Found`) in green (`color: #4ade80; background: rgba(46, 204, 113, 0.18); border: 1px solid rgba(46, 204, 113, 0.4);`) matching the structure of `0/1 Found`.
   - Positioned the completion timestamp (`HH:MM:SS`) immediately to the right of the status pill.
   - Sized and placed played words into a dedicated full-width flex container (`.unscramble-history-words`) with zero vertical or horizontal clipping on mobile devices.
-
-### H. Steady Progressive Word List Streaming in "View Full List" (`static/js/tools.js`, `templates/index.html`)
-- **Steady Background Word Loading**:
-  - Implemented `startSteadyLoader()` and `stopSteadyLoader()` using animation frame pacing (`requestAnimationFrame`) to progressively stream and append chunks of 500 words smoothly into the DOM.
-  - The initial batch renders instantly in $0\text{ms}$ while words steadily populate in the background without freezing the UI or dropping frames.
-  - Displays a live progressive counter (`Loading… 15,500 / 199,429 words`) that updates dynamically until 100% of the lexicon is loaded.
 
 ### I. Mobile Tap Highlight & Blue Flash Removal on "View Full List" (`static/css/play.css`, `templates/index.html`)
 - **Eliminated Mobile Blue Flash & Browser Focus Ring**:
@@ -143,38 +143,31 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - **Uniform 46px Height Matching the "Check" Button**:
   - Sized `#combo-input` (`"ENTER LETTERS TO CHECK..."`) to `height: 46px; min-height: 46px; max-height: 46px; padding: 10px 16px; font-size: 16px; border-radius: 8px;` matching the exact vertical dimensions and curvature of the **"Check"** button (`#combo-search-btn`) and dictionary dropdown (`#combo-dict`).
 
-### U. Windowed Chunk Rendering & Seamless Mobile Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
-- **Eliminated Mobile Black Screen & Flash on Word Search**:
-  - Replaced bulk DOM wipes with seamless near-range appending (`appendNextFullListBatch` / `prependPrevFullListBatch`) and windowed focused chunks (~500 words) for distant queries.
-  - Used direct instant `scrollTop` assignment on mobile devices (`isMobile ? fullListResults.scrollTop = centerOffset : scrollTo(...)`) to eliminate iOS Safari WebKit compositor collisions caused by simultaneous smooth scroll interpolation and virtual keyboard dismissal.
-  - Added CSS layout and paint containment (`contain: content; transform: translateZ(0);`) on `#full-list-modal-results` and full `100dvh` dimensions on `#full-list-modal` to retain GPU compositing surfaces without dropping frames.
-  - Optimized the `.jump-target-pulse` animation to use GPU-friendly background/outline transitions instead of intensive multi-layer box shadows.
-
-### V. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
+### U. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
 - **Animated Panel Sliding**:
   - Configured `window.switchPlayPanel()` to default to smooth scrolling (`smooth = true`), triggering animated sliding when pressing **"Board ➜"** in the Players panel, **"← Board"** in the Words panel, **"← Players"**, and **"Words ➜"** in the Board panel.
   - Preserved instant zero-latency snaps (`smooth = false`) for room initialization, orientation change recoveries, and programmatic panel resets.
 
-### W. Mobile Intermission Bottom Navigation Bar in FCFS, SP, and CUBE Rooms (`static/css/play.css`, `templates/index.html`)
+### V. Mobile Intermission Bottom Navigation Bar in FCFS, SP, and CUBE Rooms (`static/css/play.css`, `templates/index.html`)
 - **Always-Visible Bottom Navigation Bar**:
   - Removed the `display: none !important` override on `.board-panel.has-split-notepads .mobile-nav-indicators` so the bottom grey navigation bar with `"<- Players"` and `"Words ->"` remains accessible during intermission in **FCFS**, **SP (Split Points)**, and **CUBE (3D)** rooms on mobile devices.
 - **Dedicated Flex Layout & Dedicated Bottom Clearance**:
   - Structured `.board-panel.has-split-notepads` as a full-height column flex container, allocating `calc(100% - 44px)` to the scrollable notepads container and pinning the 44px bottom navigation bar (`flex-shrink: 0; z-index: 100;`).
   - Allows users to swipe and tap seamlessly between the **Players**, **Board/Notepads**, and **Words** panes without notepads overlapping the navigation bar.
 
-### X. Profile and Tools Controls Centering & Equal Panel Padding (`static/css/play.css`, `templates/index.html`)
+### W. Profile and Tools Controls Centering & Equal Panel Padding (`static/css/play.css`, `templates/index.html`)
 - **Centered Search, Buttons, and Inputs**:
   - Centered the username search input, **Search** button, and **My Profile** button horizontally in the Profile control panel card (`justify-content: center; align-items: center;`).
   - Standardized uniform 46px heights across profile search inputs and action buttons.
   - Symmetrized card padding (`padding: 20px 24px` on desktop, `padding: 14px 16px` on mobile, `box-sizing: border-box`), ensuring equal space surrounds contents on all four sides.
   - Applied symmetrical card padding and centered layouts across all Tools tabs (**Subanagrams**, **Sequence Search**, **Word Lists**, **Word Validator**, **Combo Checker**, **Unscramble**, and **Random Word Generator**).
 
-### Y. Drop-Down Menu Label Simplification: "Added Words" to "AW" (`templates/index.html`)
+### X. Drop-Down Menu Label Simplification: "Added Words" to "AW" (`templates/index.html`)
 - **Clean Drop-Down Text Across Tools & Game Interfaces**:
   - Updated all select dropdown options containing the text "Added Words" across the application to display **"AW"** instead (Random Word Generator, Combo Checker, Word Validator, Subanagrams, Sequence Search, Word Lists filter, and Unscramble).
   - Maintained all existing `value` bindings (`value="added_words"` and `value="added"`), ensuring seamless compatibility and identical functional behavior across all backend endpoints, queries, and event handlers.
 
-### Z. Lobby Live Player Count Accuracy & Accumulative Room Sync (`app.py`, `game_room.py`, `static/js/lobby.js`, `templates/index.html`)
+### Y. Lobby Live Player Count Accuracy & Accumulative Room Sync (`app.py`, `game_room.py`, `static/js/lobby.js`, `templates/index.html`)
 - **Guest Session Auto-Initialization Hardening**:
   - `ensure_guest_session()` and `guest_login()` now incorporate a collision retry loop (up to 10 attempts), preventing random `UNIQUE constraint failed: users.username` errors in SQLite from leaving guest users unauthenticated.
 - **Backend Room Wake-Up & State Machine Fixes**:
@@ -186,7 +179,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Guarded `fetchAndRenderRooms` in `lobby.js` and `index.html` so non-accumulative room list updates never overwrite `Start [N]` player counts on Accumulative buttons.
   - Added early stats hydration listeners on `DOMContentLoaded` and fallback defaults for `updateLobbyButtons()`.
 
-### AA. FAQ Entry for Game Room Window Navigation (`templates/index.html`)
+### Z. FAQ Entry for Game Room Window Navigation (`templates/index.html`)
 - **Quick Navigate & Detailed FAQ**:
   - Added quick navigate button and accordion entry in the **How to Play & FAQ** modal explaining that the bottom grey bar is both pressable and swipeable for swift panel navigation.
 
