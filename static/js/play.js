@@ -4670,9 +4670,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
 
-    if (hasLetters) {
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-    }
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
 
     // Determine dimensions early
     let rows = 0;
@@ -6111,6 +6109,7 @@ function reapplyBoardHighlights() {
 }
 
 function renderSplitNotepads(players, state) {
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 
@@ -6383,6 +6382,7 @@ function renderSplitNotepads(players, state) {
 }
 
 function renderFCFSNotepads(players, state) {
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 

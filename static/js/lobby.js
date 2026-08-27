@@ -59,12 +59,13 @@ window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
     if (!rawBtn) return;
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         return;
     }
     const btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
     try {
-        if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
         if (typeof stopLobbyPolling === 'function') stopLobbyPolling();
         const gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
         const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
@@ -312,6 +313,18 @@ async function createRoom(config, minRating, maxRating) {
     }
 }
 window.createRoom = createRoom;
+
+// Instant 0ms pointerdown feedback for all lobby game room buttons
+document.addEventListener('pointerdown', (e) => {
+    const rawTarget = e.target;
+    if (!rawTarget) return;
+    const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+    if (!target || typeof target.closest !== 'function') return;
+    const roomBtn = target.closest('.game-btn, .join-room-btn, .acc-btn');
+    if (roomBtn && typeof window.showLoadingOverlay === 'function') {
+        window.showLoadingOverlay('Loading...');
+    }
+}, { passive: true });
 
 // Use event delegation on document as fallback
 function setupLobbyEvents() {

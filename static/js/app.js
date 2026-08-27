@@ -2690,14 +2690,14 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'global-loading-overlay';
-        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; color: #fff; font-family: sans-serif;';
-        overlay.innerHTML = '<div class="loading-spinner" style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: #e94560; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div><div id="loading-message" style="font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;">' + message + '</div><style>@keyframes spin { to { transform: rotate(360deg); } }</style>';
+        overlay.innerHTML = '<div class="loading-spinner"></div><div id="loading-message">' + message + '</div>';
         document.body.appendChild(overlay);
     } else {
         const msgEl = overlay.querySelector('#loading-message');
         if (msgEl) msgEl.textContent = message;
-        overlay.style.display = 'flex';
     }
+    overlay.classList.remove('hidden');
+    overlay.style.setProperty('display', 'flex', 'important');
     if (window._loadingOverlayTimeout) {
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
@@ -2715,7 +2715,10 @@ window.hideLoadingOverlay = function() {
         window._loadingOverlayTimeout = null;
     }
     const overlay = document.getElementById('global-loading-overlay');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.setProperty('display', 'none', 'important');
+    }
 };
 
 window.loadFAQUserCounts = async function() {

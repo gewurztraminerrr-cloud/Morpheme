@@ -7146,23 +7146,31 @@ html, body {
 
 /* Global Loading Overlay with Glassmorphism Backdrop Blur */
 #global-loading-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    background: rgba(10, 15, 30, 0.65) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    z-index: 999999 !important;
-    color: #ffffff !important;
-    font-family: inherit !important;
-    transition: opacity 0.2s ease !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(10, 15, 30, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    color: #ffffff;
+    font-family: inherit;
+    transition: opacity 0.2s ease;
+}
+
+#global-loading-overlay.hidden,
+#global-loading-overlay[style*="display: none"] {
+    display: none !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 #global-loading-overlay .loading-spinner {
