@@ -2720,6 +2720,7 @@ body.theme-light-brown .word-item.missed {
         height: 100% !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
+        contain: layout paint;
     }
 
     #tool-combo .combo-results-container,
@@ -2730,6 +2731,8 @@ body.theme-light-brown .word-item.missed {
         height: auto !important;
         overflow: visible !important;
         padding-bottom: 30px !important;
+        contain: content;
+        transform: translateZ(0);
     }
 
     #tool-combo .result-section,

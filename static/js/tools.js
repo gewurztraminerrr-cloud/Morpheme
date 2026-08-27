@@ -3568,6 +3568,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     let isDragging = false;
     let startY = 0;
     let startThumbTop = 0;
+    let _rafId = null;
 
     function updateThumb() {
         if (isDragging) return; // Never override position while user is actively dragging
@@ -3593,6 +3594,14 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         thumb.style.top = `${thumbTop}px`;
     }
 
+    function scheduleUpdate() {
+        if (_rafId) return;
+        _rafId = requestAnimationFrame(() => {
+            _rafId = null;
+            updateThumb();
+        });
+    }
+
     // Cleanup previous observers on this scrollArea if re-initialized
     if (scrollArea._customScrollbarRO) {
         try { scrollArea._customScrollbarRO.disconnect(); } catch (_) {}
@@ -3601,19 +3610,16 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         try { scrollArea._customScrollbarMO.disconnect(); } catch (_) {}
     }
 
-    // Bind event listeners for scroll and resize
-    scrollArea.addEventListener('scroll', updateThumb, { passive: true });
-    window.addEventListener('resize', updateThumb, { passive: true });
+    // Bind event listeners for scroll
+    scrollArea.addEventListener('scroll', scheduleUpdate, { passive: true });
 
-    // Watch for dynamic content changes inside the scroll area to auto-update
-    const observer = new MutationObserver(updateThumb);
-    observer.observe(scrollArea, { childList: true, subtree: true });
-    scrollArea._customScrollbarMO = observer;
-
+    // Watch with ResizeObserver throttled via requestAnimationFrame
     if (window.ResizeObserver) {
-        const ro = new ResizeObserver(updateThumb);
+        const ro = new ResizeObserver(scheduleUpdate);
         ro.observe(scrollArea);
         scrollArea._customScrollbarRO = ro;
+    } else {
+        window.addEventListener('resize', scheduleUpdate, { passive: true });
     }
 
     function onDragMove(e) {
