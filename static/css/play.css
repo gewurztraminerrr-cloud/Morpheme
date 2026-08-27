@@ -7476,17 +7476,17 @@ body .board-cell.tile-flash-purple * {
 }
 
 #unscramble-history-scrollbar-thumb {
-    position: absolute !important;
-    top: 0 !important;
-    left: 2px !important;
-    width: 14px !important;
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.8), rgba(58, 123, 213, 0.8)) !important;
-    border-radius: 7px !important;
-    cursor: pointer !important;
-    border: 1px solid rgba(0, 210, 255, 0.6) !important;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4) !important;
-    touch-action: none !important;
-    min-height: 32px !important;
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 14px;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.8), rgba(58, 123, 213, 0.8));
+    border-radius: 7px;
+    cursor: pointer;
+    border: 1px solid rgba(0, 210, 255, 0.6);
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+    touch-action: none;
+    min-height: 32px;
 }
 
 #unscramble-history-scrollbar-thumb::before {

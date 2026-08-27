@@ -3644,6 +3644,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
         thumb.style.top = `${thumbTop}px`;
+        thumb.style.setProperty('top', `${thumbTop}px`, 'important');
     }
 
     function scheduleUpdate() {
@@ -3687,6 +3688,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         newThumbTop = Math.max(0, Math.min(maxThumbTop, newThumbTop));
 
         thumb.style.top = `${newThumbTop}px`;
+        thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight;
