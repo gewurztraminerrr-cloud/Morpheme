@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `d39e4b2d354b382d61d154ee42cf9592f75a6c1e` (`d39e4b2`)
+* **Latest Commit ID**: `6febcc02720aa01ba7b55db5a133f6a27e7f123f` (`6febcc0`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,26 +17,32 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Mobile Tap Highlight & Blue Flash Removal on "View Full List" (`static/css/play.css`, `templates/index.html`)
+### A. Steady Progressive Word List Streaming in "View Full List" (`static/js/tools.js`, `templates/index.html`)
+- **Steady Background Word Loading**:
+  - Implemented `startSteadyLoader()` and `stopSteadyLoader()` using animation frame pacing (`requestAnimationFrame`) to progressively stream and append chunks of 500 words smoothly into the DOM.
+  - The initial batch renders instantly in $0\text{ms}$ while words steadily populate in the background without freezing the UI or dropping frames.
+  - Displays a live progressive counter (`Loading… 15,500 / 199,429 words`) that updates dynamically until 100% of the lexicon is populated.
+
+### B. Mobile Tap Highlight & Blue Flash Removal on "View Full List" (`static/css/play.css`, `templates/index.html`)
 - **Eliminated Mobile Blue Flash & Browser Focus Ring**:
   - Enforced `-webkit-tap-highlight-color: transparent !important;`, `-webkit-touch-callout: none !important;`, `outline: none !important;`, and `-webkit-focus-ring-color: transparent !important;` on `#list-view-full-btn`.
   - Scoped `:focus`, `:focus-visible`, `:active`, and `:hover` states to maintain consistent lavender theme styling (`rgba(167, 139, 250, 0.25)` background with `rgba(167, 139, 250, 0.7)` border) with zero blue flash or blue border on touch.
 
-### B. Lists Tool Header Cleanup & "View Full List" Button Placement (`templates/index.html`, `static/js/tools.js`)
+### C. Lists Tool Header Cleanup & "View Full List" Button Placement (`templates/index.html`, `static/js/tools.js`)
 - **Replaced "Top Options" with "View Full List"**:
   - Removed the `"▲ Top Options"` button from the Lists tool header in Tools.
   - Positioned the `"⛶ View Full List"` button directly on the right side of the list header (`#list-column-header-title`), creating a clean, balanced layout alongside the dictionary title and count badge.
 
-### C. FAQ AW Dictionary Description Refinement (`templates/index.html`)
+### D. FAQ AW Dictionary Description Refinement (`templates/index.html`)
 - **Explicit Mention of 30,000 Filtered Words**:
   - Updated the **"What are the different dictionaries used?"** entry in the FAQ to explicitly state that close to 30,000 unwanted entries were removed from Wiktionary's word list because they were either obsolete terms, abbreviations, or misspellings.
 
-### D. Deduplication of 16+ Words Between AW & 16+ List (`dictionaries/added_words.txt`, `dictionaries/16plus.txt`)
+### E. Deduplication of 16+ Words Between AW & 16+ List (`dictionaries/added_words.txt`, `dictionaries/16plus.txt`)
 - **6,128 Duplicate 16+ Words Removed from Added Words (AW)**:
   - Deduplicated `dictionaries/added_words.txt` by removing all 6,128 words of length 16+ that already exist in the official supplementary 16+ List (`dictionaries/16plus.txt`).
   - Result: `16+ AW` now contains **38,242 unique words** with **0 overlap** with the **16+ List** (9,227 unique words). Total words in `added_words.txt` updated from 479,310 to **473,182**.
 
-### E. Instant Zero-Latency Room Loading & Synchronous Board Readiness (`app.py`, `static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
+### F. Instant Zero-Latency Room Loading & Synchronous Board Readiness (`app.py`, `static/css/style.css`, `static/js/app.js`, `static/js/lobby.js`, `static/js/play.js`, `templates/index.html`)
 - **Synchronous Board Readiness on Creation**:
   - `create_room()` in `app.py` now guarantees the room's first round board is popped and initialized synchronously before returning, eliminating the asynchronous thread gap where the frontend previously had to wait through multiple poll cycles for the board to generate.
   - Eliminated redundant network pre-fetch roundtrips (`/api/user/my_timeout_status`).
@@ -47,7 +53,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Fixed CSS display override rules (`#global-loading-overlay.hidden` and inline `setProperty('display', 'none', 'important')`).
   - `hideLoadingOverlay()` is invoked directly from `renderBoard()`, `renderSplitNotepads()`, `renderFCFSNotepads()`, and `updateGameState()`, ensuring the overlay immediately and completely vanishes the exact millisecond the game board renders behind it.
 
-### F. Performance Efficiency (PE) Calibration & Dominant Score Trophy Awards (`game_room.py`, `app.py`, `static/js/play.js`, `templates/index.html`)
+### G. Performance Efficiency (PE) Calibration & Dominant Score Trophy Awards (`game_room.py`, `app.py`, `static/js/play.js`, `templates/index.html`)
 - **Mathematical PE Calibration**:
   - Calibrated Performance Efficiency ($\text{PE}$) dynamic evaluation so players who double the score of opponents near their rating or dominate the room are reliably awarded the trophy icon 🏆 during intermission:
     - **2 players**: $\text{PE} \ge 1.30$ (corresponds to doubling opponent's score)
@@ -60,18 +66,18 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Trophies awarded are displayed strictly in the bottom-left corner of the player card during that round's **intermission**.
   - At the **start of the next round**, the trophy icon automatically disappears from all players on both backend state transitions and frontend UI rendering.
 
-### G. Mobile Profile Search Input & Button Height Alignment (`static/css/play.css`, `static/css/style.css`, `templates/index.html`)
+### H. Mobile Profile Search Input & Button Height Alignment (`static/css/play.css`, `static/css/style.css`, `templates/index.html`)
 - **Uniform 46px Height Matching the "Search" Button**:
   - Standardized `#profile-search-input` (`"Enter username..."`) on mobile devices to `height: 46px !important; min-height: 46px !important; max-height: 46px !important; padding: 10px 16px !important; font-size: 16px !important; box-sizing: border-box !important;`.
   - Matched the exact vertical height and curvature of the **"Search"** button (`#profile-search-btn`) and **"My Profile"** button (`#profile-my-profile-btn`) beneath it.
 
-### H. Level Alignment for Rotate & Transpose Buttons on Mobile (`static/css/play.css`, `templates/index.html`)
+### I. Level Alignment for Rotate & Transpose Buttons on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Fixed Button Offset / Vertical Shifting on Press**:
   - Scoped out generic `.rotate-btn:hover` translateY shifts from timer controls.
   - Enforced `transform: none !important; box-shadow: none !important; vertical-align: middle !important;` across all pseudo-states (`:hover`, `:active`, `:focus`, `:focus-visible`) for `#rotate-board-btn`, `#transpose-board-btn`, and `.timer-display .rotate-btn` on mobile devices.
   - Pressing or tapping either button maintains flush, level horizontal alignment with its partner button without jumping or tilting.
 
-### I. Cross-Browser Lobby Music on "ENTER LOBBY" Gateway (`static/js/app.js`, `templates/index.html`)
+### J. Cross-Browser Lobby Music on "ENTER LOBBY" Gateway (`static/js/app.js`, `templates/index.html`)
 - **Resolved Firefox & Safari Audio Gatekeeper Block**:
   - Added native `autoplay` attribute directly to the `#lobby-music` `<audio>` element so browsers with native media autoplay policies initiate playback immediately during HTML parsing.
   - Added `Permissions-Policy: autoplay=(self)` meta tag and hidden `allow="autoplay"` frame delegation for browser engines requiring explicit policy declarations.
@@ -80,56 +86,56 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Added Web Audio Context unlock (`AudioContext.resume()`) and multi-lifecycle event triggers (`canplay`, `loadeddata`, `DOMContentLoaded`, `load`, `focus`, `visibilitychange`) so Safari and Firefox immediately engage music playback upon presentation of the "ENTER LOBBY" button.
   - Integrated `handleLobbyMusicState()` into `showPage()` for seamless audio continuity during SPA page transitions.
 
-### J. Desktop Color Chart Repositioning & Downward Mini-Popups (`static/css/style.css`, `templates/index.html`)
+### K. Desktop Color Chart Repositioning & Downward Mini-Popups (`static/css/style.css`, `templates/index.html`)
 - **Color Chart Relocation**:
   - Moved the horizontal rating tier color chart (`#game-color-bar`) on desktops and laptops to above the game header (`.play-header`) and directly below the top navigation menu / separator.
 - **Downward Mini-Popups (Tooltips)**:
   - Repositioned the tier name and rating range hover popups to appear smoothly downward (`top: calc(100% + 7px)`) with inverted upward-pointing indicator arrows.
   - Added boundary constraints for the leftmost (`:first-child`) and rightmost (`:last-child`) segments to prevent viewport clipping.
 
-### K. Combo Checker Virtualized Column Rendering & Infinite Scrolling (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### L. Combo Checker Virtualized Column Rendering & Infinite Scrolling (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Eliminated 3-Second Mobile Viewport Freeze on Re-Focus**:
   - Replaced dumping 30,000–50,000 simultaneous DOM nodes in MP and LIC result columns with a fast, chunked rendering architecture (100 words initially rendered per column) and smooth infinite scrolling upon reaching the bottom of a column.
   - Added `content-visibility: auto; contain-intrinsic-size: 0 28px;` to `.group-row` to bypass layout calculation for off-screen table rows.
   - Throttled custom scrollbars with `requestAnimationFrame()` and removed deep DOM mutation observers.
   - Kept `#combo-input` font-size at `16px` to prevent iOS Safari auto-zoom recalculations.
 
-### L. Combo Checker Textbox & Button Height Sizing on Mobile (`static/css/play.css`, `templates/index.html`)
+### M. Combo Checker Textbox & Button Height Sizing on Mobile (`static/css/play.css`, `templates/index.html`)
 - **Uniform 46px Height Matching the "Check" Button**:
   - Sized `#combo-input` (`"ENTER LETTERS TO CHECK..."`) to `height: 46px; min-height: 46px; max-height: 46px; padding: 10px 16px; font-size: 16px; border-radius: 8px;` matching the exact vertical dimensions and curvature of the **"Check"** button (`#combo-search-btn`) and dictionary dropdown (`#combo-dict`).
 
-### M. Windowed Chunk Rendering & Seamless Mobile Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### N. Windowed Chunk Rendering & Seamless Mobile Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Eliminated Mobile Black Screen & Flash on Word Search**:
   - Replaced bulk DOM wipes with seamless near-range appending (`appendNextFullListBatch` / `prependPrevFullListBatch`) and windowed focused chunks (~500 words) for distant queries.
   - Used direct instant `scrollTop` assignment on mobile devices (`isMobile ? fullListResults.scrollTop = centerOffset : scrollTo(...)`) to eliminate iOS Safari WebKit compositor collisions caused by simultaneous smooth scroll interpolation and virtual keyboard dismissal.
   - Added CSS layout and paint containment (`contain: content; transform: translateZ(0);`) on `#full-list-modal-results` and full `100dvh` dimensions on `#full-list-modal` to retain GPU compositing surfaces without dropping frames.
   - Optimized the `.jump-target-pulse` animation to use GPU-friendly background/outline transitions instead of intensive multi-layer box shadows.
 
-### N. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
+### O. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
 - **Animated Panel Sliding**:
   - Configured `window.switchPlayPanel()` to default to smooth scrolling (`smooth = true`), triggering animated sliding when pressing **"Board ➜"** in the Players panel, **"← Board"** in the Words panel, **"← Players"**, and **"Words ➜"** in the Board panel.
   - Preserved instant zero-latency snaps (`smooth = false`) for room initialization, orientation change recoveries, and programmatic panel resets.
 
-### O. Mobile Intermission Bottom Navigation Bar in FCFS, SP, and CUBE Rooms (`static/css/play.css`, `templates/index.html`)
+### P. Mobile Intermission Bottom Navigation Bar in FCFS, SP, and CUBE Rooms (`static/css/play.css`, `templates/index.html`)
 - **Always-Visible Bottom Navigation Bar**:
   - Removed the `display: none !important` override on `.board-panel.has-split-notepads .mobile-nav-indicators` so the bottom grey navigation bar with `"<- Players"` and `"Words ->"` remains accessible during intermission in **FCFS**, **SP (Split Points)**, and **CUBE (3D)** rooms on mobile devices.
 - **Dedicated Flex Layout & Dedicated Bottom Clearance**:
   - Structured `.board-panel.has-split-notepads` as a full-height column flex container, allocating `calc(100% - 44px)` to the scrollable notepads container and pinning the 44px bottom navigation bar (`flex-shrink: 0; z-index: 100;`).
   - Allows users to swipe and tap seamlessly between the **Players**, **Board/Notepads**, and **Words** panes without notepads overlapping the navigation bar.
 
-### P. Profile and Tools Controls Centering & Equal Panel Padding (`static/css/play.css`, `templates/index.html`)
+### Q. Profile and Tools Controls Centering & Equal Panel Padding (`static/css/play.css`, `templates/index.html`)
 - **Centered Search, Buttons, and Inputs**:
   - Centered the username search input, **Search** button, and **My Profile** button horizontally in the Profile control panel card (`justify-content: center; align-items: center;`).
   - Standardized uniform 46px heights across profile search inputs and action buttons.
   - Symmetrized card padding (`padding: 20px 24px` on desktop, `padding: 14px 16px` on mobile, `box-sizing: border-box`), ensuring equal space surrounds contents on all four sides.
   - Applied symmetrical card padding and centered layouts across all Tools tabs (**Subanagrams**, **Sequence Search**, **Word Lists**, **Word Validator**, **Combo Checker**, **Unscramble**, and **Random Word Generator**).
 
-### Q. Drop-Down Menu Label Simplification: "Added Words" to "AW" (`templates/index.html`)
+### R. Drop-Down Menu Label Simplification: "Added Words" to "AW" (`templates/index.html`)
 - **Clean Drop-Down Text Across Tools & Game Interfaces**:
   - Updated all select dropdown options containing the text "Added Words" across the application to display **"AW"** instead (Random Word Generator, Combo Checker, Word Validator, Subanagrams, Sequence Search, Word Lists filter, and Unscramble).
   - Maintained all existing `value` bindings (`value="added_words"` and `value="added"`), ensuring seamless compatibility and identical functional behavior across all backend endpoints, queries, and event handlers.
 
-### R. Lobby Live Player Count Accuracy & Accumulative Room Sync (`app.py`, `game_room.py`, `static/js/lobby.js`, `templates/index.html`)
+### S. Lobby Live Player Count Accuracy & Accumulative Room Sync (`app.py`, `game_room.py`, `static/js/lobby.js`, `templates/index.html`)
 - **Guest Session Auto-Initialization Hardening**:
   - `ensure_guest_session()` and `guest_login()` now incorporate a collision retry loop (up to 10 attempts), preventing random `UNIQUE constraint failed: users.username` errors in SQLite from leaving guest users unauthenticated.
 - **Backend Room Wake-Up & State Machine Fixes**:
@@ -141,7 +147,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - Guarded `fetchAndRenderRooms` in `lobby.js` and `index.html` so non-accumulative room list updates never overwrite `Start [N]` player counts on Accumulative buttons.
   - Added early stats hydration listeners on `DOMContentLoaded` and fallback defaults for `updateLobbyButtons()`.
 
-### S. FAQ Entry for Game Room Window Navigation (`templates/index.html`)
+### T. FAQ Entry for Game Room Window Navigation (`templates/index.html`)
 - **Quick Navigate & Detailed FAQ**:
   - Added quick navigate button and accordion entry in the **How to Play & FAQ** modal explaining that the bottom grey bar is both pressable and swipeable for swift panel navigation.
 
