@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `5129ab81c7ff2308722c366ffbc3f5f3e9c52086` (`5129ab8`)
+* **Latest Commit ID**: `a4b9ac0e60882e75f78b10fdfad1ba9cefa12bc4` (`a4b9ac0`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,12 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Unscramble Session History Full-Width Mobile Word Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
-- **Generous Full-Space Display for Each Played Word**:
-  - Restructured the Session History cards in Unscramble so each round's played words sit in a dedicated full-width flex container (`.unscramble-history-words`) rather than being squished against the right side of the status count on narrow mobile viewports.
-  - Sized word badges with comfortable dimensions (`font-size: 0.9rem; font-weight: 700; padding: 6px 12px; min-height: 32px; white-space: nowrap; border-radius: 8px;`).
-  - Removed restrictive `max-height: 320px` clipping on history containers (`max-height: none !important; overflow: visible !important; width: 100% !important;`), allowing all historical words and rounds to expand naturally without being cut in half.
-  - Guarded mobile keyboard re-focus upon clicking **"Check Word"** or **"Reveal"**, preventing mobile viewport jumps and keyboard collisions.
+### A. Unscramble Session History "1/1 Found" Formatting & Layout (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Standardized "X/Y Found" Status Pill**:
+  - Formatted rounds where all solutions are found to read cleanly as `1/1 Found` (or `X/Y Found`) in green (`color: #4ade80; background: rgba(46, 204, 113, 0.18); border: 1px solid rgba(46, 204, 113, 0.4);`) matching the structure of `0/1 Found`.
+  - Positioned the completion timestamp (`HH:MM:SS`) immediately to the right of the status pill.
+  - Sized and placed played words into a dedicated full-width flex container (`.unscramble-history-words`) with zero vertical or horizontal clipping on mobile devices.
 
 ### B. Steady Progressive Word List Streaming in "View Full List" (`static/js/tools.js`, `templates/index.html`)
 - **Steady Background Word Loading**:
