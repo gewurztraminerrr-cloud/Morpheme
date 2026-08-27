@@ -8413,3 +8413,27 @@ body.is-mobile .desktop-only-setting {
     color: #c4b5fd;
     text-decoration: underline;
 }
+
+/* Lists Tool: Full List Button Mobile & Tap Styling */
+#list-view-full-btn,
+.list-column #list-view-full-btn,
+.mod-refresh-btn#list-view-full-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    outline: none !important;
+    -webkit-focus-ring-color: transparent !important;
+}
+
+#list-view-full-btn:focus,
+#list-view-full-btn:focus-visible,
+#list-view-full-btn:active,
+#list-view-full-btn:hover {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    box-shadow: none !important;
+    background: rgba(167, 139, 250, 0.25) !important;
+    border-color: rgba(167, 139, 250, 0.7) !important;
+    color: #a78bfa !important;
+}
