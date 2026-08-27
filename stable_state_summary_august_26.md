@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `54791771142fc7d6205845c43d8376997b5f1f9d` (`5479177`)
+* **Latest Commit ID**: `a6ce6b677a2889ee1d3319089063259bda207c45` (`a6ce6b6`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,10 +17,16 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. PE $\ge 2.0$ Trophy Award & Next-Round Removal Lifecycle (`game_room.py`, `static/js/play.js`, `templates/index.html`)
-- **Direct PE $\ge 2.0$ Threshold**:
-  - Configured trophy icon 🏆 award to trigger when a player's Performance Efficiency ($\text{PE}$) is **2.0 or greater** ($\text{PE} \ge 2.0$) in a multi-player round.
-- **Intermission Display & Start-of-Round Removal**:
+### A. Dynamic Room-Scaled PE & Dominant Score Trophy Award Rules (`game_room.py`, `static/js/play.js`, `templates/index.html`)
+- **Mathematical PE Calibration**:
+  - In a 3-player match with similar ratings (e.g. 1256, 1177, 1193) where the winner scores more than double the opponents (e.g. 63 vs 26 & 25), the winner's actual performance efficiency ($\text{PE} = 1.60\text{x}$) represents a decisive blowout.
+  - Dynamically scaled room-size thresholds:
+    - **2 players**: $\text{PE} \ge 1.30$ (corresponding to doubling opponent's score)
+    - **3 players**: $\text{PE} \ge 1.45$ (corresponding to doubling opponents' scores)
+    - **4–5 players**: $\text{PE} \ge 1.55$
+    - **6+ players**: $\text{PE} \ge 1.60$
+  - Added explicit domination award: $\text{score} == \text{max\_score}$ and $\text{score} \ge 1.75 \times \text{second\_score}$ ($\text{score} \ge 15$).
+- **Intermission Display & Next-Round Removal Lifecycle**:
   - Trophies awarded are displayed during that round's **intermission** in the bottom-left corner of the player card.
   - At the **start of the next round**, the trophy icon is automatically cleared from every user who had it displayed during the previous intermission.
 
