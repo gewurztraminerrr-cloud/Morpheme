@@ -1340,7 +1340,9 @@ function showPage(pageId) {
         }
     }
 
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    if (pageId !== 'page-play' && window.hideLoadingOverlay) {
+        window.hideLoadingOverlay();
+    }
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
     if (window.location.hash !== "#" + pageId) {
         history.replaceState(null, null, "#" + pageId);

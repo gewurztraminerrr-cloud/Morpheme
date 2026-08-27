@@ -71,27 +71,6 @@ async function enterLobbyRoom(rawBtn) {
         const timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
         const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
-        // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
-        window._isEnteringRoom = true;
-        if (typeof window.clearGameUIAndCache === 'function') {
-            window.clearGameUIAndCache();
-        }
-        if (typeof window.showPage === 'function') {
-            window.showPage('page-play');
-        } else if (typeof showPage === 'function') {
-            showPage('page-play');
-        }
-        if (typeof window.switchPlayPanel === 'function') {
-            window.switchPlayPanel('board', false);
-        }
-
-        const playBtn = document.getElementById('play-btn');
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.title = "";
-        }
-        if (window.updateManualToolState) window.updateManualToolState();
-
         if (window.currentRoomId && window.leaveCurrentRoom) {
             try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
         }
@@ -119,13 +98,11 @@ async function enterLobbyRoom(rawBtn) {
             data = { error: txt };
         }
 
-        window._isEnteringRoom = false;
-
         if (createResp.status === 403 && data && data.timed_out) {
+            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
             const rText = data.timeout_reason || 'Moderator timeout';
             const dText = data.remaining || 'a temporary timeout';
             const msg = `You are currently placed on a temporary timeout from all game rooms.<br><br><strong>Reason:</strong> <span style="color: var(--text-primary); font-weight: 600;">${rText}</span><br><br><strong>Time Remaining:</strong> <span style="color: #f59e0b; font-size: 1.15rem; font-weight: 700;">${dText}</span><br><br>To keep matches fair and respectful for all players, room access is temporarily restricted during a timeout period.<br><br>Please wait until your timeout expires before joining another match!`;
-            if (typeof window.showPage === 'function') window.showPage('page-lobby');
             if (window.showAlertModal) {
                 window.showAlertModal('Account Timed Out', msg, true);
             } else {
@@ -138,6 +115,26 @@ async function enterLobbyRoom(rawBtn) {
             window.currentRoomId = data.room_id;
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false;
+
+            // Switch to play page NOW that currentRoomId is confirmed
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
+            }
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-play');
+            } else if (typeof showPage === 'function') {
+                showPage('page-play');
+            }
+            if (typeof window.switchPlayPanel === 'function') {
+                window.switchPlayPanel('board', false);
+            }
+
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
 
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
@@ -228,27 +225,7 @@ async function createRoom(config, minRating, maxRating) {
     localStorage.removeItem('tournament_play_active');
     localStorage.removeItem('private_match_active');
 
-    // 1. INSTANT NAVIGATION: Switch directly to the game room page immediately!
-    window._isEnteringRoom = true;
     if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
-    if (typeof window.clearGameUIAndCache === 'function') {
-        window.clearGameUIAndCache();
-    }
-    if (typeof window.showPage === 'function') {
-        window.showPage('page-play');
-    } else if (typeof showPage === 'function') {
-        showPage('page-play');
-    }
-    if (typeof window.switchPlayPanel === 'function') {
-        window.switchPlayPanel('board', false);
-    }
-
-    const playBtn = document.getElementById('play-btn');
-    if (playBtn) {
-        playBtn.disabled = false;
-        playBtn.title = "";
-    }
-    if (window.updateManualToolState) window.updateManualToolState();
 
     try {
         const createResp = await fetch('/api/room/create', {
@@ -262,12 +239,9 @@ async function createRoom(config, minRating, maxRating) {
                 max_rating: maxRating
             })
         });
-        
-        window._isEnteringRoom = false;
 
         if (!createResp.ok) {
             const createErr = await createResp.text();
-            if (typeof window.showPage === 'function') window.showPage('page-lobby');
             throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
         }
 
@@ -280,6 +254,26 @@ async function createRoom(config, minRating, maxRating) {
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false; // Creator is always player
             stopLobbyPolling();
+
+            // Switch to play page NOW that currentRoomId is confirmed
+            if (typeof window.clearGameUIAndCache === 'function') {
+                window.clearGameUIAndCache();
+            }
+            if (typeof window.showPage === 'function') {
+                window.showPage('page-play');
+            } else if (typeof showPage === 'function') {
+                showPage('page-play');
+            }
+            if (typeof window.switchPlayPanel === 'function') {
+                window.switchPlayPanel('board', false);
+            }
+
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.title = "";
+            }
+            if (window.updateManualToolState) window.updateManualToolState();
             
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
