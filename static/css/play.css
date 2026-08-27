@@ -771,16 +771,24 @@ body.theme-light-brown .player-score-val {
     background: rgba(255, 255, 255, 0.18) !important;
     color: var(--text-primary, #fff) !important;
     border: 1px solid rgba(255, 255, 255, 0.35) !important;
-    transition: all 0.15s ease !important;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease !important;
     margin: 0 !important;
     outline: none !important;
     white-space: nowrap !important;
     box-sizing: border-box !important;
     height: 32px !important;
+    transform: none !important;
+    box-shadow: none !important;
+    vertical-align: middle !important;
 }
 
-.timer-controls-group .rotate-btn:hover {
+.timer-controls-group .rotate-btn:hover,
+.timer-controls-group .rotate-btn:active,
+.timer-controls-group .rotate-btn:focus,
+.timer-controls-group .rotate-btn:focus-visible {
     background: rgba(255, 255, 255, 0.35) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .timer-controls-group #rotate-board-btn {
@@ -1419,7 +1427,7 @@ body.theme-light-brown .player-score-val {
     white-space: nowrap;
 }
 
-.rotate-btn:hover {
+.rotate-btn:not(.timer-btn):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     filter: brightness(1.1);
@@ -7539,7 +7547,8 @@ body .board-cell.tile-flash-purple * {
     }
     #rotate-board-btn,
     #transpose-board-btn,
-    .timer-display .rotate-btn {
+    .timer-display .rotate-btn,
+    #timer-controls-group .rotate-btn {
         display: inline-flex !important;
         flex-direction: row !important;
         align-items: center !important;
@@ -7552,6 +7561,25 @@ body .board-cell.tile-flash-purple * {
         width: auto !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
+        transform: none !important;
+        box-shadow: none !important;
+        vertical-align: middle !important;
+    }
+    #rotate-board-btn:hover,
+    #rotate-board-btn:active,
+    #rotate-board-btn:focus,
+    #rotate-board-btn:focus-visible,
+    #transpose-board-btn:hover,
+    #transpose-board-btn:active,
+    #transpose-board-btn:focus,
+    #transpose-board-btn:focus-visible,
+    .timer-display .rotate-btn:hover,
+    .timer-display .rotate-btn:active,
+    .timer-display .rotate-btn:focus,
+    .timer-display .rotate-btn:focus-visible {
+        transform: none !important;
+        box-shadow: none !important;
+        background: rgba(255, 255, 255, 0.35) !important;
     }
     #rotate-board-btn {
         border-top-left-radius: 6px !important;
