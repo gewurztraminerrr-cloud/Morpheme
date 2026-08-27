@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 26, 2026
-* **Latest Commit ID**: `a0b6a2829ea5b83983226a0b940a454d6f6e80b2` (`a0b6a28`)
+* **Latest Commit ID**: `6bda60b411d7cfa70be8e52ef61d568c0762a559` (`6bda60b`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Windowed Chunk Rendering & Seamless Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+### A. Windowed Chunk Rendering & Seamless Mobile Word Jump in Tools Full List (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
 - **Eliminated Mobile Black Screen & Flash on Word Search**:
   - Replaced bulk DOM wipes with seamless near-range appending (`appendNextFullListBatch` / `prependPrevFullListBatch`) and windowed focused chunks (~500 words) for distant queries.
-  - Isolated virtual keyboard dismissal from container scrolling by executing smooth scroll jumps inside `requestAnimationFrame`, preventing iOS Safari viewport height collision flashes.
-  - Added CSS layout and paint containment (`contain: content; transform: translateZ(0);`) on `#full-list-modal-results` to retain GPU compositing surfaces without dropping frames.
+  - Used direct instant `scrollTop` assignment on mobile devices (`isMobile ? fullListResults.scrollTop = centerOffset : scrollTo(...)`) to eliminate iOS Safari WebKit compositor collisions caused by simultaneous smooth scroll interpolation and virtual keyboard dismissal.
+  - Added CSS layout and paint containment (`contain: content; transform: translateZ(0);`) on `#full-list-modal-results` and full `100dvh` dimensions on `#full-list-modal` to retain GPU compositing surfaces without dropping frames.
   - Optimized the `.jump-target-pulse` animation to use GPU-friendly background/outline transitions instead of intensive multi-layer box shadows.
 
 ### B. Smooth Sliding Transitions on Bottom Navigation Buttons (`static/js/play.js`, `templates/index.html`)
