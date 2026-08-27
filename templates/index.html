@@ -118,9 +118,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33184" as="style">
+    <link rel="preload" href="/css/style.css?v=33185" as="style">
     <link rel="preload" href="/css/lobby.css?v=33172" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33184">
+    <link rel="stylesheet" href="/css/style.css?v=33185">
     <link rel="stylesheet" href="/css/lobby.css?v=33172">
     <link rel="stylesheet" href="/css/play.css?v=33199">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
@@ -149,6 +149,39 @@
                 }
             }, duration);
         }
+
+        window.showLoadingOverlay = function(message, autoHideMs) {
+            var msg = message || 'Loading...';
+            var overlay = document.getElementById('global-loading-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'global-loading-overlay';
+                overlay.innerHTML = '<div class="loading-spinner"></div><div id="loading-message">' + msg + '</div>';
+                document.body.appendChild(overlay);
+            } else {
+                var msgEl = overlay.querySelector('#loading-message');
+                if (msgEl) msgEl.textContent = msg;
+                overlay.style.display = 'flex';
+            }
+            if (window._loadingOverlayTimeout) {
+                clearTimeout(window._loadingOverlayTimeout);
+                window._loadingOverlayTimeout = null;
+            }
+            if (typeof autoHideMs === 'number' && autoHideMs > 0) {
+                window._loadingOverlayTimeout = setTimeout(function() {
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+                }, autoHideMs);
+            }
+        };
+
+        window.hideLoadingOverlay = function() {
+            if (window._loadingOverlayTimeout) {
+                clearTimeout(window._loadingOverlayTimeout);
+                window._loadingOverlayTimeout = null;
+            }
+            var overlay = document.getElementById('global-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        };
         window.showTimeoutBanModal = function(toData) {
             var data = toData || window._userTimeoutInfo || {};
             var rText = data.reason || data.timeout_reason || 'Moderator timeout';
@@ -6512,7 +6545,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33177"></script>
-    <script src="/js/app.js?v=33183"></script>
+    <script src="/js/app.js?v=33184"></script>
     <script src="/js/lobby.js?v=33190"></script>
     <script src="/js/play.js?v=33184"></script>
     <script src="/js/tournaments.js?v=33172"></script>
