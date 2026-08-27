@@ -3310,7 +3310,7 @@ function setupListsTool() {
         }
     }
 
-    function renderFullListWindow(startIndex = 0, count = FULL_LIST_BATCH_SIZE) {
+    function renderFullListWindow(startIndex = 0, count = 400) {
         if (!fullListResults || !_fullListAllWords || _fullListAllWords.length === 0) return;
         const start = Math.max(0, Math.min(startIndex, _fullListAllWords.length - 1));
         const end = Math.min(_fullListAllWords.length, start + count);
@@ -3320,67 +3320,39 @@ function setupListsTool() {
         fullListResults.innerHTML = generateFullListItemsHtml(slice);
         _fullListRenderedStart = start;
         _fullListRenderedEnd = end;
-    }
-
-    let _steadyLoaderRafId = null;
-
-    function stopSteadyLoader() {
-        if (_steadyLoaderRafId) {
-            cancelAnimationFrame(_steadyLoaderRafId);
-            _steadyLoaderRafId = null;
+        if (typeof fullListResults._updateCustomScrollbar === 'function') {
+            fullListResults._updateCustomScrollbar();
         }
     }
 
-    function startSteadyLoader() {
-        stopSteadyLoader();
-        
-        function loadStep() {
-            if (!fullListModal || fullListModal.style.display === 'none') {
-                stopSteadyLoader();
-                return;
-            }
-            if (!_fullListAllWords || _fullListAllWords.length === 0) {
-                _steadyLoaderRafId = requestAnimationFrame(loadStep);
-                return;
-            }
-
-            if (_fullListRenderedEnd < _fullListAllWords.length) {
-                // Progressive steady batch size (500 words per animation frame)
-                const chunkSize = 500;
-                appendNextFullListBatch(chunkSize);
-
-                if (fullListCount) {
-                    if (_fullListRenderedEnd < _fullListAllWords.length) {
-                        fullListCount.textContent = `Loading… ${_fullListRenderedEnd.toLocaleString()} / ${_fullListAllWords.length.toLocaleString()} words`;
-                    } else {
-                        fullListCount.textContent = `${_fullListAllWords.length.toLocaleString()} words`;
-                    }
-                }
-                _steadyLoaderRafId = requestAnimationFrame(loadStep);
-            } else {
-                if (fullListCount) {
-                    fullListCount.textContent = `${_fullListAllWords.length.toLocaleString()} words`;
-                }
-                _steadyLoaderRafId = null;
-            }
-        }
-
-        _steadyLoaderRafId = requestAnimationFrame(loadStep);
-    }
-
-    function appendNextFullListBatch(count = 500) {
+    function appendNextFullListBatch(count = 200) {
         if (!fullListResults || !_fullListAllWords || _fullListRenderedEnd >= _fullListAllWords.length) return;
         const slice = _fullListAllWords.slice(_fullListRenderedEnd, _fullListRenderedEnd + count);
         if (slice.length === 0) return;
 
         fullListResults.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
         _fullListRenderedEnd += slice.length;
+
+        // Keep DOM node count bounded (< 1000 items) to prevent mobile WebKit compositor memory exhaustion
+        const totalItems = _fullListRenderedEnd - _fullListRenderedStart;
+        if (totalItems > 1000) {
+            const trimCount = 200;
+            const items = fullListResults.querySelectorAll('.full-list-item');
+            let removedHeight = 0;
+            for (let i = 0; i < trimCount && i < items.length; i++) {
+                removedHeight += items[i].offsetHeight || 30;
+                items[i].remove();
+            }
+            _fullListRenderedStart += trimCount;
+            fullListResults.scrollTop = Math.max(0, fullListResults.scrollTop - removedHeight);
+        }
+
         if (typeof fullListResults._updateCustomScrollbar === 'function') {
             fullListResults._updateCustomScrollbar();
         }
     }
 
-    function prependPrevFullListBatch(count = 500) {
+    function prependPrevFullListBatch(count = 200) {
         if (!fullListResults || !_fullListAllWords || _fullListRenderedStart <= 0) return;
         const start = Math.max(0, _fullListRenderedStart - count);
         const slice = _fullListAllWords.slice(start, _fullListRenderedStart);
@@ -3393,6 +3365,18 @@ function setupListsTool() {
         fullListResults.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
 
         _fullListRenderedStart = start;
+
+        // Keep DOM node count bounded (< 1000 items)
+        const totalItems = _fullListRenderedEnd - _fullListRenderedStart;
+        if (totalItems > 1000) {
+            const trimCount = 200;
+            const items = fullListResults.querySelectorAll('.full-list-item');
+            for (let i = items.length - 1; i >= items.length - trimCount && i >= 0; i--) {
+                items[i].remove();
+            }
+            _fullListRenderedEnd -= trimCount;
+        }
+
         if (typeof fullListResults._updateCustomScrollbar === 'function') {
             fullListResults._updateCustomScrollbar();
         }
@@ -3400,7 +3384,7 @@ function setupListsTool() {
 
     if (fullListResults) {
         fullListResults.addEventListener('scroll', () => {
-            if (fullListResults.scrollTop + fullListResults.clientHeight >= fullListResults.scrollHeight - 400) {
+            if (fullListResults.scrollTop + fullListResults.clientHeight >= fullListResults.scrollHeight - 300) {
                 appendNextFullListBatch();
             } else if (fullListResults.scrollTop <= 150 && _fullListRenderedStart > 0) {
                 prependPrevFullListBatch();
@@ -3442,26 +3426,26 @@ function setupListsTool() {
             } catch (e) {}
         }
 
-        // If target is just ahead of current rendered window (within 3000 words), append smoothly without clearing DOM
-        if (!targetEl && targetIdx >= _fullListRenderedEnd && targetIdx < _fullListRenderedEnd + 3000) {
-            const needed = (targetIdx - _fullListRenderedEnd) + 300;
+        // If target is just ahead of current rendered window (within 1000 words), append smoothly without clearing DOM
+        if (!targetEl && targetIdx >= _fullListRenderedEnd && targetIdx < _fullListRenderedEnd + 1000) {
+            const needed = (targetIdx - _fullListRenderedEnd) + 200;
             appendNextFullListBatch(needed);
             try {
                 targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
             } catch (e) {}
         }
-        // If target is just behind current rendered window (within 3000 words), prepend smoothly without clearing DOM
-        else if (!targetEl && targetIdx < _fullListRenderedStart && targetIdx > _fullListRenderedStart - 3000) {
-            const needed = (_fullListRenderedStart - targetIdx) + 300;
+        // If target is just behind current rendered window (within 1000 words), prepend smoothly without clearing DOM
+        else if (!targetEl && targetIdx < _fullListRenderedStart && targetIdx > _fullListRenderedStart - 1000) {
+            const needed = (_fullListRenderedStart - targetIdx) + 200;
             prependPrevFullListBatch(needed);
             try {
                 targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
             } catch (e) {}
         }
-        // If target is far away, render a focused window centered on targetIdx
+        // If target is further away, render a focused window centered on targetIdx
         else if (!targetEl) {
-            const windowStart = Math.max(0, targetIdx - 40);
-            renderFullListWindow(windowStart, 500);
+            const windowStart = Math.max(0, targetIdx - 30);
+            renderFullListWindow(windowStart, 400);
             try {
                 targetEl = fullListResults.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
             } catch (e) {}
@@ -3511,8 +3495,6 @@ function setupListsTool() {
             return;
         }
 
-        stopSteadyLoader();
-
         // Get current filter state to replicate the fetch
         const lengthSelect = document.getElementById('list-length-filter');
         const startSelect = document.getElementById('list-start-filter');
@@ -3534,16 +3516,15 @@ function setupListsTool() {
         _fullListRenderedStart = 0;
         _fullListRenderedEnd = 0;
         _fullListAllWords = currentWordsList || [];
-        if (fullListCount) fullListCount.textContent = `Loading…`;
+        if (fullListCount) fullListCount.textContent = `${_fullListAllWords.length.toLocaleString()} words`;
         fullListResults.innerHTML = '';
         fullListResults.scrollTop = 0;
         fullListModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         window.isFullListLoading = true;
         
-        renderFullListWindow(0, 500);
+        renderFullListWindow(0, 400);
         initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
-        startSteadyLoader();
 
         if (window.listsServerTruncated) {
             let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
@@ -3558,7 +3539,10 @@ function setupListsTool() {
                     const fullWords = data[selectedType] || [];
                     _fullListAllWords = fullWords;
                     window.isFullListLoading = false;
-                    startSteadyLoader();
+                    if (fullListCount) fullListCount.textContent = `${_fullListAllWords.length.toLocaleString()} words`;
+                    if (typeof fullListResults._updateCustomScrollbar === 'function') {
+                        fullListResults._updateCustomScrollbar();
+                    }
                 })
                 .catch(err => {
                     console.error('[Full List] Failed to fetch full word list:', err);
@@ -3571,7 +3555,6 @@ function setupListsTool() {
     }
 
     function closeFullListModal() {
-        stopSteadyLoader();
         if (!fullListModal) return;
         if (fullListResults) {
             window._savedFullListScrollTop = fullListResults.scrollTop;
