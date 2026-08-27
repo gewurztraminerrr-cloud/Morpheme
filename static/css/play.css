@@ -5619,10 +5619,34 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        padding: 12px 14px !important;
-        height: auto !important;
-        min-height: 44px !important;
+        padding: 10px 16px !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        font-size: 16px !important;
         margin: 0 !important;
+    }
+    #page-profile #profile-search-input {
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        padding: 10px 16px !important;
+        font-size: 16px !important;
+        line-height: 24px !important;
+        box-sizing: border-box !important;
+    }
+    #page-profile #profile-search-btn,
+    #page-profile #profile-my-profile-btn {
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        padding: 0 16px !important;
+        font-size: 16px !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: normal !important;
     }
 
     /* Random Word / Is Valid Mobile Fixes */
