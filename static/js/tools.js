@@ -3396,7 +3396,7 @@ function startSteadyLoader() {
     stopSteadyLoader();
     _virtualProgressCount = 0;
     const startTime = performance.now();
-    const DURATION_MS = 1500; // Calibrated 1.5s rate for distinct, steady block processing
+    const DURATION_MS = 5000; // Steady 5.0s rate for clear, progressive block loading
     
     function loadStep(now) {
         const modal = document.getElementById('full-list-modal');
