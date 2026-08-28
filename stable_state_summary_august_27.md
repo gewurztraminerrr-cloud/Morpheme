@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `cb54981875b33bdae506591d99bb8d413aa3dd00` (`cb54981`)
+* **Latest Commit ID**: `1fa96ee7404918a3d43ad21d121728d442d00a07` (`1fa96ee`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,17 +17,17 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Global Function Definitions & Resilient DOM Lifecycle for "View Full List" Modal (`static/js/tools.js`, `templates/index.html`, `static/css/play.css`)
+### A. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
+- **Steady Visual Progress & Real-Time Thumb Height Scaling**:
+  - Implemented `startSteadyLoader()` using `requestAnimationFrame` to animate a live progressive counter (`Loading… 10,000 / 469,764 words`) smoothly from 0 up to 100% of the total lexicon size.
+  - Dynamically recalculates and glides the scrollbar thumb higher and higher on each animation frame as the total virtual count expands, shrinking the thumb size smoothly while keeping its position pinned to the top of the track.
+  - Keeps the active DOM node count strictly memory-bounded (~400 nodes), completely preventing mobile GPU texture compositor exhaustion, zero black screen, and 60fps responsiveness across all phones, tablets, laptops, and desktops.
+
+### B. Global Scope & Immediate Availability for "View Full List" Modal (`static/js/tools.js`, `templates/index.html`, `static/css/play.css`)
 - **Global Function Availability**:
   - Moved `window.openFullListModal`, `window.closeFullListModal`, and jump helpers out of closure scopes and declared them at top-level global scope in `tools.js` to ensure immediate availability upon script parse.
   - Implemented `if (document.readyState === 'loading') document.addEventListener(...) else initToolsModules()` to ensure initialization triggers even if `DOMContentLoaded` already fired before script execution.
   - Added direct runtime DOM hoisting (`if (modal.parentElement !== document.body) document.body.appendChild(modal);`) to guarantee the modal is a direct child of `<body>` with `z-index: 9999999 !important`.
-
-### B. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
-- **Steady Visual Progress & Real-Time Thumb Height Adjustment**:
-  - Implemented `startSteadyLoader()` and `stopSteadyLoader()` using `requestAnimationFrame` to animate a live progressive counter (`Loading… 10,000 / 469,764 words`) smoothly from 0 up to 100% of the total lexicon size.
-  - Dynamically recalculates and glides the scrollbar thumb higher and higher on each animation frame as the total virtual count expands.
-  - Keeps the active DOM node count strictly memory-bounded (~400 nodes), completely preventing mobile GPU texture compositor exhaustion, zero black screen, and 60fps responsiveness across all phones, tablets, laptops, and desktops.
 
 ### C. Real-Time Dynamic Scrollbar Scaling & Thumb Positioning Across All Devices (`static/js/tools.js`, `templates/index.html`)
 - **Universal Dynamic Thumb Scaling for Mobile, Laptops & Desktops**:
