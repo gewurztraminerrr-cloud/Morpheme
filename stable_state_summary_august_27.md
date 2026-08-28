@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `abbe726c4e3df8a0603241bc656726df45359e44` (`abbe726`)
+* **Latest Commit ID**: `f801116feb636ec8179f1230a9e0fab225c5c3fd` (`f801116`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,14 +17,13 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Fast 1.8s Progressive Block Streaming & Synchronized Scrollbar in "View Full List" (`static/js/tools.js`, `templates/index.html`)
-- **Fast & Smooth 1.8s Progressive Lexicon Stream**:
-  - Calibrated the streaming cadence across a crisp **1.8-second duration** with 10,000-word block steps.
-  - Dynamically updates the top counter in rapid, visible increments from 0 to total:
-    `${displayCount.toLocaleString()} / ${total.toLocaleString()} words` (e.g. `10,000 / 469,764` ➔ `50,000 / 469,764` ➔ `120,000 / 469,764` ➔ `250,000 / 469,764` ➔ `380,000 / 469,764` ➔ `469,764 words`).
-- **Synchronized Scrollbar Shrink & Ascent**:
-  - As words process, the custom scrollbar thumb height shrinks in real time from top down to its sleek 28px height.
-  - Initial 400 words are rendered immediately with zero freezing or sluggishness, and scrolling/dragging across the full alphabetical list remains instant and 60fps responsive.
+### A. Exact 4,000 Words/Sec Progressive Streaming & Dynamic Scrollbar Scaling in "View Full List" (`static/js/tools.js`, `templates/index.html`)
+- **Exact 4,000 Words Per Second Processing Rate**:
+  - Configured `startSteadyLoader()` to stream at **exactly 4,000 words per second** (`WORDS_PER_SECOND = 4000`) with continuous 400-word block updates every 100ms.
+  - Dynamically updates the top counter in real time (e.g., after 1 second: `4,000 / 469,764 words`, after 2 seconds: `8,000 / 469,764 words`, etc.).
+- **Synchronized Scrollbar Thumb Rise & Shrinking**:
+  - As words process, the custom scrollbar thumb height shrinks in real time while rising upwards toward the top of the track (`baselineTop = (trackHeight * 0.35) * (1 - progress)`), clearly creating space below the thumb to visually represent newly loaded words.
+  - Initial batch is rendered immediately for 60fps instant responsiveness, allowing users to scroll and drag across the full alphabetical list smoothly with zero lag or freezing.
 
 ### B. Combo Checker LIC Tables Restoration & Dynamic Calibration (`app.py`, `static/css/play.css`, `templates/index.html`)
 - **Dynamic LIC Letter Threshold**:
