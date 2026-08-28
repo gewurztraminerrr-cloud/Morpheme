@@ -3270,6 +3270,9 @@ function setupListsTool() {
     // --- View Full List Modal & Word Jump ---
     const viewFullBtn = document.getElementById('list-view-full-btn');
     const fullListModal = document.getElementById('full-list-modal');
+    if (fullListModal && fullListModal.parentElement !== document.body) {
+        document.body.appendChild(fullListModal);
+    }
     const fullListClose = document.getElementById('full-list-modal-close');
     const fullListResults = document.getElementById('full-list-modal-results');
     const fullListTitle = document.getElementById('full-list-modal-title');
@@ -3543,6 +3546,10 @@ function setupListsTool() {
         const modal = document.getElementById('full-list-modal');
         const results = document.getElementById('full-list-modal-results');
         if (!modal || !results) return;
+
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
 
         stopSteadyLoader();
 
