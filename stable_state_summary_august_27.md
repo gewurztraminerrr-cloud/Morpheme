@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `be1a310175d53ec68e81d19e9355f33c0b77401a` (`be1a310`)
+* **Latest Commit ID**: `f91595a240651d843fb4fd108b4d2bb0a4f51c51` (`f91595a`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,15 +17,16 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Continuous Progressive Block Streaming & Live Lexicon Counter in "View Full List" (`static/js/tools.js`, `templates/index.html`)
-- **Continuous Full-Dictionary Progressive Block Streaming**:
-  - Eliminated the artificial 3,000-word cap and removed scroll-dependency for initial streaming.
-  - The live word stream automatically and continuously processes through the entire lexicon from 0 to total (469,764 words for AW) across a calibrated 4.0-second progression window.
-  - Dynamically updates the top counter in real time with each block processed: `${loadedCount.toLocaleString()} / ${total.toLocaleString()} words` (e.g., `50,000 / 469,764 words` ➔ `100,000 / 469,764 words` ➔ `250,000 / 469,764 words` ➔ `469,764 words`).
-- **Real-Time Scrollbar Shrink & Ascent During Stream**:
-  - The custom scrollbar thumb height shrinks in real time as each block processes, gliding up to the top of the track.
-  - Scrolling through the list or dragging the thumb maintains fluid responsiveness, with words rendered in pure alphabetical order across the entire lexicon.
-  - The thumb permanently stays small (28px minimum height) after loading finishes.
+### A. Physical Block-by-Block Word Stream & Live Exact Counter in "View Full List" (`static/js/tools.js`, `templates/index.html`)
+- **Real Continuous Physical Block Appending**:
+  - Replaced virtual simulated timers with **real continuous block DOM appending** (`appendNextFullListBatch(250)` every 40ms).
+  - Words physically and visibly stream into the table in pure alphabetical order (`AA...` ➔ `AB...` ➔ `AC...` ➔ `AD...` ➔ `AE...` ➔ `AF...` ➔ `AG...` ➔ `B...` ➔ `C...` ...).
+  - The counter at the top counts the **exact number of words physically processed and loaded into the table**:
+    `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words` (e.g. `200 / 469,764 words` ➔ `450 / 469,764 words` ➔ `700 / 469,764 words` ➔ `950 / 469,764 words` ➔ `1,200 / 469,764 words` ...).
+- **Synchronized Real-Time Scrollbar Scaling**:
+  - Because words physically append into the table, `results.scrollHeight` continuously expands in real time.
+  - The custom scrollbar thumb height shrinks progressively and naturally climbs to the top of the track.
+  - If you scroll down through the list while words stream in, you see the actual alphabetical words advancing smoothly through `B`, `C`, `D`, etc., without freezing or reset.
 
 ### B. Combo Checker LIC Tables Restoration & Dynamic Calibration (`app.py`, `static/css/play.css`, `templates/index.html`)
 - **Dynamic LIC Letter Threshold**:
