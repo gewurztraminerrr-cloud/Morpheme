@@ -3573,7 +3573,8 @@ function setupListsTool() {
         if (fullListCount) fullListCount.textContent = `Loading…`;
         results.innerHTML = '';
         results.scrollTop = 0;
-        modal.style.display = 'flex';
+        modal.classList.add('active');
+        modal.style.setProperty('display', 'flex', 'important');
         document.body.style.overflow = 'hidden';
         window.isFullListLoading = true;
         
@@ -3609,11 +3610,15 @@ function setupListsTool() {
 
     function closeFullListModal() {
         stopSteadyLoader();
-        if (!fullListModal) return;
-        if (fullListResults) {
-            window._savedFullListScrollTop = fullListResults.scrollTop;
+        const modal = document.getElementById('full-list-modal');
+        const results = document.getElementById('full-list-modal-results');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.setProperty('display', 'none', 'important');
         }
-        fullListModal.style.display = 'none';
+        if (results) {
+            window._savedFullListScrollTop = results.scrollTop;
+        }
         document.body.style.overflow = '';
         window.isFullListLoading = false;
     }
