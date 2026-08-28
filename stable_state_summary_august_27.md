@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `f801116feb636ec8179f1230a9e0fab225c5c3fd` (`f801116`)
+* **Latest Commit ID**: `8fbd822c041d2f0f7aa684494202b042176c8622` (`8fbd822`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,13 +17,14 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Exact 4,000 Words/Sec Progressive Streaming & Dynamic Scrollbar Scaling in "View Full List" (`static/js/tools.js`, `templates/index.html`)
-- **Exact 4,000 Words Per Second Processing Rate**:
-  - Configured `startSteadyLoader()` to stream at **exactly 4,000 words per second** (`WORDS_PER_SECOND = 4000`) with continuous 400-word block updates every 100ms.
-  - Dynamically updates the top counter in real time (e.g., after 1 second: `4,000 / 469,764 words`, after 2 seconds: `8,000 / 469,764 words`, etc.).
+### A. Full Word Pool Expansion Synchronized with 4,000 Words/Sec Counter in "View Full List" (`static/js/tools.js`, `templates/index.html`)
+- **Loaded Word Pool Expands Continuously**:
+  - Bound word rendering and scrolling directly to `_fullListLoadedPoolCount` which expands at **4,000 words per second**.
+  - Words physically stream into the table in real time as the counter progresses.
+  - When 168,000 words have loaded, users can scroll or drag the scrollbar down through the entire pool of 168,000 words (deep into the alphabet through `D`, `F`, `H`, `L`, `M`, etc.) rather than being limited to the initial `AC-` slice.
 - **Synchronized Scrollbar Thumb Rise & Shrinking**:
   - As words process, the custom scrollbar thumb height shrinks in real time while rising upwards toward the top of the track (`baselineTop = (trackHeight * 0.35) * (1 - progress)`), clearly creating space below the thumb to visually represent newly loaded words.
-  - Initial batch is rendered immediately for 60fps instant responsiveness, allowing users to scroll and drag across the full alphabetical list smoothly with zero lag or freezing.
+  - Dragging the thumb seamlessly seeks through the currently loaded pool of words with 60fps fluidity.
 
 ### B. Combo Checker LIC Tables Restoration & Dynamic Calibration (`app.py`, `static/css/play.css`, `templates/index.html`)
 - **Dynamic LIC Letter Threshold**:
