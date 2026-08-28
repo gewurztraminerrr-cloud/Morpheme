@@ -3394,7 +3394,7 @@ function startSteadyLoader() {
     stopSteadyLoader();
     _virtualProgressCount = 0;
     const startTime = performance.now();
-    const DURATION_MS = 2400; // 2.4 seconds smooth steady progression
+    const DURATION_MS = 1200; // Fast, steady 1.2s rapid progression
     
     function loadStep(now) {
         const modal = document.getElementById('full-list-modal');
@@ -3421,29 +3421,35 @@ function startSteadyLoader() {
         const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
         _virtualProgressCount = Math.min(total, Math.floor(progress * total));
 
+        // Format: accurate clean increments (e.g. 54,000 / 469,764 words and 54,500 / 469,764 words)
+        const stepSize = total > 50000 ? 500 : (total > 10000 ? 100 : 10);
+        const displayCount = progress < 1 ? Math.min(total, Math.max(1, Math.round(_virtualProgressCount / stepSize) * stepSize)) : total;
+
         if (countEl) {
             if (progress < 1) {
-                countEl.textContent = `Loading… ${_virtualProgressCount.toLocaleString()} / ${total.toLocaleString()} words`;
+                countEl.textContent = `Loading… ${displayCount.toLocaleString()} / ${total.toLocaleString()} words`;
             } else {
                 countEl.textContent = `${total.toLocaleString()} words`;
             }
         }
 
-        // Dynamically scale scrollbar thumb: gets smaller and higher as list grows
+        // Dynamically scale scrollbar thumb: gets smaller and goes high up at the same time
         if (track && thumb && resultsEl) {
             track.style.display = 'block';
             const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
-            const clientHeight = resultsEl.clientHeight || 500;
-            // Calculate virtual list height based on progressive count
-            const virtualScrollHeight = Math.max(clientHeight, clientHeight * (Math.max(500, _virtualProgressCount) / 350));
-            const ratio = Math.max(0.04, Math.min(1, clientHeight / virtualScrollHeight));
-            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
-            thumb.style.height = `${thumbHeight}px`;
+            const startThumbHeight = Math.min(trackHeight * 0.7, 180);
+            const targetRatio = Math.max(0.04, Math.min(1, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight)));
+            const endThumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
+            const currentThumbHeight = startThumbHeight - (progress * (startThumbHeight - endThumbHeight));
+            thumb.style.height = `${currentThumbHeight}px`;
 
-            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const maxThumbTop = Math.max(0, trackHeight - currentThumbHeight);
             const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
             const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
-            const thumbTop = scrollRatio * maxThumbTop;
+            
+            // Thumb glides higher up towards top while shrinking
+            const baselineTop = (trackHeight * 0.15) * (1 - progress);
+            const thumbTop = Math.min(maxThumbTop, baselineTop + (scrollRatio * maxThumbTop));
             thumb.style.setProperty('top', `${thumbTop}px`, 'important');
         }
 
