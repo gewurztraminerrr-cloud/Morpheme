@@ -1,20 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    setupToolsNavigation();
-    setupProfileTool();
-    setupComboChecker();
-    setupListsTool();
-    setupSequenceTool();
-    setupManualTool();
-    setupRandomWordTool();
-    setupWotdTool();
-    setupSubanagramsTool();
-    setupIsValidTool();
-    setupPrivateMessaging();
-    setupMiniProfileModal();
-    setupImageLightbox();
-    setupUnscrambleTool();
-    setupFindCountTool();
-    setupPersonalTimer();
+    const inits = [
+        setupToolsNavigation, setupProfileTool, setupComboChecker, setupListsTool,
+        setupSequenceTool, setupManualTool, setupRandomWordTool, setupWotdTool,
+        setupSubanagramsTool, setupIsValidTool, setupPrivateMessaging, setupMiniProfileModal,
+        setupImageLightbox, setupUnscrambleTool, setupFindCountTool, setupPersonalTimer
+    ];
+    inits.forEach(fn => {
+        try {
+            if (typeof fn === 'function') fn();
+        } catch (e) {
+            console.error('[Tools Init Error]', fn.name, e);
+        }
+    });
 });
 
 // NEW: Global UTC Timestamp Parser to prevent local timezone offsets
