@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `5c1471531e42af9b05523f0ac3a4b386dc14e7f3` (`5c14715`)
+* **Latest Commit ID**: `17c7741dcf5f2d97a8f1da39d8c2d705d859d8cd` (`17c7741`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,12 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. View Full List Modal Display & Direct Visibility Guarantee (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
-- **Direct Overlay Presentation**:
+### A. View Full List Modal Display & Mobile Touch Target Guarantee (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
+- **Direct Overlay Presentation & Touch Reliability**:
+  - Attached direct `ontouchend` and `onclick` event dispatchers with `touch-action: manipulation; pointer-events: auto !important; position: relative; z-index: 10;` to `#list-view-full-btn` and `#full-list-modal-close`, ensuring mobile taps trigger instantly without being blocked by ancestor selection filters.
+  - Wrapped `DOMContentLoaded` module initializers in protected `try...catch` loops in `static/js/tools.js` to guarantee module availability.
   - Removed `contain: layout paint;` from `#full-list-modal` in `play.css`.
   - Added explicit top-level visibility properties (`display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 999999 !important;`).
-  - Added direct global click handlers on `window.openFullListModal` and `window.closeFullListModal` with automatic dictionary loading.
 
 ### B. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
 - **Steady Visual Progress & Real-Time Thumb Height Adjustment**:
