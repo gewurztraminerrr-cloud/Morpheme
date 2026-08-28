@@ -3574,7 +3574,11 @@ function setupListsTool() {
         results.innerHTML = '';
         results.scrollTop = 0;
         modal.classList.add('active');
+        modal.style.display = 'flex';
         modal.style.setProperty('display', 'flex', 'important');
+        modal.style.setProperty('visibility', 'visible', 'important');
+        modal.style.setProperty('opacity', '1', 'important');
+        modal.style.setProperty('z-index', '999999', 'important');
         document.body.style.overflow = 'hidden';
         window.isFullListLoading = true;
         
@@ -3614,6 +3618,7 @@ function setupListsTool() {
         const results = document.getElementById('full-list-modal-results');
         if (modal) {
             modal.classList.remove('active');
+            modal.style.display = 'none';
             modal.style.setProperty('display', 'none', 'important');
         }
         if (results) {
