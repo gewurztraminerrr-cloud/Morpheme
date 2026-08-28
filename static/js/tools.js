@@ -3543,11 +3543,9 @@ function setupListsTool() {
     }
 
     function openFullListModal() {
-        if (!fullListModal || !fullListResults) return;
-        if (!currentWordsList || currentWordsList.length === 0) {
-            alert('No list loaded yet. Please select a list type and click Update first.');
-            return;
-        }
+        const modal = document.getElementById('full-list-modal');
+        const results = document.getElementById('full-list-modal-results');
+        if (!modal || !results) return;
 
         stopSteadyLoader();
 
@@ -3558,7 +3556,7 @@ function setupListsTool() {
         const selectedType = typeSelect ? typeSelect.value : 'nwl';
         const selectedLength = lengthSelect ? lengthSelect.value : 'all';
         const selectedStart = startSelect ? startSelect.value : 'all';
-        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${currentWordsType}_${currentWordsList.length}`;
+        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${currentWordsType || 'nwl'}_${currentWordsList ? currentWordsList.length : 0}`;
 
         // Set title
         const titleEl = document.getElementById('list-display-title');
@@ -3571,42 +3569,43 @@ function setupListsTool() {
         window._savedFullListScrollTop = 0;
         _fullListRenderedStart = 0;
         _fullListRenderedEnd = 0;
-        _fullListAllWords = currentWordsList || [];
+        _fullListAllWords = (currentWordsList && currentWordsList.length > 0) ? currentWordsList : [];
         if (fullListCount) fullListCount.textContent = `Loading…`;
-        fullListResults.innerHTML = '';
-        fullListResults.scrollTop = 0;
-        fullListModal.style.display = 'flex';
+        results.innerHTML = '';
+        results.scrollTop = 0;
+        modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         window.isFullListLoading = true;
         
-        renderFullListWindow(0, 400);
-        initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
-        startSteadyLoader();
-
-        if (window.listsServerTruncated) {
-            let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
-            if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
-            if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
-            url += `&t=${Date.now()}`;
-
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (window._lastFullListFilterKey !== currentFilterKey) return;
-                    const fullWords = data[selectedType] || [];
-                    _fullListAllWords = fullWords;
-                    window.isFullListLoading = false;
-                    startSteadyLoader();
-                })
-                .catch(err => {
-                    console.error('[Full List] Failed to fetch full word list:', err);
-                    if (fullListCount) fullListCount.textContent = `${currentWordsList.length.toLocaleString()} words (fetch failed)`;
-                    window.isFullListLoading = false;
-                });
-        } else {
-            window.isFullListLoading = false;
+        if (_fullListAllWords.length > 0) {
+            renderFullListWindow(0, 400);
+            initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
+            startSteadyLoader();
         }
+
+        let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
+        if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
+        if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
+        url += `&t=${Date.now()}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (window._lastFullListFilterKey !== currentFilterKey) return;
+                const fullWords = data[selectedType] || [];
+                _fullListAllWords = fullWords;
+                window.isFullListLoading = false;
+                renderFullListWindow(0, 400);
+                initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
+                startSteadyLoader();
+            })
+            .catch(err => {
+                console.error('[Full List] Failed to fetch full word list:', err);
+                if (fullListCount) fullListCount.textContent = `${_fullListAllWords.length.toLocaleString()} words (fetch failed)`;
+                window.isFullListLoading = false;
+            });
     }
+    window.openFullListModal = openFullListModal;
 
     function closeFullListModal() {
         stopSteadyLoader();
