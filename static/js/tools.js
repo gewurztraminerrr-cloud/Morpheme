@@ -3457,7 +3457,7 @@ function startSteadyLoader() {
             }
         }
 
-        // Dynamically scale scrollbar thumb: gets smaller and stays high up near top of track as words process
+        // Dynamically scale scrollbar thumb: gets smaller and rises up to the top of track as words load
         if (track && thumb && resultsEl) {
             track.style.display = 'block';
             const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
@@ -3471,8 +3471,9 @@ function startSteadyLoader() {
             const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
             const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
             
-            const baselineTop = (trackHeight * 0.20) * (1 - progress);
-            const thumbTop = Math.min(maxThumbTop, baselineTop + (scrollRatio * (maxThumbTop - baselineTop)));
+            // Thumb rises from 35% down up to 0 (top of track) as words process, leaving the space below for new words
+            const baselineTop = (trackHeight * 0.35) * (1 - progress);
+            const thumbTop = Math.min(maxThumbTop, Math.max(0, baselineTop + (scrollRatio * (maxThumbTop - baselineTop))));
             thumb.style.setProperty('top', `${thumbTop}px`, 'important');
         }
 
