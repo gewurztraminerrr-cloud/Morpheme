@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `0d1a1ccab3275e5f3250b491c52f25969e22bdf7` (`0d1a1cc`)
+* **Latest Commit ID**: `cb54981875b33bdae506591d99bb8d413aa3dd00` (`cb54981`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Root DOM Hoisting & Direct Document.Body Attachment for "View Full List" Modal (`static/js/tools.js`, `templates/index.html`, `static/css/play.css`)
-- **Direct Document.Body Hoisting**:
-  - Identified that `#full-list-modal` had been placed inside deeply nested modal containers (`#modal-howtoplay`) with `display: none` ancestor rules that suppressed all rendering.
-  - Moved `#full-list-modal` to the top-level body root before `<!-- Core Scripts -->` and added automatic runtime JavaScript DOM hoisting (`if (modal.parentElement !== document.body) document.body.appendChild(modal);`) in both `setupListsTool()` and `openFullListModal()`.
-  - Guaranteed instant appearance across all browsers and devices upon clicking/tapping **"View Full List"**.
+### A. Global Function Definitions & Resilient DOM Lifecycle for "View Full List" Modal (`static/js/tools.js`, `templates/index.html`, `static/css/play.css`)
+- **Global Function Availability**:
+  - Moved `window.openFullListModal`, `window.closeFullListModal`, and jump helpers out of closure scopes and declared them at top-level global scope in `tools.js` to ensure immediate availability upon script parse.
+  - Implemented `if (document.readyState === 'loading') document.addEventListener(...) else initToolsModules()` to ensure initialization triggers even if `DOMContentLoaded` already fired before script execution.
+  - Added direct runtime DOM hoisting (`if (modal.parentElement !== document.body) document.body.appendChild(modal);`) to guarantee the modal is a direct child of `<body>` with `z-index: 9999999 !important`.
 
 ### B. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
 - **Steady Visual Progress & Real-Time Thumb Height Adjustment**:
