@@ -3396,7 +3396,7 @@ function startSteadyLoader() {
     stopSteadyLoader();
     _virtualProgressCount = 0;
     const startTime = performance.now();
-    const DURATION_MS = 800; // Snappy, steady 800ms progression rate
+    const DURATION_MS = 1500; // Calibrated 1.5s rate for distinct, steady block processing
     
     function loadStep(now) {
         const modal = document.getElementById('full-list-modal');
@@ -3423,23 +3423,23 @@ function startSteadyLoader() {
         const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
         _virtualProgressCount = Math.min(total, Math.floor(progress * total));
 
-        // Format: accurate steady increments reflecting relative loading progress (e.g. 54,000 / 469,764 words)
-        const stepSize = total > 50000 ? 500 : (total > 10000 ? 100 : 10);
-        const displayCount = progress < 1 ? Math.min(total, Math.max(1, Math.round(_virtualProgressCount / stepSize) * stepSize)) : total;
+        // Format: for each block of words loaded, update the counter (e.g. 50,000 / 469,764 words)
+        const stepSize = total > 100000 ? 5000 : (total > 30000 ? 2500 : (total > 10000 ? 500 : 100));
+        const displayCount = progress < 1 ? Math.min(total, Math.max(stepSize, Math.round(_virtualProgressCount / stepSize) * stepSize)) : total;
 
         if (countEl) {
             if (progress < 1) {
-                countEl.textContent = `Loading… ${displayCount.toLocaleString()} / ${total.toLocaleString()} words`;
+                countEl.textContent = `${displayCount.toLocaleString()} / ${total.toLocaleString()} words`;
             } else {
                 countEl.textContent = `${total.toLocaleString()} words`;
             }
         }
 
-        // Dynamically scale scrollbar thumb: gets smaller and goes high up at the same time
+        // Dynamically scale scrollbar thumb: gets smaller and goes higher up while words load and as user scrolls
         if (track && thumb && resultsEl) {
             track.style.display = 'block';
             const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
-            const startThumbHeight = Math.min(trackHeight * 0.7, 180);
+            const startThumbHeight = Math.min(trackHeight * 0.75, 180);
             const targetRatio = Math.max(0.04, Math.min(1, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight)));
             const endThumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
             const currentThumbHeight = startThumbHeight - (progress * (startThumbHeight - endThumbHeight));
@@ -3449,9 +3449,9 @@ function startSteadyLoader() {
             const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
             const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
             
-            // Thumb glides higher up towards top while shrinking
-            const baselineTop = (trackHeight * 0.15) * (1 - progress);
-            const thumbTop = Math.min(maxThumbTop, baselineTop + (scrollRatio * maxThumbTop));
+            // Thumb glides higher up towards top while shrinking, simultaneously updating with scroll
+            const baselineTop = (trackHeight * 0.20) * (1 - progress);
+            const thumbTop = Math.min(maxThumbTop, baselineTop + (scrollRatio * (maxThumbTop - baselineTop)));
             thumb.style.setProperty('top', `${thumbTop}px`, 'important');
         }
 
