@@ -5984,11 +5984,12 @@ def tools_combo_check():
         mp_len_mask
     )[0]
     
-    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4, and shared_counts >= 5
+    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4, and shared_counts >= min_lic_shared
+    min_lic_shared = 3 if source_len <= 5 else (4 if source_len <= 6 else 5)
     candidates_lic = np.where(
         (dict_lens_int <= source_len + 4) & 
         (shared_counts >= dict_lens_int - 4) &
-        (shared_counts >= 5)
+        (shared_counts >= min_lic_shared)
     )[0]
     
     candidates = np.union1d(candidates_mp, candidates_lic)
@@ -6048,7 +6049,7 @@ def tools_combo_check():
                 check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
         # 2. LIC Logic
-        if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= 5:
+        if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= min_lic_shared:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
     # Sort groups by length and alphabetically without arbitrary truncation
