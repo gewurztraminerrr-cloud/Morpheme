@@ -1,3 +1,10 @@
+var _steadyLoaderRafId = null;
+var _fullListAllWords = [];
+var _fullListRenderedStart = 0;
+var _fullListRenderedEnd = 0;
+var _virtualProgressCount = 0;
+window._cachedFullWordLists = window._cachedFullWordLists || {};
+
 function initToolsModules() {
     const inits = [
         setupToolsNavigation, setupProfileTool, setupComboChecker, setupListsTool,
@@ -3735,6 +3742,9 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
 
     function updateThumb() {
         if (isDragging) return; // Never override position while user is actively dragging
+        if (_steadyLoaderRafId) return; // Let steady loader control thumb while progression animation is running
+
+        const isFullList = (scrollArea.id === 'full-list-modal-results');
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight;
         const scrollTop = scrollArea.scrollTop;
@@ -3747,15 +3757,36 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         track.style.display = 'block';
 
         const trackHeight = track.clientHeight || clientHeight;
-        const ratio = Math.min(1, clientHeight / scrollHeight);
-        const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
-        thumb.style.height = `${thumbHeight}px`;
 
-        const maxScrollTop = scrollHeight - clientHeight;
-        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
-        thumb.style.top = `${thumbTop}px`;
-        thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        if (isFullList && _fullListAllWords && _fullListAllWords.length > 0) {
+            const totalWords = _fullListAllWords.length;
+            const targetRatio = Math.max(0.04, Math.min(1, clientHeight / Math.max(clientHeight, (totalWords / 350) * clientHeight)));
+            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
+            thumb.style.height = `${thumbHeight}px`;
+
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const maxVirtualIndex = Math.max(1, totalWords - 400);
+            const currentVirtualIndex = Math.min(maxVirtualIndex, Math.max(0, _fullListRenderedStart));
+            const baseRatio = currentVirtualIndex / maxVirtualIndex;
+            
+            const maxWindowScroll = scrollHeight - clientHeight;
+            const subRatio = maxWindowScroll > 0 ? (scrollTop / maxWindowScroll) : 0;
+            const effectiveRatio = Math.min(1, Math.max(0, baseRatio + (subRatio * (400 / totalWords))));
+            
+            const thumbTop = effectiveRatio * maxThumbTop;
+            thumb.style.top = `${thumbTop}px`;
+            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        } else {
+            const ratio = Math.min(1, clientHeight / scrollHeight);
+            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+            thumb.style.height = `${thumbHeight}px`;
+
+            const maxScrollTop = scrollHeight - clientHeight;
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+            thumb.style.top = `${thumbTop}px`;
+            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        }
     }
 
     function scheduleUpdate() {
@@ -3801,6 +3832,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const deltaY = clientY - startY;
 
+        const isFullList = (scrollArea.id === 'full-list-modal-results');
         const trackHeight = track.clientHeight || scrollArea.clientHeight;
         const thumbHeight = thumb.offsetHeight;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
@@ -3811,11 +3843,18 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         thumb.style.top = `${newThumbTop}px`;
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
-        const scrollHeight = scrollArea.scrollHeight;
-        const clientHeight = scrollArea.clientHeight;
-        const maxScrollTop = scrollHeight - clientHeight;
-        if (maxThumbTop > 0) {
-            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        if (isFullList && _fullListAllWords && _fullListAllWords.length > 0) {
+            const totalWords = _fullListAllWords.length;
+            const ratio = maxThumbTop > 0 ? (newThumbTop / maxThumbTop) : 0;
+            const targetIndex = Math.floor(ratio * Math.max(0, totalWords - 400));
+            renderFullListWindow(targetIndex, 400);
+        } else {
+            const scrollHeight = scrollArea.scrollHeight;
+            const clientHeight = scrollArea.clientHeight;
+            const maxScrollTop = scrollHeight - clientHeight;
+            if (maxThumbTop > 0) {
+                scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+            }
         }
 
         if (e.cancelable !== false) {
