@@ -3434,8 +3434,8 @@ function startSteadyLoader() {
     renderFullListWindow(0, 400);
 
     const startTime = performance.now();
-    const DURATION_MS = 1800; // Snappy, smooth 1.8s total streaming duration
-    const stepSize = total > 100000 ? 10000 : (total > 30000 ? 4000 : 1000);
+    const WORDS_PER_SECOND = 4000; // Exactly 4,000 words processed per second
+    const stepSize = 400; // Crisp block update every 100ms (400 words)
 
     function streamStep(now) {
         if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
@@ -3444,9 +3444,9 @@ function startSteadyLoader() {
         }
 
         const currentTimestamp = typeof now === 'number' ? now : performance.now();
-        const elapsed = currentTimestamp - startTime;
-        const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
-        const loadedCount = Math.min(total, Math.floor(progress * total));
+        const elapsedSec = (currentTimestamp - startTime) / 1000;
+        const loadedCount = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
+        const progress = total > 0 ? (loadedCount / total) : 1;
         const displayCount = progress < 1 ? Math.min(total, Math.max(stepSize, Math.round(loadedCount / stepSize) * stepSize)) : total;
 
         if (countEl) {
@@ -3457,7 +3457,7 @@ function startSteadyLoader() {
             }
         }
 
-        // Dynamically scale scrollbar thumb: gets smaller and stays high up near top of track
+        // Dynamically scale scrollbar thumb: gets smaller and stays high up near top of track as words process
         if (track && thumb && resultsEl) {
             track.style.display = 'block';
             const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
