@@ -3392,25 +3392,32 @@ function stopSteadyLoader() {
 
 function startSteadyLoader() {
     stopSteadyLoader();
-    _virtualProgressCount = Math.min(500, _fullListAllWords ? _fullListAllWords.length : 0);
+    _virtualProgressCount = 0;
     
     function loadStep() {
         const modal = document.getElementById('full-list-modal');
         const countEl = document.getElementById('full-list-modal-count');
         const resultsEl = document.getElementById('full-list-modal-results');
-        if (!modal || modal.style.display === 'none' && !modal.classList.contains('active')) {
+        const track = document.getElementById('full-list-scrollbar-track');
+        const thumb = document.getElementById('full-list-scrollbar-thumb');
+
+        if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
             stopSteadyLoader();
             return;
         }
         if (!_fullListAllWords || _fullListAllWords.length === 0) {
+            if (countEl && window.isFullListLoading) {
+                countEl.textContent = `Loading words…`;
+            }
             _steadyLoaderRafId = requestAnimationFrame(loadStep);
             return;
         }
 
         const total = _fullListAllWords.length;
         if (_virtualProgressCount < total) {
-            // Smooth progressive increment (~90 frames / 1.5 seconds)
-            const step = Math.max(500, Math.floor(total / 90));
+            // Smooth progressive increment (~60-90 frames / 1.5s stream)
+            const remaining = total - _virtualProgressCount;
+            const step = Math.max(300, Math.floor(remaining / 24) + 400);
             _virtualProgressCount = Math.min(total, _virtualProgressCount + step);
 
             if (countEl) {
@@ -3421,8 +3428,22 @@ function startSteadyLoader() {
                 }
             }
 
-            if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
-                resultsEl._updateCustomScrollbar();
+            // Dynamically scale scrollbar thumb: gets smaller and higher as list grows
+            if (track && thumb && resultsEl) {
+                track.style.display = 'block';
+                const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
+                const clientHeight = resultsEl.clientHeight || 500;
+                // Calculate virtual list height based on progressive count
+                const virtualScrollHeight = Math.max(clientHeight, clientHeight * (_virtualProgressCount / 350));
+                const ratio = Math.max(0.04, Math.min(1, clientHeight / virtualScrollHeight));
+                const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+                thumb.style.height = `${thumbHeight}px`;
+
+                const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+                const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
+                const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
+                const thumbTop = scrollRatio * maxThumbTop;
+                thumb.style.setProperty('top', `${thumbTop}px`, 'important');
             }
 
             _steadyLoaderRafId = requestAnimationFrame(loadStep);
