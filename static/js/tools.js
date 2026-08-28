@@ -3393,8 +3393,10 @@ function stopSteadyLoader() {
 function startSteadyLoader() {
     stopSteadyLoader();
     _virtualProgressCount = 0;
+    const startTime = performance.now();
+    const DURATION_MS = 2400; // 2.4 seconds smooth steady progression
     
-    function loadStep() {
+    function loadStep(now) {
         const modal = document.getElementById('full-list-modal');
         const countEl = document.getElementById('full-list-modal-count');
         const resultsEl = document.getElementById('full-list-modal-results');
@@ -3414,38 +3416,38 @@ function startSteadyLoader() {
         }
 
         const total = _fullListAllWords.length;
-        if (_virtualProgressCount < total) {
-            // Smooth progressive increment (~60-90 frames / 1.5s stream)
-            const remaining = total - _virtualProgressCount;
-            const step = Math.max(300, Math.floor(remaining / 24) + 400);
-            _virtualProgressCount = Math.min(total, _virtualProgressCount + step);
+        const currentTimestamp = typeof now === 'number' ? now : performance.now();
+        const elapsed = currentTimestamp - startTime;
+        const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
+        _virtualProgressCount = Math.min(total, Math.floor(progress * total));
 
-            if (countEl) {
-                if (_virtualProgressCount < total) {
-                    countEl.textContent = `Loading… ${_virtualProgressCount.toLocaleString()} / ${total.toLocaleString()} words`;
-                } else {
-                    countEl.textContent = `${total.toLocaleString()} words`;
-                }
+        if (countEl) {
+            if (progress < 1) {
+                countEl.textContent = `Loading… ${_virtualProgressCount.toLocaleString()} / ${total.toLocaleString()} words`;
+            } else {
+                countEl.textContent = `${total.toLocaleString()} words`;
             }
+        }
 
-            // Dynamically scale scrollbar thumb: gets smaller and higher as list grows
-            if (track && thumb && resultsEl) {
-                track.style.display = 'block';
-                const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
-                const clientHeight = resultsEl.clientHeight || 500;
-                // Calculate virtual list height based on progressive count
-                const virtualScrollHeight = Math.max(clientHeight, clientHeight * (_virtualProgressCount / 350));
-                const ratio = Math.max(0.04, Math.min(1, clientHeight / virtualScrollHeight));
-                const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
-                thumb.style.height = `${thumbHeight}px`;
+        // Dynamically scale scrollbar thumb: gets smaller and higher as list grows
+        if (track && thumb && resultsEl) {
+            track.style.display = 'block';
+            const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
+            const clientHeight = resultsEl.clientHeight || 500;
+            // Calculate virtual list height based on progressive count
+            const virtualScrollHeight = Math.max(clientHeight, clientHeight * (Math.max(500, _virtualProgressCount) / 350));
+            const ratio = Math.max(0.04, Math.min(1, clientHeight / virtualScrollHeight));
+            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+            thumb.style.height = `${thumbHeight}px`;
 
-                const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-                const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
-                const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
-                const thumbTop = scrollRatio * maxThumbTop;
-                thumb.style.setProperty('top', `${thumbTop}px`, 'important');
-            }
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
+            const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
+            const thumbTop = scrollRatio * maxThumbTop;
+            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        }
 
+        if (progress < 1) {
             _steadyLoaderRafId = requestAnimationFrame(loadStep);
         } else {
             if (countEl) {
