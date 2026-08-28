@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `640b84eb9f1359da15c8516a8c12785d6d680588` (`640b84e`)
+* **Latest Commit ID**: `82b0f80dad917cca78ac5968d82a9f41b74eeb45` (`82b0f80`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,9 +17,9 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. 1.5s Block-by-Block Loading Rate, `[Loaded] / [Total]` Counter & Synchronized Thumb Ascent/Shrink (`static/js/tools.js`, `templates/index.html`)
+### A. 5.0s Progressive Block-by-Block Loading Rate, `[Loaded] / [Total]` Counter & Synchronized Thumb Ascent/Shrink (`static/js/tools.js`, `templates/index.html`)
 - **Block-by-Block Loading Counter**:
-  - Calibrated `startSteadyLoader()` over a 1.5-second progression window with distinct block increments (e.g., 5,000 words per block for AW, 2,500 for NWL/CSW).
+  - Calibrated `startSteadyLoader()` over a 5.0-second progression window with distinct block increments (e.g., 5,000 words per block for AW, 2,500 for NWL/CSW).
   - Continuously updates the top counter in real time with each block loaded: `${displayCount.toLocaleString()} / ${total.toLocaleString()} words` (e.g. `50,000 / 469,764 words` ➔ `75,000 / 469,764 words` ➔ `100,000 / 469,764 words` ➔ `469,764 words`).
 - **Simultaneous Thumb Ascent & Shrinking During Stream & User Scroll**:
   - As each block loads, the custom scrollbar thumb height shrinks in proportion to the loaded pool size while simultaneously gliding up toward the top of the track.
