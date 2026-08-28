@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `5f60f3d61b606c4b2c14041d4c20790bc2db3aa1` (`5f60f3d`)
+* **Latest Commit ID**: `5c1471531e42af9b05523f0ac3a4b386dc14e7f3` (`5c14715`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,11 +17,11 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. View Full List Modal Display & CSS Containment Fix (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
-- **Resolved Modal Visibility**:
-  - Removed `contain: layout paint;` from `#full-list-modal` in `play.css`, which was causing WebKit / Safari to clip and suppress fixed modal presentation upon toggling display.
-  - Enforced explicit active state handling via `.active` class and `modal.style.setProperty('display', 'flex', 'important')`.
-  - Added direct global event binding on `window.openFullListModal` with automatic dictionary retrieval.
+### A. View Full List Modal Display & Direct Visibility Guarantee (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
+- **Direct Overlay Presentation**:
+  - Removed `contain: layout paint;` from `#full-list-modal` in `play.css`.
+  - Added explicit top-level visibility properties (`display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 999999 !important;`).
+  - Added direct global click handlers on `window.openFullListModal` and `window.closeFullListModal` with automatic dictionary loading.
 
 ### B. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
 - **Steady Visual Progress & Real-Time Thumb Height Adjustment**:
