@@ -3427,15 +3427,15 @@ function startSteadyLoader() {
     const modal = document.getElementById('full-list-modal');
     const countEl = document.getElementById('full-list-modal-count');
     const resultsEl = document.getElementById('full-list-modal-results');
+    const track = document.getElementById('full-list-scrollbar-track');
+    const thumb = document.getElementById('full-list-scrollbar-thumb');
 
-    // Initial render of first block (200 words)
-    if (_fullListRenderedEnd === 0) {
-        renderFullListWindow(0, 200);
-    }
+    // Initial render of first batch (400 words)
+    renderFullListWindow(0, 400);
 
-    const BATCH_CHUNK = 250;
-    const INTERVAL_MS = 40; // 40ms interval between progressive word blocks
-    let lastAppendTime = performance.now();
+    const startTime = performance.now();
+    const DURATION_MS = 1800; // Snappy, smooth 1.8s total streaming duration
+    const stepSize = total > 100000 ? 10000 : (total > 30000 ? 4000 : 1000);
 
     function streamStep(now) {
         if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
@@ -3443,22 +3443,50 @@ function startSteadyLoader() {
             return;
         }
 
-        if (_fullListRenderedEnd >= total) {
-            if (countEl) countEl.textContent = `${total.toLocaleString()} words`;
+        const currentTimestamp = typeof now === 'number' ? now : performance.now();
+        const elapsed = currentTimestamp - startTime;
+        const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
+        const loadedCount = Math.min(total, Math.floor(progress * total));
+        const displayCount = progress < 1 ? Math.min(total, Math.max(stepSize, Math.round(loadedCount / stepSize) * stepSize)) : total;
+
+        if (countEl) {
+            if (progress < 1) {
+                countEl.textContent = `${displayCount.toLocaleString()} / ${total.toLocaleString()} words`;
+            } else {
+                countEl.textContent = `${total.toLocaleString()} words`;
+            }
+        }
+
+        // Dynamically scale scrollbar thumb: gets smaller and stays high up near top of track
+        if (track && thumb && resultsEl) {
+            track.style.display = 'block';
+            const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
+            const startThumbHeight = Math.min(trackHeight * 0.75, 180);
+            const targetRatio = Math.max(0.04, Math.min(1, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight)));
+            const endThumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
+            const currentThumbHeight = startThumbHeight - (progress * (startThumbHeight - endThumbHeight));
+            thumb.style.height = `${currentThumbHeight}px`;
+
+            const maxThumbTop = Math.max(0, trackHeight - currentThumbHeight);
+            const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
+            const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
+            
+            const baselineTop = (trackHeight * 0.20) * (1 - progress);
+            const thumbTop = Math.min(maxThumbTop, baselineTop + (scrollRatio * (maxThumbTop - baselineTop)));
+            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        }
+
+        if (progress < 1) {
+            _steadyLoaderRafId = requestAnimationFrame(streamStep);
+        } else {
+            if (countEl) {
+                countEl.textContent = `${total.toLocaleString()} words`;
+            }
             if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
                 resultsEl._updateCustomScrollbar();
             }
             _steadyLoaderRafId = null;
-            return;
         }
-
-        const currentTimestamp = typeof now === 'number' ? now : performance.now();
-        if (currentTimestamp - lastAppendTime >= INTERVAL_MS) {
-            lastAppendTime = currentTimestamp;
-            appendNextFullListBatch(BATCH_CHUNK);
-        }
-
-        _steadyLoaderRafId = requestAnimationFrame(streamStep);
     }
 
     _steadyLoaderRafId = requestAnimationFrame(streamStep);
