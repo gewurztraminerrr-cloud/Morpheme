@@ -3394,7 +3394,7 @@ function startSteadyLoader() {
     stopSteadyLoader();
     _virtualProgressCount = 0;
     const startTime = performance.now();
-    const DURATION_MS = 1200; // Fast, steady 1.2s rapid progression
+    const DURATION_MS = 800; // Snappy, steady 800ms progression rate
     
     function loadStep(now) {
         const modal = document.getElementById('full-list-modal');
@@ -3421,8 +3421,8 @@ function startSteadyLoader() {
         const progress = Math.min(1, Math.max(0, elapsed / DURATION_MS));
         _virtualProgressCount = Math.min(total, Math.floor(progress * total));
 
-        // Format: accurate clean increments (e.g. 54,000 / 469,764 words and 54,500 / 469,764 words)
-        const stepSize = total > 50000 ? 500 : (total > 10000 ? 100 : 10);
+        // Format: accurate steady increments reflecting relative loading progress
+        const stepSize = total > 50000 ? 250 : (total > 10000 ? 50 : 10);
         const displayCount = progress < 1 ? Math.min(total, Math.max(1, Math.round(_virtualProgressCount / stepSize) * stepSize)) : total;
 
         if (countEl) {
