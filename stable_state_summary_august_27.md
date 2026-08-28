@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `1fa96ee7404918a3d43ad21d121728d442d00a07` (`1fa96ee`)
+* **Latest Commit ID**: `1a93155a840ce7c1ae147bb54a3bf055e3a43b8a` (`1a93155`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,9 +17,10 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Steady Progressive Loading Counter & Dynamic Scrollbar Scaling with Zero Black Screen (`static/js/tools.js`, `templates/index.html`)
-- **Steady Visual Progress & Real-Time Thumb Height Scaling**:
-  - Implemented `startSteadyLoader()` using `requestAnimationFrame` to animate a live progressive counter (`Loading… 10,000 / 469,764 words`) smoothly from 0 up to 100% of the total lexicon size.
+### A. Time-Based Steady Progressive Word Stream & Dynamic Scrollbar Scaling (`static/js/tools.js`, `templates/index.html`)
+- **2.4-Second High-Precision Word Stream Progression**:
+  - Configured `startSteadyLoader()` using `performance.now()` timestamp deltas over a calibrated 2.4-second duration.
+  - Generates a steady, smooth, visibly progressive stream (`Loading… 10,000 / 469,764 words`) that scales consistently across all refresh rates (60Hz, 120Hz ProMotion screens on iPhone/iPad/Mac, and standard monitors).
   - Dynamically recalculates and glides the scrollbar thumb higher and higher on each animation frame as the total virtual count expands, shrinking the thumb size smoothly while keeping its position pinned to the top of the track.
   - Keeps the active DOM node count strictly memory-bounded (~400 nodes), completely preventing mobile GPU texture compositor exhaustion, zero black screen, and 60fps responsiveness across all phones, tablets, laptops, and desktops.
 
