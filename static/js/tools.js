@@ -3315,27 +3315,20 @@ function generateFullListItemsHtml(slice) {
     }
 }
 
+var _fullListLoadedPoolCount = 400;
+
 function renderFullListWindow(startIndex = 0, count = 300) {
     const results = document.getElementById('full-list-modal-results');
-    const countEl = document.getElementById('full-list-modal-count');
     if (!results || !_fullListAllWords || _fullListAllWords.length === 0) return;
-    const start = Math.max(0, Math.min(startIndex, _fullListAllWords.length - 1));
-    const end = Math.min(_fullListAllWords.length, start + count);
+    const maxPool = Math.max(count, _fullListLoadedPoolCount || _fullListAllWords.length);
+    const start = Math.max(0, Math.min(startIndex, maxPool - 1));
+    const end = Math.min(maxPool, start + count);
     const slice = _fullListAllWords.slice(start, end);
     if (slice.length === 0) return;
 
     results.innerHTML = generateFullListItemsHtml(slice);
     _fullListRenderedStart = start;
     _fullListRenderedEnd = end;
-
-    if (countEl && _fullListAllWords.length > 0) {
-        const total = _fullListAllWords.length;
-        if (_fullListRenderedEnd < total) {
-            countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words`;
-        } else {
-            countEl.textContent = `${total.toLocaleString()} words`;
-        }
-    }
 
     if (typeof results._updateCustomScrollbar === 'function') {
         results._updateCustomScrollbar();
@@ -3344,22 +3337,14 @@ function renderFullListWindow(startIndex = 0, count = 300) {
 
 function appendNextFullListBatch(count = 300) {
     const results = document.getElementById('full-list-modal-results');
-    const countEl = document.getElementById('full-list-modal-count');
     if (!results || !_fullListAllWords || _fullListRenderedEnd >= _fullListAllWords.length) return;
-    const slice = _fullListAllWords.slice(_fullListRenderedEnd, _fullListRenderedEnd + count);
+    const maxAllowedEnd = Math.max(400, _fullListLoadedPoolCount || _fullListAllWords.length);
+    if (_fullListRenderedEnd >= maxAllowedEnd) return;
+    const slice = _fullListAllWords.slice(_fullListRenderedEnd, Math.min(maxAllowedEnd, _fullListRenderedEnd + count));
     if (slice.length === 0) return;
 
     results.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
     _fullListRenderedEnd += slice.length;
-
-    if (countEl && _fullListAllWords.length > 0) {
-        const total = _fullListAllWords.length;
-        if (_fullListRenderedEnd < total) {
-            countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words`;
-        } else {
-            countEl.textContent = `${total.toLocaleString()} words`;
-        }
-    }
 
     // When scrolling down deep, trim distant items at top to protect mobile DOM memory
     if (results.scrollTop > 600) {
@@ -3384,7 +3369,6 @@ function appendNextFullListBatch(count = 300) {
 
 function prependPrevFullListBatch(count = 300) {
     const results = document.getElementById('full-list-modal-results');
-    const countEl = document.getElementById('full-list-modal-count');
     if (!results || !_fullListAllWords || _fullListRenderedStart <= 0) return;
     const start = Math.max(0, _fullListRenderedStart - count);
     const slice = _fullListAllWords.slice(start, _fullListRenderedStart);
@@ -3397,15 +3381,6 @@ function prependPrevFullListBatch(count = 300) {
     results.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
 
     _fullListRenderedStart = start;
-
-    if (countEl && _fullListAllWords.length > 0) {
-        const total = _fullListAllWords.length;
-        if (_fullListRenderedEnd < total) {
-            countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words`;
-        } else {
-            countEl.textContent = `${total.toLocaleString()} words`;
-        }
-    }
 
     if (typeof results._updateCustomScrollbar === 'function') {
         results._updateCustomScrollbar();
@@ -3430,6 +3405,7 @@ function startSteadyLoader() {
     const track = document.getElementById('full-list-scrollbar-track');
     const thumb = document.getElementById('full-list-scrollbar-thumb');
 
+    _fullListLoadedPoolCount = 400;
     // Initial render of first batch (400 words)
     renderFullListWindow(0, 400);
 
@@ -3446,6 +3422,7 @@ function startSteadyLoader() {
         const currentTimestamp = typeof now === 'number' ? now : performance.now();
         const elapsedSec = (currentTimestamp - startTime) / 1000;
         const loadedCount = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
+        _fullListLoadedPoolCount = loadedCount;
         const progress = total > 0 ? (loadedCount / total) : 1;
         const displayCount = progress < 1 ? Math.min(total, Math.max(stepSize, Math.round(loadedCount / stepSize) * stepSize)) : total;
 
@@ -3455,6 +3432,11 @@ function startSteadyLoader() {
             } else {
                 countEl.textContent = `${total.toLocaleString()} words`;
             }
+        }
+
+        // Keep DOM populated with words as stream progresses
+        if (_fullListRenderedEnd < _fullListLoadedPoolCount && _fullListRenderedEnd < 2000) {
+            appendNextFullListBatch(300);
         }
 
         // Dynamically scale scrollbar thumb: gets smaller and rises up to the top of track as words load
@@ -3861,9 +3843,9 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
         if (isFullList && _fullListAllWords && _fullListAllWords.length > 0) {
-            const totalWords = _fullListAllWords.length;
+            const currentPool = Math.max(400, _fullListLoadedPoolCount || _fullListAllWords.length);
             const ratio = maxThumbTop > 0 ? (newThumbTop / maxThumbTop) : 0;
-            const targetIndex = Math.floor(ratio * Math.max(0, totalWords - 400));
+            const targetIndex = Math.floor(ratio * Math.max(0, currentPool - 400));
             renderFullListWindow(targetIndex, 400);
         } else {
             const scrollHeight = scrollArea.scrollHeight;
