@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 27, 2026
-* **Latest Commit ID**: `51ec9d42f9c09fca3790c38db80fbb556afdaa8c` (`51ec9d4`)
+* **Latest Commit ID**: `b4caa8b12bfd4ccaf2764fcc18a5c803b4a321e5` (`b4caa8b`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,12 +17,13 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. 800ms Snappy Steady Progression with Relative Step Counter & Synchronized Thumb Ascent (`static/js/tools.js`, `templates/index.html`)
-- **800ms Snappy Stream Velocity**:
-  - Calibrated `startSteadyLoader()` to an optimal **800ms** duration for brisk, responsive loading.
-  - Dynamically updates the top counter with fine-grained relative steps reflecting how far into the total word count has loaded (e.g. `24,500 / 469,764 words` ➔ `54,000 / 469,764 words` ➔ `54,500 / 469,764 words` ➔ `469,764 words`).
+### A. Full Lexicon Uncapped Streaming & In-Memory Caching for "View Full List" (`static/js/tools.js`, `templates/index.html`)
+- **Uncapped Full Lexicon Streaming**:
+  - Removed premature binding to the capped 1,000-word page list.
+  - Fetches the complete word list (`no_limit=true`, 469,764 words for AW / 199,429 words for NWL / 281,598 words for CSW) and caches it in `window._cachedFullWordLists`.
+  - Animates the live progress counter smoothly across the entire word count (e.g. `24,500 / 469,764 words` ➔ `54,000 / 469,764 words` ➔ `54,500 / 469,764 words` ➔ `469,764 words`).
 - **Simultaneous Thumb Ascent & Shrinking**:
-  - The custom scrollbar thumb height shrinks dynamically while its vertical position glides smoothly up to the top of the track simultaneously as the virtual word list expands.
+  - The custom scrollbar thumb height shrinks dynamically while its vertical position glides smoothly up to the top of the track simultaneously as the full virtual word list expands.
   - Keeps the active DOM node count strictly memory-bounded (~400 nodes), completely preventing mobile GPU texture compositor exhaustion, zero black screen, and 60fps responsiveness across all phones, tablets, laptops, and desktops.
 
 ### B. Global Scope & Immediate Availability for "View Full List" Modal (`static/js/tools.js`, `templates/index.html`, `static/css/play.css`)
