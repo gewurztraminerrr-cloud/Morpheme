@@ -3434,9 +3434,9 @@ function startSteadyLoader() {
             }
         }
 
-        // Keep DOM populated with words as stream progresses
-        if (_fullListRenderedEnd < _fullListLoadedPoolCount && _fullListRenderedEnd < 2000) {
-            appendNextFullListBatch(300);
+        // As words load, append next blocks if user is near bottom or rendering list
+        if (_fullListRenderedEnd < _fullListLoadedPoolCount && (resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - 600 || _fullListRenderedEnd < 3000)) {
+            appendNextFullListBatch(400);
         }
 
         // Dynamically scale scrollbar thumb: gets smaller and rises up to the top of track as words load
@@ -3678,10 +3678,10 @@ window.closeFullListModal = function() {
 const fullListResultsEl = document.getElementById('full-list-modal-results');
 if (fullListResultsEl) {
     fullListResultsEl.addEventListener('scroll', () => {
-        if (fullListResultsEl.scrollTop + fullListResultsEl.clientHeight >= fullListResultsEl.scrollHeight - 300) {
-            appendNextFullListBatch();
-        } else if (fullListResultsEl.scrollTop <= 150 && _fullListRenderedStart > 0) {
-            prependPrevFullListBatch();
+        if (fullListResultsEl.scrollTop + fullListResultsEl.clientHeight >= fullListResultsEl.scrollHeight - 500) {
+            appendNextFullListBatch(500);
+        } else if (fullListResultsEl.scrollTop <= 200 && _fullListRenderedStart > 0) {
+            prependPrevFullListBatch(500);
         }
     }, { passive: true });
 }
