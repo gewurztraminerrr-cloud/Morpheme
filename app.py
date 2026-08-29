@@ -6165,9 +6165,9 @@ def tools_get_lists():
         def cap_list(lst):
             if no_limit:
                 return lst  # Return full list when explicitly requested
-            if len(lst) > 1000:
+            if len(lst) > 10000:
                 response['is_truncated'] = True
-                return lst[:1000]
+                return lst[:10000]
             return lst
 
         if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
