@@ -3113,7 +3113,7 @@ function startProgressiveRendering() {
     
     function renderChunk() {
         if (loadId !== currentProgressiveLoadId) return;
-        const maxAllowed = listsShowAll ? Infinity : 5000;
+        const maxAllowed = listsShowAll ? Infinity : 10000;
         if (currentWordsRenderedCount >= Math.min(currentWordsList.length, maxAllowed)) {
             if ((currentWordsList.length > maxAllowed || window.listsServerTruncated) && !document.getElementById('list-truncation-notice')) {
                 const scrollArea = document.getElementById('main-list-results');
@@ -3131,7 +3131,7 @@ function startProgressiveRendering() {
                     } else {
                         noticeHtml = `
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                                ⚠️ Showing first 5,000 words.<br>
+                                ⚠️ Showing first 10,000 words.<br>
                                 <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
                                     Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
                                     <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
@@ -3165,7 +3165,7 @@ function renderNextWordsPage() {
     const scrollArea = document.getElementById('main-list-results');
     if (!scrollArea || currentWordsRenderedCount >= currentWordsList.length) return;
 
-    const maxAllowed = listsShowAll ? Infinity : 5000;
+    const maxAllowed = listsShowAll ? Infinity : 10000;
     if (currentWordsRenderedCount >= maxAllowed) {
         if (!document.getElementById('list-truncation-notice')) {
             let noticeHtml = '';
@@ -3181,7 +3181,7 @@ function renderNextWordsPage() {
             } else {
                 noticeHtml = `
                     <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                        ⚠️ Showing first 5,000 words.<br>
+                        ⚠️ Showing first 10,000 words.<br>
                         <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
                             Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
                             <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
