@@ -3405,13 +3405,16 @@ function startSteadyLoader() {
     const track = document.getElementById('full-list-scrollbar-track');
     const thumb = document.getElementById('full-list-scrollbar-thumb');
 
-    _fullListLoadedPoolCount = 400;
-    // Initial render of first batch (400 words)
-    renderFullListWindow(0, 400);
+    // Clear the list and start fresh
+    if (resultsEl) resultsEl.innerHTML = '';
+    _fullListRenderedStart = 0;
+    _fullListRenderedEnd = 0;
+    _fullListLoadedPoolCount = 0;
 
     const startTime = performance.now();
-    const WORDS_PER_SECOND = 4000; // Exactly 4,000 words processed per second
-    const stepSize = 400; // Crisp block update every 100ms (400 words)
+    const WORDS_PER_SECOND = 4000; // Exactly 4,000 words appended to DOM per second
+    const STEP_SIZE = 400; // Batch to append per RAF tick (~100ms cadence)
+    let lastAppendTime = startTime;
 
     function streamStep(now) {
         if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
@@ -3421,50 +3424,56 @@ function startSteadyLoader() {
 
         const currentTimestamp = typeof now === 'number' ? now : performance.now();
         const elapsedSec = (currentTimestamp - startTime) / 1000;
-        const loadedCount = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
-        _fullListLoadedPoolCount = loadedCount;
-        const progress = total > 0 ? (loadedCount / total) : 1;
-        const displayCount = progress < 1 ? Math.min(total, Math.max(stepSize, Math.round(loadedCount / stepSize) * stepSize)) : total;
 
+        // How many words SHOULD be in DOM by now
+        const targetRendered = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
+
+        // Physically append words to catch up to target
+        if (_fullListRenderedEnd < targetRendered) {
+            const batchEnd = Math.min(targetRendered, _fullListRenderedEnd + STEP_SIZE);
+            const slice = _fullListAllWords.slice(_fullListRenderedEnd, batchEnd);
+            if (slice.length > 0 && resultsEl) {
+                resultsEl.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
+                _fullListRenderedEnd += slice.length;
+                _fullListLoadedPoolCount = _fullListRenderedEnd;
+            }
+        }
+
+        // Update counter to reflect actual words in DOM
         if (countEl) {
-            if (progress < 1) {
-                countEl.textContent = `${displayCount.toLocaleString()} / ${total.toLocaleString()} words`;
+            if (_fullListRenderedEnd < total) {
+                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words`;
             } else {
                 countEl.textContent = `${total.toLocaleString()} words`;
             }
         }
 
-        // As words load, append next blocks if user is near bottom or rendering list
-        if (_fullListRenderedEnd < _fullListLoadedPoolCount && (resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - 600 || _fullListRenderedEnd < 3000)) {
-            appendNextFullListBatch(400);
-        }
+        const progress = total > 0 ? (_fullListRenderedEnd / total) : 1;
 
-        // Dynamically scale scrollbar thumb: gets smaller and rises up to the top of track as words load
+        // Thumb rises from near top and shrinks as words load
         if (track && thumb && resultsEl) {
             track.style.display = 'block';
             const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
+            // Start large (75% of track), end small (proportional to viewport/total)
             const startThumbHeight = Math.min(trackHeight * 0.75, 180);
-            const targetRatio = Math.max(0.04, Math.min(1, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight)));
+            const targetRatio = Math.max(0.04, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight));
             const endThumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
             const currentThumbHeight = startThumbHeight - (progress * (startThumbHeight - endThumbHeight));
             thumb.style.height = `${currentThumbHeight}px`;
 
+            // Thumb starts at top and stays at top during loading (space below = loaded words)
             const maxThumbTop = Math.max(0, trackHeight - currentThumbHeight);
             const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
             const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
-            
-            // Thumb rises from 35% down up to 0 (top of track) as words process, leaving the space below for new words
-            const baselineTop = (trackHeight * 0.35) * (1 - progress);
-            const thumbTop = Math.min(maxThumbTop, Math.max(0, baselineTop + (scrollRatio * (maxThumbTop - baselineTop))));
+            // baselineTop goes from top (0) and stays near top while loading
+            const thumbTop = Math.min(maxThumbTop, Math.max(0, scrollRatio * maxThumbTop * progress));
             thumb.style.setProperty('top', `${thumbTop}px`, 'important');
         }
 
-        if (progress < 1) {
+        if (_fullListRenderedEnd < total) {
             _steadyLoaderRafId = requestAnimationFrame(streamStep);
         } else {
-            if (countEl) {
-                countEl.textContent = `${total.toLocaleString()} words`;
-            }
+            if (countEl) countEl.textContent = `${total.toLocaleString()} words`;
             if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
                 resultsEl._updateCustomScrollbar();
             }
