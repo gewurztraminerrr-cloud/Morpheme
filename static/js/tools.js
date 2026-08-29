@@ -3798,6 +3798,8 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     }
 
     function scheduleUpdate() {
+        // While the steady loader is animating the thumb, don't queue competing RAF updates
+        if (_steadyLoaderRafId) return;
         if (_rafId) return;
         _rafId = requestAnimationFrame(() => {
             _rafId = null;
