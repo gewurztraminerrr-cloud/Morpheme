@@ -3322,12 +3322,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (collapseBtn) {
             collapseBtn.style.display = 'block';
         }
-        // Focus input after sliding up
-        if (chatInput) {
-            setTimeout(() => {
-                chatInput.focus();
-            }, 100);
-        }
     }
 
     window.collapseChat = collapseChat;
