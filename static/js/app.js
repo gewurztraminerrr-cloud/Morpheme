@@ -1323,7 +1323,8 @@ function showPage(pageId) {
             } else if (typeof window.checkAccountTimeoutAndAlert === 'function') {
                 window.checkAccountTimeoutAndAlert();
             }
-        } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room') && !window._isEnteringRoom) {
+        } else if (!window.currentRoomId && !localStorage.getItem('last_joined_room') && !window._isEnteringRoom
+                   && !localStorage.getItem('tournament_play_active') && !localStorage.getItem('private_match_active')) {
             console.warn('[Navigation] No active room found. Redirecting to lobby.');
             pageId = 'page-lobby';
         }
