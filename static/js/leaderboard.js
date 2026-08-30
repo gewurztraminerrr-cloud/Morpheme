@@ -512,17 +512,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function highlightRows(query) {
-        const rows = document.querySelectorAll('.lb-row');
+        const allRows = document.querySelectorAll('.lb-row');
         if (!query) {
-            rows.forEach(row => row.classList.remove('highlight-search'));
+            allRows.forEach(row => row.classList.remove('highlight-search'));
             return;
         }
-        rows.forEach(row => {
+
+        // 1. Mark matching rows across all tables
+        allRows.forEach(row => {
             const u = (row.dataset.username || '').toLowerCase();
             if (u === query || u.includes(query)) {
                 row.classList.add('highlight-search');
             } else {
                 row.classList.remove('highlight-search');
+            }
+        });
+
+        // 2. Position the matching row in the middle of each table card
+        const cards = document.querySelectorAll('.lb-card');
+        cards.forEach(card => {
+            const matchingRow = card.querySelector('.lb-row.highlight-search');
+            const wrapper = card.querySelector('.lb-table-wrapper');
+            if (matchingRow && wrapper) {
+                const rowTop = matchingRow.offsetTop;
+                const rowH = matchingRow.offsetHeight || 36;
+                const wrapH = wrapper.clientHeight || 300;
+                const targetScroll = Math.max(0, rowTop - (wrapH / 2) + (rowH / 2));
+                wrapper.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth'
+                });
             }
         });
     }

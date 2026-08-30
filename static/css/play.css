@@ -4434,8 +4434,13 @@ input[type=range]::-moz-range-track {
 }
 
 .lb-row.highlight-search {
-    background: rgba(64, 156, 255, 0.15);
-    border-left: 3px solid #409cff;
+    background: rgba(64, 156, 255, 0.22) !important;
+    border-left: 4px solid #409cff !important;
+    box-shadow: inset 0 0 10px rgba(64, 156, 255, 0.15) !important;
+}
+
+.lb-row.highlight-search td {
+    font-weight: 700 !important;
 }
 
 .col-rank {
