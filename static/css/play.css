@@ -8472,11 +8472,44 @@ body .board-cell.tile-flash-purple * {
     .desktop-only-setting {
         display: none !important;
     }
+
+    /* Ban / Timeout User button placement on mobile: switch Lift Timeout and Check Status */
+    #mod-tab-ban #timeout-username-input {
+        order: 1 !important;
+    }
+    #mod-tab-ban .timeout-duration-box {
+        order: 2 !important;
+    }
+    #mod-tab-ban #timeout-user-btn {
+        order: 3 !important;
+    }
+    #mod-tab-ban #lift-timeout-btn {
+        order: 4 !important;
+    }
+    #mod-tab-ban #check-timeout-btn {
+        order: 5 !important;
+    }
 }
 
 body.is-mobile #setting-panel-cube-scale,
 body.is-mobile .desktop-only-setting {
     display: none !important;
+}
+
+body.is-mobile #mod-tab-ban #timeout-username-input {
+    order: 1 !important;
+}
+body.is-mobile #mod-tab-ban .timeout-duration-box {
+    order: 2 !important;
+}
+body.is-mobile #mod-tab-ban #timeout-user-btn {
+    order: 3 !important;
+}
+body.is-mobile #mod-tab-ban #lift-timeout-btn {
+    order: 4 !important;
+}
+body.is-mobile #mod-tab-ban #check-timeout-btn {
+    order: 5 !important;
 }
 
 /* ============================================================

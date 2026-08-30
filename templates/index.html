@@ -3620,9 +3620,9 @@
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
                                 Kicks user from their current room and blocks them from playing in all rooms. Offense timeouts start at <strong>10 minutes</strong> and increase exponentially for repeat offenses (20m, 40m, 80m...). Decay restores timeout duration back towards 10 minutes over offense-free time.
                             </p>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
+                            <div class="timeout-actions-row" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
                                 <input type="text" id="timeout-username-input" placeholder="Enter username to timeout..." style="flex: 1; min-width: 180px;">
-                                <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-surface); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                <div class="timeout-duration-box" style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-surface); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--input-border);">
                                     <label for="timeout-hours-input" style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0;">Duration (Hours):</label>
                                     <input type="number" id="timeout-hours-input" placeholder="Auto" min="0.1" max="168" step="0.5" style="width: 70px; padding: 4px 6px; text-align: center;" title="Leave blank for automatic offense-based duration, or specify hours (e.g. 1, 2, 24)">
                                 </div>
