@@ -10,6 +10,11 @@ async function checkModStatus() {
             window.currentUser = data.username;
         }
         
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) {
+            modsBtn.style.display = data.is_mod ? 'block' : 'none';
+        }
+        
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
         }
@@ -21,6 +26,11 @@ async function checkModStatus() {
                 loadUndefinedWords();
             }
             document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'inline-block');
+        } else {
+            document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
+            if (modsBtn) {
+                modsBtn.style.display = 'none';
+            }
         }
     } catch (err) {
         console.error("Error checking mod status:", err);

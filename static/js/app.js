@@ -42,6 +42,8 @@ let currentUserEmail = null;
 let selectedRoom = null;
 let sessionStartTime = Date.now();
 window.sessionStartTime = sessionStartTime;
+window.currentUserIsMod = false;
+window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
 
@@ -1314,6 +1316,10 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+    if (pageId === 'page-mods' && !window.currentUserIsMod) {
+        console.warn('[Navigation] Unauthorized access to mods page. Redirecting to lobby.');
+        pageId = 'page-lobby';
+    }
     if (pageId === 'page-play') {
         if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
             console.warn('[Navigation] User is timed out. Preventing navigation to page-play.');
@@ -1924,6 +1930,13 @@ async function handleLogout() {
         localStorage.clear();
         sessionStorage.clear();
         window.currentUserConfigRatings = {};
+        window.currentUserIsMod = false;
+        window.currentUserIsRootMod = false;
+        window.currentUser = null;
+        currentUser = null;
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) modsBtn.style.display = 'none';
+        document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
         
         // Set logged out flag to prevent auto-login on mobile — use sessionStorage so it only
         // applies to this tab/session and never bleeds into a future visit to morpheme.games
