@@ -3282,62 +3282,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftPanelContainer = document.querySelector('.left-panel-container');
     const collapseBtn = document.getElementById('chat-collapse-btn');
 
-    if (chatPanel) {
-        chatPanel.addEventListener('click', (e) => {
-            // Do not expand if the user clicked the text input or input section controls
-            if (e.target.closest('.chat-input-section')) {
-                return;
-            }
-
-            // Avoid re-expanding or stealing focus if already expanded
-            if (chatPanel.classList.contains('expanded')) {
-                return;
-            }
-
-            chatPanel.classList.add('expanded');
-            if (leftPanelContainer) {
-                leftPanelContainer.classList.add('chat-expanded');
-            }
-            if (collapseBtn) {
-                collapseBtn.style.display = 'block';
-            }
-
-            // Automatically focus input on expand if we didn't click inside it
-            if (chatInput && e.target !== chatInput) {
-                chatInput.focus();
-            }
-        });
-    }
-
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent re-expanding
+    function collapseChat() {
+        if (!chatPanel || (!chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
+        
+        const isMobile = window.innerWidth <= 992;
+        if (isMobile) {
+            chatPanel.classList.add('collapsing');
             chatPanel.classList.remove('expanded');
-            if (leftPanelContainer) {
-                leftPanelContainer.classList.remove('chat-expanded');
-            }
-            collapseBtn.style.display = 'none';
-        });
-    }
-
-    // Collapse when clicking outside the chatbox
-    document.addEventListener('click', (e) => {
-        if (chatPanel && chatPanel.classList.contains('expanded')) {
-            if (!chatPanel.contains(e.target)) {
-                chatPanel.classList.remove('expanded');
+            setTimeout(() => {
+                chatPanel.classList.remove('collapsing');
                 if (leftPanelContainer) {
                     leftPanelContainer.classList.remove('chat-expanded');
                 }
                 if (collapseBtn) {
                     collapseBtn.style.display = 'none';
                 }
-            }
-        }
-    });
-
-    // Escape key listener to close chat panel
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && chatPanel && chatPanel.classList.contains('expanded')) {
+            }, 280);
+        } else {
             chatPanel.classList.remove('expanded');
             if (leftPanelContainer) {
                 leftPanelContainer.classList.remove('chat-expanded');
@@ -3345,9 +3306,69 @@ document.addEventListener('DOMContentLoaded', () => {
             if (collapseBtn) {
                 collapseBtn.style.display = 'none';
             }
-            if (chatInput) {
-                chatInput.blur();
+        }
+        if (chatInput) {
+            chatInput.blur();
+        }
+    }
+
+    function expandChat() {
+        if (!chatPanel || chatPanel.classList.contains('expanded')) return;
+        chatPanel.classList.remove('collapsing');
+        chatPanel.classList.add('expanded');
+        if (leftPanelContainer) {
+            leftPanelContainer.classList.add('chat-expanded');
+        }
+        if (collapseBtn) {
+            collapseBtn.style.display = 'block';
+        }
+        // Focus input after sliding up
+        if (chatInput) {
+            setTimeout(() => {
+                chatInput.focus();
+            }, 100);
+        }
+    }
+
+    window.collapseChat = collapseChat;
+    window.expandChat = expandChat;
+
+    if (chatPanel) {
+        chatPanel.addEventListener('click', (e) => {
+            // Do not toggle if clicking input, send button, or clicking interactive text/users
+            if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user') || e.target.closest('#chat-collapse-btn')) {
+                return;
             }
+
+            // Click toggles: expand if collapsed, slide back down if already expanded
+            if (chatPanel.classList.contains('expanded')) {
+                collapseChat();
+            } else {
+                expandChat();
+            }
+        });
+    }
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent re-expanding
+            collapseChat();
+        });
+    }
+
+    // Collapse when clicking outside the chatbox
+    document.addEventListener('click', (e) => {
+        if (chatPanel && chatPanel.classList.contains('expanded')) {
+            if (!chatPanel.contains(e.target)) {
+                collapseChat();
+            }
+        }
+    });
+
+    // Escape key listener to close chat panel
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && chatPanel && chatPanel.classList.contains('expanded')) {
+            collapseChat();
         }
     });
 
