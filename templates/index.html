@@ -6062,375 +6062,6 @@
             </div>
         </div>
 
-        <!-- Room Achievements Modal -->
-        <div id="room-achievements-modal" class="modal-overlay hidden">
-            <div class="achievement-card">
-                <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
-                <div class="achievement-header" style="margin-top: 10px;">
-                    <div class="achievement-icon-outer">
-                        <div class="achievement-icon-inner">🏆</div>
-                    </div>
-                    <h2 id="achievement-title">Achievements</h2>
-                    <p id="achievement-subtitle">Room Configuration</p>
-
-                    <div class="achievement-rating-badge"
-                        style="background: rgba(255,183,77,0.1); color: #ffb74d; border: 1px solid rgba(255,183,77,0.2); padding: 5px 12px; border-radius: 8px; font-weight: 800; font-size: 0.9rem;">
-                        Rating: <span id="achievement-rating-val">-</span>
-                    </div>
-                </div>
-
-
-                <!-- Summary Stats (All-Time Static) -->
-                <div class="achievement-grid"
-                    style="margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <!-- Personal Bests -->
-                    <div class="achievement-section">
-                        <h3 id="ach-label-bests">Personal Bests</h3>
-                        <div class="stat-item">
-                            <span class="stat-label">Highest Score</span>
-                            <span class="stat-value" id="ach-high-score">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Most Words</span>
-                            <span class="stat-value" id="ach-max-words">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Longest Word</span>
-                            <span class="stat-value" id="ach-longest-word">-</span>
-                        </div>
-                        <div class="stat-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-                            <span class="stat-label">Best Word</span>
-                            <span class="stat-value" id="ach-best-word"
-                                style="font-size: 0.9rem; color: #ffd700;">-</span>
-                        </div>
-                    </div>
-                    <!-- Lifetime Stats -->
-                    <div class="achievement-section">
-                        <h3 id="ach-label-stats">Lifetime Stats</h3>
-                        <div class="stat-item">
-                            <span class="stat-label">Games Played</span>
-                            <span class="stat-value" id="ach-games-played">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Wins</span>
-                            <span class="stat-value" id="ach-wins">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Win Rate</span>
-                            <span class="stat-value" id="ach-win-rate">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Words</span>
-                            <span class="stat-value" id="ach-total-words">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Time Selection Tabs (Filtered for the lists below) -->
-                <div class="achievement-tabs modal-tabs"
-                    style="display: flex; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                    <button class="ach-tab" data-period="day"
-                        style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">DAY</button>
-                    <button class="ach-tab" data-period="week"
-                        style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">WEEK</button>
-                    <button class="ach-tab" data-period="month"
-                        style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">MONTH</button>
-                    <button class="ach-tab" data-period="year"
-                        style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">YEAR</button>
-                    <button class="ach-tab active" data-period="all"
-                        style="flex:1.2; border:none; padding: 12px 5px; font-size: 0.75rem;">ALL-TIME</button>
-                </div>
-
-                <!-- Detailed Achievement Tables (Filtered by Tabs) -->
-                <div id="achievement-tab-content"
-                    style="display: flex; flex-direction: column; gap: 40px; width: 100%;">
-                    <!-- Exceptional Performances -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Exceptional
-                                Performances</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #60a5fa; text-transform: uppercase;">Average
-                                Perf: <span id="ach-avg-perf">-</span> | Greatest PE: <span id="ach-greatest-pe">-</span>% | Avg Words Found: <span id="ach-avg-pct">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Perf</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            PE</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Word Stats</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-perf"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Winning Rounds -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Winning Rounds</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #4ade80; text-transform: uppercase;">Win
-                                Rate: <span id="ach-avg-winrate">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Perf</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Opponents</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-wins"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Games Played (Recent) -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Games Played</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total:
-                                <span id="ach-total-games">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Result</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-recent"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Best Scores -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Best Scores</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
-                                Score: <span id="ach-avg-score">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Perf</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-scores"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Best Word Counts -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Best Word Counts</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;">Average
-                                Words: <span id="ach-avg-words">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Words</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Avg Len</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-wordcounts"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Highest Percentage of Words Found -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Highest Percentage of Words Found</h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #ff4a4a; text-transform: uppercase;">Average
-                                Percentage: <span id="ach-avg-pct-header">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Percentage</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-pcts"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Highest number of Obscure words found -->
-                    <div class="achievement-section" style="grid-column: 1 / -1;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Highest number of Hard words found</h3>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Count</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Score</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-obscure"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Best Words -->
-                    <div class="achievement-section" style="grid-column: 1 / -1; margin-bottom: 20px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words
-                            </h3>
-                            <span
-                                style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
-                                Points: <span id="ach-avg-word-pts">-</span></span>
-                        </div>
-                        <div class="ach-table-container"
-                            style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
-                                <thead
-                                    style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <tr>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Word</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Points</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Length</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Date</th>
-                                        <th
-                                            style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
-                                            Snap</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ach-table-words"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-            </div> <!-- End Tab Content -->
-        </div>
-    </div>
 
 
     <style>
@@ -6503,6 +6134,377 @@
             <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
         </div>
     </div>
+
+    <!-- Room Achievements Modal -->
+    <div id="room-achievements-modal" class="modal-overlay hidden">
+        <div class="achievement-card">
+            <button id="achievement-modal-close" class="close-modal-btn">&times;</button>
+            <div class="achievement-header" style="margin-top: 10px;">
+                <div class="achievement-icon-outer">
+                    <div class="achievement-icon-inner">🏆</div>
+                </div>
+                <h2 id="achievement-title">Achievements</h2>
+                <p id="achievement-subtitle">Room Configuration</p>
+
+                <div class="achievement-rating-badge"
+                    style="background: rgba(255,183,77,0.1); color: #ffb74d; border: 1px solid rgba(255,183,77,0.2); padding: 5px 12px; border-radius: 8px; font-weight: 800; font-size: 0.9rem;">
+                    Rating: <span id="achievement-rating-val">-</span>
+                </div>
+            </div>
+
+
+            <!-- Summary Stats (All-Time Static) -->
+            <div class="achievement-grid"
+                style="margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <!-- Personal Bests -->
+                <div class="achievement-section">
+                    <h3 id="ach-label-bests">Personal Bests</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Score</span>
+                        <span class="stat-value" id="ach-high-score">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Most Words</span>
+                        <span class="stat-value" id="ach-max-words">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Longest Word</span>
+                        <span class="stat-value" id="ach-longest-word">-</span>
+                    </div>
+                    <div class="stat-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="stat-label">Best Word</span>
+                        <span class="stat-value" id="ach-best-word"
+                            style="font-size: 0.9rem; color: #ffd700;">-</span>
+                    </div>
+                </div>
+                <!-- Lifetime Stats -->
+                <div class="achievement-section">
+                    <h3 id="ach-label-stats">Lifetime Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played</span>
+                        <span class="stat-value" id="ach-games-played">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wins</span>
+                        <span class="stat-value" id="ach-wins">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Win Rate</span>
+                        <span class="stat-value" id="ach-win-rate">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Words</span>
+                        <span class="stat-value" id="ach-total-words">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Selection Tabs (Filtered for the lists below) -->
+            <div class="achievement-tabs modal-tabs"
+                style="display: flex; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <button class="ach-tab" data-period="day"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">DAY</button>
+                <button class="ach-tab" data-period="week"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">WEEK</button>
+                <button class="ach-tab" data-period="month"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">MONTH</button>
+                <button class="ach-tab" data-period="year"
+                    style="flex:1; border:none; padding: 12px 5px; font-size: 0.75rem;">YEAR</button>
+                <button class="ach-tab active" data-period="all"
+                    style="flex:1.2; border:none; padding: 12px 5px; font-size: 0.75rem;">ALL-TIME</button>
+            </div>
+
+            <!-- Detailed Achievement Tables (Filtered by Tabs) -->
+            <div id="achievement-tab-content"
+                style="display: flex; flex-direction: column; gap: 40px; width: 100%;">
+                <!-- Exceptional Performances -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Exceptional
+                            Performances</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #60a5fa; text-transform: uppercase;">Average
+                            Perf: <span id="ach-avg-perf">-</span> | Greatest PE: <span id="ach-greatest-pe">-</span>% | Avg Words Found: <span id="ach-avg-pct">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        PE</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word Stats</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-perf"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Winning Rounds -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Winning Rounds</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #4ade80; text-transform: uppercase;">Win
+                            Rate: <span id="ach-avg-winrate">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Opponents</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wins"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Games Played (Recent) -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Games Played</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;">Total:
+                            <span id="ach-total-games">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Result</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-recent"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Scores -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Scores</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Score: <span id="ach-avg-score">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Perf</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-scores"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Word Counts -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Word Counts</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase;">Average
+                            Words: <span id="ach-avg-words">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Words</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Avg Len</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-wordcounts"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Highest Percentage of Words Found -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Highest Percentage of Words Found</h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ff4a4a; text-transform: uppercase;">Average
+                            Percentage: <span id="ach-avg-pct-header">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Percentage</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-pcts"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Highest number of Obscure words found -->
+                <div class="achievement-section" style="grid-column: 1 / -1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Highest number of Hard words found</h3>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Count</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Score</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-obscure"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Best Words -->
+                <div class="achievement-section" style="grid-column: 1 / -1; margin-bottom: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Best Individual Words
+                        </h3>
+                        <span
+                            style="font-size: 0.7rem; font-weight: 800; color: #ffd700; text-transform: uppercase;">Average
+                            Points: <span id="ach-avg-word-pts">-</span></span>
+                    </div>
+                    <div class="ach-table-container"
+                        style="max-height: 400px; overflow-y: auto; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 500px;">
+                            <thead
+                                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <tr>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Word</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Points</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Length</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: left; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Date</th>
+                                    <th
+                                        style="padding: 10px 15px; text-align: right; font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3);">
+                                        Snap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ach-table-words"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Tab Content -->
+    </div>
+</div>
+
     <!-- Full List Modal Overlay (Direct Root Body Child) -->
     <div id="full-list-modal" style="display: none; position: fixed; inset: 0; z-index: 999999; background: var(--bg-primary, #12131c); flex-direction: column; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;" oncopy="return false" oncut="return false" oncontextmenu="return false" onselectstart="return false">
         <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; padding: 16px; box-sizing: border-box; user-select: none; -webkit-user-select: none;">
