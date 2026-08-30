@@ -4700,10 +4700,13 @@ body .tab-btn.active {
         gap: 6px;
     }
     .user-display {
-        border-left: none;
-        margin-left: 0;
-        padding-left: 0;
-        justify-content: center;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        margin-left: 6px !important;
+        padding-left: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
     }
 }
 
@@ -4809,9 +4812,10 @@ body .tab-btn.active {
         padding: 5px 10px !important;
     }
     .user-display {
-        border-left: none !important;
-        margin-left: 0 !important;
-        padding-left: 0 !important;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        margin-left: 6px !important;
+        padding-left: 12px !important;
+        display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
         gap: 8px !important;
