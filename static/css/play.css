@@ -5573,10 +5573,11 @@ input[type=range]::-moz-range-track {
     #page-tools .tools-content,
     #page-mods .tools-content,
     #page-settings .tools-content {
-        padding: 15px !important;
+        padding: 12px 10px !important;
         box-sizing: border-box !important;
         height: 100% !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
     }
 
@@ -8025,7 +8026,7 @@ body .board-cell.tile-flash-purple * {
     }
 }
 
-/* Appearance in Settings Desktop/Laptop No Horizontal Scroll */
+/* Appearance in Settings Desktop/Laptop/Mobile Perfect Width */
 #setting-tab-appearance,
 #setting-tab-appearance * {
     max-width: 100% !important;
@@ -8037,13 +8038,15 @@ body .board-cell.tile-flash-purple * {
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
-    padding-right: 15px !important;
+    padding: 0 !important;
 }
 
 #setting-tab-appearance .settings-tab-grid {
     width: 100% !important;
     max-width: 100% !important;
     grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 0 !important;
     overflow: visible !important;
     overflow-x: visible !important;
     box-sizing: border-box !important;
@@ -8055,40 +8058,71 @@ body .board-cell.tile-flash-purple * {
     box-sizing: border-box !important;
     overflow: visible !important;
     overflow-x: visible !important;
-    padding: 24px 20px !important;
+    padding: 18px 16px !important;
+    border-radius: 16px !important;
+}
+
+#setting-tab-appearance .setting-header {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#setting-tab-appearance .setting-title,
+#setting-tab-appearance .setting-desc {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
 }
 
 #setting-tab-appearance .theme-selector-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)) !important;
-    gap: 14px !important;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
+    gap: 10px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
-    padding: 16px 14px !important;
+    padding: 8px 6px !important;
     contain: none !important;
 }
 
 #setting-tab-appearance .dimension-sliders-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)) !important;
     gap: 10px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+}
+
+#setting-tab-appearance .dim-slider-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
 }
 
 #setting-tab-appearance .preview-board-container {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
-    padding: 15px !important;
+    overflow-x: auto !important;
+    padding: 12px 6px !important;
+    min-height: auto !important;
+    display: flex !important;
     justify-content: center !important;
+    align-items: center !important;
+}
+
+#setting-tab-appearance .preview-board {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
 #setting-tab-appearance .settings-preview-box {
@@ -8096,22 +8130,24 @@ body .board-cell.tile-flash-purple * {
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+    padding: 12px 14px !important;
 }
 
 #setting-tab-appearance #synesthesia-letters-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)) !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)) !important;
+    gap: 6px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
-    padding: 10px !important;
+    padding: 10px 8px !important;
 }
 
-#setting-tab-appearance .preview-board {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
+#setting-tab-appearance .synesthesia-unit {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 8px 2px !important;
 }
 
 /* =========================================================
