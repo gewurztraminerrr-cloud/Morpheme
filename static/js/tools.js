@@ -1826,10 +1826,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const dateEl = document.getElementById('history-review-date');
     if (dateEl) {
         if (round.timestamp) {
-                dateEl.innerText = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
-            } catch (e) {
-                dateEl.innerText = '';
-            }
+            dateEl.innerText = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
         } else {
             dateEl.innerText = '';
         }

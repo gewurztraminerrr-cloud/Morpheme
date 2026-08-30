@@ -1177,6 +1177,14 @@ window.showModTab = function(tabId) {
 
     if (tabId === 'ban') {
         loadIpBans();
+    } else if (tabId === 'notice') {
+        loadLobbyNotice();
+    } else if (tabId === 'def') {
+        loadUndefinedWords();
+    } else if (tabId === 'access') {
+        loadModList();
+    } else if (tabId === 'added') {
+        if (typeof loadAddedWordsConfig === 'function') loadAddedWordsConfig();
     }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
