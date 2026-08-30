@@ -3005,10 +3005,8 @@ def logout():
     try:
         user_id = session.get('user_id')
         if user_id:
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            conn.execute('UPDATE users SET auth_token = NULL WHERE id = ?', (user_id,))
-            conn.commit()
-            conn.close()
+            with get_db() as conn:
+                conn.execute('UPDATE users SET auth_token = NULL WHERE id = ?', (user_id,))
     except Exception as e:
         print(f"[LogoutError] Error during logout: {e}")
     finally:
@@ -3023,18 +3021,16 @@ def get_account_info():
         if not user_id or session.get('is_guest', False):
             return jsonify({'success': False, 'is_guest': True, 'error': 'Not logged in as a registered user'}), 200
         
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT username, email FROM users WHERE id = ?', (user_id,))
-        row = cursor.fetchone()
-        conn.close()
+        with get_db(row_factory=sqlite3.Row, auto_commit=False) as conn:
+            row = conn.execute('SELECT username, email FROM users WHERE id = ?', (user_id,)).fetchone()
         
         if not row:
             return jsonify({'success': False, 'error': 'User not found'}), 404
             
         return jsonify({
             'success': True,
-            'username': row[0],
-            'email': row[1] or ''
+            'username': row['username'],
+            'email': row['email'] or ''
         })
     except Exception as e:
         print(f"[get_account_info] Error: {e}")
@@ -7624,49 +7620,45 @@ def get_tournament_status():
     
     if t and 'user_id' in session and not session.get('is_guest'):
         user_id = session['user_id']
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        conn.row_factory = sqlite3.Row
-        
-        # Auto-finalize expired stale turn if user left mid-round
-        if t['status'] == 'active':
-            row = conn.execute('SELECT * FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
-                               (t['id'], t['current_round'], user_id)).fetchone()
-            if row and row['submitted_at'] is None:
-                elapsed = time.time() - row['round_start_time']
-                params = json.loads(t['parameters'])
-                time_limit = int(params.get('time_limit', 60))
-                if elapsed > time_limit + 15: # 15-second grace buffer
-                    conn.execute('UPDATE tournament_scores SET submitted_at = ? WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
-                                 (time.time(), t['id'], t['current_round'], user_id))
-                    conn.commit()
-                    print(f"[Tournament] Auto-finalized expired turn for user {user_id} (elapsed: {elapsed}s)")
+        with get_db(row_factory=sqlite3.Row) as conn:
+            # Auto-finalize expired stale turn if user left mid-round
+            if t['status'] == 'active':
+                row = conn.execute('SELECT * FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                                   (t['id'], t['current_round'], user_id)).fetchone()
+                if row and row['submitted_at'] is None:
+                    elapsed = time.time() - row['round_start_time']
+                    params = json.loads(t['parameters'])
+                    time_limit = int(params.get('time_limit', 60))
+                    if elapsed > time_limit + 15: # 15-second grace buffer
+                        conn.execute('UPDATE tournament_scores SET submitted_at = ? WHERE tournament_id = ? AND round_number = ? AND user_id = ?',
+                                     (time.time(), t['id'], t['current_round'], user_id))
+                        conn.commit()
+                        print(f"[Tournament] Auto-finalized expired turn for user {user_id} (elapsed: {elapsed}s)")
 
-        p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
-                        (t['id'], user_id)).fetchone()
-        
-        if p:
-            user_status['status'] = p['status']
-            user_status['final_rank'] = p['final_rank']
-            user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
-            matchup = tournament_manager.get_user_matchup(t['id'], t['current_round'], user_id)
-            if not matchup and p['status'] == 'eliminated':
-                for prev_r in range(t['current_round'] - 1, 0, -1):
-                    matchup = tournament_manager.get_user_matchup(t['id'], prev_r, user_id)
-                    if matchup:
-                        break
-            user_status['matchup'] = matchup
-        conn.close()
+            p = conn.execute('SELECT * FROM tournament_participants WHERE tournament_id = ? AND user_id = ?', 
+                            (t['id'], user_id)).fetchone()
+            
+            if p:
+                user_status['status'] = p['status']
+                user_status['final_rank'] = p['final_rank']
+                user_status['has_turn'] = tournament_manager.has_user_turn(t['id'], user_id)
+                matchup = tournament_manager.get_user_matchup(t['id'], t['current_round'], user_id)
+                if not matchup and p['status'] == 'eliminated':
+                    for prev_r in range(t['current_round'] - 1, 0, -1):
+                        matchup = tournament_manager.get_user_matchup(t['id'], prev_r, user_id)
+                        if matchup:
+                            break
+                user_status['matchup'] = matchup
         
     history = tournament_manager.get_history()
     
     # Get round end time if active
     round_end_time = 0
     if t and t['status'] == 'active':
-        conn = sqlite3.connect(DB_PATH, timeout=30)
-        r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
-                        (t['id'], t['current_round'])).fetchone()
-        conn.close()
-        if r: round_end_time = r[0]
+        with get_db(auto_commit=False) as conn:
+            r = conn.execute('SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                            (t['id'], t['current_round'])).fetchone()
+            if r: round_end_time = r[0]
 
     round_scores = []
     if t and t['status'] == 'active':
@@ -7674,12 +7666,11 @@ def get_tournament_status():
         user_has_completed = False
         if 'user_id' in session and not session.get('is_guest'):
             user_id = session['user_id']
-            conn = sqlite3.connect(DB_PATH, timeout=30)
-            completed_row = conn.execute('SELECT 1 FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ? AND submitted_at IS NOT NULL',
-                                         (t['id'], t['current_round'], user_id)).fetchone()
-            conn.close()
-            if completed_row:
-                user_has_completed = True
+            with get_db(auto_commit=False) as conn:
+                completed_row = conn.execute('SELECT 1 FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ? AND submitted_at IS NOT NULL',
+                                             (t['id'], t['current_round'], user_id)).fetchone()
+                if completed_row:
+                    user_has_completed = True
 
         raw_scores = tournament_manager.get_round_scores(t['id'], t['current_round'])
         for rs in raw_scores:
@@ -7700,21 +7691,20 @@ def get_tournament_status():
                     rs_dict['submitted_words'] = json.loads(rs_dict['submitted_words'])
             round_scores.append(rs_dict)
 
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (t['id'],)).fetchone()[0]
-    
-    params = json.loads(t['parameters'])
-    if t['status'] == 'active':
-        # Fetch current round uniqueness for the spinner set display
-        r_data = conn.execute('SELECT board_data FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
-                             (t['id'], t['current_round'])).fetchone()
-        if r_data:
-            try:
-                board_meta = json.loads(r_data[0])
-                params['uniqueness_ratio'] = board_meta.get('uniqueness_ratio', 0.0)
-            except:
-                params['uniqueness_ratio'] = 0.0
-    conn.close()
+    with get_db(auto_commit=False) as conn:
+        total_participants = conn.execute('SELECT COUNT(*) FROM tournament_participants WHERE tournament_id = ?', (t['id'],)).fetchone()[0]
+        
+        params = json.loads(t['parameters'])
+        if t['status'] == 'active':
+            # Fetch current round uniqueness for the spinner set display
+            r_data = conn.execute('SELECT board_data FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                                 (t['id'], t['current_round'])).fetchone()
+            if r_data:
+                try:
+                    board_meta = json.loads(r_data[0])
+                    params['uniqueness_ratio'] = board_meta.get('uniqueness_ratio', 0.0)
+                except:
+                    params['uniqueness_ratio'] = 0.0
 
     from tournament_logic import GRACE_PERIOD as _GRACE_PERIOD
     grace_end_time = (t['completed_at'] + _GRACE_PERIOD) if t.get('completed_at') else 0
@@ -7733,6 +7723,7 @@ def get_tournament_status():
         'round_scores': round_scores,
         'standings': tournament_manager.get_tournament_standings(t['id']),
         'all_matchups': tournament_manager.get_all_matchups(t['id'], t['current_round']) if t['status'] == 'active' else [],
+        'all_tournament_matchups': tournament_manager.get_all_tournament_matchups(t['id']) if t['status'] in ('active', 'completed') else [],
         'total_participants': total_participants,
         'is_guest': session.get('is_guest', False)
     })

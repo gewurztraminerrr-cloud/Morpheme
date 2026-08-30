@@ -189,23 +189,31 @@ function renderTournament(data) {
     const viewAllBtn = document.getElementById('view-all-pairings-btn');
 
     if (mCard && mList) {
-        if (data.all_matchups && data.all_matchups.length > 0) {
+        const hasMatchups = (data.all_matchups && data.all_matchups.length > 0) || (data.all_tournament_matchups && data.all_tournament_matchups.length > 0);
+        if (hasMatchups) {
             mCard.classList.remove('hidden');
 
+            const curRoundMatchups = (data.all_matchups && data.all_matchups.length > 0) ? data.all_matchups : (data.all_tournament_matchups || []);
             // USER REQUEST: Display the pairing for yourself only by default
-            const myMatchup = data.all_matchups.find(m => 
+            const myMatchup = curRoundMatchups.find(m => 
                 m.u1_name === window.currentUser || m.u2_name === window.currentUser
             );
             
             if (myMatchup) {
                 mList.innerHTML = renderMatchupItemHTML(myMatchup);
+            } else if (data.status === 'completed') {
+                mList.innerHTML = `<p class="placeholder" style="padding: 6px 0;">Tournament completed. Click "View All Pairings" to see results.</p>`;
             } else {
-                mList.innerHTML = `<p class="placeholder">You have been eliminated or are not in this round.</p>`;
+                mList.innerHTML = `<p class="placeholder" style="padding: 6px 0;">You have been eliminated or are not in this round.</p>`;
             }
 
             if (viewAllBtn) {
-                viewAllBtn.onclick = () => {
-                    showAllPairingsModal(data.all_matchups);
+                viewAllBtn.onclick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const allMatchups = (data.all_tournament_matchups && data.all_tournament_matchups.length > 0) 
+                        ? data.all_tournament_matchups 
+                        : (data.all_matchups || []);
+                    showAllPairingsModal(allMatchups, data.current_round);
                 };
             }
         } else {
@@ -616,34 +624,55 @@ window.watchTournamentWinnerReplay = async function (tid, username) {
     }
 };
 function renderMatchupItemHTML(m) {
-    const u1_isMe = m.u1_name === window.currentUser;
-    const u2_isMe = m.u2_name === window.currentUser;
-    const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color); background: rgba(144, 12, 63, 0.1);' : '';
+    const curUser = window.currentUser || localStorage.getItem('morpheme_username');
+    const u1_name = m.u1_name || 'Player 1';
+    const u2_name = (m.user2_id === -1) ? 'BYE' : (m.u2_name || 'Player 2');
 
-    const s1 = m.u1_score === null ? '...' : m.u1_score;
-    const s2 = m.u2_score === null ? '...' : m.u2_score;
+    const u1_isMe = u1_name === curUser;
+    const u2_isMe = (m.user2_id !== -1) && (u2_name === curUser);
+    const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color, #e11d48); background: rgba(225, 29, 72, 0.12);' : 'background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);';
+
+    const s1 = (m.u1_score === null || m.u1_score === undefined) ? '...' : m.u1_score;
+    const s2 = (m.u2_score === null || m.u2_score === undefined) ? ((m.user2_id === -1) ? '-' : '...') : m.u2_score;
+
+    const u1_winner = m.winner_id && m.winner_id === m.user1_id;
+    const u2_winner = m.winner_id && m.winner_id === m.user2_id;
 
     return `
-        <div class="t-matchup-item" style="${highlight}">
-            <div class="participant">
-                <span class="username ${u1_isMe ? 'me' : ''}">${m.u1_name}</span> <span class="pts">${s1}</span>
+        <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <div class="participant" style="flex: 1; display: flex; align-items: center; gap: 6px; font-weight: ${u1_winner ? 'bold' : 'normal'};">
+                <span class="username ${u1_isMe ? 'me' : ''}" style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''}">${u1_name}</span>
+                <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s1}</span>
+                ${u1_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-left: 2px;">🏆</span>' : ''}
             </div>
-            <div class="vs">vs</div>
-            <div class="participant">
+            <div class="vs" style="padding: 0 10px; opacity: 0.5; font-size: 0.75rem; font-weight: bold;">VS</div>
+            <div class="participant" style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-weight: ${u2_winner ? 'bold' : 'normal'};">
                 ${m.user2_id === -1
-            ? `<span style="opacity:0.5">BYE</span>`
-            : `<span class="username ${u2_isMe ? 'me' : ''}">${m.u2_name}</span> <span class="pts">${s2}</span>`
-        }
+                    ? `<span style="opacity: 0.45; font-style: italic;">BYE</span>`
+                    : `
+                        ${u2_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-right: 2px;">🏆</span>' : ''}
+                        <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s2}</span>
+                        <span class="username ${u2_isMe ? 'me' : ''}" style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''}">${u2_name}</span>
+                    `
+                }
             </div>
         </div>
     `;
 }
 
-function showAllPairingsModal(matchups) {
-    console.log("[Tournament] Opening All Pairings Modal, count:", matchups.length);
+function showAllPairingsModal(matchups, currentRound) {
+    if (!matchups || matchups.length === 0) {
+        if (window.showAlertModal) {
+            window.showAlertModal("All Tournament Pairings", "No pairings available yet for this tournament.");
+        }
+        return;
+    }
+
     const modal = document.getElementById('generic-info-modal');
     const titleEl = document.getElementById('generic-modal-title');
     const bodyEl = document.getElementById('generic-modal-body');
+    const okBtn = document.getElementById('generic-modal-ok-btn');
+    const closeBtn = document.getElementById('close-generic-modal');
 
     if (!modal || !titleEl || !bodyEl) {
         console.error("[Tournament] Modal elements not found:", { modal, titleEl, bodyEl });
@@ -653,34 +682,64 @@ function showAllPairingsModal(matchups) {
     titleEl.textContent = "All Tournament Pairings";
     
     const curUser = window.currentUser || localStorage.getItem('morpheme_username');
-    
-    // Sort matchups such that user's pair is near top for convenience
-    const sorted = [...matchups].sort((a,b) => {
-        const aHasMe = a.u1_name === curUser || a.u2_name === curUser;
-        const bHasMe = b.u1_name === curUser || b.u2_name === curUser;
-        if (aHasMe) return -1;
-        if (bHasMe) return 1;
-        return 0;
+
+    // Group matchups by round_number
+    const roundsMap = {};
+    matchups.forEach(m => {
+        const rNum = m.round_number || 1;
+        if (!roundsMap[rNum]) roundsMap[rNum] = [];
+        roundsMap[rNum].push(m);
     });
 
-    bodyEl.innerHTML = `
-        <div class="t-matchups-list" style="padding: 10px 0; max-height: 500px; overflow-y: auto;">
-            ${sorted.map(m => renderMatchupItemHTML(m)).join('')}
-        </div>
-    `;
+    const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 14px; max-height: 55vh; overflow-y: auto; padding: 4px 6px; text-align: left;">';
+
+    roundNumbers.forEach(rNum => {
+        const roundMatchups = roundsMap[rNum];
+        // Sort matchups so user's pairing is at top of round
+        const sorted = [...roundMatchups].sort((a, b) => {
+            const aHasMe = a.u1_name === curUser || a.u2_name === curUser;
+            const bHasMe = b.u1_name === curUser || b.u2_name === curUser;
+            if (aHasMe) return -1;
+            if (bHasMe) return 1;
+            return 0;
+        });
+
+        const isCurrent = (rNum === currentRound);
+        const roundLabel = (roundNumbers.length > 1) ? `Round ${rNum}${isCurrent ? ' (Current Round)' : ''}` : `Round ${rNum}`;
+
+        html += `
+            <div class="tournament-round-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border, rgba(255, 255, 255, 0.1)); border-radius: 10px; padding: 12px;">
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: ${isCurrent ? 'var(--accent-color, #ff6b6b)' : 'var(--text-secondary, #94a3b8)'}; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${roundLabel}</span>
+                    <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.7;">${roundMatchups.length} matchup${roundMatchups.length > 1 ? 's' : ''}</span>
+                </div>
+                <div class="t-matchups-list" style="display: flex; flex-direction: column; gap: 4px;">
+                    ${sorted.map(m => renderMatchupItemHTML(m)).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    bodyEl.innerHTML = html;
+
+    const closeModal = (e) => {
+        if (e) {
+            try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+        }
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    };
+
+    if (okBtn) okBtn.onclick = closeModal;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    modal.onclick = (e) => {
+        if (e.target === modal) closeModal(e);
+    };
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
-}
-
-// Add close listener if not added globally elsewhere (usually handled by app.js)
-const closeGenModal = document.getElementById('close-generic-modal');
-if (closeGenModal) {
-    closeGenModal.onclick = () => {
-        const modal = document.getElementById('generic-info-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.style.display = 'none';
-        }
-    };
+    modal.style.zIndex = '100001';
 }

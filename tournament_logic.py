@@ -3,6 +3,7 @@ import sqlite3
 import time
 import json
 import random
+import threading
 from spinner_set import SpinnerSet
 from word_validator import word_validator
 from db import get_db, get_db_connection, DB_PATH
@@ -17,6 +18,7 @@ class TournamentManager:
             self.db_path = db_path
         self.signup_duration = 7 * 24 * 60 * 60  # 1 week signup period
         self.turn_duration = 2 * 24 * 60 * 60    # 2 days per round
+        self._lock = threading.Lock()
 
     def get_db(self):
         return get_db_connection(self.db_path, timeout=60.0, row_factory=sqlite3.Row)
@@ -65,25 +67,35 @@ class TournamentManager:
         return dict(row) if row else None
 
     def update_tournament_status(self):
-        current = self.get_current_tournament()
-        if not current:
+        # Non-blocking lock acquisition ensures only ONE worker updates tournament state
+        # while other concurrent requests return immediately without waiting or locking SQLite
+        if not self._lock.acquire(blocking=False):
             return
 
-        now = time.time()
-        status = current['status']
+        try:
+            current = self.get_current_tournament()
+            if not current:
+                return
 
-        if status == 'signup' and now >= current['start_date']:
-            self.start_tournament(current['id'])
-        elif status == 'active':
-            self.update_matchup_winners(current['id'], current['current_round'])
-            self.check_round_advancement(current['id'])
-        elif status == 'completed':
-            # Grace period: show "Tournament Finalized" for GRACE_PERIOD seconds after completion,
-            # then automatically start a new signup period.
-            completed_at = current.get('completed_at') or 0
-            if completed_at and (now - completed_at) >= GRACE_PERIOD:
-                print(f"[Tournament] Grace period over for tournament {current['id']}. Creating next tournament.")
-                self.create_new_tournament()
+            now = time.time()
+            status = current['status']
+
+            if status == 'signup' and now >= current['start_date']:
+                self.start_tournament(current['id'])
+            elif status == 'active':
+                self.update_matchup_winners(current['id'], current['current_round'])
+                self.check_round_advancement(current['id'])
+            elif status == 'completed':
+                # Grace period: show "Tournament Finalized" for GRACE_PERIOD seconds after completion,
+                # then automatically start a new signup period.
+                completed_at = current.get('completed_at') or 0
+                if completed_at and (now - completed_at) >= GRACE_PERIOD:
+                    print(f"[Tournament] Grace period over for tournament {current['id']}. Creating next tournament.")
+                    self.create_new_tournament()
+        except Exception as e:
+            print(f"[Tournament] Error in update_tournament_status: {e}")
+        finally:
+            self._lock.release()
 
     def update_matchup_winners(self, tid, round_number):
         conn = self.get_db()
@@ -157,32 +169,29 @@ class TournamentManager:
             conn.close()
 
     def start_tournament(self, tid):
-        # 1. Fetch participants (read-only query)
         conn = self.get_db()
         try:
+            # Atomically check if tournament is still in signup status
+            row = conn.execute('SELECT status FROM tournaments WHERE id = ?', (tid,)).fetchone()
+            if not row or row['status'] != 'signup':
+                return
+
             participants = conn.execute('SELECT user_id FROM tournament_participants WHERE tournament_id = ?', (tid,)).fetchall()
             user_ids = [p['user_id'] for p in participants]
             
             if len(user_ids) < 2:
-                conn.execute('UPDATE tournaments SET status = ? WHERE id = ?', ('cancelled', tid))
+                conn.execute('UPDATE tournaments SET status = ?, completed_at = ? WHERE id = ?', ('cancelled', time.time(), tid))
                 conn.commit()
                 return
                 
+            conn.execute('UPDATE tournament_participants SET status = "active" WHERE tournament_id = ?', (tid,))
+            conn.execute('UPDATE tournaments SET status = "active", current_round = 1 WHERE id = ?', (tid,))
             conn.commit()
         finally:
             conn.close()
 
-        # 2. Generate Round 1 Board FIRST (runs on its own committed connection, no active lock)
-        # This ensures when we set current_round=1, the data exists
+        # Generate Round 1 Board and matchups
         self.start_new_round(tid, 1)
-
-        # 3. NOW activate the tournament and set round pointer
-        conn2 = self.get_db()
-        try:
-            conn2.execute('UPDATE tournaments SET status = ?, current_round = 1 WHERE id = ?', ('active', tid))
-            conn2.commit()
-        finally:
-            conn2.close()
 
     def start_new_round(self, tid, round_number, conn=None):
         should_close = False
@@ -190,12 +199,13 @@ class TournamentManager:
             conn = self.get_db()
             should_close = True
             
-        # Clean up any existing stale data for this round to prevent unique constraint failures
-        conn.execute('DELETE FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
-        conn.execute('DELETE FROM tournament_matchups WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
-        conn.execute('DELETE FROM tournament_scores WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
-        conn.commit()
-            
+        # Check if round already exists to prevent duplicate generation
+        existing_round = conn.execute('SELECT round_number FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?', (tid, round_number)).fetchone()
+        if existing_round:
+            if should_close:
+                conn.close()
+            return
+
         tournament = self.get_tournament_by_id(tid)
         params = json.loads(tournament['parameters'])
         
@@ -288,7 +298,7 @@ class TournamentManager:
         # Wait! Let's check the schema.
         
         conn.execute('''
-            INSERT INTO tournament_rounds (tournament_id, round_number, start_time, end_time, board_data)
+            INSERT OR REPLACE INTO tournament_rounds (tournament_id, round_number, start_time, end_time, board_data)
             VALUES (?, ?, ?, ?, ?)
         ''', (tid, round_number, now, end_time, json.dumps({
             'board': board,
@@ -307,6 +317,9 @@ class TournamentManager:
             conn.close()
 
     def create_matchups(self, tid, round_number, conn):
+        # Clean any existing matchups for this round to prevent duplicates
+        conn.execute('DELETE FROM tournament_matchups WHERE tournament_id = ? AND round_number = ?', (tid, round_number))
+
         # Get all active participants
         participants = conn.execute('''
             SELECT user_id FROM tournament_participants 
@@ -332,6 +345,10 @@ class TournamentManager:
     def check_round_advancement(self, tid):
         conn = self.get_db()
         tournament = self.get_tournament_by_id(tid)
+        if not tournament or tournament['status'] != 'active':
+            conn.close()
+            return
+
         round_num = tournament['current_round']
         
         round_info = conn.execute('''
@@ -355,6 +372,11 @@ class TournamentManager:
         should_start_round = False
         next_round = round_num + 1
         try:
+            # Check current_round atomically to prevent multiple threads advancing the same round
+            t_row = conn.execute('SELECT status, current_round FROM tournaments WHERE id = ?', (tid,)).fetchone()
+            if not t_row or t_row['status'] != 'active' or t_row['current_round'] != round_num:
+                return
+
             # 1. Get all matchups for this round
             matchups = conn.execute('''
                 SELECT * FROM tournament_matchups 
@@ -424,6 +446,7 @@ class TournamentManager:
                 self.complete_tournament(tid, final_results, conn=conn)
             else:
                 should_start_round = True
+                conn.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
                 
             conn.commit()
         finally:
@@ -431,13 +454,6 @@ class TournamentManager:
 
         if should_start_round:
             self.start_new_round(tid, next_round)
-            
-            conn2 = self.get_db()
-            try:
-                conn2.execute('UPDATE tournaments SET current_round = ? WHERE id = ?', (next_round, tid))
-                conn2.commit()
-            finally:
-                conn2.close()
 
     def get_user_matchup(self, tid, round_number, user_id):
         conn = self.get_db()
@@ -473,22 +489,19 @@ class TournamentManager:
 
     def forfeit_turn(self, tid, round_number, user_id):
         """Mark user turn as done with 0 score (forfeit)"""
-        # We don't use has_user_turn here because we want to allow forfeiting even if they already played?
-        # Actually no, if they've played, they've played.
-        # But if they haven't, we insert a 0 score.
         if not self.has_user_turn(tid, user_id):
             return False
             
         conn = self.get_db()
         try:
             conn.execute('''
-                INSERT INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
+                INSERT OR REPLACE INTO tournament_scores (tournament_id, round_number, user_id, score, submitted_words, submitted_at, round_start_time)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (tid, round_number, user_id, 0, json.dumps([]), time.time(), time.time()))
             conn.commit()
             return True
         except Exception as e:
-            print(f"Forfeit Error: {e}")
+            print(f"[Tournament] Error forfeiting turn: {e}")
             return False
         finally:
             conn.close()
@@ -529,6 +542,22 @@ class TournamentManager:
             WHERE m.tournament_id = ? AND m.round_number = ?
             ORDER BY m.id ASC
         ''', (tid, round_number)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_all_tournament_matchups(self, tid):
+        conn = self.get_db()
+        rows = conn.execute('''
+            SELECT m.*, 
+                   u1.username as u1_name, u2.username as u2_name,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
+                   (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
+            FROM tournament_matchups m
+            LEFT JOIN users u1 ON m.user1_id = u1.id
+            LEFT JOIN users u2 ON m.user2_id = u2.id
+            WHERE m.tournament_id = ?
+            ORDER BY m.round_number ASC, m.id ASC
+        ''', (tid,)).fetchall()
         conn.close()
         return [dict(r) for r in rows]
 
