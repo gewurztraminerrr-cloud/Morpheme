@@ -2623,6 +2623,9 @@ function renderRatingsGrid(configRatings, user = null) {
                 const box = document.createElement('div');
                 box.className = 'rating-box clickable';
                 box.title = "Click to view achievements for this room type";
+                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s;';
+                box.onmouseenter = () => { box.style.background = 'rgba(255,255,255,0.08)'; };
+                box.onmouseleave = () => { box.style.background = 'rgba(255,255,255,0.03)'; };
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-info" style="flex: 1;">
@@ -2638,8 +2641,13 @@ function renderRatingsGrid(configRatings, user = null) {
                 `;
 
                 box.onclick = () => {
-                    if (u && u.username) {
-                        showRoomAchievements(u.username, mode, board, time);
+                    const targetUsername = (u && u.username)
+                        ? u.username
+                        : (document.getElementById('profile-username')?.innerText?.trim() || null);
+                    if (targetUsername) {
+                        showRoomAchievements(targetUsername, mode, board, time);
+                    } else {
+                        console.warn('[Achievements] Could not determine username for achievement lookup.');
                     }
                 };
 
@@ -2719,7 +2727,7 @@ let currentAchConfig = null;
 
 async function showRoomAchievements(username, mode, board, time, period = 'all') {
     const modal = document.getElementById('room-achievements-modal');
-    if (!modal) return;
+    if (!modal) { console.error('[Achievements] Modal element not found'); return; }
 
     // Track state for period switching
     currentAchConfig = { username, mode, board, time };
@@ -2731,6 +2739,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         previousScroll = card.scrollTop;
     }
 
+    // Show modal first so any crash in tab/title setup is visible
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+
     // Update tab UI
     const tabs = document.querySelectorAll('.modal-tabs .ach-tab');
     tabs.forEach(tab => {
@@ -2738,16 +2751,12 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         else tab.classList.remove('active');
     });
 
-    // Set titles
-    document.getElementById('achievement-title').textContent = `${username}'s Achievements`;
-    document.getElementById('achievement-subtitle').textContent =
+    // Set titles (null-guarded)
+    const titleEl = document.getElementById('achievement-title');
+    const subtitleEl = document.getElementById('achievement-subtitle');
+    if (titleEl) titleEl.textContent = `${username}'s Achievements`;
+    if (subtitleEl) subtitleEl.textContent =
         `${mode.charAt(0).toUpperCase() + mode.slice(1)} ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
-
-
-    // Show loading state
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-    modal.style.opacity = '1';
 
     try {
         const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}?period=${period}`);
@@ -3018,6 +3027,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // showToast?
     }
 }
+window.showRoomAchievements = showRoomAchievements;
 
 function showImageLightbox(url, caption = "") {
     const modal = document.getElementById('image-lightbox-modal');
