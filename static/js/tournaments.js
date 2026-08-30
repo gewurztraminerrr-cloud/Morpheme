@@ -257,7 +257,7 @@ function renderTournament(data) {
             hBody.innerHTML = '<tr><td colspan="4" style="text-align:center; opacity:0.5; padding:40px;">No Hall of Fame records yet. Be the first champion!</td></tr>';
         } else {
             hBody.innerHTML = history.map(h => {
-                const date = new Date(h.completed_at * 1000).toLocaleDateString();
+                const date = typeof window.formatAppDate === 'function' ? window.formatAppDate(h.completed_at) : new Date(h.completed_at * 1000).toLocaleDateString();
                 return `
                     <tr>
                         <td>${date}</td>

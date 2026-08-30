@@ -152,13 +152,7 @@
                             avatar = '✨';
                         }
 
-                        let dateStr = '';
-                        try {
-                            const date = (typeof window.parseUTCTimestamp === 'function') ? window.parseUTCTimestamp(donation.timestamp) : new Date(donation.timestamp);
-                            dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        } catch (e) {
-                            dateStr = donation.timestamp;
-                        }
+                        const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(donation.timestamp, true) : (donation.timestamp || '');
 
                         return `
                             <div class="hof-item">

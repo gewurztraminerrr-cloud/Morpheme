@@ -47,6 +47,40 @@ window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
 
+function formatAppDate(val, includeTime = false) {
+    if (!val && val !== 0) return '-';
+    let d;
+    if (typeof val === 'number') {
+        d = new Date(val < 1e11 ? val * 1000 : val);
+    } else if (typeof val === 'string') {
+        const iso = (val.includes('Z') || val.includes('+')) ? val.replace(' ', 'T') : val.replace(' ', 'T') + 'Z';
+        d = new Date(iso);
+        if (isNaN(d.getTime())) {
+            d = new Date(val);
+        }
+    } else if (val instanceof Date) {
+        d = val;
+    } else {
+        return String(val);
+    }
+    if (isNaN(d.getTime())) return String(val);
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const dateStr = `${day}/${month}/${year}`;
+
+    if (includeTime) {
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${dateStr} ${hours}:${minutes} ${ampm}`;
+    }
+    return dateStr;
+}
+window.formatAppDate = formatAppDate;
+
 async function loadCurrentUserConfigRatings() {
     if (!window.currentUser || window.currentUserIsGuest) {
         window.currentUserConfigRatings = {};

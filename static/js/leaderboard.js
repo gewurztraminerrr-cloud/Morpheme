@@ -423,24 +423,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDate(isoStr) {
         if (!isoStr) return '-';
-        // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
-        // Force UTC if no timezone specified
+        if (typeof window.formatAppDate === 'function') {
+            return window.formatAppDate(isoStr);
+        }
         const dateStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr.replace(' ', 'T') : isoStr.replace(' ', 'T') + 'Z';
         const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return isoStr; // Fallback
-
-        // Check if it's today
-        const now = new Date();
-        const isToday = d.getDate() === now.getDate() &&
-            d.getMonth() === now.getMonth() &&
-            d.getFullYear() === now.getFullYear();
-
-        if (isToday) {
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        // Otherwise "Mon DD"
-        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        if (isNaN(d.getTime())) return isoStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
     }
 
     function renderUserLink(row) {

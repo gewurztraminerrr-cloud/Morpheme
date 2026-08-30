@@ -514,7 +514,7 @@ function formatLastVisited(lastVisitedStr, isOnline) {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 30) return `${diffDays}d ago`;
-    return visitedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    return typeof window.formatAppDate === 'function' ? window.formatAppDate(visitedDate) : visitedDate.toLocaleDateString();
 }
 
 window.showMiniProfile = async function (username) {
@@ -585,7 +585,8 @@ window.showMiniProfile = async function (username) {
                 durationStr = months > 0 ? `${months}m` : '< 1m';
             }
 
-            joinedEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
+            const formattedJoined = typeof window.formatAppDate === 'function' ? window.formatAppDate(joinedDate) : joinedDate.toLocaleDateString();
+            joinedEl.innerText = `Registered: ${formattedJoined} (${durationStr})`;
         } else if (joinedEl) {
             joinedEl.innerText = "Registered: -";
         }
@@ -1328,7 +1329,8 @@ async function renderProfile(user) {
             durationStr = months > 0 ? `${months}m` : '< 1m';
         }
 
-        joinedValEl.innerText = `Registered: ${joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} (${durationStr})`;
+        const formattedJoined = typeof window.formatAppDate === 'function' ? window.formatAppDate(joinedDate) : joinedDate.toLocaleDateString();
+        joinedValEl.innerText = `Registered: ${formattedJoined} (${durationStr})`;
     } else if (joinedValEl) {
         joinedValEl.innerText = 'Registered: -';
     }
@@ -1496,12 +1498,7 @@ async function renderProfile(user) {
         // Date Formatting
         let dateStr = '-';
         if (round.timestamp) {
-            const d = window.parseUTCTimestamp(round.timestamp);
-            try {
-                dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            } catch (e) {
-                dateStr = '-';
-            }
+            dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp) : String(round.timestamp);
         }
 
         return `
@@ -1829,9 +1826,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const dateEl = document.getElementById('history-review-date');
     if (dateEl) {
         if (round.timestamp) {
-            const d = window.parseUTCTimestamp(round.timestamp);
-            try {
-                dateEl.innerText = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                dateEl.innerText = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
             } catch (e) {
                 dateEl.innerText = '';
             }
@@ -3012,7 +3007,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         }
 
         function dateToShort(d) {
-            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+            return typeof window.formatAppDate === 'function' ? window.formatAppDate(d) : d.toLocaleDateString();
         }
 
         // Restore Scroll Position
@@ -5894,14 +5889,7 @@ async function runFindCountSearch() {
         
         if (data.recent && data.recent.length > 0) {
             tableBody.innerHTML = data.recent.map(item => {
-                const date = window.parseUTCTimestamp(item.timestamp);
-                const formattedDate = date.toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+                const formattedDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(item.timestamp, true) : item.timestamp;
                 
                 const flagHtml = window.getFlagHtml ? window.getFlagHtml(item.country_flag) : (item.country_flag || '');
                 return `

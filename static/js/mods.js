@@ -839,7 +839,7 @@ async function loadIpBans() {
                         <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.banned_username || 'Manual / Unknown')}</td>
                         <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.banned_by || 'Moderator')}</td>
                         <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.reason || '-')}</td>
-                        <td style="padding: 8px; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(b.created_at || '-')}</td>
+                        <td style="padding: 8px; font-size: 0.8rem; color: var(--text-secondary);">${typeof window.formatAppDate === 'function' ? window.formatAppDate(b.created_at, true) : escapeHtml(b.created_at || '-')}</td>
                         <td style="padding: 8px; text-align: right;">
                             <button class="mini-action-btn secondary" style="background: #059669; border-color: #047857; color: #fff; padding: 3px 8px; font-size: 0.75rem;" onclick="liftIpBan('${escapeHtml(b.ip_address)}', ${b.id})">🔓 Lift Ban</button>
                         </td>

@@ -759,8 +759,7 @@ const Forum = {
         }
 
         postsList.innerHTML = posts.map(post => {
-            const date = parseUTCTimestamp(post.timestamp);
-            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(post.timestamp, true) : post.timestamp;
             const isComment = post.type === 'comment';
             const postId = post.post_id || post.id;
             const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
@@ -854,8 +853,7 @@ const Forum = {
         this.renderImagePreviews('comment');
 
         const detailEl = document.getElementById('forum-post-detail');
-        const date = parseUTCTimestamp(post.timestamp);
-        const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(post.timestamp, true) : post.timestamp;
 
         const postUrls = post.image_urls || (post.image_url ? [post.image_url] : []);
         let postImagesHtml = '';
@@ -911,7 +909,7 @@ const Forum = {
             commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
         } else {
             commentsListEl.innerHTML = sortedComments.map(c => {
-                const cDate = parseUTCTimestamp(c.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+                const cDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(c.timestamp, true) : c.timestamp;
                 const cUrls = c.image_urls || (c.image_url ? [c.image_url] : []);
                 let cImagesHtml = '';
                 if (cUrls.length > 0) {

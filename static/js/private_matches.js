@@ -475,7 +475,7 @@
         }
 
         container.innerHTML = matches.map(m => {
-            const formattedDate = m.last_activity ? new Date(m.last_activity * 1000).toLocaleDateString() : '';
+            const formattedDate = m.last_activity ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(m.last_activity) : new Date(m.last_activity * 1000).toLocaleDateString()) : '';
             const wordsRange = (() => {
                 let wr = m.parameters.word_count_range;
                 if (Array.isArray(wr)) {
