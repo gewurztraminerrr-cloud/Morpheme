@@ -429,15 +429,37 @@ async function submitDictionaryToDatabase() {
 
 async function loadLobbyNotice() {
     const input = document.getElementById('lobby-notice-input');
+    const previewEl = document.getElementById('current-notice-preview');
+    const badgeEl = document.getElementById('current-notice-badge');
     if (!input) return;
     
     try {
         const response = await fetch('/api/mods/lobby-notice');
         const data = await response.json();
-        if (data.notice) {
+        if (data.notice && data.notice.trim() !== '') {
             input.value = data.notice;
+            if (previewEl) {
+                previewEl.textContent = data.notice;
+                previewEl.style.fontStyle = 'normal';
+                previewEl.style.opacity = '1';
+            }
+            if (badgeEl) {
+                badgeEl.textContent = 'Active Notice';
+                badgeEl.style.background = 'rgba(16, 185, 129, 0.2)';
+                badgeEl.style.color = '#34d399';
+            }
         } else {
             input.value = '';
+            if (previewEl) {
+                previewEl.textContent = 'No announcement is currently set. Type a message below and click "Update Lobby Notice" to publish.';
+                previewEl.style.fontStyle = 'italic';
+                previewEl.style.opacity = '0.7';
+            }
+            if (badgeEl) {
+                badgeEl.textContent = 'No Active Notice';
+                badgeEl.style.background = 'rgba(255, 255, 255, 0.1)';
+                badgeEl.style.color = 'var(--text-secondary)';
+            }
         }
     } catch (err) {
         console.error("Error loading lobby notice:", err);
@@ -458,6 +480,7 @@ async function updateLobbyNotice() {
         const data = await response.json();
         if (data.success) {
             showModStatus("Lobby notice updated successfully.", false, 'notice-status-area');
+            await loadLobbyNotice();
         } else {
             showModStatus(data.error || "Failed to update notice.", true, 'notice-status-area');
         }
