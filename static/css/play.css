@@ -8052,18 +8052,23 @@ body .board-cell.tile-flash-purple * {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
     padding: 20px 18px !important;
 }
 
 #setting-tab-appearance .theme-selector-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
-    gap: 10px !important;
+    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)) !important;
+    gap: 12px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    padding: 10px 8px !important;
+    contain: none !important;
 }
 
 #setting-tab-appearance .dimension-sliders-grid {
@@ -8154,6 +8159,8 @@ body .board-cell.tile-flash-purple * {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
+        padding: 10px 8px !important;
     }
 
     /* Board size preview container */
