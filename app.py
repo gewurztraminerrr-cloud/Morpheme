@@ -801,14 +801,21 @@ def remove_added_word():
     if not is_mod(username):
         return jsonify({'error': 'Unauthorized'}), 401
         
-    data = request.json
-    word = data.get('word', '').strip().upper()
-    if not word:
+    data = request.json or {}
+    raw_word = data.get('word', '')
+    if isinstance(raw_word, list):
+        words = [w.strip().upper() for w in raw_word if w and w.strip()]
+    else:
+        # Split by comma or whitespace for rapid bulk removal
+        words = [w.strip().upper() for w in str(raw_word).replace(',', ' ').split() if w.strip()]
+        
+    if not words:
         return jsonify({'error': 'Word is required'}), 400
         
     try:
-        # Update in-memory sets instantly
-        word_validator.remove_word_in_memory(word)
+        # Update in-memory sets instantly for all words
+        for w in words:
+            word_validator.remove_word_in_memory(w)
         
         # Clear local/endpoint caches instantly
         TOOLS_DICT_CACHE.clear()
@@ -820,21 +827,24 @@ def remove_added_word():
         LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
 
         # Spawn asynchronous thread to update files on disk (prevents blocking)
-        def remove_added_word_async(w):
+        def remove_added_words_async(word_list):
             try:
                 # 1. Update Added Words file
                 lines = []
                 if os.path.exists(ADDED_WORDS_FILE):
                     with open(ADDED_WORDS_FILE, 'r') as f:
                         lines = [line.strip().upper() for line in f if line.strip()]
-                if w in lines:
-                    new_lines = [l for l in lines if l != w]
+                
+                remove_set = set(word_list)
+                new_lines = [l for l in lines if l not in remove_set]
+                if len(new_lines) != len(lines):
                     with open(ADDED_WORDS_FILE, 'w') as f:
                         for l in new_lines:
                             f.write(l + '\n')
                 
                 # 2. Sync with Global Tally
-                _update_word_stats(w, "remove")
+                for w in word_list:
+                    _update_word_stats(w, "remove")
                 
                 # Update the mtime to the actual new file mtime
                 global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
@@ -842,16 +852,15 @@ def remove_added_word():
                     curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
                     LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
                     LAST_ADDED_WORDS_MTIME = curr_mtime
-                print(f"[AsyncMods] Finished removing word '{w}' from disk and tally.")
+                print(f"[AsyncMods] Finished removing {len(word_list)} word(s) from disk and tally.")
             except Exception as e:
-                print(f"[AsyncMods] Error removing '{w}' from disk: {e}")
+                print(f"[AsyncMods] Error removing words from disk: {e}")
 
         import threading
-        threading.Thread(target=remove_added_word_async, args=(word,), daemon=True).start()
+        threading.Thread(target=remove_added_words_async, args=(words,), daemon=True).start()
 
-        return jsonify({'success': True, 'message': f'Word "{word}" removed.'})
-        
-        return jsonify({'error': 'Word not found in the list.'}), 404
+        msg = f'Word "{words[0]}" removed.' if len(words) == 1 else f'{len(words)} words removed successfully.'
+        return jsonify({'success': True, 'message': msg, 'removed_words': words})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

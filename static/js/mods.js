@@ -220,109 +220,98 @@ async function removePronunciation() {
 }
 
 async function addAddedWord() {
-    console.info("[Mods] addAddedWord triggered.");
     const wordInput = document.getElementById('added-word-input');
-    const word = wordInput ? wordInput.value.trim() : '';
+    const rawVal = wordInput ? wordInput.value.trim() : '';
 
-    if (!word) {
+    if (!rawVal) {
         showModStatus('Please enter a word.', true, 'added-word-status-area');
-        return;
-    }
-
-    // Letters only — reject anything with digits, spaces, punctuation, etc.
-    if (!/^[A-Za-z]+$/.test(word)) {
-        showModStatus('❌ Invalid entry: only letters (A–Z) are allowed. Please remove any numbers, spaces, or special characters.', true, 'added-word-status-area');
         if (wordInput) wordInput.focus();
         return;
     }
 
-    console.info(`[Mods] Attempting to add word: "${word}"`);
+    // Letters, commas, spaces allowed
+    if (!/^[A-Za-z,\s]+$/.test(rawVal)) {
+        showModStatus('❌ Invalid entry: only letters (A–Z) and commas are allowed.', true, 'added-word-status-area');
+        if (wordInput) wordInput.focus();
+        return;
+    }
+
+    // Instantly clear input and maintain focus for continuous typing flow
+    if (wordInput) {
+        wordInput.value = '';
+        wordInput.focus();
+    }
+
+    showModStatus(`Adding word(s)...`, false, 'added-word-status-area');
 
     try {
         const response = await fetch('/api/mods/added_words/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word })
+            body: JSON.stringify({ word: rawVal })
         });
         const data = await response.json();
-        
-        // UNCONDITIONALLY clear input and restore focus to facilitate rapid typing flow
-        if (wordInput) {
-            wordInput.value = '';
-            wordInput.focus();
-        }
 
         if (data.success) {
-            const msg = data.message || `Word "${word}" added (V2 Success)`;
-            showModStatus(msg, false, 'added-word-status-area');
+            const msg = data.message || `Word(s) added successfully.`;
+            showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            const errorMsg = data.error || "Failed to add word (V2 Error)";
-            showModStatus(errorMsg, true, 'added-word-status-area');
+            const errorMsg = data.error || "Failed to add word.";
+            showModStatus(`❌ ${errorMsg}`, true, 'added-word-status-area');
         }
+        if (wordInput) wordInput.focus();
     } catch (err) {
-        console.error("Error adding added word:", err);
-        if (wordInput) {
-            wordInput.value = '';
-            wordInput.focus();
-        }
-        showModStatus("Network error adding word.", true, 'added-word-status-area');
+        console.error("Error adding word:", err);
+        showModStatus("❌ Network error adding word.", true, 'added-word-status-area');
+        if (wordInput) wordInput.focus();
     }
 }
 
 async function removeAddedWord() {
-    console.info("[Mods] removeAddedWord triggered.");
     const wordInput = document.getElementById('added-word-input');
-    const word = wordInput ? wordInput.value.trim() : '';
+    const rawVal = wordInput ? wordInput.value.trim() : '';
 
-    if (!word) {
-        showModStatus('Please enter a word.', true, 'added-word-status-area');
-        return;
-    }
-
-    // Letters only — reject anything with digits, spaces, punctuation, etc.
-    if (!/^[A-Za-z]+$/.test(word)) {
-        showModStatus('❌ Invalid entry: only letters (A–Z) are allowed. Please remove any numbers, spaces, or special characters.', true, 'added-word-status-area');
+    if (!rawVal) {
+        showModStatus('Please enter a word to remove.', true, 'added-word-status-area');
         if (wordInput) wordInput.focus();
         return;
     }
 
-    console.info(`[Mods] Attempting to remove word: "${word}"`);
+    // Letters, commas, spaces allowed
+    if (!/^[A-Za-z,\s]+$/.test(rawVal)) {
+        showModStatus('❌ Invalid entry: only letters (A–Z) and commas are allowed.', true, 'added-word-status-area');
+        if (wordInput) wordInput.focus();
+        return;
+    }
+
+    // Instantly clear input and keep focus for lightning-fast consecutive removal
+    if (wordInput) {
+        wordInput.value = '';
+        wordInput.focus();
+    }
+
+    showModStatus(`Removing word(s)...`, false, 'added-word-status-area');
 
     try {
         const response = await fetch('/api/mods/added_words/remove', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word: word.toUpperCase() })
+            body: JSON.stringify({ word: rawVal })
         });
         const data = await response.json();
-        
-        // Clear input regardless of success/fail (consistency)
-        if (wordInput) {
-            wordInput.value = '';
-            wordInput.focus();
-        }
 
         if (data.success) {
-            showModStatus(`Word "${word}" removed from Added Words list.`, false, 'added-word-status-area');
-            alert(`Success: Word "${word}" was removed from the dictionary.`);
-            
+            const msg = data.message || `Word(s) removed from Added Words list.`;
+            showModStatus(`🗑️ ${msg}`, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            showModStatus(data.error || "Failed to remove word.", true, 'added-word-status-area');
-            alert("Error: " + (data.error || "Failed to remove word."));
+            showModStatus(`❌ ${data.error || "Failed to remove word."}`, true, 'added-word-status-area');
         }
-        
-        // Final focus catch specifically after alerts
         if (wordInput) wordInput.focus();
     } catch (err) {
         console.error("Error removing added word:", err);
-        if (wordInput) {
-            wordInput.value = '';
-            wordInput.focus();
-        }
-        showModStatus("Network error removing word.", true, 'added-word-status-area');
-        alert("Network error: Could not reach the server.");
+        showModStatus("❌ Network error removing word.", true, 'added-word-status-area');
         if (wordInput) wordInput.focus();
     }
 }
@@ -535,16 +524,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addedWordInput = document.getElementById('added-word-input');
     if (addedWordInput) {
-        // Real-time: strip any non-letter characters as the user types.
+        // Real-time: strip invalid characters as the user types (letters, commas, spaces allowed).
         addedWordInput.addEventListener('input', () => {
             const before = addedWordInput.value;
-            const after = before.replace(/[^A-Za-z]/g, '');
+            const after = before.replace(/[^A-Za-z,\s]/g, '');
             if (before !== after) {
                 // Preserve cursor position after stripping
                 const sel = addedWordInput.selectionStart - (before.length - after.length);
                 addedWordInput.value = after;
                 addedWordInput.setSelectionRange(Math.max(0, sel), Math.max(0, sel));
-                showModStatus('❌ Only letters (A–Z) are allowed.', true, 'added-word-status-area');
+                showModStatus('❌ Only letters (A–Z) and commas are allowed.', true, 'added-word-status-area');
             }
         });
         addedWordInput.addEventListener('keydown', (e) => {
