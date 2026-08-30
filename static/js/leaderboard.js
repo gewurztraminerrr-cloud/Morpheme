@@ -485,10 +485,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function highlightRows(query) {
         const rows = document.querySelectorAll('.lb-row');
+        if (!query) {
+            rows.forEach(row => row.classList.remove('highlight-search'));
+            return;
+        }
         rows.forEach(row => {
-            if (row.dataset.username.includes(query)) {
+            const u = (row.dataset.username || '').toLowerCase();
+            if (u === query || u.includes(query)) {
                 row.classList.add('highlight-search');
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Adjust only the card table wrapper internally without scrolling the main screen
+                const wrapper = row.closest('.lb-table-wrapper');
+                if (wrapper) {
+                    const rowTop = row.offsetTop;
+                    const wrapperScroll = wrapper.scrollTop;
+                    const wrapperHeight = wrapper.clientHeight;
+                    if (rowTop < wrapperScroll || rowTop > wrapperScroll + wrapperHeight) {
+                        wrapper.scrollTop = Math.max(0, rowTop - wrapperHeight / 2);
+                    }
+                }
             } else {
                 row.classList.remove('highlight-search');
             }
