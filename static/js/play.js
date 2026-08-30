@@ -441,7 +441,29 @@ function isOnPlayPage() {
 }
 
 async function ejectToLobby(reason = "inactivity") {
+    if (window._isEjectingToLobby) {
+        console.log(`[play.js] Ejection already in progress (reason: ${reason}). Skipping duplicate call.`);
+        return;
+    }
+    window._isEjectingToLobby = true;
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
+
+    // Stop all polling and timer intervals immediately to prevent cascading polls
+    stopPolling();
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (window._transitionPollTimer) {
+        clearInterval(window._transitionPollTimer);
+        window._transitionPollTimer = null;
+    }
+    window.currentRoomId = null;
+    window._wasEverInRoster = false;
+    window._emptyPlayersPollCount = 0;
+    try {
+        localStorage.removeItem('last_joined_room');
+    } catch(e) {}
 
     // Check if inactivity notice should be suppressed (e.g. absent >= 1 hour)
     let shouldSuppressNotice = false;
@@ -466,30 +488,22 @@ async function ejectToLobby(reason = "inactivity") {
         }
     }
 
-    // 2. Stop poll and clear state
-    stopPolling();
-    window.currentRoomId = null;
-    window._wasEverInRoster = false;
-    window._emptyPlayersPollCount = 0;
-    try {
-        localStorage.removeItem('last_joined_room');
-    } catch(e) {}
-
     if (shouldSuppressNotice) {
         console.log('[play.js] Session Expired notice suppressed because last visit exceeded 1 hour.');
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
         else window.location.href = '#page-lobby';
+        setTimeout(() => { window._isEjectingToLobby = false; }, 500);
         return;
     }
 
-    // 3. Clear ANY other overlays that might block the explanation
+    // 2. Clear ANY other overlays that might block the explanation
     document.querySelectorAll('.modal-overlay, .board-overlay, .results-overlay').forEach(ov => {
         ov.classList.add('hidden');
         ov.style.display = 'none';
     });
 
-    // 4. Build message
+    // 3. Build message
     let title = "Session Expired";
     let message = `
         You have been returned to the lobby due to 10 minutes of inactivity. 
@@ -509,11 +523,25 @@ async function ejectToLobby(reason = "inactivity") {
     }
 
     if (reason === "daily_reset") {
+        const now = Date.now();
+        // DEDUPLICATION: Ensure ONLY ONE NOTICE is shown for the 12:00 AM daily reset
+        if (window._lastDailyResetNoticeTime && (now - window._lastDailyResetNoticeTime < 120000)) {
+            console.log('[play.js] Daily reset notice suppressed because one was already shown recently.');
+            if (window.navigateToPage) window.navigateToPage('lobby');
+            else if (window.showPage) window.showPage('page-lobby');
+            else window.location.href = '#page-lobby';
+            setTimeout(() => { window._isEjectingToLobby = false; }, 500);
+            return;
+        }
+        window._lastDailyResetNoticeTime = now;
+
         title = "Daily Room Reset (12:00 AM)";
         message = `
-            The 24-hour Daily Room has concluded and reset for the new day!
+            The 24-hour Daily Room has concluded and reset at 12:00 AM for the new day!
             <br><br>
-            A fresh daily board has been generated. Please rejoin the room from the lobby to start finding words on today's new board!
+            You have been returned to the Lobby while the previous day's results are finalized.
+            <br><br>
+            Entering the room again from the Lobby will show you the brand-new daily round and board!
         `;
     }
 
@@ -544,8 +572,7 @@ async function ejectToLobby(reason = "inactivity") {
         `;
     }
 
-    // 5. SHOW MODAL FIRST — over whatever page the user is currently on (Tools, Profile, etc.)
-    //    so they always see the notice regardless of which tab they were in.
+    // 4. SHOW MODAL FIRST — over whatever page the user is currently on
     if (window.showAlertModal) {
         window.showAlertModal(title, message, true);
         console.log('[play.js] Displayed eviction modal before redirect.');
@@ -562,11 +589,12 @@ async function ejectToLobby(reason = "inactivity") {
         }
     }
 
-    // 6. THEN navigate to lobby after a short delay so the modal is visible first
+    // 5. THEN navigate to lobby after a short delay so the modal is visible first
     setTimeout(() => {
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
         else window.location.href = '#page-lobby';
+        window._isEjectingToLobby = false;
     }, 400);
 }
 
@@ -610,7 +638,7 @@ setInterval(() => {
     if (!roomId) return;
 
     // EXEMPTION: No idle limit for 24h rooms
-    const is24h = window.lastGameState && window.lastGameState.game_type === 'accumulative' && window.lastGameState.time_limit >= 7200;
+    const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
     if (is24h) return;
 
     const idleMs = Date.now() - lastGameInteractionTime;
@@ -1527,10 +1555,10 @@ async function updateGameState(incomingState = null) {
             window._wasEverInRoster = true;
         }
 
-        const is24H = (state.time_limit >= 7200);
+        const is24H = (state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400'))) || (state.game_type === '24h');
 
         // 24H MIDNIGHT RESET EVICTION: If we were actively established in the room and midnight reset occurred, eject user to lobby with clear modal!
-        if (is24H && window._wasEverInRoster && (state.midnight_reset_occurred || (state.state === 'active' && state.time_remaining !== undefined && state.time_remaining <= 0))) {
+        if (is24H && window._wasEverInRoster && (state.midnight_reset_occurred || (state.state === 'active' && state.time_remaining !== undefined && state.time_remaining <= 0) || state.state === 'intermission')) {
             console.warn(`[play.js] 24H daily midnight reset detected (midnightReset: ${state.midnight_reset_occurred}, state: ${state.state}, TR: ${state.time_remaining}). Ejecting to lobby.`);
             ejectToLobby("daily_reset");
             return;
@@ -1542,6 +1570,13 @@ async function updateGameState(incomingState = null) {
                 previousState.players.some(p => p.username.toLowerCase() === currentUsername.toLowerCase()) ||
                 (previousState.spectators || []).some(s => s.username.toLowerCase() === currentUsername.toLowerCase())
             );
+
+            // If this is a 24H room and we are no longer in the roster, it was due to midnight reset!
+            if (is24H && window._wasEverInRoster) {
+                console.warn('[play.js] 24H room player roster reset at midnight. Triggering daily_reset ejection.');
+                ejectToLobby("daily_reset");
+                return;
+            }
 
             // INSTANTANEOUS EVICTION: If we were previously established in the roster in a non-24h room, kick immediately
             if (window._wasEverInRoster) {
@@ -4438,6 +4473,13 @@ function updateLocalTimer() {
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
+        
+        const is24hRoom = (window.lastGameState && (window.lastGameState.time_limit >= 7200 || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))))) || timerFormatIs24h;
+        if (is24hRoom && window._wasEverInRoster) {
+            console.warn('[play.js] 24H room local countdown reached 0:00 (12:00 AM midnight). Ejecting to lobby with daily reset notice.');
+            ejectToLobby("daily_reset");
+            return;
+        }
         
         // Instant client-side transition feedback!
         setTimerWaitingState(true);
