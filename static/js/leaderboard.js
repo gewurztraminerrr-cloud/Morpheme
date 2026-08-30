@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <div class="lb-search">
                     <input type="text" id="lb-search-input" placeholder="Search username..." autocomplete="off">
-                    <button id="lb-find-user-btn" class="lb-search-btn">FIND USER</button>
-                    <button id="lb-find-me-btn" class="lb-search-btn">FIND ME</button>
+                    <button type="button" id="lb-find-user-btn" class="lb-search-btn">FIND USER</button>
+                    <button type="button" id="lb-find-me-btn" class="lb-search-btn">FIND ME</button>
                 </div>
             </div>
 
@@ -105,12 +105,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const findUserBtn = document.getElementById('lb-find-user-btn');
     const findMeBtn = document.getElementById('lb-find-me-btn');
 
-    function executeFindUser() {
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        highlightRows(query);
+    function preserveScreenPosition(callback) {
+        const pageLb = document.getElementById('page-leaderboards');
+        const prevPageScroll = pageLb ? pageLb.scrollTop : 0;
+        const prevWinScroll = window.scrollY || document.documentElement.scrollTop || 0;
+
+        callback();
+
+        // Lock scroll position on mobile / desktop
+        if (pageLb) pageLb.scrollTop = prevPageScroll;
+        window.scrollTo(0, prevWinScroll);
+        requestAnimationFrame(() => {
+            if (pageLb) pageLb.scrollTop = prevPageScroll;
+            window.scrollTo(0, prevWinScroll);
+        });
     }
 
-    function executeFindMe() {
+    function executeFindUser(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        preserveScreenPosition(() => {
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            highlightRows(query);
+        });
+    }
+
+    function executeFindMe(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         let user = '';
         if (window.currentUser) {
             if (typeof window.currentUser === 'object' && window.currentUser.username) {
@@ -131,7 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) {
             if (searchInput) searchInput.value = user;
-            highlightRows(user.toLowerCase());
+            preserveScreenPosition(() => {
+                highlightRows(user.toLowerCase());
+            });
         } else {
             alert("Please log in to use FIND ME.");
         }
@@ -147,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                executeFindUser();
+                executeFindUser(e);
             }
         });
     }
@@ -493,16 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const u = (row.dataset.username || '').toLowerCase();
             if (u === query || u.includes(query)) {
                 row.classList.add('highlight-search');
-                // Adjust only the card table wrapper internally without scrolling the main screen
-                const wrapper = row.closest('.lb-table-wrapper');
-                if (wrapper) {
-                    const rowTop = row.offsetTop;
-                    const wrapperScroll = wrapper.scrollTop;
-                    const wrapperHeight = wrapper.clientHeight;
-                    if (rowTop < wrapperScroll || rowTop > wrapperScroll + wrapperHeight) {
-                        wrapper.scrollTop = Math.max(0, rowTop - wrapperHeight / 2);
-                    }
-                }
             } else {
                 row.classList.remove('highlight-search');
             }
