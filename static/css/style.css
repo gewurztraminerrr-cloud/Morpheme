@@ -5330,13 +5330,14 @@ body .tab-btn.active {
 /* Theme Selector Styles */
 .theme-selector-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 16px;
     margin-top: 15px;
     max-width: 900px;
-    padding: 10px 8px;
+    padding: 16px 14px !important;
     overflow: visible !important;
     box-sizing: border-box;
+    contain: none !important;
 }
 
 .theme-btn {
@@ -5344,10 +5345,13 @@ body .tab-btn.active {
     height: 40px;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
     border: 2px solid rgba(var(--text-primary-rgb), 0.2);
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin: 2px;
 }
 
 .theme-btn:hover {
@@ -5358,9 +5362,9 @@ body .tab-btn.active {
 }
 
 .theme-btn.active {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px #fff, 0 0 5px rgba(255, 255, 255, 0.9);
-    border: 3px solid #fff !important;
+    transform: scale(1.2) !important;
+    box-shadow: 0 0 16px #ffffff, 0 0 6px rgba(255, 255, 255, 0.95) !important;
+    border: 3px solid #ffffff !important;
     z-index: 10 !important;
 }
 

@@ -8044,7 +8044,8 @@ body .board-cell.tile-flash-purple * {
     width: 100% !important;
     max-width: 100% !important;
     grid-template-columns: 1fr !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
     box-sizing: border-box !important;
 }
 
@@ -8054,20 +8055,20 @@ body .board-cell.tile-flash-purple * {
     box-sizing: border-box !important;
     overflow: visible !important;
     overflow-x: visible !important;
-    padding: 20px 18px !important;
+    padding: 24px 20px !important;
 }
 
 #setting-tab-appearance .theme-selector-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)) !important;
-    gap: 12px !important;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)) !important;
+    gap: 14px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
-    padding: 10px 8px !important;
+    padding: 16px 14px !important;
     contain: none !important;
 }
 
@@ -8137,7 +8138,8 @@ body .board-cell.tile-flash-purple * {
         grid-template-columns: 1fr !important;
         gap: 28px !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
     }
 
     /* Each panel fills full content width */
@@ -8146,6 +8148,7 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow: visible !important;
+        overflow-x: visible !important;
         height: auto !important;
         min-height: unset !important;
         padding: 30px !important;
@@ -8154,13 +8157,16 @@ body .board-cell.tile-flash-purple * {
     /* Theme color-dot grid */
     #setting-tab-appearance .theme-selector-grid {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)) !important;
-        gap: 14px !important;
+        grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)) !important;
+        gap: 16px !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow: visible !important;
-        padding: 10px 8px !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        padding: 16px 14px !important;
+        contain: none !important;
     }
 
     /* Board size preview container */
