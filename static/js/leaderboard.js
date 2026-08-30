@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="lb-search">
-                    <input type="text" id="lb-search-input" placeholder="Find yourself..." autocomplete="off">
+                    <input type="text" id="lb-search-input" placeholder="Search username..." autocomplete="off">
+                    <button id="lb-find-user-btn" class="lb-search-btn">FIND USER</button>
+                    <button id="lb-find-me-btn" class="lb-search-btn">FIND ME</button>
                 </div>
             </div>
 
@@ -98,12 +100,57 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchLeaderboard();
     });
 
-    // Search
+    // Search Controls: only trigger on FIND USER / FIND ME / Enter key
     const searchInput = document.getElementById('lb-search-input');
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
+    const findUserBtn = document.getElementById('lb-find-user-btn');
+    const findMeBtn = document.getElementById('lb-find-me-btn');
+
+    function executeFindUser() {
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         highlightRows(query);
-    });
+    }
+
+    function executeFindMe() {
+        let user = '';
+        if (window.currentUser) {
+            if (typeof window.currentUser === 'object' && window.currentUser.username) {
+                user = window.currentUser.username;
+            } else if (typeof window.currentUser === 'string') {
+                user = window.currentUser;
+            }
+        }
+        if (!user && window.user && window.user.username) {
+            user = window.user.username;
+        }
+        if (!user) {
+            try {
+                const stored = localStorage.getItem('morpheme_username') || sessionStorage.getItem('username');
+                if (stored) user = stored;
+            } catch (e) {}
+        }
+
+        if (user) {
+            if (searchInput) searchInput.value = user;
+            highlightRows(user.toLowerCase());
+        } else {
+            alert("Please log in to use FIND ME.");
+        }
+    }
+
+    if (findUserBtn) {
+        findUserBtn.addEventListener('click', executeFindUser);
+    }
+    if (findMeBtn) {
+        findMeBtn.addEventListener('click', executeFindMe);
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeFindUser();
+            }
+        });
+    }
 
     // -- Functions --
 
@@ -334,16 +381,16 @@ document.addEventListener('DOMContentLoaded', () => {
                  <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
-        }, true); // Enable local search
+        });
 
         // Re-apply search if it exists
         const searchInput = document.getElementById('lb-search-input');
-        if (searchInput.value) {
-            highlightRows(searchInput.value.toLowerCase());
+        if (searchInput && searchInput.value.trim()) {
+            highlightRows(searchInput.value.trim().toLowerCase());
         }
     }
 
-    function createTableCard(container, title, rows, rowRenderer, includeSearch = false, customClass = '') {
+    function createTableCard(container, title, rows, rowRenderer, customClass = '') {
         if (!rows || rows.length === 0) return;
 
         const card = document.createElement('div');
@@ -356,21 +403,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>`;
         }).join('');
 
-        // Header Structure
-        let headerHTML = `<div class="lb-card-header-text">${title}</div>`;
-        if (includeSearch) {
-            headerHTML += `
-                <div class="lb-card-search">
-                    <input type="text" placeholder="Username" class="lb-local-input">
-                    <button class="lb-local-btn">FIND ME</button>
-                    <span class="lb-local-msg"></span>
-                </div>
-             `;
-        }
-
         card.innerHTML = `
             <div class="lb-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                ${headerHTML}
+                <div class="lb-card-header-text">${title}</div>
             </div>
             <div class="lb-table-wrapper">
                 <table class="lb-table">
@@ -378,45 +413,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </table>
             </div>
         `;
-
-        // Attach Search Logic
-        if (includeSearch) {
-            const btn = card.querySelector('.lb-local-btn');
-            const input = card.querySelector('.lb-local-input');
-            const msg = card.querySelector('.lb-local-msg');
-
-            // Pre-fill if logged in (handle cases where window.currentUser is user object or username string)
-            if (window.currentUser) {
-                if (typeof window.currentUser === 'object' && window.currentUser.username) {
-                    input.value = window.currentUser.username;
-                } else if (typeof window.currentUser === 'string') {
-                    input.value = window.currentUser;
-                }
-            }
-
-            const performSearch = () => {
-                const query = input.value.trim().toLowerCase();
-                if (!query) return;
-
-                const targetRow = card.querySelector(`.lb-row[data-username="${query}"]`);
-                if (targetRow) {
-                    // Highlight
-                    card.querySelectorAll('.lb-row').forEach(r => r.classList.remove('highlight-search'));
-                    targetRow.classList.add('highlight-search');
-                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    msg.textContent = '';
-                } else {
-                    msg.textContent = 'Not found (in top 1000)';
-                    msg.style.color = '#e74c3c';
-                    setTimeout(() => msg.textContent = '', 2000);
-                }
-            };
-
-            btn.addEventListener('click', performSearch);
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') performSearch();
-            });
-        }
 
         container.appendChild(card);
     }
