@@ -3692,27 +3692,33 @@
                     </div>
 
                     <!-- Lobby Notice Management -->
-                    <div id="mod-tab-notice" class="tool-pane">
+                    <div id="mod-tab-notice" class="tool-pane" style="width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
                             <h2>Global Lobby Notice</h2>
-                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">This message will be shown as a popup to all users <strong>ONLY</strong> when they enter the Lobby (never during gameplay).</p>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 15px;">This message will be displayed as a popup to players <strong>ONLY</strong> when they enter the Lobby (never during gameplay).</p>
                         </div>
                         
-                        <!-- Live Status & Preview Card -->
-                        <div class="mod-action-card" style="margin-bottom: 15px; border: 1px solid rgba(79, 172, 254, 0.25); border-radius: 8px; background: rgba(79, 172, 254, 0.05); padding: 14px; width: 100%; box-sizing: border-box;">
-                            <div style="font-weight: 700; color: #4facfe; margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;">
+                        <!-- Live Status & Current Announcement Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(79, 172, 254, 0.25); border-radius: 10px; background: rgba(79, 172, 254, 0.06); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="font-weight: 700; color: #4facfe; margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;">
                                 <span>📢 Current Live Announcement</span>
-                                <span id="current-notice-badge" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; background: rgba(255,255,255,0.1); color: var(--text-secondary);">No Active Notice</span>
+                                <span id="current-notice-badge" style="font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; background: rgba(255,255,255,0.1); color: var(--text-secondary); font-weight: 600;">No Active Notice</span>
                             </div>
-                            <div id="current-notice-preview" style="font-size: 0.9rem; color: var(--text-primary); background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; min-height: 40px; border: 1px dashed rgba(255,255,255,0.15); white-space: pre-wrap; font-style: italic; opacity: 0.7;">No announcement is currently set. Type a message below and click "Update Lobby Notice" to publish.</div>
+                            <div id="current-notice-preview" style="font-size: 0.9rem; color: var(--text-primary); background: rgba(0,0,0,0.3); padding: 12px 14px; border-radius: 8px; min-height: 48px; border: 1px dashed rgba(255,255,255,0.15); white-space: pre-wrap; font-style: italic; opacity: 0.7; line-height: 1.45;">No announcement is currently set. Enter a message below and click "Broadcast Notice" to publish.</div>
                         </div>
 
-                        <div id="notice-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
-                        <div class="mod-add-section" style="flex-direction: column; align-items: stretch; gap: 10px; width: 100%; box-sizing: border-box;">
-                            <textarea id="lobby-notice-input" placeholder="Enter new announcement message... (Supports multi-line text)" style="width: 100%; min-height: 110px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical; box-sizing: border-box;"></textarea>
-                            <div class="mod-action-buttons" style="display: flex; gap: 10px; width: 100%;">
-                                <button id="set-notice-btn" class="mod-full-btn add" style="flex: 1;">Update Lobby Notice</button>
-                                <button id="clear-notice-btn" class="mod-full-btn remove" style="flex: 0.3;">Clear Notice</button>
+                        <!-- Compose & Broadcast Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; background: rgba(255, 255, 255, 0.04); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 10px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                <span>✍️ Compose Announcement</span>
+                            </div>
+                            <div id="notice-status-area" style="min-height: 20px; margin-bottom: 10px; font-weight: 600; font-size: 0.88rem;"></div>
+                            <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box;">
+                                <textarea id="lobby-notice-input" placeholder="Type your announcement or message here... (Supports multiple lines)" style="width: 100%; min-height: 120px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 12px 14px; font-family: inherit; font-size: 0.95rem; line-height: 1.45; resize: vertical; box-sizing: border-box;"></textarea>
+                                <div style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
+                                    <button id="set-notice-btn" class="mod-full-btn add" style="flex: 1; min-width: 180px; padding: 12px 20px; font-size: 0.95rem; font-weight: 700; background: #2563eb; border: 1px solid #1d4ed8; color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">📢 Broadcast Notice</button>
+                                    <button id="clear-notice-btn" class="mod-full-btn remove" style="flex: 0 0 130px; padding: 12px 16px; font-size: 0.95rem; font-weight: 600; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Clear Notice</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6592,7 +6598,7 @@
     <script src="/js/leaderboard.js?v=33173"></script>
     <script src="/js/tools.js?v=33234"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
-    <script src="/js/mods.js?v=33177"></script>
+    <script src="/js/mods.js?v=33178"></script>
     <script src="/js/private_matches.js?v=33173"></script>
     <script src="/js/donate.js?v=33173"></script>
     

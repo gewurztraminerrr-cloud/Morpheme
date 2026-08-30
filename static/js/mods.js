@@ -479,7 +479,11 @@ async function updateLobbyNotice() {
         });
         const data = await response.json();
         if (data.success) {
-            showModStatus("Lobby notice updated successfully.", false, 'notice-status-area');
+            if (notice) {
+                showModStatus("Lobby announcement broadcasted successfully!", false, 'notice-status-area');
+            } else {
+                showModStatus("Lobby notice cleared successfully.", false, 'notice-status-area');
+            }
             await loadLobbyNotice();
         } else {
             showModStatus(data.error || "Failed to update notice.", true, 'notice-status-area');
