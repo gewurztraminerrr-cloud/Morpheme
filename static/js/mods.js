@@ -16,6 +16,7 @@ async function checkModStatus() {
         
         if (data.is_mod) {
             loadModList();
+            loadIpBans();
             if (typeof loadUndefinedWords === 'function') {
                 loadUndefinedWords();
             }
@@ -564,6 +565,16 @@ document.addEventListener('DOMContentLoaded', () => {
         banUserBtn.addEventListener('click', banUser);
     }
 
+    const manualBanIpBtn = document.getElementById('manual-ban-ip-btn');
+    if (manualBanIpBtn) {
+        manualBanIpBtn.addEventListener('click', banIpAddress);
+    }
+
+    const refreshIpBansBtn = document.getElementById('refresh-ip-bans-btn');
+    if (refreshIpBansBtn) {
+        refreshIpBansBtn.addEventListener('click', loadIpBans);
+    }
+
 
     const setNoticeBtn = document.getElementById('set-notice-btn');
     if (setNoticeBtn) {
@@ -780,7 +791,8 @@ async function banUser() {
         if (data.success) {
             if (input) input.value = '';
             showModStatus(data.message, false, 'ban-status-area');
-            alert(`User "${username}" has been permanently erased from the database.`);
+            alert(data.message || `User "${username}" has been permanently erased from the database.`);
+            loadIpBans();
         } else {
             showModStatus(data.error || "Failed to ban user.", true, 'ban-status-area');
             alert("Error: " + (data.error || "Failed to ban user."));
@@ -790,6 +802,109 @@ async function banUser() {
         showModStatus("Network error banning user.", true, 'ban-status-area');
     }
 }
+
+// --- IP BAN MANAGEMENT ---
+async function loadIpBans() {
+    const tbody = document.getElementById('ip-bans-tbody');
+    const tableWrap = document.getElementById('ip-bans-table-wrap');
+    const emptyEl = document.getElementById('ip-bans-empty');
+    const countEl = document.getElementById('ip-bans-count');
+    if (!tbody) return;
+
+    try {
+        const response = await fetch('/api/mods/ip_bans');
+        const data = await response.json();
+        if (data.success && Array.isArray(data.bans)) {
+            if (countEl) countEl.textContent = data.bans.length;
+            if (data.bans.length === 0) {
+                if (emptyEl) emptyEl.style.display = 'block';
+                if (tableWrap) tableWrap.style.display = 'none';
+                tbody.innerHTML = '';
+            } else {
+                if (emptyEl) emptyEl.style.display = 'none';
+                if (tableWrap) tableWrap.style.display = 'block';
+                tbody.innerHTML = data.bans.map(b => `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <td style="padding: 8px; font-family: monospace; font-weight: 600; color: #f43f5e;">${escapeHtml(b.ip_address)}</td>
+                        <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.banned_username || 'Manual / Unknown')}</td>
+                        <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.banned_by || 'Moderator')}</td>
+                        <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.reason || '-')}</td>
+                        <td style="padding: 8px; font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(b.created_at || '-')}</td>
+                        <td style="padding: 8px; text-align: right;">
+                            <button class="mini-action-btn secondary" style="background: #059669; border-color: #047857; color: #fff; padding: 3px 8px; font-size: 0.75rem;" onclick="liftIpBan('${escapeHtml(b.ip_address)}', ${b.id})">🔓 Lift Ban</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (err) {
+        console.error("Error loading IP bans:", err);
+    }
+}
+
+async function banIpAddress() {
+    const ipInput = document.getElementById('manual-ip-input');
+    const reasonInput = document.getElementById('manual-ip-reason-input');
+    const ip = ipInput ? ipInput.value.trim() : '';
+    const reason = reasonInput ? reasonInput.value.trim() : '';
+
+    if (!ip) {
+        alert("Please enter a valid IP address to ban.");
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to ban IP address "${ip}"? Any devices using this IP will be completely blocked from Morpheme.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/ban_ip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip_address: ip, reason: reason })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (ipInput) ipInput.value = '';
+            if (reasonInput) reasonInput.value = '';
+            showModStatus(data.message || `IP ${ip} banned.`, false, 'ban-status-area');
+            loadIpBans();
+        } else {
+            alert("Error: " + (data.error || "Failed to ban IP."));
+        }
+    } catch (err) {
+        console.error("Error banning IP:", err);
+        showModStatus("Network error banning IP.", true, 'ban-status-area');
+    }
+}
+
+async function liftIpBan(ip, id) {
+    if (!confirm(`Are you sure you want to lift the IP ban for "${ip}"?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/mods/lift_ip_ban', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip_address: ip, id: id })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus(data.message || `IP ban lifted for ${ip}.`, false, 'ban-status-area');
+            loadIpBans();
+        } else {
+            alert("Error: " + (data.error || "Failed to lift IP ban."));
+        }
+    } catch (err) {
+        console.error("Error lifting IP ban:", err);
+        showModStatus("Network error lifting IP ban.", true, 'ban-status-area');
+    }
+}
+
+window.loadIpBans = loadIpBans;
+window.banIpAddress = banIpAddress;
+window.liftIpBan = liftIpBan;
 
 async function addDefinition() {
     const wordInput = document.getElementById('def-word-input');
@@ -1049,6 +1164,10 @@ window.showModTab = function(tabId) {
             pane.classList.remove('active');
         }
     });
+
+    if (tabId === 'ban') {
+        loadIpBans();
+    }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);

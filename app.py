@@ -394,6 +394,63 @@ def mod_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ============================================================
+# IP TRACKING & BANNING SYSTEM
+# ============================================================
+BANNED_IPS_CACHE = set()
+
+def reload_banned_ips():
+    """Reloads active banned IPs from database into in-memory O(1) set."""
+    global BANNED_IPS_CACHE
+    try:
+        conn = get_db_connection(DB_PATH, timeout=15.0)
+        rows = conn.execute("SELECT ip_address FROM ip_bans").fetchall()
+        BANNED_IPS_CACHE = {r['ip_address'].strip() for r in rows if r['ip_address'] and r['ip_address'].strip()}
+        conn.close()
+        print(f"[IP_BANS] Loaded {len(BANNED_IPS_CACHE)} banned IP(s) into cache.")
+    except Exception as e:
+        print(f"[IP_BANS] Error reloading banned IPs: {e}")
+
+def get_client_ip(req=None):
+    """Extracts true remote client IP, respecting reverse-proxy headers (Nginx/Cloudflare)."""
+    if req is None:
+        req = request
+    try:
+        x_forwarded = req.headers.get('X-Forwarded-For')
+        if x_forwarded:
+            parts = [p.strip() for p in x_forwarded.split(',') if p.strip()]
+            if parts:
+                return parts[0]
+        x_real = req.headers.get('X-Real-IP')
+        if x_real and x_real.strip():
+            return x_real.strip()
+        return (req.remote_addr or '').strip()
+    except Exception:
+        return ''
+
+@app.before_request
+def check_ip_ban():
+    """Blocks all incoming non-static traffic if client IP is present in BANNED_IPS_CACHE."""
+    # Skip static files, service worker, audio, images, icons, manifest
+    if (request.path.startswith('/static') or 
+        request.path in ['/service-worker.js', '/favicon.ico', '/manifest.json'] or 
+        any(request.path.endswith(ext) for ext in ('.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.mp3', '.wav', '.json', '.svg', '.woff2', '.woff', '.ttf'))):
+        return
+
+    client_ip = get_client_ip()
+    if client_ip and client_ip in BANNED_IPS_CACHE:
+        if request.path.startswith('/api/'):
+            return jsonify({'error': 'Access restricted. Your IP address has been banned from Morpheme.'}), 403
+        return (
+            "<!DOCTYPE html><html><head><title>Access Restricted</title>"
+            "<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
+            "display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;}"
+            "div{background:#1e293b;padding:36px;border-radius:16px;border:1px solid #334155;max-width:480px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.5);}"
+            "h1{color:#f43f5e;margin-top:0;font-size:1.6rem;}p{line-height:1.6;color:#94a3b8;}</style></head>"
+            "<body><div><h1>403 - Access Restricted</h1><p>Your IP address has been permanently banned from Morpheme due to a violation of community terms.</p></div></body></html>",
+            403
+        )
+
 @app.before_request
 def enforce_one_month_session():
     # Skip static files, login/register, presence beacon, and captcha
@@ -427,8 +484,10 @@ def ensure_guest_session():
                 guest_username = f'Guest_{guest_id}'
                 dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
                 password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
+                client_ip = get_client_ip()
                 with get_db() as conn:
-                    cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (guest_username, password_hash))
+                    cursor = conn.execute('INSERT INTO users (username, password_hash, registration_ip, last_ip) VALUES (?, ?, ?, ?)', 
+                                          (guest_username, password_hash, client_ip, client_ip))
                     new_user_id = cursor.lastrowid
                 session['user_id'] = new_user_id
                 session['username'] = guest_username
@@ -1124,7 +1183,7 @@ def ban_user_api():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
     
-    data = request.json
+    data = request.json or {}
     username = (data.get('username') or '').strip()
     
     if not username:
@@ -1136,17 +1195,30 @@ def ban_user_api():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        # Get user ID
-        cursor = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,))
+        # Get user ID and recorded IP addresses before deletion
+        cursor = conn.execute("SELECT id, registration_ip, last_ip FROM users WHERE username = ? COLLATE NOCASE", (username,))
         row = cursor.fetchone()
         if not row:
             return jsonify({'error': 'User not found'}), 404
         user_id = row['id']
+        reg_ip = (row['registration_ip'] or '').strip()
+        last_ip = (row['last_ip'] or '').strip()
         
         # Start transaction
         conn.execute("BEGIN TRANSACTION")
         
-        # Deletions (Erase all traces)
+        # 1. IP Ban: Automatically ban all associated IP addresses
+        now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        banned_by = session.get('username', 'Moderator')
+        reason = f"Account banned: {username}"
+        ips_to_ban = {ip for ip in (reg_ip, last_ip) if ip}
+        for ip in ips_to_ban:
+            conn.execute("""
+                INSERT OR REPLACE INTO ip_bans (ip_address, banned_username, banned_by, reason, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (ip, username, banned_by, reason, now_str))
+        
+        # 2. Deletions (Erase all user traces)
         # ID-based deletions
         conn.execute("DELETE FROM forum_comments WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM forum_posts WHERE user_id = ?", (user_id,))
@@ -1173,6 +1245,9 @@ def ban_user_api():
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         
         conn.commit()
+        
+        # Reload cache
+        reload_banned_ips()
     except Exception as e:
         conn.rollback()
         print(f"Error banning user: {e}")
@@ -1180,7 +1255,87 @@ def ban_user_api():
     finally:
         conn.close()
         
-    return jsonify({'success': True, 'message': f'User {username} successfully banned and all traces erased.'})
+    ip_msg = f" (and {len(ips_to_ban)} IP address{'es' if len(ips_to_ban) != 1 else ''})" if ips_to_ban else ""
+    return jsonify({'success': True, 'message': f'User {username}{ip_msg} successfully banned and all traces erased.'})
+
+
+@app.route('/api/mods/ip_bans', methods=['GET'])
+@login_required
+def get_ip_bans_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        with get_db() as conn:
+            rows = conn.execute("SELECT id, ip_address, banned_username, banned_by, reason, created_at FROM ip_bans ORDER BY id DESC").fetchall()
+            bans = [dict(r) for r in rows]
+            return jsonify({'success': True, 'bans': bans})
+    except Exception as e:
+        print(f"Error fetching IP bans: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mods/ban_ip', methods=['POST'])
+@login_required
+def ban_ip_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    ip = (data.get('ip_address') or '').strip()
+    reason = (data.get('reason') or 'Moderator manual IP ban').strip()
+    username = (data.get('username') or '').strip()
+    
+    if not ip:
+        return jsonify({'error': 'IP address is required'}), 400
+        
+    import ipaddress
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError:
+        return jsonify({'error': 'Invalid IPv4 or IPv6 address format'}), 400
+        
+    banned_by = session.get('username', 'Moderator')
+    now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    
+    try:
+        with get_db() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO ip_bans (ip_address, banned_username, banned_by, reason, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (ip, username, banned_by, reason, now_str))
+            conn.commit()
+            
+        reload_banned_ips()
+        return jsonify({'success': True, 'message': f'IP address {ip} has been banned.'})
+    except Exception as e:
+        print(f"Error banning IP: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/mods/lift_ip_ban', methods=['POST'])
+@login_required
+def lift_ip_ban_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    ip = (data.get('ip_address') or '').strip()
+    ban_id = data.get('id')
+    
+    if not ip and not ban_id:
+        return jsonify({'error': 'IP address or ban ID required'}), 400
+        
+    try:
+        with get_db() as conn:
+            if ban_id:
+                conn.execute("DELETE FROM ip_bans WHERE id = ?", (ban_id,))
+            else:
+                conn.execute("DELETE FROM ip_bans WHERE ip_address = ?", (ip,))
+            conn.commit()
+            
+        reload_banned_ips()
+        return jsonify({'success': True, 'message': f'IP ban lifted for {ip or f"ID {ban_id}"}.'})
+    except Exception as e:
+        print(f"Error lifting IP ban: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 def format_duration_string(minutes):
@@ -1561,6 +1716,14 @@ def init_db():
             word TEXT PRIMARY KEY,
             definition TEXT
         );
+        CREATE TABLE IF NOT EXISTS ip_bans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address TEXT UNIQUE NOT NULL,
+            banned_username TEXT,
+            banned_by TEXT,
+            reason TEXT,
+            created_at TEXT
+        );
     ''')
     conn.commit()
     
@@ -1722,6 +1885,21 @@ def init_db():
         conn.execute('ALTER TABLE users ADD COLUMN last_visited DATETIME')
         conn.commit()
         print("Migrated DB: Added last_visited column to users")
+    except sqlite3.OperationalError:
+        pass
+
+    # MIGRATION: Add registration_ip and last_ip columns for IP tracking and ban enforcement
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN registration_ip TEXT')
+        conn.commit()
+        print("Migrated DB: Added registration_ip column to users")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN last_ip TEXT')
+        conn.commit()
+        print("Migrated DB: Added last_ip column to users")
     except sqlite3.OperationalError:
         pass
 
@@ -2156,6 +2334,7 @@ def init_db():
     conn.close()
 
 init_db()
+reload_banned_ips()
 
 # Configuration for Uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/avatars')
@@ -2805,10 +2984,11 @@ def register():
             return jsonify({'error': 'Email is already registered'}), 400
             
         password_hash = generate_password_hash(password, method='pbkdf2:sha256')
+        client_ip = get_client_ip()
         
         # Insert user cleanly
-        cursor = conn.execute('INSERT INTO users (username, password_hash, email, is_verified, country_flag) VALUES (?, ?, ?, 1, ?)',
-                    (username, password_hash, email, flag))
+        cursor = conn.execute('INSERT INTO users (username, password_hash, email, is_verified, country_flag, registration_ip, last_ip) VALUES (?, ?, ?, 1, ?, ?, ?)',
+                    (username, password_hash, email, flag, client_ip, client_ip))
         user_id = cursor.lastrowid
         
         # Insert default settings for the new user
@@ -2940,7 +3120,8 @@ def login():
         
         canonical_username = user[3]
         auth_token = uuid.uuid4().hex
-        conn.execute('UPDATE users SET auth_token = ? WHERE id = ?', (auth_token, user[0]))
+        client_ip = get_client_ip()
+        conn.execute('UPDATE users SET auth_token = ?, last_ip = ? WHERE id = ?', (auth_token, client_ip, user[0]))
         conn.commit()
         conn.close()
 
@@ -2976,6 +3157,11 @@ def auto_login():
         conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT id, username, email, rating FROM users WHERE auth_token = ?', (token,))
         user = cursor.fetchone()
+        
+        if user:
+            client_ip = get_client_ip()
+            conn.execute('UPDATE users SET last_ip = ? WHERE id = ?', (client_ip, user[0]))
+            conn.commit()
         conn.close()
         
         if not user:
