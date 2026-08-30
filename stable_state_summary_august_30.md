@@ -9,7 +9,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 * **Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme`
 * **Branch**: `main`
 * **Date**: August 30, 2026
-* **Latest Commit ID**: `898f0b5d5bfa780d6b9d6a364177eb0594a9ea4c` (`898f0b5`)
+* **Latest Commit ID**: `fc606ce48f5ebce4d8ef589cfa6dc30d66a6a2ef` (`fc606ce`)
 * **Production Host**: `132.148.72.249` (`morpheme.games`)
 * **Synchronization Status**: **100% Synchronized** across Localhost, GitHub, and Production (`morpheme.games`).
 
@@ -17,7 +17,15 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. 12:00 AM Daily Room Reset Notice & Single-Notice Guarantee (`static/js/play.js`)
+### A. Layout / App Theme Edge Color Option Glow Cutoff Fix (`static/css/style.css`, `static/css/play.css`, `templates/index.html`)
+- **Unclipped Radial Glow Across Laptops, Desktops & Mobile**:
+  - Removed `overflow-x: hidden` clipping on `#setting-tab-appearance .settings-tab-grid` and `.setting-panel` across all breakpoints.
+  - Sized `.theme-selector-grid` with generous `padding: 16px 14px !important; overflow: visible !important; contain: none !important;` so that edge color options (far left, far right, top, and bottom) display their full `transform: scale(1.2)` expansion and 16px radiant white box-shadow glow without being cropped.
+  - Set `.theme-btn.active` to `z-index: 10 !important;` so active selections always paint cleanly on top of neighboring options.
+
+---
+
+### B. 12:00 AM Daily Room Reset Notice & Single-Notice Guarantee (`static/js/play.js`)
 - **Clear Explanatory Notice at Midnight Rollover**:
   - When a 24-hour daily room reaches 12:00 AM (midnight) and concludes, active users are returned to the Lobby and presented with a clear, priority modal notice:
     - **Title**: `Daily Room Reset (12:00 AM)`
