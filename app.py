@@ -5863,6 +5863,10 @@ def load_tools_dictionary(dict_name):
     except FileNotFoundError:
         print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
 
+    # Merge custom Added Words if enabled in game/tools
+    if word_validator and word_validator.get_use_added_words() and getattr(word_validator, 'added_words', None):
+        words = words | word_validator.added_words
+
     # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX & BITMASKS (C-ACCELERATED) ---
     import numpy as np
     word_list = sorted(list(words))
