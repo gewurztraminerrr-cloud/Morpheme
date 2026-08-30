@@ -3891,7 +3891,7 @@
                             <h2>Appearance</h2>
                             <p>Customize the visual layout, themes, sizes, and styling of the game.</p>
                         </div>
-                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
                             <!-- App Theme -->
                             <div class="setting-panel">
                                 <div class="setting-header">
@@ -3901,8 +3901,7 @@
                                     </div>
                                 </div>
                                 <!-- Expanded Theme Selector Grid -->
-                                <div class="theme-selector-grid"
-                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 16px; margin-top: 15px; max-width: 900px; padding: 16px 14px; overflow: visible; box-sizing: border-box;">
+                                <div class="theme-selector-grid" style="margin-top: 15px; max-width: 900px; box-sizing: border-box;">
                                     <button class="theme-btn" data-theme="default"
                                         style="background: #1a1a2e; border: 2px solid #fff;" title="Default"></button>
                                     <button class="theme-btn" data-theme="black" style="background: #000000;"
@@ -3992,10 +3991,10 @@
                                     </div>
                                 </div>
 
-                                <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                                <div class="dimension-sizes-section" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; width: 100%; box-sizing: border-box;">
                                     <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
                                     <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms. The 2D example board above will demonstrate the selected size.</div>
-                                    <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                                    <div class="dimension-sliders-grid" style="width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                                 <span style="font-weight: 600;">4x4 Grid</span>
@@ -4124,8 +4123,7 @@
                                     <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
                                         style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
                                 </div>
-                                <div id="synesthesia-letters-grid"
-                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                                <div id="synesthesia-letters-grid" style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
                                     <!-- Letters A-Z injected by settings.js -->
                                 </div>
 

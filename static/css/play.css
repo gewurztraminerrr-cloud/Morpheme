@@ -8525,6 +8525,163 @@ body .board-cell.tile-flash-purple * {
     #mod-tab-ban #check-timeout-btn {
         order: 5 !important;
     }
+
+    /* Mobile settings & appearance panels width constraint */
+    #page-settings,
+    #page-settings * {
+        box-sizing: border-box !important;
+    }
+    #page-settings {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+    }
+    #page-settings .tools-split-layout {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .tools-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 12px 10px 60px 10px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+    #page-settings .tool-pane {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    #page-settings .settings-tab-grid {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .setting-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 16px 14px !important;
+        border-radius: 14px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        margin: 0 !important;
+    }
+    #page-settings .setting-header {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .setting-title,
+    #page-settings .setting-desc {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+    #page-settings .theme-selector-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 10px 8px !important;
+        overflow: visible !important;
+    }
+    #page-settings .dimension-sliders-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .dim-slider-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 10px 8px !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .preview-board-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 12px 6px !important;
+        min-height: auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    #page-settings .preview-board {
+        margin: 0 auto !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings #synesthesia-letters-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important;
+        gap: 6px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 8px 6px !important;
+    }
+    #page-settings .synesthesia-unit {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 6px 2px !important;
+    }
+    #page-settings .settings-preview-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 10px 12px !important;
+    }
+    #page-settings .setting-slider-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings input[type="range"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #page-settings .color-dot-grid {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        justify-content: center !important;
+    }
 }
 
 body.is-mobile #setting-panel-cube-scale,
@@ -8546,6 +8703,102 @@ body.is-mobile #mod-tab-ban #lift-timeout-btn {
 }
 body.is-mobile #mod-tab-ban #check-timeout-btn {
     order: 5 !important;
+}
+
+body.is-mobile #page-settings,
+body.is-mobile #page-settings * {
+    box-sizing: border-box !important;
+}
+body.is-mobile #page-settings {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}
+body.is-mobile #page-settings .tools-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px 10px 60px 10px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+body.is-mobile #page-settings .tool-pane {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #page-settings .settings-tab-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #page-settings .setting-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+body.is-mobile #page-settings .preview-board-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    padding: 12px 6px !important;
+}
+body.is-mobile #page-settings .dimension-sliders-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #page-settings .dim-slider-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 8px !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #page-settings #synesthesia-letters-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 8px 6px !important;
+}
+body.is-mobile #page-settings .synesthesia-unit {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 6px 2px !important;
+}
+body.is-mobile #page-settings .theme-selector-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 10px 8px !important;
+    overflow: visible !important;
 }
 
 /* ============================================================
