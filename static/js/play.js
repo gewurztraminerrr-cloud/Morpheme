@@ -2776,8 +2776,8 @@ async function updateGameState(incomingState = null) {
 
                         return `
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44;"></div>
-                                <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${name}</span>
+                                <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${name}'); event.stopPropagation();" style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44; cursor: pointer;" title="View Mini-Profile"></div>
+                                <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${name}'); event.stopPropagation();" title="View Mini-Profile">${name}</span>
                                 <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 600;">(${rating})</span>
                             </div>
                         `;
@@ -3058,7 +3058,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
                 <span class="player-rank">#${rank}</span>
-                <span class="rating-square" onclick="window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;"></span>
+                <span class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
                 <span class="player-username">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
@@ -10017,8 +10017,8 @@ window.showFinderModal = function (word) {
                                     <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 22px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; font-size: 0.75rem; font-weight: 800;">
                                         ${rankText}
                                     </div>
-                                    <div style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22;"></div>
-                                    <span style="font-weight: 700; font-size: 0.95rem;">${p.username}</span>
+                                    <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22; cursor: pointer;" title="View Mini-Profile"></div>
+                                    <span style="font-weight: 700; font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" title="View Mini-Profile">${p.username}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${wordPts} pts</span>

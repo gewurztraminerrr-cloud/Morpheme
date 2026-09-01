@@ -653,10 +653,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const flagHtml = window.getFlagHtml ? window.getFlagHtml(row.country_flag) : (row.country_flag || '');
 
         return `
-            <div class="lb-user-cell" onclick="window.showMiniProfile('${row.username}')">
-                <div class="rating-square" style="background-color: ${color};"></div>
+            <div class="lb-user-cell" onclick="if (window.showMiniProfile) window.showMiniProfile('${row.username}');">
+                <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${row.username}'); event.stopPropagation();" style="background-color: ${color}; cursor: pointer;" title="View Mini-Profile"></div>
                 <span class="user-flag">${flagHtml}</span>
-                <span class="username">${row.username}</span>
+                <span class="username" onclick="if (window.showMiniProfile) window.showMiniProfile('${row.username}'); event.stopPropagation();" style="cursor: pointer;" title="View Mini-Profile">${row.username}</span>
             </div>
         `;
     }
