@@ -8749,7 +8749,7 @@ async function initTournamentPlay() {
             } catch (e) { console.error("Failed to fetch matchup for display:", e); }
 
             playerList.innerHTML = `
-                <div class="player-card active" style="border-left: 4px solid #2ecc71;">
+                <div class="player-card active" style="border-left: none;">
                     <div class="player-info">
                         <div class="username">TOURNAMENT TURN</div>
                         <div class="score">Versus: <span style="color:#2ecc71">${oppName}</span></div>

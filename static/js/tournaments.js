@@ -208,13 +208,7 @@ function renderTournament(data) {
             }
 
             if (viewAllBtn) {
-                viewAllBtn.onclick = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
-                    const allMatchups = (data.all_tournament_matchups && data.all_tournament_matchups.length > 0) 
-                        ? data.all_tournament_matchups 
-                        : (data.all_matchups || []);
-                    showAllPairingsModal(allMatchups, data.current_round);
-                };
+                viewAllBtn.onclick = handleViewAllPairingsClick;
             }
         } else {
             mCard.classList.add('hidden');
@@ -660,10 +654,42 @@ function renderMatchupItemHTML(m) {
     `;
 }
 
+async function handleViewAllPairingsClick(e) {
+    if (e) {
+        try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+    }
+    let allMatchups = (currentTournamentState && currentTournamentState.all_tournament_matchups && currentTournamentState.all_tournament_matchups.length > 0)
+        ? currentTournamentState.all_tournament_matchups
+        : (currentTournamentState && currentTournamentState.all_matchups ? currentTournamentState.all_matchups : []);
+
+    let curRound = (currentTournamentState && currentTournamentState.current_round) ? currentTournamentState.current_round : 1;
+
+    if (!allMatchups || allMatchups.length === 0) {
+        try {
+            const resp = await fetch('/api/tournament/status', { cache: 'no-store' });
+            if (resp.ok) {
+                const freshData = await resp.json();
+                currentTournamentState = freshData;
+                allMatchups = (freshData.all_tournament_matchups && freshData.all_tournament_matchups.length > 0)
+                    ? freshData.all_tournament_matchups
+                    : (freshData.all_matchups || []);
+                curRound = freshData.current_round || 1;
+            }
+        } catch (err) {
+            console.error("Error fetching tournament status for matchups:", err);
+        }
+    }
+
+    showAllPairingsModal(allMatchups, curRound);
+}
+window.handleViewAllPairingsClick = handleViewAllPairingsClick;
+
 function showAllPairingsModal(matchups, currentRound) {
     if (!matchups || matchups.length === 0) {
-        if (window.showAlertModal) {
+        if (typeof window.showAlertModal === 'function') {
             window.showAlertModal("All Tournament Pairings", "No pairings available yet for this tournament.");
+        } else {
+            alert("No pairings available yet for this tournament.");
         }
         return;
     }
@@ -693,7 +719,7 @@ function showAllPairingsModal(matchups, currentRound) {
 
     const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
 
-    let html = '<div style="display: flex; flex-direction: column; gap: 14px; max-height: 55vh; overflow-y: auto; padding: 4px 6px; text-align: left;">';
+    let html = '<div style="display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; padding: 4px 6px; text-align: left;">';
 
     roundNumbers.forEach(rNum => {
         const roundMatchups = roundsMap[rNum];
@@ -725,12 +751,21 @@ function showAllPairingsModal(matchups, currentRound) {
     html += '</div>';
     bodyEl.innerHTML = html;
 
+    const card = modal.querySelector('.achievement-card');
+    if (card) {
+        card.style.maxWidth = '520px';
+    }
+
     const closeModal = (e) => {
         if (e) {
             try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
         }
         modal.classList.add('hidden');
         modal.style.display = 'none';
+        modal.style.setProperty('display', 'none', 'important');
+        if (card) {
+            card.style.maxWidth = '';
+        }
     };
 
     if (okBtn) okBtn.onclick = closeModal;
@@ -741,5 +776,7 @@ function showAllPairingsModal(matchups, currentRound) {
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
+    modal.style.setProperty('display', 'flex', 'important');
     modal.style.zIndex = '100001';
 }
+window.showAllPairingsModal = showAllPairingsModal;
