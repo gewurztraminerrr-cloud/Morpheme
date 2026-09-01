@@ -3296,16 +3296,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatPanel = document.querySelector('.chat-panel');
     const leftPanelContainer = document.querySelector('.left-panel-container');
     const collapseBtn = document.getElementById('chat-collapse-btn');
+    const chatDragHandle = document.getElementById('chat-drag-handle');
 
     function collapseChat() {
         if (!chatPanel || (!chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
         
-        chatPanel.classList.add('collapsing');
-        chatPanel.classList.remove('expanded');
-        
+        if (chatInput) {
+            chatInput.blur();
+        }
+
         if (collapseBtn) {
             collapseBtn.style.display = 'none';
         }
+
+        chatPanel.classList.add('collapsing');
+        chatPanel.classList.remove('expanded');
 
         setTimeout(() => {
             chatPanel.classList.remove('collapsing');
@@ -3316,11 +3321,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chatHistory) {
                 chatHistory.scrollTop = chatHistory.scrollHeight;
             }
-        }, 300);
-
-        if (chatInput) {
-            chatInput.blur();
-        }
+        }, 260);
     }
 
     function expandChat() {
@@ -3337,7 +3338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chatHistory) {
             setTimeout(() => {
                 chatHistory.scrollTop = chatHistory.scrollHeight;
-            }, 60);
+            }, 50);
         }
     }
 
@@ -3345,24 +3346,59 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expandChat = expandChat;
 
     if (chatPanel) {
+        // Click to expand when collapsed; click drag handle or close button to collapse
         chatPanel.addEventListener('click', (e) => {
-            // Do not toggle if clicking input, send button, or clicking interactive text/users
+            // Do not toggle if clicking input, send button, interactive links, or users
             if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user') || e.target.closest('#chat-collapse-btn')) {
                 return;
             }
 
-            // Click toggles: expand if collapsed, slide back down if already expanded
-            if (chatPanel.classList.contains('expanded')) {
-                collapseChat();
-            } else {
+            if (!chatPanel.classList.contains('expanded')) {
                 expandChat();
+            } else if (e.target.closest('#chat-drag-handle')) {
+                collapseChat();
             }
         });
+
+        // Touch Slide Up / Slide Down Gestures
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isTouchTracking = false;
+
+        chatPanel.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            isTouchTracking = true;
+        }, { passive: true });
+
+        chatPanel.addEventListener('touchend', (e) => {
+            if (!isTouchTracking || e.changedTouches.length !== 1) return;
+            isTouchTracking = false;
+            const endY = e.changedTouches[0].clientY;
+            const endX = e.changedTouches[0].clientX;
+            const diffY = endY - touchStartY;
+            const diffX = Math.abs(endX - touchStartX);
+
+            // Verify predominantly vertical swipe
+            if (Math.abs(diffY) > 30 && Math.abs(diffY) > diffX) {
+                if (diffY < -30 && !chatPanel.classList.contains('expanded')) {
+                    // Swiped up on collapsed chat -> expand
+                    expandChat();
+                } else if (diffY > 30 && chatPanel.classList.contains('expanded')) {
+                    // Swiped down on expanded chat -> collapse
+                    const chatHistory = document.getElementById('chat-history');
+                    if (e.target.closest('#chat-drag-handle') || !chatHistory || chatHistory.scrollTop <= 8) {
+                        collapseChat();
+                    }
+                }
+            }
+        }, { passive: true });
     }
 
     if (collapseBtn) {
         collapseBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent re-expanding
+            e.stopPropagation();
             collapseChat();
         });
     }
