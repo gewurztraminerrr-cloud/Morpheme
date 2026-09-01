@@ -6406,27 +6406,37 @@ def tools_get_lists():
             response['uniques'] = cap_list(sorted(list(get_source_set('uniqueNWL'))))
             
         if list_type in ['all', 'new_nwl']:
-            response['new_nwl'] = list(get_source_set('new_NWL'))
-            response['new_nwl'].reverse() # Show most recent first
-            response['new_nwl'] = cap_list(response['new_nwl'])
+            raw_new_nwl = list(get_source_set('new_NWL'))
+            if no_limit:
+                response['new_nwl'] = sorted(raw_new_nwl)
+            else:
+                response['new_nwl'] = list(reversed(raw_new_nwl)) # Show most recent first
+                response['new_nwl'] = cap_list(response['new_nwl'])
             
         if list_type in ['all', 'new_csw']:
-            response['new_csw'] = list(get_source_set('new_CSW'))
-            response['new_csw'].reverse() # Show most recent first
-            response['new_csw'] = cap_list(response['new_csw'])
+            raw_new_csw = list(get_source_set('new_CSW'))
+            if no_limit:
+                response['new_csw'] = sorted(raw_new_csw)
+            else:
+                response['new_csw'] = list(reversed(raw_new_csw)) # Show most recent first
+                response['new_csw'] = cap_list(response['new_csw'])
             
         if list_type in ['all', 'added']:
-            # Added Words: Use preloaded in-memory list to prevent lag
+            # Added Words: Use preloaded in-memory list
             raw_lines = getattr(word_validator, 'added_words_list', [])
             unique_added = []
             for w in raw_lines:
                 # Filter by length and start char if provided
                 if target_len is not None and len(w) != target_len: continue
                 if start_char is not None and not w.startswith(start_char): continue
-                
                 unique_added.append(w)
-            # Sorted alphabetically (A-to-Z)
-            response['added'] = cap_list(unique_added)
+
+            if no_limit:
+                # View Full Lists: always alphabetically sorted (A-to-Z)
+                response['added'] = sorted(unique_added)
+            else:
+                # Default main tab (first 10,000): newest words first
+                response['added'] = cap_list(unique_added)
 
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:

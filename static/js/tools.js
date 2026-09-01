@@ -3650,9 +3650,20 @@ window.openFullListModal = function() {
         fullListCount.textContent = `Loading…`;
     }
 
+    // Helper to ensure alphabetical sorting for full list view
+    const sortAlphabetical = (list, type) => {
+        if (!list || list.length === 0) return [];
+        if (type === 'likelihood') return list; // Likelihood retains its score order
+        return list.slice().sort((a, b) => {
+            const wa = (typeof a === 'object' ? a.word : a) || '';
+            const wb = (typeof b === 'object' ? b.word : b) || '';
+            return wa.localeCompare(wb);
+        });
+    };
+
     // If cached in-memory, load immediately
     if (window._cachedFullWordLists[currentFilterKey]) {
-        const fullWords = window._cachedFullWordLists[currentFilterKey];
+        const fullWords = sortAlphabetical(window._cachedFullWordLists[currentFilterKey], selectedType);
         _fullListAllWords = fullWords;
         _fullListRenderedStart = 0;
         _fullListRenderedEnd = 0;
@@ -3671,7 +3682,8 @@ window.openFullListModal = function() {
         .then(r => r.json())
         .then(data => {
             if (window._lastFullListFilterKey !== currentFilterKey) return;
-            const fullWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || [];
+            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || [];
+            const fullWords = sortAlphabetical(rawWords, selectedType);
             _fullListAllWords = fullWords;
             _fullListRenderedStart = 0;
             _fullListRenderedEnd = 0;
