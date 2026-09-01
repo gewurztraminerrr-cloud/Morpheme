@@ -524,24 +524,34 @@ async function ejectToLobby(reason = "inactivity") {
 
     if (reason === "daily_reset") {
         const now = Date.now();
-        // DEDUPLICATION: Ensure ONLY ONE NOTICE is shown for the 12:00 AM daily reset
-        if (window._lastDailyResetNoticeTime && (now - window._lastDailyResetNoticeTime < 120000)) {
-            console.log('[play.js] Daily reset notice suppressed because one was already shown recently.');
+        // DEDUPLICATION: Ensure ONLY ONE NOTICE is shown for the 12:00 AM daily reset (never repeat multiple times)
+        const todayKey = new Date().toDateString();
+        let alreadyShownToday = (window._shownDailyResetDate === todayKey);
+        try {
+            if (sessionStorage.getItem('morpheme_shown_daily_reset_date') === todayKey) {
+                alreadyShownToday = true;
+            }
+        } catch(e) {}
+
+        if (alreadyShownToday || (window._lastDailyResetNoticeTime && (now - window._lastDailyResetNoticeTime < 300000))) {
+            console.log('[play.js] Daily reset notice suppressed because it was already shown once today.');
             if (window.navigateToPage) window.navigateToPage('lobby');
             else if (window.showPage) window.showPage('page-lobby');
             else window.location.href = '#page-lobby';
             setTimeout(() => { window._isEjectingToLobby = false; }, 500);
             return;
         }
+        window._shownDailyResetDate = todayKey;
         window._lastDailyResetNoticeTime = now;
+        try {
+            sessionStorage.setItem('morpheme_shown_daily_reset_date', todayKey);
+        } catch(e) {}
 
-        title = "Daily Room Reset (12:00 AM)";
+        title = "24-Hour Room Reset (12:00 AM)";
         message = `
-            The 24-hour Daily Room has concluded and reset at 12:00 AM for the new day!
+            The 24-hour round has concluded at 12:00 AM midnight. You have been returned to the Lobby while the room resets for the new day.
             <br><br>
-            You have been returned to the Lobby while the previous day's results are finalized.
-            <br><br>
-            Entering the room again from the Lobby will show you the brand-new daily round and board!
+            Entering the room again will show you the new round!
         `;
     }
 
@@ -1190,6 +1200,11 @@ async function updateGameState(incomingState = null) {
                         errData = await response.json();
                         errorMsg = errData.error || "";
                     } catch(e) {}
+
+                    if (errData && (errData.reason === 'daily_reset' || errorMsg.toLowerCase().includes('daily room reset') || errorMsg.toLowerCase().includes('daily_reset'))) {
+                        ejectToLobby("daily_reset");
+                        return;
+                    }
 
                     if (errData && (errData.timed_out || (errData.reason && errData.reason.startsWith('timeout')) || errorMsg.toLowerCase().includes('timed out'))) {
                         const reason = errData.reason || (errorMsg ? 'timeout:' + errorMsg : 'timeout');

@@ -1975,6 +1975,14 @@ class GameRoom:
                             } for p in (self.players or [])
                         }
                         
+                        # EVICTION RECORD: Mark all users in 24h room to receive daily_reset notice
+                        if not hasattr(self, 'evicted_users') or self.evicted_users is None:
+                            self.evicted_users = {}
+                        for p in (self.players or []):
+                            self.evicted_users[str(p.user_id)] = 'daily_reset'
+                        for s in (self.spectators or []):
+                            self.evicted_users[str(s.user_id)] = 'daily_reset'
+                        
                         # Capture intermission stats
                         self.previous_total_words = getattr(self, 'total_words_count', 0)
                         self.previous_total_points = getattr(self, 'total_points_count', 0)
@@ -6866,10 +6874,16 @@ class RoomManager:
                 room.round_start_time = time.time()
                 room.state = 'active'
                 if room.time_limit >= 7200:
+                    if not hasattr(room, 'evicted_users') or room.evicted_users is None:
+                        room.evicted_users = {}
+                    for p in (room.players or []):
+                        room.evicted_users[str(p.user_id)] = 'daily_reset'
+                    for s in (room.spectators or []):
+                        room.evicted_users[str(s.user_id)] = 'daily_reset'
                     room.players = []
                     room.past_players = {}
                     room.spectators = []
-                    print(f"[RoomManager] Reset 24h room {room_id} players for fresh new daily round.")
+                    print(f"[RoomManager] Reset 24h room {room_id} players for fresh new daily round and marked evicted_users for daily_reset notice.")
                 room.midnight_reset_occurred = False
                 if hasattr(room, 'intermission_stuck_start_time'):
                     delattr(room, 'intermission_stuck_start_time')
