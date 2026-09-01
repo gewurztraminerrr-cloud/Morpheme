@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="3x3x3">3x3x3 Cube</option>
                     </select>
                     <select id="lb-filter-time">
-                        <option value="all">All Speeds</option>
+                        <option value="all">All Time Lengths</option>
                         <option value="45">45s Blitz</option>
                         <option value="180">3m Standard</option>
                         <option value="300">5m Speed</option>
@@ -78,6 +78,152 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
+    // Filter Configurations and Cascading Logic
+    const allGameTypes = [
+        { value: 'all', text: 'All Game Types' },
+        { value: 'accumulative', text: 'Accumulative' },
+        { value: '3d', text: 'Cube' },
+        { value: 'fcfs', text: 'First Come First Serve' },
+        { value: 'split', text: 'Split Points' }
+    ];
+
+    const allDims = [
+        { value: 'all', text: 'All Sizes' },
+        { value: '4x4', text: '4x4' },
+        { value: '4x6', text: '4x6' },
+        { value: '5x7', text: '5x7' },
+        { value: '6x8', text: '6x8' },
+        { value: '3x3x3', text: '3x3x3 Cube' }
+    ];
+
+    const allTimes = [
+        { value: 'all', text: 'All Time Lengths' },
+        { value: '45', text: '45s Blitz' },
+        { value: '180', text: '3m Standard' },
+        { value: '300', text: '5m Speed' },
+        { value: '600', text: '10m Relaxed' }
+    ];
+
+    const modeConfig = {
+        'all': {
+            dims: ['4x4', '4x6', '5x7', '6x8', '3x3x3'],
+            times: ['45', '180', '300', '600']
+        },
+        'accumulative': {
+            dims: ['4x4', '4x6', '5x7', '6x8'],
+            times: ['45', '180', '600']
+        },
+        'fcfs': {
+            dims: ['4x4', '4x6', '5x7', '6x8'],
+            times: ['45', '180']
+        },
+        'split': {
+            dims: ['4x4', '4x6', '5x7', '6x8'],
+            times: ['45', '180']
+        },
+        '3d': {
+            dims: ['3x3x3'],
+            times: ['180', '300', '600']
+        }
+    };
+
+    function updateFilterDropdowns(source = 'game') {
+        const gameSelect = document.getElementById('lb-filter-game');
+        const dimsSelect = document.getElementById('lb-filter-dims');
+        const timeSelect = document.getElementById('lb-filter-time');
+        if (!gameSelect || !dimsSelect || !timeSelect) return;
+
+        let selectedGame = gameSelect.value;
+        let selectedDim = dimsSelect.value;
+        let selectedTime = timeSelect.value;
+
+        if (source === 'dims') {
+            if (selectedDim === '3x3x3') {
+                if (selectedGame !== '3d' && selectedGame !== 'all') {
+                    selectedGame = '3d';
+                    gameSelect.value = '3d';
+                }
+            } else if (selectedDim !== 'all') {
+                if (selectedGame === '3d') {
+                    selectedGame = 'all';
+                    gameSelect.value = 'all';
+                }
+            }
+        } else if (source === 'time') {
+            if (selectedTime === '300') {
+                if (selectedGame !== '3d' && selectedGame !== 'all') {
+                    selectedGame = '3d';
+                    gameSelect.value = '3d';
+                }
+            } else if (selectedTime === '45') {
+                if (selectedGame === '3d') {
+                    selectedGame = 'all';
+                    gameSelect.value = 'all';
+                }
+            }
+        }
+
+        const cfg = modeConfig[selectedGame] || modeConfig['all'];
+
+        // Determine allowed game modes if dimension or time was changed
+        let allowedGames = ['all', 'accumulative', '3d', 'fcfs', 'split'];
+        if (selectedDim === '3x3x3' || selectedTime === '300') {
+            allowedGames = ['all', '3d'];
+        } else if (selectedDim !== 'all') {
+            allowedGames = ['all', 'accumulative', 'fcfs', 'split'];
+        }
+        if (selectedTime === '45') {
+            allowedGames = allowedGames.filter(g => g !== '3d');
+        } else if (selectedTime === '600') {
+            allowedGames = allowedGames.filter(g => g !== 'fcfs' && g !== 'split');
+        }
+
+        if (source !== 'game') {
+            const currentG = gameSelect.value;
+            gameSelect.innerHTML = allGameTypes
+                .filter(g => g.value === 'all' || allowedGames.includes(g.value))
+                .map(g => `<option value="${g.value}">${g.text}</option>`)
+                .join('');
+            if (allowedGames.includes(currentG) || currentG === 'all') {
+                gameSelect.value = currentG;
+            } else {
+                gameSelect.value = 'all';
+            }
+        }
+
+        // Rebuild Dims select
+        const allowedDims = cfg.dims;
+        const currentDim = dimsSelect.value;
+        dimsSelect.innerHTML = '<option value="all">All Sizes</option>' + 
+            allDims
+                .filter(d => d.value !== 'all' && allowedDims.includes(d.value))
+                .map(d => `<option value="${d.value}">${d.text}</option>`)
+                .join('');
+        if (allowedDims.includes(currentDim) || currentDim === 'all') {
+            dimsSelect.value = currentDim;
+        } else {
+            dimsSelect.value = 'all';
+        }
+
+        // Rebuild Time select
+        const allowedTimes = cfg.times;
+        const currentTime = timeSelect.value;
+        timeSelect.innerHTML = '<option value="all">All Time Lengths</option>' + 
+            allTimes
+                .filter(t => t.value !== 'all' && allowedTimes.includes(t.value))
+                .map(t => `<option value="${t.value}">${t.text}</option>`)
+                .join('');
+        if (allowedTimes.includes(currentTime) || currentTime === 'all') {
+            timeSelect.value = currentTime;
+        } else {
+            timeSelect.value = 'all';
+        }
+
+        currentFilters.game_type = gameSelect.value;
+        currentFilters.board_dimensions = dimsSelect.value;
+        currentFilters.time_limit = timeSelect.value;
+    }
+
     // -- Event Listeners --
 
     // Tabs
@@ -92,16 +238,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Filters
-    document.getElementById('lb-filter-game').addEventListener('change', (e) => {
-        currentFilters.game_type = e.target.value;
+    document.getElementById('lb-filter-game').addEventListener('change', () => {
+        updateFilterDropdowns('game');
         fetchLeaderboard();
     });
-    document.getElementById('lb-filter-dims').addEventListener('change', (e) => {
-        currentFilters.board_dimensions = e.target.value;
+    document.getElementById('lb-filter-dims').addEventListener('change', () => {
+        updateFilterDropdowns('dims');
         fetchLeaderboard();
     });
-    document.getElementById('lb-filter-time').addEventListener('change', (e) => {
-        currentFilters.time_limit = e.target.value;
+    document.getElementById('lb-filter-time').addEventListener('change', () => {
+        updateFilterDropdowns('time');
         fetchLeaderboard();
     });
 
