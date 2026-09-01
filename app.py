@@ -7551,7 +7551,7 @@ def get_leaderboard_data():
         # 1. Best Scores
         scores = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.total_score, rh.user_rating, u.username, u.country_flag, u.avatar_url,
+                SELECT rh.total_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                        rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.total_score DESC, rh.timestamp DESC) as rn
@@ -7565,7 +7565,7 @@ def get_leaderboard_data():
         # 2. Best Words
         words = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.best_word, rh.best_word_score, u.username, u.country_flag, u.avatar_url,
+                SELECT rh.best_word, rh.best_word_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                        rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
@@ -7579,7 +7579,7 @@ def get_leaderboard_data():
         # 3. Best PE
         pes = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.performance_ratio, rh.total_score, u.username, u.country_flag, u.avatar_url,
+                SELECT rh.performance_ratio, rh.total_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                        rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.total_words_avail, rh.round_start_time,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.performance_ratio DESC, rh.timestamp DESC) as rn
@@ -7592,7 +7592,7 @@ def get_leaderboard_data():
 
         # 4. Best Pct Found (capped to avoid full-table JSON scan)
         cursor_pcts = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+            SELECT rh.total_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                    rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                    rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.total_words_avail, rh.round_start_time
             FROM round_history rh
@@ -7631,7 +7631,7 @@ def get_leaderboard_data():
         # 5. Best Ratings
         ratings = conn.execute(f"""
             SELECT * FROM (
-                SELECT rh.user_rating as max_rating, u.username, u.country_flag, u.avatar_url,
+                SELECT rh.user_rating as max_rating, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.timestamp, rh.game_type, rh.board_dimensions, rh.round_duration,
                        ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.user_rating DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
@@ -7644,7 +7644,7 @@ def get_leaderboard_data():
         # 6. Avg Score
         avgs = conn.execute(f"""
             SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, MAX(rh.timestamp) as last_active,
-                   u.username, u.country_flag, u.avatar_url
+                   COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
@@ -7655,7 +7655,7 @@ def get_leaderboard_data():
 
         # 7. Obscure words (capped — high-scoring rounds are most likely candidates)
         cursor_obscure = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+            SELECT rh.total_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                    rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                    rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.round_start_time
             FROM round_history rh
@@ -7684,7 +7684,7 @@ def get_leaderboard_data():
 
         # 8. Avg Pct Found (capped)
         cursor_avg_pct = conn.execute(f"""
-            SELECT rh.total_score, u.username, u.country_flag, u.avatar_url,
+            SELECT rh.total_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                    rh.total_words_avail, rh.words_json
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
@@ -7715,6 +7715,7 @@ def get_leaderboard_data():
                 'username': user,
                 'country_flag': d['country_flag'],
                 'avatar_url': d['avatar_url'],
+                'user_rating': d.get('user_rating', 1200),
                 'avg_pct': round(sum(pcts) / len(pcts) * 100, 1),
                 'games': len(pcts)
             })
@@ -7729,8 +7730,9 @@ def get_leaderboard_data():
             is_24h_filter = (time_limit != 'all' and int(time_limit) >= 7200)
             rating_subquery = "u.rating" if is_24h_filter else "COALESCE((SELECT MAX(rating) FROM user_ratings WHERE user_id = u.id AND config_key LIKE ?), 1200)"
             m_sql = f"""SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
-                               COUNT(rh.id) as game_count, {rating_subquery} as rating, rh.game_type,
-                               rh.board_dimensions, rh.round_duration
+                               COUNT(rh.id) as game_count, {rating_subquery} as rating,
+                               COALESCE(u.rating, 1200) as user_rating,
+                               rh.game_type, rh.board_dimensions, rh.round_duration
                         FROM round_history rh JOIN users u ON rh.user_id = u.id
                         WHERE {base_where} GROUP BY u.id ORDER BY game_count DESC LIMIT 50"""
             m_params = [rating_pattern] + params if not is_24h_filter else params
@@ -7743,6 +7745,7 @@ def get_leaderboard_data():
                                     SELECT DISTINCT (game_type || '|' || board_dimensions || '|' || round_duration)
                                     FROM round_history WHERE user_id = u.id AND {period_clause}
                                 )) as rating,
+                               COALESCE(u.rating, 1200) as user_rating,
                                rh.game_type, rh.board_dimensions, rh.round_duration
                         FROM round_history rh JOIN users u ON rh.user_id = u.id
                         WHERE {base_where} GROUP BY u.id ORDER BY game_count DESC LIMIT 50"""

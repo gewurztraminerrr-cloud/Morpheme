@@ -632,9 +632,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserLink(row) {
-        // Colored square logic
-        const rating = row.user_rating || row.rating || 1200;
-        let color = '#95a5a6'; // gray default
+        // Colored square logic: use user's rating
+        const rating = (row.user_rating !== undefined && row.user_rating !== null && row.user_rating > 0)
+            ? row.user_rating
+            : ((row.rating !== undefined && row.rating !== null && row.rating > 0) ? row.rating : 1200);
+
+        let color = '#0044ff'; // blue default (1200)
         if (window.getRatingColor) {
             color = window.getRatingColor(rating);
         } else {
@@ -643,12 +646,11 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (rating >= 2000) color = '#e67e22'; // orange
             else if (rating >= 1800) color = '#f1c40f'; // yellow
             else if (rating >= 1500) color = '#2ecc71'; // green
-            else if (rating >= 1200) color = '#3498db'; // blue
+            else if (rating >= 1200) color = '#0044ff'; // blue
             else color = '#9b59b6'; // purple/basic
         }
 
         const flagHtml = window.getFlagHtml ? window.getFlagHtml(row.country_flag) : (row.country_flag || '');
-        // If avatar isn't supported yet in API response fully, fallback to flag/square
 
         return `
             <div class="lb-user-cell" onclick="window.showMiniProfile('${row.username}')">
