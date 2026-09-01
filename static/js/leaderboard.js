@@ -284,6 +284,19 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
+        createTableCard(contentArea, "Highest Average Score (Min 3 Games)", data.avg_scores, (row, i) => {
+            return `
+                 <td class="col-rank">#${i + 1}</td>
+                 <td class="col-user">
+                      ${renderUserLink(row)}
+                 </td>
+                 <td class="col-val highlight">${Math.round(row.avg_score)}</td>
+                 <td class="col-meta">${row.games} games</td>
+                 <td class="col-date">${formatDate(row.last_active)}</td>
+                 <td class="col-action"></td>
+             `;
+        });
+
         createTableCard(contentArea, "Best Words Played", data.best_words, (row, i) => {
             return `
                 <td class="col-rank">#${i + 1}</td>
@@ -359,19 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      ${renderReplayBtn(row)}
                  </td>
             `;
-        });
-
-        createTableCard(contentArea, "Highest Average Score (Min 3 Games)", data.avg_scores, (row, i) => {
-            return `
-                 <td class="col-rank">#${i + 1}</td>
-                 <td class="col-user">
-                      ${renderUserLink(row)}
-                 </td>
-                 <td class="col-val highlight">${Math.round(row.avg_score)}</td>
-                 <td class="col-meta">${row.games} games</td>
-                 <td class="col-date">${formatDate(row.last_active)}</td>
-                 <td class="col-action"></td>
-             `;
         });
 
         createTableCard(contentArea, "Peak Ratings Achieved", data.best_ratings, (row, i) => {
