@@ -7758,6 +7758,8 @@ def get_leaderboard_data():
         current_ratings_rows = conn.execute(f"""
             SELECT u.username, u.country_flag, u.avatar_url, MAX(rh.timestamp) as last_active,
                    COALESCE(ur_best.rating, 1200) as rating,
+                   COALESCE(u.games_played, 0) as user_total_games,
+                   COUNT(rh.id) as period_games,
                    ur_best.config_key,
                    rh.game_type, rh.board_dimensions, rh.round_duration
             FROM round_history rh
@@ -7776,6 +7778,12 @@ def get_leaderboard_data():
         current_ratings = []
         for r in current_ratings_rows:
             d = dict(r)
+            rating_val = d.get('rating', 1200)
+            total_games = max(d.get('user_total_games', 0), d.get('period_games', 0))
+            # Rule: If rating is 1200, must have over 10 games played to be included
+            if rating_val == 1200 and total_games <= 10:
+                continue
+
             cfg_k = d.get('config_key') or ''
             parts = cfg_k.split('|')
             if len(parts) == 3:
