@@ -5731,6 +5731,22 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         box-sizing: border-box !important;
     }
+    #tool-unscramble .unscramble-must-have-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #tool-unscramble .unscramble-must-have-row > select {
+        width: 110px !important;
+        max-width: 140px !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
     .unscramble-container {
         flex-direction: column !important;
         height: auto !important;
