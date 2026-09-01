@@ -2150,6 +2150,7 @@ class GameRoom:
                             self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
                             self.winners_history.insert(0, {
                                 'round': self.current_round,
+                                'game_type': getattr(self, 'game_type', 'accumulative'),
                                 'winners': winners_data,
                                 'all_players': sorted([{'username': p.username, 'score': p.score} for p in (active_pool or self.players)], key=lambda x: x['score'], reverse=True),
                                 'score': max_score,

@@ -1840,15 +1840,40 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
     window.currentActiveReplayRound = round;
 
+    // Helper to format game type name
+    function getReplayGameTypeName(r) {
+        if (!r) return 'Accumulative';
+        const gt = String(r.game_type || r.mode || '').toLowerCase().trim();
+        const dims = String(r.dimensions || r.board_dimensions || '').toUpperCase();
+        const isCube = (gt === 'cube' || gt === '3d' || gt === 'solo_3d' || gt === '3d_cube' || gt === '3d cube' ||
+                        dims.includes('CUBE') || dims.includes('3X3X3') || dims.includes('3D') ||
+                        (Array.isArray(r.board) && r.board.length === 6 && Array.isArray(r.board[0]) && Array.isArray(r.board[0][0])));
+        if (isCube) return 'Cube';
+        if (gt === 'fcfs' || gt === 'solo_fcfs' || gt.includes('first_come') || gt.includes('first come')) return 'First Come First Serve';
+        if (gt === 'split' || gt === 'solo_split' || gt.includes('split')) return 'Split Points';
+        if (gt === 'tournament') return 'Tournament';
+        if (gt === 'accumulative' || gt === 'acc' || gt === 'solo_accumulative') return 'Accumulative';
+        if (gt) return gt.charAt(0).toUpperCase() + gt.slice(1);
+        return 'Accumulative';
+    }
+
+    const gameTypeName = getReplayGameTypeName(round);
+
+    // Update Game Type Display
+    const gameTypeEl = document.getElementById('history-review-game-type');
+    const intGameTypeEl = document.getElementById('integrated-history-review-game-type');
+    if (gameTypeEl) gameTypeEl.innerText = gameTypeName;
+    if (intGameTypeEl) intGameTypeEl.innerText = gameTypeName;
+
     // Update Date Display
     const dateEl = document.getElementById('history-review-date');
-    if (dateEl) {
-        if (round.timestamp) {
-            dateEl.innerText = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
-        } else {
-            dateEl.innerText = '';
-        }
+    const intDateEl = document.getElementById('integrated-history-review-date');
+    let dateStr = '';
+    if (round.timestamp) {
+        dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
     }
+    if (dateEl) dateEl.innerText = dateStr;
+    if (intDateEl) intDateEl.innerText = dateStr;
 
     // Try to find the Overlay first (preferred for a "window that appears")
     const overlay = document.getElementById('history-review-overlay');
