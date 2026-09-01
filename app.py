@@ -1027,6 +1027,8 @@ def add_definition_api():
         # Flush and Reload
         DEFINITIONS_CACHE = {} # Force reload
         load_definitions()
+        global _UNDEFINED_WORDS_CACHE
+        _UNDEFINED_WORDS_CACHE = None
         
         if len(words) > 1:
             msg = f"Definitions for {', '.join(words)} set."
@@ -1049,14 +1051,7 @@ def compute_undefined_words(force=False):
             
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            added_words_path = os.path.join(base_dir, 'dictionaries', 'added_words.txt')
-            raw_added = set()
-            if os.path.exists(added_words_path):
-                with open(added_words_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    for line in f:
-                        w = line.strip().upper()
-                        if w:
-                            raw_added.add(w)
+            dicts_dir = os.path.join(base_dir, 'dictionaries')
 
             # Definitions from DEFINITIONS_CACHE (or disk)
             global DEFINITIONS_CACHE
@@ -1085,22 +1080,25 @@ def compute_undefined_words(force=False):
                                 words.add(w)
                 return words
 
-            dicts_dir = os.path.join(base_dir, 'dictionaries')
             nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
             csw_words   = _read_wordlist(os.path.join(dicts_dir, 'CSW.txt'))
             long_words  = _read_wordlist(os.path.join(dicts_dir, '16plus.txt'))
-            standard    = nwl_words | csw_words | long_words
-            truly_added = raw_added - standard
+            added_words = _read_wordlist(os.path.join(dicts_dir, 'added_words.txt'))
+            new_nwl     = _read_wordlist(os.path.join(dicts_dir, 'new_NWL.txt'))
+            new_csw     = _read_wordlist(os.path.join(dicts_dir, 'new_CSW.txt'))
 
-            undefined_words = sorted([w for w in truly_added if w not in defined_words])
+            all_vocab = nwl_words | csw_words | long_words | added_words | new_nwl | new_csw
+
+            # All words without a definition, sorted by length (shortest first) then alphabetically
+            undefined_words = [w for w in all_vocab if w not in defined_words]
+            undefined_words.sort(key=lambda x: (len(x), x))
+
             _UNDEFINED_WORDS_CACHE = {
                 'success': True,
                 'words': undefined_words,
                 '_debug': {
-                    'raw_added_count': len(raw_added),
+                    'total_vocab_count': len(all_vocab),
                     'defined_count': len(defined_words),
-                    'standard_dict_count': len(standard),
-                    'truly_added_count': len(truly_added),
                     'undefined_count': len(undefined_words),
                 }
             }
@@ -1115,7 +1113,8 @@ def get_undefined_words_api():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
         
-    result = compute_undefined_words(force=False)
+    force = request.args.get('force', 'false').lower() == 'true'
+    result = compute_undefined_words(force=force)
     status_code = 200 if result.get('success') else 500
     return jsonify(result), status_code
 
@@ -1172,8 +1171,9 @@ def remove_definition_api():
         
         os.replace(temp_path, DEFINITIONS_PATH)
         
-        global DEFINITIONS_CACHE
+        global DEFINITIONS_CACHE, _UNDEFINED_WORDS_CACHE
         DEFINITIONS_CACHE = {} # Force reload
+        _UNDEFINED_WORDS_CACHE = None
         load_definitions()
         
         if len(removed_words) > 1:

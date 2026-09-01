@@ -562,12 +562,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const refreshUndefBtn = document.getElementById('refresh-undef-btn');
     if (refreshUndefBtn) {
-        refreshUndefBtn.addEventListener('click', loadUndefinedWords);
+        refreshUndefBtn.addEventListener('click', () => loadUndefinedWords(true));
     }
 
     const undefSearchInput = document.getElementById('undef-search-input');
     if (undefSearchInput) {
         undefSearchInput.addEventListener('input', renderUndefinedWords);
+    }
+
+    const undefScrollArea = document.querySelector('.undef-words-list-scroll');
+    if (undefScrollArea) {
+        undefScrollArea.addEventListener('scroll', () => {
+            if (undefScrollArea.scrollTop + undefScrollArea.clientHeight >= undefScrollArea.scrollHeight - 150) {
+                appendUndefBatch();
+            }
+        });
     }
 
     // Ban / Timeout User
@@ -1048,8 +1057,11 @@ window.promptRemoveAddedWord = async function() {
 
 // Undefined Words Table Support
 let undefinedWordsList = [];
+let undefRenderedCount = 0;
+const UNDEF_BATCH_SIZE = 500;
+let currentFilteredUndef = [];
 
-async function loadUndefinedWords() {
+async function loadUndefinedWords(force = false) {
     const container = document.getElementById('undef-words-container');
     if (!container) return;
     
@@ -1066,7 +1078,8 @@ async function loadUndefinedWords() {
     if (countEl) countEl.textContent = '(Loading...)';
     
     try {
-        const response = await fetch('/api/mods/definitions/undefined');
+        const url = force ? '/api/mods/definitions/undefined?force=true' : '/api/mods/definitions/undefined';
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.success && Array.isArray(data.words)) {
@@ -1089,26 +1102,34 @@ function renderUndefinedWords() {
     
     if (!tbody) return;
     
-    const filtered = query 
+    currentFilteredUndef = query 
         ? undefinedWordsList.filter(w => w.includes(query))
         : undefinedWordsList;
         
     if (countEl) {
-        countEl.textContent = `(${filtered.length} undefined)`;
+        countEl.textContent = `(${currentFilteredUndef.length.toLocaleString()} undefined)`;
     }
     
-    if (filtered.length === 0) {
+    if (currentFilteredUndef.length === 0) {
         tbody.innerHTML = `<tr><td style="padding: 10px; color: rgba(255,255,255,0.4); font-size: 0.85rem; text-align: center;">No undefined words found.</td></tr>`;
         return;
     }
     
-    // Slice to first 100 items to keep DOM weight lightweight and prevent layout lag/freezes on mobile resize
-    const displayLimit = 100;
-    const displayWords = filtered.slice(0, displayLimit);
+    undefRenderedCount = 0;
+    tbody.innerHTML = '';
+    appendUndefBatch();
+}
+
+function appendUndefBatch() {
+    const tbody = document.getElementById('undef-words-tbody');
+    if (!tbody || undefRenderedCount >= currentFilteredUndef.length) return;
+    
+    const nextWords = currentFilteredUndef.slice(undefRenderedCount, undefRenderedCount + UNDEF_BATCH_SIZE);
+    if (nextWords.length === 0) return;
     
     // Group words by length
     const groups = {};
-    displayWords.forEach(word => {
+    nextWords.forEach(word => {
         const len = word.length;
         if (!groups[len]) groups[len] = [];
         groups[len].push(word);
@@ -1123,12 +1144,15 @@ function renderUndefinedWords() {
         // Sort words within this length group alphabetically
         groups[len].sort((a, b) => a.localeCompare(b));
         
-        // Category Header Row
-        rowsHTML.push(`
-            <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); pointer-events: none;">
-                <td style="padding: 6px 12px; font-weight: 800; font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">${len} Letters</td>
-            </tr>
-        `);
+        // Check if header for this length already exists in DOM
+        const existingHeader = tbody.querySelector(`.undef-header-${len}`);
+        if (!existingHeader) {
+            rowsHTML.push(`
+                <tr class="undef-header-${len}" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); pointer-events: none;">
+                    <td style="padding: 6px 12px; font-weight: 800; font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">${len} Letters</td>
+                </tr>
+            `);
+        }
         
         // Word Rows
         groups[len].forEach(word => {
@@ -1139,19 +1163,9 @@ function renderUndefinedWords() {
             `);
         });
     });
-
-    // Add footer warning if total filtered exceeds limit
-    if (filtered.length > displayLimit) {
-        rowsHTML.push(`
-            <tr style="pointer-events: none;">
-                <td style="padding: 10px; color: rgba(255,255,255,0.4); font-size: 0.8rem; text-align: center; font-style: italic; background: rgba(0,0,0,0.1);">
-                    Showing first ${displayLimit} of ${filtered.length} words. Use search to filter.
-                </td>
-            </tr>
-        `);
-    }
     
-    tbody.innerHTML = rowsHTML.join('');
+    tbody.insertAdjacentHTML('beforeend', rowsHTML.join(''));
+    undefRenderedCount += nextWords.length;
 }
 
 window.selectUndefinedWord = function(word) {
@@ -1167,6 +1181,7 @@ window.selectUndefinedWord = function(word) {
 
 window.loadUndefinedWords = loadUndefinedWords;
 window.renderUndefinedWords = renderUndefinedWords;
+window.appendUndefBatch = appendUndefBatch;
 
 window.showModTab = function(tabId) {
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
