@@ -70,6 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="lb-attribution">
                 * Leaderboards update in real-time. Only non-24h rooms are tracked.
             </div>
+
+            <!-- Mobile Vertical Scroller Track & Thumb -->
+            <div id="lb-mobile-scrollbar-track" class="lb-mobile-scrollbar-track">
+                <div id="lb-mobile-scrollbar-thumb" class="lb-mobile-scrollbar-thumb"></div>
+            </div>
         </div>
     `;
 
@@ -546,6 +551,149 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function initMobileScrollbar() {
+        const page = document.getElementById('page-leaderboards');
+        const track = document.getElementById('lb-mobile-scrollbar-track');
+        const thumb = document.getElementById('lb-mobile-scrollbar-thumb');
+        if (!page || !track || !thumb) return;
+
+        let isDragging = false;
+        let startY = 0;
+        let startThumbTop = 0;
+        let rafId = null;
+
+        function updateThumb() {
+            if (isDragging) return;
+            if (window.innerWidth > 992) {
+                track.style.display = 'none';
+                return;
+            }
+
+            const scrollHeight = page.scrollHeight;
+            const clientHeight = page.clientHeight;
+            const scrollTop = page.scrollTop;
+
+            if (scrollHeight <= clientHeight + 15 || clientHeight <= 0) {
+                track.style.display = 'none';
+                return;
+            }
+            track.style.display = 'block';
+
+            const trackHeight = track.clientHeight;
+            const ratio = Math.min(1, clientHeight / scrollHeight);
+            const thumbHeight = Math.max(35, Math.min(trackHeight, trackHeight * ratio));
+            thumb.style.height = `${thumbHeight}px`;
+
+            const maxScrollTop = scrollHeight - clientHeight;
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+            thumb.style.top = `${thumbTop}px`;
+        }
+
+        function scheduleUpdate() {
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                updateThumb();
+            });
+        }
+
+        page.addEventListener('scroll', scheduleUpdate, { passive: true });
+        window.addEventListener('resize', scheduleUpdate, { passive: true });
+
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(scheduleUpdate);
+            ro.observe(page);
+        }
+        if (window.MutationObserver) {
+            const mo = new MutationObserver(scheduleUpdate);
+            mo.observe(page, { childList: true, subtree: true });
+        }
+
+        function onDragStart(e) {
+            isDragging = true;
+            thumb.classList.add('dragging');
+            document.body.style.userSelect = 'none';
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+            startThumbTop = parseFloat(thumb.style.top) || 0;
+
+            document.addEventListener('mousemove', onDragMove, { passive: false });
+            document.addEventListener('mouseup', onDragEnd);
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
+            document.addEventListener('touchcancel', onDragEnd);
+
+            if (e.cancelable !== false) e.preventDefault();
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = clientY - startY;
+
+            const trackHeight = track.clientHeight;
+            const thumbHeight = thumb.offsetHeight;
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+
+            let newThumbTop = Math.max(0, Math.min(maxThumbTop, startThumbTop + deltaY));
+            thumb.style.top = `${newThumbTop}px`;
+
+            const scrollHeight = page.scrollHeight;
+            const clientHeight = page.clientHeight;
+            const maxScrollTop = scrollHeight - clientHeight;
+            if (maxThumbTop > 0) {
+                page.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+            }
+
+            if (e.cancelable !== false) e.preventDefault();
+        }
+
+        function onDragEnd() {
+            if (isDragging) {
+                isDragging = false;
+                thumb.classList.remove('dragging');
+                document.body.style.userSelect = '';
+
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onDragMove);
+                document.removeEventListener('touchend', onDragEnd);
+                document.removeEventListener('touchcancel', onDragEnd);
+
+                scheduleUpdate();
+            }
+        }
+
+        thumb.addEventListener('mousedown', onDragStart);
+        thumb.addEventListener('touchstart', onDragStart, { passive: false });
+
+        track.addEventListener('click', (e) => {
+            if (e.target === thumb) return;
+            const rect = track.getBoundingClientRect();
+            const clickY = e.clientY - rect.top;
+            const trackHeight = track.clientHeight;
+            const thumbHeight = thumb.offsetHeight;
+            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+            const targetThumbTop = Math.max(0, Math.min(maxThumbTop, clickY - (thumbHeight / 2)));
+            
+            const scrollHeight = page.scrollHeight;
+            const clientHeight = page.clientHeight;
+            const maxScrollTop = scrollHeight - clientHeight;
+            if (maxThumbTop > 0) {
+                page.scrollTo({
+                    top: (targetThumbTop / maxThumbTop) * maxScrollTop,
+                    behavior: 'smooth'
+                });
+            }
+        });
+
+        scheduleUpdate();
+        setTimeout(scheduleUpdate, 200);
+        setTimeout(scheduleUpdate, 600);
+    }
+
+    initMobileScrollbar();
+
     // Initial Fetch
     // We delay slightly to ensure global styles/scripts are ready
     setTimeout(() => {
@@ -561,6 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mutations.forEach((mutation) => {
                 if (mutation.target.classList.contains('active')) {
                     fetchLeaderboard();
+                    initMobileScrollbar();
                 }
             });
         });

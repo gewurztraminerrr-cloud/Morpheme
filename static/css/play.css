@@ -6313,11 +6313,57 @@ input[type=range]::-moz-range-track {
     }
 
     #page-leaderboards {
-        padding: 10px 6px !important;
+        padding: 10px 22px 10px 6px !important;
+        position: relative !important;
     }
 
     #page-tournaments {
         padding: 10px 0px !important;
+    }
+}
+
+/* Leaderboards Mobile Vertical Scroller Track & Thumb */
+.lb-mobile-scrollbar-track {
+    display: none;
+}
+
+@media (max-width: 992px) {
+    .lb-mobile-scrollbar-track {
+        position: fixed;
+        top: 130px;
+        bottom: 25px;
+        right: 3px;
+        width: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 7px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        z-index: 999;
+        backdrop-filter: blur(4px);
+        touch-action: none;
+        display: none; /* Shown dynamically via JS when tables overflow */
+    }
+
+    .lb-mobile-scrollbar-thumb {
+        position: absolute;
+        top: 0;
+        left: 1px;
+        width: 10px;
+        min-height: 35px;
+        background: linear-gradient(180deg, #409cff, #2980b9);
+        border-radius: 5px;
+        cursor: pointer;
+        border: 1px solid rgba(64, 156, 255, 0.6);
+        box-shadow: 0 0 8px rgba(64, 156, 255, 0.4);
+        touch-action: none;
+        transition: width 0.15s, background 0.15s;
+    }
+
+    .lb-mobile-scrollbar-thumb:active,
+    .lb-mobile-scrollbar-thumb.dragging {
+        background: linear-gradient(180deg, #60adff, #3498db);
+        border: 1px solid rgba(64, 156, 255, 0.9);
+        box-shadow: 0 0 12px rgba(64, 156, 255, 0.7);
+        width: 12px;
     }
 }
 
