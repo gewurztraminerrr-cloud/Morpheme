@@ -1780,8 +1780,8 @@ body.theme-light-brown .word-item.missed {
     gap: 15px;
     height: calc(100vh - 240px);
     width: 100%;
-    padding: 0 15px 10px 0;
-    /* Flush left as requested */
+    padding: 0;
+    margin: 0;
     box-sizing: border-box;
 }
 
@@ -1793,7 +1793,8 @@ body.theme-light-brown .word-item.missed {
     flex-direction: column;
     overflow: hidden;
     min-width: 0;
-    /* Allow grid to shrink them */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .list-column h3 {
@@ -7363,30 +7364,47 @@ body .board-cell.tile-flash-purple * {
         padding: 0 !important;
     }
 
+    .combo-control-panel,
     #tool-sequence .combo-control-panel,
     #tool-subanagrams .combo-control-panel,
-    #tool-lists .combo-control-panel {
+    #tool-lists .combo-control-panel,
+    #tool-combo .combo-control-panel,
+    #tool-is-valid .combo-control-panel,
+    #tool-unscramble .combo-control-panel,
+    #tool-find-count .combo-control-panel,
+    #tool-timer .combo-control-panel,
+    #page-profile .combo-control-panel {
         flex: 0 0 auto !important;
-        margin-bottom: 8px !important;
-        padding: 12px 16px !important;
+        margin-bottom: 12px !important;
+        padding: 14px 16px !important;
         box-sizing: border-box !important;
         width: 100% !important;
+        max-width: 100% !important;
     }
 
     #tool-sequence .seq-results-container,
     #tool-subanagrams #sub-results-container,
     #tool-lists .lists-container,
+    #tool-combo .combo-results-container,
+    #tool-is-valid #valid-results-container,
     .seq-results-container,
-    #sub-results-container {
+    #sub-results-container,
+    .lists-container {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 0 !important;
         margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
     }
 
     .list-scroll-area-wrapper,
@@ -7395,6 +7413,8 @@ body .board-cell.tile-flash-purple * {
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
@@ -7408,14 +7428,22 @@ body .board-cell.tile-flash-purple * {
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         overflow-y: auto !important;
     }
 
-    #tool-lists .list-column {
+    #tool-lists .list-column,
+    .lists-container .list-column {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
