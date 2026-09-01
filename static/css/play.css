@@ -7037,6 +7037,7 @@ body.is-desktop .word-input-section {
 
 
 /* Responsive Dynamic Chatbox Enlargement Styles */
+/* Responsive Dynamic Chatbox Enlargement Styles */
 .left-panel-container {
     position: relative;
     overflow: hidden;
@@ -7044,22 +7045,38 @@ body.is-desktop .word-input-section {
 
 .left-panel-container .players-panel,
 .left-panel-container .definitions-panel {
-    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, margin 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.25s ease;
     min-height: 0;
     overflow: hidden;
-    will-change: max-height, opacity;
+}
+
+.left-panel-container.chat-expanded .players-panel,
+.left-panel-container.chat-expanded .definitions-panel {
+    opacity: 0.15;
+    pointer-events: none;
 }
 
 .chat-panel {
     position: relative;
-    transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), flex 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+    transition: height 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), max-height 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
     cursor: pointer;
-    will-change: height, transform;
+    overflow: hidden;
+    will-change: height, max-height;
+    box-sizing: border-box;
 }
 
 .chat-panel .chat-input-section,
 .chat-panel #chat-history {
     cursor: default;
+    min-height: 0;
+}
+
+#chat-history {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Close/Collapse Button positioning */
@@ -7067,14 +7084,14 @@ body.is-desktop .word-input-section {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 50%;
     color: var(--text-primary);
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     font-size: 20px;
-    line-height: 24px;
+    line-height: 26px;
     text-align: center;
     cursor: pointer;
     z-index: 10005;
@@ -7083,42 +7100,50 @@ body.is-desktop .word-input-section {
 }
 
 .chat-collapse-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.08);
 }
 
 .chat-collapse-btn:active {
     transform: scale(0.95);
 }
 
-/* Desktop layout overrides (Smooth upward flex sliding) */
+/* Desktop layout overrides (Smooth bottom-anchored upward expansion without flex disruption) */
 @media (min-width: 993px) {
-    .left-panel-container.chat-expanded {
-        height: 100%;
-    }
-    .left-panel-container.chat-expanded .players-panel,
-    .left-panel-container.chat-expanded .definitions-panel {
-        flex: 0 0 0px !important;
-        height: 0 !important;
-        max-height: 0 !important;
-        min-height: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        border-width: 0 !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        visibility: hidden;
-    }
     .chat-panel.expanded {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         height: 100% !important;
-        flex: 1 1 100% !important;
-        box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+        max-height: 100% !important;
+        z-index: 60 !important;
+        box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.65);
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+        border-radius: 12px !important;
+    }
+    
+    .chat-panel.collapsing {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 150px !important;
+        max-height: 150px !important;
+        z-index: 60 !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        border-radius: 12px !important;
+    }
+
+    .chat-panel.expanded #chat-history,
+    .chat-panel.collapsing #chat-history {
+        margin-top: 10px;
     }
 }
 
-/* Mobile layout overrides (Smooth upward / downward sliding sheet) */
+/* Mobile layout overrides (Smooth GPU-accelerated upward / downward sliding sheet) */
 @media (max-width: 992px) {
     .chat-panel.expanded {
         position: fixed !important;
@@ -7131,14 +7156,14 @@ body.is-desktop .word-input-section {
         height: 100dvh !important;
         z-index: 99999 !important;
         border-radius: 0 !important;
-        padding: 20px !important;
+        padding: 16px !important;
         box-sizing: border-box !important;
-        background: var(--bg-primary) !important;
+        background: var(--bg-panel, #1e293b) !important;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5) !important;
-        animation: chatSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transform: translate3d(0, 0, 0) !important;
+        opacity: 1 !important;
+        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.25s ease !important;
         will-change: transform, opacity;
-        -webkit-transform: translate3d(0, 0, 0);
-        transform: translate3d(0, 0, 0);
     }
 
     .chat-panel.collapsing {
@@ -7152,41 +7177,23 @@ body.is-desktop .word-input-section {
         height: 100dvh !important;
         z-index: 99999 !important;
         border-radius: 0 !important;
-        padding: 20px !important;
+        padding: 16px !important;
         box-sizing: border-box !important;
-        background: var(--bg-primary) !important;
-        animation: chatSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        background: var(--bg-panel, #1e293b) !important;
+        transform: translate3d(0, 100%, 0) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease !important;
         will-change: transform, opacity;
-        -webkit-transform: translate3d(0, 0, 0);
-        transform: translate3d(0, 0, 0);
     }
 
-    @keyframes chatSlideUp {
-        0% {
-            transform: translate3d(0, 100%, 0);
-            opacity: 0.6;
-        }
-        100% {
-            transform: translate3d(0, 0, 0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes chatSlideDown {
-        0% {
-            transform: translate3d(0, 0, 0);
-            opacity: 1;
-        }
-        100% {
-            transform: translate3d(0, 100%, 0);
-            opacity: 0.6;
-        }
-    }
-    
     .chat-panel.expanded #chat-history,
     .chat-panel.collapsing #chat-history {
-        margin-top: 25px;
+        margin-top: 30px;
         flex: 1 !important;
+        min-height: 0 !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
