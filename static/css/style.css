@@ -2218,7 +2218,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 20000;
+    z-index: 100005;
     opacity: 1;
     transition: opacity 0.3s ease;
 }
