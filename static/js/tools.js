@@ -505,16 +505,34 @@ function formatLastVisited(lastVisitedStr, isOnline) {
     const visitedDate = new Date(lastVisitedStr.endsWith('Z') ? lastVisitedStr : lastVisitedStr + 'Z');
     if (isNaN(visitedDate.getTime())) return '-';
     const now = new Date();
-    const diffMs = now - visitedDate;
+    const diffMs = Math.max(0, now - visitedDate);
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 30) return `${diffDays}d ago`;
-    return typeof window.formatAppDate === 'function' ? window.formatAppDate(visitedDate) : visitedDate.toLocaleDateString();
+    let durationStr = '';
+    if (diffMins < 1) {
+        durationStr = '< 1m';
+    } else if (diffMins < 60) {
+        durationStr = `${diffMins}m`;
+    } else if (diffHours < 24) {
+        durationStr = `${diffHours}h`;
+    } else if (diffDays < 30) {
+        durationStr = `${diffDays}d`;
+    } else {
+        const years = now.getFullYear() - visitedDate.getFullYear();
+        const months = (now.getMonth() + 1) - (visitedDate.getMonth() + 1) + (years * 12);
+        if (months >= 12) {
+            const y = Math.floor(months / 12);
+            const m = months % 12;
+            durationStr = `${y}y${m > 0 ? ` ${m}m` : ''}`;
+        } else {
+            durationStr = months > 0 ? `${months}m` : `${diffDays}d`;
+        }
+    }
+
+    const formattedDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(visitedDate) : visitedDate.toLocaleDateString();
+    return `${formattedDate} (${durationStr})`;
 }
 
 window.showMiniProfile = async function (username) {
