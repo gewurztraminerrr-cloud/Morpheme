@@ -728,6 +728,27 @@ window.showMiniProfile = async function (username) {
             }
         }
 
+        // Setup Moderator Action Buttons (Visible strictly for authorized moderators, non-self)
+        const isMod = Boolean(window.currentUserIsMod);
+        const modActions = document.getElementById('mini-profile-mod-actions');
+        const isSelf = currentName && currentName.toLowerCase() === data.username.toLowerCase();
+
+        if (modActions) {
+            if (isMod && !isSelf) {
+                modActions.classList.remove('hidden');
+                const timeoutBtn = document.getElementById('mini-profile-timeout-btn');
+                if (timeoutBtn) {
+                    timeoutBtn.onclick = () => window.openModTimeoutModal(data.username);
+                }
+                const banBtn = document.getElementById('mini-profile-ban-btn');
+                if (banBtn) {
+                    banBtn.onclick = () => window.openModBanModal(data.username);
+                }
+            } else {
+                modActions.classList.add('hidden');
+            }
+        }
+
         // Finally Show
         if (modal) {
             modal.classList.add('forced-show');
@@ -736,6 +757,152 @@ window.showMiniProfile = async function (username) {
 
     } catch (err) {
         console.error("Mini profile fetch error:", err);
+    }
+};
+
+window.openModTimeoutModal = function(username) {
+    if (!username) return;
+    const modal = document.getElementById('mod-timeout-modal');
+    const uEl = document.getElementById('mod-timeout-modal-username');
+    const hInput = document.getElementById('mod-timeout-modal-hours');
+    const rInput = document.getElementById('mod-timeout-modal-reason');
+    const confirmBtn = document.getElementById('mod-timeout-modal-confirm-btn');
+
+    if (uEl) uEl.textContent = username;
+    if (hInput) hInput.value = '';
+    if (rInput) rInput.value = '';
+
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Timeout User';
+        confirmBtn.onclick = async () => {
+            if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+                alert(`Action Prohibited: User '${username}' cannot be timed out.`);
+                return;
+            }
+            const hoursVal = hInput ? hInput.value.trim() : '';
+            const reasonVal = rInput ? rInput.value.trim() : '';
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/mods/timeout_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        reason: reasonVal || 'Moderator timeout',
+                        hours: hoursVal || null
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.closeModTimeoutModal();
+                    if (window.showAlertModal) {
+                        window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${data.timeout_until} UTC`);
+                    } else {
+                        alert(`User "${username}" has been timed out for ${data.duration}.`);
+                    }
+                } else {
+                    alert("Error: " + (data.error || "Failed to timeout user."));
+                }
+            } catch (err) {
+                console.error("Error timing out user:", err);
+                alert("Network error timing out user.");
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Yes, Timeout User';
+            }
+        };
+    }
+
+    if (modal) {
+        modal.classList.add('forced-show');
+        modal.classList.remove('hidden');
+    }
+};
+
+window.closeModTimeoutModal = function() {
+    const modal = document.getElementById('mod-timeout-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('forced-show');
+    }
+};
+
+window.openModBanModal = function(username) {
+    if (!username) return;
+    const modal = document.getElementById('mod-ban-modal');
+    const uEl = document.getElementById('mod-ban-modal-username');
+    const rInput = document.getElementById('mod-ban-modal-reason');
+    const confirmBtn = document.getElementById('mod-ban-modal-confirm-btn');
+
+    if (uEl) uEl.textContent = username;
+    if (rInput) rInput.value = '';
+
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Ban & Erase';
+        confirmBtn.onclick = async () => {
+            if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+                alert(`Action Prohibited: User '${username}' cannot be banned.`);
+                return;
+            }
+            const reasonVal = rInput ? rInput.value.trim() : '';
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Erasing & Banning...';
+
+            try {
+                const response = await fetch('/api/mods/ban_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        reason: reasonVal || 'Permanent ban'
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.closeModBanModal();
+                    const miniModal = document.getElementById('mini-profile-modal');
+                    if (miniModal) {
+                        miniModal.classList.add('hidden');
+                        miniModal.classList.remove('forced-show');
+                    }
+                    if (typeof window.loadIpBans === 'function') {
+                        window.loadIpBans();
+                    }
+                    if (window.showAlertModal) {
+                        window.showAlertModal('User Erased & Banned', data.message || `User "${username}" has been permanently erased from the database.`);
+                    } else {
+                        alert(data.message || `User "${username}" has been permanently erased from the database.`);
+                    }
+                } else {
+                    alert("Error: " + (data.error || "Failed to ban user."));
+                }
+            } catch (err) {
+                console.error("Error banning user:", err);
+                alert("Network error banning user.");
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Yes, Ban & Erase';
+            }
+        };
+    }
+
+    if (modal) {
+        modal.classList.add('forced-show');
+        modal.classList.remove('hidden');
+    }
+};
+
+window.closeModBanModal = function() {
+    const modal = document.getElementById('mod-ban-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('forced-show');
     }
 };
 

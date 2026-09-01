@@ -3621,13 +3621,13 @@
                                 ⏱️ Timeout User
                             </div>
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
-                                Kicks user from their current room and blocks them from playing in all rooms. Offense timeouts start at <strong>10 minutes</strong> and increase exponentially for repeat offenses (20m, 40m, 80m...). Decay restores timeout duration back towards 10 minutes over offense-free time.
+                                Kicks user from their current room and blocks them from playing in all rooms. Offense timeouts start at <strong>10 minutes</strong> and increase exponentially for repeat offenses (20m, 40m, 80m...). Decay restores timeout duration back towards 10 minutes over offense-free time. <strong>(Note: .1 hour = 6 minutes, 1 = 1 hour, 24 = 1 day)</strong>
                             </p>
                             <div class="timeout-actions-row" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
                                 <input type="text" id="timeout-username-input" placeholder="Enter username to timeout..." style="flex: 1; min-width: 180px;">
                                 <div class="timeout-duration-box" style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-surface); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--input-border);">
-                                    <label for="timeout-hours-input" style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0;">Duration (Hours):</label>
-                                    <input type="number" id="timeout-hours-input" placeholder="Auto" min="0.1" max="168" step="0.5" style="width: 70px; padding: 4px 6px; text-align: center;" title="Leave blank for automatic offense-based duration, or specify hours (e.g. 1, 2, 24)">
+                                    <label for="timeout-hours-input" style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; margin: 0;">Duration (Hours): <span style="font-size: 0.78rem; color: #f59e0b; font-weight: 600;">(.1 = 6 min)</span></label>
+                                    <input type="number" id="timeout-hours-input" placeholder="Auto" min="0.1" max="168" step="0.1" style="width: 70px; padding: 4px 6px; text-align: center;" title="Note: .1 = 6 minutes, 1 = 1 hour, 24 = 1 day">
                                 </div>
                                 <button id="timeout-user-btn" class="mod-full-btn add" style="background: #d97706; border-color: #b45309; min-width: 130px;">⏱️ Timeout User</button>
                                 <button id="check-timeout-btn" class="mod-full-btn" style="min-width: 120px; background: var(--bg-surface); border: 1px solid var(--input-border);">🔍 Check Status</button>
@@ -6153,6 +6153,67 @@
                     <button id="mini-profile-message" class="mini-action-btn secondary hidden">Message</button>
                     <button id="mini-profile-friend" class="mini-action-btn secondary hidden">Add Friend</button>
                 </div>
+
+                <!-- Moderator Actions (Visible Only to Mods) -->
+                <div id="mini-profile-mod-actions" class="mini-profile-actions mod-actions-row hidden" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; gap: 8px; width: 100%;">
+                    <button id="mini-profile-timeout-btn" class="mini-action-btn secondary" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; flex: 1; font-weight: 600;">⏱️ Timeout</button>
+                    <button id="mini-profile-ban-btn" class="mini-action-btn secondary" style="background: rgba(244, 63, 94, 0.15); border: 1px solid #f43f5e; color: #f43f5e; flex: 1; font-weight: 600;">🚫 Ban</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderator Mini-Profile Timeout Modal -->
+        <div id="mod-timeout-modal" class="mini-profile-overlay hidden" style="z-index: 100010;" onclick="if(event.target===this)window.closeModTimeoutModal()">
+            <div class="mini-profile-card" style="max-width: 460px; padding: 24px; box-sizing: border-box;">
+                <button class="mini-profile-close" onclick="window.closeModTimeoutModal()">&times;</button>
+                <div style="font-weight: 700; color: #f59e0b; font-size: 1.15rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    ⏱️ Timeout User: <span id="mod-timeout-modal-username" style="color: var(--text-primary); font-family: monospace;">Username</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+                    Kicks user from their current room and temporarily restricts them from playing across all rooms.
+                </p>
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="mod-timeout-modal-hours" style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">Duration (Hours):</label>
+                        <span style="font-size: 0.78rem; color: #f59e0b; font-weight: 600;">(Note: .1 = 6 min, 1 = 1 hr, 24 = 1 day)</span>
+                    </div>
+                    <input type="number" id="mod-timeout-modal-hours" placeholder="Auto (or specify hours e.g. 0.1, 1, 24)" min="0.1" max="168" step="0.1" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="mod-timeout-modal-reason" style="display: block; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Reason for Timeout:</label>
+                    <textarea id="mod-timeout-modal-reason" placeholder="Explain why the user is timed out... (e.g. Chat harassment, Unsportsmanlike conduct, Spamming)" style="width: 100%; min-height: 70px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; text-align: center; color: var(--text-primary);">
+                    Are you sure you want to timeout this user?
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModTimeoutModal()">No, Cancel</button>
+                    <button id="mod-timeout-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #d97706; border-color: #b45309; color: #fff; font-weight: 700;">Yes, Timeout User</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderator Mini-Profile Ban Modal -->
+        <div id="mod-ban-modal" class="mini-profile-overlay hidden" style="z-index: 100010;" onclick="if(event.target===this)window.closeModBanModal()">
+            <div class="mini-profile-card" style="max-width: 460px; padding: 24px; box-sizing: border-box;">
+                <button class="mini-profile-close" onclick="window.closeModBanModal()">&times;</button>
+                <div style="font-weight: 700; color: #f43f5e; font-size: 1.15rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    🚫 Permanent Ban & Erase: <span id="mod-ban-modal-username" style="color: var(--text-primary); font-family: monospace;">Username</span>
+                </div>
+                <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 14px; font-size: 0.82rem; color: #f43f5e; line-height: 1.4;">
+                    <strong>CRITICAL WARNING:</strong> This will permanently delete the user account, erase all stats/posts/ratings, and automatically blacklist their IP address(es).
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="mod-ban-modal-reason" style="display: block; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Reason for Permanent Ban:</label>
+                    <textarea id="mod-ban-modal-reason" placeholder="Explain why the user is banned... (e.g. Using unauthorized word-finding bots, Cheating in tournament, Severe harassment)" style="width: 100%; min-height: 70px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; text-align: center; color: var(--text-primary);">
+                    Are you sure you want to permanently erase and ban this user?
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModBanModal()">No, Cancel</button>
+                    <button id="mod-ban-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #e11d48; border-color: #be123c; color: #fff; font-weight: 700;">Yes, Ban & Erase</button>
+                </div>
             </div>
         </div>
 
@@ -6634,7 +6695,7 @@
     <script src="/js/play.js?v=33198"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33245"></script>
+    <script src="/js/tools.js?v=33250"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33190"></script>
     <script src="/js/private_matches.js?v=33173"></script>
