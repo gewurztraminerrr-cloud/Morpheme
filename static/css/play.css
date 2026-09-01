@@ -2376,9 +2376,10 @@ body.theme-light-brown .word-item.missed {
 
 .tool-pane.active {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     overflow-y: auto;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .tool-header,
@@ -2396,7 +2397,6 @@ body.theme-light-brown .word-item.missed {
 .unscramble-game-area,
 #unscramble-found-container {
     width: 100%;
-    max-width: 1200px;
     box-sizing: border-box;
 }
 
@@ -8512,24 +8512,38 @@ body .board-cell.tile-flash-purple * {
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
     }
 
     #tool-lists .tool-header {
         flex: 0 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     #tool-lists .combo-control-panel {
         flex: 0 0 auto !important;
         position: relative !important;
         top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 12px !important;
     }
 
     #tool-lists .lists-container {
         flex: 1 1 0 !important;
         min-height: 0 !important;
         height: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
         overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
         padding-bottom: 10px !important;
         box-sizing: border-box !important;
     }
@@ -8537,18 +8551,27 @@ body .board-cell.tile-flash-purple * {
     #tool-lists .list-column {
         flex: 1 1 0 !important;
         min-height: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
     }
 
     #tool-lists .list-scroll-area-wrapper {
         flex: 1 1 0 !important;
         min-height: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
     }
 
     #tool-lists .list-scroll-area {
         flex: 1 1 0 !important;
         min-height: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         overflow-y: auto !important;
         height: 100% !important;
     }
