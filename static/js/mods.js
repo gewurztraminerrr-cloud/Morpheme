@@ -801,7 +801,9 @@ async function liftTimeout() {
 
 async function banUser() {
     const input = document.getElementById('ban-username-input');
+    const reasonInput = document.getElementById('ban-reason-input');
     const username = input ? input.value.trim() : '';
+    const reason = reasonInput ? reasonInput.value.trim() : '';
     if (!username) {
         alert("Please enter a username to ban.");
         return;
@@ -820,11 +822,12 @@ async function banUser() {
         const response = await fetch('/api/mods/ban_user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({ username, reason })
         });
         const data = await response.json();
         if (data.success) {
             if (input) input.value = '';
+            if (reasonInput) reasonInput.value = '';
             showModStatus(data.message, false, 'ban-status-area');
             alert(data.message || `User "${username}" has been permanently erased from the database.`);
             loadIpBans();

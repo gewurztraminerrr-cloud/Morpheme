@@ -398,16 +398,32 @@ def mod_required(f):
 # IP TRACKING & BANNING SYSTEM
 # ============================================================
 BANNED_IPS_CACHE = set()
+BANNED_IPS_REASONS = {}
+BANNED_USERNAMES_REASONS = {}
 
 def reload_banned_ips():
-    """Reloads active banned IPs from database into in-memory O(1) set."""
-    global BANNED_IPS_CACHE
+    """Reloads active banned IPs and usernames from database into in-memory O(1) structures."""
+    global BANNED_IPS_CACHE, BANNED_IPS_REASONS, BANNED_USERNAMES_REASONS
     try:
         conn = get_db_connection(DB_PATH, timeout=15.0)
-        rows = conn.execute("SELECT ip_address FROM ip_bans").fetchall()
-        BANNED_IPS_CACHE = {r['ip_address'].strip() for r in rows if r['ip_address'] and r['ip_address'].strip()}
+        rows = conn.execute("SELECT ip_address, banned_username, reason FROM ip_bans ORDER BY id ASC").fetchall()
+        new_cache = set()
+        new_ip_reasons = {}
+        new_u_reasons = {}
+        for r in rows:
+            ip = (r['ip_address'] or '').strip()
+            u = (r['banned_username'] or '').strip().lower()
+            reason = (r['reason'] or '').strip() or 'Violation of community rules'
+            if ip:
+                new_cache.add(ip)
+                new_ip_reasons[ip] = reason
+            if u:
+                new_u_reasons[u] = reason
+        BANNED_IPS_CACHE = new_cache
+        BANNED_IPS_REASONS = new_ip_reasons
+        BANNED_USERNAMES_REASONS = new_u_reasons
         conn.close()
-        print(f"[IP_BANS] Loaded {len(BANNED_IPS_CACHE)} banned IP(s) into cache.")
+        print(f"[IP_BANS] Loaded {len(BANNED_IPS_CACHE)} banned IP(s) and {len(BANNED_USERNAMES_REASONS)} banned username(s) into cache.")
     except Exception as e:
         print(f"[IP_BANS] Error reloading banned IPs: {e}")
 
@@ -439,15 +455,21 @@ def check_ip_ban():
 
     client_ip = get_client_ip()
     if client_ip and client_ip in BANNED_IPS_CACHE:
+        ban_reason = BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
         if request.path.startswith('/api/'):
-            return jsonify({'error': 'Access restricted. Your IP address has been banned from Morpheme.'}), 403
+            return jsonify({
+                'error': f'Your account / IP address has been permanently banned.\nReason: {ban_reason}',
+                'banned': True,
+                'is_banned': True,
+                'ban_reason': ban_reason
+            }), 403
         return (
             "<!DOCTYPE html><html><head><title>Access Restricted</title>"
             "<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;"
             "display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;}"
             "div{background:#1e293b;padding:36px;border-radius:16px;border:1px solid #334155;max-width:480px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.5);}"
-            "h1{color:#f43f5e;margin-top:0;font-size:1.6rem;}p{line-height:1.6;color:#94a3b8;}</style></head>"
-            "<body><div><h1>403 - Access Restricted</h1><p>Your IP address has been permanently banned from Morpheme due to a violation of community terms.</p></div></body></html>",
+            "h1{color:#f43f5e;margin-top:0;font-size:1.6rem;}p{line-height:1.6;color:#94a3b8;}strong{color:#f8fafc;}</style></head>"
+            f"<body><div><h1>403 - Access Restricted</h1><p>Your account and IP address have been permanently banned from Morpheme.<br><br><strong>Reason:</strong> {ban_reason}</p></div></body></html>",
             403
         )
 
@@ -1194,6 +1216,8 @@ def ban_user_api():
     
     data = request.json or {}
     username = (data.get('username') or '').strip()
+    custom_reason = (data.get('reason') or '').strip()
+    ban_reason = custom_reason if custom_reason else f"Permanent ban: Violation of community rules"
     
     if not username:
         return jsonify({'error': 'Username required'}), 400
@@ -1219,13 +1243,18 @@ def ban_user_api():
         # 1. IP Ban: Automatically ban all associated IP addresses
         now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         banned_by = session.get('username', 'Moderator')
-        reason = f"Account banned: {username}"
         ips_to_ban = {ip for ip in (reg_ip, last_ip) if ip}
-        for ip in ips_to_ban:
+        if not ips_to_ban:
             conn.execute("""
                 INSERT OR REPLACE INTO ip_bans (ip_address, banned_username, banned_by, reason, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            """, (ip, username, banned_by, reason, now_str))
+            """, ('', username, banned_by, ban_reason, now_str))
+        else:
+            for ip in ips_to_ban:
+                conn.execute("""
+                    INSERT OR REPLACE INTO ip_bans (ip_address, banned_username, banned_by, reason, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ip, username, banned_by, ban_reason, now_str))
         
         # 2. Deletions (Erase all user traces)
         # ID-based deletions
@@ -3111,15 +3140,43 @@ def login():
         if not data:
             return jsonify({'success': False, 'error': 'Invalid request data'}), 200
             
-        username = data.get('username')
+        username = (data.get('username') or '').strip()
         password = data.get('password')
         captcha_val = data.get('captcha', '')
         captcha_id = data.get('captcha_id')
         
         if not _validate_captcha(captcha_id, captcha_val):
             return jsonify({'success': False, 'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 200
-            
+
+        client_ip = get_client_ip()
+        u_lower = username.lower()
+        
+        # Check in-memory ban cache or database
+        if (client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS):
+            ban_reason = BANNED_USERNAMES_REASONS.get(u_lower) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
+            return jsonify({
+                'success': False,
+                'banned': True,
+                'is_banned': True,
+                'ban_reason': ban_reason,
+                'error': f'This account has been permanently banned from Morpheme.\nReason: {ban_reason}'
+            }), 200
+
         conn = sqlite3.connect(DB_PATH, timeout=30)
+        
+        # Also check ip_bans directly in case it was just added
+        ban_row = conn.execute("SELECT reason FROM ip_bans WHERE (banned_username = ? COLLATE NOCASE AND banned_username != '') OR (ip_address = ? AND ip_address != '') ORDER BY id DESC LIMIT 1", (username, client_ip)).fetchone()
+        if ban_row:
+            ban_reason = ban_row[0] or "Violation of community rules"
+            conn.close()
+            return jsonify({
+                'success': False,
+                'banned': True,
+                'is_banned': True,
+                'ban_reason': ban_reason,
+                'error': f'This account has been permanently banned from Morpheme.\nReason: {ban_reason}'
+            }), 200
+
         cursor = conn.execute('SELECT id, password_hash, email, username FROM users WHERE username = ? COLLATE NOCASE', (username,))
         user = cursor.fetchone()
         

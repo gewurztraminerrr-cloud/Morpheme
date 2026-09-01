@@ -1709,7 +1709,15 @@ async function handleSignIn() {
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
         } else {
-            errorEl.textContent = data.error || data.message || 'Failed to login.';
+            if (data.banned || data.is_banned) {
+                const rText = data.ban_reason || data.reason || 'Violation of community rules';
+                if (typeof window.showPermanentBanModal === 'function') {
+                    window.showPermanentBanModal(rText);
+                }
+                errorEl.textContent = `Account permanently banned: ${rText}`;
+            } else {
+                errorEl.textContent = data.error || data.message || 'Failed to login.';
+            }
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
@@ -1783,7 +1791,15 @@ async function handleSignUp() {
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
         } else {
-            errorEl.textContent = data.error || data.message || 'Failed to register.';
+            if (data.banned || data.is_banned) {
+                const rText = data.ban_reason || data.reason || 'Violation of community rules';
+                if (typeof window.showPermanentBanModal === 'function') {
+                    window.showPermanentBanModal(rText);
+                }
+                errorEl.textContent = `Registration blocked: ${rText}`;
+            } else {
+                errorEl.textContent = data.error || data.message || 'Failed to register.';
+            }
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
         }
     } catch (error) {
@@ -2360,6 +2376,18 @@ window.showTimeoutBanModal = function(toData) {
             }
         }
     }, 1000);
+};
+
+// Global showPermanentBanModal definition for banned users
+window.showPermanentBanModal = function(banReason) {
+    const rText = banReason || 'Violation of community terms';
+    const msg = `Your account and associated IP address have been permanently banned from Morpheme.<br><br><strong>Reason:</strong> <span style="color: #f43f5e; font-size: 1.05rem; font-weight: 700;">${rText}</span><br><br>Permanent bans are issued for severe violations of platform rules (such as cheating, botting, or abusive behavior). All account stats and data have been terminated.`;
+    
+    if (typeof window.showAlertModal === 'function') {
+        window.showAlertModal('Account Permanently Banned', msg, true);
+    } else {
+        alert(`Account Permanently Banned\n\nReason: ${rText}`);
+    }
 };
 
 window.checkAccountTimeoutAndAlert = async function() {
