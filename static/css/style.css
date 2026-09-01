@@ -3682,15 +3682,21 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100000;
+    z-index: 100015;
     backdrop-filter: blur(8px);
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 .modal-overlay.hidden {
-    display: none;
-    opacity: 0;
-    pointer-events: none;
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.modal-overlay.forced-show {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .achievement-card {
@@ -3706,6 +3712,39 @@ body {
     max-height: 95vh;
     overflow-y: auto;
     animation: achievementPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Skill Rankings & Rating Boxes - Prevent Blue Highlights & Text Selection on Mobile */
+.profile-ratings-section,
+.profile-ratings-section *,
+.ratings-filters,
+.ratings-filters *,
+.ratings-grid,
+.rating-box,
+.rating-box *,
+.modal-tabs,
+.modal-tabs *,
+.achievement-tabs,
+.achievement-tabs *,
+.ach-tab {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.rating-box {
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.rating-box:active {
+    background: rgba(255, 255, 255, 0.12) !important;
+    transform: scale(0.98);
 }
 
 .achievement-card .close-modal-btn {

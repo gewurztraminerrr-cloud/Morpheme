@@ -2825,7 +2825,7 @@ function renderRatingsGrid(configRatings, user = null) {
                 const box = document.createElement('div');
                 box.className = 'rating-box clickable';
                 box.title = "Click to view achievements for this room type";
-                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s;';
+                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s, transform 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; outline: none;';
                 box.onmouseenter = () => { box.style.background = 'rgba(255,255,255,0.08)'; };
                 box.onmouseleave = () => { box.style.background = 'rgba(255,255,255,0.03)'; };
                 box.innerHTML = `
@@ -2842,16 +2842,21 @@ function renderRatingsGrid(configRatings, user = null) {
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
                 `;
 
-                box.onclick = () => {
+                const handleBoxClick = (e) => {
+                    if (e) {
+                        try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+                    }
                     const targetUsername = (u && u.username)
                         ? u.username
-                        : (document.getElementById('profile-username')?.innerText?.trim() || null);
+                        : (window.currentProfileUsername || document.getElementById('profile-username')?.innerText?.trim() || (typeof window.currentUser === 'object' ? window.currentUser?.username : window.currentUser) || (typeof currentUser !== 'undefined' ? (currentUser.username || currentUser) : null) || localStorage.getItem('morpheme_username') || null);
                     if (targetUsername) {
                         showRoomAchievements(targetUsername, mode, board, time);
                     } else {
                         console.warn('[Achievements] Could not determine username for achievement lookup.');
                     }
                 };
+
+                box.onclick = handleBoxClick;
 
                 grid.appendChild(box);
                 visibleCount++;
@@ -2914,8 +2919,10 @@ function setupImageLightbox() {
     if (achModal && achClose) {
         const close = () => {
             achModal.classList.add('hidden');
+            achModal.classList.remove('forced-show');
             achModal.style.display = 'none';
             achModal.style.opacity = '0';
+            achModal.style.pointerEvents = 'none';
         };
         achClose.onclick = close;
         achModal.onclick = (e) => {
@@ -2943,8 +2950,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
 
     // Show modal first so any crash in tab/title setup is visible
     modal.classList.remove('hidden');
+    modal.classList.add('forced-show');
     modal.style.display = 'flex';
     modal.style.opacity = '1';
+    modal.style.pointerEvents = 'auto';
 
     // Update tab UI
     const tabs = document.querySelectorAll('.modal-tabs .ach-tab');
