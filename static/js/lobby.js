@@ -186,9 +186,6 @@ async function handleAccumulativeClick(accBtn) {
 window.handleAccumulativeClick = handleAccumulativeClick;
 
 async function handleShowRoomsClick(listBtn) {
-    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
-        return;
-    }
     if (typeof window.handleShowRoomsInline === 'function') {
         return window.handleShowRoomsInline(listBtn);
     }
@@ -198,12 +195,12 @@ window.handleShowRoomsClick = handleShowRoomsClick;
 
 async function handleLobbyButtonClickCore(btn, evt) {
     if (!btn) return;
-    if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
-        return;
-    }
     const realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
     const gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
     if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
+        if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+            return;
+        }
         enterLobbyRoom(realBtn);
     } else {
         handleShowRoomsClick(realBtn);

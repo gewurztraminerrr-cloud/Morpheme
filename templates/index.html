@@ -329,16 +329,16 @@
 
         async function handleShowRoomsInline(rawBtn) {
             if (!rawBtn) return;
-            if (await window.checkAccountTimeoutAndAlert()) {
-                return;
-            }
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'fcfs';
             var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
             var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
+            // Mark clicked button as active immediately
+            document.querySelectorAll('.game-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+
             var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
-            showLobbyToast('Fetching active rooms for ' + gameType.toUpperCase() + ' (' + boardDimensions + ', ' + timeStr + ')...');
 
             window.currentLobbyConfig = { gameType: gameType, timeLimit: timeLimit, boardDimensions: boardDimensions };
 
@@ -792,13 +792,13 @@
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
             }
-            if (await window.checkAccountTimeoutAndAlert()) {
-                return;
-            }
             var realBtn = (btn && typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
             var gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
 
             if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
+                if (await window.checkAccountTimeoutAndAlert()) {
+                    return;
+                }
                 enterLobbyRoomInline(realBtn);
             } else {
                 handleShowRoomsInline(realBtn);
@@ -6630,7 +6630,7 @@
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
     <script src="/js/app.js?v=33190"></script>
-    <script src="/js/lobby.js?v=33193"></script>
+    <script src="/js/lobby.js?v=33200"></script>
     <script src="/js/play.js?v=33198"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
