@@ -701,21 +701,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // 2. Position the matching row in the middle of each table card
-        const cards = document.querySelectorAll('.lb-card');
-        cards.forEach(card => {
-            const matchingRow = card.querySelector('.lb-row.highlight-search');
-            const wrapper = card.querySelector('.lb-table-wrapper');
-            if (matchingRow && wrapper) {
-                const rowTop = matchingRow.offsetTop;
-                const rowH = matchingRow.offsetHeight || 36;
-                const wrapH = wrapper.clientHeight || 300;
-                const targetScroll = Math.max(0, rowTop - (wrapH / 2) + (rowH / 2));
-                wrapper.scrollTo({
-                    top: targetScroll,
-                    behavior: 'smooth'
-                });
-            }
-        });
+        const scrollMatchingRows = () => {
+            const cards = document.querySelectorAll('.lb-card');
+            cards.forEach(card => {
+                const matchingRow = card.querySelector('.lb-row.highlight-search');
+                const wrapper = card.querySelector('.lb-table-wrapper');
+                if (matchingRow && wrapper) {
+                    const rowRect = matchingRow.getBoundingClientRect();
+                    const wrapRect = wrapper.getBoundingClientRect();
+                    const currentScroll = wrapper.scrollTop;
+                    const delta = (rowRect.top + (rowRect.height / 2)) - (wrapRect.top + (wrapRect.height / 2));
+                    const targetScroll = Math.max(0, currentScroll + delta);
+                    wrapper.scrollTop = targetScroll;
+                    wrapper.scrollTo({
+                        top: targetScroll,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        };
+
+        scrollMatchingRows();
+        requestAnimationFrame(scrollMatchingRows);
+        setTimeout(scrollMatchingRows, 50);
+        setTimeout(scrollMatchingRows, 150);
     }
 
     function initMobileScrollbar() {
