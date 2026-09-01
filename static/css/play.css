@@ -2445,6 +2445,10 @@ body.theme-light-brown .word-item.missed {
     box-sizing: border-box;
 }
 
+.unscramble-must-have-group {
+    display: contents;
+}
+
 #combo-input {
     flex: 0 1 350px;
     max-width: 350px;
@@ -5731,7 +5735,7 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    #tool-unscramble .unscramble-must-have-row {
+    #tool-unscramble .unscramble-must-have-group {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
@@ -5740,10 +5744,18 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    #tool-unscramble .unscramble-must-have-row > select {
+    #tool-unscramble .unscramble-must-have-group > .unscramble-must-have-label {
+        margin: 0 !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+    }
+    #tool-unscramble .unscramble-must-have-group > select {
         width: 110px !important;
-        max-width: 140px !important;
-        flex: 0 0 auto !important;
+        max-width: 130px !important;
+        flex: 0 0 110px !important;
         box-sizing: border-box !important;
         margin: 0 !important;
     }

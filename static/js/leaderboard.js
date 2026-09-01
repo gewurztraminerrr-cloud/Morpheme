@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Mark matching rows across all tables
         allRows.forEach(row => {
             const u = (row.dataset.username || '').toLowerCase();
-            if (u === query || u.includes(query)) {
+            if (u === query) {
                 row.classList.add('highlight-search');
             } else {
                 row.classList.remove('highlight-search');
