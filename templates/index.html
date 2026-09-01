@@ -3819,13 +3819,23 @@
                             </div>
                         </div>
                         
-                        <div class="mod-add-section pron-layout" style="margin-bottom: 15px; width: 100%; box-sizing: border-box;">
-                            <input type="text" id="def-word-input" style="flex: 0.4;" placeholder="Words, e.g. MORPHEME, GRID">
-                            <textarea id="def-text-input" style="flex: 1; min-height: 48px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;" placeholder="Enter definition..."></textarea>
-                        </div>
-                        <div class="mod-action-buttons" style="width: 100%;">
-                            <button id="add-def-btn" class="mod-full-btn add">Set Definition</button>
-                            <button id="remove-def-btn" class="mod-full-btn remove">Remove Definition</button>
+                        <!-- Word & Definition Declaration Card -->
+                        <div class="def-entry-card" style="margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; background: rgba(255, 255, 255, 0.04); padding: 16px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                <span>✏️ Declare Word & Definition</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+                                <label for="def-word-input" style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Word(s)</label>
+                                <input type="text" id="def-word-input" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box;" placeholder="Enter word(s), comma-separated e.g. MORPHEME, MORPHEMES">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+                                <label for="def-text-input" style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Definition</label>
+                                <textarea id="def-text-input" style="width: 100%; min-height: 80px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 10px 14px; font-family: inherit; font-size: 0.95rem; line-height: 1.45; resize: vertical; box-sizing: border-box;" placeholder="Enter definition without trailing period (e.g. a meaningful morphological unit of a language [n])..."></textarea>
+                            </div>
+                            <div class="mod-action-buttons" style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
+                                <button id="add-def-btn" class="mod-full-btn add" style="flex: 1; min-width: 160px; padding: 12px 20px; font-size: 0.95rem; font-weight: 700; background: #2563eb; border: 1px solid #1d4ed8; color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Set Definition</button>
+                                <button id="remove-def-btn" class="mod-full-btn remove" style="flex: 0 0 160px; padding: 12px 16px; font-size: 0.95rem; font-weight: 600; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Remove Definition</button>
+                            </div>
                         </div>
                     </div>
 
@@ -6614,7 +6624,7 @@
     <script src="/js/leaderboard.js?v=33265"></script>
     <script src="/js/tools.js?v=33240"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
-    <script src="/js/mods.js?v=33185"></script>
+    <script src="/js/mods.js?v=33188"></script>
     <script src="/js/private_matches.js?v=33173"></script>
     <script src="/js/donate.js?v=33173"></script>
     

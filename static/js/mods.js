@@ -69,7 +69,7 @@ async function loadModList() {
     const isJeffb = Boolean(window.currentUserIsRootMod) || 
                     (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
 
-    const addSection = document.querySelector('.mod-add-section');
+    const addSection = document.querySelector('#mod-tab-access .mod-add-section');
     if (addSection) {
         addSection.style.display = isJeffb ? 'flex' : 'none';
     }
