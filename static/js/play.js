@@ -3321,7 +3321,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chatHistory) {
                 chatHistory.scrollTop = chatHistory.scrollHeight;
             }
-        }, 260);
+        }, 280);
     }
 
     function expandChat() {
