@@ -364,38 +364,39 @@
     box-sizing: border-box !important;
 }
 
-/* Widescreen desktop/laptop side-by-side override */
+/* Widescreen desktop/laptop layout: Rating textbox above, buttons below */
 @media (min-width: 901px) {
     .rating-filter-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
         gap: 8px;
+        width: 100%;
+        align-items: stretch;
     }
     #rating-filter {
-        flex: 1;
-        min-width: 185px;
-        padding: 12px;
-        font-size: 1rem;
+        grid-column: 1 / -1;
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 0.95rem;
     }
     .room-tab-btn {
         flex-direction: row;
-        gap: 4px;
-        width: auto;
-        padding: 12px 14px;
+        gap: 6px;
+        width: 100%;
+        padding: 10px 14px;
         font-size: 0.9rem;
         white-space: nowrap;
     }
     #my-rating-btn {
         flex-direction: row;
-        gap: 4px;
-        width: auto;
-        padding: 12px 15px;
-        font-size: 0.95rem;
+        gap: 6px;
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 0.9rem;
         white-space: nowrap;
     }
     #lobby-refresh-btn {
-        padding: 12px 14px !important;
+        padding: 10px 14px !important;
         height: auto !important;
     }
     .room-meta {
