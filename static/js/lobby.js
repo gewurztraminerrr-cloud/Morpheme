@@ -1343,12 +1343,9 @@ function renderLobbyState(data) {
             let html = '';
             players.forEach(p => {
                 const uname = p.username || 'Player';
-                const rating = (p.rating !== undefined && p.rating !== null) ? p.rating : 1200;
-                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
                 
                 html += `
                     <div class="lobby-player-row" onclick="if (window.showMiniProfile) window.showMiniProfile('${uname}'); event.stopPropagation();" title="View ${uname}'s Profile">
-                        <div class="lobby-player-rating" style="background-color: ${rColor};">${rating}</div>
                         <span class="lobby-player-name">${uname}</span>
                     </div>
                 `;
@@ -1366,15 +1363,12 @@ function renderLobbyState(data) {
         let msgHtml = '';
         messages.forEach(m => {
             const author = m.username || 'Guest';
-            const rating = (m.rating !== undefined && m.rating !== null) ? m.rating : 1200;
-            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
             const timeStr = formatLobbyMessageTime(m.timestamp || m.time);
             const text = (m.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             
             msgHtml += `
-                <div class="lobby-chat-msg" style="border-left-color: ${rColor};">
+                <div class="lobby-chat-msg">
                     <div class="lobby-chat-msg-header">
-                        <span class="lobby-chat-rating-badge" style="background-color: ${rColor};">${rating}</span>
                         <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); event.stopPropagation();">${author}</span>
                         <span class="lobby-chat-time">${timeStr}</span>
                     </div>
