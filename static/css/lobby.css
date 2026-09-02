@@ -1279,6 +1279,7 @@ body.theme-light-brown .field-hint {
     .store-item-features {
         grid-template-columns: repeat(4, 1fr) !important; /* Spread features horizontally across 4 columns */
         gap: 12px !important;
+    }
 }
 
 /* Journey message styling with responsive typography */
