@@ -374,14 +374,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.textContent = 'ENTER LOBBY';
                 }
 
-                let gatewayClicked = false;
-                const handleGatewayTransition = async (e) => {
-                    if (gatewayClicked) return;
-                    gatewayClicked = true;
+                let gatewayTransitioning = false;
+                const executeGatewayTransition = (e) => {
+                    if (gatewayTransitioning) return;
+                    gatewayTransitioning = true;
+                    window._gatewayTransitioning = true;
+                    window._gatewayPassed = true;
 
-                    console.log(`[Gateway] Transitioning via event: ${e ? e.type : 'manual'}`);
+                    gatewayBtn.classList.remove('dragged-out');
+                    gatewayBtn.classList.add('pressed', 'flattened');
 
-                    // 1. Play audio synchronously first to preserve user gesture context on Safari
+                    console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
+
+                    // 1. Play audio synchronously first
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
@@ -391,62 +396,85 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
                     }
 
-                    // 2. Leave the room if we are not going to the play page
+                    // 2. Non-blocking background room cleanup
                     if (targetNavName !== 'play') {
                         if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                            console.log('[Gateway] Leaving current room on gateway transition.');
-                            try {
-                                await window.leaveCurrentRoom();
-                            } catch (err) {
-                                console.error('[Gateway] Failed to leave room during gateway transition:', err);
-                            }
+                            window.leaveCurrentRoom().catch(() => {});
                         }
                     }
 
-                    // 3. Perform the page transition
+                    // 3. Immediately fetch lobby stats in background
                     try {
-                        showPage(targetPageId);
-                        const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
-                        if (navBtn) updateActiveNav(navBtn);
-                        handleLobbyMusicState();
-                        if (hash === '#page-login') {
-                            history.replaceState(null, null, '#page-lobby');
+                        fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data && data.stats && typeof window.applyLobbyStatsToButtons === 'function') {
+                                    window.applyLobbyStatsToButtons(data.stats);
+                                }
+                            }).catch(() => {});
+                    } catch (e) {}
+
+                    // 4. Perform the page transition after snappy 140ms press feedback
+                    setTimeout(() => {
+                        try {
+                            showPage(targetPageId);
+                            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                            if (navBtn) updateActiveNav(navBtn);
+                            handleLobbyMusicState();
+                            if (hash === '#page-login') {
+                                history.replaceState(null, null, '#page-lobby');
+                            }
+                            if (typeof window.fetchLobbyStats === 'function') {
+                                window.fetchLobbyStats('all');
+                            }
+                            if (typeof window.startStatsPolling === 'function') {
+                                window.startStatsPolling();
+                            }
+                        } catch (transitionErr) {
+                            console.error('[Gateway] Exception performing page transition:', transitionErr);
                         }
-                    } catch (transitionErr) {
-                        console.error('[Gateway] Exception performing page transition:', transitionErr);
-                    }
+                    }, 140);
                 };
 
-                // Robust interaction handlers: Outer socket click + Drag-out cancellation back to 3D
+                window.handleEnterLobbyClick = (btn, evt) => {
+                    executeGatewayTransition(evt);
+                };
+
                 const housingEl = document.getElementById('gateway-housing') || gatewayBtn.parentElement;
                 let isPointerDown = false;
-                let transitionTimeout = null;
 
                 function getCoords(e) {
+                    if (!e) return null;
                     if (e.touches && e.touches.length > 0) {
                         return { x: e.touches[0].clientX, y: e.touches[0].clientY };
                     }
                     if (e.changedTouches && e.changedTouches.length > 0) {
                         return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
                     }
-                    return { x: e.clientX, y: e.clientY };
+                    if (typeof e.clientX === 'number' && !isNaN(e.clientX)) {
+                        return { x: e.clientX, y: e.clientY };
+                    }
+                    return null;
                 }
 
-                function isInsideButton(e) {
+                function isInsideGateway(e) {
+                    const coords = getCoords(e);
+                    if (!coords) return true; // If coordinates unavailable (synthetic click), treat as inside
                     const targetEl = housingEl || gatewayBtn;
                     const rect = targetEl.getBoundingClientRect();
-                    const coords = getCoords(e);
+                    const buffer = 12; // 12px generous margin around outer edge
                     return (
-                        coords.x >= (rect.left - 4) &&
-                        coords.x <= (rect.right + 4) &&
-                        coords.y >= (rect.top - 4) &&
-                        coords.y <= (rect.bottom + 4)
+                        coords.x >= (rect.left - buffer) &&
+                        coords.x <= (rect.right + buffer) &&
+                        coords.y >= (rect.top - buffer) &&
+                        coords.y <= (rect.bottom + buffer)
                     );
                 }
 
                 const handlePressStart = (e) => {
-                    if (gatewayClicked) return;
+                    if (gatewayTransitioning) return;
                     isPointerDown = true;
+                    gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
@@ -459,48 +487,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 const handlePressMove = (e) => {
-                    if (!isPointerDown || gatewayClicked) return;
-                    if (isInsideButton(e)) {
+                    if (!isPointerDown || gatewayTransitioning) return;
+                    if (isInsideGateway(e)) {
+                        gatewayBtn.classList.remove('dragged-out');
                         gatewayBtn.classList.add('pressed', 'flattened');
                     } else {
                         // User dragged across and out of the button: bring back to 3D standing position
+                        gatewayBtn.classList.add('dragged-out');
                         gatewayBtn.classList.remove('pressed', 'flattened');
-                        if (transitionTimeout) {
-                            clearTimeout(transitionTimeout);
-                            transitionTimeout = null;
-                        }
                     }
                 };
 
                 const handlePressEnd = (e) => {
-                    if (!isPointerDown || gatewayClicked) return;
+                    if (!isPointerDown || gatewayTransitioning) return;
                     isPointerDown = false;
 
-                    if (isInsideButton(e)) {
+                    if (isInsideGateway(e)) {
                         // Released inside button or outer housing: keep flattened and trigger transition
+                        gatewayBtn.classList.remove('dragged-out');
                         gatewayBtn.classList.add('pressed', 'flattened');
-                        if (transitionTimeout) return;
-                        transitionTimeout = setTimeout(() => {
-                            handleGatewayTransition(e);
-                        }, 200);
+                        executeGatewayTransition(e);
                     } else {
                         // Released OUTSIDE: bring back to 3D standing position and do not enter Lobby
+                        gatewayBtn.classList.add('dragged-out');
                         gatewayBtn.classList.remove('pressed', 'flattened');
-                        if (transitionTimeout) {
-                            clearTimeout(transitionTimeout);
-                            transitionTimeout = null;
-                        }
+                        setTimeout(() => {
+                            gatewayBtn.classList.remove('dragged-out');
+                        }, 100);
                     }
                 };
 
                 const handlePressCancel = () => {
-                    if (gatewayClicked) return;
+                    if (gatewayTransitioning) return;
                     isPointerDown = false;
+                    gatewayBtn.classList.add('dragged-out');
                     gatewayBtn.classList.remove('pressed', 'flattened');
-                    if (transitionTimeout) {
-                        clearTimeout(transitionTimeout);
-                        transitionTimeout = null;
-                    }
+                    setTimeout(() => {
+                        gatewayBtn.classList.remove('dragged-out');
+                    }, 100);
                 };
 
                 // Attach to button AND outer housing socket
@@ -509,6 +533,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     el.addEventListener('pointerdown', handlePressStart);
                     el.addEventListener('mousedown', handlePressStart);
                     el.addEventListener('touchstart', handlePressStart, { passive: true });
+                    el.addEventListener('click', (e) => {
+                        executeGatewayTransition(e);
+                    });
                 });
 
                 // Global window drag and release tracking
@@ -522,17 +549,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 window.addEventListener('pointercancel', handlePressCancel);
                 window.addEventListener('touchcancel', handlePressCancel);
-
-                window.handleEnterLobbyClick = (btn, evt) => {
-                    if (!gatewayClicked) {
-                        gatewayBtn.classList.add('pressed', 'flattened');
-                        if (!transitionTimeout) {
-                            transitionTimeout = setTimeout(() => {
-                                handleGatewayTransition(evt);
-                            }, 200);
-                        }
-                    }
-                };
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');

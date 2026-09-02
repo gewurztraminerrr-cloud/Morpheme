@@ -6822,13 +6822,13 @@ select option,
 }
 
 /* Completely Flattened & Sunken State (Stays flattened upon release) */
-.neon-gateway-btn:active,
-.neon-gateway-btn.pressed,
-.neon-gateway-btn.flattened,
-.neon-gateway-btn.pressed:hover,
-.neon-gateway-btn.flattened:hover,
-.neon-gateway-btn.pressed:focus,
-.neon-gateway-btn.flattened:focus {
+.neon-gateway-btn:active:not(.dragged-out),
+.neon-gateway-btn.pressed:not(.dragged-out),
+.neon-gateway-btn.flattened:not(.dragged-out),
+.neon-gateway-btn.pressed:not(.dragged-out):hover,
+.neon-gateway-btn.flattened:not(.dragged-out):hover,
+.neon-gateway-btn.pressed:not(.dragged-out):focus,
+.neon-gateway-btn.flattened:not(.dragged-out):focus {
     transform: translateY(0px) scale(0.985) !important;
     background: linear-gradient(180deg, #c40062 0%, #aa0055 45%, #8a0045 100%) !important;
     border-color: rgba(255, 0, 127, 0.4) !important;
@@ -6843,6 +6843,33 @@ select option,
         0 0 6px rgba(255, 0, 127, 0.7) !important;
     filter: brightness(0.85) !important;
     transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
+}
+
+/* Force 3D Elevated Standing Position when dragged out */
+.neon-gateway-btn.dragged-out {
+    transform: translateY(-12px) !important;
+    background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3) !important;
+    box-shadow:
+        inset 0 2px 1px rgba(255, 255, 255, 0.85),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.4),
+        inset 0 0 12px rgba(255, 255, 255, 0.2),
+        0 1px 0 #e60073,
+        0 2px 0 #d10069,
+        0 3px 0 #bd005e,
+        0 4px 0 #a80054,
+        0 5px 0 #94004a,
+        0 6px 0 #800040,
+        0 7px 0 #6b0035,
+        0 8px 0 #57002b,
+        0 9px 0 #420021,
+        0 10px 0 #2e0017,
+        0 11px 0 #1f0010,
+        0 12px 0 #120009,
+        0 14px 20px rgba(0, 0, 0, 0.65),
+        0 20px 35px rgba(255, 0, 127, 0.4) !important;
+    filter: none !important;
 }
 
 
