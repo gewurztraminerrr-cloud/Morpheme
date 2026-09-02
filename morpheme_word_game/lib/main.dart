@@ -11,8 +11,16 @@ import 'package:audio_session/audio_session.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Hide top status bar for an immersive full-screen game experience
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // Enable edge-to-edge mode with transparent system bars to eliminate OS fullscreen exit prompt
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
   runApp(const MorphemeApp());
 }
 
