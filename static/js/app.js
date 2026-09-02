@@ -809,51 +809,23 @@ async function checkSession() {
         let response = await fetch('/api/session');
         let data = await response.json();
 
+        const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+
         // If server says authenticated, always trust it and clear any stale logged-out flag
         if (data.authenticated) {
             sessionStorage.removeItem('morpheme_logged_out');
             localStorage.removeItem('morpheme_logged_out');
-        } else if (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true') {
+        } else if (isLoggedOutExplicitly) {
             // Server says not authenticated AND user explicitly logged out — respect logout intent.
-            // Still try auto-login via stored token as a last resort.
-            const token = localStorage.getItem('morpheme_auth_token');
-            if (token) {
-                console.info('[Auth] Logged-out flag set, but attempting auto-login via stored token...');
-                try {
-                    const autoLoginRes = await fetch('/api/auth/auto-login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ auth_token: token })
-                    });
-                    const autoLoginData = await autoLoginRes.json();
-                    if (autoLoginData.success) {
-                        console.info('[Auth] Auto-login succeeded (overriding logged-out flag).');
-                        sessionStorage.removeItem('morpheme_logged_out');
-                        localStorage.removeItem('morpheme_logged_out');
-                        data = {
-                            authenticated: true,
-                            username: autoLoginData.username,
-                            email: autoLoginData.email,
-                            rating: autoLoginData.rating,
-                            is_guest: false,
-                            is_mod: autoLoginData.is_mod
-                        };
-                    } else {
-                        console.info('[Auth] User explicitly logged out, no valid token. Staying on login page.');
-                        updateAuthUI();
-                        return;
-                    }
-                } catch (e) {
-                    console.error('[Auth] Auto-login error:', e);
-                    updateAuthUI();
-                    return;
-                }
-            } else {
-                console.info('[Auth] User explicitly logged out, no token. Staying on login page.');
-                updateAuthUI();
-                return;
-            }
-
+            currentUser = null;
+            window.currentUser = null;
+            window.currentUserIsGuest = false;
+            window.currentUserIsMod = false;
+            localStorage.removeItem('morpheme_logged_in');
+            localStorage.removeItem('morpheme_username');
+            localStorage.removeItem('morpheme_auth_token');
+            updateAuthUI();
+            return;
         } else if (!data.authenticated) {
             // Not logged out intentionally, but no server session — try auto-login
             const token = localStorage.getItem('morpheme_auth_token');
@@ -937,31 +909,16 @@ async function checkSession() {
             } catch (e) { console.warn('Error checking current room', e); }
 
         } else {
-            // Server says not authenticated and auto-login did not succeed.
-            // Check if localStorage still marks the user as logged in — this can happen
-            // transiently during a server restart when the new Flask process has no session
-            // and the auto-login endpoint is still unavailable.
-            const prevLoggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
-            const prevUsername = localStorage.getItem('morpheme_username');
-            if (prevLoggedIn && prevUsername) {
-                // Optimistically keep the user in their current page.
-                // The next checkSession (or any API call) will catch a genuine logout.
-                console.warn('[Auth] Server returned !authenticated but localStorage shows prior session. Keeping current UI (server may be restarting).');
-                currentUser = prevUsername;
-                window.currentUser = currentUser;
-                updateAuthUI();
-            } else {
-                localStorage.removeItem('morpheme_logged_in');
-                updateAuthUI();
-            }
+            currentUser = null;
+            window.currentUser = null;
+            window.currentUserIsGuest = false;
+            window.currentUserIsMod = false;
+            localStorage.removeItem('morpheme_logged_in');
+            localStorage.removeItem('morpheme_username');
+            updateAuthUI();
         }
     } catch (error) {
-        // Network error or invalid JSON (e.g. server restarting and Nginx is serving the
-        // splash page instead of JSON). This is NOT a logout — it is a transient server
-        // unavailability. Do NOT clear the session or redirect to login; just keep the
-        // current UI state so the user stays where they are until the server comes back.
         console.warn('[Auth] Session check failed (server may be restarting):', error.message || error);
-        // Leave currentUser, localStorage.morpheme_logged_in, and the current page untouched.
     }
 }
 
@@ -2011,44 +1968,55 @@ async function handleLogout() {
     }
 
     try {
-        console.info('[Auth] Logout initiated. Preserving global markers...');
+        console.info('[Auth] Logout initiated...');
         
-        // Use fetch and await to ensure session is cleared before we reload the page!
+        // Ensure session is cleared on server
         await fetch('/api/logout', { method: 'POST' });
         
         // Preserve global "read" states (Notices, Forum markers) across login sessions
         const noticeId = localStorage.getItem('morpheme_read_notice_id');
         const forumViewed = localStorage.getItem('forum_last_viewed');
         const userSettings = localStorage.getItem('morpheme_user_settings');
-        
-        console.info(`[Auth] Preservation: noticeId=${noticeId}, forumViewed=${forumViewed}`);
 
-        // Clear only session-specific or sensitive data
+        // Clear session and auth data
         localStorage.clear();
         sessionStorage.clear();
-        window.currentUserConfigRatings = {};
-        window.currentUserIsMod = false;
-        window.currentUserIsRootMod = false;
-        window.currentUser = null;
-        currentUser = null;
-        const modsBtn = document.getElementById('nav-mods-btn');
-        if (modsBtn) modsBtn.style.display = 'none';
-        document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
-        
-        // Set logged out flag to prevent auto-login on mobile — use sessionStorage so it only
-        // applies to this tab/session and never bleeds into a future visit to morpheme.games
         sessionStorage.setItem('morpheme_logged_out', 'true');
-        localStorage.removeItem('morpheme_logged_out'); // Clear any legacy localStorage copy
+        localStorage.setItem('morpheme_logged_out', 'true');
         
         // Restore non-sensitive global markers
         if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
         if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
         if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
         
-        console.info('[Auth] Markers restored. Redirecting in 500ms...');
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 500);
+        window.currentUserConfigRatings = {};
+        window.currentUserIsMod = false;
+        window.currentUserIsRootMod = false;
+        window.currentUser = null;
+        window.currentUserIsGuest = false;
+        currentUser = null;
+
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) modsBtn.style.display = 'none';
+        document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
+
+        // Update auth UI and switch directly to the Login page
+        updateAuthUI();
+        showPage('page-login');
+        const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
+        if (loginBtn) updateActiveNav(loginBtn);
+        window.location.hash = '#page-login';
+
+        // Refresh user count and captcha on login screen
+        if (typeof fetchUserCount === 'function') fetchUserCount();
+        const captchaImg = document.getElementById('guest-captcha-img');
+        if (captchaImg && typeof refreshCaptcha === 'function') refreshCaptcha(captchaImg);
+
+        if (logoutBtn) {
+            logoutBtn.textContent = 'Logout';
+            logoutBtn.style.opacity = '1';
+            logoutBtn.disabled = false;
+        }
     } catch (error) {
         console.error('Logout error:', error);
         if (logoutBtn) {
