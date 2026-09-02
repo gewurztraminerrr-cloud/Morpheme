@@ -6788,6 +6788,7 @@ def tools_subanagrams_random():
     dict_name = request.args.get('dictionary', 'CSW')
     target_len = int(request.args.get('length', 8))
     min_len = int(request.args.get('min_length', 3))
+    mode = request.args.get('mode', 'word')
     
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
@@ -6796,21 +6797,42 @@ def tools_subanagrams_random():
     word_list = dictionary['words']
     lens = dictionary['lens']
     
-    candidates = [word_list[i] for i in range(len(word_list)) if lens[i] == target_len]
-    if not candidates:
-        candidates = [word_list[i] for i in range(len(word_list)) if lens[i] >= 6]
-        
-    if not candidates:
-        return jsonify({'error': 'No words available in dictionary'}), 400
-        
-    chosen_word = random.choice(candidates)
-    letters_list = list(chosen_word)
-    random.shuffle(letters_list)
-    for _ in range(5):
-        if "".join(letters_list) != chosen_word or len(letters_list) <= 3:
-            break
+    if mode == 'random':
+        # Totally random letters using standard English tile distribution
+        BAG = (
+            'E'*12 + 'A'*9 + 'I'*9 + 'O'*8 + 'N'*6 + 'R'*6 + 'T'*6 +
+            'L'*4 + 'S'*4 + 'U'*4 + 'D'*4 + 'G'*3 +
+            'B'*2 + 'C'*2 + 'M'*2 + 'P'*2 + 'F'*2 + 'H'*2 + 'V'*2 + 'W'*2 + 'Y'*2 +
+            'K'*1 + 'J'*1 + 'X'*1 + 'Q'*1 + 'Z'*1
+        )
+        VOWELS = 'AEIOU'
+        min_vowels = max(1, target_len // 4)
+        for _ in range(50):
+            selected = random.choices(BAG, k=target_len)
+            vowel_count = sum(1 for c in selected if c in VOWELS)
+            if vowel_count >= min_vowels and vowel_count < target_len:
+                random.shuffle(selected)
+                shuffled_letters = "".join(selected)
+                break
+        else:
+            shuffled_letters = "".join(random.choices(BAG, k=target_len))
+    else:
+        # Full Word Guaranteed: Pick a random dictionary word of target length and shuffle
+        candidates = [word_list[i] for i in range(len(word_list)) if lens[i] == target_len]
+        if not candidates:
+            candidates = [word_list[i] for i in range(len(word_list)) if lens[i] >= 6]
+            
+        if not candidates:
+            return jsonify({'error': 'No words available in dictionary'}), 400
+            
+        chosen_word = random.choice(candidates)
+        letters_list = list(chosen_word)
         random.shuffle(letters_list)
-    shuffled_letters = "".join(letters_list)
+        for _ in range(5):
+            if "".join(letters_list) != chosen_word or len(letters_list) <= 3:
+                break
+            random.shuffle(letters_list)
+        shuffled_letters = "".join(letters_list)
     
     from collections import Counter
     input_counter = Counter(shuffled_letters)
@@ -6842,11 +6864,14 @@ def tools_subanagrams_random():
             results.append(word)
             
     results.sort(key=lambda x: (-len(x), x))
+    has_full_word = any(len(w) == len(shuffled_letters) for w in results)
     
     return jsonify({
         'letters': shuffled_letters,
         'results': results,
-        'count': len(results)
+        'count': len(results),
+        'mode': mode,
+        'has_full_word': has_full_word
     })
 
 @app.route('/api/tools/validate', methods=['POST'])

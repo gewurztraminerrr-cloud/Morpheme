@@ -4825,6 +4825,7 @@ let _subAllWords = [];
 let _subFoundWords = new Set();
 let _subIsRevealed = false;
 let _subFeedbackTimeout = null;
+let _subCurrentMode = 'word';
 
 function setupSubanagramsTool() {
     const findAllBtn = document.getElementById('sub-find-all-btn');
@@ -4832,6 +4833,7 @@ function setupSubanagramsTool() {
     const randomBtn = document.getElementById('sub-random-btn');
     const customInput = document.getElementById('sub-input');
     const lengthSelect = document.getElementById('sub-length');
+    const modeSelect = document.getElementById('sub-gen-mode');
     const dictSelect = document.getElementById('sub-dict');
     const wordInput = document.getElementById('sub-word-input');
     const submitBtn = document.getElementById('sub-submit-word-btn');
@@ -4842,13 +4844,14 @@ function setupSubanagramsTool() {
         findAllBtn.addEventListener('click', () => {
             const raw = customInput ? customInput.value.trim() : '';
             const dict = dictSelect ? dictSelect.value : 'CSW';
+            const mode = modeSelect ? modeSelect.value : 'word';
             if (raw) {
                 findAndRevealAllSubanagrams(raw, dict);
             } else if (_subCurrentLetters) {
                 findAndRevealAllSubanagrams(_subCurrentLetters, dict);
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dict, true);
+                generateRandomSubanagrams(len, dict, mode, true);
             }
         });
     }
@@ -4857,6 +4860,7 @@ function setupSubanagramsTool() {
         practiceBtn.addEventListener('click', () => {
             const raw = customInput ? customInput.value.trim() : '';
             const dict = dictSelect ? dictSelect.value : 'CSW';
+            const mode = modeSelect ? modeSelect.value : 'word';
             if (raw) {
                 loadCustomSubanagrams(raw, dict);
             } else if (_subCurrentLetters) {
@@ -4867,7 +4871,7 @@ function setupSubanagramsTool() {
                 if (wi) wi.focus();
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dict, false);
+                generateRandomSubanagrams(len, dict, mode, false);
             }
         });
     }
@@ -4876,7 +4880,8 @@ function setupSubanagramsTool() {
         randomBtn.addEventListener('click', () => {
             const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
             const dict = dictSelect ? dictSelect.value : 'CSW';
-            generateRandomSubanagrams(len, dict, false);
+            const mode = modeSelect ? modeSelect.value : 'word';
+            generateRandomSubanagrams(len, dict, mode, false);
         });
     }
 
@@ -4896,16 +4901,27 @@ function setupSubanagramsTool() {
         });
     }
 
+    if (modeSelect) {
+        modeSelect.addEventListener('change', () => {
+            const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+            const dict = dictSelect ? dictSelect.value : 'CSW';
+            const mode = modeSelect.value;
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed);
+        });
+    }
+
     if (lengthSelect) {
         lengthSelect.addEventListener('change', () => {
             const len = parseInt(lengthSelect.value) || 8;
             const dict = dictSelect ? dictSelect.value : 'CSW';
-            generateRandomSubanagrams(len, dict, _subIsRevealed);
+            const mode = modeSelect ? modeSelect.value : 'word';
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed);
         });
     }
 
     if (dictSelect) {
         dictSelect.addEventListener('change', () => {
+            const mode = modeSelect ? modeSelect.value : 'word';
             if (_subCurrentLetters) {
                 if (_subIsRevealed) {
                     findAndRevealAllSubanagrams(_subCurrentLetters, dictSelect.value);
@@ -4914,7 +4930,7 @@ function setupSubanagramsTool() {
                 }
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dictSelect.value, _subIsRevealed);
+                generateRandomSubanagrams(len, dictSelect.value, mode, _subIsRevealed);
             }
         });
     }
@@ -4945,7 +4961,7 @@ function setupSubanagramsTool() {
 
     // Auto-generate on first launch if empty
     if (!_subCurrentLetters) {
-        generateRandomSubanagrams(8, 'CSW', false);
+        generateRandomSubanagrams(8, 'CSW', 'word', false);
     }
 }
 
@@ -5001,7 +5017,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
     }
 }
 
-async function generateRandomSubanagrams(length, dictionary, instantReveal = false) {
+async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false) {
     const lettersDisplay = document.getElementById('sub-letters-display');
     const countInfo = document.getElementById('sub-count-info');
     const resultsContainer = document.getElementById('sub-results-container');
@@ -5011,11 +5027,11 @@ async function generateRandomSubanagrams(length, dictionary, instantReveal = fal
     if (lettersDisplay) lettersDisplay.textContent = '...';
     if (countInfo) countInfo.textContent = 'Loading sequence...';
     if (resultsContainer) {
-        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Generating random sequence...</div>';
+        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Generating letters...</div>';
     }
 
     try {
-        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}`);
+        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}`);
         const data = await response.json();
 
         if (data.error) {
@@ -5027,6 +5043,7 @@ async function generateRandomSubanagrams(length, dictionary, instantReveal = fal
         _subAllWords = data.results || [];
         _subFoundWords.clear();
         _subIsRevealed = !!instantReveal;
+        _subCurrentMode = data.mode || mode;
 
         if (customInput) customInput.value = _subCurrentLetters;
         if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
@@ -5037,7 +5054,9 @@ async function generateRandomSubanagrams(length, dictionary, instantReveal = fal
 
         updateSubanagramsHeader();
         renderSubanagramsResults();
-        showSubFeedback(`Generated ${_subCurrentLetters.length}-letter sequence (${_subAllWords.length} subanagrams)`, 'info');
+        
+        const modeDesc = (_subCurrentMode === 'random') ? 'Totally Random Letters' : 'Full Word Guaranteed';
+        showSubFeedback(`Generated ${_subCurrentLetters.length}-letter sequence (${modeDesc} • ${_subAllWords.length} subanagrams)`, 'info');
 
     } catch (err) {
         console.error("Failed to generate random subanagrams:", err);
