@@ -3319,7 +3319,7 @@
                             <div class="input-row"
                                 style="justify-content: center !important; display: flex !important; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%;">
                                 <input type="text" id="sub-input" placeholder="Enter word or letters (e.g. HEOPSLEM)..."
-                                    autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex: 1 1 200px; min-width: 160px; text-transform: uppercase;">
+                                    autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="flex: 1 1 200px; min-width: 160px; text-transform: uppercase;">
                                 <button id="sub-find-all-btn" class="primary-action" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
                                 <button id="sub-practice-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
                                 <div style="display: inline-flex; align-items: center; gap: 6px;">
@@ -3369,7 +3369,7 @@
 
                                     <div style="display: flex; gap: 8px; width: 100%;">
                                         <input type="text" id="sub-word-input" placeholder="Type a subanagram (e.g. MOPE)..."
-                                            autocomplete="off" autocapitalize="characters" spellcheck="false"
+                                            autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';"
                                             style="flex: 1; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(167,139,250,0.3); background: rgba(0,0,0,0.35); color: #fff; border-radius: 12px; transition: all 0.3s ease; outline: none;">
                                         <button id="sub-submit-word-btn"
                                             style="padding: 10px 20px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.2s ease;">
@@ -6893,7 +6893,7 @@
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33315"></script>
+    <script src="/js/tools.js?v=33320"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33205"></script>
     <script src="/js/private_matches.js?v=33173"></script>

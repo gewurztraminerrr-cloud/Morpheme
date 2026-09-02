@@ -4881,6 +4881,12 @@ function setupSubanagramsTool() {
     }
 
     if (customInput) {
+        customInput.addEventListener('focus', function() {
+            this.value = '';
+        });
+        customInput.addEventListener('click', function() {
+            this.value = '';
+        });
         customInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const raw = customInput.value.trim();
@@ -4918,6 +4924,12 @@ function setupSubanagramsTool() {
     }
 
     if (wordInput) {
+        wordInput.addEventListener('focus', function() {
+            this.value = '';
+        });
+        wordInput.addEventListener('click', function() {
+            this.value = '';
+        });
         wordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitSubanagramWord();
         });
