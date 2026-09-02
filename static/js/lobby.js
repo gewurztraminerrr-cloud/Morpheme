@@ -1402,7 +1402,7 @@ function renderLobbyState(data) {
         chatHistoryEl.innerHTML = msgHtml;
         lastLobbyChatMessagesCount = messages.length;
         
-        if (isNearBottom || isFirstLoad) {
+        if (isNearBottom || isFirstLoad || messages.length !== lastLobbyChatMessagesCount) {
             chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
         }
     }
@@ -1419,10 +1419,29 @@ async function handleLobbyChatSubmit(e) {
     const text = input.value.trim();
     if (!text) return;
     
-    // Asynchronous lock & instant synchronous input clearing for single-send protection
+    // Clear input immediately and set single-send lock
     isSendingLobbyChat = true;
     input.value = '';
     if (sendBtn) sendBtn.disabled = true;
+
+    // Optimistically append the message immediately so there is zero delay in UI
+    const chatHistory = document.getElementById('lobby-chat-history');
+    if (chatHistory) {
+        const myName = (window.currentUser && window.currentUser.username) || 'You';
+        const nowStr = formatLobbyMessageTime(Date.now() / 1000);
+        const safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const optMsg = document.createElement('div');
+        optMsg.className = 'lobby-chat-msg';
+        optMsg.innerHTML = `
+            <div class="lobby-chat-msg-header">
+                <span class="lobby-chat-author">${myName}</span>
+                <span class="lobby-chat-time">${nowStr}</span>
+            </div>
+            <div class="lobby-chat-text">${safeText}</div>
+        `;
+        chatHistory.appendChild(optMsg);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
     
     try {
         const resp = await fetch('/api/lobby/chat', {
@@ -1432,9 +1451,8 @@ async function handleLobbyChatSubmit(e) {
         });
         
         const data = await resp.json();
-        if (resp.ok && data.success) {
+        if (resp.ok && (data.success || data.messages)) {
             renderLobbyState(data);
-            const chatHistory = document.getElementById('lobby-chat-history');
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
         } else {
             if (data.timed_out) {
@@ -1454,9 +1472,6 @@ async function handleLobbyChatSubmit(e) {
     } finally {
         isSendingLobbyChat = false;
         if (sendBtn) sendBtn.disabled = false;
-        if (input) {
-            input.focus();
-        }
     }
 }
 window.handleLobbyChatSubmit = handleLobbyChatSubmit;
@@ -1465,17 +1480,21 @@ function setupLobbyMobileKeyboardSupport() {
     const input = document.getElementById('lobby-chat-input');
     const sendBtn = document.getElementById('lobby-chat-send-btn');
     const drawer = document.getElementById('lobby-chat-drawer');
+    const form = document.getElementById('lobby-chat-form');
 
     if (!input) return;
 
-    if (sendBtn) {
-        // Prevent tapping Send from blurring input and closing mobile keyboard
-        const handleSendPointer = (e) => {
-            if (e.cancelable) e.preventDefault();
+    if (form) {
+        form.onsubmit = (e) => {
+            e.preventDefault();
             handleLobbyChatSubmit(e);
         };
-        sendBtn.addEventListener('pointerdown', handleSendPointer);
-        sendBtn.addEventListener('touchstart', handleSendPointer, { passive: false });
+    }
+
+    if (sendBtn) {
+        sendBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
     }
 
     input.addEventListener('keydown', (e) => {
