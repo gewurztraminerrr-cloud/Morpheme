@@ -2082,32 +2082,31 @@ body.theme-light-brown .field-hint {
         box-sizing: border-box !important;
     }
 
-    .lobby-chat-drawer.open.keyboard-open .lobby-chat-slide-panel,
-    .lobby-chat-drawer.open:focus-within .lobby-chat-slide-panel {
+    .lobby-chat-drawer.open.keyboard-open .lobby-chat-slide-panel {
         max-height: 55vh !important;
         max-height: 55dvh !important;
     }
 
-    .lobby-chat-drawer.open.keyboard-open .lobby-slide-body,
-    .lobby-chat-drawer.open:focus-within .lobby-slide-body {
+    .lobby-chat-drawer.open.keyboard-open .lobby-slide-body {
         height: 50vh !important;
         height: 50dvh !important;
         max-height: 320px !important;
     }
 
-    .lobby-chat-drawer.open.keyboard-open .lobby-players-half,
-    .lobby-chat-drawer.open:focus-within .lobby-players-half {
-        display: none !important;
+    .lobby-chat-drawer.open .lobby-players-half {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        max-height: 110px !important;
+        min-height: 60px !important;
     }
 
-    .lobby-chat-drawer.open.keyboard-open .lobby-chat-half,
-    .lobby-chat-drawer.open:focus-within .lobby-chat-half {
+    .lobby-chat-drawer.open .lobby-chat-half {
         flex: 1 1 auto !important;
+        min-height: 0 !important;
         height: 100% !important;
     }
 
-    .lobby-chat-drawer.open.keyboard-open .lobby-chat-history,
-    .lobby-chat-drawer.open:focus-within .lobby-chat-history {
+    .lobby-chat-drawer.open .lobby-chat-history {
         flex: 1 1 0% !important;
         min-height: 60px !important;
         max-height: 100% !important;

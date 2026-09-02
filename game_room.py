@@ -7545,18 +7545,21 @@ class LobbyManager:
         uid_str = str(user_id)
         now = time.time()
         for r in list(self.room_manager.rooms.values()):
+            r_state = getattr(r, 'state', '')
+            if r_state not in ('playing', 'intermission', 'countdown'):
+                continue
             is_daily = (getattr(r, 'time_limit', 0) >= 7200)
             for p in getattr(r, 'players', []):
                 if getattr(p, 'is_ai', False):
                     continue
                 if str(getattr(p, 'user_id', '')) == uid_str:
-                    if not is_daily:
-                        return True
-                    elif (now - getattr(p, 'last_active', 0)) < 60:
+                    timeout = 60 if is_daily else 25
+                    if (now - getattr(p, 'last_active', 0)) < timeout:
                         return True
             for s in getattr(r, 'spectators', []):
                 if str(getattr(s, 'user_id', '')) == uid_str:
-                    return True
+                    if (now - getattr(s, 'last_active', 0)) < 25:
+                        return True
         return False
 
     def update_presence(self, user_id, username, rating=1200, avatar_url=None):
