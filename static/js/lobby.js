@@ -1481,16 +1481,26 @@ window.stopLobbyChatPolling = stopLobbyChatPolling;
 // Start Lobby Chat & Presence Polling
 startLobbyChatPolling();
 
-// Wakeup on window focus & visibility restoration (e.g. app unminimized / session restored)
+// Lifecycle & Visibility listeners: remove player from lobby presence when minimized or hidden, restore on return
 window.addEventListener('visibilitychange', () => {
-    if (!document.hidden && isOnLobby()) {
-        fetchLobbyState();
+    if (document.hidden || document.visibilityState === 'hidden') {
+        leaveLobbyPresence();
+    } else if (isOnLobby()) {
+        startLobbyChatPolling();
     }
+});
+
+window.addEventListener('pagehide', () => {
+    leaveLobbyPresence();
+});
+
+window.addEventListener('freeze', () => {
+    leaveLobbyPresence();
 });
 
 window.addEventListener('focus', () => {
     if (isOnLobby()) {
-        fetchLobbyState();
+        startLobbyChatPolling();
     }
 });
 
