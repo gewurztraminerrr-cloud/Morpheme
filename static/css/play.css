@@ -7460,14 +7460,13 @@ body .board-cell.tile-flash-purple * {
     }
 
     #tool-subanagrams #sub-length {
-        width: 140px !important;
-        min-width: 130px !important;
+        width: 165px !important;
+        min-width: 165px !important;
         height: 42px !important;
         min-height: 42px !important;
         font-size: 1rem !important;
         font-weight: 700 !important;
         border-radius: 10px !important;
-        flex: 1 1 auto !important;
     }
 
     #tool-subanagrams #sub-gen-mode {
