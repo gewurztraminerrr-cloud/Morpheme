@@ -1513,6 +1513,8 @@
             })();
 
             window.handleEnterLobbyClick = function(btn, evt) {
+                window._gatewayPassed = true;
+                window._gatewayTransitioning = true;
                 var gb = btn || document.getElementById('btn-enter-lobby-gateway');
                 if (gb) {
                     gb.classList.remove('dragged-out');
@@ -6812,7 +6814,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33255"></script>
+    <script src="/js/app.js?v=33260"></script>
     <script src="/js/lobby.js?v=33240"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>

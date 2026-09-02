@@ -323,6 +323,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (currentUser) {
+        // If user already clicked ENTER LOBBY during startup, keep them in the Lobby
+        if (window._gatewayPassed) {
+            console.log('[app.js] Gateway already passed by user; retaining active view.');
+            const curPage = window.currentPageId || 'page-lobby';
+            showPage(curPage);
+            const targetNav = curPage.replace('page-', '');
+            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNav}"]`) || document.querySelector('.nav-btn[data-page="lobby"]');
+            if (navBtn) updateActiveNav(navBtn);
+            handleLobbyMusicState();
+            return;
+        }
+
         // If the user is in an active game match, resume game
         const activePageEl = document.querySelector('.page.active');
         const activePageId = activePageEl ? activePageEl.id : '';
