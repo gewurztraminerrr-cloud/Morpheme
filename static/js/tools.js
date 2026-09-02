@@ -3609,10 +3609,14 @@ function renderFullListWindow(startIndex, targetWordToHighlight = null) {
             } catch (e) {}
 
             if (targetEl) {
-                targetEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                // Safely scroll ONLY within the resultsEl container to avoid mobile window displacement
+                const targetTop = targetEl.offsetTop - (resultsEl.clientHeight / 2) + (targetEl.clientHeight / 2);
+                resultsEl.scrollTop = Math.max(0, targetTop);
                 targetEl.classList.add('jump-target-pulse');
                 setTimeout(() => { targetEl.classList.remove('jump-target-pulse'); }, 2500);
             }
+            // Lock window scroll at 0, 0
+            window.scrollTo(0, 0);
         });
     }
 }
@@ -3790,6 +3794,7 @@ function handleFullListWordJump() {
     if (!input) return;
     const query = input.value.trim().toUpperCase();
     input.blur();
+    window.scrollTo(0, 0);
     if (!query) return;
 
     if (!_fullListAllWords || _fullListAllWords.length === 0) {
@@ -3802,17 +3807,31 @@ function handleFullListWordJump() {
     if (wordType === 'likelihood') {
         targetIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' ? item.word : item).toUpperCase() === query);
     } else {
-        targetIdx = _fullListAllWords.findIndex(w => (typeof w === 'object' ? w.word : w).toUpperCase() === query);
+        // High-speed binary search for 300,000+ words
+        let low = 0;
+        let high = total - 1;
+        while (low <= high) {
+            const mid = (low + high) >> 1;
+            const w = (typeof _fullListAllWords[mid] === 'object' ? _fullListAllWords[mid].word : _fullListAllWords[mid]).toUpperCase();
+            if (w === query) {
+                targetIdx = mid;
+                break;
+            }
+            if (w < query) low = mid + 1;
+            else high = mid - 1;
+        }
     }
 
     if (targetIdx === -1) {
         showFullListToast(`"${query}" was not found in this list.`, true);
+        window.scrollTo(0, 0);
         return;
     }
 
     // Center window around target word
     const targetStart = Math.max(0, targetIdx - 40);
     renderFullListWindow(targetStart, query);
+    window.scrollTo(0, 0);
 }
 window.handleFullListWordJump = handleFullListWordJump;
 
