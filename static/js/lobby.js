@@ -1262,26 +1262,33 @@ let isSendingLobbyChat = false;
 let lastLobbyChatMessagesCount = 0;
 
 function formatLobbyMessageTime(isoOrSeconds) {
-    if (!isoOrSeconds) return '';
+    if (!isoOrSeconds && isoOrSeconds !== 0) return '';
     try {
+        if (typeof window.formatAppDate === 'function') {
+            return window.formatAppDate(isoOrSeconds, true);
+        }
         let date;
         if (typeof isoOrSeconds === 'number') {
-            date = new Date(isoOrSeconds * 1000);
+            date = new Date(isoOrSeconds < 1e11 ? isoOrSeconds * 1000 : isoOrSeconds);
+        } else if (typeof isoOrSeconds === 'string') {
+            const iso = (isoOrSeconds.includes('Z') || isoOrSeconds.includes('+')) ? isoOrSeconds.replace(' ', 'T') : isoOrSeconds.replace(' ', 'T') + 'Z';
+            date = new Date(iso);
+            if (isNaN(date.getTime())) {
+                date = new Date(isoOrSeconds);
+            }
         } else {
             date = new Date(isoOrSeconds);
         }
-        if (isNaN(date.getTime())) return '';
+        if (isNaN(date.getTime())) return String(isoOrSeconds);
         
-        const now = new Date();
-        const isToday = (date.toDateString() === now.toDateString());
-        const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
-        
-        if (isToday) {
-            return timeStr;
-        } else {
-            const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-            return `${dateStr}, ${timeStr}`;
-        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
     } catch (e) {
         return '';
     }
