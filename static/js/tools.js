@@ -3507,8 +3507,6 @@ let _fullListAllWords = [];
 let _fullListRenderedStart = 0;
 let _fullListRenderedEnd = 0;
 let _steadyLoaderRafId = null;
-let _virtualProgressCount = 0;
-const FULL_LIST_BATCH_SIZE = 600;
 
 function showFullListToast(msg, isError = false) {
     const toast = document.getElementById('full-list-jump-toast');
@@ -3536,78 +3534,6 @@ function generateFullListItemsHtml(slice) {
     }
 }
 
-var _fullListLoadedPoolCount = 400;
-
-function renderFullListWindow(startIndex = 0, count = 300) {
-    const results = document.getElementById('full-list-modal-results');
-    if (!results || !_fullListAllWords || _fullListAllWords.length === 0) return;
-    const maxPool = Math.max(count, _fullListLoadedPoolCount || _fullListAllWords.length);
-    const start = Math.max(0, Math.min(startIndex, maxPool - 1));
-    const end = Math.min(maxPool, start + count);
-    const slice = _fullListAllWords.slice(start, end);
-    if (slice.length === 0) return;
-
-    results.innerHTML = generateFullListItemsHtml(slice);
-    _fullListRenderedStart = start;
-    _fullListRenderedEnd = end;
-
-    if (typeof results._updateCustomScrollbar === 'function') {
-        results._updateCustomScrollbar();
-    }
-}
-
-function appendNextFullListBatch(count = 300) {
-    const results = document.getElementById('full-list-modal-results');
-    if (!results || !_fullListAllWords || _fullListRenderedEnd >= _fullListAllWords.length) return;
-    const maxAllowedEnd = Math.max(400, _fullListLoadedPoolCount || _fullListAllWords.length);
-    if (_fullListRenderedEnd >= maxAllowedEnd) return;
-    const slice = _fullListAllWords.slice(_fullListRenderedEnd, Math.min(maxAllowedEnd, _fullListRenderedEnd + count));
-    if (slice.length === 0) return;
-
-    results.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
-    _fullListRenderedEnd += slice.length;
-
-    // When scrolling down deep, trim distant items at top to protect mobile DOM memory
-    if (results.scrollTop > 600) {
-        const totalItems = _fullListRenderedEnd - _fullListRenderedStart;
-        if (totalItems > 3000) {
-            const trimCount = 300;
-            const items = results.querySelectorAll('.full-list-item');
-            let removedHeight = 0;
-            for (let i = 0; i < trimCount && i < items.length; i++) {
-                removedHeight += items[i].offsetHeight || 30;
-                items[i].remove();
-            }
-            _fullListRenderedStart += trimCount;
-            results.scrollTop = Math.max(0, results.scrollTop - removedHeight);
-        }
-    }
-
-    if (typeof results._updateCustomScrollbar === 'function') {
-        results._updateCustomScrollbar();
-    }
-}
-
-function prependPrevFullListBatch(count = 300) {
-    const results = document.getElementById('full-list-modal-results');
-    if (!results || !_fullListAllWords || _fullListRenderedStart <= 0) return;
-    const start = Math.max(0, _fullListRenderedStart - count);
-    const slice = _fullListAllWords.slice(start, _fullListRenderedStart);
-    if (slice.length === 0) return;
-
-    const prevScrollHeight = results.scrollHeight;
-    const prevScrollTop = results.scrollTop;
-    results.insertAdjacentHTML('afterbegin', generateFullListItemsHtml(slice));
-    const newScrollHeight = results.scrollHeight;
-    results.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
-
-    _fullListRenderedStart = start;
-
-    if (typeof results._updateCustomScrollbar === 'function') {
-        results._updateCustomScrollbar();
-    }
-}
-
 function stopSteadyLoader() {
     if (_steadyLoaderRafId) {
         cancelAnimationFrame(_steadyLoaderRafId);
@@ -3623,19 +3549,14 @@ function startSteadyLoader() {
     const modal = document.getElementById('full-list-modal');
     const countEl = document.getElementById('full-list-modal-count');
     const resultsEl = document.getElementById('full-list-modal-results');
-    const track = document.getElementById('full-list-scrollbar-track');
-    const thumb = document.getElementById('full-list-scrollbar-thumb');
 
-    // Clear the list and start fresh
+    // Clear the list and start fresh from 0
     if (resultsEl) resultsEl.innerHTML = '';
     _fullListRenderedStart = 0;
     _fullListRenderedEnd = 0;
-    _fullListLoadedPoolCount = 0;
 
     const startTime = performance.now();
     const WORDS_PER_SECOND = 4000; // Exactly 4,000 words appended to DOM per second
-    const STEP_SIZE = 400; // Batch to append per RAF tick (~100ms cadence)
-    let lastAppendTime = startTime;
 
     function streamStep(now) {
         if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
@@ -3646,58 +3567,35 @@ function startSteadyLoader() {
         const currentTimestamp = typeof now === 'number' ? now : performance.now();
         const elapsedSec = (currentTimestamp - startTime) / 1000;
 
-        // How many words SHOULD be in DOM by now
+        // How many words should be in DOM by now
         const targetRendered = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
 
         // Physically append words to catch up to target
         if (_fullListRenderedEnd < targetRendered) {
-            const batchEnd = Math.min(targetRendered, _fullListRenderedEnd + STEP_SIZE);
-            const slice = _fullListAllWords.slice(_fullListRenderedEnd, batchEnd);
+            const slice = _fullListAllWords.slice(_fullListRenderedEnd, targetRendered);
             if (slice.length > 0 && resultsEl) {
                 resultsEl.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
                 _fullListRenderedEnd += slice.length;
-                _fullListLoadedPoolCount = _fullListRenderedEnd;
             }
         }
 
-        // Update counter to reflect actual words in DOM
+        // Live counter update: e.g. "8,000 / 469,764" while loading, "469,764 words" when complete
         if (countEl) {
             if (_fullListRenderedEnd < total) {
-                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()} words`;
+                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()}`;
             } else {
                 countEl.textContent = `${total.toLocaleString()} words`;
             }
         }
 
-        const progress = total > 0 ? (_fullListRenderedEnd / total) : 1;
-
-        // Thumb rises from near top and shrinks as words load
-        if (track && thumb && resultsEl) {
-            track.style.display = 'block';
-            const trackHeight = track.clientHeight || resultsEl.clientHeight || 500;
-            // Start large (75% of track), end small (proportional to viewport/total)
-            const startThumbHeight = Math.min(trackHeight * 0.75, 180);
-            const targetRatio = Math.max(0.04, resultsEl.clientHeight / Math.max(resultsEl.clientHeight, (total / 350) * resultsEl.clientHeight));
-            const endThumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
-            const currentThumbHeight = startThumbHeight - (progress * (startThumbHeight - endThumbHeight));
-            thumb.style.height = `${currentThumbHeight}px`;
-
-            // Thumb starts at top and stays at top during loading (space below = loaded words)
-            const maxThumbTop = Math.max(0, trackHeight - currentThumbHeight);
-            const maxScroll = resultsEl.scrollHeight - resultsEl.clientHeight;
-            const scrollRatio = maxScroll > 0 ? (resultsEl.scrollTop / maxScroll) : 0;
-            // baselineTop goes from top (0) and stays near top while loading
-            const thumbTop = Math.min(maxThumbTop, Math.max(0, scrollRatio * maxThumbTop * progress));
-            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+        // Trigger custom scrollbar recalculation so thumb moves up and gets smaller as more words are added below
+        if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
+            resultsEl._updateCustomScrollbar();
         }
 
         if (_fullListRenderedEnd < total) {
             _steadyLoaderRafId = requestAnimationFrame(streamStep);
         } else {
-            if (countEl) countEl.textContent = `${total.toLocaleString()} words`;
-            if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
-                resultsEl._updateCustomScrollbar();
-            }
             _steadyLoaderRafId = null;
         }
     }
@@ -3717,6 +3615,7 @@ function handleFullListWordJump() {
         _fullListAllWords = (typeof currentWordsList !== 'undefined' && currentWordsList) ? currentWordsList : [];
     }
 
+    const total = _fullListAllWords.length;
     let targetIdx = -1;
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
     if (wordType === 'likelihood') {
@@ -3726,40 +3625,35 @@ function handleFullListWordJump() {
     }
 
     if (targetIdx === -1) {
-        if (window.isFullListLoading) {
-            showFullListToast(`"${query}" is not loaded yet. Loading word list...`);
-        } else {
-            showFullListToast(`"${query}" was not found in this list.`, true);
-        }
+        showFullListToast(`"${query}" was not found in this list.`, true);
         return;
     }
 
-    let targetEl = null;
-    if (targetIdx >= _fullListRenderedStart && targetIdx < _fullListRenderedEnd) {
-        try {
-            targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-        } catch (e) {}
+    // If target word is further down than currently rendered in DOM, immediately append up to that word
+    if (targetIdx >= _fullListRenderedEnd) {
+        const renderUpTo = Math.min(total, targetIdx + 200);
+        const slice = _fullListAllWords.slice(_fullListRenderedEnd, renderUpTo);
+        if (slice.length > 0) {
+            results.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
+            _fullListRenderedEnd += slice.length;
+        }
+        const countEl = document.getElementById('full-list-modal-count');
+        if (countEl) {
+            if (_fullListRenderedEnd < total) {
+                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()}`;
+            } else {
+                countEl.textContent = `${total.toLocaleString()} words`;
+            }
+        }
+        if (typeof results._updateCustomScrollbar === 'function') {
+            results._updateCustomScrollbar();
+        }
     }
 
-    if (!targetEl && targetIdx >= _fullListRenderedEnd && targetIdx < _fullListRenderedEnd + 1000) {
-        const needed = (targetIdx - _fullListRenderedEnd) + 200;
-        appendNextFullListBatch(needed);
-        try {
-            targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-        } catch (e) {}
-    } else if (!targetEl && targetIdx < _fullListRenderedStart && targetIdx > _fullListRenderedStart - 1000) {
-        const needed = (_fullListRenderedStart - targetIdx) + 200;
-        prependPrevFullListBatch(needed);
-        try {
-            targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-        } catch (e) {}
-    } else if (!targetEl) {
-        const windowStart = Math.max(0, targetIdx - 30);
-        renderFullListWindow(windowStart, 400);
-        try {
-            targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-        } catch (e) {}
-    }
+    let targetEl = null;
+    try {
+        targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
+    } catch (e) {}
 
     if (targetEl) {
         requestAnimationFrame(() => {
@@ -3916,18 +3810,6 @@ window.closeFullListModal = function() {
     window.isFullListLoading = false;
 };
 
-// Wire up events on DOM elements
-const fullListResultsEl = document.getElementById('full-list-modal-results');
-if (fullListResultsEl) {
-    fullListResultsEl.addEventListener('scroll', () => {
-        if (fullListResultsEl.scrollTop + fullListResultsEl.clientHeight >= fullListResultsEl.scrollHeight - 500) {
-            appendNextFullListBatch(500);
-        } else if (fullListResultsEl.scrollTop <= 200 && _fullListRenderedStart > 0) {
-            prependPrevFullListBatch(500);
-        }
-    }, { passive: true });
-}
-
 const fullListJumpBtnEl = document.getElementById('full-list-jump-btn');
 if (fullListJumpBtnEl) {
     fullListJumpBtnEl.addEventListener('click', handleFullListWordJump);
@@ -3983,9 +3865,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
 
     function updateThumb() {
         if (isDragging) return; // Never override position while user is actively dragging
-        if (_steadyLoaderRafId) return; // Let steady loader control thumb while progression animation is running
 
-        const isFullList = (scrollArea.id === 'full-list-modal-results');
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight;
         const scrollTop = scrollArea.scrollTop;
@@ -3998,41 +3878,18 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         track.style.display = 'block';
 
         const trackHeight = track.clientHeight || clientHeight;
+        const ratio = Math.min(1, clientHeight / scrollHeight);
+        const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+        thumb.style.height = `${thumbHeight}px`;
 
-        if (isFullList && _fullListAllWords && _fullListAllWords.length > 0) {
-            const totalWords = _fullListAllWords.length;
-            const targetRatio = Math.max(0.04, Math.min(1, clientHeight / Math.max(clientHeight, (totalWords / 350) * clientHeight)));
-            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * targetRatio));
-            thumb.style.height = `${thumbHeight}px`;
-
-            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-            const maxVirtualIndex = Math.max(1, totalWords - 400);
-            const currentVirtualIndex = Math.min(maxVirtualIndex, Math.max(0, _fullListRenderedStart));
-            const baseRatio = currentVirtualIndex / maxVirtualIndex;
-            
-            const maxWindowScroll = scrollHeight - clientHeight;
-            const subRatio = maxWindowScroll > 0 ? (scrollTop / maxWindowScroll) : 0;
-            const effectiveRatio = Math.min(1, Math.max(0, baseRatio + (subRatio * (400 / totalWords))));
-            
-            const thumbTop = effectiveRatio * maxThumbTop;
-            thumb.style.top = `${thumbTop}px`;
-            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
-        } else {
-            const ratio = Math.min(1, clientHeight / scrollHeight);
-            const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
-            thumb.style.height = `${thumbHeight}px`;
-
-            const maxScrollTop = scrollHeight - clientHeight;
-            const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-            const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
-            thumb.style.top = `${thumbTop}px`;
-            thumb.style.setProperty('top', `${thumbTop}px`, 'important');
-        }
+        const maxScrollTop = scrollHeight - clientHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+        thumb.style.top = `${thumbTop}px`;
+        thumb.style.setProperty('top', `${thumbTop}px`, 'important');
     }
 
     function scheduleUpdate() {
-        // While the steady loader is animating the thumb, don't queue competing RAF updates
-        if (_steadyLoaderRafId) return;
         if (_rafId) return;
         _rafId = requestAnimationFrame(() => {
             _rafId = null;
@@ -4075,7 +3932,6 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const deltaY = clientY - startY;
 
-        const isFullList = (scrollArea.id === 'full-list-modal-results');
         const trackHeight = track.clientHeight || scrollArea.clientHeight;
         const thumbHeight = thumb.offsetHeight;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
@@ -4086,18 +3942,11 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
         thumb.style.top = `${newThumbTop}px`;
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
-        if (isFullList && _fullListAllWords && _fullListAllWords.length > 0) {
-            const currentPool = Math.max(400, _fullListLoadedPoolCount || _fullListAllWords.length);
-            const ratio = maxThumbTop > 0 ? (newThumbTop / maxThumbTop) : 0;
-            const targetIndex = Math.floor(ratio * Math.max(0, currentPool - 400));
-            renderFullListWindow(targetIndex, 400);
-        } else {
-            const scrollHeight = scrollArea.scrollHeight;
-            const clientHeight = scrollArea.clientHeight;
-            const maxScrollTop = scrollHeight - clientHeight;
-            if (maxThumbTop > 0) {
-                scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
-            }
+        const scrollHeight = scrollArea.scrollHeight;
+        const clientHeight = scrollArea.clientHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
         }
 
         if (e.cancelable !== false) {
