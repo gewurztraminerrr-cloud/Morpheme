@@ -827,6 +827,7 @@ def add_added_word_api():
             'message': msg,
             'added_words': valid_to_add,
             'code_version': 'V5-STRICT-UNIQUE'
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
