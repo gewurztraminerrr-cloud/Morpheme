@@ -376,7 +376,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let gatewayTransitioning = false;
                 const executeGatewayTransition = (e) => {
-                    if (gatewayTransitioning) return;
                     gatewayTransitioning = true;
                     window._gatewayTransitioning = true;
                     window._gatewayPassed = true;
@@ -414,26 +413,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }).catch(() => {});
                     } catch (e) {}
 
-                    // 4. Perform the page transition after snappy 140ms press feedback
-                    setTimeout(() => {
-                        try {
-                            showPage(targetPageId);
-                            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
-                            if (navBtn) updateActiveNav(navBtn);
-                            handleLobbyMusicState();
-                            if (hash === '#page-login') {
-                                history.replaceState(null, null, '#page-lobby');
-                            }
-                            if (typeof window.fetchLobbyStats === 'function') {
-                                window.fetchLobbyStats('all');
-                            }
-                            if (typeof window.startStatsPolling === 'function') {
-                                window.startStatsPolling();
-                            }
-                        } catch (transitionErr) {
-                            console.error('[Gateway] Exception performing page transition:', transitionErr);
+                    // 4. Perform the page transition immediately
+                    const pLoad = document.getElementById('page-loading');
+                    if (pLoad) {
+                        pLoad.classList.remove('active');
+                        pLoad.style.display = 'none';
+                    }
+                    try {
+                        showPage(targetPageId);
+                        const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                        if (navBtn) updateActiveNav(navBtn);
+                        handleLobbyMusicState();
+                        if (hash === '#page-login') {
+                            history.replaceState(null, null, '#page-lobby');
                         }
-                    }, 140);
+                        if (typeof window.fetchLobbyStats === 'function') {
+                            window.fetchLobbyStats('all');
+                        }
+                        if (typeof window.startStatsPolling === 'function') {
+                            window.startStatsPolling();
+                        }
+                    } catch (transitionErr) {
+                        console.error('[Gateway] Exception performing page transition:', transitionErr);
+                    }
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {

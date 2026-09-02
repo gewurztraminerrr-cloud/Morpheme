@@ -1409,6 +1409,9 @@
         </script>
 
         <style>
+            #page-loading {
+                display: none;
+            }
             #page-loading.active {
                 display: flex !important;
                 flex-direction: column;
@@ -1417,7 +1420,9 @@
                 min-height: calc(100vh - 100px);
             }
             @media (max-width: 768px) {
-                #page-loading,
+                #page-loading:not(.active) {
+                    display: none !important;
+                }
                 #page-loading.active {
                     position: fixed !important;
                     top: 0 !important;
@@ -1432,6 +1437,7 @@
                     margin: 0 !important;
                     padding: 0 !important;
                     touch-action: none !important;
+                    display: flex !important;
                 }
             }
 
@@ -1448,8 +1454,8 @@
         <!-- Loading / Gateway Page (Instantly Visible) -->
         <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div class="gateway-btn-housing" id="gateway-housing">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn">ENTER LOBBY</button>
+                <div class="gateway-btn-housing" id="gateway-housing" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(document.getElementById('btn-enter-lobby-gateway'), event);">
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -1507,11 +1513,7 @@
             })();
 
             window.handleEnterLobbyClick = function(btn, evt) {
-                if (window._gatewayTransitioning) return;
-                window._gatewayTransitioning = true;
-                window._gatewayPassed = true;
-
-                var gb = document.getElementById('btn-enter-lobby-gateway');
+                var gb = btn || document.getElementById('btn-enter-lobby-gateway');
                 if (gb) {
                     gb.classList.remove('dragged-out');
                     gb.classList.add('pressed', 'flattened');
@@ -1535,43 +1537,39 @@
                     }
                 } catch(e) {}
 
-                // Immediately fetch and apply authoritative stats on tap
-                try {
-                    fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            if (data && data.stats && typeof window.applyLobbyStatsToButtons === 'function') {
-                                window.applyLobbyStatsToButtons(data.stats);
-                            }
-                        }).catch(function() {});
-                } catch(e) {}
+                var targetPageId = 'page-lobby';
+                var hash = window.location.hash || '';
+                if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
+                    targetPageId = hash.substring(1);
+                }
+                var targetNavName = targetPageId.replace('page-', '');
 
-                setTimeout(function() {
-                    var targetPageId = 'page-lobby';
-                    var hash = window.location.hash || '';
-                    if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
-                        targetPageId = hash.substring(1);
-                    }
-                    var targetNavName = targetPageId.replace('page-', '');
+                // Hide loading screen cleanly
+                var pLoad = document.getElementById('page-loading');
+                if (pLoad) {
+                    pLoad.classList.remove('active');
+                    pLoad.style.display = 'none';
+                }
 
-                    if (typeof window.showPage === 'function') {
-                        window.showPage(targetPageId);
-                    } else if (typeof showPage === 'function') {
-                        showPage(targetPageId);
-                    } else {
-                        var pLoad = document.getElementById('page-loading');
-                        var pLobby = document.getElementById(targetPageId) || document.getElementById('page-lobby');
-                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
-                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block'; }
+                if (typeof window.showPage === 'function') {
+                    window.showPage(targetPageId);
+                } else if (typeof showPage === 'function') {
+                    showPage(targetPageId);
+                } else {
+                    var pLobby = document.getElementById(targetPageId) || document.getElementById('page-lobby');
+                    if (pLobby) {
+                        pLobby.classList.add('active');
+                        pLobby.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block';
                     }
+                }
 
-                    var navBtn = document.querySelector('.nav-btn[data-page="' + targetNavName + '"]') || document.querySelector('.nav-btn[data-page="lobby"]');
-                    if (navBtn && typeof window.updateActiveNav === 'function') {
-                        window.updateActiveNav(navBtn);
-                    }
-                    if (typeof handleLobbyMusicState === 'function') {
-                        handleLobbyMusicState();
-                    }
+                var navBtn = document.querySelector('.nav-btn[data-page="' + targetNavName + '"]') || document.querySelector('.nav-btn[data-page="lobby"]');
+                if (navBtn && typeof window.updateActiveNav === 'function') {
+                    window.updateActiveNav(navBtn);
+                }
+                if (typeof handleLobbyMusicState === 'function') {
+                    handleLobbyMusicState();
+                }
                     if (typeof window.fetchLobbyStats === 'function') {
                         window.fetchLobbyStats('all');
                     }
@@ -6808,7 +6806,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33240"></script>
+    <script src="/js/app.js?v=33245"></script>
     <script src="/js/lobby.js?v=33235"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
