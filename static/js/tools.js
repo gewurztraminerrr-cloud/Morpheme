@@ -4568,7 +4568,7 @@ function revealManualWords(forceShow = false) {
                 fontSize = "0.95rem";
             }
             return `
-                <div title="${w}" style="padding: 10px 6px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: ${fontSize}; transition: all 0.2s; cursor: default; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" title="${w}" style="padding: 10px 6px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; font-size: ${fontSize}; transition: all 0.2s; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${w}
                 </div>
             `;
@@ -6194,6 +6194,9 @@ window.openWordInIsValid = function (word) {
     if (container) container.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
+window._wordDefCache = window._wordDefCache || new Map();
+let _defPopoverDocListenerAdded = false;
+
 window.hideWordDefinitionPopup = function () {
     const popover = document.getElementById('tool-word-def-popover');
     if (popover) {
@@ -6208,7 +6211,11 @@ window.hideWordDefinitionPopup = function () {
 
 window.showWordDefinitionPopup = async function (word, event) {
     if (!word) return;
-    const cleanWord = String(word).trim().toUpperCase();
+    if (event && typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+    }
+    const cleanWord = String(typeof word === 'object' ? (word.word || word) : word).trim().toUpperCase();
+    if (!cleanWord) return;
 
     let popover = document.getElementById('tool-word-def-popover');
     if (!popover) {
@@ -6230,23 +6237,28 @@ window.showWordDefinitionPopup = async function (word, event) {
             </div>
         `;
         document.body.appendChild(popover);
+    }
 
-        // Close on document click outside
+    if (!_defPopoverDocListenerAdded) {
+        _defPopoverDocListenerAdded = true;
         document.addEventListener('click', (e) => {
-            if (popover && popover.classList.contains('active')) {
-                if (!popover.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item')) {
+            const p = document.getElementById('tool-word-def-popover');
+            if (p && p.classList.contains('active')) {
+                if (Date.now() - (p._openedAt || 0) < 180) return;
+                if (!p.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item')) {
                     window.hideWordDefinitionPopup();
                 }
             }
         });
 
-        // Close on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 window.hideWordDefinitionPopup();
             }
         });
     }
+
+    popover._openedAt = Date.now();
 
     const wordTextEl = document.getElementById('tool-def-word-text');
     const lenBadgeEl = document.getElementById('tool-def-len-badge');
@@ -6258,13 +6270,17 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (lenBadgeEl) lenBadgeEl.textContent = `${cleanWord.length}L`;
     if (pronEl) pronEl.style.display = 'none';
     if (isValidBtn) {
-        isValidBtn.onclick = () => window.openWordInIsValid(cleanWord);
+        isValidBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            window.openWordInIsValid(cleanWord);
+        };
     }
 
     // Smart Positioning
     const evt = event || window.event;
     const target = evt ? (evt.currentTarget || evt.target) : null;
     popover.style.display = 'block';
+    popover.style.setProperty('z-index', '2147483647', 'important');
 
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
@@ -6276,8 +6292,8 @@ window.showWordDefinitionPopup = async function (word, event) {
         if (left < 12) left = 12;
 
         let top = rect.bottom + 8;
-        if (top + 200 > window.innerHeight && rect.top > 200) {
-            top = rect.top - 190;
+        if (top + 220 > window.innerHeight && rect.top > 220) {
+            top = rect.top - 210;
         }
         if (top < 12) top = 12;
 
@@ -6294,7 +6310,25 @@ window.showWordDefinitionPopup = async function (word, event) {
     void popover.offsetWidth;
     popover.classList.add('active');
 
-    // Check in-memory cache for 0ms instant display
+    function renderDefData(data) {
+        if (data && data.pronunciation && pronEl) {
+            pronEl.textContent = data.pronunciation;
+            pronEl.style.display = 'block';
+        } else if (pronEl) {
+            pronEl.style.display = 'none';
+        }
+
+        if (contentEl) {
+            if (data && data.definition && data.definition.trim()) {
+                contentEl.textContent = data.definition;
+            } else {
+                contentEl.innerHTML = '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
+            }
+        }
+    }
+
+    if (!window._wordDefCache) window._wordDefCache = new Map();
+
     if (window._wordDefCache.has(cleanWord)) {
         renderDefData(window._wordDefCache.get(cleanWord));
         return;
@@ -6314,26 +6348,12 @@ window.showWordDefinitionPopup = async function (word, event) {
     } catch (err) {
         if (contentEl) contentEl.innerHTML = '<span style="color: #f87171;">Failed to load definition.</span>';
     }
-
-    function renderDefData(data) {
-        if (data && data.pronunciation && pronEl) {
-            pronEl.textContent = data.pronunciation;
-            pronEl.style.display = 'block';
-        } else if (pronEl) {
-            pronEl.style.display = 'none';
-        }
-
-        if (contentEl) {
-            if (data && data.definition && data.definition.trim()) {
-                contentEl.textContent = data.definition;
-            } else {
-                contentEl.innerHTML = '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
-            }
-        }
-    }
 };
 
 window.lookupWord = function (word, event) {
+    if (event && typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+    }
     window.showWordDefinitionPopup(word, event);
 };
 
