@@ -7443,48 +7443,8 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
     }
 
-    #tool-subanagrams .sub-len-wrapper {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    #tool-subanagrams .sub-len-label {
-        font-size: 1.05rem !important;
-        font-weight: 800 !important;
-        color: #ffffff !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-    }
-
-    #tool-subanagrams #sub-length {
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        border-radius: 10px !important;
-        box-sizing: border-box !important;
-    }
-
-    #tool-subanagrams #sub-gen-mode {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        border-radius: 10px !important;
-        box-sizing: border-box !important;
-    }
-
+    #tool-subanagrams #sub-length,
+    #tool-subanagrams #sub-gen-mode,
     #tool-subanagrams #sub-dict {
         width: 100% !important;
         max-width: 100% !important;
