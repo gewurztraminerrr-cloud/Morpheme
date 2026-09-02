@@ -1092,11 +1092,9 @@ body.theme-light-brown .field-hint {
         scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
         padding: 8px 10px 48px 10px !important;
         box-sizing: border-box !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
     }
@@ -1862,11 +1860,9 @@ body.theme-light-brown .field-hint {
         scroll-snap-stop: always !important;
         padding: 8px 10px 48px 10px !important;
         box-sizing: border-box !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
         clip-path: none !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
@@ -1915,11 +1911,9 @@ body.theme-light-brown .field-hint {
     .active-rooms-panel #rooms-list {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
         padding: 8px 8px 48px 8px !important;
         margin: 0 !important;
         scrollbar-width: thin !important;
