@@ -1043,7 +1043,12 @@ body.theme-light-brown .field-hint {
     .lobby-grid {
         display: flex !important;
         flex-direction: row !important;
+        flex: 0 0 calc(100% - 42px) !important;
+        height: calc(100% - 42px) !important;
+        max-height: calc(100% - 42px) !important;
+        min-height: calc(100% - 42px) !important;
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
         -webkit-overflow-scrolling: touch !important;
         scroll-behavior: auto !important;
@@ -1743,10 +1748,10 @@ body.theme-light-brown .field-hint {
     .lobby-grid {
         display: flex !important;
         flex-direction: row !important;
-        flex: 1 1 0% !important;
-        min-height: 0 !important;
-        height: auto !important;
-        max-height: none !important;
+        flex: 0 0 calc(100% - 42px) !important;
+        height: calc(100% - 42px) !important;
+        max-height: calc(100% - 42px) !important;
+        min-height: calc(100% - 42px) !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
@@ -1786,7 +1791,8 @@ body.theme-light-brown .field-hint {
         width: 100% !important;
         height: 38px !important;
         min-height: 38px !important;
-        margin: 3px 0 0 0 !important;
+        max-height: 38px !important;
+        margin: 4px 0 0 0 !important;
         position: relative !important;
         z-index: 500 !important;
         display: block !important;
