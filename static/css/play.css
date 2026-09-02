@@ -6277,17 +6277,11 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        overflow: hidden !important;
-        padding: 0 !important;
-        height: calc(100vh - 145px) !important;
-        height: calc(100dvh - 145px) !important;
-        max-height: calc(100dvh - 145px) !important;
-        flex-direction: column !important;
-        position: relative !important;
+        padding-bottom: 45px !important;
     }
 
     #page-lobby.active {
-        display: flex !important;
+        display: block !important;
     }
 
     #page-tools .tools-split-layout,
