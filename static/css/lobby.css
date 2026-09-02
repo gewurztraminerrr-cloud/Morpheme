@@ -1125,11 +1125,10 @@ body.theme-light-brown .field-hint {
         margin-bottom: 12px !important;
     }
 
-    .game-section:last-child,
-    .solo-friends-section:last-child,
-    .split-points-section {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
+    .split-points-section,
+    .solo-friends-section:last-child {
+        margin-bottom: 75px !important;
+        padding-bottom: 15px !important;
     }
 
     .game-title,
@@ -1960,10 +1959,10 @@ body.theme-light-brown .field-hint {
         font-size: 0.8rem !important;
     }
 
-    .game-types-panel .game-section:last-child,
-    .game-types-panel .split-points-section {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
+    .game-types-panel .split-points-section,
+    .solo-friends-panel .solo-friends-section:last-child {
+        margin-bottom: 75px !important;
+        padding-bottom: 15px !important;
     }
 
     .lobby-chat-drawer {
@@ -2081,6 +2080,19 @@ body.theme-light-brown .field-hint {
     .lobby-chat-form {
         flex-shrink: 0 !important;
     }
+
+    .mobile-lobby-spacer {
+        display: block !important;
+        height: 75px !important;
+        min-height: 75px !important;
+        width: 100% !important;
+        flex-shrink: 0 !important;
+        pointer-events: none !important;
+    }
+}
+
+.mobile-lobby-spacer {
+    display: none !important;
 }
 
 /* Tighten container padding on desktop when on Lobby to dock drawer cleanly near screen bottom */
@@ -2089,5 +2101,8 @@ body.theme-light-brown .field-hint {
     body:has(#page-lobby.active) .pages {
         padding-top: 6px !important;
         padding-bottom: 4px !important;
+    }
+    .mobile-lobby-spacer {
+        display: none !important;
     }
 }
