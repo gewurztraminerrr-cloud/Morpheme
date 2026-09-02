@@ -1454,10 +1454,91 @@ async function handleLobbyChatSubmit(e) {
     } finally {
         isSendingLobbyChat = false;
         if (sendBtn) sendBtn.disabled = false;
-        if (input && window.innerWidth > 900) input.focus();
+        if (input) {
+            input.focus();
+        }
     }
 }
 window.handleLobbyChatSubmit = handleLobbyChatSubmit;
+
+function setupLobbyMobileKeyboardSupport() {
+    const input = document.getElementById('lobby-chat-input');
+    const sendBtn = document.getElementById('lobby-chat-send-btn');
+    const drawer = document.getElementById('lobby-chat-drawer');
+
+    if (!input) return;
+
+    if (sendBtn) {
+        // Prevent tapping Send from blurring input and closing mobile keyboard
+        const handleSendPointer = (e) => {
+            if (e.cancelable) e.preventDefault();
+            handleLobbyChatSubmit(e);
+        };
+        sendBtn.addEventListener('pointerdown', handleSendPointer);
+        sendBtn.addEventListener('touchstart', handleSendPointer, { passive: false });
+    }
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleLobbyChatSubmit(e);
+        }
+    });
+
+    input.addEventListener('focus', () => {
+        if (drawer) {
+            drawer.classList.add('keyboard-open');
+        }
+        setTimeout(() => {
+            const chatHistory = document.getElementById('lobby-chat-history');
+            if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+            if (input.scrollIntoView) {
+                input.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }
+        }, 120);
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            if (document.activeElement !== input && drawer) {
+                drawer.classList.remove('keyboard-open');
+                drawer.style.bottom = '';
+            }
+        }, 150);
+    });
+
+    if (window.visualViewport) {
+        const handleViewportChange = () => {
+            if (!drawer || !drawer.classList.contains('open')) return;
+            if (window.innerWidth <= 900) {
+                const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
+                const isFocused = document.activeElement === input;
+                if (keyboardHeight > 80 || isFocused) {
+                    drawer.classList.add('keyboard-open');
+                    drawer.style.bottom = `${keyboardHeight}px`;
+                    const chatHistory = document.getElementById('lobby-chat-history');
+                    if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+                } else {
+                    drawer.classList.remove('keyboard-open');
+                    drawer.style.bottom = '0px';
+                }
+            } else {
+                drawer.classList.remove('keyboard-open');
+                drawer.style.bottom = '';
+            }
+        };
+        window.visualViewport.addEventListener('resize', handleViewportChange);
+        window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+}
+window.setupLobbyMobileKeyboardSupport = setupLobbyMobileKeyboardSupport;
+
+// Initialize mobile keyboard listeners on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupLobbyMobileKeyboardSupport);
+} else {
+    setupLobbyMobileKeyboardSupport();
+}
 
 function startLobbyChatPolling() {
     stopLobbyChatPolling();

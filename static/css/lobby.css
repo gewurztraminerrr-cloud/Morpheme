@@ -2075,6 +2075,44 @@ body.theme-light-brown .field-hint {
         flex-shrink: 0 !important;
     }
 
+    .lobby-chat-input,
+    .lobby-chat-input:focus,
+    .lobby-chat-input:active {
+        font-size: 16px !important; /* Prevents auto-zoom on mobile devices */
+        box-sizing: border-box !important;
+    }
+
+    .lobby-chat-drawer.open.keyboard-open .lobby-chat-slide-panel,
+    .lobby-chat-drawer.open:focus-within .lobby-chat-slide-panel {
+        max-height: 55vh !important;
+        max-height: 55dvh !important;
+    }
+
+    .lobby-chat-drawer.open.keyboard-open .lobby-slide-body,
+    .lobby-chat-drawer.open:focus-within .lobby-slide-body {
+        height: 50vh !important;
+        height: 50dvh !important;
+        max-height: 320px !important;
+    }
+
+    .lobby-chat-drawer.open.keyboard-open .lobby-players-half,
+    .lobby-chat-drawer.open:focus-within .lobby-players-half {
+        display: none !important;
+    }
+
+    .lobby-chat-drawer.open.keyboard-open .lobby-chat-half,
+    .lobby-chat-drawer.open:focus-within .lobby-chat-half {
+        flex: 1 1 auto !important;
+        height: 100% !important;
+    }
+
+    .lobby-chat-drawer.open.keyboard-open .lobby-chat-history,
+    .lobby-chat-drawer.open:focus-within .lobby-chat-history {
+        flex: 1 1 0% !important;
+        min-height: 60px !important;
+        max-height: 100% !important;
+    }
+
     .mobile-lobby-spacer {
         display: block !important;
         height: 75px !important;
