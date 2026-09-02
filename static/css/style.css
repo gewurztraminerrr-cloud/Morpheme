@@ -3724,10 +3724,68 @@ body {
     position: relative;
     max-height: 95vh;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
     animation: achievementPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent !important;
+}
+
+.achievement-card::-webkit-scrollbar {
+    width: 8px;
+    display: block !important;
+}
+
+.achievement-card::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.achievement-card::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.achievement-card::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.55);
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+[class*="theme-white"] .achievement-card,
+[class*="theme-light-"] .achievement-card,
+body.theme-yellow .achievement-card,
+body.theme-pink .achievement-card,
+body.theme-orange .achievement-card,
+body.theme-gray .achievement-card,
+body.theme-light-brown .achievement-card {
+    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.05);
+}
+
+[class*="theme-white"] .achievement-card::-webkit-scrollbar-track,
+[class*="theme-light-"] .achievement-card::-webkit-scrollbar-track,
+body.theme-yellow .achievement-card::-webkit-scrollbar-track,
+body.theme-pink .achievement-card::-webkit-scrollbar-track,
+body.theme-orange .achievement-card::-webkit-scrollbar-track,
+body.theme-gray .achievement-card::-webkit-scrollbar-track,
+body.theme-light-brown .achievement-card::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[class*="theme-white"] .achievement-card::-webkit-scrollbar-thumb,
+[class*="theme-light-"] .achievement-card::-webkit-scrollbar-thumb,
+body.theme-yellow .achievement-card::-webkit-scrollbar-thumb,
+body.theme-pink .achievement-card::-webkit-scrollbar-thumb,
+body.theme-orange .achievement-card::-webkit-scrollbar-thumb,
+body.theme-gray .achievement-card::-webkit-scrollbar-thumb,
+body.theme-light-brown .achievement-card::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.35);
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 /* Skill Rankings & Rating Boxes - Prevent Blue Highlights & Text Selection on Mobile */
