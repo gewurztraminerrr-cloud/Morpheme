@@ -597,14 +597,14 @@ async function fetchUserCount() {
 
 
 // Helper to play lobby music safely across all platforms (desktops, laptops, tablets, mobile).
+// Helper to play lobby music safely across all platforms (Safari, iOS, Chrome, Firefox, desktops, mobile).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     if (!lobbyMusic) return;
     lobbyMusic.loop = true;
-    if (typeof lobbyMusic.volume === 'number' && lobbyMusic.volume === 1) {
-        lobbyMusic.volume = 0.5;
-    }
+    lobbyMusic.volume = 0.5;
+    lobbyMusic.muted = false;
 
-    // Unlock Web Audio Context for Safari/Firefox
+    // Unlock Web Audio Context for Safari / iOS CoreAudio
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) {
@@ -614,36 +614,41 @@ function playLobbyMusicHelper(lobbyMusic, onSuccess) {
             if (window._morphemeAudioCtx.state === 'suspended') {
                 window._morphemeAudioCtx.resume();
             }
+            if (window._morphemeAudioCtx.state === 'running') {
+                const buffer = window._morphemeAudioCtx.createBuffer(1, 1, 22050);
+                const source = window._morphemeAudioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(window._morphemeAudioCtx.destination);
+                source.start(0);
+            }
         }
     } catch(e) {}
 
-    try {
-        lobbyMusic.muted = false;
-    } catch(e) {}
-
     // If already playing smoothly and unmuted, continue playback without restarting!
-    if (!lobbyMusic.paused && !lobbyMusic.muted) {
-        console.log('[LobbyMusic] Already playing continuously at:', lobbyMusic.currentTime);
+    if (!lobbyMusic.paused && !lobbyMusic.muted && lobbyMusic.currentTime > 0) {
         if (onSuccess) onSuccess();
         return;
     }
 
-    console.log('[LobbyMusic] Playing lobby music.');
-    const playPromise = lobbyMusic.play();
-    if (playPromise !== undefined) {
-        playPromise
-            .then(() => {
-                console.log('[LobbyMusic] Play succeeded.');
-                if (onSuccess) onSuccess();
-            })
-            .catch(err => {
-                console.warn('[LobbyMusic] Play failed / trying muted buffer fallback:', err ? err.name : '');
-                try {
-                    lobbyMusic.muted = true;
-                    lobbyMusic.play().catch(() => {});
-                } catch(mErr) {}
-                setupFirstInteractionMusic();
-            });
+    // Force load if not ready
+    if (lobbyMusic.readyState === 0) {
+        try { lobbyMusic.load(); } catch(e) {}
+    }
+
+    try {
+        const playPromise = lobbyMusic.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('[LobbyMusic] Play succeeded on Safari/Chrome.');
+                    if (onSuccess) onSuccess();
+                })
+                .catch(err => {
+                    console.warn('[LobbyMusic] Play deferred until user gesture:', err ? err.name : '');
+                });
+        }
+    } catch(err) {
+        console.warn('[LobbyMusic] Play exception:', err);
     }
 }
 
@@ -703,21 +708,11 @@ function playMusicOnFirstInteraction() {
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     const shouldPlay = (onLobby || onLoading || !activePage) && !inGameRoom && lobbyMusicSetting;
 
-    console.log('[LobbyMusic] Gesture state evaluation:', {
-        onLobby,
-        onLoading,
-        inGameRoom,
-        lobbyMusicSetting,
-        shouldPlay
-    });
-
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
         if (lobbyMusic) {
             console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
             playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-        } else {
-            console.warn('[LobbyMusic] #lobby-music element not found on gesture.');
         }
     } else {
         const lobbyMusic = document.getElementById('lobby-music');
@@ -727,18 +722,17 @@ function playMusicOnFirstInteraction() {
     }
 }
 
+const GESTURE_AUDIO_EVENTS = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
+
 function removeInteractionListeners() {
-    const events = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'mousemove', 'pointermove'];
-    events.forEach(evt => {
+    GESTURE_AUDIO_EVENTS.forEach(evt => {
         window.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
         document.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
 
 function setupFirstInteractionMusic() {
-    // Add event listeners without once: true so we don't prematurely delete them on early loading clicks!
-    const events = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'mousemove', 'pointermove'];
-    events.forEach(evt => {
+    GESTURE_AUDIO_EVENTS.forEach(evt => {
         window.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
     });

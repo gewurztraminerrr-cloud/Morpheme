@@ -1318,21 +1318,23 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-        </div>
-
-        <!-- Global Audio Elements (Loaded on Demand / Preloaded for Instant Playback) -->
-        <iframe src="about:blank" allow="autoplay" style="display:none;position:absolute;width:0;height:0;border:0;"></iframe>
-        <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" autoplay playsinline webkit-playsinline loop></audio>
+                       <!-- Global Audio Elements (Loaded on Demand / Preloaded for Instant Playback) -->
+        <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" playsinline webkit-playsinline loop></audio>
         <audio id="triple-music" src="/music/triple.mp3" preload="none" loop></audio>
 
         <script>
-            // Immediate Cross-Platform Lobby Music Initiation (only on ENTER LOBBY screen or in Main Lobby)
+            // Immediate Cross-Platform Lobby Music Initiation for Safari, iOS, Chrome, Firefox
             (function() {
                 var audio = document.getElementById('lobby-music');
                 if (!audio) return;
                 audio.volume = 0.5;
                 audio.loop = true;
+                audio.muted = false;
+
+                // Preload audio buffer immediately
+                try {
+                    audio.load();
+                } catch(e) {}
 
                 function unlockWebAudio() {
                     try {
@@ -1343,6 +1345,13 @@
                             }
                             if (window._morphemeAudioCtx.state === 'suspended') {
                                 window._morphemeAudioCtx.resume();
+                            }
+                            if (window._morphemeAudioCtx.state === 'running') {
+                                var buffer = window._morphemeAudioCtx.createBuffer(1, 1, 22050);
+                                var source = window._morphemeAudioCtx.createBufferSource();
+                                source.buffer = buffer;
+                                source.connect(window._morphemeAudioCtx.destination);
+                                source.start(0);
                             }
                         }
                     } catch(e) {}
@@ -1360,15 +1369,12 @@
                         try {
                             unlockWebAudio();
                             audio.muted = false;
+                            audio.volume = 0.5;
                             if (audio.paused) {
                                 var p = audio.play();
                                 if (p !== undefined) {
                                     p.catch(function(e) {
-                                        // If unmuted playback was blocked by browser policy, buffer muted first so it is immediately ready
-                                        try {
-                                            audio.muted = true;
-                                            audio.play().catch(function() {});
-                                        } catch(mErr) {}
+                                        // Pending legitimate user gesture on strict Safari/Chrome
                                     });
                                 }
                             }
@@ -1380,37 +1386,21 @@
                     }
                 };
 
-                // 1. Attempt immediate programmatic play on page lifecycle events
-                function tryAutoplay() {
-                    window.playLobbyAudioImmediate();
-                }
-                tryAutoplay();
-                audio.addEventListener('canplay', tryAutoplay);
-                audio.addEventListener('loadeddata', tryAutoplay);
-                document.addEventListener('DOMContentLoaded', tryAutoplay);
-                window.addEventListener('load', tryAutoplay);
-                window.addEventListener('focus', function() {
-                    try { audio.muted = false; } catch(e) {}
-                    window.playLobbyAudioImmediate();
-                });
-                document.addEventListener('visibilitychange', function() {
-                    if (document.visibilityState === 'visible') {
-                        try { audio.muted = false; } catch(e) {}
-                        window.playLobbyAudioImmediate();
-                    }
-                });
-
-                // 2. Immediate capture listener on first user interaction across Safari/Firefox/Chrome
-                var interactionEvents = ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerover', 'pointerenter', 'pointermove', 'mousemove', 'keydown', 'keyup', 'click', 'focus', 'wheel', 'scroll'];
+                // Legitimate user gesture events for Safari/iOS/Chrome
+                var gestureEvents = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
                 function unlockAndPlayAudio() {
-                    try { audio.muted = false; } catch(e) {}
                     unlockWebAudio();
                     window.playLobbyAudioImmediate();
                 }
 
-                interactionEvents.forEach(function(evt) {
+                gestureEvents.forEach(function(evt) {
                     window.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
                     document.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
+                });
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    try { audio.load(); } catch(e) {}
+                    window.playLobbyAudioImmediate();
                 });
             })();
         </script>
@@ -6815,7 +6805,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33220"></script>
+    <script src="/js/app.js?v=33225"></script>
     <script src="/js/lobby.js?v=33220"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
