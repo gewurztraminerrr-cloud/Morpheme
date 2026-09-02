@@ -3717,15 +3717,15 @@ body {
     backdrop-filter: blur(20px);
     border: 1px solid var(--input-border);
     border-radius: 24px;
-    width: 90%;
-    max-width: 500px;
-    padding: 20px;
+    width: 95%;
+    max-width: 850px;
+    padding: 24px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
     position: relative;
-    max-height: 95vh;
-    overflow-y: auto;
+    max-height: 90vh;
+    overflow-y: scroll;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+    scrollbar-color: #38bdf8 rgba(255, 255, 255, 0.08);
     animation: achievementPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     user-select: none;
     -webkit-user-select: none;
@@ -3733,27 +3733,61 @@ body {
 }
 
 .achievement-card::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
+    height: 10px;
     display: block !important;
 }
 
 .achievement-card::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(15, 23, 42, 0.6);
     border-radius: 8px;
     margin: 12px 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .achievement-card::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
     border-radius: 8px;
-    border: 2px solid transparent;
-    background-clip: content-box;
+    border: 2px solid rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    min-height: 40px;
 }
 
 .achievement-card::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.55);
-    border: 2px solid transparent;
-    background-clip: content-box;
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
+}
+
+/* Inner Achievement Tables Scroller */
+.ach-table-container {
+    scrollbar-width: thin;
+    scrollbar-color: #38bdf8 rgba(255, 255, 255, 0.06);
+}
+
+.ach-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    display: block !important;
+}
+
+.ach-table-container::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 6px;
+    margin: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ach-table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.3);
+    min-height: 30px;
+}
+
+.ach-table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 [class*="theme-white"] .achievement-card,
@@ -3763,7 +3797,7 @@ body.theme-pink .achievement-card,
 body.theme-orange .achievement-card,
 body.theme-gray .achievement-card,
 body.theme-light-brown .achievement-card {
-    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.05);
+    scrollbar-color: #2563eb rgba(0, 0, 0, 0.08);
 }
 
 [class*="theme-white"] .achievement-card::-webkit-scrollbar-track,
@@ -3773,7 +3807,8 @@ body.theme-pink .achievement-card::-webkit-scrollbar-track,
 body.theme-orange .achievement-card::-webkit-scrollbar-track,
 body.theme-gray .achievement-card::-webkit-scrollbar-track,
 body.theme-light-brown .achievement-card::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 [class*="theme-white"] .achievement-card::-webkit-scrollbar-thumb,
@@ -3783,9 +3818,8 @@ body.theme-pink .achievement-card::-webkit-scrollbar-thumb,
 body.theme-orange .achievement-card::-webkit-scrollbar-thumb,
 body.theme-gray .achievement-card::-webkit-scrollbar-thumb,
 body.theme-light-brown .achievement-card::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.35);
-    border: 2px solid transparent;
-    background-clip: content-box;
+    background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
+    border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 /* Skill Rankings & Rating Boxes - Prevent Blue Highlights & Text Selection on Mobile */
