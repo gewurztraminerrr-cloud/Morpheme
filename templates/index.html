@@ -1532,6 +1532,8 @@
 
                 // Background room cleanup without blocking UI
                 try {
+                    localStorage.removeItem('private_match_active');
+                    localStorage.removeItem('tournament_play_active');
                     if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
                         window.leaveCurrentRoom().catch(function() {});
                     }
@@ -1570,13 +1572,12 @@
                 if (typeof handleLobbyMusicState === 'function') {
                     handleLobbyMusicState();
                 }
-                    if (typeof window.fetchLobbyStats === 'function') {
-                        window.fetchLobbyStats('all');
-                    }
-                    if (typeof window.startStatsPolling === 'function') {
-                        window.startStatsPolling();
-                    }
-                }, 140);
+                if (typeof window.fetchLobbyStats === 'function') {
+                    window.fetchLobbyStats('all');
+                }
+                if (typeof window.startStatsPolling === 'function') {
+                    window.startStatsPolling();
+                }
             };
         </script>
 
@@ -6811,7 +6812,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33250"></script>
+    <script src="/js/app.js?v=33255"></script>
     <script src="/js/lobby.js?v=33240"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>

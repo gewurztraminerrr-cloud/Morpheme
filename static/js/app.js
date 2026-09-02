@@ -396,11 +396,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     // 2. Non-blocking background room cleanup
-                    if (targetNavName !== 'play') {
+                    try {
+                        localStorage.removeItem('private_match_active');
+                        localStorage.removeItem('tournament_play_active');
                         if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
                             window.leaveCurrentRoom().catch(() => {});
                         }
-                    }
+                    } catch (_) {}
 
                     // 3. Immediately fetch lobby stats in background
                     try {
@@ -461,10 +463,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 function isInsideGateway(e) {
                     const coords = getCoords(e);
-                    if (!coords) return true; // If coordinates unavailable (synthetic click), treat as inside
+                    if (!coords) return true; // If coordinates unavailable (synthetic click/touch release), treat as inside
                     const targetEl = housingEl || gatewayBtn;
                     const rect = targetEl.getBoundingClientRect();
-                    const buffer = 12; // 12px generous margin around outer edge
+                    const buffer = 50; // 50px generous margin so mobile taps never get dropped
                     return (
                         coords.x >= (rect.left - buffer) &&
                         coords.x <= (rect.right + buffer) &&
