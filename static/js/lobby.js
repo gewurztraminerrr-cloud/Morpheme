@@ -1206,10 +1206,10 @@ function resetLobbyButtons() {
                     window.currentLobbyConfig.boardDimensions,
                     window.currentLobbyConfig.timeLimit
                 );
-                myRatingBtn.textContent = `My Rating (${rating})`;
+                myRatingBtn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${rating})</span>`;
                 myRatingBtn.dataset.rating = rating;
             } else {
-                myRatingBtn.textContent = 'My Rating';
+                myRatingBtn.innerHTML = '<span class="my-rating-label">My Rating</span>';
                 myRatingBtn.removeAttribute('data-rating');
             }
         }
@@ -1222,14 +1222,14 @@ async function updateMyRatingButton(gameType, board, time) {
     if (!btn) return;
 
     if (!window.currentLobbyConfig) {
-        btn.textContent = 'My Rating';
+        btn.innerHTML = '<span class="my-rating-label">My Rating</span>';
         btn.removeAttribute('data-rating');
         btn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
         return;
     }
 
     const initialRating = getUserConfigRating(gameType, board, time);
-    btn.textContent = `My Rating (${initialRating})`;
+    btn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${initialRating})</span>`;
     btn.dataset.rating = initialRating;
     btn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
 
@@ -1240,7 +1240,7 @@ async function updateMyRatingButton(gameType, board, time) {
                     await window.loadCurrentUserConfigRatings();
                     if (window.currentLobbyConfig) {
                         const updatedRating = getUserConfigRating(gameType, board, time);
-                        btn.textContent = `My Rating (${updatedRating})`;
+                        btn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${updatedRating})</span>`;
                         btn.dataset.rating = updatedRating;
                     }
                 } catch (e) {
