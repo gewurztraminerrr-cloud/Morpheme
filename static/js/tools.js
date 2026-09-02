@@ -110,6 +110,17 @@ window.showTool = function(toolId) {
             renderUnscrambleFound();
         }
     }
+    if (toolId === 'subanagrams') {
+        if (!_subCurrentLetters) {
+            const lengthSelect = document.getElementById('sub-length');
+            const modeSelect = document.getElementById('sub-gen-mode');
+            const dictSelect = document.getElementById('sub-dict');
+            const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+            const dict = dictSelect ? dictSelect.value : 'CSW';
+            const mode = modeSelect ? modeSelect.value : 'word';
+            generateRandomSubanagrams(len, dict, mode, false);
+        }
+    }
 
     // Scroll tools content into view horizontally to the right pane on mobile with smooth sliding
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -4959,8 +4970,9 @@ function setupSubanagramsTool() {
         resetBtn.addEventListener('click', resetFoundSubanagrams);
     }
 
-    // Auto-generate on first launch if empty
-    if (!_subCurrentLetters) {
+    // Auto-generate on first launch if subanagrams tool is currently active and empty
+    const subPane = document.getElementById('tool-subanagrams');
+    if (subPane && subPane.classList.contains('active') && !_subCurrentLetters) {
         generateRandomSubanagrams(8, 'CSW', 'word', false);
     }
 }

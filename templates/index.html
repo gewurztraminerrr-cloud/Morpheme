@@ -3359,11 +3359,11 @@
                                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                                     <div id="sub-letters-display" class="random-word-large"
                                         style="letter-spacing: clamp(5px, 1.2vw, 15px); font-weight: 900; color: #a78bfa; text-shadow: 0 0 30px rgba(167,139,250,0.4); font-size: clamp(1.8rem, 3.8vw, 3.2rem); margin-bottom: 5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-align: center; max-width: 100%; overflow: visible; text-transform: uppercase;">
-                                        HEOPSLEM
+                                        ...
                                     </div>
                                     <div id="sub-count-info"
                                         style="font-size: 0.95rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                                        Found: 0 / 0 subanagrams
+                                        Loading letters...
                                     </div>
                                 </div>
 
@@ -3399,7 +3399,7 @@
                             <!-- Results Box (Found words & All subanagrams) -->
                             <div id="sub-results-container" class="seq-results-container"
                                 style="width: 100%; max-width: 100%; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; min-height: 250px; flex: 1;">
-                                <!-- Results table / Found words injected via JS -->
+                                <div class="seq-results-placeholder">Loading letters and subanagrams...</div>
                             </div>
                         </div>
                     </div>
@@ -6897,7 +6897,7 @@
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33325"></script>
+    <script src="/js/tools.js?v=33330"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33205"></script>
     <script src="/js/private_matches.js?v=33173"></script>
