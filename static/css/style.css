@@ -978,6 +978,11 @@ body {
     display: block;
 }
 
+#page-lobby.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

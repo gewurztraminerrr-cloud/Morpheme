@@ -1402,7 +1402,7 @@ function showPage(pageId) {
         const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
         if (isMatch) {
             page.classList.add('active');
-            page.style.display = 'block';
+            page.style.display = (page.id === 'page-lobby') ? 'flex' : 'block';
             page.style.opacity = '1';
             page.style.visibility = 'visible';
             page.scrollTop = 0;
