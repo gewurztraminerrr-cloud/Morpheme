@@ -498,36 +498,8 @@ def enforce_one_month_session():
                  return jsonify({'error': 'Session expired. Please log in again.'}), 401
             return redirect('/')
 
-def ensure_guest_session():
-    if 'user_id' not in session:
-        import random, string
-        for attempt in range(10):
-            try:
-                guest_id = random.randint(10000, 99999)
-                guest_username = f'Guest_{guest_id}'
-                dummy_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-                password_hash = generate_password_hash(dummy_password, method='pbkdf2:sha256')
-                client_ip = get_client_ip()
-                with get_db() as conn:
-                    cursor = conn.execute('INSERT INTO users (username, password_hash, registration_ip, last_ip) VALUES (?, ?, ?, ?)', 
-                                          (guest_username, password_hash, client_ip, client_ip))
-                    new_user_id = cursor.lastrowid
-                session['user_id'] = new_user_id
-                session['username'] = guest_username
-                session['is_guest'] = True
-                session['_morpheme_login_time'] = time.time()
-                session.permanent = True
-                print(f"[AutoGuest] Automatically initialized guest session for user: {guest_username}")
-                break
-            except Exception as e:
-                if 'UNIQUE' in str(e) and attempt < 9:
-                    continue
-                print(f"[AutoGuest] Error creating guest session (attempt {attempt}): {e}")
-
 @app.before_request
 def load_user():
-    if 'user_id' not in session and request.path and not request.path.startswith('/static') and not any(request.path.endswith(ext) for ext in ('.js', '.css', '.png', '.jpg', '.ico', '.mp3', '.wav', '.json')):
-        ensure_guest_session()
     if 'user_id' in session:
         g.user = User(session['user_id'], session['username'])
     else:
@@ -4314,8 +4286,6 @@ def create_room():
         with open(DEBUG_FLOW_PATH, 'a') as f:
             f.write(f"\n[app.py] create_room called at {time.time()}\n")
         if 'user_id' not in session:
-            ensure_guest_session()
-        if 'user_id' not in session:
             return jsonify({'error': 'Not authenticated'}), 401
         
         # Timeout check
@@ -4416,8 +4386,6 @@ def create_room():
 
 @app.route('/api/room/<room_id>/join', methods=['POST'])
 def join_room(room_id):
-    if 'user_id' not in session:
-        ensure_guest_session()
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
@@ -4723,8 +4691,6 @@ def get_lobby_chat():
 @app.route('/api/lobby/chat', methods=['POST'])
 def send_lobby_chat():
     """Send a message to Lobby Chat with 100-message FIFO buffer."""
-    if 'user_id' not in session:
-        ensure_guest_session()
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
