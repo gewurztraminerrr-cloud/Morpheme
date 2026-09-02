@@ -3719,13 +3719,13 @@ body {
     border-radius: 24px;
     width: 95%;
     max-width: 850px;
-    padding: 24px;
+    padding: 24px 38px 24px 24px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
     position: relative;
     max-height: 90vh;
-    overflow-y: scroll;
-    scrollbar-width: thin;
-    scrollbar-color: #38bdf8 rgba(255, 255, 255, 0.08);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     animation: achievementPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     user-select: none;
     -webkit-user-select: none;
@@ -3733,29 +3733,56 @@ body {
 }
 
 .achievement-card::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-    display: block !important;
+    display: none !important;
+    width: 0 !important;
 }
 
-.achievement-card::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 8px;
-    margin: 12px 0;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* Custom Large Draggable Scrollbar Track & Thumb for Achievements */
+#achievements-modal-scrollbar-track {
+    position: absolute;
+    top: 60px;
+    bottom: 20px;
+    right: 8px;
+    width: 20px;
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 10px;
+    z-index: 9999;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(0, 0, 0, 0.4);
+    display: none;
+    touch-action: none;
 }
 
-.achievement-card::-webkit-scrollbar-thumb {
+#achievements-modal-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 14px;
     background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
     border-radius: 8px;
-    border: 2px solid rgba(15, 23, 42, 0.8);
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
-    min-height: 40px;
+    cursor: grab;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), 0 2px 6px rgba(0, 0, 0, 0.6);
+    touch-action: none;
+    min-height: 48px;
 }
 
-.achievement-card::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
+#achievements-modal-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #7dd3fc 0%, #3b82f6 100%);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 1), 0 2px 8px rgba(0, 0, 0, 0.8);
+    width: 16px;
+    left: 1px;
+}
+
+#achievements-modal-scrollbar-thumb:active,
+#achievements-modal-scrollbar-thumb.dragging {
+    cursor: grabbing;
+    background: linear-gradient(180deg, #a5f3fc 0%, #1d4ed8 100%);
+    border-color: #ffffff;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 1), 0 0 8px #38bdf8;
+    width: 16px;
+    left: 1px;
 }
 
 /* Inner Achievement Tables Scroller */

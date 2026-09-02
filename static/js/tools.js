@@ -2937,18 +2937,24 @@ function setupImageLightbox() {
     // Also setup achievement modal
     const achModal = document.getElementById('room-achievements-modal');
     const achClose = document.getElementById('achievement-modal-close');
-    if (achModal && achClose) {
-        const close = () => {
-            achModal.classList.add('hidden');
-            achModal.classList.remove('forced-show');
-            achModal.style.display = 'none';
-            achModal.style.opacity = '0';
-            achModal.style.pointerEvents = 'none';
-        };
-        achClose.onclick = close;
-        achModal.onclick = (e) => {
-            if (e.target === achModal) close();
-        };
+    if (achModal) {
+        const achCard = achModal.querySelector('.achievement-card');
+        if (achCard && typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement(achCard, 'achievements-modal-scrollbar-track', 'achievements-modal-scrollbar-thumb');
+        }
+        if (achClose) {
+            const close = () => {
+                achModal.classList.add('hidden');
+                achModal.classList.remove('forced-show');
+                achModal.style.display = 'none';
+                achModal.style.opacity = '0';
+                achModal.style.pointerEvents = 'none';
+            };
+            achClose.onclick = close;
+            achModal.onclick = (e) => {
+                if (e.target === achModal) close();
+            };
+        }
     }
 }
 
@@ -2975,6 +2981,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     modal.style.display = 'flex';
     modal.style.opacity = '1';
     modal.style.pointerEvents = 'auto';
+
+    if (card && typeof initCustomScrollbarForElement === 'function') {
+        initCustomScrollbarForElement(card, 'achievements-modal-scrollbar-track', 'achievements-modal-scrollbar-thumb');
+    }
 
     // Update tab UI
     const tabs = document.querySelectorAll('.modal-tabs .ach-tab');
@@ -3251,12 +3261,23 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (card && previousScroll > 0) {
             setTimeout(() => {
                 card.scrollTop = previousScroll;
+                if (typeof card._updateCustomScrollbar === 'function') {
+                    card._updateCustomScrollbar();
+                }
             }, 0);
+        } else if (card && typeof card._updateCustomScrollbar === 'function') {
+            setTimeout(() => {
+                card._updateCustomScrollbar();
+            }, 50);
         }
 
     } catch (err) {
         console.error("Failed to fetch achievements:", err);
         // showToast?
+    } finally {
+        if (card && typeof card._updateCustomScrollbar === 'function') {
+            card._updateCustomScrollbar();
+        }
     }
 }
 window.showRoomAchievements = showRoomAchievements;
