@@ -6271,18 +6271,7 @@ input[type=range]::-moz-range-track {
         display: flex !important;
     }
 
-    /* Mobile overrides for page-lobby */
-    #page-lobby {
-        display: none;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        padding-bottom: 45px !important;
-    }
 
-    #page-lobby.active {
-        display: block !important;
-    }
 
     #page-tools .tools-split-layout,
     #page-settings .tools-split-layout,

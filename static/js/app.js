@@ -1417,6 +1417,7 @@ function showPage(pageId) {
     if (pageId !== 'page-loading') {
         document.body.classList.remove('loading-active');
     }
+    document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
     window.scrollTo(0, 0);
     if (typeof handleLobbyMusicState === 'function') {
         handleLobbyMusicState();
