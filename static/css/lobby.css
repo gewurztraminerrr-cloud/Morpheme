@@ -1848,6 +1848,8 @@ body.theme-light-brown .field-hint {
         gap: 6px !important;
         overflow-y: auto !important;
         max-height: 75px !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
     }
 
     .lobby-player-row {
