@@ -1253,4 +1253,228 @@ async function updateMyRatingButton(gameType, board, time) {
 window.updateMyRatingButton = updateMyRatingButton;
 window.fetchAndRenderRooms = fetchAndRenderRooms;
 
-console.log('lobby.js fully loaded - version with polling');
+// ============================================================
+// LOBBY PLAYERS & CHAT DRAWER CONTROLLER
+// ============================================================
+let lobbyChatPollInterval = null;
+let isLobbyChatDrawerOpen = false;
+let isSendingLobbyChat = false;
+let lastLobbyChatMessagesCount = 0;
+
+function formatLobbyMessageTime(isoOrSeconds) {
+    if (!isoOrSeconds) return '';
+    try {
+        let date;
+        if (typeof isoOrSeconds === 'number') {
+            date = new Date(isoOrSeconds * 1000);
+        } else {
+            date = new Date(isoOrSeconds);
+        }
+        if (isNaN(date.getTime())) return '';
+        
+        const now = new Date();
+        const isToday = (date.toDateString() === now.toDateString());
+        const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+        
+        if (isToday) {
+            return timeStr;
+        } else {
+            const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            return `${dateStr}, ${timeStr}`;
+        }
+    } catch (e) {
+        return '';
+    }
+}
+
+function toggleLobbyChatDrawer() {
+    const drawer = document.getElementById('lobby-chat-drawer');
+    if (!drawer) return;
+    
+    isLobbyChatDrawerOpen = !isLobbyChatDrawerOpen;
+    if (isLobbyChatDrawerOpen) {
+        drawer.classList.add('open');
+        fetchLobbyState();
+        setTimeout(() => {
+            const chatHistory = document.getElementById('lobby-chat-history');
+            if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+            const input = document.getElementById('lobby-chat-input');
+            if (input && window.innerWidth > 900) input.focus();
+        }, 100);
+    } else {
+        drawer.classList.remove('open');
+    }
+}
+window.toggleLobbyChatDrawer = toggleLobbyChatDrawer;
+
+async function fetchLobbyState() {
+    if (!isOnLobby()) return;
+    try {
+        const resp = await fetch('/api/lobby/chat', { cache: 'no-store' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        renderLobbyState(data);
+    } catch (e) {
+        console.error('[Lobby] Error fetching lobby state:', e);
+    }
+}
+window.fetchLobbyState = fetchLobbyState;
+
+function renderLobbyState(data) {
+    if (!data) return;
+    
+    const count = (data.count !== undefined) ? data.count : (data.players ? data.players.length : 0);
+    const players = data.players || [];
+    const messages = data.messages || [];
+    
+    // 1. Update count badges
+    const onlineCountEl = document.getElementById('lobby-online-count');
+    if (onlineCountEl) onlineCountEl.textContent = count;
+    
+    const headerCountEl = document.getElementById('lobby-players-count-header');
+    if (headerCountEl) headerCountEl.textContent = count;
+    
+    // 2. Render Players List
+    const playersListEl = document.getElementById('lobby-players-list');
+    if (playersListEl) {
+        if (players.length === 0) {
+            playersListEl.innerHTML = '<div class="lobby-empty-players">No players currently in lobby</div>';
+        } else {
+            let html = '';
+            players.forEach(p => {
+                const uname = p.username || 'Player';
+                const rating = (p.rating !== undefined && p.rating !== null) ? p.rating : 1200;
+                const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
+                
+                html += `
+                    <div class="lobby-player-row" onclick="if (window.showMiniProfile) window.showMiniProfile('${uname}'); event.stopPropagation();" title="View ${uname}'s Profile">
+                        <div class="lobby-player-rating" style="background-color: ${rColor};">${rating}</div>
+                        <span class="lobby-player-name">${uname}</span>
+                    </div>
+                `;
+            });
+            playersListEl.innerHTML = html;
+        }
+    }
+    
+    // 3. Render Chat Messages (100 messages buffer)
+    const chatHistoryEl = document.getElementById('lobby-chat-history');
+    if (chatHistoryEl) {
+        const isNearBottom = (chatHistoryEl.scrollHeight - chatHistoryEl.scrollTop <= chatHistoryEl.clientHeight + 60);
+        const isFirstLoad = (lastLobbyChatMessagesCount === 0);
+        
+        let msgHtml = '';
+        messages.forEach(m => {
+            const author = m.username || 'Guest';
+            const rating = (m.rating !== undefined && m.rating !== null) ? m.rating : 1200;
+            const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#b3b3b3';
+            const timeStr = formatLobbyMessageTime(m.timestamp || m.time);
+            const text = (m.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            msgHtml += `
+                <div class="lobby-chat-msg" style="border-left-color: ${rColor};">
+                    <div class="lobby-chat-msg-header">
+                        <span class="lobby-chat-rating-badge" style="background-color: ${rColor};">${rating}</span>
+                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); event.stopPropagation();">${author}</span>
+                        <span class="lobby-chat-time">${timeStr}</span>
+                    </div>
+                    <div class="lobby-chat-text">${text}</div>
+                </div>
+            `;
+        });
+        chatHistoryEl.innerHTML = msgHtml;
+        lastLobbyChatMessagesCount = messages.length;
+        
+        if (isNearBottom || isFirstLoad) {
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        }
+    }
+}
+
+async function handleLobbyChatSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (isSendingLobbyChat) return;
+    
+    const input = document.getElementById('lobby-chat-input');
+    const sendBtn = document.getElementById('lobby-chat-send-btn');
+    if (!input) return;
+    
+    const text = input.value.trim();
+    if (!text) return;
+    
+    // Asynchronous lock & instant synchronous input clearing for single-send protection
+    isSendingLobbyChat = true;
+    input.value = '';
+    if (sendBtn) sendBtn.disabled = true;
+    
+    try {
+        const resp = await fetch('/api/lobby/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
+        
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            renderLobbyState(data);
+            const chatHistory = document.getElementById('lobby-chat-history');
+            if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+        } else {
+            if (data.timed_out) {
+                if (typeof window.showTimeoutBanModal === 'function') {
+                    window.showTimeoutBanModal(data);
+                } else {
+                    alert(data.error || 'You are timed out.');
+                }
+            } else if (data.error) {
+                if (typeof window.showLobbyToast === 'function') {
+                    window.showLobbyToast(data.error, 'error');
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[Lobby] Error sending chat message:', err);
+    } finally {
+        isSendingLobbyChat = false;
+        if (sendBtn) sendBtn.disabled = false;
+        if (input && window.innerWidth > 900) input.focus();
+    }
+}
+window.handleLobbyChatSubmit = handleLobbyChatSubmit;
+
+function startLobbyChatPolling() {
+    stopLobbyChatPolling();
+    fetchLobbyState();
+    lobbyChatPollInterval = setInterval(() => {
+        if (isOnLobby()) {
+            fetchLobbyState();
+        }
+    }, 2000);
+}
+window.startLobbyChatPolling = startLobbyChatPolling;
+
+function stopLobbyChatPolling() {
+    if (lobbyChatPollInterval) {
+        clearInterval(lobbyChatPollInterval);
+        lobbyChatPollInterval = null;
+    }
+}
+window.stopLobbyChatPolling = stopLobbyChatPolling;
+
+// Start Lobby Chat & Presence Polling
+startLobbyChatPolling();
+
+// Wakeup on window focus & visibility restoration (e.g. app unminimized / session restored)
+window.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isOnLobby()) {
+        fetchLobbyState();
+    }
+});
+
+window.addEventListener('focus', () => {
+    if (isOnLobby()) {
+        fetchLobbyState();
+    }
+});
+
+console.log('lobby.js fully loaded with Lobby Players & Chat controller');

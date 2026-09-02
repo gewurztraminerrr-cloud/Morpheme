@@ -208,7 +208,7 @@ from tournament_logic import tournament_manager
 from private_match_logic import private_match_manager
 from word_validator import word_validator
 from scoring import calculate_word_score, get_valued_word_score
-from game_room import room_manager, STATS_PATH
+from game_room import room_manager, lobby_manager, STATS_PATH
 import fcntl
 
 # MODERATOR SYSTEM
@@ -4589,6 +4589,88 @@ def get_lobby_stats():
         stats[key] = len(user_set)
     
     return jsonify({'stats': stats})
+
+@app.route('/api/lobby/chat', methods=['GET'])
+def get_lobby_chat():
+    """Fetch active lobby players and the 100-message chat history."""
+    if 'user_id' in session:
+        user_id = session['user_id']
+        username = session.get('username') or 'Guest'
+        is_guest = session.get('is_guest', False)
+        rating = 1200
+        avatar_url = None
+        
+        if not is_guest:
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=30)
+                cur = conn.execute('SELECT rating, avatar_url FROM users WHERE id = ?', (user_id,))
+                row = cur.fetchone()
+                if row:
+                    rating = row[0] if row[0] is not None else 1200
+                    avatar_url = row[1]
+                conn.close()
+            except Exception as e:
+                print(f"[get_lobby_chat] DB error: {e}")
+        
+        lobby_manager.update_presence(user_id, username, rating, avatar_url)
+    
+    state = lobby_manager.get_lobby_state()
+    return jsonify(state)
+
+@app.route('/api/lobby/chat', methods=['POST'])
+def send_lobby_chat():
+    """Send a message to Lobby Chat with 100-message FIFO buffer."""
+    if 'user_id' not in session:
+        ensure_guest_session()
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user_id = session['user_id']
+    username = session.get('username') or 'Guest'
+    is_guest = session.get('is_guest', False)
+    
+    # Check user discipline / timeout
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id or username)
+    if is_to:
+        r_text = reason_val or 'Moderator timeout'
+        return jsonify({
+            'error': f'You are temporarily timed out from chatting for another {rem_str}.',
+            'timed_out': True,
+            'remaining': rem_str,
+            'reason': f'timeout:{rem_str}|{r_text}'
+        }), 403
+    
+    data = request.get_json(silent=True) or {}
+    message = data.get('message', '').strip()
+    if not message:
+        return jsonify({'error': 'Message cannot be empty'}), 400
+    
+    message = message[:300]
+    
+    rating = 1200
+    avatar_url = None
+    if not is_guest:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            cur = conn.execute('SELECT rating, avatar_url FROM users WHERE id = ?', (user_id,))
+            row = cur.fetchone()
+            if row:
+                rating = row[0] if row[0] is not None else 1200
+                avatar_url = row[1]
+            conn.close()
+        except Exception as e:
+            print(f"[send_lobby_chat] DB error: {e}")
+    
+    lobby_manager.update_presence(user_id, username, rating, avatar_url)
+    lobby_manager.add_message(user_id, username, rating, message)
+    
+    state = lobby_manager.get_lobby_state()
+    return jsonify({
+        'success': True,
+        'count': state['count'],
+        'players': state['players'],
+        'messages': state['messages']
+    })
 
 @app.route('/api/room/<room_id>/state')
 def get_room_state(room_id):

@@ -1474,6 +1474,16 @@ function showPage(pageId) {
         if (typeof window.startStatsPolling === 'function') {
             window.startStatsPolling();
         }
+        if (typeof window.fetchLobbyState === 'function') {
+            window.fetchLobbyState();
+        }
+        if (typeof window.startLobbyChatPolling === 'function') {
+            window.startLobbyChatPolling();
+        }
+    } else {
+        if (typeof window.stopLobbyChatPolling === 'function') {
+            window.stopLobbyChatPolling();
+        }
     }
 
     if (pageId === 'page-mods') {

@@ -119,9 +119,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33195" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33172" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33200" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33195">
-    <link rel="stylesheet" href="/css/lobby.css?v=33172">
+    <link rel="stylesheet" href="/css/lobby.css?v=33200">
     <link rel="stylesheet" href="/css/play.css?v=33265">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
     <link rel="stylesheet" href="/css/forum.css?v=33177">
@@ -2097,6 +2097,44 @@
                     <div id="rooms-list">
                         <p class="placeholder">No "Show Rooms" selected</p>
                         <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lobby Players & Chat Sliding Drawer -->
+            <div id="lobby-chat-drawer" class="lobby-chat-drawer">
+                <button id="lobby-chat-toggle-btn" class="lobby-chat-toggle-btn" onclick="window.toggleLobbyChatDrawer()">
+                    <div class="lobby-toggle-content">
+                        <span class="lobby-toggle-icon">💬</span>
+                        <span class="lobby-toggle-text">Players in Lobby & Chat [<span id="lobby-online-count">0</span>]</span>
+                    </div>
+                    <span id="lobby-drawer-arrow" class="lobby-drawer-arrow">▲</span>
+                </button>
+                <div id="lobby-chat-slide-panel" class="lobby-chat-slide-panel">
+                    <div class="lobby-slide-body">
+                        <!-- Left Half: Players in Lobby -->
+                        <div class="lobby-slide-half lobby-players-half">
+                            <div class="lobby-half-header">
+                                <span class="lobby-half-title">👥 Players in Lobby (<span id="lobby-players-count-header">0</span>)</span>
+                            </div>
+                            <div id="lobby-players-list" class="lobby-players-list">
+                                <div class="lobby-empty-players">No players in lobby</div>
+                            </div>
+                        </div>
+                        <!-- Right Half: Lobby Chat -->
+                        <div class="lobby-slide-half lobby-chat-half">
+                            <div class="lobby-half-header">
+                                <span class="lobby-half-title">💬 Lobby Chat</span>
+                                <span class="lobby-chat-limit-note">Last 100 messages</span>
+                            </div>
+                            <div id="lobby-chat-history" class="lobby-chat-history">
+                                <!-- Messages will be rendered here -->
+                            </div>
+                            <form id="lobby-chat-form" class="lobby-chat-form" onsubmit="window.handleLobbyChatSubmit(event)">
+                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="300" autocomplete="off">
+                                <button type="submit" id="lobby-chat-send-btn" class="lobby-chat-send-btn">Send</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -6691,8 +6729,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33190"></script>
-    <script src="/js/lobby.js?v=33200"></script>
+    <script src="/js/app.js?v=33195"></script>
+    <script src="/js/lobby.js?v=33210"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>

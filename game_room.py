@@ -326,6 +326,12 @@ class GameRoom:
     
     def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
         """Add player to room"""
+        if not is_ai and user_id:
+            try:
+                if 'lobby_manager' in globals():
+                    lobby_manager.remove_user(user_id)
+            except Exception:
+                pass
         is_daily = self.time_limit >= 7200
         uid_str = str(user_id)
         uname_lower = str(username).lower()
@@ -4104,6 +4110,12 @@ class RoomManager:
             if uid_str in self.user_presence:
                 del self.user_presence[uid_str]
         
+        try:
+            if 'lobby_manager' in globals():
+                lobby_manager.remove_user(user_id)
+        except Exception:
+            pass
+        
         # USER REQUEST: Immediate removal from all rooms to prevent "zombie" rooms
         rooms_to_delete = []
         for ri, room in list(self.rooms.items()):
@@ -7514,5 +7526,108 @@ class RoomManager:
         # Implementation of global room update trigger if needed (e.g. for SocketIO or cache busting)
         pass # Placeholder for existing mechanism
 
-# Global instance
+# Global instances
 room_manager = RoomManager()
+
+from collections import deque
+
+class LobbyManager:
+    def __init__(self, room_mgr):
+        self.room_manager = room_mgr
+        self.lock = threading.RLock()
+        self.lobby_users = {} # { user_id_str: { 'user_id': uid, 'username': uname, 'rating': r, 'avatar_url': url, 'last_seen': float } }
+        self.chat_messages = deque(maxlen=100)
+        self._msg_id_seq = 0
+
+    def is_user_in_any_room(self, user_id):
+        if not user_id:
+            return False
+        uid_str = str(user_id)
+        now = time.time()
+        for r in list(self.room_manager.rooms.values()):
+            is_daily = (getattr(r, 'time_limit', 0) >= 7200)
+            for p in getattr(r, 'players', []):
+                if getattr(p, 'is_ai', False):
+                    continue
+                if str(getattr(p, 'user_id', '')) == uid_str:
+                    if not is_daily:
+                        return True
+                    elif (now - getattr(p, 'last_active', 0)) < 60:
+                        return True
+            for s in getattr(r, 'spectators', []):
+                if str(getattr(s, 'user_id', '')) == uid_str:
+                    return True
+        return False
+
+    def update_presence(self, user_id, username, rating=1200, avatar_url=None):
+        if not user_id or not username:
+            return
+        uid_str = str(user_id)
+        if self.is_user_in_any_room(user_id):
+            with self.lock:
+                self.lobby_users.pop(uid_str, None)
+            return
+
+        with self.lock:
+            self.lobby_users[uid_str] = {
+                'user_id': user_id,
+                'username': username,
+                'rating': rating if rating is not None else 1200,
+                'avatar_url': avatar_url,
+                'last_seen': time.time()
+            }
+
+    def remove_user(self, user_id):
+        if not user_id:
+            return
+        with self.lock:
+            self.lobby_users.pop(str(user_id), None)
+
+    def get_lobby_state(self):
+        now = time.time()
+        with self.lock:
+            active_users = []
+            stale_keys = []
+            for uid_str, data in list(self.lobby_users.items()):
+                if (now - data['last_seen']) > 30 or self.is_user_in_any_room(data['user_id']):
+                    stale_keys.append(uid_str)
+                else:
+                    active_users.append({
+                        'user_id': data['user_id'],
+                        'username': data['username'],
+                        'rating': data['rating'],
+                        'avatar_url': data.get('avatar_url')
+                    })
+            for k in stale_keys:
+                self.lobby_users.pop(k, None)
+
+            active_users.sort(key=lambda u: u['username'].lower())
+            messages_list = list(self.chat_messages)
+
+            return {
+                'players': active_users,
+                'count': len(active_users),
+                'messages': messages_list
+            }
+
+    def add_message(self, user_id, username, rating, message):
+        if not message or not username:
+            return None
+        with self.lock:
+            self._msg_id_seq += 1
+            now = time.time()
+            import datetime
+            iso_ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            msg_entry = {
+                'id': self._msg_id_seq,
+                'user_id': user_id,
+                'username': username,
+                'rating': rating if rating is not None else 1200,
+                'message': message.strip()[:300],
+                'time': now,
+                'timestamp': iso_ts
+            }
+            self.chat_messages.append(msg_entry)
+            return msg_entry
+
+lobby_manager = LobbyManager(room_manager)
