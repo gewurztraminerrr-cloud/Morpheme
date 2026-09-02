@@ -745,27 +745,35 @@ def toggle_added_words():
 @app.route('/api/mods/added_words/add', methods=['POST'])
 @mod_required
 def add_added_word_api():
-    word = request.json.get('word', '').strip().upper()
-    if not word: return jsonify({'error': 'Word required'}), 400
+    data = request.json or {}
+    raw_word = data.get('word', '')
+    if isinstance(raw_word, list):
+        words = [w.strip().upper() for w in raw_word if w and w.strip()]
+    else:
+        words = [w.strip().upper() for w in str(raw_word).replace(',', ' ').split() if w.strip()]
+        
+    if not words:
+        return jsonify({'error': 'Word required'}), 400
     
-    # Reject if already present in standard dictionaries (CSW, NWL, or 16plus)
-    if word_validator.is_valid_word_authoritative(word):
+    # Check for words already in official dictionaries
+    official_words = [w for w in words if word_validator.is_valid_word_authoritative(w)]
+    if official_words and len(words) == 1:
         return jsonify({
-            'error': f"'{word}' is already a valid word in the official dictionaries (CSW/NWL/16plus).",
+            'error': f"'{official_words[0]}' is already a valid word in the official dictionaries (CSW/NWL/16plus).",
             'is_authoritative': True
         }), 400
 
-    # Reject if already present in Added Words list (User Request)
-    if word.upper() in word_validator.added_words:
-        print(f"[Mods] REJECTED Duplicate: '{word}' is already in the Added Words set.")
+    valid_to_add = [w for w in words if not word_validator.is_valid_word_authoritative(w)]
+    if not valid_to_add:
         return jsonify({
-            'error': f"'{word}' is already present on Added Words list.",
-            'is_duplicate': True
+            'error': f"All specified words are already in the official dictionaries.",
+            'is_authoritative': True
         }), 400
         
     try:
-        # Update in-memory sets instantly
-        word_validator.add_word_in_memory(word)
+        # Update in-memory sets instantly (in reverse so words[0] ends up at index 0)
+        for w in reversed(valid_to_add):
+            word_validator.add_word_in_memory(w)
         
         # Clear local/endpoint caches instantly
         TOOLS_DICT_CACHE.clear()
@@ -777,7 +785,7 @@ def add_added_word_api():
         LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
 
         # Spawn asynchronous thread to update files on disk (prevents blocking)
-        def save_added_word_async(w):
+        def save_added_words_async(word_list):
             try:
                 with _added_words_file_lock:
                     # 1. Update Added Words file
@@ -785,37 +793,40 @@ def add_added_word_api():
                     if os.path.exists(ADDED_WORDS_FILE):
                         with open(ADDED_WORDS_FILE, 'r') as f:
                             lines = [line.strip().upper() for line in f if line.strip()]
-                    if w in lines:
-                        lines.remove(w)
-                    lines.insert(0, w)
+                    for w in word_list:
+                        while w in lines:
+                            lines.remove(w)
+                    for w in reversed(word_list):
+                        lines.insert(0, w)
                     with open(ADDED_WORDS_FILE, 'w') as f:
                         for l in lines:
                             f.write(f"{l}\n")
                     
                     # 2. Sync with Global Tally stats file (heavy I/O)
-                    _update_word_stats(w, "add")
+                    for w in word_list:
+                        _update_word_stats(w, "add")
                     
                     global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
                     if os.path.exists(ADDED_WORDS_FILE):
                         curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
                         LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
                         LAST_ADDED_WORDS_MTIME = curr_mtime
-                print(f"[AsyncMods] Finished saving new word '{w}' to disk and tally.")
+                print(f"[AsyncMods] Finished saving {len(word_list)} new word(s) to disk and tally.")
             except Exception as e:
-                print(f"[AsyncMods] Error saving '{w}' to disk: {e}")
+                print(f"[AsyncMods] Error saving words to disk: {e}")
 
         import threading
-        threading.Thread(target=save_added_word_async, args=(word,), daemon=True).start()
+        threading.Thread(target=save_added_words_async, args=(valid_to_add,), daemon=True).start()
         
         # Trigger dynamic definition mapping and auto-saving rules
-        ensure_definitions_background([word])
+        ensure_definitions_background(valid_to_add)
 
+        msg = f'New word "{valid_to_add[0]}" added to Added Words list successfully.' if len(valid_to_add) == 1 else f'{len(valid_to_add)} words added to Added Words list successfully.'
         return jsonify({
             'success': True, 
-            'message': f'New word "{word}" added to Added Words list successfully.',
+            'message': msg,
+            'added_words': valid_to_add,
             'code_version': 'V5-STRICT-UNIQUE'
-        })
-        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
