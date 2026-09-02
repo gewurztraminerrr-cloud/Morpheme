@@ -129,7 +129,7 @@
     <link rel="preload" href="/css/lobby.css?v=33305" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33240">
     <link rel="stylesheet" href="/css/lobby.css?v=33305">
-    <link rel="stylesheet" href="/css/play.css?v=33320">
+    <link rel="stylesheet" href="/css/play.css?v=33325">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
     <link rel="stylesheet" href="/css/forum.css?v=33177">
     <link rel="stylesheet" href="/css/donate.css?v=33175">
@@ -3322,27 +3322,30 @@
                                     autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="flex: 1 1 200px; min-width: 160px; text-transform: uppercase;">
                                 <button id="sub-find-all-btn" class="primary-action" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
                                 <button id="sub-practice-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
-                                <select id="sub-length" style="width: 165px; height: 42px; font-size: 1rem; font-weight: 700;">
-                                    <option value="5">Length: 5 Letters</option>
-                                    <option value="6">Length: 6 Letters</option>
-                                    <option value="7">Length: 7 Letters</option>
-                                    <option value="8" selected>Length: 8 Letters</option>
-                                    <option value="9">Length: 9 Letters</option>
-                                    <option value="10">Length: 10 Letters</option>
-                                    <option value="11">Length: 11 Letters</option>
-                                    <option value="12">Length: 12 Letters</option>
-                                </select>
-                                <select id="sub-gen-mode" style="width: 165px; height: 42px; font-size: 1rem; font-weight: 700;">
+                                <div class="sub-len-wrapper" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <span class="sub-len-label" style="font-size: 0.95rem; color: rgba(255,255,255,0.85); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">LEN:</span>
+                                    <select id="sub-length" style="width: 70px;">
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8" selected>8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                    </select>
+                                </div>
+                                <select id="sub-gen-mode" style="width: 165px;">
                                     <option value="word" selected>Word Guaranteed</option>
                                     <option value="random">Totally Random</option>
                                 </select>
-                                <select id="sub-dict" style="width: 130px; height: 42px; font-size: 1rem; font-weight: 700;">
+                                <select id="sub-dict" style="width: 120px;">
                                     <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW" selected>CSW (Intl)</option>
                                     <option value="added_words">AW</option>
                                 </select>
-                                <button id="sub-random-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; height: 42px; padding: 0 16px; border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 1rem;">🎲 Random</button>
+                                <button id="sub-random-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
                             </div>
                         </div>
 
