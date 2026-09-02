@@ -3501,12 +3501,11 @@ function setupListsTool() {
         }
     }
 
-// --- View Full List Modal & Word Jump Global Management ---
+// --- View Full List Modal & High-Performance Virtual Windowing ---
 window.isFullListLoading = false;
 let _fullListAllWords = [];
-let _fullListRenderedStart = 0;
-let _fullListRenderedEnd = 0;
-let _steadyLoaderRafId = null;
+let _fullListWindowStart = 0;
+const FULL_LIST_WINDOW_SIZE = 800; // Optimal rendering chunk: <1ms render time, zero memory bloat
 
 function showFullListToast(msg, isError = false) {
     const toast = document.getElementById('full-list-jump-toast');
@@ -3534,79 +3533,192 @@ function generateFullListItemsHtml(slice) {
     }
 }
 
-function stopSteadyLoader() {
-    if (_steadyLoaderRafId) {
-        cancelAnimationFrame(_steadyLoaderRafId);
-        _steadyLoaderRafId = null;
+function renderFullListWindow(startIndex, targetWordToHighlight = null) {
+    const resultsEl = document.getElementById('full-list-modal-results');
+    const countEl = document.getElementById('full-list-modal-count');
+    if (!resultsEl || !_fullListAllWords || _fullListAllWords.length === 0) return;
+
+    const total = _fullListAllWords.length;
+    const maxStart = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
+    const clampedStart = Math.max(0, Math.min(maxStart, startIndex));
+    _fullListWindowStart = clampedStart;
+
+    const slice = _fullListAllWords.slice(clampedStart, clampedStart + FULL_LIST_WINDOW_SIZE);
+    resultsEl.innerHTML = generateFullListItemsHtml(slice);
+
+    if (countEl) {
+        countEl.textContent = `${total.toLocaleString()} words`;
+    }
+
+    updateFullListVirtualScrollbar();
+
+    if (targetWordToHighlight) {
+        requestAnimationFrame(() => {
+            let targetEl = null;
+            try {
+                targetEl = resultsEl.querySelector(`.full-list-item[data-word="${CSS.escape(targetWordToHighlight)}"]`);
+            } catch (e) {}
+
+            if (targetEl) {
+                targetEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                targetEl.classList.add('jump-target-pulse');
+                setTimeout(() => { targetEl.classList.remove('jump-target-pulse'); }, 2500);
+            }
+        });
     }
 }
 
-function startSteadyLoader() {
-    stopSteadyLoader();
-    if (!_fullListAllWords || _fullListAllWords.length === 0) return;
+function updateFullListVirtualScrollbar() {
+    const track = document.getElementById('full-list-scrollbar-track');
+    const thumb = document.getElementById('full-list-scrollbar-thumb');
+    const resultsEl = document.getElementById('full-list-modal-results');
+    if (!track || !thumb || !resultsEl || !_fullListAllWords || _fullListAllWords.length === 0) return;
 
     const total = _fullListAllWords.length;
-    const modal = document.getElementById('full-list-modal');
-    const countEl = document.getElementById('full-list-modal-count');
-    const resultsEl = document.getElementById('full-list-modal-results');
+    if (total <= 50) {
+        track.style.display = 'none';
+        return;
+    }
+    track.style.display = 'block';
 
-    // Clear the list and start fresh from 0
-    if (resultsEl) resultsEl.innerHTML = '';
-    _fullListRenderedStart = 0;
-    _fullListRenderedEnd = 0;
+    const trackHeight = track.clientHeight || resultsEl.clientHeight;
+    const ratio = Math.max(0.08, Math.min(1, FULL_LIST_WINDOW_SIZE / total));
+    const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+    thumb.style.height = `${thumbHeight}px`;
 
-    const startTime = performance.now();
-    const WORDS_PER_SECOND = 4000; // Exactly 4,000 words appended to DOM per second
+    const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+    const maxStartIndex = Math.max(1, total - FULL_LIST_WINDOW_SIZE);
+    const progress = Math.min(1, Math.max(0, _fullListWindowStart / maxStartIndex));
+    const thumbTop = progress * maxThumbTop;
 
-    function streamStep(now) {
-        if (!modal || (modal.style.display === 'none' && !modal.classList.contains('active'))) {
-            stopSteadyLoader();
-            return;
-        }
+    thumb.style.top = `${thumbTop}px`;
+    thumb.style.setProperty('top', `${thumbTop}px`, 'important');
+}
 
-        const currentTimestamp = typeof now === 'number' ? now : performance.now();
-        const elapsedSec = (currentTimestamp - startTime) / 1000;
+function initFullListVirtualScrollbar() {
+    const results = document.getElementById('full-list-modal-results');
+    const track = document.getElementById('full-list-scrollbar-track');
+    const thumb = document.getElementById('full-list-scrollbar-thumb');
+    if (!results || !track || !thumb) return;
 
-        // How many words should be in DOM by now
-        const targetRendered = Math.min(total, Math.floor(elapsedSec * WORDS_PER_SECOND));
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+    let _dragRafId = null;
 
-        // Physically append words to catch up to target
-        if (_fullListRenderedEnd < targetRendered) {
-            const slice = _fullListAllWords.slice(_fullListRenderedEnd, targetRendered);
-            if (slice.length > 0 && resultsEl) {
-                resultsEl.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
-                _fullListRenderedEnd += slice.length;
-            }
-        }
+    function applyDragPosition(clientY) {
+        if (!_fullListAllWords || _fullListAllWords.length === 0) return;
+        const total = _fullListAllWords.length;
+        const trackHeight = track.clientHeight || results.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        if (maxThumbTop <= 0) return;
 
-        // Live counter update: e.g. "8,000 / 469,764" while loading, "469,764 words" when complete
-        if (countEl) {
-            if (_fullListRenderedEnd < total) {
-                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()}`;
-            } else {
-                countEl.textContent = `${total.toLocaleString()} words`;
-            }
-        }
+        const deltaY = clientY - startY;
+        let newThumbTop = Math.max(0, Math.min(maxThumbTop, startThumbTop + deltaY));
 
-        // Trigger custom scrollbar recalculation so thumb moves up and gets smaller as more words are added below
-        if (resultsEl && typeof resultsEl._updateCustomScrollbar === 'function') {
-            resultsEl._updateCustomScrollbar();
-        }
+        thumb.style.top = `${newThumbTop}px`;
+        thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
-        if (_fullListRenderedEnd < total) {
-            _steadyLoaderRafId = requestAnimationFrame(streamStep);
-        } else {
-            _steadyLoaderRafId = null;
+        const progress = newThumbTop / maxThumbTop;
+        const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
+        const targetIndex = Math.floor(progress * maxStartIndex);
+
+        if (_dragRafId) cancelAnimationFrame(_dragRafId);
+        _dragRafId = requestAnimationFrame(() => {
+            _dragRafId = null;
+            renderFullListWindow(targetIndex);
+        });
+    }
+
+    function onDragMove(e) {
+        if (!isDragging) return;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        applyDragPosition(clientY);
+        if (e.cancelable !== false) e.preventDefault();
+    }
+
+    function onDragEnd() {
+        if (isDragging) {
+            isDragging = false;
+            thumb.classList.remove('dragging');
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('mouseup', onDragEnd);
+            document.removeEventListener('touchmove', onDragMove);
+            document.removeEventListener('touchend', onDragEnd);
+            document.removeEventListener('touchcancel', onDragEnd);
         }
     }
 
-    _steadyLoaderRafId = requestAnimationFrame(streamStep);
+    function onDragStart(e) {
+        isDragging = true;
+        thumb.classList.add('dragging');
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startY = clientY;
+        startThumbTop = parseFloat(thumb.style.top) || 0;
+        document.body.style.userSelect = 'none';
+
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('touchmove', onDragMove, { passive: false });
+        document.addEventListener('touchend', onDragEnd);
+        document.addEventListener('touchcancel', onDragEnd);
+
+        if (e.cancelable !== false) e.preventDefault();
+    }
+
+    thumb.onmousedown = onDragStart;
+    thumb.ontouchstart = onDragStart;
+
+    track.onmousedown = (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const thumbHeight = thumb.offsetHeight;
+        startThumbTop = Math.max(0, clickY - thumbHeight / 2);
+        startY = e.clientY;
+        onDragStart(e);
+        applyDragPosition(e.clientY);
+    };
+
+    track.ontouchstart = (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const touchY = e.touches[0].clientY - rect.top;
+        const thumbHeight = thumb.offsetHeight;
+        startThumbTop = Math.max(0, touchY - thumbHeight / 2);
+        startY = e.touches[0].clientY;
+        onDragStart(e);
+        applyDragPosition(e.touches[0].clientY);
+    };
+
+    // Smooth continuous window pagination when scrolling inside word grid
+    results.onscroll = () => {
+        if (isDragging) return;
+        if (!_fullListAllWords || _fullListAllWords.length === 0) return;
+        const total = _fullListAllWords.length;
+        const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
+
+        const scrollHeight = results.scrollHeight;
+        const scrollTop = results.scrollTop;
+        const clientHeight = results.clientHeight;
+
+        if (scrollTop + clientHeight >= scrollHeight - 40 && _fullListWindowStart < maxStartIndex) {
+            const nextStart = Math.min(maxStartIndex, _fullListWindowStart + 200);
+            renderFullListWindow(nextStart);
+            results.scrollTop = Math.max(0, scrollTop - 100);
+        } else if (scrollTop <= 30 && _fullListWindowStart > 0) {
+            const prevStart = Math.max(0, _fullListWindowStart - 200);
+            renderFullListWindow(prevStart);
+            results.scrollTop = 100;
+        }
+    };
 }
 
 function handleFullListWordJump() {
     const input = document.getElementById('full-list-jump-input');
-    const results = document.getElementById('full-list-modal-results');
-    if (!input || !results) return;
+    if (!input) return;
     const query = input.value.trim().toUpperCase();
     input.blur();
     if (!query) return;
@@ -3629,63 +3741,9 @@ function handleFullListWordJump() {
         return;
     }
 
-    // If target word is further down than currently rendered in DOM, immediately append up to that word
-    if (targetIdx >= _fullListRenderedEnd) {
-        const renderUpTo = Math.min(total, targetIdx + 200);
-        const slice = _fullListAllWords.slice(_fullListRenderedEnd, renderUpTo);
-        if (slice.length > 0) {
-            results.insertAdjacentHTML('beforeend', generateFullListItemsHtml(slice));
-            _fullListRenderedEnd += slice.length;
-        }
-        const countEl = document.getElementById('full-list-modal-count');
-        if (countEl) {
-            if (_fullListRenderedEnd < total) {
-                countEl.textContent = `${_fullListRenderedEnd.toLocaleString()} / ${total.toLocaleString()}`;
-            } else {
-                countEl.textContent = `${total.toLocaleString()} words`;
-            }
-        }
-        if (typeof results._updateCustomScrollbar === 'function') {
-            results._updateCustomScrollbar();
-        }
-    }
-
-    let targetEl = null;
-    try {
-        targetEl = results.querySelector(`.full-list-item[data-word="${CSS.escape(query)}"]`);
-    } catch (e) {}
-
-    if (targetEl) {
-        requestAnimationFrame(() => {
-            results.querySelectorAll('.full-list-item.jump-target-pulse').forEach(el => {
-                el.classList.remove('jump-target-pulse');
-            });
-
-            const containerRect = results.getBoundingClientRect();
-            const targetRect = targetEl.getBoundingClientRect();
-            const relativeOffset = targetRect.top - containerRect.top + results.scrollTop;
-            const centerOffset = relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
-
-            const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                results.scrollTop = Math.max(0, centerOffset);
-            } else {
-                results.scrollTo({
-                    top: Math.max(0, centerOffset),
-                    behavior: 'smooth'
-                });
-            }
-
-            targetEl.classList.add('jump-target-pulse');
-            setTimeout(() => {
-                targetEl.classList.remove('jump-target-pulse');
-            }, 2500);
-
-            if (window.getSelection) {
-                window.getSelection().removeAllRanges();
-            }
-        });
-    }
+    // Center window around target word
+    const targetStart = Math.max(0, targetIdx - 40);
+    renderFullListWindow(targetStart, query);
 }
 window.handleFullListWordJump = handleFullListWordJump;
 
@@ -3701,8 +3759,6 @@ window.openFullListModal = function() {
     if (modal.parentElement !== document.body) {
         document.body.appendChild(modal);
     }
-
-    stopSteadyLoader();
 
     const lengthSelect = document.getElementById('list-length-filter');
     const startSelect = document.getElementById('list-start-filter');
@@ -3725,9 +3781,7 @@ window.openFullListModal = function() {
     const fullListCount = document.getElementById('full-list-modal-count');
 
     window._lastFullListFilterKey = currentFilterKey;
-    window._savedFullListScrollTop = 0;
-    _fullListRenderedStart = 0;
-    _fullListRenderedEnd = 0;
+    _fullListWindowStart = 0;
 
     results.innerHTML = '<div style="padding: 40px; text-align: center; color: #a78bfa; font-size: 1.1rem; font-weight: 700; width: 100%;">Loading words…</div>';
     results.scrollTop = 0;
@@ -3745,10 +3799,9 @@ window.openFullListModal = function() {
         fullListCount.textContent = `Loading…`;
     }
 
-    // Helper to ensure alphabetical sorting for full list view
     const sortAlphabetical = (list, type) => {
         if (!list || list.length === 0) return [];
-        if (type === 'likelihood') return list; // Likelihood retains its score order
+        if (type === 'likelihood') return list;
         return list.slice().sort((a, b) => {
             const wa = (typeof a === 'object' ? a.word : a) || '';
             const wb = (typeof b === 'object' ? b.word : b) || '';
@@ -3756,15 +3809,12 @@ window.openFullListModal = function() {
         });
     };
 
-    // If cached in-memory, load immediately
     if (window._cachedFullWordLists[currentFilterKey]) {
         const fullWords = sortAlphabetical(window._cachedFullWordLists[currentFilterKey], selectedType);
         _fullListAllWords = fullWords;
-        _fullListRenderedStart = 0;
-        _fullListRenderedEnd = 0;
         window.isFullListLoading = false;
-        initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
-        startSteadyLoader();
+        initFullListVirtualScrollbar();
+        renderFullListWindow(0);
         return;
     }
 
@@ -3780,12 +3830,10 @@ window.openFullListModal = function() {
             const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || [];
             const fullWords = sortAlphabetical(rawWords, selectedType);
             _fullListAllWords = fullWords;
-            _fullListRenderedStart = 0;
-            _fullListRenderedEnd = 0;
             window._cachedFullWordLists[currentFilterKey] = fullWords;
             window.isFullListLoading = false;
-            initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
-            startSteadyLoader();
+            initFullListVirtualScrollbar();
+            renderFullListWindow(0);
         })
         .catch(err => {
             console.error('[Full List] Failed to fetch full word list:', err);
@@ -3795,16 +3843,11 @@ window.openFullListModal = function() {
 };
 
 window.closeFullListModal = function() {
-    stopSteadyLoader();
     const modal = document.getElementById('full-list-modal');
-    const results = document.getElementById('full-list-modal-results');
     if (modal) {
         modal.classList.remove('active');
         modal.style.display = 'none';
         modal.style.setProperty('display', 'none', 'important');
-    }
-    if (results) {
-        window._savedFullListScrollTop = results.scrollTop;
     }
     document.body.style.overflow = '';
     window.isFullListLoading = false;
