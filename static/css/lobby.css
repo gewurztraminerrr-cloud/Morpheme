@@ -1743,7 +1743,7 @@ body.theme-light-brown .field-hint {
         flex-direction: row !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        height: calc(100% - 44px) !important;
+        height: calc(100% - 42px) !important;
         max-height: none !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
@@ -1773,6 +1773,7 @@ body.theme-light-brown .field-hint {
         padding: 10px 12px 14px 12px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         clip-path: none !important;
     }
@@ -1785,6 +1786,8 @@ body.theme-light-brown .field-hint {
         margin: 0 !important;
         position: relative !important;
         z-index: 500 !important;
+        display: block !important;
+        box-sizing: border-box !important;
     }
 
     .lobby-chat-toggle-btn {
@@ -1794,6 +1797,9 @@ body.theme-light-brown .field-hint {
         border-bottom: none !important;
         font-size: 0.82rem !important;
         padding: 0 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
     }
 
     .lobby-chat-slide-panel {
@@ -1802,36 +1808,78 @@ body.theme-light-brown .field-hint {
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        z-index: 600 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
+        background: rgba(16, 14, 28, 0.98) !important;
+        backdrop-filter: blur(24px) !important;
+        -webkit-backdrop-filter: blur(24px) !important;
         border-radius: 14px 14px 0 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        border-bottom: none !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7) !important;
+        z-index: 600 !important;
     }
 
     .lobby-chat-drawer.open .lobby-chat-slide-panel {
-        max-height: 65vh !important;
-        max-height: 65dvh !important;
+        max-height: 70vh !important;
+        max-height: 70dvh !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
     }
 
     .lobby-slide-body {
         display: flex !important;
         flex-direction: column !important;
-        height: 60vh !important;
-        height: 60dvh !important;
-        max-height: 480px !important;
+        height: 65vh !important;
+        height: 65dvh !important;
+        max-height: 520px !important;
         gap: 8px !important;
         padding: 10px !important;
         box-sizing: border-box !important;
     }
 
     .lobby-players-half {
-        flex: 0 0 110px !important;
-        max-height: 110px !important;
-        min-height: 90px !important;
+        flex: 0 0 auto !important;
+        max-height: 120px !important;
+        min-height: 80px !important;
+        padding: 8px 10px !important;
+    }
+
+    .lobby-players-list {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        overflow-y: auto !important;
+        max-height: 75px !important;
+    }
+
+    .lobby-player-row {
+        padding: 4px 8px !important;
+        font-size: 0.78rem !important;
+        flex: 0 0 auto !important;
     }
 
     .lobby-chat-half {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
+        padding: 8px 10px !important;
+    }
+
+    .lobby-chat-history {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .lobby-chat-form {
+        flex-shrink: 0 !important;
     }
 }
 
