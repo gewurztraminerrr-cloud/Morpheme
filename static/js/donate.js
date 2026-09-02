@@ -73,7 +73,7 @@
                 }
 
                 // 2. Update progress bar fill
-                const progressFill = document.querySelector('.progress-bar-fill');
+                const progressFill = document.querySelector('#page-donate .progress-bar-fill');
                 if (progressFill) {
                     progressFill.style.width = '0%';
                     setTimeout(() => {

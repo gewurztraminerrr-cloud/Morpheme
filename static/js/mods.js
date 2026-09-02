@@ -1171,6 +1171,8 @@ window.showModTab = function(tabId) {
         loadIpBans();
     } else if (tabId === 'notice') {
         loadLobbyNotice();
+    } else if (tabId === 'donations') {
+        loadModDonations();
     } else if (tabId === 'def') {
         loadUndefinedWords();
     } else if (tabId === 'access') {
@@ -1257,7 +1259,152 @@ function setupModsNavigation() {
             if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
         });
     }
+    // Setup donation management listeners
+    const addDonationBtn = document.getElementById('add-donation-btn');
+    if (addDonationBtn) {
+        addDonationBtn.addEventListener('click', addModDonation);
+    }
+    const refreshDonationsBtn = document.getElementById('refresh-donations-btn');
+    if (refreshDonationsBtn) {
+        refreshDonationsBtn.addEventListener('click', loadModDonations);
+    }
+    const donorAmountInput = document.getElementById('mod-donor-amount');
+    if (donorAmountInput) {
+        donorAmountInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addModDonation();
+            }
+        });
+    }
+    const donorNameInput = document.getElementById('mod-donor-name');
+    if (donorNameInput) {
+        donorNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addModDonation();
+            }
+        });
+    }
 }
+
+async function loadModDonations() {
+    const emptyEl = document.getElementById('mod-donations-empty');
+    const tableWrap = document.getElementById('mod-donations-table-wrap');
+    const tbody = document.getElementById('mod-donations-tbody');
+    const countEl = document.getElementById('mod-donations-count');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch('/api/mods/donations/list');
+        const data = await res.json();
+        const donations = data.donations || [];
+        if (countEl) countEl.innerText = donations.length;
+
+        if (donations.length === 0) {
+            if (emptyEl) emptyEl.style.display = 'block';
+            if (tableWrap) tableWrap.style.display = 'none';
+            tbody.innerHTML = '';
+            return;
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (tableWrap) tableWrap.style.display = 'block';
+
+        tbody.innerHTML = donations.map(d => {
+            const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(d.timestamp, true) : (d.timestamp || '');
+            const isAnon = Boolean(d.is_anonymous);
+            return `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 8px; color: var(--text-secondary); white-space: nowrap;">${dateStr}</td>
+                    <td style="padding: 8px; font-weight: 700; color: #fff;">${escapeHTML(d.donor_name || 'Anonymous')}</td>
+                    <td style="padding: 8px; font-weight: 800; color: #4ade80;">$${parseFloat(d.amount).toFixed(2)}</td>
+                    <td style="padding: 8px; color: ${isAnon ? '#f43f5e' : 'var(--text-secondary)'};">${isAnon ? 'Yes (Anon)' : 'Public'}</td>
+                    <td style="padding: 8px;"><span style="font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: #4ade80; font-weight: 600;">Confirmed</span></td>
+                    <td style="padding: 8px; text-align: right;">
+                        <button class="mini-action-btn remove" onclick="deleteModDonation(${d.id})" style="padding: 3px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Error loading mod donations:", err);
+    }
+}
+
+async function addModDonation() {
+    const nameInput = document.getElementById('mod-donor-name');
+    const amountInput = document.getElementById('mod-donor-amount');
+    const anonCheckbox = document.getElementById('mod-donor-anonymous');
+
+    const donor_name = nameInput ? nameInput.value.trim() : '';
+    const amount = amountInput ? parseFloat(amountInput.value) : 0;
+    const is_anonymous = anonCheckbox ? anonCheckbox.checked : false;
+
+    if (!donor_name) {
+        showModStatus("Please enter a donor name or username.", true, 'donation-status-area');
+        return;
+    }
+    if (!amount || isNaN(amount) || amount <= 0) {
+        showModStatus("Please enter a valid donation amount greater than $0.", true, 'donation-status-area');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/mods/donations/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ donor_name, amount, is_anonymous })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showModStatus(`Successfully recorded $${amount.toFixed(2)} donation for "${donor_name}"!`, false, 'donation-status-area');
+            if (nameInput) nameInput.value = '';
+            if (amountInput) amountInput.value = '';
+            if (anonCheckbox) anonCheckbox.checked = false;
+            loadModDonations();
+            if (typeof window.initDonatePage === 'function') {
+                window.initDonatePage();
+            }
+        } else {
+            showModStatus(data.error || "Failed to record donation.", true, 'donation-status-area');
+        }
+    } catch (err) {
+        console.error("Error adding donation:", err);
+        showModStatus("Network error recording donation.", true, 'donation-status-area');
+    }
+}
+
+async function deleteModDonation(id) {
+    if (!confirm("Are you sure you want to delete this donation record? This will remove it from the Hall of Fame and progress meter.")) {
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/mods/donations/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showModStatus("Donation record deleted.", false, 'donation-status-area');
+            loadModDonations();
+            if (typeof window.initDonatePage === 'function') {
+                window.initDonatePage();
+            }
+        } else {
+            showModStatus(data.error || "Failed to delete donation.", true, 'donation-status-area');
+        }
+    } catch (err) {
+        console.error("Error deleting donation:", err);
+        showModStatus("Network error deleting donation.", true, 'donation-status-area');
+    }
+}
+
+window.loadModDonations = loadModDonations;
+window.addModDonation = addModDonation;
+window.deleteModDonation = deleteModDonation;
 
 // Add event listener to initialize setupModsNavigation when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

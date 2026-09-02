@@ -1699,6 +1699,85 @@ def update_lobby_notice():
 
 
 
+# --- DONATION MANAGEMENT MOD ROUTES ---
+
+@app.route('/api/mods/donations/list', methods=['GET'])
+@login_required
+def list_mod_donations():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        cursor = conn.execute("""
+            SELECT id, user_id, donor_name, amount, is_anonymous, status, timestamp
+            FROM donations
+            ORDER BY timestamp DESC
+        """)
+        rows = cursor.fetchall()
+        donations = [dict(r) for r in rows]
+        return jsonify({'donations': donations})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/mods/donations/add', methods=['POST'])
+@login_required
+def add_mod_donation():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    donor_name = (data.get('donor_name') or '').strip()
+    amount = data.get('amount')
+    is_anonymous = 1 if data.get('is_anonymous') else 0
+    timestamp = data.get('timestamp') or datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+    if not donor_name:
+        return jsonify({'error': 'Donor name or username is required.'}), 400
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            return jsonify({'error': 'Donation amount must be greater than $0.'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid donation amount.'}), 400
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        user_row = conn.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", (donor_name,)).fetchone()
+        user_id = user_row[0] if user_row else None
+
+        conn.execute("""
+            INSERT INTO donations (user_id, donor_name, amount, is_anonymous, status, timestamp)
+            VALUES (?, ?, ?, ?, 'confirmed', ?)
+        """, (user_id, donor_name, amount, is_anonymous, timestamp))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/mods/donations/delete', methods=['POST'])
+@login_required
+def delete_mod_donation():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    donation_id = data.get('id')
+    if not donation_id:
+        return jsonify({'error': 'Donation ID is required.'}), 400
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        conn.execute("DELETE FROM donations WHERE id = ?", (donation_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 
 # --- AUTH ROUTES ---
 
