@@ -111,7 +111,7 @@ window.showTool = function(toolId) {
         }
     }
     if (toolId === 'subanagrams') {
-        if (!_subCurrentLetters) {
+        if (!_subCurrentLetters && !_isSubLoading) {
             const lengthSelect = document.getElementById('sub-length');
             const modeSelect = document.getElementById('sub-gen-mode');
             const dictSelect = document.getElementById('sub-dict');
@@ -4837,6 +4837,8 @@ let _subFoundWords = new Set();
 let _subIsRevealed = false;
 let _subFeedbackTimeout = null;
 let _subCurrentMode = 'word';
+let _subAbortController = null;
+let _isSubLoading = false;
 
 function setupSubanagramsTool() {
     const findAllBtn = document.getElementById('sub-find-all-btn');
@@ -4969,15 +4971,16 @@ function setupSubanagramsTool() {
     if (resetBtn) {
         resetBtn.addEventListener('click', resetFoundSubanagrams);
     }
-
-    // Auto-generate on first launch if subanagrams tool is currently active and empty
-    const subPane = document.getElementById('tool-subanagrams');
-    if (subPane && subPane.classList.contains('active') && !_subCurrentLetters) {
-        generateRandomSubanagrams(8, 'CSW', 'word', false);
-    }
 }
 
 async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
+    if (_subAbortController) {
+        try { _subAbortController.abort(); } catch (e) {}
+    }
+    _subAbortController = new AbortController();
+    const signal = _subAbortController.signal;
+    _isSubLoading = true;
+
     const lettersDisplay = document.getElementById('sub-letters-display');
     const countInfo = document.getElementById('sub-count-info');
     const resultsContainer = document.getElementById('sub-results-container');
@@ -4986,6 +4989,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
     const clean = rawLetters.toUpperCase().replace(/[^A-Z]/g, '');
     if (!clean) {
         showSubFeedback('Please enter valid letters (A-Z)', 'error');
+        _isSubLoading = false;
         return;
     }
 
@@ -5002,8 +5006,11 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
             body: JSON.stringify({
                 input: clean,
                 dictionary: dictionary
-            })
+            }),
+            signal: signal
         });
+
+        if (signal.aborted) return;
 
         const data = await response.json();
         if (data.error) {
@@ -5024,12 +5031,24 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
         showSubFeedback(`Found ${_subAllWords.length} subanagrams for "${_subCurrentLetters}"`, 'success');
 
     } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error("Failed to find all subanagrams:", err);
         showSubFeedback('Failed to analyze sequence', 'error');
+    } finally {
+        if (!signal.aborted) {
+            _isSubLoading = false;
+        }
     }
 }
 
 async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false) {
+    if (_subAbortController) {
+        try { _subAbortController.abort(); } catch (e) {}
+    }
+    _subAbortController = new AbortController();
+    const signal = _subAbortController.signal;
+    _isSubLoading = true;
+
     const lettersDisplay = document.getElementById('sub-letters-display');
     const countInfo = document.getElementById('sub-count-info');
     const resultsContainer = document.getElementById('sub-results-container');
@@ -5043,7 +5062,12 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     }
 
     try {
-        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}`);
+        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}`, {
+            signal: signal
+        });
+
+        if (signal.aborted) return;
+
         const data = await response.json();
 
         if (data.error) {
@@ -5071,12 +5095,24 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
         showSubFeedback(`Generated ${_subCurrentLetters.length}-letter sequence (${modeDesc} • ${_subAllWords.length} subanagrams)`, 'info');
 
     } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error("Failed to generate random subanagrams:", err);
         showSubFeedback('Failed to generate letters', 'error');
+    } finally {
+        if (!signal.aborted) {
+            _isSubLoading = false;
+        }
     }
 }
 
 async function loadCustomSubanagrams(rawLetters, dictionary) {
+    if (_subAbortController) {
+        try { _subAbortController.abort(); } catch (e) {}
+    }
+    _subAbortController = new AbortController();
+    const signal = _subAbortController.signal;
+    _isSubLoading = true;
+
     const lettersDisplay = document.getElementById('sub-letters-display');
     const countInfo = document.getElementById('sub-count-info');
     const resultsContainer = document.getElementById('sub-results-container');
@@ -5086,6 +5122,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
     const clean = rawLetters.toUpperCase().replace(/[^A-Z]/g, '');
     if (!clean) {
         showSubFeedback('Please enter valid letters (A-Z)', 'error');
+        _isSubLoading = false;
         return;
     }
 
@@ -5102,8 +5139,11 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
             body: JSON.stringify({
                 input: clean,
                 dictionary: dictionary
-            })
+            }),
+            signal: signal
         });
+
+        if (signal.aborted) return;
 
         const data = await response.json();
         if (data.error) {
@@ -5128,8 +5168,13 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
         showSubFeedback(`Loaded "${_subCurrentLetters}" (${_subAllWords.length} subanagrams possible)`, 'info');
 
     } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error("Failed to load custom subanagrams:", err);
         showSubFeedback('Failed to analyze sequence', 'error');
+    } finally {
+        if (!signal.aborted) {
+            _isSubLoading = false;
+        }
     }
 }
 
