@@ -3820,7 +3820,7 @@
                                     <input type="checkbox" id="mod-donor-anonymous" style="width: 16px; height: 16px; cursor: pointer; accent-color: #f43f5e;">
                                     <span>Display as <strong>Anonymous</strong> in Hall of Fame</span>
                                 </label>
-                                <button id="add-donation-btn" class="mod-full-btn add" style="padding: 10px 24px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #f43f5e, #ec4899); border: none; color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">➕ Record Donation</button>
+                                <button id="add-donation-btn" class="mod-full-btn add" onclick="if(window.addModDonation) window.addModDonation();" style="padding: 10px 24px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #f43f5e, #ec4899); border: none; color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">➕ Record Donation</button>
                             </div>
                         </div>
 
@@ -3828,7 +3828,7 @@
                         <div class="mod-action-card" style="border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; background: rgba(255, 255, 255, 0.04); padding: 16px; width: 100%; box-sizing: border-box;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">📜 Recorded Donations History (<span id="mod-donations-count">0</span>)</span>
-                                <button id="refresh-donations-btn" class="mini-action-btn secondary" style="padding: 4px 10px; font-size: 0.75rem;">🔄 Refresh</button>
+                                <button id="refresh-donations-btn" class="mini-action-btn secondary" onclick="if(window.loadModDonations) window.loadModDonations();" style="padding: 4px 10px; font-size: 0.75rem;">🔄 Refresh</button>
                             </div>
                             
                             <div id="mod-donations-list-container" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 6px; background: var(--bg-surface); padding: 8px; box-sizing: border-box;">
@@ -6819,7 +6819,7 @@
     <script src="/js/leaderboard.js?v=33270"></script>
     <script src="/js/tools.js?v=33275"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
-    <script src="/js/mods.js?v=33200"></script>
+    <script src="/js/mods.js?v=33205"></script>
     <script src="/js/private_matches.js?v=33173"></script>
     <script src="/js/donate.js?v=33175"></script>
     
