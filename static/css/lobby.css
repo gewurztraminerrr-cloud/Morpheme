@@ -1721,18 +1721,36 @@ body.theme-light-brown .field-hint {
 
 /* Mobile Specific */
 @media (max-width: 900px) {
+    html:has(#page-lobby.active),
+    body:has(#page-lobby.active) {
+        overflow: hidden !important;
+        overscroll-behavior-y: none !important;
+        height: 100% !important;
+        max-height: 100% !important;
+    }
+
+    .pages:has(#page-lobby.active),
+    body:has(#page-lobby.active) .pages {
+        padding: 4px 6px 0 6px !important;
+        height: calc(100vh - 120px) !important;
+        height: calc(100dvh - 120px) !important;
+        max-height: calc(100dvh - 120px) !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
     #page-lobby {
         display: none;
         width: 100% !important;
         max-width: 100% !important;
-        height: calc(100vh - 100px) !important;
-        height: calc(100dvh - 100px) !important;
-        max-height: calc(100dvh - 100px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
         flex-direction: column !important;
         position: relative !important;
         padding: 0 !important;
         margin: 0 !important;
+        box-sizing: border-box !important;
     }
 
     #page-lobby.active {
@@ -1744,8 +1762,8 @@ body.theme-light-brown .field-hint {
         flex-direction: row !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        height: calc(100% - 42px) !important;
-        max-height: none !important;
+        height: calc(100% - 40px) !important;
+        max-height: calc(100% - 40px) !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
@@ -1769,9 +1787,10 @@ body.theme-light-brown .field-hint {
         min-width: 100% !important;
         max-width: 100% !important;
         height: 100% !important;
+        max-height: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 10px 12px 14px 12px !important;
+        padding: 8px 10px 30px 10px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -1784,7 +1803,7 @@ body.theme-light-brown .field-hint {
         width: 100% !important;
         height: 38px !important;
         min-height: 38px !important;
-        margin: 0 !important;
+        margin: 2px 0 0 0 !important;
         position: relative !important;
         z-index: 500 !important;
         display: block !important;
