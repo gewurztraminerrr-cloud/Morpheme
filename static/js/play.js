@@ -3256,12 +3256,22 @@ function renderChat(messages) {
     listEl.scrollTop = listEl.scrollHeight;
 }
 
+let isSendingChat = false;
+
 async function sendChatMessage() {
+    if (isSendingChat) return;
     const input = document.getElementById('chat-input');
+    if (!input) return;
     const message = input.value.trim();
     const roomId = getCurrentRoomId();
 
     if (!message || !roomId) return;
+
+    isSendingChat = true;
+    input.value = ''; // Synchronously clear input immediately so double-press cannot grab the message again
+
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (sendBtn) sendBtn.disabled = true;
 
     try {
         await fetch(`/api/room/${roomId}/chat`, {
@@ -3269,11 +3279,12 @@ async function sendChatMessage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
         });
-
-        input.value = ''; // Clear input
         // updateGameState will pick it up on next poll
     } catch (e) {
         console.error('Failed to send chat:', e);
+    } finally {
+        isSendingChat = false;
+        if (sendBtn) sendBtn.disabled = false;
     }
 }
 
