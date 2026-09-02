@@ -1063,7 +1063,6 @@ body.theme-light-brown .field-hint {
     }
     
     .game-types-panel,
-    .active-rooms-panel,
     .solo-friends-panel {
         flex: 0 0 100% !important;
         width: 100% !important;
@@ -1080,9 +1079,26 @@ body.theme-light-brown .field-hint {
         -webkit-overflow-scrolling: touch !important;
     }
 
-    .game-section,
-    .solo-friends-section,
     .active-rooms-panel {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        padding: 8px 10px 42px 10px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .game-section,
+    .solo-friends-section {
         gap: 8px !important;
         margin-bottom: 12px !important;
     }
@@ -1753,7 +1769,6 @@ body.theme-light-brown .field-hint {
     }
 
     .game-types-panel,
-    .active-rooms-panel,
     .solo-friends-panel {
         flex: 0 0 100% !important;
         width: 100% !important;
@@ -1767,6 +1782,51 @@ body.theme-light-brown .field-hint {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         clip-path: none !important;
+    }
+
+    .active-rooms-panel {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        padding: 8px 10px 42px 10px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        clip-path: none !important;
+    }
+
+    .active-rooms-panel #rooms-list {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 8px !important;
+        margin: 0 !important;
+    }
+
+    .active-rooms-panel #selected-game-info {
+        padding: 8px 10px !important;
+        font-size: 0.95rem !important;
+        margin: 0 !important;
+    }
+
+    .active-rooms-panel .rating-filter-container {
+        margin: 0 !important;
+        gap: 4px !important;
+    }
+
+    .active-rooms-panel #rating-filter {
+        padding: 8px 6px !important;
+        font-size: 0.8rem !important;
     }
 
     .game-types-panel .game-section:last-child,
