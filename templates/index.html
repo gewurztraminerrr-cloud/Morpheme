@@ -3693,26 +3693,19 @@
                             </div>
                         </div>
 
-                        <!-- IP Ban Management Section -->
+                        <!-- Active IP Blacklist Section -->
                         <div class="mod-action-card" style="border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; background: rgba(239, 68, 68, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
                             <div style="font-weight: 700; color: #ef4444; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
-                                🌐 IP Ban Management
+                                🌐 Active IP Blacklist
                             </div>
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
-                                Banned IP addresses are blocked from loading game pages, logging in, or creating accounts. When a user is permanently banned, their IP is automatically added here. You can also manually ban or lift IP addresses below.
+                                When a user is permanently banned above, their IP addresses are automatically blacklisted here to block new account registrations and reconnections. You can view all active bans and lift any ban below if needed.
                             </p>
                             
-                            <!-- Manual IP Ban Form -->
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center;">
-                                <input type="text" id="manual-ip-input" placeholder="Enter IP address (e.g. 192.0.2.1)..." style="flex: 1; min-width: 180px;">
-                                <input type="text" id="manual-ip-reason-input" placeholder="Reason (Optional)..." style="flex: 1.5; min-width: 200px;">
-                                <button id="manual-ban-ip-btn" class="mod-full-btn remove" style="min-width: 130px; background: #dc2626; border-color: #b91c1c;">🚫 Ban IP</button>
-                            </div>
-                            
                             <!-- Banned IPs List / Table -->
-                            <div style="margin-top: 14px;">
+                            <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Active IP Bans (<span id="ip-bans-count">0</span>)</span>
+                                    <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Blacklisted IPs (<span id="ip-bans-count">0</span>)</span>
                                     <button id="refresh-ip-bans-btn" class="mini-action-btn secondary" style="padding: 4px 10px; font-size: 0.75rem;">🔄 Refresh</button>
                                 </div>
                                 <div id="ip-bans-list-container" style="max-height: 240px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 6px; background: var(--bg-surface); padding: 8px; box-sizing: border-box;">
@@ -6736,7 +6729,7 @@
     <script src="/js/leaderboard.js?v=33270"></script>
     <script src="/js/tools.js?v=33270"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
-    <script src="/js/mods.js?v=33190"></script>
+    <script src="/js/mods.js?v=33195"></script>
     <script src="/js/private_matches.js?v=33173"></script>
     <script src="/js/donate.js?v=33173"></script>
     

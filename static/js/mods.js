@@ -600,11 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
         banUserBtn.addEventListener('click', banUser);
     }
 
-    const manualBanIpBtn = document.getElementById('manual-ban-ip-btn');
-    if (manualBanIpBtn) {
-        manualBanIpBtn.addEventListener('click', banIpAddress);
-    }
-
     const refreshIpBansBtn = document.getElementById('refresh-ip-bans-btn');
     if (refreshIpBansBtn) {
         refreshIpBansBtn.addEventListener('click', loadIpBans);
@@ -880,42 +875,6 @@ async function loadIpBans() {
     }
 }
 
-async function banIpAddress() {
-    const ipInput = document.getElementById('manual-ip-input');
-    const reasonInput = document.getElementById('manual-ip-reason-input');
-    const ip = ipInput ? ipInput.value.trim() : '';
-    const reason = reasonInput ? reasonInput.value.trim() : '';
-
-    if (!ip) {
-        alert("Please enter a valid IP address to ban.");
-        return;
-    }
-
-    if (!confirm(`Are you sure you want to ban IP address "${ip}"? Any devices using this IP will be completely blocked from Morpheme.`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/mods/ban_ip', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ip_address: ip, reason: reason })
-        });
-        const data = await response.json();
-        if (data.success) {
-            if (ipInput) ipInput.value = '';
-            if (reasonInput) reasonInput.value = '';
-            showModStatus(data.message || `IP ${ip} banned.`, false, 'ban-status-area');
-            loadIpBans();
-        } else {
-            alert("Error: " + (data.error || "Failed to ban IP."));
-        }
-    } catch (err) {
-        console.error("Error banning IP:", err);
-        showModStatus("Network error banning IP.", true, 'ban-status-area');
-    }
-}
-
 async function liftIpBan(ip, id) {
     if (!confirm(`Are you sure you want to lift the IP ban for "${ip}"?`)) {
         return;
@@ -941,7 +900,6 @@ async function liftIpBan(ip, id) {
 }
 
 window.loadIpBans = loadIpBans;
-window.banIpAddress = banIpAddress;
 window.liftIpBan = liftIpBan;
 
 async function addDefinition() {
