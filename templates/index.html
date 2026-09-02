@@ -3307,31 +3307,94 @@
                         </div>
                     </div>
                     <!-- Subanagrams Tool Interface -->
-                    <div id="tool-subanagrams" class="tool-pane">
+                    <div id="tool-subanagrams" class="tool-pane"
+                        style="flex-direction: column; width: 100%; box-sizing: border-box; overflow-y: auto !important; padding-bottom: 30px;">
                         <div class="tool-header">
                             <h2>Subanagrams</h2>
-                            <p>Find all words that can be formed using letters from your input.
-                            </p>
+                            <p>Generate or enter a sequence of letters and type subanagrams to test your word finding.</p>
                         </div>
 
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="sub-input" placeholder="Enter letters (e.g. HELLO)..."
-                                    autocomplete="off" style="width: 250px;">
-                                <select id="sub-dict" style="width: 140px;">
+                        <div class="combo-control-panel"
+                            style="padding: 14px 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 12px 0; background: rgba(255, 255, 255, 0.05); box-sizing: border-box;">
+                            <div class="input-row"
+                                style="justify-content: center !important; display: flex !important; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%;">
+                                <input type="text" id="sub-input" placeholder="Custom sequence (e.g. HEOPSLEM)..."
+                                    autocomplete="off" autocapitalize="characters" spellcheck="false" style="width: 210px; text-transform: uppercase;">
+                                <button id="sub-custom-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd;">Load Letters</button>
+                                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Length:</span>
+                                    <select id="sub-length" style="width: 85px;">
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8" selected>8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                    </select>
+                                </div>
+                                <select id="sub-dict" style="width: 130px;">
                                     <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW" selected>CSW (Intl)</option>
                                     <option value="added_words">AW</option>
                                 </select>
-                                <button id="sub-search-btn">Find Subanagrams</button>
+                                <button id="sub-random-btn" class="primary-action" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 8px; cursor: pointer;">🎲 Random Letters</button>
                             </div>
                         </div>
 
-                        <div id="sub-results-container" class="seq-results-container">
-                            <div class="seq-results-placeholder">Enter letters to find
-                                subanagrams.</div>
-                            <!-- Results table injected via JS -->
+                        <div class="subanagrams-container"
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 10px; width: 100%; box-sizing: border-box;">
+
+                            <!-- Sequence Dashboard -->
+                            <div class="subanagrams-game-area"
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 100%; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 20px 24px; box-sizing: border-box; flex-shrink: 0;">
+
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                                    <div id="sub-letters-display" class="random-word-large"
+                                        style="letter-spacing: clamp(5px, 1.2vw, 15px); font-weight: 900; color: #a78bfa; text-shadow: 0 0 30px rgba(167,139,250,0.4); font-size: clamp(1.8rem, 3.8vw, 3.2rem); margin-bottom: 5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-align: center; max-width: 100%; overflow: visible; text-transform: uppercase;">
+                                        HEOPSLEM
+                                    </div>
+                                    <div id="sub-count-info"
+                                        style="font-size: 0.95rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        Found: 0 / 0 subanagrams
+                                    </div>
+                                </div>
+
+                                <div class="input-dashboard"
+                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 520px; margin-top: 5px;">
+
+                                    <div style="display: flex; gap: 8px; width: 100%;">
+                                        <input type="text" id="sub-word-input" placeholder="Enter subanagram (e.g. MOPE)..."
+                                            autocomplete="off" autocapitalize="characters" spellcheck="false"
+                                            style="flex: 1; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(167,139,250,0.3); background: rgba(0,0,0,0.35); color: #fff; border-radius: 12px; transition: all 0.3s ease; outline: none;">
+                                        <button id="sub-submit-word-btn"
+                                            style="padding: 10px 20px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.2s ease;">
+                                            Submit
+                                        </button>
+                                    </div>
+
+                                    <div style="display: flex; gap: 12px; width: 100%;">
+                                        <button id="sub-reveal-btn" class="secondary-action"
+                                            style="flex: 1; height: 40px; font-size: 0.9rem; font-weight: 700; border-radius: 10px; background: linear-gradient(135deg, #4facfe, #2980b9); border: none; color: #fff; cursor: pointer; transition: all 0.3s ease;">
+                                            Reveal All Subanagrams
+                                        </button>
+                                        <button id="sub-reset-btn"
+                                            style="flex: 1; height: 40px; font-size: 0.9rem; font-weight: 700; border-radius: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0; cursor: pointer; transition: all 0.3s ease;">
+                                            Clear Found
+                                        </button>
+                                    </div>
+
+                                    <div id="sub-feedback-msg" style="min-height: 20px; font-size: 0.9rem; font-weight: 600; text-align: center; transition: opacity 0.2s;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Results Box (Found words & All subanagrams) -->
+                            <div id="sub-results-container" class="seq-results-container"
+                                style="width: 100%; max-width: 100%; background: rgba(30,30,50,0.6); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; min-height: 250px; flex: 1;">
+                                <!-- Results table / Found words injected via JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -6828,7 +6891,7 @@
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33300"></script>
+    <script src="/js/tools.js?v=33310"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33205"></script>
     <script src="/js/private_matches.js?v=33173"></script>

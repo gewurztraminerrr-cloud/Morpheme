@@ -6728,23 +6728,25 @@ def tools_sequence_search():
 
 @app.route('/api/tools/subanagrams', methods=['POST'])
 def tools_subanagrams():
-    data = request.json
-    input_text = data.get('input', '').upper().strip()
+    data = request.json or {}
+    raw_input = data.get('input', '')
     dict_name = data.get('dictionary', 'NWL')
+    min_len = int(data.get('min_length', 3))
     
-    if not input_text:
-        return jsonify({'error': 'No input provided'}), 400
+    clean_input = re.sub(r'[^A-Z]', '', raw_input.upper())
+    if not clean_input:
+        return jsonify({'error': 'No letters provided'}), 400
         
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
         
     from collections import Counter
-    input_counter = Counter(input_text)
-    input_len = len(input_text)
+    input_counter = Counter(clean_input)
+    input_len = len(clean_input)
     
     input_mask = 0
-    for char in input_text:
+    for char in clean_input:
         if 'A' <= char <= 'Z':
             input_mask |= (1 << (ord(char) - ord('A')))
     input_inv_mask = (~input_mask) & 0xFFFFFFFF
@@ -6755,7 +6757,7 @@ def tools_subanagrams():
     
     results = []
     for i in range(len(word_list)):
-        if lens[i] > input_len:
+        if lens[i] < min_len or lens[i] > input_len:
             continue
         if (masks[i] & input_inv_mask) != 0:
             continue
@@ -6775,6 +6777,74 @@ def tools_subanagrams():
     results.sort(key=lambda x: (-len(x), x))
     
     return jsonify({
+        'letters': clean_input,
+        'results': results,
+        'count': len(results)
+    })
+
+@app.route('/api/tools/subanagrams/random', methods=['GET'])
+def tools_subanagrams_random():
+    import random
+    dict_name = request.args.get('dictionary', 'CSW')
+    target_len = int(request.args.get('length', 8))
+    min_len = int(request.args.get('min_length', 3))
+    
+    dictionary = load_tools_dictionary(dict_name)
+    if not dictionary:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        
+    word_list = dictionary['words']
+    lens = dictionary['lens']
+    
+    candidates = [word_list[i] for i in range(len(word_list)) if lens[i] == target_len]
+    if not candidates:
+        candidates = [word_list[i] for i in range(len(word_list)) if lens[i] >= 6]
+        
+    if not candidates:
+        return jsonify({'error': 'No words available in dictionary'}), 400
+        
+    chosen_word = random.choice(candidates)
+    letters_list = list(chosen_word)
+    random.shuffle(letters_list)
+    for _ in range(5):
+        if "".join(letters_list) != chosen_word or len(letters_list) <= 3:
+            break
+        random.shuffle(letters_list)
+    shuffled_letters = "".join(letters_list)
+    
+    from collections import Counter
+    input_counter = Counter(shuffled_letters)
+    input_len = len(shuffled_letters)
+    
+    input_mask = 0
+    for char in shuffled_letters:
+        if 'A' <= char <= 'Z':
+            input_mask |= (1 << (ord(char) - ord('A')))
+    input_inv_mask = (~input_mask) & 0xFFFFFFFF
+    
+    masks = dictionary['masks']
+    results = []
+    for i in range(len(word_list)):
+        if lens[i] < min_len or lens[i] > input_len:
+            continue
+        if (masks[i] & input_inv_mask) != 0:
+            continue
+            
+        word = word_list[i]
+        word_counter = Counter(word)
+        is_subanagram = True
+        for char, count in word_counter.items():
+            if input_counter[char] < count:
+                is_subanagram = False
+                break
+        
+        if is_subanagram:
+            results.append(word)
+            
+    results.sort(key=lambda x: (-len(x), x))
+    
+    return jsonify({
+        'letters': shuffled_letters,
         'results': results,
         'count': len(results)
     })

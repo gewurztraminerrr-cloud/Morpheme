@@ -4820,96 +4820,392 @@ async function updateWotd() {
 
 // --- Subanagrams Tool Logic ---
 
-function setupSubanagramsTool() {
-    const searchBtn = document.getElementById('sub-search-btn');
-    const input = document.getElementById('sub-input');
+let _subCurrentLetters = '';
+let _subAllWords = [];
+let _subFoundWords = new Set();
+let _subIsRevealed = false;
+let _subFeedbackTimeout = null;
 
-    if (searchBtn) {
-        searchBtn.addEventListener('click', runSubanagramSearch);
+function setupSubanagramsTool() {
+    const randomBtn = document.getElementById('sub-random-btn');
+    const customBtn = document.getElementById('sub-custom-btn');
+    const customInput = document.getElementById('sub-input');
+    const lengthSelect = document.getElementById('sub-length');
+    const dictSelect = document.getElementById('sub-dict');
+    const wordInput = document.getElementById('sub-word-input');
+    const submitBtn = document.getElementById('sub-submit-word-btn');
+    const revealBtn = document.getElementById('sub-reveal-btn');
+    const resetBtn = document.getElementById('sub-reset-btn');
+
+    if (randomBtn) {
+        randomBtn.addEventListener('click', () => {
+            const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+            const dict = dictSelect ? dictSelect.value : 'CSW';
+            generateRandomSubanagrams(len, dict);
+        });
     }
 
-    if (input) {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') runSubanagramSearch();
+    if (customBtn) {
+        customBtn.addEventListener('click', () => {
+            const raw = customInput ? customInput.value.trim() : '';
+            const dict = dictSelect ? dictSelect.value : 'CSW';
+            if (raw) loadCustomSubanagrams(raw, dict);
         });
+    }
+
+    if (customInput) {
+        customInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const raw = customInput.value.trim();
+                const dict = dictSelect ? dictSelect.value : 'CSW';
+                if (raw) loadCustomSubanagrams(raw, dict);
+            }
+        });
+    }
+
+    if (lengthSelect) {
+        lengthSelect.addEventListener('change', () => {
+            const len = parseInt(lengthSelect.value) || 8;
+            const dict = dictSelect ? dictSelect.value : 'CSW';
+            generateRandomSubanagrams(len, dict);
+        });
+    }
+
+    if (dictSelect) {
+        dictSelect.addEventListener('change', () => {
+            if (_subCurrentLetters) {
+                loadCustomSubanagrams(_subCurrentLetters, dictSelect.value);
+            } else {
+                const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+                generateRandomSubanagrams(len, dictSelect.value);
+            }
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitSubanagramWord);
+    }
+
+    if (wordInput) {
+        wordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitSubanagramWord();
+        });
+    }
+
+    if (revealBtn) {
+        revealBtn.addEventListener('click', revealAllSubanagrams);
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetFoundSubanagrams);
+    }
+
+    // Auto-generate on first launch if empty
+    if (!_subCurrentLetters) {
+        generateRandomSubanagrams(8, 'CSW');
     }
 }
 
-async function runSubanagramSearch() {
-    const inputEl = document.getElementById('sub-input');
-    const dictEl = document.getElementById('sub-dict');
+async function generateRandomSubanagrams(length, dictionary) {
+    const lettersDisplay = document.getElementById('sub-letters-display');
+    const countInfo = document.getElementById('sub-count-info');
     const resultsContainer = document.getElementById('sub-results-container');
+    const wordInput = document.getElementById('sub-word-input');
+    const customInput = document.getElementById('sub-input');
 
-    const input = inputEl.value.trim();
-    const dictionary = dictEl.value;
+    if (lettersDisplay) lettersDisplay.textContent = '...';
+    if (countInfo) countInfo.textContent = 'Loading sequence...';
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Generating random sequence...</div>';
+    }
 
-    if (!input) {
-        resultsContainer.innerHTML = '<div class="seq-results-placeholder">Please enter letters to search.</div>';
+    try {
+        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}`);
+        const data = await response.json();
+
+        if (data.error) {
+            showSubFeedback(data.error, 'error');
+            return;
+        }
+
+        _subCurrentLetters = data.letters;
+        _subAllWords = data.results || [];
+        _subFoundWords.clear();
+        _subIsRevealed = false;
+
+        if (customInput) customInput.value = _subCurrentLetters;
+        if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
+        }
+
+        updateSubanagramsHeader();
+        renderSubanagramsResults();
+        showSubFeedback(`Generated ${_subCurrentLetters.length}-letter sequence (${_subAllWords.length} subanagrams possible)`, 'info');
+
+    } catch (err) {
+        console.error("Failed to generate random subanagrams:", err);
+        showSubFeedback('Failed to generate letters', 'error');
+    }
+}
+
+async function loadCustomSubanagrams(rawLetters, dictionary) {
+    const lettersDisplay = document.getElementById('sub-letters-display');
+    const countInfo = document.getElementById('sub-count-info');
+    const resultsContainer = document.getElementById('sub-results-container');
+    const wordInput = document.getElementById('sub-word-input');
+
+    const clean = rawLetters.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!clean) {
+        showSubFeedback('Please enter valid letters (A-Z)', 'error');
         return;
     }
 
-    resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
+    if (lettersDisplay) lettersDisplay.textContent = '...';
+    if (countInfo) countInfo.textContent = 'Analyzing sequence...';
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
+    }
 
     try {
         const response = await fetch('/api/tools/subanagrams', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                input: input,
+                input: clean,
                 dictionary: dictionary
             })
         });
 
         const data = await response.json();
-
         if (data.error) {
-            resultsContainer.innerHTML = `<div style="padding:20px; color:#f43f5e;">Error: ${data.error}</div>`;
+            showSubFeedback(data.error, 'error');
             return;
         }
 
-        const words = data.results;
-        const count = data.count;
+        _subCurrentLetters = data.letters;
+        _subAllWords = data.results || [];
+        _subFoundWords.clear();
+        _subIsRevealed = false;
 
-        if (words.length === 0) {
-            resultsContainer.innerHTML = '<div class="seq-results-placeholder">No subanagrams found.</div>';
-            return;
+        if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
+        if (wordInput) {
+            wordInput.value = '';
+            wordInput.focus();
         }
 
-        // Render Results Table
-        let html = `
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); text-align: left;">
-                Found ${count} subanagrams
-            </div>
-            <div class="list-scroll-area-wrapper" style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;">
-                <div class="sub-scroll-area list-scroll-area" id="sub-list-results" style="height: 100%; overflow-y: auto; padding: 10px;">
-                    <table class="group-table" style="width: 100%;">
-                        <tbody>
-        `;
-
-        // Clickable words for Subanagram search
-        html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace;">${w}</span>
-            </td></tr>
-        `).join('');
-
-        html += `
-                        </tbody>
-                    </table>
-                </div>
-                <div class="custom-scrollbar-track" id="sub-scrollbar-track">
-                    <div class="custom-scrollbar-thumb" id="sub-scrollbar-thumb"></div>
-                </div>
-            </div>
-        `;
-
-        resultsContainer.innerHTML = html;
-        initCustomScrollbarForElement('sub-list-results', 'sub-scrollbar-track', 'sub-scrollbar-thumb');
+        updateSubanagramsHeader();
+        renderSubanagramsResults();
+        showSubFeedback(`Loaded "${_subCurrentLetters}" (${_subAllWords.length} subanagrams possible)`, 'info');
 
     } catch (err) {
-        console.error("Subanagram search failed:", err);
-        resultsContainer.innerHTML = '<div style="padding:20px; color:#f43f5e;">Search failed.</div>';
+        console.error("Failed to load custom subanagrams:", err);
+        showSubFeedback('Failed to analyze sequence', 'error');
     }
+}
+
+function submitSubanagramWord() {
+    const wordInput = document.getElementById('sub-word-input');
+    if (!wordInput) return;
+    const word = wordInput.value.trim().toUpperCase();
+    if (!word) return;
+
+    if (!_subCurrentLetters || _subAllWords.length === 0) {
+        showSubFeedback('Please load or generate a sequence first.', 'error');
+        return;
+    }
+
+    if (_subFoundWords.has(word)) {
+        showSubFeedback(`"${word}" is already in your found list!`, 'warning');
+        wordInput.select();
+        return;
+    }
+
+    if (_subAllWords.includes(word)) {
+        _subFoundWords.add(word);
+        wordInput.value = '';
+        updateSubanagramsHeader();
+        renderSubanagramsResults();
+
+        if (_subFoundWords.size === _subAllWords.length) {
+            showSubFeedback(`🎉 INCREDIBLE! You found all ${_subAllWords.length} subanagrams!`, 'success');
+        } else {
+            showSubFeedback(`✓ "${word}" found! (+${word.length} pts) [${_subFoundWords.size}/${_subAllWords.length}]`, 'success');
+        }
+    } else {
+        const poolCounts = {};
+        for (const ch of _subCurrentLetters) poolCounts[ch] = (poolCounts[ch] || 0) + 1;
+        let canForm = true;
+        for (const ch of word) {
+            if (!poolCounts[ch] || poolCounts[ch] <= 0) {
+                canForm = false;
+                break;
+            }
+            poolCounts[ch]--;
+        }
+
+        if (!canForm) {
+            showSubFeedback(`"${word}" cannot be formed from ${_subCurrentLetters}`, 'error');
+        } else if (word.length < 3) {
+            showSubFeedback(`"${word}" is too short (min 3 letters).`, 'warning');
+        } else {
+            showSubFeedback(`"${word}" is not a valid word in this dictionary.`, 'error');
+        }
+        wordInput.select();
+    }
+}
+
+function revealAllSubanagrams() {
+    if (!_subAllWords || _subAllWords.length === 0) return;
+    _subIsRevealed = true;
+    updateSubanagramsHeader();
+    renderSubanagramsResults();
+    showSubFeedback(`Revealed all ${_subAllWords.length} subanagrams. (Found: ${_subFoundWords.size})`, 'info');
+}
+
+function resetFoundSubanagrams() {
+    _subFoundWords.clear();
+    _subIsRevealed = false;
+    updateSubanagramsHeader();
+    renderSubanagramsResults();
+    const wordInput = document.getElementById('sub-word-input');
+    if (wordInput) {
+        wordInput.value = '';
+        wordInput.focus();
+    }
+    showSubFeedback('Cleared found words.', 'info');
+}
+
+function updateSubanagramsHeader() {
+    const countInfo = document.getElementById('sub-count-info');
+    if (!countInfo) return;
+    const total = _subAllWords.length;
+    const found = _subFoundWords.size;
+    let score = 0;
+    _subFoundWords.forEach(w => { score += w.length; });
+    countInfo.textContent = `Found: ${found} / ${total} subanagrams (Score: ${score})`;
+}
+
+function showSubFeedback(msg, type = 'info') {
+    const el = document.getElementById('sub-feedback-msg');
+    if (!el) return;
+    if (_subFeedbackTimeout) clearTimeout(_subFeedbackTimeout);
+
+    el.textContent = msg;
+    if (type === 'success') {
+        el.style.color = '#34d399';
+    } else if (type === 'error') {
+        el.style.color = '#f87171';
+    } else if (type === 'warning') {
+        el.style.color = '#fbbf24';
+    } else {
+        el.style.color = '#c4b5fd';
+    }
+
+    _subFeedbackTimeout = setTimeout(() => {
+        el.textContent = '';
+    }, 4000);
+}
+
+function renderSubanagramsResults() {
+    const resultsContainer = document.getElementById('sub-results-container');
+    if (!resultsContainer) return;
+
+    if (!_subCurrentLetters || _subAllWords.length === 0) {
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder">Generate or enter a sequence to begin.</div>';
+        return;
+    }
+
+    const total = _subAllWords.length;
+    const foundList = Array.from(_subFoundWords).sort((a, b) => (-b.length + a.length) || a.localeCompare(b));
+
+    let html = `
+        <div class="list-scroll-area-wrapper" style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;">
+            <div class="sub-scroll-area list-scroll-area" id="sub-list-results" style="height: 100%; overflow-y: auto; padding: 10px;">
+    `;
+
+    if (_subIsRevealed) {
+        const grouped = {};
+        _subAllWords.forEach(w => {
+            const l = w.length;
+            if (!grouped[l]) grouped[l] = [];
+            grouped[l].push(w);
+        });
+
+        const lengths = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+
+        html += `
+            <div style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; background: rgba(59, 130, 246, 0.15); border-left: 3px solid #3b82f6; font-weight: 700; color: #93c5fd; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span>All Subanagrams (${total})</span>
+                <span style="font-size: 0.8rem; color: #34d399;">You Found: ${_subFoundWords.size} / ${total}</span>
+            </div>
+        `;
+
+        lengths.forEach(len => {
+            const wordsInLen = grouped[len];
+            html += `
+                <div style="font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 10px 0 4px 4px;">
+                    ${len}-Letter Words (${wordsInLen.length})
+                </div>
+                <table class="group-table" style="width: 100%; margin-bottom: 8px;">
+                    <tbody>
+            `;
+            wordsInLen.forEach(w => {
+                const isFound = _subFoundWords.has(w);
+                const color = isFound ? '#34d399' : '#94a3b8';
+                const badge = isFound ? '<span style="color: #34d399; font-size: 0.75rem; font-weight: 700; margin-right: 6px;">✓</span>' : '<span style="opacity: 0.3; font-size: 0.75rem; margin-right: 6px;">•</span>';
+                html += `
+                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        ${badge}
+                        <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: ${color}; font-weight: ${isFound ? '700' : '500'};">${w}</span>
+                    </td></tr>
+                `;
+            });
+            html += `</tbody></table>`;
+        });
+
+    } else {
+        html += `
+            <div style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; background: rgba(167, 139, 250, 0.15); border-left: 3px solid #a78bfa; font-weight: 700; color: #c4b5fd; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span>Your Found Words (${foundList.length} / ${total})</span>
+                <span style="font-size: 0.8rem; opacity: 0.7;">Click word for definition</span>
+            </div>
+        `;
+
+        if (foundList.length === 0) {
+            html += `
+                <div style="padding: 30px 10px; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.95rem;">
+                    Type subanagrams formed from <strong style="color: #a78bfa;">${_subCurrentLetters}</strong> into the box above and press Enter!
+                </div>
+            `;
+        } else {
+            html += `<table class="group-table" style="width: 100%;"><tbody>`;
+            foundList.forEach(w => {
+                html += `
+                    <tr><td style="padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="color: #34d399; font-weight: 700; margin-right: 6px;">✓</span>
+                            <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: #fff; font-weight: 700;">${w}</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">+${w.length} pts</span>
+                    </td></tr>
+                `;
+            });
+            html += `</tbody></table>`;
+        }
+    }
+
+    html += `
+            </div>
+            <div class="custom-scrollbar-track" id="sub-scrollbar-track">
+                <div class="custom-scrollbar-thumb" id="sub-scrollbar-thumb"></div>
+            </div>
+        </div>
+    `;
+
+    resultsContainer.innerHTML = html;
+    initCustomScrollbarForElement('sub-list-results', 'sub-scrollbar-track', 'sub-scrollbar-thumb');
 }
 
 // --- Is Valid Tool Logic ---
