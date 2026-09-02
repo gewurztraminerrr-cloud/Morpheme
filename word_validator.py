@@ -289,31 +289,31 @@ class WordValidator:
     def add_word_in_memory(self, word):
         """Add a word to the in-memory structures instantly and thread-safely."""
         word = word.upper().strip()
-        if word not in self.added_words:
-            self.added_words.add(word)
-            self.added_words_list.insert(0, word)
-            self._add_to_trie(self.added_trie, word)
-            if getattr(self, 'use_added_words', True):
-                if hasattr(self, 'full_nwl_set'):
-                    self.full_nwl_set.add(word)
-                if hasattr(self, 'full_csw_set'):
-                    self.full_csw_set.add(word)
+        self.added_words.add(word)
+        while word in self.added_words_list:
+            self.added_words_list.remove(word)
+        self.added_words_list.insert(0, word)
+        self._add_to_trie(self.added_trie, word)
+        if getattr(self, 'use_added_words', True):
+            if hasattr(self, 'full_nwl_set'):
+                self.full_nwl_set.add(word)
+            if hasattr(self, 'full_csw_set'):
+                self.full_csw_set.add(word)
 
     def remove_word_in_memory(self, word):
         """Remove a word from the in-memory structures instantly and thread-safely."""
         word = word.upper().strip()
-        if word in self.added_words:
-            self.added_words.remove(word)
-            if word in self.added_words_list:
-                self.added_words_list.remove(word)
-            
-            self._remove_from_trie(self.added_trie, word)
-            if hasattr(self, 'full_nwl_set') and word in self.full_nwl_set:
-                if word not in self.nwl_words and word not in self.long_words:
-                    self.full_nwl_set.discard(word)
-            if hasattr(self, 'full_csw_set') and word in self.full_csw_set:
-                if word not in self.csw_words and word not in self.long_words:
-                    self.full_csw_set.discard(word)
+        self.added_words.discard(word)
+        while word in self.added_words_list:
+            self.added_words_list.remove(word)
+        
+        self._remove_from_trie(self.added_trie, word)
+        if hasattr(self, 'full_nwl_set'):
+            if word not in self.nwl_words and word not in self.long_words:
+                self.full_nwl_set.discard(word)
+        if hasattr(self, 'full_csw_set'):
+            if word not in self.csw_words and word not in self.long_words:
+                self.full_csw_set.discard(word)
 
     def _remove_from_trie(self, root, word):
         """Unset is_word in trie without full rebuild (O(length) instead of O(474k))"""

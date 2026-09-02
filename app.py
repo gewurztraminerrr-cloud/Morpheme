@@ -214,6 +214,7 @@ import fcntl
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
 ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
+_added_words_file_lock = threading.Lock()
 
 
 # GLOBAL WORD TALLY CONTROLLER
@@ -778,25 +779,27 @@ def add_added_word_api():
         # Spawn asynchronous thread to update files on disk (prevents blocking)
         def save_added_word_async(w):
             try:
-                # 1. Update Added Words file
-                lines = []
-                if os.path.exists(ADDED_WORDS_FILE):
-                    with open(ADDED_WORDS_FILE, 'r') as f:
-                        lines = [line.strip().upper() for line in f if line.strip()]
-                if w not in lines:
+                with _added_words_file_lock:
+                    # 1. Update Added Words file
+                    lines = []
+                    if os.path.exists(ADDED_WORDS_FILE):
+                        with open(ADDED_WORDS_FILE, 'r') as f:
+                            lines = [line.strip().upper() for line in f if line.strip()]
+                    if w in lines:
+                        lines.remove(w)
                     lines.insert(0, w)
                     with open(ADDED_WORDS_FILE, 'w') as f:
                         for l in lines:
                             f.write(f"{l}\n")
-                
-                # 2. Sync with Global Tally stats file (heavy I/O)
-                _update_word_stats(w, "add")
-                
-                global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
-                if os.path.exists(ADDED_WORDS_FILE):
-                    curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
-                    LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
-                    LAST_ADDED_WORDS_MTIME = curr_mtime
+                    
+                    # 2. Sync with Global Tally stats file (heavy I/O)
+                    _update_word_stats(w, "add")
+                    
+                    global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
+                    if os.path.exists(ADDED_WORDS_FILE):
+                        curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+                        LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+                        LAST_ADDED_WORDS_MTIME = curr_mtime
                 print(f"[AsyncMods] Finished saving new word '{w}' to disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error saving '{w}' to disk: {e}")
@@ -851,29 +854,30 @@ def remove_added_word():
         # Spawn asynchronous thread to update files on disk (prevents blocking)
         def remove_added_words_async(word_list):
             try:
-                # 1. Update Added Words file
-                lines = []
-                if os.path.exists(ADDED_WORDS_FILE):
-                    with open(ADDED_WORDS_FILE, 'r') as f:
-                        lines = [line.strip().upper() for line in f if line.strip()]
-                
-                remove_set = set(word_list)
-                new_lines = [l for l in lines if l not in remove_set]
-                if len(new_lines) != len(lines):
-                    with open(ADDED_WORDS_FILE, 'w') as f:
-                        for l in new_lines:
-                            f.write(l + '\n')
-                
-                # 2. Sync with Global Tally
-                for w in word_list:
-                    _update_word_stats(w, "remove")
-                
-                # Update the mtime to the actual new file mtime
-                global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
-                if os.path.exists(ADDED_WORDS_FILE):
-                    curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
-                    LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
-                    LAST_ADDED_WORDS_MTIME = curr_mtime
+                with _added_words_file_lock:
+                    # 1. Update Added Words file
+                    lines = []
+                    if os.path.exists(ADDED_WORDS_FILE):
+                        with open(ADDED_WORDS_FILE, 'r') as f:
+                            lines = [line.strip().upper() for line in f if line.strip()]
+                    
+                    remove_set = set(word_list)
+                    new_lines = [l for l in lines if l not in remove_set]
+                    if len(new_lines) != len(lines):
+                        with open(ADDED_WORDS_FILE, 'w') as f:
+                            for l in new_lines:
+                                f.write(l + '\n')
+                    
+                    # 2. Sync with Global Tally
+                    for w in word_list:
+                        _update_word_stats(w, "remove")
+                    
+                    # Update the mtime to the actual new file mtime
+                    global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
+                    if os.path.exists(ADDED_WORDS_FILE):
+                        curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+                        LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+                        LAST_ADDED_WORDS_MTIME = curr_mtime
                 print(f"[AsyncMods] Finished removing {len(word_list)} word(s) from disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error removing words from disk: {e}")
