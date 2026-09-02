@@ -49,28 +49,39 @@ async function checkModStatus() {
     }
 }
 
+const _modStatusTimeouts = {};
+
 function showModStatus(message, isError = false, targetId = 'mod-status-area') {
     const statusArea = document.getElementById(targetId);
     if (!statusArea) {
         alert(message);
         return;
     }
+    
+    if (_modStatusTimeouts[targetId]) {
+        clearTimeout(_modStatusTimeouts[targetId]);
+        delete _modStatusTimeouts[targetId];
+    }
+    
+    statusArea.style.transition = '';
     statusArea.textContent = message;
-    statusArea.style.color = isError ? '#f43f5e' : '#4ade80';
+    statusArea.style.color = isError ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing')) ? '#38bdf8' : '#4ade80';
     statusArea.style.opacity = '1';
     
-    // Clear after 5 seconds
-    setTimeout(() => {
-        if (statusArea.textContent === message) {
-            statusArea.style.transition = 'opacity 1s ease';
-            statusArea.style.opacity = '0';
-            setTimeout(() => {
-                if (statusArea.textContent === message) statusArea.textContent = '';
-                statusArea.style.opacity = '1';
-                statusArea.style.transition = '';
-            }, 1000);
-        }
-    }, 5000);
+    // Clear after 5 seconds if not a loading message
+    if (!message.endsWith('...')) {
+        _modStatusTimeouts[targetId] = setTimeout(() => {
+            if (statusArea.textContent === message) {
+                statusArea.style.transition = 'opacity 1s ease';
+                statusArea.style.opacity = '0';
+                setTimeout(() => {
+                    if (statusArea.textContent === message) statusArea.textContent = '';
+                    statusArea.style.opacity = '1';
+                    statusArea.style.transition = '';
+                }, 1000);
+            }
+        }, 5000);
+    }
 }
 
 
@@ -256,12 +267,17 @@ async function addAddedWord() {
 
     showModStatus(`Adding word(s)...`, false, 'added-word-status-area');
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
         const response = await fetch('/api/mods/added_words/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word: rawVal })
+            body: JSON.stringify({ word: rawVal }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (data.success) {
@@ -274,8 +290,10 @@ async function addAddedWord() {
         }
         if (wordInput) wordInput.focus();
     } catch (err) {
+        clearTimeout(timeoutId);
         console.error("Error adding word:", err);
-        showModStatus("❌ Network error adding word.", true, 'added-word-status-area');
+        const errMsg = (err.name === 'AbortError') ? '❌ Request timed out adding word.' : '❌ Network error adding word.';
+        showModStatus(errMsg, true, 'added-word-status-area');
         if (wordInput) wordInput.focus();
     }
 }
@@ -305,12 +323,17 @@ async function removeAddedWord() {
 
     showModStatus(`Removing word(s)...`, false, 'added-word-status-area');
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
         const response = await fetch('/api/mods/added_words/remove', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word: rawVal })
+            body: JSON.stringify({ word: rawVal }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (data.success) {
@@ -322,8 +345,10 @@ async function removeAddedWord() {
         }
         if (wordInput) wordInput.focus();
     } catch (err) {
+        clearTimeout(timeoutId);
         console.error("Error removing added word:", err);
-        showModStatus("❌ Network error removing word.", true, 'added-word-status-area');
+        const errMsg = (err.name === 'AbortError') ? '❌ Request timed out removing word.' : '❌ Network error removing word.';
+        showModStatus(errMsg, true, 'added-word-status-area');
         if (wordInput) wordInput.focus();
     }
 }
