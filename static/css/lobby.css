@@ -1,6 +1,9 @@
 /* Lobby-specific CSS */
 
-#page-lobby,
+#page-lobby {
+    display: none;
+}
+
 #page-lobby.active {
     display: flex !important;
     flex-direction: column !important;
@@ -1739,7 +1742,7 @@ body.theme-light-brown .field-hint {
         flex-direction: row !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        height: 100% !important;
+        height: calc(100% - 44px) !important;
         max-height: none !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
