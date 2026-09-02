@@ -427,29 +427,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }).catch(() => {});
                     } catch (e) {}
 
-                    // 4. Perform the page transition immediately
-                    const pLoad = document.getElementById('page-loading');
-                    if (pLoad) {
-                        pLoad.classList.remove('active');
-                        pLoad.style.display = 'none';
-                    }
-                    try {
-                        showPage(targetPageId);
-                        const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
-                        if (navBtn) updateActiveNav(navBtn);
-                        handleLobbyMusicState();
-                        if (hash === '#page-login') {
-                            history.replaceState(null, null, '#page-lobby');
+                    // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
+                    setTimeout(() => {
+                        const pLoad = document.getElementById('page-loading');
+                        if (pLoad) {
+                            pLoad.classList.remove('active');
+                            pLoad.style.display = 'none';
                         }
-                        if (typeof window.fetchLobbyStats === 'function') {
-                            window.fetchLobbyStats('all');
+                        try {
+                            showPage(targetPageId);
+                            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                            if (navBtn) updateActiveNav(navBtn);
+                            handleLobbyMusicState();
+                            if (hash === '#page-login') {
+                                history.replaceState(null, null, '#page-lobby');
+                            }
+                            if (typeof window.fetchLobbyStats === 'function') {
+                                window.fetchLobbyStats('all');
+                            }
+                            if (typeof window.startStatsPolling === 'function') {
+                                window.startStatsPolling();
+                            }
+                        } catch (transitionErr) {
+                            console.error('[Gateway] Exception performing page transition:', transitionErr);
                         }
-                        if (typeof window.startStatsPolling === 'function') {
-                            window.startStatsPolling();
-                        }
-                    } catch (transitionErr) {
-                        console.error('[Gateway] Exception performing page transition:', transitionErr);
-                    }
+                    }, 120);
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {
