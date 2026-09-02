@@ -6279,8 +6279,9 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow: hidden !important;
         padding: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100vh - 145px) !important;
+        height: calc(100dvh - 145px) !important;
+        max-height: calc(100dvh - 145px) !important;
         flex-direction: column !important;
         position: relative !important;
     }
