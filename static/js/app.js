@@ -323,41 +323,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (currentUser) {
+        // If the user is in an active game match, resume game
         const activePageEl = document.querySelector('.page.active');
         const activePageId = activePageEl ? activePageEl.id : '';
-        const savedActivePage = sessionStorage.getItem('morpheme_active_page');
 
-        // Determine destination page: prioritize URL hash, then private/game match, then saved session page
-        let targetPageId = '';
         if (privateActive || (hash === '#page-play' && window.currentRoomId) || activePageId === 'page-play') {
-            targetPageId = 'page-play';
-        } else if (hash && hash.startsWith('#page-') && hash !== '#page-loading' && hash !== '#page-login') {
-            targetPageId = hash.substring(1);
-        } else if (savedActivePage && savedActivePage !== 'page-loading' && savedActivePage !== 'page-login') {
-            targetPageId = savedActivePage;
-        } else if (window._gatewayPassed || window.currentRoomId || (activePageId && activePageId !== 'page-loading')) {
-            targetPageId = activePageId || 'page-lobby';
-        }
-
-        // If a specific destination or saved page exists, stay directly on that page!
-        if (targetPageId) {
-            window._gatewayPassed = true;
-            sessionStorage.setItem('morpheme_active_page', targetPageId);
-            showPage(targetPageId);
-            const targetNavName = targetPageId.replace('page-', '');
-            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
-            if (navBtn) updateActiveNav(navBtn);
-            handleLobbyMusicState();
-            if (hash === '#page-login') {
-                history.replaceState(null, null, '#' + targetPageId);
-            }
+            showPage('page-play');
+            const playBtn = document.querySelector('.nav-btn[data-page="play"]');
+            if (playBtn) updateActiveNav(playBtn);
         } else {
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
             const spinnerCont = document.getElementById('loading-spinner-container');
             const gatewayCont = document.getElementById('loading-gateway-container');
 
             if (gatewayBtn && gatewayCont) {
-                // Ensure gateway container is active and visible only for fresh initial entry
+                // Ensure gateway container is active and visible
                 showPage('page-loading');
                 if (spinnerCont) spinnerCont.style.display = 'none';
                 gatewayCont.style.display = 'flex';
@@ -383,9 +363,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, { passive: true });
                 });
 
-                gatewayBtn.textContent = 'ENTER LOBBY';
-                let gatewayTargetPage = 'page-lobby';
-                let gatewayTargetNav = 'lobby';
+                // Customize button text based on destination
+                let targetPageId = 'page-lobby';
+                let targetNavName = 'lobby';
+                if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
+                    targetPageId = hash.substring(1);
+                    targetNavName = targetPageId.replace('page-', '');
+                    gatewayBtn.textContent = 'ENTER ' + targetNavName.toUpperCase();
+                } else {
+                    gatewayBtn.textContent = 'ENTER LOBBY';
+                }
 
                 let gatewayClicked = false;
                 const handleGatewayTransition = async (e) => {

@@ -1650,32 +1650,8 @@
                     const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
                     
                     if (loggedIn) {
-                        const hash = window.location.hash || '';
-                        let targetPageId = '';
-                        if (hash && hash.startsWith('#page-') && hash !== '#page-loading' && hash !== '#page-login') {
-                            targetPageId = hash.substring(1);
-                        } else {
-                            const savedPage = sessionStorage.getItem('morpheme_active_page');
-                            if (savedPage && savedPage !== 'page-loading' && savedPage !== 'page-login') {
-                                targetPageId = savedPage;
-                            }
-                        }
-
-                        if (targetPageId) {
-                            const targetPageEl = document.getElementById(targetPageId);
-                            if (targetPageEl) {
-                                targetPageEl.classList.add('active');
-                                targetPageEl.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block';
-                                if (pageLoading) pageLoading.classList.remove('active');
-                                if (pageLogin) pageLogin.classList.remove('active');
-                            } else {
-                                if (pageLoading) pageLoading.classList.add('active');
-                                if (pageLogin) pageLogin.classList.remove('active');
-                            }
-                        } else {
-                            if (pageLoading) pageLoading.classList.add('active');
-                            if (pageLogin) pageLogin.classList.remove('active');
-                        }
+                        if (pageLoading) pageLoading.classList.add('active');
+                        if (pageLogin) pageLogin.classList.remove('active');
                     } else {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
@@ -6812,7 +6788,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33205"></script>
+    <script src="/js/app.js?v=33210"></script>
     <script src="/js/lobby.js?v=33220"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
