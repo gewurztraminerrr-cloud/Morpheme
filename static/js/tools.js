@@ -3578,7 +3578,14 @@ function generateFullListItemsHtml(slice) {
 function renderFullListWindow(startIndex, targetWordToHighlight = null) {
     const resultsEl = document.getElementById('full-list-modal-results');
     const countEl = document.getElementById('full-list-modal-count');
-    if (!resultsEl || !_fullListAllWords || _fullListAllWords.length === 0) return;
+    if (!resultsEl) return;
+
+    if (!_fullListAllWords || _fullListAllWords.length === 0) {
+        resultsEl.innerHTML = '<div style="padding: 40px; text-align: center; color: rgba(255,255,255,0.6); font-size: 1rem; width: 100%;">No words found matching these filters.</div>';
+        if (countEl) countEl.textContent = '0 words';
+        updateFullListVirtualScrollbar();
+        return;
+    }
 
     const total = _fullListAllWords.length;
     const maxStart = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
@@ -3614,7 +3621,10 @@ function updateFullListVirtualScrollbar() {
     const track = document.getElementById('full-list-scrollbar-track');
     const thumb = document.getElementById('full-list-scrollbar-thumb');
     const resultsEl = document.getElementById('full-list-modal-results');
-    if (!track || !thumb || !resultsEl || !_fullListAllWords || _fullListAllWords.length === 0) return;
+    if (!track || !thumb || !resultsEl || !_fullListAllWords || _fullListAllWords.length === 0) {
+        if (track) track.style.display = 'none';
+        return;
+    }
 
     const total = _fullListAllWords.length;
     if (total <= 50) {
@@ -3623,9 +3633,9 @@ function updateFullListVirtualScrollbar() {
     }
     track.style.display = 'block';
 
-    const trackHeight = track.clientHeight || resultsEl.clientHeight;
+    const trackHeight = track.clientHeight || resultsEl.clientHeight || 400;
     const ratio = Math.max(0.08, Math.min(1, FULL_LIST_WINDOW_SIZE / total));
-    const thumbHeight = Math.max(28, Math.min(trackHeight, trackHeight * ratio));
+    const thumbHeight = Math.max(36, Math.min(trackHeight, trackHeight * ratio));
     thumb.style.height = `${thumbHeight}px`;
 
     const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
@@ -3637,11 +3647,17 @@ function updateFullListVirtualScrollbar() {
     thumb.style.setProperty('top', `${thumbTop}px`, 'important');
 }
 
+let _fullListScrollbarInitialized = false;
 function initFullListVirtualScrollbar() {
     const results = document.getElementById('full-list-modal-results');
     const track = document.getElementById('full-list-scrollbar-track');
     const thumb = document.getElementById('full-list-scrollbar-thumb');
     if (!results || !track || !thumb) return;
+
+    updateFullListVirtualScrollbar();
+
+    if (_fullListScrollbarInitialized) return;
+    _fullListScrollbarInitialized = true;
 
     let isDragging = false;
     let startY = 0;
@@ -3651,8 +3667,8 @@ function initFullListVirtualScrollbar() {
     function applyDragPosition(clientY) {
         if (!_fullListAllWords || _fullListAllWords.length === 0) return;
         const total = _fullListAllWords.length;
-        const trackHeight = track.clientHeight || results.clientHeight;
-        const thumbHeight = thumb.offsetHeight;
+        const trackHeight = track.clientHeight || results.clientHeight || 400;
+        const thumbHeight = thumb.offsetHeight || 36;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         if (maxThumbTop <= 0) return;
 
@@ -3673,70 +3689,81 @@ function initFullListVirtualScrollbar() {
         });
     }
 
-    function onDragMove(e) {
+    function getClientY(e) {
+        if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
+        if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
+        return e.clientY;
+    }
+
+    function onPointerMove(e) {
         if (!isDragging) return;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        applyDragPosition(clientY);
+        applyDragPosition(getClientY(e));
         if (e.cancelable !== false) e.preventDefault();
     }
 
-    function onDragEnd() {
+    function onPointerUp(e) {
         if (isDragging) {
             isDragging = false;
             thumb.classList.remove('dragging');
             document.body.style.userSelect = '';
-            document.removeEventListener('mousemove', onDragMove);
-            document.removeEventListener('mouseup', onDragEnd);
-            document.removeEventListener('touchmove', onDragMove);
-            document.removeEventListener('touchend', onDragEnd);
-            document.removeEventListener('touchcancel', onDragEnd);
+            try {
+                if (e.pointerId && thumb.hasPointerCapture && thumb.hasPointerCapture(e.pointerId)) {
+                    thumb.releasePointerCapture(e.pointerId);
+                }
+            } catch (_) {}
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+            window.removeEventListener('touchmove', onPointerMove);
+            window.removeEventListener('touchend', onPointerUp);
+            window.removeEventListener('touchcancel', onPointerUp);
+            window.removeEventListener('mousemove', onPointerMove);
+            window.removeEventListener('mouseup', onPointerUp);
         }
     }
 
-    function onDragStart(e) {
+    function onPointerDown(e) {
         isDragging = true;
         thumb.classList.add('dragging');
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        startY = clientY;
+        startY = getClientY(e);
         startThumbTop = parseFloat(thumb.style.top) || 0;
         document.body.style.userSelect = 'none';
 
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
-        document.addEventListener('touchmove', onDragMove, { passive: false });
-        document.addEventListener('touchend', onDragEnd);
-        document.addEventListener('touchcancel', onDragEnd);
+        try {
+            if (e.pointerId && thumb.setPointerCapture) {
+                thumb.setPointerCapture(e.pointerId);
+            }
+        } catch (_) {}
+
+        window.addEventListener('pointermove', onPointerMove, { passive: false });
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+        window.addEventListener('touchcancel', onPointerUp);
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
 
         if (e.cancelable !== false) e.preventDefault();
     }
 
-    thumb.onmousedown = onDragStart;
-    thumb.ontouchstart = onDragStart;
+    thumb.addEventListener('pointerdown', onPointerDown);
+    thumb.addEventListener('touchstart', onPointerDown, { passive: false });
+    thumb.addEventListener('mousedown', onPointerDown);
 
-    track.onmousedown = (e) => {
+    track.addEventListener('pointerdown', (e) => {
         if (e.target === thumb) return;
         const rect = track.getBoundingClientRect();
-        const clickY = e.clientY - rect.top;
-        const thumbHeight = thumb.offsetHeight;
+        const clickY = getClientY(e) - rect.top;
+        const thumbHeight = thumb.offsetHeight || 36;
         startThumbTop = Math.max(0, clickY - thumbHeight / 2);
-        startY = e.clientY;
-        onDragStart(e);
-        applyDragPosition(e.clientY);
-    };
-
-    track.ontouchstart = (e) => {
-        if (e.target === thumb) return;
-        const rect = track.getBoundingClientRect();
-        const touchY = e.touches[0].clientY - rect.top;
-        const thumbHeight = thumb.offsetHeight;
-        startThumbTop = Math.max(0, touchY - thumbHeight / 2);
-        startY = e.touches[0].clientY;
-        onDragStart(e);
-        applyDragPosition(e.touches[0].clientY);
-    };
+        startY = getClientY(e);
+        onPointerDown(e);
+        applyDragPosition(getClientY(e));
+    });
 
     // Smooth continuous window pagination when scrolling inside word grid
-    results.onscroll = () => {
+    results.addEventListener('scroll', () => {
         if (isDragging) return;
         if (!_fullListAllWords || _fullListAllWords.length === 0) return;
         const total = _fullListAllWords.length;
@@ -3755,7 +3782,7 @@ function initFullListVirtualScrollbar() {
             renderFullListWindow(prevStart);
             results.scrollTop = 100;
         }
-    };
+    }, { passive: true });
 }
 
 function handleFullListWordJump() {
@@ -3841,19 +3868,18 @@ window.openFullListModal = function() {
         fullListCount.textContent = `Loading…`;
     }
 
-    const sortAlphabetical = (list, type) => {
-        if (!list || list.length === 0) return [];
-        if (type === 'likelihood') return list;
-        return list.slice().sort((a, b) => {
-            const wa = (typeof a === 'object' ? a.word : a) || '';
-            const wb = (typeof b === 'object' ? b.word : b) || '';
-            return wa.localeCompare(wb);
-        });
-    };
+    if (window._cachedFullWordLists[currentFilterKey] && window._cachedFullWordLists[currentFilterKey].length > 0) {
+        _fullListAllWords = window._cachedFullWordLists[currentFilterKey];
+        window.isFullListLoading = false;
+        initFullListVirtualScrollbar();
+        renderFullListWindow(0);
+        return;
+    }
 
-    if (window._cachedFullWordLists[currentFilterKey]) {
-        const fullWords = sortAlphabetical(window._cachedFullWordLists[currentFilterKey], selectedType);
-        _fullListAllWords = fullWords;
+    // Reuse in-memory client list if it was not truncated
+    if (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && !window.listsServerTruncated && currentWordsType === selectedType) {
+        _fullListAllWords = currentWordsList;
+        window._cachedFullWordLists[currentFilterKey] = currentWordsList;
         window.isFullListLoading = false;
         initFullListVirtualScrollbar();
         renderFullListWindow(0);
@@ -3866,13 +3892,15 @@ window.openFullListModal = function() {
     url += `&t=${Date.now()}`;
 
     fetch(url)
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP error ${r.status}`);
+            return r.json();
+        })
         .then(data => {
             if (window._lastFullListFilterKey !== currentFilterKey) return;
-            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || [];
-            const fullWords = sortAlphabetical(rawWords, selectedType);
-            _fullListAllWords = fullWords;
-            window._cachedFullWordLists[currentFilterKey] = fullWords;
+            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || [];
+            _fullListAllWords = rawWords;
+            window._cachedFullWordLists[currentFilterKey] = rawWords;
             window.isFullListLoading = false;
             initFullListVirtualScrollbar();
             renderFullListWindow(0);
@@ -3880,6 +3908,7 @@ window.openFullListModal = function() {
         .catch(err => {
             console.error('[Full List] Failed to fetch full word list:', err);
             if (fullListCount) fullListCount.textContent = `Fetch failed`;
+            results.innerHTML = `<div style="padding: 40px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Failed to load words. <br><button onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
             window.isFullListLoading = false;
         });
 };
