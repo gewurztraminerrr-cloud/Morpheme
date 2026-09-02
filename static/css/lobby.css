@@ -1088,7 +1088,8 @@ body.theme-light-brown .field-hint {
     }
 
     .game-section:last-child,
-    .solo-friends-section:last-child {
+    .solo-friends-section:last-child,
+    .split-points-section {
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
@@ -1760,7 +1761,7 @@ body.theme-light-brown .field-hint {
         max-width: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 8px 10px 42px 10px !important;
+        padding: 8px 10px 38px 10px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -1768,7 +1769,8 @@ body.theme-light-brown .field-hint {
         clip-path: none !important;
     }
 
-    .game-types-panel .game-section:last-child {
+    .game-types-panel .game-section:last-child,
+    .game-types-panel .split-points-section {
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
