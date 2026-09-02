@@ -2236,24 +2236,48 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
     // 4. Playback Logic
     const rawWords = round.words || [];
-    // Prefer stored round_duration; fall back to the live game state's time_limit for the
-    // current room (covers older winners_history entries that predate the round_duration field);
-    // last resort is 60s.
-    const liveTimeLimitForRoom = (window.lastGameState && window.lastGameState.room_id === round.room_id)
-        ? window.lastGameState.time_limit
-        : null;
-    const roundDuration = round.round_duration || liveTimeLimitForRoom || 60;
+
+    // Helper to format timestamps and durations into M:SS.S
+    function formatReplayTime(sec) {
+        if (isNaN(sec) || sec < 0) sec = 0;
+        const m = Math.floor(sec / 60);
+        const s = (sec % 60).toFixed(1);
+        return `${m}:${s.padStart(4, '0')}`;
+    }
+
+    // Accurately determine roundDuration
+    let roundDuration = 0;
+    if (round.round_duration && Number(round.round_duration) > 0) {
+        roundDuration = Number(round.round_duration);
+    } else if (round.time_limit && Number(round.time_limit) > 0) {
+        roundDuration = Number(round.time_limit);
+    } else if (round.duration && Number(round.duration) > 0) {
+        roundDuration = Number(round.duration);
+    } else if (window.lastGameState && window.lastGameState.room_id === round.room_id && window.lastGameState.time_limit) {
+        roundDuration = Number(window.lastGameState.time_limit);
+    } else if (round.room_id) {
+        const match = String(round.room_id).match(/_(\d+)$/);
+        if (match && match[1]) {
+            roundDuration = parseInt(match[1], 10);
+        }
+    }
+    if (!roundDuration || roundDuration <= 0) {
+        roundDuration = 45;
+    }
 
     // START TIME LOGIC:
-    // Preferred: round_start_time (absolute s)
-    // Fallback 1: First word timestamp - 2s
-    // Fallback 2: Entry timestamp (converted to s)
     let startTime = 0;
     if (round.round_start_time) {
         startTime = parseFloat(round.round_start_time);
+        if (startTime > 1000000000000) startTime /= 1000.0;
     } else if (round.timestamp) {
-        const parsedDate = window.parseUTCTimestamp ? window.parseUTCTimestamp(round.timestamp) : new Date(round.timestamp);
-        const tVal = parsedDate.getTime() / 1000.0;
+        let tVal = 0;
+        if (typeof round.timestamp === 'number') {
+            tVal = round.timestamp > 1000000000000 ? round.timestamp / 1000.0 : round.timestamp;
+        } else {
+            const parsedDate = window.parseUTCTimestamp ? window.parseUTCTimestamp(round.timestamp) : new Date(round.timestamp);
+            tVal = parsedDate.getTime() / 1000.0;
+        }
         startTime = isNaN(tVal) ? (Date.now() / 1000) - roundDuration : tVal - roundDuration;
     } else {
         startTime = (Date.now() / 1000) - roundDuration;
@@ -2262,7 +2286,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // Normalize and convert all timestamps to SECONDS relative to epoch
     let processedWords = rawWords.map(w => {
         let ts = 0;
-        // 1. Support multiple possible keys: timestamp, time, time_offset
         if (w.timestamp !== undefined && w.timestamp !== null) {
             ts = parseFloat(w.timestamp);
         } else if (w.time !== undefined && w.time !== null) {
@@ -2270,10 +2293,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         } else if (w.time_offset !== undefined && w.time_offset !== null) {
             ts = startTime + parseFloat(w.time_offset);
         } else {
-            ts = startTime; // Fallback to start
+            ts = startTime;
         }
 
-        // 2. Detect millisecond vs second timestamps
         if (ts > 1000000000000) {
             ts = ts / 1000.0;
         }
@@ -2291,8 +2313,15 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         return tA - tB;
     });
 
-    // 3. Fallback: If all words have nearly identical timestamps, distribute them evenly
-    // (e.g., if they were batch-submitted at the end of a round)
+    // If round_start_time was not explicitly saved, calibrate startTime to the word timestamp range
+    if (!round.round_start_time && processedWords.length > 0) {
+        const firstWordTs = processedWords[0].timestamp;
+        if (firstWordTs < startTime || firstWordTs > startTime + roundDuration) {
+            startTime = Math.max(0, firstWordTs - 2.0);
+        }
+    }
+
+    // Fallback: If all words have nearly identical timestamps, distribute them evenly
     const allSameTime = processedWords.length > 1 && processedWords.every((w, idx, arr) => 
         idx === 0 || Math.abs(w.timestamp - arr[0].timestamp) < 0.1
     );
@@ -2301,7 +2330,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         console.log(`[Replay-Fallback] Batch/identical timestamps detected. Spacing ${processedWords.length} words evenly.`);
         const N = processedWords.length;
         processedWords = processedWords.map((w, idx) => {
-            // Distribute them evenly over the first 85% of the round duration so they don't hit the absolute end
             const offset = (idx + 1) * ((roundDuration * 0.85) / (N + 1));
             return {
                 ...w,
@@ -2320,10 +2348,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const renderWord = (word) => {
         const wTimestamp = parseFloat(word.timestamp) || 0;
         let relTimeSec = Math.max(0, wTimestamp - startTime);
-
-        const min = Math.floor(relTimeSec / 60);
-        const sec = (relTimeSec % 60).toFixed(1);
-        const timeStr = `${min}:${sec.padStart(4, '0')}`;
+        const timeStr = formatReplayTime(relTimeSec);
 
         // Styling based on points
         let ptsClass = 'walkthrough-pts';
@@ -2339,34 +2364,34 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         `;
     };
 
-    const showAllWords = () => {
-        // Always show in chronological order (the order words were found)
+    const showAllWords = (keepProgressUI = false) => {
         const displayWords = [...sortedWords];
 
         if (walkthroughList) {
-            // Always first-found first (chronological) on all screen sizes
             const htmlContent = displayWords.map(w => renderWord(w)).join('');
             walkthroughList.innerHTML = htmlContent;
             if (sortedWords.length === 0) {
                 walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
             }
-            // Auto-scroll to bottom to show latest? Or top? 
-            // Usually start at top.
             walkthroughList.scrollTop = 0;
         }
 
-        // Ensure "Show All" is hidden, and "Watch" is visible (reset state)
         if (skipBtn) skipBtn.classList.add('hidden');
         if (startBtn) {
             startBtn.classList.remove('hidden');
-            startBtn.innerText = "▶ Watch Replay"; // Reset text
+            startBtn.innerText = "▶ Watch Replay";
         }
-        if (progressUI) progressUI.classList.add('hidden');
-        if (progressBar) {
-            progressBar.style.transition = 'none';
-            progressBar.style.width = '0%';
-            progressBar.offsetHeight; // Force reflow
-            progressBar.style.transition = '';
+        if (!keepProgressUI) {
+            if (progressUI) progressUI.classList.add('hidden');
+            if (progressBar) {
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
+                progressBar.offsetHeight; // Force reflow
+                progressBar.style.transition = '';
+            }
+            if (currentTimeEl) {
+                currentTimeEl.innerText = `0:00.0 / ${formatReplayTime(roundDuration)}`;
+            }
         }
 
         const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
@@ -2376,14 +2401,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // ALWAYS Show All Words initially
     showAllWords();
 
-    // Snapshot Mode logic merged with above (always show initially)
-
     // Interactive Replay
     if (startBtn) {
         startBtn.onclick = () => {
             console.log(`[Review] Starting Replay...`);
             
-            // Bulletproof cleanup: Stop any currently running interval to prevent overlap
             if (window.replayInterval) {
                 clearInterval(window.replayInterval);
                 window.replayInterval = null;
@@ -2400,16 +2422,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             if (skipBtn) skipBtn.classList.remove('hidden');
             if (progressUI) progressUI.classList.remove('hidden');
 
-            // Score tracking (internal + UI updates)
             let currentScore = 0;
             const currentScoreEl = document.getElementById(useOverlay ? 'replay-current-score' : 'integrated-current-score');
             if (currentScoreEl) currentScoreEl.innerText = "0 pts";
+            if (currentTimeEl) currentTimeEl.innerText = `0:00.0 / ${formatReplayTime(roundDuration)}`;
 
-            if (walkthroughList) walkthroughList.innerHTML = ''; // CLEAR LIST FOR ANIMATION
+            if (walkthroughList) walkthroughList.innerHTML = '';
 
-            let elapsed = 0;
             let wordIndex = 0;
-            const tick = 100;
+            const playbackStartPerf = performance.now();
+            const tick = 50; // 20 FPS for silky-smooth progress meter
 
             // Clear Highlights
             if (boardContainer) {
@@ -2417,35 +2439,30 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             }
 
             window.replayInterval = setInterval(() => {
-                elapsed += tick / 1000;
-
-                // Update Progress — cap display at roundDuration so timer never shows past end of round
+                const nowPerf = performance.now();
+                const elapsed = (nowPerf - playbackStartPerf) / 1000;
                 const displayElapsed = Math.min(elapsed, roundDuration);
-                if (progressBar) progressBar.style.width = `${(displayElapsed / roundDuration) * 100}%`;
+
+                // Update Progress Meter
+                if (progressBar) progressBar.style.width = `${Math.min(100, (displayElapsed / roundDuration) * 100)}%`;
                 if (currentTimeEl) {
-                    const m = Math.floor(displayElapsed / 60);
-                    const s = (displayElapsed % 60).toFixed(1);
-                    currentTimeEl.innerText = `${m}:${s.padStart(4, '0')}`;
+                    currentTimeEl.innerText = `${formatReplayTime(displayElapsed)} / ${formatReplayTime(roundDuration)}`;
                 }
 
                 // Append new words in order
                 while (wordIndex < sortedWords.length) {
                     const word = sortedWords[wordIndex];
                     const wTimestamp = parseFloat(word.timestamp) || 0;
-                    const relWordTime = wTimestamp - startTime;
+                    const relWordTime = Math.max(0, wTimestamp - startTime);
 
                     if (elapsed >= relWordTime || isNaN(relWordTime)) {
-                        console.log(`[Review] Displaying word: ${word.word} (relative: ${relWordTime ? relWordTime.toFixed(1) : 'NaN'}s)`);
-
                         try {
-                            // Insert at TOP on mobile, or BOTTOM on desktop
                             if (walkthroughList) {
-                                // Always display the (new) word just displayed at the top of the list
                                 walkthroughList.insertAdjacentHTML('afterbegin', renderWord(word));
-                                walkthroughList.scrollTop = 0; // Keep scrolled to top so the newest is visible
+                                walkthroughList.scrollTop = 0;
                             }
 
-                            currentScore += word.points;
+                            currentScore += (Number(word.points) || 0);
                             if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
 
                             // Highlight Path
@@ -2454,14 +2471,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                             const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
 
                             if (is3D) {
-                                // 3D Cube Highlighting
                                 const path = findWordPathOnCube(word.word, round.board);
                                 if (path && boardContainer) {
                                     const cells = boardContainer.querySelectorAll('.review-cell');
-                                    // Clear and apply new highlight
                                     cells.forEach(c => c.classList.remove('highlight'));
                                     path.forEach((p, i) => {
-                                        // Index is f*9 + r*3 + c
                                         const idx = p.f * 9 + p.r * 3 + p.c;
                                         setTimeout(() => {
                                             if (cells[idx]) cells[idx].classList.add('highlight');
@@ -2469,13 +2483,10 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                                     });
                                 }
                             } else {
-                                // 2D Board Highlighting
                                 const path = findWordPath(round.board, word.word);
                                 if (path && boardContainer) {
                                     const cells = boardContainer.querySelectorAll('.review-cell');
                                     const gridCols = round.board[0].length;
-
-                                    // Clear and apply new highlight
                                     cells.forEach(c => c.classList.remove('highlight'));
                                     path.forEach((p, i) => {
                                         const idx = p.row * gridCols + p.col;
@@ -2488,7 +2499,6 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         } catch (err) {
                             console.error("[Review] Error processing word in replay:", err);
                         } finally {
-                            // IMPORTANT: Increment wordIndex even if rendering fails to prevent infinite loops!
                             wordIndex++;
                         }
                     } else {
@@ -2497,11 +2507,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                 }
 
                 if (elapsed >= roundDuration) {
-                    // Flush any remaining words before stopping (catches words near round's end)
+                    // Flush any remaining words before stopping
                     while (wordIndex < sortedWords.length) {
                         try {
                             const word = sortedWords[wordIndex];
-                            currentScore += word.points;
+                            currentScore += (Number(word.points) || 0);
                             if (currentScoreEl) currentScoreEl.innerText = `${currentScore} pts`;
                         } catch (err) {
                             console.error('[Review] Error flushing word at round end:', err);
@@ -2516,8 +2526,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                         startBtn.classList.remove('hidden');
                         startBtn.innerText = "↺ Replay";
                     }
-                    // Reset list to show all words in chronological order (first found at the top) when complete
-                    showAllWords();
+                    if (progressBar) progressBar.style.width = '100%';
+                    if (currentTimeEl) currentTimeEl.innerText = `${formatReplayTime(roundDuration)} / ${formatReplayTime(roundDuration)}`;
+                    showAllWords(true);
                 }
             }, tick);
         };
