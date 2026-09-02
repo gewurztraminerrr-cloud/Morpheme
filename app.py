@@ -4669,6 +4669,14 @@ def get_lobby_stats():
     
     return jsonify({'stats': stats})
 
+@app.route('/api/lobby/leave', methods=['POST', 'GET'])
+def leave_lobby():
+    """Explicitly remove current user from active lobby presence."""
+    if 'user_id' in session:
+        user_id = session['user_id']
+        lobby_manager.remove_user(user_id)
+    return jsonify({'success': True})
+
 @app.route('/api/lobby/chat', methods=['GET'])
 def get_lobby_chat():
     """Fetch active lobby players and the 100-message chat history."""

@@ -1157,6 +1157,9 @@ function setupNavigation() {
 
             // Handle Modals (Not Pages)
             if (pageTarget === 'howtoplay') {
+                if (typeof window.leaveLobbyPresence === 'function') {
+                    window.leaveLobbyPresence();
+                }
                 const modal = document.getElementById('modal-howtoplay');
                 if (modal) {
                     modal.classList.add('forced-show');
@@ -1189,6 +1192,10 @@ function setupNavigation() {
                 if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
                     console.log('[setupNavigation] Leaving current room on Lobby navigation click.');
                     await window.leaveCurrentRoom();
+                }
+            } else {
+                if (typeof window.leaveLobbyPresence === 'function') {
+                    window.leaveLobbyPresence();
                 }
             }
 
@@ -1493,7 +1500,9 @@ function showPage(pageId) {
             window.startLobbyChatPolling();
         }
     } else {
-        if (typeof window.stopLobbyChatPolling === 'function') {
+        if (typeof window.leaveLobbyPresence === 'function') {
+            window.leaveLobbyPresence();
+        } else if (typeof window.stopLobbyChatPolling === 'function') {
             window.stopLobbyChatPolling();
         }
     }

@@ -7582,6 +7582,9 @@ class LobbyManager:
             return
         with self.lock:
             self.lobby_users.pop(str(user_id), None)
+            for k, data in list(self.lobby_users.items()):
+                if str(data.get('user_id')) == str(user_id) or str(data.get('username')) == str(user_id):
+                    self.lobby_users.pop(k, None)
 
     def get_lobby_state(self):
         now = time.time()

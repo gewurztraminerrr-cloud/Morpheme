@@ -1153,14 +1153,30 @@ function formatTime(seconds) {
 }
 
 function isOnLobby() {
-    if (window.currentPageId === 'page-lobby' || window.currentPageId === 'lobby') return true;
+    if (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'lobby') {
+        return false;
+    }
     const el = document.getElementById('page-lobby');
     if (!el) return false;
-    if (el.classList.contains('active')) return true;
-    if (el.style.display && el.style.display !== 'none') return true;
-    return window.location.hash === '#page-lobby' || window.location.hash === '#lobby';
+    return el.classList.contains('active') && el.style.display !== 'none';
 }
 window.isOnLobby = isOnLobby;
+
+function leaveLobbyPresence() {
+    if (typeof stopLobbyChatPolling === 'function') {
+        stopLobbyChatPolling();
+    }
+    try {
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/lobby/leave');
+        } else {
+            fetch('/api/lobby/leave', { method: 'POST', keepalive: true }).catch(() => {});
+        }
+    } catch (e) {
+        fetch('/api/lobby/leave', { method: 'POST' }).catch(() => {});
+    }
+}
+window.leaveLobbyPresence = leaveLobbyPresence;
 
 function getUserConfigRating(gameType, board, time) {
     const cleanType = String(gameType || '').replace('solo_', '');
