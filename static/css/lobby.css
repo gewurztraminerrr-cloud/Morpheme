@@ -1,30 +1,57 @@
 /* Lobby-specific CSS */
 
+#page-lobby {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 90px);
+    max-height: calc(100vh - 90px);
+    overflow: hidden !important;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
 .lobby-grid {
     display: grid;
     grid-template-columns: 1.7fr 1.3fr;
-    gap: 20px;
-    height: calc(100vh - 100px);
+    gap: 16px;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
     margin-top: 0;
+    margin-bottom: 0;
+    overflow: hidden;
     transition: grid-template-columns 0.3s ease, gap 0.3s ease;
 }
 
 #mobile-panel-main {
     grid-column: 1;
-    grid-row: 1;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 #mobile-panel-solo {
     grid-column: 1;
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     backdrop-filter: blur(10px);
     border: 1px solid var(--input-border);
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 #mobile-panel-rooms {
     grid-column: 2;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 /* Hide mobile navigation buttons on desktop */
@@ -1343,23 +1370,6 @@ body.theme-light-brown .field-hint {
 
 
 /* ============================================================
-   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
-   ============================================================ */
-@supports (height: 100dvh) {
-    .lobby-grid {
-        height: calc(100dvh - 100px);
-    }
-}
-
-@media (max-width: 900px) {
-    @supports (height: 100dvh) {
-        .lobby-grid {
-            min-height: calc(100dvh - 100px);
-        }
-    }
-}
-
-/* ============================================================
    LOBBY TIMEOUT / BAN LOCK STYLING
    ============================================================ */
 .game-btn.timeout-locked,
@@ -1382,16 +1392,13 @@ body.theme-light-brown .field-hint {
    LOBBY PLAYERS & CHAT SLIDING DRAWER
    ============================================================ */
 .lobby-chat-drawer {
+    flex: 0 0 38px;
     width: 100%;
-    margin-top: 8px;
-    background: var(--bg-panel, #1a1a2e);
-    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12));
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-    z-index: 100;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    -webkit-tap-highlight-color: transparent !important;
+    height: 38px;
+    margin-top: 6px;
+    position: relative;
+    z-index: 500;
+    box-sizing: border-box;
 }
 
 .lobby-chat-toggle-btn {
@@ -1402,28 +1409,30 @@ body.theme-light-brown .field-hint {
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
-    background: linear-gradient(90deg, rgba(255, 0, 127, 0.15) 0%, rgba(123, 44, 191, 0.18) 50%, rgba(0, 180, 216, 0.15) 100%);
-    border: none;
-    border-bottom: 1px solid transparent;
+    background: linear-gradient(90deg, rgba(255, 0, 127, 0.22) 0%, rgba(123, 44, 191, 0.28) 50%, rgba(0, 180, 216, 0.22) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
     color: var(--text-primary, #ffffff);
     font-family: inherit;
     font-size: 0.88rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    transition: all 0.2s ease;
     user-select: none;
     -webkit-tap-highlight-color: transparent !important;
     outline: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .lobby-chat-toggle-btn:hover {
-    background: linear-gradient(90deg, rgba(255, 0, 127, 0.25) 0%, rgba(123, 44, 191, 0.28) 50%, rgba(0, 180, 216, 0.25) 100%);
+    background: linear-gradient(90deg, rgba(255, 0, 127, 0.32) 0%, rgba(123, 44, 191, 0.38) 50%, rgba(0, 180, 216, 0.32) 100%);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .lobby-chat-drawer.open .lobby-chat-toggle-btn {
-    border-bottom: 1px solid var(--input-border, rgba(255, 255, 255, 0.12));
-    background: linear-gradient(90deg, rgba(255, 0, 127, 0.28) 0%, rgba(123, 44, 191, 0.32) 50%, rgba(0, 180, 216, 0.28) 100%);
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(90deg, rgba(255, 0, 127, 0.38) 0%, rgba(123, 44, 191, 0.45) 50%, rgba(0, 180, 216, 0.38) 100%);
 }
 
 .lobby-toggle-content {
@@ -1456,15 +1465,29 @@ body.theme-light-brown .field-hint {
 }
 
 .lobby-chat-slide-panel {
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    width: 100%;
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    background: rgba(15, 15, 26, 0.85);
-    backdrop-filter: blur(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    background: rgba(16, 14, 28, 0.96);
+    backdrop-filter: blur(20px);
+    border-radius: 12px 12px 0 0;
+    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.18));
+    border-bottom: none;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    z-index: 600;
 }
 
 .lobby-chat-drawer.open .lobby-chat-slide-panel {
-    max-height: 380px;
+    max-height: 400px;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .lobby-slide-body {
@@ -1684,49 +1707,116 @@ body.theme-light-brown .field-hint {
 /* Mobile Specific */
 @media (max-width: 900px) {
     #page-lobby {
-        padding-bottom: 44px !important;
+        display: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: calc(100vh - 100px) !important;
+        height: calc(100dvh - 100px) !important;
+        max-height: calc(100dvh - 100px) !important;
+        overflow: hidden !important;
+        flex-direction: column !important;
+        position: relative !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #page-lobby.active {
+        display: flex !important;
+    }
+
+    .lobby-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: none !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        scrollbar-width: none !important;
+        margin: 0 !important;
     }
     
-    .lobby-chat-drawer {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
+    .lobby-grid::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .game-types-panel,
+    .active-rooms-panel,
+    .solo-friends-panel {
+        flex: 0 0 100% !important;
         width: 100% !important;
-        margin-top: 0 !important;
-        border-radius: 12px 12px 0 0 !important;
-        border-bottom: none !important;
-        z-index: 1000 !important;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        padding: 10px 12px 14px 12px !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        clip-path: none !important;
+    }
+
+    .lobby-chat-drawer {
+        flex: 0 0 38px !important;
+        width: 100% !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        margin: 0 !important;
+        position: relative !important;
+        z-index: 500 !important;
     }
 
     .lobby-chat-toggle-btn {
         height: 38px !important;
         min-height: 38px !important;
+        border-radius: 8px 8px 0 0 !important;
+        border-bottom: none !important;
         font-size: 0.82rem !important;
-        padding: 0 14px !important;
+        padding: 0 12px !important;
+    }
+
+    .lobby-chat-slide-panel {
+        position: absolute !important;
+        bottom: 38px !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 600 !important;
+        border-radius: 14px 14px 0 0 !important;
     }
 
     .lobby-chat-drawer.open .lobby-chat-slide-panel {
         max-height: 65vh !important;
+        max-height: 65dvh !important;
     }
 
     .lobby-slide-body {
         display: flex !important;
         flex-direction: column !important;
         height: 60vh !important;
+        height: 60dvh !important;
         max-height: 480px !important;
-        gap: 10px !important;
+        gap: 8px !important;
         padding: 10px !important;
+        box-sizing: border-box !important;
     }
 
     .lobby-players-half {
         flex: 0 0 110px !important;
         max-height: 110px !important;
+        min-height: 90px !important;
     }
 
     .lobby-chat-half {
-        flex: 1 !important;
+        flex: 1 1 auto !important;
         min-height: 0 !important;
+        height: 100% !important;
     }
 }

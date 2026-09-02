@@ -6247,11 +6247,10 @@ input[type=range]::-moz-range-track {
     }
 
 
-    /* Mobile overrides for page-tools, page-settings, page-mods, page-lobby, and page-forums */
+    /* Mobile overrides for page-tools, page-settings, page-mods, and page-forums */
     #page-tools,
     #page-settings,
     #page-mods,
-    #page-lobby,
     #page-forums {
         display: none;
         width: 100% !important;
@@ -6268,8 +6267,25 @@ input[type=range]::-moz-range-track {
     #page-tools.active,
     #page-settings.active,
     #page-mods.active,
-    #page-lobby.active,
     #page-forums.active {
+        display: flex !important;
+    }
+
+    /* Mobile overrides for page-lobby */
+    #page-lobby {
+        display: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        height: calc(100vh - 110px) !important;
+        height: calc(100dvh - 110px) !important;
+        flex-direction: column !important;
+        position: relative !important;
+    }
+
+    #page-lobby.active {
         display: flex !important;
     }
 
