@@ -2065,6 +2065,16 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                 }
             };
         }
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('forced-show');
+                if (window.replayInterval) {
+                    clearInterval(window.replayInterval);
+                    window.replayInterval = null;
+                }
+            }
+        };
     } else if (integratedPanel) {
         integratedPanel.classList.remove('hidden');
         integratedPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
