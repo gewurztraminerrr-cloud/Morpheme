@@ -305,6 +305,13 @@ function debounce(func, wait) {
             localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
+        // Time Zone
+        const tzSelect = document.getElementById('setting-timezone-select');
+        const currentTz = (settings && settings.timezone) || window.currentUserTimezone || 'auto';
+        if (tzSelect) {
+            tzSelect.value = currentTz;
+        }
+
         // Allow Private Messages
         if (settings.allow_pm !== undefined) {
             let val = settings.allow_pm;
@@ -676,6 +683,28 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.vibration_alert = val;
             saveSettingDebounced('vibration_alert', val);
+        });
+    }
+
+    const tzSettingSelect = document.getElementById('setting-timezone-select');
+    if (tzSettingSelect) {
+        tzSettingSelect.value = window.currentUserTimezone || 'auto';
+        tzSettingSelect.addEventListener('change', async (e) => {
+            const newTz = e.target.value;
+            window.currentUserTimezone = newTz;
+            localStorage.setItem('morpheme_timezone', newTz);
+            if (!window.userSettings) window.userSettings = {};
+            window.userSettings.timezone = newTz;
+            saveSettingDebounced('timezone', newTz);
+            const profileTzSelect = document.getElementById('profile-timezone-select');
+            if (profileTzSelect) profileTzSelect.value = newTz;
+            const profileTzVal = document.getElementById('profile-timezone-val');
+            if (profileTzVal && typeof tzLabels !== 'undefined') profileTzVal.innerText = tzLabels[newTz] || newTz;
+            fetch('/api/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ timezone: newTz })
+            }).catch(err => console.error(err));
         });
     }
 

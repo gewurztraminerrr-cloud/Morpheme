@@ -1091,6 +1091,41 @@
                                                     <span class="meta-label">Location</span>
                                                     <span id="profile-location-val" class="meta-text">-</span>
                                                 </div>
+                                                <div class="meta-item" id="profile-timezone-container" title="Time Zone">
+                                                    <span class="meta-icon">🌐</span>
+                                                    <span class="meta-label">Timezone</span>
+                                                    <span id="profile-timezone-val" class="meta-text" style="cursor: pointer;">Auto (Device)</span>
+                                                    <select id="profile-timezone-select" class="timezone-edit-select hidden" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 6px; padding: 2px 6px; font-size: 0.82rem; max-width: 170px;">
+                                                        <option value="auto">Auto (Device Local)</option>
+                                                        <option value="UTC">UTC (Universal Time)</option>
+                                                        <option value="America/New_York">US Eastern Time (ET)</option>
+                                                        <option value="America/Chicago">US Central Time (CT)</option>
+                                                        <option value="America/Denver">US Mountain Time (MT)</option>
+                                                        <option value="America/Phoenix">US Arizona (MST, no DST)</option>
+                                                        <option value="America/Los_Angeles">US Pacific Time (PT)</option>
+                                                        <option value="America/Anchorage">US Alaska Time (AKT)</option>
+                                                        <option value="Pacific/Honolulu">US Hawaii Time (HST)</option>
+                                                        <option value="America/Toronto">Canada Eastern (Toronto)</option>
+                                                        <option value="America/Vancouver">Canada Pacific (Vancouver)</option>
+                                                        <option value="America/Sao_Paulo">Brazil (São Paulo - BRT)</option>
+                                                        <option value="Europe/London">UK / Ireland (London - GMT/BST)</option>
+                                                        <option value="Europe/Paris">Central Europe (Paris, Berlin - CET/CEST)</option>
+                                                        <option value="Europe/Athens">Eastern Europe (Athens, Cairo - EET/EEST)</option>
+                                                        <option value="Europe/Moscow">Russia (Moscow - MSK)</option>
+                                                        <option value="Asia/Dubai">Gulf Standard Time (Dubai - GST)</option>
+                                                        <option value="Asia/Kolkata">India Standard Time (IST)</option>
+                                                        <option value="Asia/Bangkok">Indochina Time (Bangkok, Jakarta - ICT)</option>
+                                                        <option value="Asia/Singapore">Singapore / Malaysia (SGT)</option>
+                                                        <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                                                        <option value="Asia/Shanghai">China Standard Time (Beijing - CST)</option>
+                                                        <option value="Asia/Tokyo">Japan Standard Time (Tokyo - JST)</option>
+                                                        <option value="Asia/Seoul">Korea Standard Time (Seoul - KST)</option>
+                                                        <option value="Australia/Perth">Australia Western (Perth - AWST)</option>
+                                                        <option value="Australia/Adelaide">Australia Central (Adelaide - ACST)</option>
+                                                        <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
+                                                        <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
+                                                    </select>
+                                                </div>
                                                 <div class="meta-item" id="profile-joined-container"
                                                     title="Registered Morpheme">
                                                     <span class="meta-icon">🗓️</span>
@@ -4810,6 +4845,46 @@
                                 </div>
                             </div>
 
+                            <!-- Time Zone Selection -->
+                            <div class="setting-panel">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Time Zone</div>
+                                        <div class="setting-desc">Choose your preferred time zone for recorded match history, round logs, and profile activity.</div>
+                                    </div>
+                                    <select id="setting-timezone-select" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 8px; padding: 6px 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                                        <option value="auto">Auto (Device Local)</option>
+                                        <option value="UTC">UTC (Universal Time)</option>
+                                        <option value="America/New_York">US Eastern Time (ET)</option>
+                                        <option value="America/Chicago">US Central Time (CT)</option>
+                                        <option value="America/Denver">US Mountain Time (MT)</option>
+                                        <option value="America/Phoenix">US Arizona (MST, no DST)</option>
+                                        <option value="America/Los_Angeles">US Pacific Time (PT)</option>
+                                        <option value="America/Anchorage">US Alaska Time (AKT)</option>
+                                        <option value="Pacific/Honolulu">US Hawaii Time (HST)</option>
+                                        <option value="America/Toronto">Canada Eastern (Toronto)</option>
+                                        <option value="America/Vancouver">Canada Pacific (Vancouver)</option>
+                                        <option value="America/Sao_Paulo">Brazil (São Paulo - BRT)</option>
+                                        <option value="Europe/London">UK / Ireland (London - GMT/BST)</option>
+                                        <option value="Europe/Paris">Central Europe (Paris, Berlin - CET/CEST)</option>
+                                        <option value="Europe/Athens">Eastern Europe (Athens, Cairo - EET/EEST)</option>
+                                        <option value="Europe/Moscow">Russia (Moscow - MSK)</option>
+                                        <option value="Asia/Dubai">Gulf Standard Time (Dubai - GST)</option>
+                                        <option value="Asia/Kolkata">India Standard Time (IST)</option>
+                                        <option value="Asia/Bangkok">Indochina Time (Bangkok, Jakarta - ICT)</option>
+                                        <option value="Asia/Singapore">Singapore / Malaysia (SGT)</option>
+                                        <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                                        <option value="Asia/Shanghai">China Standard Time (Beijing - CST)</option>
+                                        <option value="Asia/Tokyo">Japan Standard Time (Tokyo - JST)</option>
+                                        <option value="Asia/Seoul">Korea Standard Time (Seoul - KST)</option>
+                                        <option value="Australia/Perth">Australia Western (Perth - AWST)</option>
+                                        <option value="Australia/Adelaide">Australia Central (Adelaide - ACST)</option>
+                                        <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
+                                        <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Toggle: Allow Private Messages -->
                             <div class="setting-panel">
                                 <label for="setting-allow-pm" class="setting-header" style="cursor: pointer;">
@@ -6893,14 +6968,14 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33127"></script>
+    <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33340"></script>
+    <script src="/js/app.js?v=33345"></script>
     <script src="/js/lobby.js?v=33240"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33335"></script>
+    <script src="/js/tools.js?v=33340"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33215"></script>
     <script src="/js/private_matches.js?v=33173"></script>

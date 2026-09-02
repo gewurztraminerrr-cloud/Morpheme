@@ -1946,7 +1946,8 @@ def init_db():
         ('location', 'TEXT'),
         ('quote', 'TEXT'),
         ('description', 'TEXT'),
-        ('proof_url', 'TEXT')
+        ('proof_url', 'TEXT'),
+        ('timezone', "TEXT DEFAULT 'auto'")
     ]
     for col_name, col_type in columns:
         try:
@@ -3539,7 +3540,7 @@ def update_profile():
         return jsonify({'error': 'Guest accounts cannot update profile'}), 403
         
     data = request.get_json()
-    fields = ['full_name', 'age', 'gender', 'location', 'quote', 'description', 'proof_url']
+    fields = ['full_name', 'age', 'gender', 'location', 'quote', 'description', 'proof_url', 'timezone']
     updates = {k: v for k, v in data.items() if k in fields}
     
     if not updates:
@@ -3585,7 +3586,7 @@ def get_public_profile(username):
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
-               max_pe, avg_pe, pe_count, created_at, last_visited
+               max_pe, avg_pe, pe_count, created_at, last_visited, timezone
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -3818,6 +3819,7 @@ def get_public_profile(username):
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17],
         'last_visited': user[18] or user[17],
+        'timezone': user[19] or 'auto',
         'allow_pm': allow_pm,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,

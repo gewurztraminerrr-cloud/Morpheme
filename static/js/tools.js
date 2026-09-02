@@ -1499,6 +1499,73 @@ async function renderProfile(user) {
     if (genderEl) genderEl.innerText = user.gender || '-';
     if (locationEl) locationEl.innerText = user.location || '-';
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
+
+    // Timezone Handling
+    const tzValEl = document.getElementById('profile-timezone-val');
+    const tzSelectEl = document.getElementById('profile-timezone-select');
+    const userTz = user.timezone || 'auto';
+
+    const tzLabels = {
+        'auto': 'Auto (Device)',
+        'UTC': 'UTC (Universal Time)',
+        'America/New_York': 'US Eastern (ET)',
+        'America/Chicago': 'US Central (CT)',
+        'America/Denver': 'US Mountain (MT)',
+        'America/Phoenix': 'US Arizona (MST)',
+        'America/Los_Angeles': 'US Pacific (PT)',
+        'America/Anchorage': 'US Alaska (AKT)',
+        'Pacific/Honolulu': 'US Hawaii (HST)',
+        'America/Toronto': 'Canada Eastern',
+        'America/Vancouver': 'Canada Pacific',
+        'America/Sao_Paulo': 'Brazil (BRT)',
+        'Europe/London': 'London (GMT/BST)',
+        'Europe/Paris': 'Central Europe (CET)',
+        'Europe/Athens': 'Eastern Europe (EET)',
+        'Europe/Moscow': 'Moscow (MSK)',
+        'Asia/Dubai': 'Dubai (GST)',
+        'Asia/Kolkata': 'India (IST)',
+        'Asia/Bangkok': 'Indochina (ICT)',
+        'Asia/Singapore': 'Singapore (SGT)',
+        'Asia/Hong_Kong': 'Hong Kong (HKT)',
+        'Asia/Shanghai': 'China (CST)',
+        'Asia/Tokyo': 'Japan (JST)',
+        'Asia/Seoul': 'Korea (KST)',
+        'Australia/Perth': 'Australia West (AWST)',
+        'Australia/Adelaide': 'Australia Central (ACST)',
+        'Australia/Sydney': 'Australia East (AEST)',
+        'Pacific/Auckland': 'New Zealand (NZST)'
+    };
+
+    if (tzValEl) {
+        tzValEl.innerText = tzLabels[userTz] || userTz;
+    }
+    if (tzSelectEl) {
+        tzSelectEl.value = userTz;
+        if (isOwner) {
+            tzValEl.style.display = 'none';
+            tzSelectEl.classList.remove('hidden');
+            tzSelectEl.onchange = async () => {
+                const newTz = tzSelectEl.value;
+                window.currentUserTimezone = newTz;
+                localStorage.setItem('morpheme_timezone', newTz);
+                if (tzValEl) tzValEl.innerText = tzLabels[newTz] || newTz;
+                await saveProfileField('timezone', newTz);
+                const settingSelect = document.getElementById('setting-timezone-select');
+                if (settingSelect) settingSelect.value = newTz;
+                if (user.recent_rounds) {
+                    const listContainer = document.getElementById('profile-history-list');
+                    if (listContainer && typeof window.renderRoundItem === 'function') {
+                        listContainer.innerHTML = user.recent_rounds.map(r => window.renderRoundItem(r)).join('');
+                    }
+                }
+            };
+        } else {
+            tzValEl.style.display = 'inline-block';
+            tzSelectEl.classList.add('hidden');
+            tzSelectEl.onchange = null;
+        }
+    }
+
     if (descriptionEl) {
         descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
         setTimeout(() => {
@@ -1694,7 +1761,7 @@ async function renderProfile(user) {
         // Date Formatting
         let dateStr = '-';
         if (round.timestamp) {
-            dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp) : String(round.timestamp);
+            dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(round.timestamp, true) : String(round.timestamp);
         }
 
         return `

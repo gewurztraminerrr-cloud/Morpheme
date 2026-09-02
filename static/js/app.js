@@ -46,8 +46,9 @@ window.currentUserIsMod = false;
 window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
+window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
 
-function formatAppDate(val, includeTime = false) {
+function formatAppDate(val, includeTime = false, customTz = null) {
     if (!val && val !== 0) return '-';
     let d;
     if (typeof val === 'number') {
@@ -65,19 +66,49 @@ function formatAppDate(val, includeTime = false) {
     }
     if (isNaN(d.getTime())) return String(val);
 
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const dateStr = `${day}/${month}/${year}`;
+    const tz = (customTz && customTz !== 'auto') 
+        ? customTz 
+        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto' ? window.currentUserTimezone : undefined);
 
-    if (includeTime) {
-        let hours = d.getHours();
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        return `${dateStr} ${hours}:${minutes} ${ampm}`;
+    try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: includeTime ? 'numeric' : undefined,
+            minute: includeTime ? '2-digit' : undefined,
+            hour12: true,
+            timeZoneName: includeTime ? 'short' : undefined,
+            timeZone: tz
+        });
+        const parts = dtf.formatToParts(d);
+        const p = {};
+        for (const part of parts) {
+            p[part.type] = part.value;
+        }
+        const dateStr = `${p.day}/${p.month}/${p.year}`;
+        if (includeTime) {
+            const h = p.hour;
+            const m = p.minute;
+            const ampm = (p.dayPeriod || '').toUpperCase();
+            const tzAbbr = p.timeZoneName || '';
+            return `${dateStr} ${h}:${m} ${ampm}${tzAbbr ? ' ' + tzAbbr : ''}`.trim();
+        }
+        return dateStr;
+    } catch (e) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const dateStr = `${day}/${month}/${year}`;
+        if (includeTime) {
+            let hours = d.getHours();
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            return `${dateStr} ${hours}:${minutes} ${ampm}`;
+        }
+        return dateStr;
     }
-    return dateStr;
 }
 window.formatAppDate = formatAppDate;
 
@@ -89,9 +120,15 @@ async function loadCurrentUserConfigRatings() {
     try {
         const resp = await fetch(`/api/profile/${encodeURIComponent(window.currentUser)}?t=${Date.now()}`);
         const data = await resp.json();
-        if (data && data.config_ratings) {
-            window.currentUserConfigRatings = data.config_ratings;
-            console.log('Loaded config ratings for current user:', window.currentUserConfigRatings);
+        if (data) {
+            if (data.timezone) {
+                window.currentUserTimezone = data.timezone;
+                localStorage.setItem('morpheme_timezone', data.timezone);
+            }
+            if (data.config_ratings) {
+                window.currentUserConfigRatings = data.config_ratings;
+                console.log('Loaded config ratings for current user:', window.currentUserConfigRatings);
+            }
             if (window.currentLobbyConfig) {
                 const activeCfg = window.currentLobbyConfig;
                 if (window.updateMyRatingButton) {
