@@ -3311,19 +3311,20 @@
                         style="flex-direction: column; width: 100%; box-sizing: border-box; overflow-y: auto !important; padding-bottom: 30px;">
                         <div class="tool-header">
                             <h2>Subanagrams</h2>
-                            <p>Generate or enter a sequence of letters and type subanagrams to test your word finding.</p>
+                            <p>Find all words contained within any sequence of letters, or test your skills in interactive practice mode.</p>
                         </div>
 
                         <div class="combo-control-panel"
                             style="padding: 14px 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 12px 0; background: rgba(255, 255, 255, 0.05); box-sizing: border-box;">
                             <div class="input-row"
-                                style="justify-content: center !important; display: flex !important; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%;">
-                                <input type="text" id="sub-input" placeholder="Custom sequence (e.g. HEOPSLEM)..."
-                                    autocomplete="off" autocapitalize="characters" spellcheck="false" style="width: 210px; text-transform: uppercase;">
-                                <button id="sub-custom-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd;">Load Letters</button>
+                                style="justify-content: center !important; display: flex !important; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%;">
+                                <input type="text" id="sub-input" placeholder="Enter word or letters (e.g. HEOPSLEM)..."
+                                    autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex: 1 1 200px; min-width: 160px; text-transform: uppercase;">
+                                <button id="sub-find-all-btn" class="primary-action" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
+                                <button id="sub-practice-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
                                 <div style="display: inline-flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Length:</span>
-                                    <select id="sub-length" style="width: 85px;">
+                                    <span style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Len:</span>
+                                    <select id="sub-length" style="width: 70px;">
                                         <option value="5">5</option>
                                         <option value="6">6</option>
                                         <option value="7">7</option>
@@ -3334,13 +3335,13 @@
                                         <option value="12">12</option>
                                     </select>
                                 </div>
-                                <select id="sub-dict" style="width: 130px;">
+                                <select id="sub-dict" style="width: 120px;">
                                     <option value="ALL">ALL (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW" selected>CSW (Intl)</option>
                                     <option value="added_words">AW</option>
                                 </select>
-                                <button id="sub-random-btn" class="primary-action" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 8px; cursor: pointer;">🎲 Random Letters</button>
+                                <button id="sub-random-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
                             </div>
                         </div>
 
@@ -3349,7 +3350,7 @@
 
                             <!-- Sequence Dashboard -->
                             <div class="subanagrams-game-area"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 100%; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 20px 24px; box-sizing: border-box; flex-shrink: 0;">
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 100%; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); padding: 18px 24px; box-sizing: border-box; flex-shrink: 0;">
 
                                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
                                     <div id="sub-letters-display" class="random-word-large"
@@ -3362,11 +3363,12 @@
                                     </div>
                                 </div>
 
-                                <div class="input-dashboard"
+                                <!-- Practice Typing Section (Can be toggled or visible) -->
+                                <div id="sub-practice-section" class="input-dashboard"
                                     style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 520px; margin-top: 5px;">
 
                                     <div style="display: flex; gap: 8px; width: 100%;">
-                                        <input type="text" id="sub-word-input" placeholder="Enter subanagram (e.g. MOPE)..."
+                                        <input type="text" id="sub-word-input" placeholder="Type a subanagram (e.g. MOPE)..."
                                             autocomplete="off" autocapitalize="characters" spellcheck="false"
                                             style="flex: 1; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(167,139,250,0.3); background: rgba(0,0,0,0.35); color: #fff; border-radius: 12px; transition: all 0.3s ease; outline: none;">
                                         <button id="sub-submit-word-btn"
@@ -6891,7 +6893,7 @@
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>
-    <script src="/js/tools.js?v=33310"></script>
+    <script src="/js/tools.js?v=33315"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33205"></script>
     <script src="/js/private_matches.js?v=33173"></script>
