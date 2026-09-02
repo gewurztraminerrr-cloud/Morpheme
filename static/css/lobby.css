@@ -1064,15 +1064,15 @@ body.theme-light-brown .field-hint {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
-        max-height: none !important;
         padding: 12px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
-        clip-path: inset(0);
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .game-section,

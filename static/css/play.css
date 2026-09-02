@@ -6297,7 +6297,6 @@ input[type=range]::-moz-range-track {
         min-height: 100% !important;
     }
 
-    #page-lobby .lobby-grid,
     #page-forums .forum-container {
         flex: 1 !important;
         min-height: 0 !important;
