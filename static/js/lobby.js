@@ -1206,7 +1206,7 @@ function resetLobbyButtons() {
                     window.currentLobbyConfig.boardDimensions,
                     window.currentLobbyConfig.timeLimit
                 );
-                myRatingBtn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${rating})</span>`;
+                myRatingBtn.innerHTML = `<span class="my-rating-label">My Rating</span><span class="my-rating-val">(${rating})</span>`;
                 myRatingBtn.dataset.rating = rating;
             } else {
                 myRatingBtn.innerHTML = '<span class="my-rating-label">My Rating</span>';
@@ -1229,7 +1229,7 @@ async function updateMyRatingButton(gameType, board, time) {
     }
 
     const initialRating = getUserConfigRating(gameType, board, time);
-    btn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${initialRating})</span>`;
+    btn.innerHTML = `<span class="my-rating-label">My Rating</span><span class="my-rating-val">(${initialRating})</span>`;
     btn.dataset.rating = initialRating;
     btn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
 
@@ -1240,7 +1240,7 @@ async function updateMyRatingButton(gameType, board, time) {
                     await window.loadCurrentUserConfigRatings();
                     if (window.currentLobbyConfig) {
                         const updatedRating = getUserConfigRating(gameType, board, time);
-                        btn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${updatedRating})</span>`;
+                        btn.innerHTML = `<span class="my-rating-label">My Rating</span><span class="my-rating-val">(${updatedRating})</span>`;
                         btn.dataset.rating = updatedRating;
                     }
                 } catch (e) {

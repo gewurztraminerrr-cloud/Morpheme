@@ -343,14 +343,16 @@
 }
 
 #my-rating-btn .my-rating-label {
-    white-space: nowrap;
-    display: block;
+    white-space: nowrap !important;
+    display: block !important;
+    line-height: 1.15 !important;
 }
 
 #my-rating-btn .my-rating-val {
-    white-space: nowrap;
-    display: block;
-    font-weight: 700;
+    white-space: nowrap !important;
+    display: block !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
 }
 
 #my-rating-btn:hover {
@@ -399,12 +401,16 @@
         white-space: nowrap;
     }
     #my-rating-btn {
-        flex-direction: row;
+        flex-direction: row !important;
         gap: 6px;
         width: 100%;
         padding: 10px 14px;
         font-size: 0.9rem;
         white-space: nowrap;
+    }
+    #my-rating-btn .my-rating-label,
+    #my-rating-btn .my-rating-val {
+        display: inline-block !important;
     }
     #lobby-refresh-btn {
         padding: 10px 14px !important;

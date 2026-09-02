@@ -119,9 +119,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33215" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33300" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33305" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33215">
-    <link rel="stylesheet" href="/css/lobby.css?v=33300">
+    <link rel="stylesheet" href="/css/lobby.css?v=33305">
     <link rel="stylesheet" href="/css/play.css?v=33295">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33172">
     <link rel="stylesheet" href="/css/forum.css?v=33177">
@@ -632,10 +632,10 @@
                         return 1200;
                     };
                     var exactRating = getRating(window.currentLobbyConfig.gameType, window.currentLobbyConfig.boardDimensions, window.currentLobbyConfig.timeLimit);
-                    ratingBtn.textContent = 'My Rating (' + exactRating + ')';
+                    ratingBtn.innerHTML = '<span class="my-rating-label">My Rating</span><span class="my-rating-val">(' + exactRating + ')</span>';
                     ratingBtn.dataset.rating = exactRating;
                 } else {
-                    ratingBtn.textContent = 'My Rating';
+                    ratingBtn.innerHTML = '<span class="my-rating-label">My Rating</span>';
                     ratingBtn.removeAttribute('data-rating');
                 }
                 ratingBtn.style.display = (window.currentUser && !window.currentUserIsGuest) ? 'inline-block' : 'none';
@@ -6808,8 +6808,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33127"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33235"></script>
-    <script src="/js/lobby.js?v=33230"></script>
+    <script src="/js/app.js?v=33240"></script>
+    <script src="/js/lobby.js?v=33235"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33270"></script>

@@ -104,7 +104,7 @@ async function loadCurrentUserConfigRatings() {
                     const ratingBtn = document.getElementById('my-rating-btn');
                     if (ratingBtn && typeof window.getUserConfigRating === 'function') {
                         const exact = window.getUserConfigRating(activeCfg.gameType, activeCfg.boardDimensions, activeCfg.timeLimit);
-                        ratingBtn.innerHTML = `<span class="my-rating-label">My Rating</span> <span class="my-rating-val">(${exact})</span>`;
+                        ratingBtn.innerHTML = `<span class="my-rating-label">My Rating</span><span class="my-rating-val">(${exact})</span>`;
                         ratingBtn.dataset.rating = exact;
                         ratingBtn.style.display = 'inline-block';
                     }
