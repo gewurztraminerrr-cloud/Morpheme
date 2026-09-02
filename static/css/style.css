@@ -3238,13 +3238,16 @@ body {
     background: rgba(var(--text-primary-rgb), 0.1);
     border-radius: 3px;
     overflow: hidden;
+    width: 100%;
 }
 
-.progress-bar-fill {
+#replay-progress-bar,
+.replay-progress-container .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #409cff, #ffd700);
+    background: linear-gradient(90deg, #00f0ff 0%, #38bdf8 50%, #818cf8 100%);
     width: 0%;
-    transition: width 0.1s linear;
+    border-radius: 3px;
+    transition: none !important;
 }
 
 /* Walkthrough animation item */
@@ -3482,8 +3485,9 @@ body {
 
 .mini-progress-fill {
     height: 100%;
-    background: #409cff;
+    background: linear-gradient(90deg, #00f0ff 0%, #38bdf8 50%, #818cf8 100%);
     width: 0%;
+    transition: none !important;
 }
 
 .integrated-walkthrough-list {
