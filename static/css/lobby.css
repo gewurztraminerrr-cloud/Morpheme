@@ -94,10 +94,15 @@
 .game-types-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
     max-height: 100%;
+}
+
+.game-types-panel .game-section:last-of-type,
+.game-types-panel .game-section:last-child {
+    margin-bottom: 0 !important;
 }
 
 .game-section,
