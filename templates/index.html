@@ -157,7 +157,7 @@
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33400">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
-    <link rel="stylesheet" href="/css/play.css?v=33405">
+    <link rel="stylesheet" href="/css/play.css?v=33410">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
     <link rel="stylesheet" href="/css/forum.css?v=33180">
     <link rel="stylesheet" href="/css/donate.css?v=33190">
@@ -2150,42 +2150,10 @@
 
         <!-- Play Page -->
         <div id="page-play" class="page">
-            <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
-
-            <div class="play-header">
-                <div class="header-title-group">
-                    <h2 id="game-title">Accumulative</h2>
-                    <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
-                </div>
-
-                <!-- Timer Panel moved here -->
-                <div class="timer-display">
-                    <div class="timer-left-group">
-                        <span class="timer-label">Time:</span>
-                        <span class="timer-value" id="timer-value">0:00</span>
-                    </div>
-                    <div class="timer-controls-group" id="timer-controls-group">
-                        <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
-                        <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
-                    </div>
-                </div>
-                <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                    <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
-                </div>
-                <div class="game-params">
-                    Diff: <span id="param-diff">-</span> |
-                    Min: <span id="param-min">-</span> |
-                    Dict: <span id="param-dict">-</span> |
-                    Words: <span id="param-range">-</span> |
-                    Format: <span id="param-format">-</span> |
-                    Bonus: <span id="param-bonus">-</span>
-                </div>
-                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
-            </div>
-
             <div class="play-grid">
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
+                    <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
 
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
@@ -2221,6 +2189,36 @@
 
                 <!-- Center Panel: Board -->
                 <div class="board-panel" id="play-panel-board">
+                    <div class="play-header">
+                        <div class="header-title-group">
+                            <h2 id="game-title">Accumulative</h2>
+                            <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
+                        </div>
+
+                        <!-- Timer Panel moved here -->
+                        <div class="timer-display">
+                            <div class="timer-left-group">
+                                <span class="timer-label">Time:</span>
+                                <span class="timer-value" id="timer-value">0:00</span>
+                            </div>
+                            <div class="timer-controls-group" id="timer-controls-group">
+                                <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
+                                <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
+                            </div>
+                        </div>
+                        <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                            <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
+                        </div>
+                        <div class="game-params">
+                            Diff: <span id="param-diff">-</span> |
+                            Min: <span id="param-min">-</span> |
+                            Dict: <span id="param-dict">-</span> |
+                            Words: <span id="param-range">-</span> |
+                            Format: <span id="param-format">-</span> |
+                            Bonus: <span id="param-bonus">-</span>
+                        </div>
+                        <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+                    </div>
 
                     <div id="game-board" class="game-board"></div>
                     <div id="word-validation-status" class="validation-status"></div>
@@ -2233,8 +2231,6 @@
                         <button class="nav-arrow nav-left" onclick="window.switchPlayPanel('players', true)"><span style="display: inline-block; transform: scaleX(-1);">➜</span> Players</button>
                         <button class="nav-arrow nav-right" onclick="window.switchPlayPanel('words', true)">Words ➜</button>
                     </div>
-
-
                 </div>
 
                 <!-- Right Panel: Submitted Words and Definitions -->
@@ -6910,9 +6906,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33475"></script>
+    <script src="/js/app.js?v=33480"></script>
     <script src="/js/lobby.js?v=33400"></script>
-    <script src="/js/play.js?v=33225"></script>
+    <script src="/js/play.js?v=33230"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33275"></script>
     <script src="/js/tools.js?v=33415"></script>
