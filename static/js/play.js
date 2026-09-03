@@ -120,6 +120,8 @@ window.updateIntermissionBellSource = function() {
 };
 
 const unlockAudio = () => {
+    const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+    if (activePage === 'page-loading' && !window._gatewayPassed) return;
     window.updateIntermissionBellSource();
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic) {
@@ -272,6 +274,8 @@ const BoardAudio = {
 
 // Warm up and resume AudioContext on user interaction
 const initAudioOnUserInteraction = () => {
+    const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+    if (activePage === 'page-loading' && !window._gatewayPassed) return;
     BoardAudio.init();
     if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
         BoardAudio.ctx.resume();
