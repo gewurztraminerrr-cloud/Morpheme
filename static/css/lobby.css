@@ -2534,7 +2534,7 @@ body.theme-light-brown .lobby-chat-input:focus {
 @media (min-width: 901px) {
     .pages:has(#page-lobby.active),
     body:has(#page-lobby.active) .pages {
-        padding-top: 2px !important;
+        padding-top: 0 !important;
         padding-bottom: 4px !important;
     }
     .mobile-lobby-spacer {
