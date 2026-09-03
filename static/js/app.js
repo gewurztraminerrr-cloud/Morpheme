@@ -2761,6 +2761,73 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen and popup on tap after minimizing/leaving
+(function _setupMobileFullscreenManager() {
+    let needsReEngage = true;
+
+    function isMobileDevice() {
+        return (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    function attemptFullscreen() {
+        if (!isMobileDevice() || !window._gatewayPassed) return;
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+
+        try {
+            const docEl = document.documentElement;
+            const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+            if (req) {
+                req.call(docEl, { navigationUI: 'hide' }).catch(() => {
+                    try { req.call(docEl).catch(() => {}); } catch(e) {}
+                });
+            }
+        } catch (e) {}
+    }
+
+    // Flag when user minimizes app, switches tabs, or returns to screen
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' || document.visibilityState === 'visible') {
+            needsReEngage = true;
+        }
+    });
+
+    window.addEventListener('pageshow', () => {
+        needsReEngage = true;
+    });
+
+    window.addEventListener('focus', () => {
+        needsReEngage = true;
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            needsReEngage = true;
+        }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            needsReEngage = true;
+        }
+    });
+
+    // On any user tap after returning / minimizing, re-engage fullscreen
+    ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+        document.addEventListener(evtType, (e) => {
+            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
+            if (!window._gatewayPassed) return;
+
+            // Skip typing in inputs
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            attemptFullscreen();
+            needsReEngage = false;
+        }, { passive: true });
+    });
+
+    window.triggerMobileFullscreen = attemptFullscreen;
+})();
+
 // Export utility for other files
 window.updateManualToolState = function () {
     const manualBtn = document.querySelector('.tool-nav-btn[data-tool="manual"]');
