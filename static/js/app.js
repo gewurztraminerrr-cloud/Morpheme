@@ -301,7 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
-    setupFirstInteractionMusic(); // Active immediately for early loading clicks
     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
     if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
     
@@ -645,7 +644,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     fetchUserCount(); // Fetch user count for login page
-    setupFirstInteractionMusic(); // Set up gesture listeners immediately on page load!
 });
 
 async function fetchUserCount() {
