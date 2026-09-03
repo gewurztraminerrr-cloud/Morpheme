@@ -1132,7 +1132,7 @@ body.theme-light-brown .field-hint {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+        scrollbar-color: rgba(0, 240, 255, 0.7) rgba(255, 255, 255, 0.05) !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
@@ -2231,7 +2231,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         -webkit-overflow-scrolling: touch !important;
         clip-path: none !important;
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+        scrollbar-color: rgba(0, 240, 255, 0.7) rgba(255, 255, 255, 0.05) !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
@@ -2252,10 +2252,10 @@ body.theme-light-brown .lobby-chat-input:focus {
 
     .game-types-panel::-webkit-scrollbar-thumb,
     .solo-friends-panel::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, rgba(255, 0, 127, 0.8), rgba(123, 44, 191, 0.9)) !important;
+        background: linear-gradient(180deg, rgba(0, 240, 255, 0.8), rgba(123, 44, 191, 0.9)) !important;
         border-radius: 4px !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        box-shadow: 0 0 8px rgba(255, 0, 127, 0.4) !important;
+        box-shadow: 0 0 8px rgba(0, 240, 255, 0.4) !important;
     }
 
     .active-rooms-panel,
@@ -2294,7 +2294,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         background: rgba(0, 0, 0, 0.18) !important;
         box-sizing: border-box !important;
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+        scrollbar-color: rgba(0, 240, 255, 0.7) rgba(255, 255, 255, 0.05) !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder {
@@ -2324,9 +2324,10 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rooms-list::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, rgba(255, 0, 127, 0.8), rgba(123, 44, 191, 0.9)) !important;
+        background: linear-gradient(180deg, rgba(0, 240, 255, 0.8), rgba(123, 44, 191, 0.9)) !important;
         border-radius: 4px !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 0 8px rgba(0, 240, 255, 0.4) !important;
     }
 
     .active-rooms-panel #selected-game-info {
