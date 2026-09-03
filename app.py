@@ -6041,27 +6041,41 @@ def load_tools_dictionary(dict_name):
 
     if dict_name == 'ALL':
         words = set()
-        for d in ['NWL', 'CSW']:
+        for d in ['NWL', 'CSW', 'new_NWL', 'new_CSW', 'custom_nwl', 'custom_csw']:
             p = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{d}.txt')
             if os.path.exists(p):
                 with open(p, 'r') as f:
                     words.update(line.strip().upper() for line in f if line.strip())
-        # Add manually added words
-        words.update(word_validator.added_words)
+        # Add manually added words for ALL
+        if word_validator and getattr(word_validator, 'added_words', None):
+            words.update(word_validator.added_words)
         print(f"[Tools] Loaded ALL dictionary: {len(words)} unique words")
     elif dict_name == 'added_words':
-        words = word_validator.added_words.copy()
+        words = word_validator.added_words.copy() if (word_validator and getattr(word_validator, 'added_words', None)) else set()
         print(f"[Tools] Loaded Added Words dictionary: {len(words)} unique words")
     else:
         dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
+        words = set()
         try:
             print(f"[Tools] Loading dictionary: {dict_path}")
             with open(dict_path, 'r') as f:
-                words = set(word.strip().upper() for word in f)
+                words = set(word.strip().upper() for word in f if word.strip())
             print(f"[Tools] Loaded {len(words)} words from {dict_name}")
         except FileNotFoundError:
             print(f"[Tools] Dictionary file not found: {dict_path}")
-            words = set()
+
+        # Also load new / custom additions for specific dictionary
+        extra_files = []
+        if dict_name == 'NWL':
+            extra_files = ['new_NWL.txt', 'custom_nwl.txt']
+        elif dict_name == 'CSW':
+            extra_files = ['new_CSW.txt', 'custom_csw.txt']
+
+        for ext_f in extra_files:
+            p = os.path.join(os.path.dirname(__file__), 'dictionaries', ext_f)
+            if os.path.exists(p):
+                with open(p, 'r') as f:
+                    words.update(line.strip().upper() for line in f if line.strip())
 
     # Merge supplementary 16+ word list
     long_path = os.path.join(os.path.dirname(__file__), 'dictionaries', '16plus.txt')
@@ -6072,10 +6086,6 @@ def load_tools_dictionary(dict_name):
         print(f"[Tools] Merged {len(long_words)} supplementary 16+ words into {dict_name}")
     except FileNotFoundError:
         print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
-
-    # Merge custom Added Words if enabled in game/tools
-    if word_validator and word_validator.get_use_added_words() and getattr(word_validator, 'added_words', None):
-        words = words | word_validator.added_words
 
     # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX & BITMASKS (C-ACCELERATED) ---
     import numpy as np
