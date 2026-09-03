@@ -3964,7 +3964,11 @@ window.openFullListModal = function() {
 
     modal.classList.remove('hidden');
     modal.classList.add('forced-show');
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     window.isFullListLoading = true;
 
     if (fullListCount) {
@@ -4030,7 +4034,11 @@ window.closeFullListModal = function() {
         modal.style.top = '';
         modal.style.left = '';
     }
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     window.isFullListLoading = false;
 };
 
@@ -4046,6 +4054,11 @@ if (fullListJumpInputEl) {
             e.preventDefault();
             handleFullListWordJump();
         }
+    });
+    fullListJumpInputEl.addEventListener('focus', () => {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
     });
 }
 
