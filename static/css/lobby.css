@@ -1089,16 +1089,15 @@ body.theme-light-brown .field-hint {
 .buy-now-btn:hover {
     filter: brightness(1.1);
 }
-
 /* Tablet & Mobile Layout for Lobby Grid */
 @media (max-width: 900px) {
     .lobby-grid {
         display: flex !important;
         flex-direction: row !important;
-        flex: 0 0 calc(100% - 42px) !important;
-        height: calc(100% - 42px) !important;
-        max-height: calc(100% - 42px) !important;
-        min-height: calc(100% - 42px) !important;
+        flex: 1 1 0% !important;
+        height: calc(100% - 46px) !important;
+        max-height: calc(100% - 46px) !important;
+        min-height: 0 !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         scroll-snap-type: x mandatory !important;
@@ -1109,6 +1108,7 @@ body.theme-light-brown .field-hint {
         box-sizing: border-box !important;
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
+        margin: 0 0 8px 0 !important;
     }
     .lobby-grid::-webkit-scrollbar {
         display: none !important;
@@ -1122,15 +1122,19 @@ body.theme-light-brown .field-hint {
         max-width: 100% !important;
         height: 100% !important;
         max-height: 100% !important;
+        min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
-        padding: 8px 10px 48px 10px !important;
+        padding: 8px 10px 10px 10px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
+        border-radius: 12px !important;
+        background: var(--bg-panel) !important;
     }
 
     .active-rooms-panel {
@@ -1140,15 +1144,19 @@ body.theme-light-brown .field-hint {
         max-width: 100% !important;
         height: 100% !important;
         max-height: 100% !important;
+        min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 8px 10px 42px 10px !important;
+        padding: 8px 10px 8px 10px !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+        border-radius: 12px !important;
+        background: var(--bg-panel) !important;
     }
 
     .game-section,
@@ -2148,11 +2156,12 @@ body.theme-light-brown .lobby-chat-input:focus {
     #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100% - 46px) !important;
+        max-height: calc(100% - 46px) !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 0 0 38px 0 !important;
+        padding: 0 !important;
+        margin: 0 0 46px 0 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -2189,9 +2198,10 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-width: 100% !important;
         height: 100% !important;
         max-height: 100% !important;
+        min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 8px 10px 48px 10px !important;
+        padding: 8px 10px 10px 10px !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -2199,6 +2209,9 @@ body.theme-light-brown .lobby-chat-input:focus {
         clip-path: none !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
+        border-radius: 12px !important;
+        background: var(--bg-panel) !important;
     }
 
     .game-types-panel::-webkit-scrollbar,
@@ -2229,9 +2242,10 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-width: 100% !important;
         height: 100% !important;
         max-height: 100% !important;
+        min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 8px 10px 4px 10px !important;
+        padding: 8px 10px 8px 10px !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
@@ -2239,6 +2253,9 @@ body.theme-light-brown .lobby-chat-input:focus {
         display: flex !important;
         flex-direction: column !important;
         clip-path: none !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+        border-radius: 12px !important;
+        background: var(--bg-panel) !important;
     }
 
     .active-rooms-panel #rooms-list {
@@ -2247,10 +2264,26 @@ body.theme-light-brown .lobby-chat-input:focus {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 8px 8px 48px 8px !important;
+        padding: 8px !important;
         margin: 0 !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.22)) !important;
+        border-radius: 8px !important;
+        background: rgba(0, 0, 0, 0.18) !important;
+        box-sizing: border-box !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(255, 0, 127, 0.7) rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .active-rooms-panel #rooms-list .placeholder {
+        margin-top: 8px !important;
+        font-size: 0.82rem !important;
+    }
+
+    .active-rooms-panel #rooms-list .placeholder-icon {
+        width: 80px !important;
+        max-width: 30% !important;
+        height: auto !important;
+        margin: 8px auto !important;
     }
 
     .active-rooms-panel #rooms-list::-webkit-scrollbar {
@@ -2271,8 +2304,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #selected-game-info {
-        padding: 8px 10px !important;
-        font-size: 0.95rem !important;
+        padding: 6px 10px !important;
+        font-size: 0.9rem !important;
         margin: 0 !important;
     }
 
@@ -2282,14 +2315,14 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rating-filter {
-        padding: 8px 6px !important;
+        padding: 6px 6px !important;
         font-size: 0.8rem !important;
     }
 
     .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
-        margin-bottom: 75px !important;
-        padding-bottom: 15px !important;
+        margin-bottom: 20px !important;
+        padding-bottom: 10px !important;
     }
 
     .lobby-chat-drawer {
