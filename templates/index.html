@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MORPHEME - Premium Multiplayer Grid Word Game</title>
     <meta name="description" content="Play MORPHEME online! The definitive free multiplayer grid word search game featuring competitive word boards, 24-hour accumulative rooms, custom tournaments, and advanced word discovery tools.">
     <meta name="keywords" content="Word Game, Word Games, Game, Games, Word, Words, Morpheme, Morpheme Word Game, Multiplayer, Multiplayer Games, Multiplayer Word Game, Multiplayer Word Games, Live Word Games, Online Word Games, Online Game, Live Game, online word search, multiplayer word search, word search game, anagram solver, word solver, word puzzles, word find, word puzzle games, competitive word game, word gaming platform, word boards, word tournaments, CSW dictionary, NWL dictionary, Scrabble dictionary, word association, vocabulary games, educational word games, brain games, daily word game">
@@ -140,9 +140,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33330" as="style">
+    <link rel="preload" href="/css/style.css?v=33335" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33330">
+    <link rel="stylesheet" href="/css/style.css?v=33335">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1522,16 +1522,31 @@
         <script>
             (function() {
                 var pLoad = document.getElementById('page-loading');
+                var lastTouchEnd = 0;
                 var blockBg = function(e) {
                     var gb = document.getElementById('btn-enter-lobby-gateway');
                     if (gb && e.target !== gb && !gb.contains(e.target)) {
                         if (e.cancelable) e.preventDefault();
                     }
                 };
+                var blockDoubleTap = function(e) {
+                    var now = Date.now();
+                    if (now - lastTouchEnd <= 350) {
+                        var gb = document.getElementById('btn-enter-lobby-gateway');
+                        if (gb && e.target !== gb && !gb.contains(e.target)) {
+                            if (e.cancelable) e.preventDefault();
+                        }
+                    }
+                    lastTouchEnd = now;
+                };
                 if (pLoad) {
                     pLoad.addEventListener('touchstart', blockBg, { passive: false });
                     pLoad.addEventListener('pointerdown', blockBg, { passive: false });
+                    pLoad.addEventListener('touchend', blockDoubleTap, { passive: false });
                     pLoad.addEventListener('touchmove', function(e) {
+                        if (e.cancelable) e.preventDefault();
+                    }, { passive: false });
+                    pLoad.addEventListener('dblclick', function(e) {
                         if (e.cancelable) e.preventDefault();
                     }, { passive: false });
                 }
@@ -7001,7 +7016,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33380"></script>
+    <script src="/js/app.js?v=33385"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
