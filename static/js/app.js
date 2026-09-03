@@ -608,34 +608,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, 100);
                 };
 
-                // Block background touches and double-tap zoom on #page-loading to prevent any mobile viewport motion
-                const pLoadEl = document.getElementById('page-loading');
-                if (pLoadEl) {
-                    let lastTouchTime = 0;
-                    const blockBg = (e) => {
-                        if (e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) {
-                            if (e.cancelable) e.preventDefault();
-                        }
-                    };
-                    const blockDoubleTap = (e) => {
-                        const now = Date.now();
-                        if (now - lastTouchTime <= 350) {
-                            if (e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) {
-                                if (e.cancelable) e.preventDefault();
-                            }
-                        }
-                        lastTouchTime = now;
-                    };
-                    pLoadEl.addEventListener('touchstart', blockBg, { passive: false });
-                    pLoadEl.addEventListener('pointerdown', blockBg, { passive: false });
-                    pLoadEl.addEventListener('touchend', blockDoubleTap, { passive: false });
-                    pLoadEl.addEventListener('touchmove', (e) => {
-                        if (e.cancelable) e.preventDefault();
-                    }, { passive: false });
-                    pLoadEl.addEventListener('dblclick', (e) => {
-                        if (e.cancelable) e.preventDefault();
-                    }, { passive: false });
-                }
 
                 // Strictly attach interaction listeners ONLY to the button itself
                 gatewayBtn.addEventListener('pointerdown', handlePressStart);
