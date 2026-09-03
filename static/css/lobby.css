@@ -1218,12 +1218,11 @@ body.theme-light-brown .field-hint {
         background: rgba(var(--text-primary-rgb), 0.15);
     }
 
-    /* Shrink the placeholder icon on mobile so it doesn't block the view */
     #rooms-list .placeholder-icon {
-        width: 120px !important;
-        max-width: 50% !important;
-        margin: 15px auto !important;
-        opacity: 0.6;
+        width: 140px !important;
+        max-width: 55% !important;
+        margin: 12px auto !important;
+        opacity: 0.85;
     }
 
     /* Snug styling for game config matrices on mobile screen */
@@ -2282,15 +2281,17 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rooms-list .placeholder {
-        margin-top: 6px !important;
-        font-size: 0.82rem !important;
+        margin-top: 10px !important;
+        font-size: 0.88rem !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder-icon {
-        width: 75px !important;
-        max-width: 28% !important;
+        width: 140px !important;
+        max-width: 55% !important;
         height: auto !important;
-        margin: 6px auto !important;
+        margin: 12px auto !important;
+        border-radius: 50% !important;
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.15)) !important;
     }
 
     .active-rooms-panel #rooms-list::-webkit-scrollbar {
