@@ -75,10 +75,11 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Mobile Game Room: Reveal MORPHEME header and top menu buttons when swiping down from the top on any panel
+// Mobile Game Room: Ultra-fast instant reveal for MORPHEME header and top menu buttons when swiping down
 (function _setupMobileGameRoomHeaderReveal() {
     let touchStartY = 0;
     let touchStartX = 0;
+    let isTracking = false;
     
     document.addEventListener('touchstart', (e) => {
         if (window.innerWidth > 992) return;
@@ -87,11 +88,12 @@ window.addEventListener('resize', () => {
         if (e.touches && e.touches.length === 1) {
             touchStartY = e.touches[0].clientY;
             touchStartX = e.touches[0].clientX;
+            isTracking = true;
         }
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        if (window.innerWidth > 992) return;
+        if (!isTracking || window.innerWidth > 992) return;
         const playPage = document.getElementById('page-play');
         if (!playPage || !playPage.classList.contains('active')) return;
         if (!e.touches || e.touches.length !== 1) return;
@@ -101,20 +103,25 @@ window.addEventListener('resize', () => {
         const diffY = currentY - touchStartY;
         const diffX = Math.abs(currentX - touchStartX);
 
-        // If swiping down (diffY > 25) more vertically than horizontally
-        if (diffY > 25 && diffY > diffX * 1.2) {
+        // Immediate responsive trigger: swiping down (diffY > 8px)
+        if (diffY > 8 && diffY > diffX * 0.8) {
             const panel = e.target.closest('.left-panel-container, .board-panel, .words-panel, #page-play');
             if (panel) {
-                // If the panel is at the top of its scroll container
-                if (panel.scrollTop <= 8) {
+                if (panel.scrollTop <= 12) {
                     if (window.scrollY > 0) {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        isTracking = false;
+                        window.scrollTo(0, 0);
                     }
                 }
             } else if (window.scrollY > 0) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                isTracking = false;
+                window.scrollTo(0, 0);
             }
         }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        isTracking = false;
     }, { passive: true });
 })();
 
