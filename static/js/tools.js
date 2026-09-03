@@ -548,6 +548,9 @@ function formatLastVisited(lastVisitedStr, isOnline) {
 
 window.showMiniProfile = async function (username) {
     if (!username) return;
+    if (window.getSelection) {
+        try { window.getSelection().removeAllRanges(); } catch (e) {}
+    }
     console.log(`[showMiniProfile] Attempting to open profile for: ${username}`);
     const modal = document.getElementById('mini-profile-modal');
     if (!modal) {

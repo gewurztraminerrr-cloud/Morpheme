@@ -1368,7 +1368,7 @@ function renderLobbyState(data) {
                 const uname = p.username || 'Player';
                 
                 html += `
-                    <div class="lobby-player-row" onclick="if (window.showMiniProfile) window.showMiniProfile('${uname}'); event.stopPropagation();" title="View ${uname}'s Profile">
+                    <div class="lobby-player-row" onclick="if (window.showMiniProfile) window.showMiniProfile('${uname}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View ${uname}'s Profile">
                         <span class="lobby-player-name">${uname}</span>
                     </div>
                 `;
@@ -1392,7 +1392,7 @@ function renderLobbyState(data) {
             msgHtml += `
                 <div class="lobby-chat-msg">
                     <div class="lobby-chat-msg-header">
-                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); event.stopPropagation();">${author}</span>
+                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${author}</span>
                         <span class="lobby-chat-time">${timeStr}</span>
                     </div>
                     <div class="lobby-chat-text">${text}</div>

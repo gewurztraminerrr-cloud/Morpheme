@@ -1934,8 +1934,13 @@ body.theme-light-brown .lobby-chat-input:focus {
     border-radius: 20px;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
-    user-select: none;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    -webkit-touch-callout: none !important;
     -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
 }
 
 .lobby-player-row:hover {
@@ -1951,6 +1956,11 @@ body.theme-light-brown .lobby-chat-input:focus {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    -webkit-touch-callout: none !important;
 }
 
 .lobby-empty-players {
@@ -1958,6 +1968,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     color: var(--text-secondary, #777);
     font-size: 0.8rem;
     margin-top: 20px;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* Lobby Chat */
@@ -1987,12 +1999,22 @@ body.theme-light-brown .lobby-chat-input:focus {
     align-items: center;
     gap: 6px;
     font-size: 0.75rem;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
 }
 
 .lobby-chat-author {
     font-weight: 700;
     color: #00f0ff;
     cursor: pointer;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
 }
 
 .lobby-chat-author:hover {
