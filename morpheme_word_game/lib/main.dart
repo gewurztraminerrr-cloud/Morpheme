@@ -11,7 +11,7 @@ import 'package:audio_session/audio_session.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Enable edge-to-edge mode with transparent system bars to eliminate OS fullscreen exit prompt
+  // Start with edge-to-edge system bars visible
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -21,6 +21,13 @@ void main() {
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
+
+  // After 3 seconds, transition to immersiveSticky mode: navigation buttons disappear
+  // and swipe-up from bottom temporarily reveals them for a few seconds
+  Future.delayed(const Duration(seconds: 3), () {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  });
+
   runApp(const MorphemeApp());
 }
 
