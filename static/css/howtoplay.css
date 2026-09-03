@@ -1314,3 +1314,180 @@
         padding: 15px 18px;
     }
 }
+
+/* ============================================================
+   LIGHT THEME STYLING FOR HOW TO PLAY & FAQ MODALS
+   ============================================================ */
+[class*="theme-white"] .modal-window,
+[class*="theme-light-"] .modal-window,
+body.theme-yellow .modal-window,
+body.theme-pink .modal-window,
+body.theme-orange .modal-window,
+body.theme-gray .modal-window,
+body.theme-light-brown .modal-window {
+    background: rgba(248, 250, 252, 0.92) !important;
+    --text-primary: #111111 !important;
+    --text-primary-rgb: 17, 17, 17 !important;
+}
+
+[class*="theme-white"] .close-modal-btn,
+[class*="theme-light-"] .close-modal-btn,
+body.theme-yellow .close-modal-btn,
+body.theme-pink .close-modal-btn,
+body.theme-orange .close-modal-btn,
+body.theme-gray .close-modal-btn,
+body.theme-light-brown .close-modal-btn {
+    color: #111111 !important;
+    opacity: 0.75;
+}
+
+[class*="theme-white"] .instruction-card,
+[class*="theme-light-"] .instruction-card,
+body.theme-yellow .instruction-card,
+body.theme-pink .instruction-card,
+body.theme-orange .instruction-card,
+body.theme-gray .instruction-card,
+body.theme-light-brown .instruction-card,
+[class*="theme-white"] .faq-container,
+[class*="theme-light-"] .faq-container,
+body.theme-yellow .faq-container,
+body.theme-pink .faq-container,
+body.theme-orange .faq-container,
+body.theme-gray .faq-container,
+body.theme-light-brown .faq-container,
+[class*="theme-white"] .faq-category,
+[class*="theme-light-"] .faq-category,
+body.theme-yellow .faq-category,
+body.theme-pink .faq-category,
+body.theme-orange .faq-category,
+body.theme-gray .faq-category,
+body.theme-light-brown .faq-category {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    color: #111111 !important;
+}
+
+[class*="theme-white"] .instruction-card h2,
+[class*="theme-light-"] .instruction-card h2,
+body.theme-yellow .instruction-card h2,
+body.theme-pink .instruction-card h2,
+body.theme-orange .instruction-card h2,
+body.theme-gray .instruction-card h2,
+body.theme-light-brown .instruction-card h2,
+[class*="theme-white"] .instruction-card h3,
+[class*="theme-light-"] .instruction-card h3,
+body.theme-yellow .instruction-card h3,
+body.theme-pink .instruction-card h3,
+body.theme-orange .instruction-card h3,
+body.theme-gray .instruction-card h3,
+body.theme-light-brown .instruction-card h3,
+[class*="theme-white"] .faq-title,
+[class*="theme-light-"] .faq-title,
+body.theme-yellow .faq-title,
+body.theme-pink .faq-title,
+body.theme-orange .faq-title,
+body.theme-gray .faq-title,
+body.theme-light-brown .faq-title,
+[class*="theme-white"] .faq-category-title,
+[class*="theme-light-"] .faq-category-title,
+body.theme-yellow .faq-category-title,
+body.theme-pink .faq-category-title,
+body.theme-orange .faq-category-title,
+body.theme-gray .faq-category-title,
+body.theme-light-brown .faq-category-title,
+[class*="theme-white"] .faq-selector-title,
+[class*="theme-light-"] .faq-selector-title,
+body.theme-yellow .faq-selector-title,
+body.theme-pink .faq-selector-title,
+body.theme-orange .faq-selector-title,
+body.theme-gray .faq-selector-title,
+body.theme-light-brown .faq-selector-title {
+    color: #111111 !important;
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .instruction-card p,
+[class*="theme-light-"] .instruction-card p,
+body.theme-yellow .instruction-card p,
+body.theme-pink .instruction-card p,
+body.theme-orange .instruction-card p,
+body.theme-gray .instruction-card p,
+body.theme-light-brown .instruction-card p,
+[class*="theme-white"] .instruction-card li,
+[class*="theme-light-"] .instruction-card li,
+body.theme-yellow .instruction-card li,
+body.theme-pink .instruction-card li,
+body.theme-orange .instruction-card li,
+body.theme-gray .instruction-card li,
+body.theme-light-brown .instruction-card li,
+[class*="theme-white"] .faq-answer,
+[class*="theme-light-"] .faq-answer,
+body.theme-yellow .faq-answer,
+body.theme-pink .faq-answer,
+body.theme-orange .faq-answer,
+body.theme-gray .faq-answer,
+body.theme-light-brown .faq-answer {
+    color: #333333 !important;
+}
+
+[class*="theme-white"] .faq-item,
+[class*="theme-light-"] .faq-item,
+body.theme-yellow .faq-item,
+body.theme-pink .faq-item,
+body.theme-orange .faq-item,
+body.theme-gray .faq-item,
+body.theme-light-brown .faq-item {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-white"] .faq-question,
+[class*="theme-light-"] .faq-question,
+body.theme-yellow .faq-question,
+body.theme-pink .faq-question,
+body.theme-orange .faq-question,
+body.theme-gray .faq-question,
+body.theme-light-brown .faq-question {
+    color: #111111 !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-white"] .faq-nav-link,
+[class*="theme-light-"] .faq-nav-link,
+body.theme-yellow .faq-nav-link,
+body.theme-pink .faq-nav-link,
+body.theme-orange .faq-nav-link,
+body.theme-gray .faq-nav-link,
+body.theme-light-brown .faq-nav-link {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    color: #111111 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-white"] .faq-nav-link:hover,
+[class*="theme-light-"] .faq-nav-link:hover,
+body.theme-yellow .faq-nav-link:hover,
+body.theme-pink .faq-nav-link:hover,
+body.theme-orange .faq-nav-link:hover,
+body.theme-gray .faq-nav-link:hover,
+body.theme-light-brown .faq-nav-link:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    color: #000000 !important;
+}
+
+[class*="theme-white"] .mode-card,
+[class*="theme-light-"] .mode-card,
+body.theme-yellow .mode-card,
+body.theme-pink .mode-card,
+body.theme-orange .mode-card,
+body.theme-gray .mode-card,
+body.theme-light-brown .mode-card {
+    background: #f8fafc !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #111111 !important;
+}

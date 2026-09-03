@@ -993,27 +993,36 @@ body.theme-light-brown .forum-back-btn {
     color: var(--text-primary) !important;
 }
 
-/* Specific button readability fixes for themes where the accent color is light */
-/* This ensures "white-on-white" or "white-on-yellow" text doesn't happen */
-body.theme-white .forum-action-btn,
-body.theme-gray .forum-action-btn,
-body.theme-orange .forum-action-btn,
-body.theme-red .forum-action-btn,
-body.theme-green .forum-action-btn,
-body.theme-blue .forum-action-btn,
-body.theme-purple .forum-action-btn,
-body.theme-dark-pink .forum-action-btn,
-body.theme-dark-yellow .forum-action-btn,
-body.theme-light-yellow .forum-action-btn,
+/* Vibrant, high-contrast action buttons for Forums across all themes */
+.forum-action-btn,
+#forum-new-post-btn,
+.forum-action-btn.primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 700 !important;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease !important;
+}
+
+.forum-action-btn:hover,
+#forum-new-post-btn:hover,
+.forum-action-btn.primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.45) !important;
+    opacity: 0.95 !important;
+}
+
+[class*="theme-white"] .forum-action-btn,
+[class*="theme-light-"] .forum-action-btn,
 body.theme-yellow .forum-action-btn,
 body.theme-pink .forum-action-btn,
-body.theme-light-gray .forum-action-btn,
-body.theme-light-blue .forum-action-btn,
-body.theme-light-red .forum-action-btn,
-body.theme-light-brown .forum-action-btn,
-[class*="theme-light-"] .forum-action-btn {
-    color: #000 !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+body.theme-orange .forum-action-btn,
+body.theme-gray .forum-action-btn,
+body.theme-light-brown .forum-action-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
 }
 
 /* Ensure Back button has enough contrast on white backgrounds */
@@ -1024,9 +1033,9 @@ body.theme-pink .forum-back-btn,
 body.theme-orange .forum-back-btn,
 body.theme-gray .forum-back-btn,
 body.theme-light-brown .forum-back-btn {
-    border-color: rgba(0, 0, 0, 0.2);
-    background: rgba(0, 0, 0, 0.05);
-    color: #333 !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #111111 !important;
 }
 
 [class*="theme-white"] .forum-back-btn:hover,
@@ -1035,12 +1044,9 @@ body.theme-yellow .forum-back-btn:hover,
 body.theme-pink .forum-back-btn:hover,
 body.theme-orange .forum-back-btn:hover,
 body.theme-gray .forum-back-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-/* Special fix for Black theme or very dark themes where accent might be white */
-body.theme-black .forum-action-btn {
-    color: #000 !important;
+    background: rgba(0, 0, 0, 0.12) !important;
+    border-color: rgba(0, 0, 0, 0.35) !important;
+    color: #000000 !important;
 }
 
 /* Tablet & Smaller Mac Device Scaling for Forums Page */
