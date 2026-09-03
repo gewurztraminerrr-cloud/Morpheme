@@ -2678,6 +2678,9 @@ function _updateVhVariable() {
 }
 
 function _restoreAllMobilePanels() {
+    const pLoad = document.getElementById('page-loading');
+    if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
+
     // If the user is currently touching, swiping, or typing in an input, never override scroll or styles!
     if (_isUserTouching || _isKeyboardOpen()) return;
 
@@ -2712,6 +2715,8 @@ function _restoreAllMobilePanels() {
 
 let _viewportRecoveryTimers = [];
 window.scheduleMobileViewportRecovery = function() {
+    const pLoad = document.getElementById('page-loading');
+    if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
     if (_isKeyboardOpen()) return;
     _viewportRecoveryTimers.forEach(clearTimeout);
     _viewportRecoveryTimers = [];
