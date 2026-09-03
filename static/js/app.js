@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 const handlePressCancel = () => {
-                    if (gatewayTransitioning) return;
+                    if (!isPointerDown || gatewayTransitioning) return;
                     isPointerDown = false;
                     gatewayBtn.classList.add('dragged-out');
                     gatewayBtn.classList.remove('pressed', 'flattened');
