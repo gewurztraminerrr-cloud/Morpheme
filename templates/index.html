@@ -6910,9 +6910,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33470"></script>
+    <script src="/js/app.js?v=33475"></script>
     <script src="/js/lobby.js?v=33400"></script>
-    <script src="/js/play.js?v=33220"></script>
+    <script src="/js/play.js?v=33225"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33275"></script>
     <script src="/js/tools.js?v=33415"></script>
@@ -6994,8 +6994,8 @@
         }
 
         function adjustPlayHeaderForDevice() {
-            const pagePlay = document.getElementById('page-play') || document.querySelector('.page.active');
-            if (!pagePlay || (pagePlay.id !== 'page-play' && pagePlay.id !== '')) return;
+            const pagePlay = document.getElementById('page-play');
+            if (!pagePlay) return;
             const header = document.querySelector('.play-header');
             const boardPanel = document.querySelector('.board-panel');
             const timerDisplay = document.querySelector('.timer-display');
@@ -7007,7 +7007,7 @@
             if (!header || !boardPanel) return;
             
             if (window.innerWidth <= 992) {
-                // Mobile: Move inside board panel so it swipes with it
+                // Mobile: Move play-header inside board panel so it ONLY shows above the board, never above Players or Words
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
                 }
@@ -7019,7 +7019,7 @@
                 if (timerControlsGroup && timerDisplay && timerControlsGroup.parentElement !== timerDisplay) {
                     timerDisplay.appendChild(timerControlsGroup);
                 }
-                // Move Color Chart (Color Bar) back inside the left panel (Players/Chat) so it displays when swiping right
+                // Move Color Chart (Color Bar) strictly inside the left panel (above Players) on mobile
                 if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
                     playersPanel.prepend(colorBar);
                 }
@@ -7043,14 +7043,11 @@
             }
         }
 
-
-
-
-
-
-        // Run on load and on resize
+        // Run immediately, on load, on resize, and on DOMContentLoaded
+        adjustPlayHeaderForDevice();
         window.addEventListener('load', adjustPlayHeaderForDevice);
         window.addEventListener('resize', adjustPlayHeaderForDevice);
+        document.addEventListener('DOMContentLoaded', adjustPlayHeaderForDevice);
         
         // Also run when switching to the play page (if handled by app.js)
         document.addEventListener('DOMContentLoaded', adjustPlayHeaderForDevice);

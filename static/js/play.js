@@ -13,6 +13,9 @@ window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
 window.switchPlayPanel = function(panelId, smooth = true) {
     window._currentPlayPanel = panelId || 'board';
+    if (typeof adjustPlayHeaderForDevice === 'function') {
+        adjustPlayHeaderForDevice();
+    }
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
     const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel);
@@ -26,6 +29,9 @@ window.switchPlayPanel = function(panelId, smooth = true) {
 };
 
 window._restorePlayPanel = function() {
+    if (typeof adjustPlayHeaderForDevice === 'function') {
+        adjustPlayHeaderForDevice();
+    }
     window.switchPlayPanel(window._currentPlayPanel || 'board', false);
 };
 
