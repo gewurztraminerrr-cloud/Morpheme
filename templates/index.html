@@ -138,9 +138,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33320" as="style">
+    <link rel="preload" href="/css/style.css?v=33325" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33320">
+    <link rel="stylesheet" href="/css/style.css?v=33325">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1423,7 +1423,7 @@
                     var onPlay = (activePage === 'page-play');
                     var inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
                     
-                    if ((onLobby || onLoading || !activePage) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
+                    if ((onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
                         try {
                             unlockWebAudio();
                             audio.muted = false;
@@ -1446,7 +1446,14 @@
 
                 // Legitimate user gesture events for Safari/iOS/Chrome
                 var gestureEvents = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
-                function unlockAndPlayAudio() {
+                function unlockAndPlayAudio(e) {
+                    var pLoad = document.getElementById('page-loading');
+                    if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) {
+                        var gb = document.getElementById('btn-enter-lobby-gateway');
+                        if (e && e.target && e.target !== gb && !gb.contains(e.target)) {
+                            return;
+                        }
+                    }
                     unlockWebAudio();
                     window.playLobbyAudioImmediate();
                 }
