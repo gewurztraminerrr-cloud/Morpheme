@@ -377,10 +377,258 @@ body.theme-gray .logo .pronunciation,
 body.theme-light-brown .logo .pronunciation,
 .page h2,
 .setting-title,
+.tool-header h2,
+.page-title-header h2,
 #username-display {
     color: var(--text-primary) !important;
     background: none !important;
     -webkit-text-fill-color: initial !important;
+}
+
+[class*="theme-white"] .tool-nav-btn,
+[class*="theme-light-"] .tool-nav-btn,
+body.theme-yellow .tool-nav-btn,
+body.theme-pink .tool-nav-btn,
+body.theme-orange .tool-nav-btn,
+body.theme-gray .tool-nav-btn,
+body.theme-light-brown .tool-nav-btn {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+[class*="theme-white"] .tool-nav-btn:hover,
+[class*="theme-light-"] .tool-nav-btn:hover,
+body.theme-yellow .tool-nav-btn:hover,
+body.theme-pink .tool-nav-btn:hover,
+body.theme-orange .tool-nav-btn:hover,
+body.theme-gray .tool-nav-btn:hover,
+body.theme-light-brown .tool-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+[class*="theme-white"] .tool-nav-btn.active,
+[class*="theme-light-"] .tool-nav-btn.active,
+body.theme-yellow .tool-nav-btn.active,
+body.theme-pink .tool-nav-btn.active,
+body.theme-orange .tool-nav-btn.active,
+body.theme-gray .tool-nav-btn.active,
+body.theme-light-brown .tool-nav-btn.active {
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-color: rgba(37, 99, 235, 0.5) !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.15) !important;
+}
+
+[class*="theme-white"] .tool-btn-title,
+[class*="theme-light-"] .tool-btn-title,
+body.theme-yellow .tool-btn-title,
+body.theme-pink .tool-btn-title,
+body.theme-orange .tool-btn-title,
+body.theme-gray .tool-btn-title,
+body.theme-light-brown .tool-btn-title {
+    color: var(--text-primary) !important;
+}
+
+[class*="theme-white"] .tool-btn-desc,
+[class*="theme-light-"] .tool-btn-desc,
+body.theme-yellow .tool-btn-desc,
+body.theme-pink .tool-btn-desc,
+body.theme-orange .tool-btn-desc,
+body.theme-gray .tool-btn-desc,
+body.theme-light-brown .tool-btn-desc {
+    color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Control Panels & Dashboard Cards for Light Themes */
+[class*="theme-white"] .combo-control-panel,
+[class*="theme-light-"] .combo-control-panel,
+body.theme-yellow .combo-control-panel,
+body.theme-pink .combo-control-panel,
+body.theme-orange .combo-control-panel,
+body.theme-gray .combo-control-panel,
+body.theme-light-brown .combo-control-panel {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+[class*="theme-white"] .subanagrams-game-area,
+[class*="theme-white"] .seq-results-container,
+[class*="theme-white"] #sub-results-container,
+[class*="theme-white"] #seq-results-container,
+[class*="theme-white"] .random-word-container,
+[class*="theme-white"] .wotd-container,
+[class*="theme-white"] .combo-results-container,
+[class*="theme-white"] .lists-container,
+[class*="theme-white"] .list-column,
+[class*="theme-white"] .list-scroll-area,
+[class*="theme-light-"] .subanagrams-game-area,
+[class*="theme-light-"] .seq-results-container,
+[class*="theme-light-"] #sub-results-container,
+[class*="theme-light-"] #seq-results-container,
+[class*="theme-light-"] .random-word-container,
+[class*="theme-light-"] .wotd-container,
+[class*="theme-light-"] .combo-results-container,
+[class*="theme-light-"] .lists-container,
+[class*="theme-light-"] .list-column,
+[class*="theme-light-"] .list-scroll-area,
+body.theme-yellow .subanagrams-game-area,
+body.theme-yellow .seq-results-container,
+body.theme-yellow #sub-results-container,
+body.theme-yellow #seq-results-container,
+body.theme-yellow .random-word-container,
+body.theme-yellow .wotd-container,
+body.theme-yellow .combo-results-container,
+body.theme-yellow .lists-container,
+body.theme-yellow .list-column,
+body.theme-yellow .list-scroll-area,
+body.theme-pink .subanagrams-game-area,
+body.theme-pink .seq-results-container,
+body.theme-pink #sub-results-container,
+body.theme-pink #seq-results-container,
+body.theme-pink .random-word-container,
+body.theme-pink .wotd-container,
+body.theme-pink .combo-results-container,
+body.theme-pink .lists-container,
+body.theme-pink .list-column,
+body.theme-pink .list-scroll-area,
+body.theme-orange .subanagrams-game-area,
+body.theme-orange .seq-results-container,
+body.theme-orange #sub-results-container,
+body.theme-orange #seq-results-container,
+body.theme-orange .random-word-container,
+body.theme-orange .wotd-container,
+body.theme-orange .combo-results-container,
+body.theme-orange .lists-container,
+body.theme-orange .list-column,
+body.theme-orange .list-scroll-area,
+body.theme-gray .subanagrams-game-area,
+body.theme-gray .seq-results-container,
+body.theme-gray #sub-results-container,
+body.theme-gray #seq-results-container,
+body.theme-gray .random-word-container,
+body.theme-gray .wotd-container,
+body.theme-gray .combo-results-container,
+body.theme-gray .lists-container,
+body.theme-gray .list-column,
+body.theme-gray .list-scroll-area,
+body.theme-light-brown .subanagrams-game-area,
+body.theme-light-brown .seq-results-container,
+body.theme-light-brown #sub-results-container,
+body.theme-light-brown #seq-results-container,
+body.theme-light-brown .random-word-container,
+body.theme-light-brown .wotd-container,
+body.theme-light-brown .combo-results-container,
+body.theme-light-brown .lists-container,
+body.theme-light-brown .list-column,
+body.theme-light-brown .list-scroll-area {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: var(--text-primary) !important;
+}
+
+[class*="theme-white"] .wotd-definition,
+[class*="theme-white"] #wotd-definition,
+[class*="theme-white"] .random-word-definition,
+[class*="theme-white"] #random-word-definition,
+[class*="theme-white"] .valid-definition-display,
+[class*="theme-white"] #valid-definition-display,
+[class*="theme-light-"] .wotd-definition,
+[class*="theme-light-"] #wotd-definition,
+[class*="theme-light-"] .random-word-definition,
+[class*="theme-light-"] #random-word-definition,
+[class*="theme-light-"] .valid-definition-display,
+[class*="theme-light-"] #valid-definition-display,
+body.theme-yellow .wotd-definition,
+body.theme-yellow #wotd-definition,
+body.theme-yellow .random-word-definition,
+body.theme-yellow #random-word-definition,
+body.theme-yellow .valid-definition-display,
+body.theme-yellow #valid-definition-display,
+body.theme-pink .wotd-definition,
+body.theme-pink #wotd-definition,
+body.theme-pink .random-word-definition,
+body.theme-pink #random-word-definition,
+body.theme-pink .valid-definition-display,
+body.theme-pink #valid-definition-display,
+body.theme-orange .wotd-definition,
+body.theme-orange #wotd-definition,
+body.theme-orange .random-word-definition,
+body.theme-orange #random-word-definition,
+body.theme-orange .valid-definition-display,
+body.theme-orange #valid-definition-display,
+body.theme-gray .wotd-definition,
+body.theme-gray #wotd-definition,
+body.theme-gray .random-word-definition,
+body.theme-gray #random-word-definition,
+body.theme-gray .valid-definition-display,
+body.theme-gray #valid-definition-display,
+body.theme-light-brown .wotd-definition,
+body.theme-light-brown #wotd-definition,
+body.theme-light-brown .random-word-definition,
+body.theme-light-brown #random-word-definition,
+body.theme-light-brown .valid-definition-display,
+body.theme-light-brown #valid-definition-display {
+    color: var(--text-primary) !important;
+    opacity: 0.9 !important;
+}
+
+[class*="theme-white"] .tool-header p,
+[class*="theme-white"] .page-title-header p,
+[class*="theme-white"] .chart-desc,
+[class*="theme-white"] .wotd-intro,
+[class*="theme-white"] .sub-len-label,
+[class*="theme-white"] .unscramble-must-have-label,
+[class*="theme-white"] .seq-results-placeholder,
+[class*="theme-white"] #sub-count-info,
+[class*="theme-light-"] .tool-header p,
+[class*="theme-light-"] .page-title-header p,
+[class*="theme-light-"] .chart-desc,
+[class*="theme-light-"] .wotd-intro,
+[class*="theme-light-"] .sub-len-label,
+[class*="theme-light-"] .unscramble-must-have-label,
+[class*="theme-light-"] .seq-results-placeholder,
+[class*="theme-light-"] #sub-count-info,
+body.theme-yellow .tool-header p,
+body.theme-yellow .page-title-header p,
+body.theme-yellow .chart-desc,
+body.theme-yellow .wotd-intro,
+body.theme-yellow .sub-len-label,
+body.theme-yellow .unscramble-must-have-label,
+body.theme-yellow .seq-results-placeholder,
+body.theme-yellow #sub-count-info,
+body.theme-pink .tool-header p,
+body.theme-pink .page-title-header p,
+body.theme-pink .chart-desc,
+body.theme-pink .wotd-intro,
+body.theme-pink .sub-len-label,
+body.theme-pink .unscramble-must-have-label,
+body.theme-pink .seq-results-placeholder,
+body.theme-pink #sub-count-info,
+body.theme-orange .tool-header p,
+body.theme-orange .page-title-header p,
+body.theme-orange .chart-desc,
+body.theme-orange .wotd-intro,
+body.theme-orange .sub-len-label,
+body.theme-orange .unscramble-must-have-label,
+body.theme-orange .seq-results-placeholder,
+body.theme-orange #sub-count-info,
+body.theme-gray .tool-header p,
+body.theme-gray .page-title-header p,
+body.theme-gray .chart-desc,
+body.theme-gray .wotd-intro,
+body.theme-gray .sub-len-label,
+body.theme-gray .unscramble-must-have-label,
+body.theme-gray .seq-results-placeholder,
+body.theme-gray #sub-count-info,
+body.theme-light-brown .tool-header p,
+body.theme-light-brown .page-title-header p,
+body.theme-light-brown .chart-desc,
+body.theme-light-brown .wotd-intro,
+body.theme-light-brown .sub-len-label,
+body.theme-light-brown .unscramble-must-have-label,
+body.theme-light-brown .seq-results-placeholder,
+body.theme-light-brown #sub-count-info {
+    color: rgba(0, 0, 0, 0.75) !important;
 }
 
 [class*="theme-white"] .nav-btn,
@@ -408,14 +656,40 @@ body.theme-light-brown .auth-container {
 }
 
 /* Input Styles for Light Themes */
-[class*="theme-white"] .auth-form input,
-[class*="theme-light-"] .auth-form input,
-body.theme-yellow .auth-form input,
-body.theme-pink .auth-form input,
-body.theme-orange .auth-form input {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: #111;
+[class*="theme-white"] input[type="text"],
+[class*="theme-white"] textarea,
+[class*="theme-light-"] input[type="text"],
+[class*="theme-light-"] textarea,
+body.theme-yellow input[type="text"],
+body.theme-yellow textarea,
+body.theme-pink input[type="text"],
+body.theme-pink textarea,
+body.theme-orange input[type="text"],
+body.theme-orange textarea,
+body.theme-gray input[type="text"],
+body.theme-gray textarea,
+body.theme-light-brown input[type="text"],
+body.theme-light-brown textarea {
+    background: rgba(0, 0, 0, 0.06) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    color: var(--text-primary) !important;
+}
+
+[class*="theme-white"] input::placeholder,
+[class*="theme-white"] textarea::placeholder,
+[class*="theme-light-"] input::placeholder,
+[class*="theme-light-"] textarea::placeholder,
+body.theme-yellow input::placeholder,
+body.theme-yellow textarea::placeholder,
+body.theme-pink input::placeholder,
+body.theme-pink textarea::placeholder,
+body.theme-orange input::placeholder,
+body.theme-orange textarea::placeholder,
+body.theme-gray input::placeholder,
+body.theme-gray textarea::placeholder,
+body.theme-light-brown input::placeholder,
+body.theme-light-brown textarea::placeholder {
+    color: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Gameplay Elements for Light Themes */
