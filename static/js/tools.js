@@ -4031,10 +4031,24 @@ window.closeFullListModal = function() {
         modal.classList.remove('active');
         modal.style.display = 'none';
         modal.style.setProperty('display', 'none', 'important');
+        modal.style.height = '';
+        modal.style.top = '';
     }
     document.body.style.overflow = '';
     window.isFullListLoading = false;
 };
+
+if (window.visualViewport) {
+    const syncFullListModalViewport = () => {
+        const modal = document.getElementById('full-list-modal');
+        if (modal && modal.classList.contains('active')) {
+            modal.style.height = `${window.visualViewport.height}px`;
+            modal.style.top = `${window.visualViewport.offsetTop}px`;
+        }
+    };
+    window.visualViewport.addEventListener('resize', syncFullListModalViewport);
+    window.visualViewport.addEventListener('scroll', syncFullListModalViewport);
+}
 
 const fullListJumpBtnEl = document.getElementById('full-list-jump-btn');
 if (fullListJumpBtnEl) {
