@@ -2175,10 +2175,10 @@ body.theme-light-brown .lobby-chat-input:focus {
     #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: calc(100dvh - 166px) !important;
-        height: calc(100vh - 166px) !important;
-        max-height: calc(100dvh - 166px) !important;
-        max-height: calc(100vh - 166px) !important;
+        height: calc(100dvh - 162px) !important;
+        height: calc(100vh - 162px) !important;
+        max-height: calc(100dvh - 162px) !important;
+        max-height: calc(100vh - 162px) !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         padding: 0 !important;
