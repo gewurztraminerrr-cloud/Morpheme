@@ -95,7 +95,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     border: 1px solid var(--input-border);
-    padding: 16px 20px 30px 20px;
+    padding: 16px 20px 24px 20px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
     max-height: 100%;
@@ -104,8 +104,16 @@
 
 .game-types-panel .game-section:last-of-type,
 .game-types-panel .game-section:last-child {
-    margin-bottom: 36px !important;
-    padding-bottom: 12px !important;
+    margin-bottom: 24px !important;
+    padding-bottom: 16px !important;
+}
+
+.game-types-panel::after {
+    content: '';
+    display: block;
+    height: 32px;
+    width: 100%;
+    flex-shrink: 0;
 }
 
 .game-section,
