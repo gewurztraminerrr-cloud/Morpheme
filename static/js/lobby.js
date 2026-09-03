@@ -678,20 +678,11 @@ function setupLobbyEvents() {
                 if (!lobbyStatsInterval) startStatsPolling();
 
                 // Mobile: snap to main panel
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    const scrollToMain = () => {
-                        const mainPanel = document.getElementById('mobile-panel-main');
-                        if (mainPanel) {
-                            const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
-                            if (lobbyGrid) lobbyGrid.scrollLeft = mainPanel.offsetLeft;
-                        }
-                    };
-                    scrollToMain();
-                    requestAnimationFrame(scrollToMain);
-                    setTimeout(scrollToMain, 50);
-                    setTimeout(scrollToMain, 150);
-                }
+                window.scrollLobbyToMainPanel();
+                requestAnimationFrame(window.scrollLobbyToMainPanel);
+                setTimeout(window.scrollLobbyToMainPanel, 50);
+                setTimeout(window.scrollLobbyToMainPanel, 150);
+                setTimeout(window.scrollLobbyToMainPanel, 300);
             } else {
                 stopLobbyPolling();
                 stopStatsPolling();
@@ -705,24 +696,32 @@ function setupLobbyEvents() {
         startStatsPolling();
 
         // Mobile layout: Snap to center main lobby panel on load
-        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile) {
-            const scrollToMain = () => {
-                const mainPanel = document.getElementById('mobile-panel-main');
-                if (mainPanel) {
-                    const lobbyGrid = mainPanel.closest('.lobby-grid') || mainPanel.parentElement;
-                    if (lobbyGrid) {
-                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
-                    }
-                }
-            };
-            scrollToMain();
-            requestAnimationFrame(scrollToMain);
-            setTimeout(scrollToMain, 50);
-            setTimeout(scrollToMain, 150);
-        }
+        window.scrollLobbyToMainPanel();
+        requestAnimationFrame(window.scrollLobbyToMainPanel);
+        setTimeout(window.scrollLobbyToMainPanel, 50);
+        setTimeout(window.scrollLobbyToMainPanel, 150);
+        setTimeout(window.scrollLobbyToMainPanel, 300);
     } // end if (isOnLobby())
 } // end setupLobbyEvents
+
+window.scrollLobbyToMainPanel = function(behavior = 'auto') {
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) return;
+    const mainPanel = document.getElementById('mobile-panel-main');
+    const lobbyGrid = document.querySelector('.lobby-grid');
+    if (!mainPanel || !lobbyGrid) return;
+
+    const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
+    const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
+
+    if (targetLeft > 0) {
+        if (behavior === 'smooth') {
+            lobbyGrid.scrollTo({ left: targetLeft, behavior: 'smooth' });
+        } else {
+            lobbyGrid.scrollLeft = targetLeft;
+        }
+    }
+};
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupLobbyEvents);
