@@ -176,11 +176,11 @@
 
     function getEmptyPlaceholderHTML(subtext) {
         return `
-            <div class="hof-item" style="grid-column: 1 / -1; justify-content: center; padding: 25px; border-style: dashed; border-color: rgba(255,255,255,0.15); background: rgba(0,0,0,0.15);">
+            <div class="hof-item hof-empty-placeholder" style="grid-column: 1 / -1; justify-content: center; padding: 25px;">
                 <div style="text-align: center;">
                     <div style="font-size: 1.5rem; margin-bottom: 8px;">🤝</div>
-                    <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">No Donations Yet</div>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">${subtext}</p>
+                    <div class="hof-empty-title" style="font-weight: 700; margin-bottom: 4px;">No Donations Yet</div>
+                    <p class="hof-empty-subtext" style="font-size: 0.8rem; margin: 0;">${subtext}</p>
                 </div>
             </div>
         `;

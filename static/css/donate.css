@@ -631,6 +631,84 @@
     }
 }
 
+.custom-donate-panel {
+    margin: 0 auto;
+    max-width: 550px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.custom-donate-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+}
+
+.custom-donate-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary, #94a3b8);
+    margin: 0;
+}
+
+.custom-amount-input-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 10px 20px;
+}
+
+.custom-donate-input {
+    width: 100%;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.6rem;
+    font-weight: 800;
+    outline: none;
+    text-align: left;
+    padding: 0;
+}
+
+.paypal-security-badge {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    font-weight: 500;
+}
+
+.hof-empty-placeholder {
+    border-style: dashed !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+.hof-empty-title {
+    color: #ffffff;
+}
+
+.hof-empty-subtext {
+    color: var(--text-secondary, #94a3b8);
+}
+
 /* ============================================================
    LIGHT THEME STYLING FOR DONATE TAB
    ============================================================ */
@@ -667,7 +745,7 @@ body.theme-pink .donate-tagline,
 body.theme-orange .donate-tagline,
 body.theme-gray .donate-tagline,
 body.theme-light-brown .donate-tagline {
-    color: #444444 !important;
+    color: #333333 !important;
 }
 
 [class*="theme-white"] .funding-header h3,
@@ -680,56 +758,40 @@ body.theme-light-brown .funding-header h3 {
     color: #111111 !important;
 }
 
+[class*="theme-white"] .funding-status,
+[class*="theme-light-"] .funding-status,
+body.theme-yellow .funding-status,
+body.theme-pink .funding-status,
+body.theme-orange .funding-status,
+body.theme-gray .funding-status,
+body.theme-light-brown .funding-status {
+    color: #e11d48 !important;
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .progress-bar-container,
+[class*="theme-light-"] .progress-bar-container,
+body.theme-yellow .progress-bar-container,
+body.theme-pink .progress-bar-container,
+body.theme-orange .progress-bar-container,
+body.theme-gray .progress-bar-container,
+body.theme-light-brown .progress-bar-container {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
 [class*="theme-white"] .funding-footer,
 [class*="theme-light-"] .funding-footer,
 body.theme-yellow .funding-footer,
 body.theme-pink .funding-footer,
 body.theme-orange .funding-footer,
 body.theme-gray .funding-footer,
-body.theme-light-brown .funding-footer {
-    color: #555555 !important;
-}
-
-[class*="theme-white"] .donate-card,
-[class*="theme-light-"] .donate-card,
-body.theme-yellow .donate-card,
-body.theme-pink .donate-card,
-body.theme-orange .donate-card,
-body.theme-gray .donate-card,
-body.theme-light-brown .donate-card {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-}
-
-[class*="theme-white"] .card-price,
-[class*="theme-light-"] .card-price,
-body.theme-yellow .card-price,
-body.theme-pink .card-price,
-body.theme-orange .card-price,
-body.theme-gray .card-price,
-body.theme-light-brown .card-price {
-    color: #111111 !important;
-}
-
-[class*="theme-white"] .card-price .frequency,
-[class*="theme-light-"] .card-price .frequency,
-body.theme-yellow .card-price .frequency,
-body.theme-pink .card-price .frequency,
-body.theme-orange .card-price .frequency,
-body.theme-gray .card-price .frequency,
-body.theme-light-brown .card-price .frequency {
-    color: #666666 !important;
-}
-
-[class*="theme-white"] .card-benefits li,
-[class*="theme-light-"] .card-benefits li,
-body.theme-yellow .card-benefits li,
-body.theme-pink .card-benefits li,
-body.theme-orange .card-benefits li,
-body.theme-gray .card-benefits li,
-body.theme-light-brown .card-benefits li {
-    color: #333333 !important;
+body.theme-light-brown .funding-footer,
+[class*="theme-white"] #funding-percentage-text,
+[class*="theme-light-"] #funding-percentage-text,
+[class*="theme-white"] #funding-days-text,
+[class*="theme-light-"] #funding-days-text {
+    color: #444444 !important;
 }
 
 [class*="theme-white"] .custom-donate-panel,
@@ -760,59 +822,49 @@ body.theme-pink .custom-donate-desc,
 body.theme-orange .custom-donate-desc,
 body.theme-gray .custom-donate-desc,
 body.theme-light-brown .custom-donate-desc {
-    color: #555555 !important;
+    color: #333333 !important;
 }
 
-[class*="theme-white"] .custom-amount-input-group,
-[class*="theme-light-"] .custom-amount-input-group,
-body.theme-yellow .custom-amount-input-group,
-body.theme-pink .custom-amount-input-group,
-body.theme-orange .custom-amount-input-group,
-body.theme-gray .custom-amount-input-group,
-body.theme-light-brown .custom-amount-input-group {
+[class*="theme-white"] .custom-amount-input-box,
+[class*="theme-light-"] .custom-amount-input-box,
+body.theme-yellow .custom-amount-input-box,
+body.theme-pink .custom-amount-input-box,
+body.theme-orange .custom-amount-input-box,
+body.theme-gray .custom-amount-input-box,
+body.theme-light-brown .custom-amount-input-box {
     background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.2) !important;
 }
 
-[class*="theme-white"] .custom-amount-input-group input,
-[class*="theme-light-"] .custom-amount-input-group input,
-body.theme-yellow .custom-amount-input-group input,
-body.theme-pink .custom-amount-input-group input,
-body.theme-orange .custom-amount-input-group input,
-body.theme-gray .custom-amount-input-group input,
-body.theme-light-brown .custom-amount-input-group input {
+[class*="theme-white"] .custom-donate-input,
+[class*="theme-light-"] .custom-donate-input,
+body.theme-yellow .custom-donate-input,
+body.theme-pink .custom-donate-input,
+body.theme-orange .custom-donate-input,
+body.theme-gray .custom-donate-input,
+body.theme-light-brown .custom-donate-input {
     color: #111111 !important;
 }
 
-[class*="theme-white"] .currency-symbol,
-[class*="theme-light-"] .currency-symbol,
-body.theme-yellow .currency-symbol,
-body.theme-pink .currency-symbol,
-body.theme-orange .currency-symbol,
-body.theme-gray .currency-symbol,
-body.theme-light-brown .currency-symbol {
-    color: #444444 !important;
+[class*="theme-white"] .currency-prefix,
+[class*="theme-light-"] .currency-prefix,
+body.theme-yellow .currency-prefix,
+body.theme-pink .currency-prefix,
+body.theme-orange .currency-prefix,
+body.theme-gray .currency-prefix,
+body.theme-light-brown .currency-prefix {
+    color: #e11d48 !important;
 }
 
-[class*="theme-white"] .hof-column,
-[class*="theme-light-"] .hof-column,
-body.theme-yellow .hof-column,
-body.theme-pink .hof-column,
-body.theme-orange .hof-column,
-body.theme-gray .hof-column,
-body.theme-light-brown .hof-column {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-}
-
-[class*="theme-white"] .hof-column-title,
-[class*="theme-light-"] .hof-column-title,
-body.theme-yellow .hof-column-title,
-body.theme-pink .hof-column-title,
-body.theme-orange .hof-column-title,
-body.theme-gray .hof-column-title,
-body.theme-light-brown .hof-column-title {
+[class*="theme-white"] .hof-column h3,
+[class*="theme-light-"] .hof-column h3,
+body.theme-yellow .hof-column h3,
+body.theme-pink .hof-column h3,
+body.theme-orange .hof-column h3,
+body.theme-gray .hof-column h3,
+body.theme-light-brown .hof-column h3 {
     color: #111111 !important;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 [class*="theme-white"] .hof-item,
@@ -823,45 +875,56 @@ body.theme-orange .hof-item,
 body.theme-gray .hof-item,
 body.theme-light-brown .hof-item {
     background: rgba(0, 0, 0, 0.04) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
-[class*="theme-white"] .donor-name,
-[class*="theme-light-"] .donor-name,
-body.theme-yellow .donor-name,
-body.theme-pink .donor-name,
-body.theme-orange .donor-name,
-body.theme-gray .donor-name,
-body.theme-light-brown .donor-name {
+[class*="theme-white"] .hof-avatar,
+[class*="theme-light-"] .hof-avatar,
+body.theme-yellow .hof-avatar,
+body.theme-pink .hof-avatar,
+body.theme-orange .hof-avatar,
+body.theme-gray .hof-avatar,
+body.theme-light-brown .hof-avatar {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+[class*="theme-white"] .hof-name,
+[class*="theme-light-"] .hof-name,
+body.theme-yellow .hof-name,
+body.theme-pink .hof-name,
+body.theme-orange .hof-name,
+body.theme-gray .hof-name,
+body.theme-light-brown .hof-name {
     color: #111111 !important;
 }
 
-[class*="theme-white"] .donor-date,
-[class*="theme-light-"] .donor-date,
-body.theme-yellow .donor-date,
-body.theme-pink .donor-date,
-body.theme-orange .donor-date,
-body.theme-gray .donor-date,
-body.theme-light-brown .donor-date {
-    color: #666666 !important;
+[class*="theme-white"] .hof-empty-placeholder,
+[class*="theme-light-"] .hof-empty-placeholder,
+body.theme-yellow .hof-empty-placeholder,
+body.theme-pink .hof-empty-placeholder,
+body.theme-orange .hof-empty-placeholder,
+body.theme-gray .hof-empty-placeholder,
+body.theme-light-brown .hof-empty-placeholder {
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    background: rgba(0, 0, 0, 0.03) !important;
 }
 
-[class*="theme-white"] .donate-faq-item summary,
-[class*="theme-light-"] .donate-faq-item summary,
-body.theme-yellow .donate-faq-item summary,
-body.theme-pink .donate-faq-item summary,
-body.theme-orange .donate-faq-item summary,
-body.theme-gray .donate-faq-item summary,
-body.theme-light-brown .donate-faq-item summary {
+[class*="theme-white"] .hof-empty-title,
+[class*="theme-light-"] .hof-empty-title,
+body.theme-yellow .hof-empty-title,
+body.theme-pink .hof-empty-title,
+body.theme-orange .hof-empty-title,
+body.theme-gray .hof-empty-title,
+body.theme-light-brown .hof-empty-title {
     color: #111111 !important;
 }
 
-[class*="theme-white"] .donate-faq-item p,
-[class*="theme-light-"] .donate-faq-item p,
-body.theme-yellow .donate-faq-item p,
-body.theme-pink .donate-faq-item p,
-body.theme-orange .donate-faq-item p,
-body.theme-gray .donate-faq-item p,
-body.theme-light-brown .donate-faq-item p {
-    color: #333333 !important;
+[class*="theme-white"] .hof-empty-subtext,
+[class*="theme-light-"] .hof-empty-subtext,
+body.theme-yellow .hof-empty-subtext,
+body.theme-pink .hof-empty-subtext,
+body.theme-orange .hof-empty-subtext,
+body.theme-gray .hof-empty-subtext,
+body.theme-light-brown .hof-empty-subtext {
+    color: #555555 !important;
 }
