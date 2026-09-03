@@ -5231,7 +5231,7 @@ body .tab-btn.active {
         justify-content: center !important;
         align-items: center !important;
         overflow-x: hidden !important; /* No horizontal scrolling at all */
-        padding: 12px 15px !important;
+        padding: max(28px, calc(env(safe-area-inset-top, 0px) + 20px)) 15px 12px 15px !important;
         gap: 12px !important; /* Space between logo and buttons grid */
         width: 100% !important;
         max-width: 100% !important;
@@ -5252,6 +5252,7 @@ body .tab-btn.active {
         gap: 6px !important; /* Slightly snugger spacing on mobile */
         box-sizing: border-box !important;
         position: relative !important;
+        margin-top: 4px !important;
     }
 
     /* Swipe indicator no longer needed, they are on the same panel! */
