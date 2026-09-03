@@ -2140,7 +2140,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 4px 6px 4px 6px !important;
+        padding: 4px 6px 46px 6px !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -2172,8 +2172,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     .lobby-grid {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: auto !important;
-        max-height: calc(100% - 46px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: row !important;
         overflow-x: auto !important;
@@ -2184,7 +2184,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         box-sizing: border-box !important;
         scrollbar-width: none !important;
-        margin: 0 0 8px 0 !important;
+        margin: 0 !important;
     }
     
     .lobby-grid::-webkit-scrollbar {
@@ -2246,11 +2246,9 @@ body.theme-light-brown .lobby-chat-input:focus {
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 8px 10px 8px 10px !important;
+        padding: 6px 8px 8px 8px !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
-        overflow-y: hidden !important;
-        overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         clip-path: none !important;
@@ -2265,9 +2263,9 @@ body.theme-light-brown .lobby-chat-input:focus {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 8px !important;
-        margin: 0 0 4px 0 !important;
-        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
+        padding: 6px 8px 8px 8px !important;
+        margin: 0 !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
         border-radius: 8px !important;
         background: rgba(0, 0, 0, 0.18) !important;
         box-sizing: border-box !important;
@@ -2276,15 +2274,15 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rooms-list .placeholder {
-        margin-top: 8px !important;
+        margin-top: 6px !important;
         font-size: 0.82rem !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder-icon {
-        width: 80px !important;
-        max-width: 30% !important;
+        width: 75px !important;
+        max-width: 28% !important;
         height: auto !important;
-        margin: 8px auto !important;
+        margin: 6px auto !important;
     }
 
     .active-rooms-panel #rooms-list::-webkit-scrollbar {
@@ -2305,8 +2303,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #selected-game-info {
-        padding: 6px 10px !important;
-        font-size: 0.9rem !important;
+        padding: 4px 8px !important;
+        font-size: 0.88rem !important;
         margin: 0 !important;
     }
 
@@ -2316,8 +2314,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rating-filter {
-        padding: 6px 6px !important;
-        font-size: 0.8rem !important;
+        padding: 5px 6px !important;
+        font-size: 0.78rem !important;
     }
 
     .game-types-panel .split-points-section,
@@ -2327,20 +2325,17 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .lobby-chat-drawer {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
         width: 100% !important;
         height: 38px !important;
         min-height: 38px !important;
         max-height: 38px !important;
-        flex: 0 0 38px !important;
-        flex-shrink: 0 !important;
-        flex-grow: 0 !important;
-        margin: 0 0 2px 0 !important;
-        padding: 0 !important;
-        z-index: 500 !important;
+        margin: 0 !important;
+        padding: 0 6px !important;
+        z-index: 9999 !important;
         display: block !important;
         box-sizing: border-box !important;
         background: transparent !important;
