@@ -7324,21 +7324,6 @@ select option,
     filter: none !important;
 }
 
-/* Mobile & Touchscreen Stationary Lock: Retains exact 3D standing height (-12px) without vertical translation on press */
-@media (max-width: 900px), (hover: none) {
-    .neon-gateway-btn,
-    .neon-gateway-btn:hover,
-    .neon-gateway-btn:active,
-    .neon-gateway-btn.pressed,
-    .neon-gateway-btn.flattened,
-    .neon-gateway-btn.dragged-out {
-        transform: translateY(-12px) !important;
-    }
-    .gateway-btn-housing {
-        transform: none !important;
-    }
-}
-
 
 /* PC/Desktop Widescreen Login Layout Overrides */
 @media (min-width: 1800px) {
