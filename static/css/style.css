@@ -7278,7 +7278,6 @@ select option,
 }
 
 /* Completely Flattened & Sunken State (Stays flattened upon release) */
-.neon-gateway-btn:active:not(.dragged-out),
 .neon-gateway-btn.pressed:not(.dragged-out),
 .neon-gateway-btn.flattened:not(.dragged-out),
 .neon-gateway-btn.pressed:not(.dragged-out):hover,
