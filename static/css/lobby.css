@@ -94,6 +94,7 @@
 .game-types-panel {
     background: var(--bg-panel);
     border-radius: 12px;
+    border: 1px solid var(--input-border);
     padding: 16px 20px 24px 20px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
@@ -223,6 +224,7 @@
 .active-rooms-panel {
     background: var(--bg-panel);
     border-radius: 12px;
+    border: 1px solid var(--input-border);
     padding: 16px 20px 0 20px;
     backdrop-filter: blur(10px);
     display: flex;
