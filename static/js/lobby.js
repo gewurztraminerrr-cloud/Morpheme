@@ -1310,12 +1310,20 @@ function formatLobbyMessageTime(isoOrSeconds) {
     }
 }
 
-function toggleLobbyChatDrawer() {
+function closeLobbyChatDrawer() {
+    isLobbyChatDrawerOpen = false;
     const drawer = document.getElementById('lobby-chat-drawer');
-    if (!drawer) return;
-    
-    isLobbyChatDrawerOpen = !isLobbyChatDrawerOpen;
-    if (isLobbyChatDrawerOpen) {
+    if (drawer) {
+        drawer.classList.remove('open');
+        drawer.classList.remove('keyboard-open');
+    }
+}
+window.closeLobbyChatDrawer = closeLobbyChatDrawer;
+
+function openLobbyChatDrawer() {
+    isLobbyChatDrawerOpen = true;
+    const drawer = document.getElementById('lobby-chat-drawer');
+    if (drawer) {
         drawer.classList.add('open');
         fetchLobbyState();
         setTimeout(() => {
@@ -1324,8 +1332,15 @@ function toggleLobbyChatDrawer() {
             const input = document.getElementById('lobby-chat-input');
             if (input && window.innerWidth > 900) input.focus();
         }, 100);
+    }
+}
+window.openLobbyChatDrawer = openLobbyChatDrawer;
+
+function toggleLobbyChatDrawer() {
+    if (isLobbyChatDrawerOpen) {
+        closeLobbyChatDrawer();
     } else {
-        drawer.classList.remove('open');
+        openLobbyChatDrawer();
     }
 }
 window.toggleLobbyChatDrawer = toggleLobbyChatDrawer;

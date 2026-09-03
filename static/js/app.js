@@ -1488,6 +1488,9 @@ function showPage(pageId) {
         if (typeof window.resetLobbyButtons === 'function') {
             window.resetLobbyButtons();
         }
+        if (typeof window.closeLobbyChatDrawer === 'function') {
+            window.closeLobbyChatDrawer();
+        }
         if (typeof window.loadPrivateMatches === 'function') {
             window.loadPrivateMatches();
         }
