@@ -2773,6 +2773,8 @@ document.addEventListener('visibilitychange', () => {
         if (!isMobileDevice() || !window._gatewayPassed) return;
         const pLoad = document.getElementById('page-loading');
         if (pLoad && (pLoad.classList.contains('active') || pLoad.style.display !== 'none')) return;
+        const fullListModal = document.getElementById('full-list-modal');
+        if (fullListModal && (fullListModal.classList.contains('forced-show') || !fullListModal.classList.contains('hidden'))) return;
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
         try {
@@ -2818,9 +2820,9 @@ document.addEventListener('visibilitychange', () => {
             if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
             if (!window._gatewayPassed) return;
 
-            // Skip typing in inputs
+            // Skip typing in inputs or interacting inside full list modal
             const tag = e.target && e.target.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.closest && e.target.closest('#full-list-modal'))) return;
 
             attemptFullscreen();
             needsReEngage = false;

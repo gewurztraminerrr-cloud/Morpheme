@@ -8997,9 +8997,11 @@ body .board-cell.tile-flash-purple * {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
     background: #12131c !important;
     display: flex !important;
     flex-direction: column !important;
@@ -9009,6 +9011,8 @@ body .board-cell.tile-flash-purple * {
     padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
 }
 
 #full-list-modal.hidden {
