@@ -2151,17 +2151,17 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-    }
-
-    #page-lobby.active {
+       #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100dvh - 190px) !important;
+        height: calc(100vh - 190px) !important;
+        max-height: calc(100dvh - 190px) !important;
+        max-height: calc(100vh - 190px) !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0 0 46px 0 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -2252,7 +2252,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         display: flex !important;
         flex-direction: column !important;
         clip-path: none !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
+        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2265,7 +2265,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         -webkit-overflow-scrolling: touch !important;
         padding: 6px 8px 8px 8px !important;
         margin: 0 !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
+        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.35)) !important;
         border-radius: 8px !important;
         background: rgba(0, 0, 0, 0.18) !important;
         box-sizing: border-box !important;
