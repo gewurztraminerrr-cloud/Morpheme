@@ -277,10 +277,11 @@
     grid-column: auto;
     width: 100%;
     padding: 8px 4px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(var(--text-primary-rgb), 0.08);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.2);
     border-radius: 8px;
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-primary);
+    opacity: 0.85;
     font-weight: 700;
     font-size: 0.75rem;
     cursor: pointer;
@@ -295,25 +296,58 @@
     box-sizing: border-box;
 }
 
+.room-tab-btn span {
+    color: inherit !important;
+}
+
 .room-tab-btn:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
+    background: rgba(var(--text-primary-rgb), 0.16);
+    color: var(--text-primary);
+    opacity: 1;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .room-tab-btn.active#open-rooms-filter-btn {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border-color: #34d399;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border-color: #34d399 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
 }
 
 .room-tab-btn.active#closed-rooms-filter-btn {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    border-color: #f87171;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+    border-color: #f87171 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Light Theme Room Tab Buttons */
+[class*="theme-white"] .room-tab-btn:not(.active),
+[class*="theme-light-"] .room-tab-btn:not(.active),
+body.theme-yellow .room-tab-btn:not(.active),
+body.theme-pink .room-tab-btn:not(.active),
+body.theme-orange .room-tab-btn:not(.active),
+body.theme-gray .room-tab-btn:not(.active),
+body.theme-light-brown .room-tab-btn:not(.active) {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.25) !important;
+    color: #111111 !important;
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .room-tab-btn:not(.active):hover,
+[class*="theme-light-"] .room-tab-btn:not(.active):hover,
+body.theme-yellow .room-tab-btn:not(.active):hover,
+body.theme-pink .room-tab-btn:not(.active):hover,
+body.theme-orange .room-tab-btn:not(.active):hover,
+body.theme-gray .room-tab-btn:not(.active):hover,
+body.theme-light-brown .room-tab-btn:not(.active):hover {
+    background: rgba(0, 0, 0, 0.14) !important;
+    border-color: rgba(0, 0, 0, 0.4) !important;
+    color: #000000 !important;
 }
 
 .room-tab-btn:active {
