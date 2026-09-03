@@ -43,7 +43,7 @@
     grid-column: 1;
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 16px 20px 14px 20px;
     backdrop-filter: blur(10px);
     border: 1px solid var(--input-border);
     height: 100%;
@@ -95,7 +95,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     border: 1px solid var(--input-border);
-    padding: 16px 20px 24px 20px;
+    padding: 16px 20px 14px 20px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
     max-height: 100%;
@@ -104,8 +104,8 @@
 
 .game-types-panel .game-section:last-of-type,
 .game-types-panel .game-section:last-child {
-    margin-bottom: 24px !important;
-    padding-bottom: 8px !important;
+    margin-bottom: 14px !important;
+    padding-bottom: 4px !important;
 }
 
 .game-section,
@@ -225,7 +225,7 @@
     background: var(--bg-panel);
     border-radius: 12px;
     border: 1px solid var(--input-border);
-    padding: 16px 20px 0 20px;
+    padding: 16px 20px 14px 20px;
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
