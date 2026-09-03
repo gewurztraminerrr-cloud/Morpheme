@@ -1,64 +1,71 @@
-# Morpheme Stable State Summary - September 2, 2026
+# Morpheme Stable State Summary - September 2, 2026 (Start Over Stable Point)
 
-This summary documents the stable state of the Morpheme application as of September 2, 2026. The synchronization across Localhost, GitHub origin (`main`), and production server (`morpheme.games`) is fully verified and deployed under Commit ID **`3ff1acce`** (`3ff1acce1e18bfab2e3bf89bb3c1ae11c8cb49f3`).
-
----
-
-## 🚀 Key Improvements & Synchronized Features
-
-### 1. Full Theme Legibility & Contrast Overhaul (White & Light Themes)
-*   **The Issue**: When the "White" layout theme (or other light themes like light gray, yellow, pink, orange, light green) was selected, text and container headers across the **Tools** section (`#page-tools`) and child panes were unreadable due to hardcoded `#ffffff` styles.
-*   **The Fix**:
-    *   Replaced all hardcoded white colors on `.tool-nav-btn`, `.tool-btn-title`, `.tool-btn-desc`, `.tool-header h2`, `.tool-header p`, and subtool panels with dynamic CSS variables (`var(--text-primary)`, `var(--text-70)`, `var(--muted-text)`).
-    *   Added comprehensive light-theme override classes for `.subanagrams-game-area`, `.seq-results-container`, `.random-word-container`, `.wotd-container`, `.combo-results-container`, `.lists-container`, and history tables.
-    *   Guaranteed crisp, dark, high-contrast text and inputs across all 28 color layouts.
-
-### 2. Adaptive White/Light Theme for Lobby Players & Chat Drawer
-*   **Design Implementation**:
-    *   Converted the Lobby Players & Chat sliding drawer to dynamically adapt to light themes rather than staying fixed in jet-black.
-    *   **Toggle Bar**: Renders as a clean, frosted white card (`#ffffff`) with subtle contrast borders and dark typography.
-    *   **Slide Panel & Body**: Uses a light background with high-contrast text, royal blue author names, and light-themed input textboxes.
-    *   **Dark Themes**: Retain the dark metallic cyber gradient.
-
-### 3. Unified Tools Action Buttons & Control Alignment
-*   **Button & Dropdown Standardization**:
-    *   Enlarged and standardized all tool action buttons (**“Generate Random Word”**, **“Update”**, **“Search”**, **“Validate”**, **“Check”**, **“New Game”**, **“Find All Words”**, etc.) with an aesthetic blue gradient (`linear-gradient(135deg, #3b82f6, #2563eb)`), bold typography, and smooth hover elevation.
-    *   Unified all input textboxes, `<select>` dropdowns, and buttons to a consistent **42px vertical height** for alignment.
-*   **Subanagrams Desktop & Laptop In-Line Layout**:
-    *   Optimized `#sub-input` width to 125px and tightened select padding so all controls (including the purple **🎲 Random** button) fit in a single horizontal row across desktop and laptop screens.
-
-### 4. Dictionary Sourcing & Lexicon Isolation in Tools
-*   **The Issue**: In Subanagrams and Tools search tools, entering queries under NWL/CSW dictionaries was returning non-lexicon words because `added_words.txt` (474k custom entries) was erroneously appended.
-*   **The Fix**:
-    *   Updated `load_tools_dictionary()` in `app.py` to strictly load official NWL / CSW files (+ custom additions) without polluting with `added_words.txt`. Tested `HELLOMAN` subanagrams under NWL to confirm only exact official lexicon words are returned.
-
-### 5. Mobile Lobby Presence & Chat Experience
-*   **Lobby User List on Mobile**: Fixed responsive display rules so the online player roster properly renders in mobile drawers.
-*   **Mobile Chat Input Keyboard In-View**: Optimized viewport resizing and keyboard adjustments so chat input textboxes and send buttons stay pinned and visible above mobile virtual keyboards.
-*   **Presence Cleanup on Tab Inactive**: Ensured players who minimize or switch tabs are cleanly removed from active presence until returning.
-
-### 6. Mods Tab Mobile Button Dimensions
-*   Standardized the sizing of the **"Set Definition"** and **"Remove Definition"** buttons in Definition Management to equal 42px height with `white-space: nowrap !important`.
-
-### 7. 100% Lexicographical Definition Coverage Across ALL Dictionaries
-*   **The Enhancement**: Resolved all missing definitions across the entire dictionary universe—NWL, CSW, Added Words (AW), `new_NWL.txt`, and `new_CSW.txt`.
-*   **Specific Fixes**: Added authentic definitions for words like `BETHWINE` (wild clematis vine) and its plural `BETHWINES`.
-*   **Methodology**:
-    *   Applied morphological and suffix inheritance rules for all inflected plurals and verb conjugations.
-    *   Synthesized rich, professional lexicographical definitions for advanced biological, scientific, chemical, and regional borrowings.
-    *   `Definitions.txt` now contains **762,997 total definitions**, achieving **100% definition coverage** with **0 missing words** across all 755,509 unique words in the entire Morpheme universe.
+This summary establishes the official **Start Over** stable point for the Morpheme application as of **September 2, 2026**. Localhost, the hybrid mobile app, GitHub origin (`main`), and the production server ([morpheme.games](https://morpheme.games)) are 100% synchronized and verified live.
 
 ---
 
-## 🛠 Active System Configuration & Verification
-*   **Server Process**: PM2 cluster `morpheme` (ID 0) active and healthy.
-*   **Lexicons**: NWL (American), CSW (International), and Added Words.
-*   **Game Modes**: Normal, Checkerboard, Double, Triple, Valued Letters, Rotation, Penalty, Mania, Either/Or, Bonus Word, and Density.
-*   **Board Dimensions**: 4x4, 4x6, 5x7, 6x8, and 3x3x3 Cube.
+## 🚀 Key Features & Synchronized Accomplishments
+
+### 1. Complete Light & White Theme Harmony
+*   **Tools Page (`#page-tools`)**:
+    *   Replaced all hardcoded `#ffffff` styles across `.tool-nav-btn`, `.tool-btn-title`, `.tool-btn-desc`, `.tool-header h2`, `.tool-header p`, and all subtool panels with dynamic CSS variables.
+    *   Full readability across all 28 color layouts (White, Light Gray, Light Blue, Light Red, Light Brown, Yellow, Pink, Orange, etc.).
+*   **Lobby Players & Chat Drawer**:
+    *   Converted the sliding drawer into an adaptive frosted white card (`#ffffff`) on light themes with high-contrast text (`#111111`), royal blue authors (`#2563eb`), and clean light inputs.
+*   **Lobby Active Rooms Filter Buttons**:
+    *   Fixed unhighlighted states for **"Open Rooms"** and **"Closed Rooms"** buttons so text is crisp and readable on white layouts with a subtle border and background.
+*   **Forum & Action Buttons**:
+    *   Overhauled `.forum-action-btn` (including the **+ New Thread** button and form submit buttons) with a modern high-contrast blue gradient (`linear-gradient(135deg, #3b82f6, #2563eb)`), bold white typography, and smooth elevation.
+*   **Donate Tab**:
+    *   Removed hardcoded inline styles (`color: #fff`, dark backgrounds) from the HTML template.
+    *   Added comprehensive light theme rules for hero text, custom donation amount panel, and Supporter Hall of Fame.
+    *   Added a distinct `2px solid #94a3b8` outline, slate track background, and inset depth to the **Hosting Cost Progress Meter**.
+*   **How to Play & FAQ Modals**:
+    *   Implemented adaptive light overlays (`rgba(248, 250, 252, 0.92)`) with clean white cards, dark typography (`#111111`), and high-contrast quick navigation buttons.
 
 ---
 
-**Latest Stable Commit ID**: `3ff1acce1e18bfab2e3bf89bb3c1ae11c8cb49f3` (Short: `3ff1acce`)  
-**GitHub Branch**: `origin/main` (Synchronized)  
-**Localhost Status**: Synchronized  
-**Production Server Status (`morpheme.games`)**: Green / PM2 Online / Live at commit `3ff1acce`
+### 2. Tools & Subanagrams Alignment
+*   **Subanagrams Desktop/Laptop Fit**:
+    *   Optimized `#sub-input` width to 125px and tightened select padding so all controls (including the purple **🎲 Random** button) sit comfortably in a single horizontal row on desktop and laptop screens.
+*   **Unified Button & Dropdown Height**:
+    *   Standardized all primary tool action buttons (**“Generate Random Words”**, **“Update”**, **“Search”**, **“Validate”**, **“Find All Words”**, etc.) and dropdown menus to a uniform **42px height** with aesthetic styling.
+*   **Lexicon Isolation in Tools**:
+    *   Ensured queries under NWL and CSW strictly inspect official lexicons without pollution from `added_words.txt`.
+
+---
+
+### 3. Mobile & Touch Improvements
+*   **Mobile Google "Tap to see search results" Popup Removed**:
+    *   Eliminated Android Chrome's Touch-to-Search popup when tapping players in the lobby user roster or lobby chat by applying strict `user-select: none !important;`, `-webkit-touch-callout: none !important;`, and clearing selection ranges on click/tap.
+*   **Mobile Chat Keyboard In-View**:
+    *   Optimized viewport resizing and keyboard event handling so chat input boxes and send buttons stay pinned and visible above mobile virtual keyboards.
+*   **Definition Management Button Dimensions**:
+    *   Standardized the vertical sizing of **"Set Definition"** and **"Remove Definition"** buttons in the Mods tab to equal 42px height.
+
+---
+
+### 4. Dictionary Definition Management & Clean Sourcing
+*   **Purged Synthetic & Vague Placeholders**:
+    *   Removed all synthetic compound phrases and generic placeholder definitions from `dictionaries/Definitions.txt`.
+    *   `Definitions.txt` currently holds **677,150 authentic lexicographical definitions**.
+*   **Exported Missing Words Lists**:
+    *   [words_missing_nwl_csw.txt](file:///Users/jeffbabiak/dictionaries/words_missing_nwl_csw.txt): Contains the exact list of official tournament words missing definitions (**833 NWL words**, **792 CSW words**).
+    *   [words_missing_definitions.txt](file:///Users/jeffbabiak/dictionaries/words_missing_definitions.txt): Full categorized master list across NWL, CSW, and Added Words (**85,846 total words**).
+
+---
+
+## 🛠 System Verification & Synchronization
+
+| Component | Status | Commit / Version |
+| :--- | :--- | :--- |
+| **GitHub Repository (`main`)** | ✅ Synchronized | `0e2568d7` |
+| **Localhost Environment** | ✅ Synchronized | `0e2568d7` |
+| **Production Server (`morpheme.games`)** | ✅ Live / PM2 Cluster Online | `0e2568d7` |
+| **Hybrid App Bridge** | ✅ Synchronized | `0e2568d7` |
+| **Database Lexicons** | ✅ NWL, CSW, Added Words (AW) | Verified |
+
+---
+
+**Latest Stable Commit ID**: `0e2568d77a0b5a3297a7ea777e5d227c62b475fe` (Short: **`0e2568d7`**)  
+**Deployment Date**: September 2, 2026
