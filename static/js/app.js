@@ -521,10 +521,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 function isInsideGateway(e) {
                     const coords = getCoords(e);
-                    if (!coords) return true; // If coordinates unavailable (synthetic click/touch release), treat as inside
-                    const targetEl = housingEl || gatewayBtn;
+                    if (!coords) return true;
+                    const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    const targetEl = isMobile ? gatewayBtn : (housingEl || gatewayBtn);
                     const rect = targetEl.getBoundingClientRect();
-                    const buffer = 50; // 50px generous margin so mobile taps never get dropped
+                    const buffer = isMobile ? 0 : 20;
                     return (
                         coords.x >= (rect.left - buffer) &&
                         coords.x <= (rect.right + buffer) &&
@@ -565,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     isPointerDown = false;
 
                     if (isInsideGateway(e)) {
-                        // Released inside button or outer housing: keep flattened and trigger transition
+                        // Released inside button: keep flattened and trigger transition
                         gatewayBtn.classList.remove('dragged-out');
                         gatewayBtn.classList.add('pressed', 'flattened');
                         executeGatewayTransition(e);
@@ -589,8 +590,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, 100);
                 };
 
-                // Attach to button AND outer housing socket
-                const interactiveElements = [gatewayBtn, housingEl].filter(Boolean);
+                // On mobile devices, strictly attach to gatewayBtn to prevent mis-clicks on surrounding space
+                const isMobileDevice = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const interactiveElements = isMobileDevice ? [gatewayBtn] : [gatewayBtn, housingEl].filter(Boolean);
                 interactiveElements.forEach(el => {
                     el.addEventListener('pointerdown', handlePressStart);
                     el.addEventListener('mousedown', handlePressStart);

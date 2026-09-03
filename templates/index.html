@@ -109,6 +109,19 @@
             box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -2px 3px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(255, 255, 255, 0.2), 0 1px 0 #e60073, 0 2px 0 #d10069, 0 3px 0 #bd005e, 0 4px 0 #a80054, 0 5px 0 #94004a, 0 6px 0 #800040, 0 7px 0 #6b0035, 0 8px 0 #57002b, 0 9px 0 #420021, 0 10px 0 #2e0017, 0 11px 0 #1f0010, 0 12px 0 #120009, 0 14px 20px rgba(0, 0, 0, 0.65), 0 20px 35px rgba(255, 0, 127, 0.4) !important;
             transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
+
+        /* Mobile & Touchscreen Stationary Lock */
+        @media (max-width: 900px), (hover: none) {
+            .neon-gateway-btn,
+            .neon-gateway-btn:hover,
+            .neon-gateway-btn:active,
+            .neon-gateway-btn.pressed,
+            .neon-gateway-btn.flattened,
+            .neon-gateway-btn.dragged-out,
+            .gateway-btn-housing {
+                transform: none !important;
+            }
+        }
     </style>
 
     <script>
@@ -125,9 +138,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33290" as="style">
+    <link rel="preload" href="/css/style.css?v=33295" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33290">
+    <link rel="stylesheet" href="/css/style.css?v=33295">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1496,7 +1509,7 @@
         <!-- Loading / Gateway Page (Instantly Visible) -->
         <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div class="gateway-btn-housing" id="gateway-housing" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(document.getElementById('btn-enter-lobby-gateway'), event);">
+                <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                 </div>
             </div>
@@ -6970,7 +6983,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33355"></script>
+    <script src="/js/app.js?v=33360"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
