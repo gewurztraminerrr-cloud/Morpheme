@@ -110,14 +110,16 @@
             transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
-        /* Mobile & Touchscreen Stationary Lock */
+        /* Mobile & Touchscreen Stationary Lock: Retains exact 3D standing height (-12px) without vertical translation on press */
         @media (max-width: 900px), (hover: none) {
             .neon-gateway-btn,
             .neon-gateway-btn:hover,
             .neon-gateway-btn:active,
             .neon-gateway-btn.pressed,
             .neon-gateway-btn.flattened,
-            .neon-gateway-btn.dragged-out,
+            .neon-gateway-btn.dragged-out {
+                transform: translateY(-12px) !important;
+            }
             .gateway-btn-housing {
                 transform: none !important;
             }
@@ -138,9 +140,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33295" as="style">
+    <link rel="preload" href="/css/style.css?v=33300" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33295">
+    <link rel="stylesheet" href="/css/style.css?v=33300">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
