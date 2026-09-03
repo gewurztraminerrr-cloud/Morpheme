@@ -102,7 +102,7 @@
 
 .game-types-panel .game-section:last-of-type,
 .game-types-panel .game-section:last-child {
-    margin-bottom: 0 !important;
+    margin-bottom: 16px !important;
 }
 
 .game-section,
