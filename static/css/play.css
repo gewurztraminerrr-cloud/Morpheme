@@ -8993,14 +8993,15 @@ body .board-cell.tile-flash-purple * {
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    background: rgba(18, 19, 28, 0.98) !important;
+    background: #12131c !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
     z-index: 100020 !important;
-    backdrop-filter: blur(8px) !important;
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
 #full-list-modal.hidden {

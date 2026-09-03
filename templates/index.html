@@ -129,7 +129,7 @@
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33255">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
-    <link rel="stylesheet" href="/css/play.css?v=33395">
+    <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
     <link rel="stylesheet" href="/css/forum.css?v=33180">
     <link rel="stylesheet" href="/css/donate.css?v=33190">
@@ -6942,9 +6942,9 @@
 
     <!-- Full List Modal Overlay (Direct Root Body Child) -->
     <div id="full-list-modal" class="modal-overlay hidden" oncontextmenu="return false">
-        <div style="display: flex; flex-direction: column; height: 100%; max-width: 900px; width: 100%; margin: 0 auto; background: #1a152e; border-radius: 12px; border: 1px solid rgba(167,139,250,0.3); padding: 16px; box-sizing: border-box; overflow: hidden;">
+        <div style="display: flex; flex-direction: column; flex: 1 1 0%; min-height: 0; height: 100%; width: 100%; max-width: 900px; margin: 0 auto; background: #1a152e; border-radius: 12px; border: 1px solid rgba(167,139,250,0.3); padding: 14px; box-sizing: border-box; overflow: hidden;">
             <!-- Modal Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; user-select: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; user-select: none;">
                 <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
                     <span style="font-size: 1.3rem; font-weight: 800; color: #a78bfa;" id="full-list-modal-title">Full List</span>
                     <span style="font-size: 0.85rem; opacity: 0.7; color: rgba(255,255,255,0.8);" id="full-list-modal-count"></span>
@@ -6952,14 +6952,14 @@
                 <button id="full-list-modal-close" type="button" onclick="if(window.closeFullListModal)window.closeFullListModal();" ontouchend="if(window.closeFullListModal){window.closeFullListModal(); event.preventDefault();}" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: var(--text-primary); font-size: 1.2rem; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; touch-action: manipulation; pointer-events: auto !important;" title="Close">✕</button>
             </div>
             <!-- Word Jump Input Bar -->
-            <div id="full-list-jump-bar" style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-shrink: 0; position: relative;">
+            <div id="full-list-jump-bar" style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-shrink: 0; position: relative;">
                 <input type="text" id="full-list-jump-input" placeholder="Enter word to jump to..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" style="flex: 1; min-width: 0; background: #0f0c1b; border: 1.5px solid rgba(167,139,250,0.5); color: #ffffff; padding: 9px 14px; border-radius: 8px; font-size: 16px; font-weight: 700; text-transform: uppercase; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-user-select: text !important; user-select: text !important; touch-action: manipulation;">
                 <button id="full-list-jump-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-size: 0.9rem; font-weight: 700; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; touch-action: manipulation;">Go</button>
                 <!-- Small Toast / Notification Popup -->
                 <div id="full-list-jump-toast" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; z-index: 10; background: rgba(20, 15, 35, 0.96); border: 1px solid rgba(167, 139, 250, 0.5); color: #e9d5ff; font-size: 0.85rem; font-weight: 600; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); text-align: center; pointer-events: none; transition: opacity 0.2s;"></div>
             </div>
             <!-- Scrollable Word Grid -->
-            <div style="position: relative; flex: 1; min-height: 0; width: 100%;">
+            <div style="position: relative; flex: 1 1 0%; min-height: 0; width: 100%; overflow: hidden;">
                 <div id="full-list-modal-results" style="height: 100%; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px 28px 12px 15px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px 8px; box-sizing: border-box;" oncontextmenu="return false"></div>
                 <div class="custom-scrollbar-track" id="full-list-scrollbar-track">
                     <div class="custom-scrollbar-thumb" id="full-list-scrollbar-thumb"></div>
