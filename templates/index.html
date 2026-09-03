@@ -152,9 +152,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33390" as="style">
+    <link rel="preload" href="/css/style.css?v=33395" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33390">
+    <link rel="stylesheet" href="/css/style.css?v=33395">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -6909,7 +6909,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33460"></script>
+    <script src="/js/app.js?v=33465"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33220"></script>
     <script src="/js/tournaments.js?v=33180"></script>
@@ -6982,60 +6982,7 @@
             }
         }, true);
 
-        // Immersive PWA Fullscreen Mode for Mobile Devices (Android Navigation Bar hide)
-        (function() {
-            const sendDebug = (step, info) => {
-                fetch('/api/debug-pwa', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        step: step,
-                        userAgent: navigator.userAgent,
-                        isStandalone: window.matchMedia('(display-mode: standalone)').matches,
-                        isFullscreenMode: window.matchMedia('(display-mode: fullscreen)').matches,
-                        navigatorStandalone: !!window.navigator.standalone,
-                        fullscreenEnabled: !!document.fullscreenEnabled,
-                        fullscreenElement: !!document.fullscreenElement,
-                        info: info || {}
-                    })
-                }).catch(() => {});
-            };
 
-            // Log initialization status
-            sendDebug("initialized");
-
-            const triggerFullscreen = () => {
-                const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                              window.matchMedia('(display-mode: fullscreen)').matches ||
-                              window.navigator.standalone === true;
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                
-                // Log touch/click interaction
-                sendDebug("interaction_detected", { isPWA: isPWA, isMobile: isMobile });
-                
-                if (isPWA && isMobile) {
-                    const docEl = document.documentElement;
-                    if (!document.fullscreenElement && docEl.requestFullscreen) {
-                        sendDebug("requesting_fullscreen");
-                        docEl.requestFullscreen({ navigationUI: 'hide' })
-                            .then(() => {
-                                sendDebug("fullscreen_success");
-                            })
-                            .catch((err) => {
-                                sendDebug("fullscreen_failed", { error: err ? err.message : 'Unknown' });
-                            });
-                    } else {
-                        sendDebug("cannot_request_fullscreen", { 
-                            hasDocElRequest: !!(docEl && docEl.requestFullscreen),
-                            hasFullscreenElement: !!document.fullscreenElement
-                        });
-                    }
-                }
-            };
-            document.addEventListener('touchstart', triggerFullscreen, { passive: true });
-            document.addEventListener('click', triggerFullscreen);
-        })();
-    </script>
     
     <!-- Script to handle mobile-only header placement -->
     <script>
