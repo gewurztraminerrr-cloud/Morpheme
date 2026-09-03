@@ -3962,13 +3962,8 @@ window.openFullListModal = function() {
     results.innerHTML = '<div style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
     results.scrollTop = 0;
 
-    modal.classList.add('active');
-    modal.style.display = 'flex';
-    modal.style.setProperty('display', 'flex', 'important');
-    modal.style.setProperty('visibility', 'visible', 'important');
-    modal.style.setProperty('opacity', '1', 'important');
-    modal.style.setProperty('z-index', '9999999', 'important');
-    document.body.style.overflow = 'hidden';
+    modal.classList.remove('hidden');
+    modal.classList.add('forced-show');
     window.isFullListLoading = true;
 
     if (fullListCount) {
@@ -4028,27 +4023,11 @@ window.openFullListModal = function() {
 window.closeFullListModal = function() {
     const modal = document.getElementById('full-list-modal');
     if (modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
-        modal.style.setProperty('display', 'none', 'important');
-        modal.style.height = '';
-        modal.style.top = '';
+        modal.classList.add('hidden');
+        modal.classList.remove('forced-show');
     }
-    document.body.style.overflow = '';
     window.isFullListLoading = false;
 };
-
-if (window.visualViewport) {
-    const syncFullListModalViewport = () => {
-        const modal = document.getElementById('full-list-modal');
-        if (modal && modal.classList.contains('active')) {
-            modal.style.height = `${window.visualViewport.height}px`;
-            modal.style.top = `${window.visualViewport.offsetTop}px`;
-        }
-    };
-    window.visualViewport.addEventListener('resize', syncFullListModalViewport);
-    window.visualViewport.addEventListener('scroll', syncFullListModalViewport);
-}
 
 const fullListJumpBtnEl = document.getElementById('full-list-jump-btn');
 if (fullListJumpBtnEl) {
