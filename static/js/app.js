@@ -751,8 +751,8 @@ function handleLobbyMusicState() {
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
-    // STRICT REQUIREMENT: Only play the Lobby music if the user is on the ENTER LOBBY screen or in the Main Lobby!
-    const shouldPlay = (onLobby || onLoading || !activePage) && !inGameRoom && lobbyMusicSetting;
+    // STRICT REQUIREMENT: Only play the Lobby music if the user has passed the gateway or is on the Main Lobby!
+    const shouldPlay = (onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         activePage,
@@ -780,15 +780,22 @@ function handleLobbyMusicState() {
 }
 
 // Modern Browser Autoplay bypass helpers
-function playMusicOnFirstInteraction() {
-    console.log('[LobbyMusic] playMusicOnFirstInteraction() triggered by gesture.');
+function playMusicOnFirstInteraction(e) {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onLobby = (activePage === 'page-lobby');
     const onLoading = (activePage === 'page-loading');
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
-    const shouldPlay = (onLobby || onLoading || !activePage) && !inGameRoom && lobbyMusicSetting;
+    
+    if (onLoading && !window._gatewayPassed) {
+        const gb = document.getElementById('btn-enter-lobby-gateway');
+        if (e && e.target && e.target !== gb && !gb.contains(e.target)) {
+            return;
+        }
+    }
+
+    const shouldPlay = (onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && lobbyMusicSetting;
 
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
