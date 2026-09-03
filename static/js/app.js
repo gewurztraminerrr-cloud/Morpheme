@@ -526,12 +526,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                     );
                 }
 
+                const addWindowTracking = () => {
+                    window.addEventListener('pointermove', handlePressMove, { passive: true });
+                    window.addEventListener('touchmove', handlePressMove, { passive: true });
+                    window.addEventListener('mousemove', handlePressMove, { passive: true });
+                    window.addEventListener('pointerup', handlePressEnd);
+                    window.addEventListener('touchend', handlePressEnd);
+                    window.addEventListener('mouseup', handlePressEnd);
+                    window.addEventListener('pointercancel', handlePressCancel);
+                    window.addEventListener('touchcancel', handlePressCancel);
+                };
+
+                const removeWindowTracking = () => {
+                    window.removeEventListener('pointermove', handlePressMove);
+                    window.removeEventListener('touchmove', handlePressMove);
+                    window.removeEventListener('mousemove', handlePressMove);
+                    window.removeEventListener('pointerup', handlePressEnd);
+                    window.removeEventListener('touchend', handlePressEnd);
+                    window.removeEventListener('mouseup', handlePressEnd);
+                    window.removeEventListener('pointercancel', handlePressCancel);
+                    window.removeEventListener('touchcancel', handlePressCancel);
+                };
+
                 const handlePressStart = (e) => {
                     if (gatewayTransitioning) return;
                     if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
                     isPointerDown = true;
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
+                    addWindowTracking();
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {
@@ -555,6 +578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 const handlePressEnd = (e) => {
+                    removeWindowTracking();
                     if (!isPointerDown || gatewayTransitioning) return;
                     isPointerDown = false;
 
@@ -574,6 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 const handlePressCancel = () => {
+                    removeWindowTracking();
                     if (!isPointerDown || gatewayTransitioning) return;
                     isPointerDown = false;
                     gatewayBtn.classList.add('dragged-out');
@@ -619,18 +644,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gatewayBtn.addEventListener('click', (e) => {
                     executeGatewayTransition(e);
                 });
-
-                // Global window drag and release tracking
-                window.addEventListener('pointermove', handlePressMove, { passive: true });
-                window.addEventListener('touchmove', handlePressMove, { passive: true });
-                window.addEventListener('mousemove', handlePressMove, { passive: true });
-
-                window.addEventListener('pointerup', handlePressEnd);
-                window.addEventListener('touchend', handlePressEnd);
-                window.addEventListener('mouseup', handlePressEnd);
-
-                window.addEventListener('pointercancel', handlePressCancel);
-                window.addEventListener('touchcancel', handlePressCancel);
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');
