@@ -75,6 +75,49 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Mobile Game Room: Reveal MORPHEME header and top menu buttons when swiping down from the top on any panel
+(function _setupMobileGameRoomHeaderReveal() {
+    let touchStartY = 0;
+    let touchStartX = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+        if (window.innerWidth > 992) return;
+        const playPage = document.getElementById('page-play');
+        if (!playPage || !playPage.classList.contains('active')) return;
+        if (e.touches && e.touches.length === 1) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (window.innerWidth > 992) return;
+        const playPage = document.getElementById('page-play');
+        if (!playPage || !playPage.classList.contains('active')) return;
+        if (!e.touches || e.touches.length !== 1) return;
+        
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+        const diffY = currentY - touchStartY;
+        const diffX = Math.abs(currentX - touchStartX);
+
+        // If swiping down (diffY > 25) more vertically than horizontally
+        if (diffY > 25 && diffY > diffX * 1.2) {
+            const panel = e.target.closest('.left-panel-container, .board-panel, .words-panel, #page-play');
+            if (panel) {
+                // If the panel is at the top of its scroll container
+                if (panel.scrollTop <= 8) {
+                    if (window.scrollY > 0) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }
+            } else if (window.scrollY > 0) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    }, { passive: true });
+})();
+
 // =============================================================================
 
 let isTournamentPlay = false;
