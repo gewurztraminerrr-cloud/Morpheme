@@ -7280,10 +7280,15 @@ select option,
     }
     .mod-full-btn, .add-mod-btn {
         width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
         box-sizing: border-box !important;
-        white-space: normal !important;
-        padding: 12px !important;
-        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+        padding: 0 16px !important;
+        font-size: 0.92rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     .dict-upload-row {
         flex-direction: column !important;
