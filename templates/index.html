@@ -125,9 +125,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33305" as="style">
+    <link rel="preload" href="/css/style.css?v=33310" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33305">
+    <link rel="stylesheet" href="/css/style.css?v=33310">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1555,9 +1555,10 @@
             })();
 
             window.handleEnterLobbyClick = function(btn, evt) {
+                var gb = document.getElementById('btn-enter-lobby-gateway');
+                if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
                 window._gatewayPassed = true;
                 window._gatewayTransitioning = true;
-                var gb = btn || document.getElementById('btn-enter-lobby-gateway');
                 if (gb) {
                     gb.classList.remove('dragged-out');
                     gb.classList.add('pressed', 'flattened');
@@ -6970,7 +6971,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33365"></script>
+    <script src="/js/app.js?v=33370"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>

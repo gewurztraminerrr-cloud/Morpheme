@@ -418,6 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let gatewayTransitioning = false;
                 const executeGatewayTransition = (e) => {
+                    if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
                     gatewayTransitioning = true;
                     window._gatewayTransitioning = true;
                     window._gatewayPassed = true;
@@ -492,6 +493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {
+                    if (evt && evt.target && evt.target !== gatewayBtn && !gatewayBtn.contains(evt.target)) return;
                     executeGatewayTransition(evt);
                 };
 
@@ -526,6 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const handlePressStart = (e) => {
                     if (gatewayTransitioning) return;
+                    if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
                     isPointerDown = true;
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
