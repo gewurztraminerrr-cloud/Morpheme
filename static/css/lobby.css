@@ -1095,8 +1095,8 @@ body.theme-light-brown .field-hint {
         display: flex !important;
         flex-direction: row !important;
         flex: 1 1 0% !important;
-        height: calc(100% - 44px) !important;
-        max-height: calc(100% - 44px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
@@ -1108,7 +1108,7 @@ body.theme-light-brown .field-hint {
         box-sizing: border-box !important;
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
-        margin: 0 0 6px 0 !important;
+        margin: 0 !important;
     }
     .lobby-grid::-webkit-scrollbar {
         display: none !important;
@@ -2159,8 +2159,10 @@ body.theme-light-brown .lobby-chat-input:focus {
     #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100dvh - 166px) !important;
+        height: calc(100vh - 166px) !important;
+        max-height: calc(100dvh - 166px) !important;
+        max-height: calc(100vh - 166px) !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         padding: 0 !important;
@@ -2175,8 +2177,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     .lobby-grid {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: calc(100% - 44px) !important;
-        max-height: calc(100% - 44px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: row !important;
         overflow-x: auto !important;
@@ -2187,7 +2189,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         box-sizing: border-box !important;
         scrollbar-width: none !important;
-        margin: 0 0 6px 0 !important;
+        margin: 0 !important;
     }
     
     .lobby-grid::-webkit-scrollbar {
