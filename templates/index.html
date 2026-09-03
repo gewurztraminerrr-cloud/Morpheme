@@ -148,9 +148,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33365" as="style">
+    <link rel="preload" href="/css/style.css?v=33370" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33365">
+    <link rel="stylesheet" href="/css/style.css?v=33370">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1392,93 +1392,7 @@
 
         <script>
             // Immediate Cross-Platform Lobby Music Initiation for Safari, iOS, Chrome, Firefox
-            (function() {
-                var audio = document.getElementById('lobby-music');
-                if (!audio) return;
-                audio.volume = 0.5;
-                audio.loop = true;
-                audio.muted = false;
 
-                // Preload audio buffer immediately
-                try {
-                    audio.load();
-                } catch(e) {}
-
-                function unlockWebAudio() {
-                    try {
-                        var AudioCtx = window.AudioContext || window.webkitAudioContext;
-                        if (AudioCtx) {
-                            if (!window._morphemeAudioCtx) {
-                                window._morphemeAudioCtx = new AudioCtx();
-                            }
-                            if (window._morphemeAudioCtx.state === 'suspended') {
-                                window._morphemeAudioCtx.resume();
-                            }
-                            if (window._morphemeAudioCtx.state === 'running') {
-                                var buffer = window._morphemeAudioCtx.createBuffer(1, 1, 22050);
-                                var source = window._morphemeAudioCtx.createBufferSource();
-                                source.buffer = buffer;
-                                source.connect(window._morphemeAudioCtx.destination);
-                                source.start(0);
-                            }
-                        }
-                    } catch(e) {}
-                }
-
-                window.playLobbyAudioImmediate = function() {
-                    if (!audio) return;
-                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
-                    var onLobby = (activePage === 'page-lobby');
-                    var onLoading = (activePage === 'page-loading');
-                    var onPlay = (activePage === 'page-play');
-                    var inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
-                    
-                    if ((onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && (!window.userSettings || window.userSettings.lobby_music !== false)) {
-                        try {
-                            unlockWebAudio();
-                            audio.muted = false;
-                            audio.volume = 0.5;
-                            if (audio.paused) {
-                                var p = audio.play();
-                                if (p !== undefined) {
-                                    p.catch(function(e) {
-                                        // Pending legitimate user gesture on strict Safari/Chrome
-                                    });
-                                }
-                            }
-                        } catch (e) {}
-                    } else if (inGameRoom || (!onLobby && !onLoading && activePage)) {
-                        if (!audio.paused) {
-                            audio.pause();
-                        }
-                    }
-                };
-
-                // Legitimate user gesture events for Safari/iOS/Chrome
-                var gestureEvents = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
-                function unlockAndPlayAudio(e) {
-                    var pLoad = document.getElementById('page-loading');
-                    if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) {
-                        var gb = document.getElementById('btn-enter-lobby-gateway');
-                        if (e && e.target && e.target !== gb && !gb.contains(e.target)) {
-                            return;
-                        }
-                    }
-                    unlockWebAudio();
-                    window.playLobbyAudioImmediate();
-                }
-
-                gestureEvents.forEach(function(evt) {
-                    window.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
-                    document.addEventListener(evt, unlockAndPlayAudio, { capture: true, passive: true });
-                });
-
-                document.addEventListener('DOMContentLoaded', function() {
-                    try { audio.load(); } catch(e) {}
-                    window.playLobbyAudioImmediate();
-                });
-            })();
-        </script>
 
         <style>
             #page-loading {
@@ -6995,7 +6909,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33435"></script>
+    <script src="/js/app.js?v=33440"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33220"></script>
     <script src="/js/tournaments.js?v=33180"></script>

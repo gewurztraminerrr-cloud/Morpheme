@@ -392,17 +392,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.classList.remove('loading-active');
                 handleLobbyMusicState();
 
-                // Trigger playback on any pointer/touch/hover event on the gateway button for Safari/Firefox
-                const audioTriggers = ['pointerenter', 'pointerdown', 'touchstart', 'mousedown', 'mouseover', 'focus', 'click'];
-                audioTriggers.forEach(evt => {
-                    gatewayBtn.addEventListener(evt, () => {
-                        if (typeof window.playLobbyAudioImmediate === 'function') {
-                            window.playLobbyAudioImmediate();
-                        } else {
-                            handleLobbyMusicState();
-                        }
-                    }, { passive: true });
-                });
+
 
                 // Customize button text based on destination
                 let targetPageId = 'page-lobby';
