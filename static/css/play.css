@@ -237,8 +237,8 @@
     background: var(--bg-panel);
     border-radius: 12px;
     padding: 8px 10px;
-    height: 175px; /* Spacious, comfortable chat box */
-    flex: 0 0 175px;
+    height: 200px; /* Spacious, comfortable chat box */
+    flex: 0 0 200px;
     flex-shrink: 0;
     overflow: hidden; /* Prevent content from overflowing or stretching the box */
 
@@ -5471,7 +5471,7 @@ input[type=range]::-moz-range-track {
         max-height: none !important;
     }
     .chat-panel {
-        height: 165px !important;
+        height: 190px !important;
         flex: none !important;
         max-height: none !important;
         margin-top: 10px !important;
@@ -7241,9 +7241,9 @@ body.is-desktop .word-input-section {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    height: 175px;
-    max-height: 175px;
-    flex: 0 0 175px;
+    height: 200px;
+    max-height: 200px;
+    flex: 0 0 200px;
     outline: none !important;
     user-select: none;
     -webkit-user-select: none;
@@ -7350,7 +7350,7 @@ body.is-desktop .word-input-section {
 
 @keyframes chatSlideUp {
     0% {
-        transform: translate3d(0, calc(100% - 165px), 0);
+        transform: translate3d(0, calc(100% - 190px), 0);
     }
     100% {
         transform: translate3d(0, 0, 0);
@@ -7362,7 +7362,7 @@ body.is-desktop .word-input-section {
         transform: translate3d(0, 0, 0);
     }
     100% {
-        transform: translate3d(0, calc(100% - 165px), 0);
+        transform: translate3d(0, calc(100% - 190px), 0);
     }
 }
 
@@ -7381,10 +7381,10 @@ body.is-desktop .word-input-section {
 
 @media (max-width: 992px) {
     .chat-panel {
-        height: 165px !important;
-        max-height: 165px !important;
-        min-height: 165px !important;
-        flex: 0 0 165px !important;
+        height: 190px !important;
+        max-height: 190px !important;
+        min-height: 190px !important;
+        flex: 0 0 190px !important;
         margin-left: 10px !important;
         margin-right: 10px !important;
         width: calc(100% - 20px) !important;
