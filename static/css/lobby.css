@@ -1095,8 +1095,8 @@ body.theme-light-brown .field-hint {
         display: flex !important;
         flex-direction: row !important;
         flex: 1 1 0% !important;
-        height: calc(100% - 46px) !important;
-        max-height: calc(100% - 46px) !important;
+        height: calc(100% - 44px) !important;
+        max-height: calc(100% - 44px) !important;
         min-height: 0 !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
@@ -1108,7 +1108,7 @@ body.theme-light-brown .field-hint {
         box-sizing: border-box !important;
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
-        margin: 0 0 8px 0 !important;
+        margin: 0 0 6px 0 !important;
     }
     .lobby-grid::-webkit-scrollbar {
         display: none !important;
@@ -1120,13 +1120,13 @@ body.theme-light-brown .field-hint {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
-        height: calc(100% - 54px) !important;
-        max-height: calc(100% - 54px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important; /* Prevent skipping panels on fast swipe */
         padding: 8px 10px 10px 10px !important;
-        margin: 0 0 54px 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -1144,20 +1144,20 @@ body.theme-light-brown .field-hint {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
-        height: calc(100% - 54px) !important;
-        max-height: calc(100% - 54px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         padding: 6px 8px 8px 8px !important;
-        margin: 0 0 54px 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
-        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.22)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2143,7 +2143,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 4px 6px 46px 6px !important;
+        padding: 4px 6px 0 6px !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -2159,14 +2159,12 @@ body.theme-light-brown .lobby-chat-input:focus {
     #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: calc(100dvh - 190px) !important;
-        height: calc(100vh - 190px) !important;
-        max-height: calc(100dvh - 190px) !important;
-        max-height: calc(100vh - 190px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         padding: 0 !important;
-        margin: 0 0 46px 0 !important;
+        margin: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -2177,8 +2175,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     .lobby-grid {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100% - 44px) !important;
+        max-height: calc(100% - 44px) !important;
         display: flex !important;
         flex-direction: row !important;
         overflow-x: auto !important;
@@ -2189,7 +2187,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         box-sizing: border-box !important;
         scrollbar-width: none !important;
-        margin: 0 !important;
+        margin: 0 0 6px 0 !important;
     }
     
     .lobby-grid::-webkit-scrollbar {
@@ -2202,13 +2200,13 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
-        height: calc(100% - 54px) !important;
-        max-height: calc(100% - 54px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         padding: 8px 10px 10px 10px !important;
-        margin: 0 0 54px 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -2248,19 +2246,19 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
-        height: calc(100% - 54px) !important;
-        max-height: calc(100% - 54px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         padding: 6px 8px 8px 8px !important;
-        margin: 0 0 54px 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         clip-path: none !important;
-        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.22)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2273,7 +2271,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         -webkit-overflow-scrolling: touch !important;
         padding: 6px 8px 8px 8px !important;
         margin: 0 !important;
-        border: 2px solid var(--input-border, rgba(255, 255, 255, 0.35)) !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
         border-radius: 8px !important;
         background: rgba(0, 0, 0, 0.18) !important;
         box-sizing: border-box !important;
