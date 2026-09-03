@@ -5356,8 +5356,15 @@ input[type=range]::-moz-range-track {
     .left-panel-container {
         gap: 0 !important;
     }
-    /* Sleek premium rating bar inside mobile left panel */
+    /* Strictly keep color chart ONLY above Players [0] inside mobile left panel, nowhere else in game rooms */
+    #page-play > #game-color-bar,
+    .play-header #game-color-bar,
+    .board-panel #game-color-bar,
+    .words-panel #game-color-bar {
+        display: none !important;
+    }
     .left-panel-container #game-color-bar {
+        display: flex !important;
         margin-bottom: 10px !important;
         border-radius: 6px !important;
         overflow: hidden !important;
