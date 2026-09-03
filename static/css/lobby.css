@@ -2353,8 +2353,8 @@ body.theme-light-brown .lobby-chat-input:focus {
 
     .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
-        margin-bottom: 20px !important;
-        padding-bottom: 10px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 0 !important;
     }
 
     .lobby-chat-drawer {
@@ -2501,8 +2501,8 @@ body.theme-light-brown .lobby-chat-input:focus {
 
     .mobile-lobby-spacer {
         display: block !important;
-        height: 75px !important;
-        min-height: 75px !important;
+        height: 12px !important;
+        min-height: 12px !important;
         width: 100% !important;
         flex-shrink: 0 !important;
         pointer-events: none !important;
