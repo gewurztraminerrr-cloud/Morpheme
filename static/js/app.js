@@ -2761,7 +2761,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen and popup on tap after minimizing/leaving
+// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen and popup on tap after minimizing/leaving (only inside app, never on gateway)
 (function _setupMobileFullscreenManager() {
     let needsReEngage = true;
 
@@ -2771,6 +2771,8 @@ document.addEventListener('visibilitychange', () => {
 
     function attemptFullscreen() {
         if (!isMobileDevice() || !window._gatewayPassed) return;
+        const pLoad = document.getElementById('page-loading');
+        if (pLoad && (pLoad.classList.contains('active') || pLoad.style.display !== 'none')) return;
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
         try {

@@ -1513,21 +1513,6 @@
                     }
                 } catch(e) {}
 
-                // Engage mobile immersive fullscreen mode on user tap
-                if (window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    try {
-                        var docEl = document.documentElement;
-                        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                            var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-                            if (req) {
-                                req.call(docEl, { navigationUI: 'hide' }).catch(function() {
-                                    try { req.call(docEl).catch(function() {}); } catch(e) {}
-                                });
-                            }
-                        }
-                    } catch(e) {}
-                }
-
                 // Background room cleanup without blocking UI
                 try {
                     localStorage.removeItem('private_match_active');
@@ -6927,7 +6912,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33495"></script>
+    <script src="/js/app.js?v=33500"></script>
     <script src="/js/lobby.js?v=33405"></script>
     <script src="/js/play.js?v=33240"></script>
     <script src="/js/tournaments.js?v=33180"></script>
