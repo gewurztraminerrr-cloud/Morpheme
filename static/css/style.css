@@ -5231,7 +5231,7 @@ body .tab-btn.active {
         justify-content: center !important;
         align-items: center !important;
         overflow-x: hidden !important; /* No horizontal scrolling at all */
-        padding: 16px 12px 6px 12px !important;
+        padding: 22px 12px 4px 12px !important;
         gap: 8px !important; /* Space between logo and buttons grid */
         width: 100% !important;
         max-width: 100% !important;
