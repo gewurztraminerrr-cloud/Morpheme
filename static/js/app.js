@@ -583,6 +583,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }, 100);
                 };
 
+                // Block background touches on #page-loading to prevent any mobile viewport or scroll jitter
+                const pLoadEl = document.getElementById('page-loading');
+                if (pLoadEl) {
+                    const blockBg = (e) => {
+                        if (e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) {
+                            if (e.cancelable) e.preventDefault();
+                        }
+                    };
+                    pLoadEl.addEventListener('touchstart', blockBg, { passive: false });
+                    pLoadEl.addEventListener('pointerdown', blockBg, { passive: false });
+                    pLoadEl.addEventListener('touchmove', (e) => {
+                        if (e.cancelable) e.preventDefault();
+                    }, { passive: false });
+                }
+
                 // Strictly attach interaction listeners ONLY to the button itself
                 gatewayBtn.addEventListener('pointerdown', handlePressStart);
                 gatewayBtn.addEventListener('mousedown', handlePressStart);

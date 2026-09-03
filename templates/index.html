@@ -44,6 +44,8 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior: none;
+            touch-action: manipulation;
         }
         .page {
             display: none;
@@ -138,9 +140,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33325" as="style">
+    <link rel="preload" href="/css/style.css?v=33330" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33325">
+    <link rel="stylesheet" href="/css/style.css?v=33330">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1518,6 +1520,23 @@
         </div>
 
         <script>
+            (function() {
+                var pLoad = document.getElementById('page-loading');
+                var blockBg = function(e) {
+                    var gb = document.getElementById('btn-enter-lobby-gateway');
+                    if (gb && e.target !== gb && !gb.contains(e.target)) {
+                        if (e.cancelable) e.preventDefault();
+                    }
+                };
+                if (pLoad) {
+                    pLoad.addEventListener('touchstart', blockBg, { passive: false });
+                    pLoad.addEventListener('pointerdown', blockBg, { passive: false });
+                    pLoad.addEventListener('touchmove', function(e) {
+                        if (e.cancelable) e.preventDefault();
+                    }, { passive: false });
+                }
+            })();
+
             // Immediate 0ms Lobby Stats Hydration & DOM-Ready Handler
             (function() {
                 window.applyLobbyStatsToButtons = function(stats) {
@@ -6982,7 +7001,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33375"></script>
+    <script src="/js/app.js?v=33380"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
