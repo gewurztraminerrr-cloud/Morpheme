@@ -1607,7 +1607,7 @@ body.theme-light-brown .field-hint {
 
 .lobby-slide-body {
     display: grid;
-    grid-template-columns: 1fr 1.25fr;
+    grid-template-columns: 1fr 2fr;
     gap: 14px;
     height: 340px;
     padding: 12px 14px;
