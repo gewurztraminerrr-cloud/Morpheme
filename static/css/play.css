@@ -2431,7 +2431,7 @@ body.theme-light-brown .word-item.missed {
 
 .input-row {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
@@ -2449,20 +2449,146 @@ body.theme-light-brown .word-item.missed {
     display: contents;
 }
 
+/* --- UNIFIED TOOLS ACTION BUTTONS & DROPDOWNS (DESKTOP / LAPTOP) --- */
+.input-row > button,
+#find-count-btn,
+#random-gen-btn,
+#combo-search-btn,
+#valid-check-btn,
+#seq-search-btn,
+#list-update-btn,
+#unscramble-gen-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 20px !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    font-family: inherit !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
+}
+
+.input-row > button:hover,
+#find-count-btn:hover,
+#random-gen-btn:hover,
+#combo-search-btn:hover,
+#valid-check-btn:hover,
+#seq-search-btn:hover,
+#list-update-btn:hover,
+#unscramble-gen-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+    opacity: 0.95 !important;
+}
+
+.input-row > button:active,
+#find-count-btn:active,
+#random-gen-btn:active,
+#combo-search-btn:active,
+#valid-check-btn:active,
+#seq-search-btn:active,
+#list-update-btn:active,
+#unscramble-gen-btn:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Secondary / Special Tool Buttons */
+#sub-practice-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+}
+
+#sub-random-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+}
+
+#more-random-words-btn {
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 18px !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+}
+
+/* Unified Dropdowns Across All Tools (Vertically Equal at 42px) */
+.input-row > select,
+#page-tools select,
+#sub-length,
+#sub-gen-mode,
+#sub-dict,
+#seq-mode,
+#seq-dict,
+#seq-length,
+#random-length,
+#random-dict,
+#combo-dict,
+#valid-dict,
+#list-length-filter,
+#list-start-filter,
+#list-type-filter,
+#unscramble-length,
+#unscramble-dict,
+#unscramble-must-have,
+#random-words-dict-select {
+    height: 42px !important;
+    min-height: 42px !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 0 12px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+}
+
+/* Unified Input Textboxes Across All Tools (Vertically Equal at 42px) */
+.input-row > input[type="text"],
+#page-tools input[type="text"],
+#find-count-input,
+#combo-input,
+#valid-input,
+#seq-input,
+#sub-input {
+    height: 42px !important;
+    min-height: 42px !important;
+    font-size: 0.95rem !important;
+    border-radius: 8px !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+}
+
 #combo-input {
     flex: 0 1 350px;
     max-width: 350px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.15);
     color: var(--text-primary);
-    padding: 10px 18px;
-    height: 46px;
-    border-radius: 8px;
-    font-size: 1.05rem;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 1px;
-    box-sizing: border-box;
 }
 
 #profile-search-input {
@@ -2539,29 +2665,7 @@ body.theme-light-brown .word-item.missed {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     color: var(--text-primary);
-    padding: 10px 16px;
-    height: 46px;
-    border-radius: 8px;
-    font-size: 1rem;
     cursor: pointer;
-    box-sizing: border-box;
-}
-
-#combo-search-btn {
-    background: linear-gradient(135deg, #4ade80, #22c55e);
-    border: none;
-    color: var(--text-primary);
-    padding: 0 24px;
-    height: 46px;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    transition: transform 0.1s;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #combo-search-btn:active {
