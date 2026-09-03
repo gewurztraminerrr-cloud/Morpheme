@@ -677,12 +677,12 @@ function setupLobbyEvents() {
                 // Start accumulative auto-poll interval if not already running
                 if (!lobbyStatsInterval) startStatsPolling();
 
-                // Mobile: snap to main panel
-                window.scrollLobbyToMainPanel();
-                requestAnimationFrame(window.scrollLobbyToMainPanel);
-                setTimeout(window.scrollLobbyToMainPanel, 50);
-                setTimeout(window.scrollLobbyToMainPanel, 150);
-                setTimeout(window.scrollLobbyToMainPanel, 300);
+                // Mobile: snap to active lobby panel (default main)
+                if (!window._currentLobbyPanel || window._currentLobbyPanel === 'main') {
+                    window.scrollLobbyToMainPanel();
+                } else if (typeof window._restoreLobbyPanel === 'function') {
+                    window._restoreLobbyPanel();
+                }
             } else {
                 stopLobbyPolling();
                 stopStatsPolling();
@@ -695,33 +695,83 @@ function setupLobbyEvents() {
     if (isOnLobby()) {
         startStatsPolling();
 
-        // Mobile layout: Snap to center main lobby panel on load
-        window.scrollLobbyToMainPanel();
-        requestAnimationFrame(window.scrollLobbyToMainPanel);
-        setTimeout(window.scrollLobbyToMainPanel, 50);
-        setTimeout(window.scrollLobbyToMainPanel, 150);
-        setTimeout(window.scrollLobbyToMainPanel, 300);
+        // Mobile layout: Snap to active lobby panel on load
+        if (!window._currentLobbyPanel || window._currentLobbyPanel === 'main') {
+            window.scrollLobbyToMainPanel();
+        } else if (typeof window._restoreLobbyPanel === 'function') {
+            window._restoreLobbyPanel();
+        }
     } // end if (isOnLobby())
 } // end setupLobbyEvents
 
-window.scrollLobbyToMainPanel = function(behavior = 'auto') {
+const _LOBBY_PANELS = ['solo', 'main', 'rooms'];
+window._currentLobbyPanel = 'main'; // tracks which lobby panel is in view
+
+window.switchLobbyPanel = function(panelId, smooth = false) {
+    window._currentLobbyPanel = panelId || 'main';
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
-    const mainPanel = document.getElementById('mobile-panel-main');
     const lobbyGrid = document.querySelector('.lobby-grid');
-    if (!mainPanel || !lobbyGrid) return;
+    if (!lobbyGrid) return;
+    const el = document.getElementById('mobile-panel-' + window._currentLobbyPanel);
+    if (!el) return;
 
-    const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
-    const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
-
-    if (targetLeft > 0) {
-        if (behavior === 'smooth') {
-            lobbyGrid.scrollTo({ left: targetLeft, behavior: 'smooth' });
-        } else {
-            lobbyGrid.scrollLeft = targetLeft;
-        }
+    const targetLeft = el.offsetLeft;
+    if (smooth && typeof lobbyGrid.scrollTo === 'function') {
+        lobbyGrid.scrollTo({ left: targetLeft, behavior: 'smooth' });
+    } else {
+        lobbyGrid.scrollLeft = targetLeft;
     }
 };
+
+window.scrollLobbyToMainPanel = function(behavior = 'auto') {
+    window.switchLobbyPanel('main', behavior === 'smooth');
+};
+
+window._restoreLobbyPanel = function() {
+    window.switchLobbyPanel(window._currentLobbyPanel || 'main', false);
+};
+
+// Track which panel the user swiped to so window._currentLobbyPanel stays in sync.
+(function _setupLobbyGridScrollTracker() {
+    let scrollDebounceTimer = null;
+    function updateActiveLobbyPanelTrack() {
+        if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
+        scrollDebounceTimer = setTimeout(() => {
+            const lobbyGrid = document.querySelector('.lobby-grid');
+            if (!lobbyGrid) return;
+            const solo = document.getElementById('mobile-panel-solo');
+            const main = document.getElementById('mobile-panel-main');
+            const rooms = document.getElementById('mobile-panel-rooms');
+            if (!main || !lobbyGrid) return;
+
+            const currentScroll = lobbyGrid.scrollLeft;
+            const threshold = (main.offsetLeft) / 2;
+
+            if (rooms && currentScroll >= main.offsetLeft + threshold) {
+                window._currentLobbyPanel = 'rooms';
+            } else if (solo && currentScroll <= threshold) {
+                window._currentLobbyPanel = 'solo';
+            } else {
+                window._currentLobbyPanel = 'main';
+            }
+        }, 50);
+    }
+
+    function _attachTracker() {
+        const lobbyGrid = document.querySelector('.lobby-grid');
+        if (!lobbyGrid) return;
+        lobbyGrid.addEventListener('scroll', updateActiveLobbyPanelTrack, { passive: true });
+        if ('onscrollend' in window) {
+            lobbyGrid.addEventListener('scrollend', updateActiveLobbyPanelTrack, { passive: true });
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _attachTracker);
+    } else {
+        _attachTracker();
+    }
+})();
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupLobbyEvents);

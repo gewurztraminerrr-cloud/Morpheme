@@ -2711,6 +2711,12 @@ function _restoreAllMobilePanels() {
             if (mainContent) forumContainer.scrollLeft = mainContent.offsetLeft;
         }
     }
+
+    // 4. Lobby Page (.lobby-grid)
+    const lobbyGrid = document.querySelector('.lobby-grid');
+    if (lobbyGrid && typeof window._restoreLobbyPanel === 'function') {
+        window._restoreLobbyPanel();
+    }
 }
 
 let _viewportRecoveryTimers = [];

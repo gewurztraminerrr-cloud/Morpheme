@@ -1531,6 +1531,16 @@
 
                 // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                 setTimeout(function() {
+                    window._currentLobbyPanel = 'main';
+                    var pLobby = document.getElementById(targetPageId) || document.getElementById('page-lobby');
+                    var lobbyGrid = document.querySelector('.lobby-grid');
+                    var mainPanel = document.getElementById('mobile-panel-main');
+                    if (targetPageId === 'page-lobby' && pLobby && lobbyGrid && mainPanel) {
+                        pLobby.classList.add('active');
+                        pLobby.style.display = 'flex';
+                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                    }
+
                     var pLoad = document.getElementById('page-loading');
                     if (pLoad) {
                         pLoad.classList.remove('active');
@@ -1541,12 +1551,9 @@
                         window.showPage(targetPageId);
                     } else if (typeof showPage === 'function') {
                         showPage(targetPageId);
-                    } else {
-                        var pLobby = document.getElementById(targetPageId) || document.getElementById('page-lobby');
-                        if (pLobby) {
-                            pLobby.classList.add('active');
-                            pLobby.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block';
-                        }
+                    } else if (pLobby) {
+                        pLobby.classList.add('active');
+                        pLobby.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block';
                     }
 
                     var navBtn = document.querySelector('.nav-btn[data-page="' + targetNavName + '"]') || document.querySelector('.nav-btn[data-page="lobby"]');
@@ -6905,8 +6912,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33485"></script>
-    <script src="/js/lobby.js?v=33400"></script>
+    <script src="/js/app.js?v=33490"></script>
+    <script src="/js/lobby.js?v=33405"></script>
     <script src="/js/play.js?v=33240"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33275"></script>
