@@ -655,6 +655,9 @@ async function fetchUserCount() {
 // Helper to play lobby music safely across all platforms (Safari, iOS, Chrome, Firefox, desktops, mobile).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
     if (!lobbyMusic) return;
+    if (!lobbyMusic.src || !lobbyMusic.src.includes('/music/lobby.mp3')) {
+        lobbyMusic.src = lobbyMusic.getAttribute('data-src') || '/music/lobby.mp3';
+    }
     lobbyMusic.loop = true;
     lobbyMusic.volume = 0.5;
     lobbyMusic.muted = false;
