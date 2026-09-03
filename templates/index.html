@@ -71,10 +71,12 @@
             position: relative;
             user-select: none;
             -webkit-user-select: none;
+            pointer-events: none;
         }
         .neon-gateway-btn {
             position: relative;
             display: inline-block;
+            pointer-events: auto;
             background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%);
             border: 1px solid rgba(255, 255, 255, 0.4);
             border-bottom: 1px solid rgba(0, 0, 0, 0.3);
@@ -125,9 +127,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33310" as="style">
+    <link rel="preload" href="/css/style.css?v=33315" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33310">
+    <link rel="stylesheet" href="/css/style.css?v=33315">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1471,15 +1473,16 @@
                     left: 0 !important;
                     right: 0 !important;
                     bottom: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    height: 100dvh !important;
-                    max-height: 100vh !important;
+                    width: 100% !important;
+                    height: 100% !important;
                     overflow: hidden !important;
                     margin: 0 !important;
                     padding: 0 !important;
-                    touch-action: none !important;
+                    touch-action: manipulation !important;
                     display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: center !important;
+                    align-items: center !important;
                 }
             }
 
@@ -6971,7 +6974,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33370"></script>
+    <script src="/js/app.js?v=33375"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>

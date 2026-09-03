@@ -7190,8 +7190,9 @@ select option,
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    cursor: pointer;
-    touch-action: none;
+    cursor: default;
+    pointer-events: none !important;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
 }
@@ -7199,6 +7200,7 @@ select option,
 .neon-gateway-btn {
     position: relative;
     display: inline-block;
+    pointer-events: auto !important;
     background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
