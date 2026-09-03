@@ -3628,7 +3628,8 @@ function setupListsTool() {
 window.isFullListLoading = false;
 let _fullListAllWords = [];
 let _fullListWindowStart = 0;
-const FULL_LIST_WINDOW_SIZE = 800; // Optimal rendering chunk: <1ms render time, zero memory bloat
+const FULL_LIST_WINDOW_SIZE = 400; // Optimal rendering chunk: instant 60fps render, lightweight DOM
+let _isRenderingFullListWindow = false;
 
 function showFullListToast(msg, isError = false) {
     const toast = document.getElementById('full-list-jump-toast');
@@ -3674,6 +3675,7 @@ function renderFullListWindow(startIndex, targetWordToHighlight = null) {
     _fullListWindowStart = clampedStart;
 
     const slice = _fullListAllWords.slice(clampedStart, clampedStart + FULL_LIST_WINDOW_SIZE);
+    _isRenderingFullListWindow = true;
     resultsEl.innerHTML = generateFullListItemsHtml(slice);
 
     if (countEl) {
@@ -3690,14 +3692,16 @@ function renderFullListWindow(startIndex, targetWordToHighlight = null) {
             } catch (e) {}
 
             if (targetEl) {
-                // Safely scroll ONLY within the resultsEl container to avoid mobile window displacement
                 const targetTop = targetEl.offsetTop - (resultsEl.clientHeight / 2) + (targetEl.clientHeight / 2);
                 resultsEl.scrollTop = Math.max(0, targetTop);
                 targetEl.classList.add('jump-target-pulse');
                 setTimeout(() => { targetEl.classList.remove('jump-target-pulse'); }, 2500);
             }
-            // Lock window scroll at 0, 0
-            window.scrollTo(0, 0);
+            _isRenderingFullListWindow = false;
+        });
+    } else {
+        requestAnimationFrame(() => {
+            _isRenderingFullListWindow = false;
         });
     }
 }
@@ -3847,26 +3851,33 @@ function initFullListVirtualScrollbar() {
         applyDragPosition(getClientY(e));
     });
 
-    // Smooth continuous window pagination when scrolling inside word grid
+    // Smooth continuous window pagination with animation frame throttling and recursion protection
+    let _scrollRafId = null;
     results.addEventListener('scroll', () => {
-        if (isDragging) return;
+        if (isDragging || _isRenderingFullListWindow) return;
         if (!_fullListAllWords || _fullListAllWords.length === 0) return;
-        const total = _fullListAllWords.length;
-        const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
 
-        const scrollHeight = results.scrollHeight;
-        const scrollTop = results.scrollTop;
-        const clientHeight = results.clientHeight;
+        if (_scrollRafId) return;
+        _scrollRafId = requestAnimationFrame(() => {
+            _scrollRafId = null;
+            if (isDragging || _isRenderingFullListWindow) return;
 
-        if (scrollTop + clientHeight >= scrollHeight - 40 && _fullListWindowStart < maxStartIndex) {
-            const nextStart = Math.min(maxStartIndex, _fullListWindowStart + 200);
-            renderFullListWindow(nextStart);
-            results.scrollTop = Math.max(0, scrollTop - 100);
-        } else if (scrollTop <= 30 && _fullListWindowStart > 0) {
-            const prevStart = Math.max(0, _fullListWindowStart - 200);
-            renderFullListWindow(prevStart);
-            results.scrollTop = 100;
-        }
+            const total = _fullListAllWords.length;
+            const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
+            const scrollHeight = results.scrollHeight;
+            const scrollTop = results.scrollTop;
+            const clientHeight = results.clientHeight;
+
+            if (scrollTop + clientHeight >= scrollHeight - 60 && _fullListWindowStart < maxStartIndex) {
+                const nextStart = Math.min(maxStartIndex, _fullListWindowStart + 150);
+                renderFullListWindow(nextStart);
+                results.scrollTop = Math.max(10, scrollTop - 80);
+            } else if (scrollTop <= 30 && _fullListWindowStart > 0) {
+                const prevStart = Math.max(0, _fullListWindowStart - 150);
+                renderFullListWindow(prevStart);
+                results.scrollTop = 100;
+            }
+        });
     }, { passive: true });
 }
 
@@ -3875,7 +3886,6 @@ function handleFullListWordJump() {
     if (!input) return;
     const query = input.value.trim().toUpperCase();
     input.blur();
-    window.scrollTo(0, 0);
     if (!query) return;
 
     if (!_fullListAllWords || _fullListAllWords.length === 0) {
@@ -3905,19 +3915,16 @@ function handleFullListWordJump() {
 
     if (targetIdx === -1) {
         showFullListToast(`"${query}" was not found in this list.`, true);
-        window.scrollTo(0, 0);
         return;
     }
 
     // Center window around target word
     const targetStart = Math.max(0, targetIdx - 40);
     renderFullListWindow(targetStart, query);
-    window.scrollTo(0, 0);
 }
 window.handleFullListWordJump = handleFullListWordJump;
 
 window.openFullListModal = function() {
-    console.log('[Full List] Opening full list modal');
     let modal = document.getElementById('full-list-modal');
     let results = document.getElementById('full-list-modal-results');
     if (!modal || !results) {
@@ -3952,7 +3959,7 @@ window.openFullListModal = function() {
     window._lastFullListFilterKey = currentFilterKey;
     _fullListWindowStart = 0;
 
-    results.innerHTML = '<div style="padding: 40px; text-align: center; color: #a78bfa; font-size: 1.1rem; font-weight: 700; width: 100%;">Loading words…</div>';
+    results.innerHTML = '<div style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
     results.scrollTop = 0;
 
     modal.classList.add('active');
@@ -3991,8 +3998,12 @@ window.openFullListModal = function() {
     if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
     url += `&t=${Date.now()}`;
 
-    fetch(url)
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+
+    fetch(url, { signal: controller.signal })
         .then(r => {
+            clearTimeout(fetchTimeout);
             if (!r.ok) throw new Error(`HTTP error ${r.status}`);
             return r.json();
         })
@@ -4006,9 +4017,10 @@ window.openFullListModal = function() {
             renderFullListWindow(0);
         })
         .catch(err => {
+            clearTimeout(fetchTimeout);
             console.error('[Full List] Failed to fetch full word list:', err);
-            if (fullListCount) fullListCount.textContent = `Fetch failed`;
-            results.innerHTML = `<div style="padding: 40px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Failed to load words. <br><button onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
+            if (fullListCount) fullListCount.textContent = `Fetch error`;
+            results.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Unable to load words.<br><span style="font-size: 0.85rem; opacity: 0.75; display: inline-block; margin-top: 6px;">Please check your connection and try again.</span><br><button type="button" onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
             window.isFullListLoading = false;
         });
 };
