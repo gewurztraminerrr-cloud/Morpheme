@@ -1765,32 +1765,32 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 10px 15px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
 
             <!-- Board: dimension + time -->
             <div style="display: flex; flex-direction: column; gap: 2px; align-items: flex-start; justify-content: center; text-align: left;">
-                <span style="font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.85);">${dims}</span>
-                <span style="font-size: 0.62rem; color: rgba(255,255,255,0.35); font-weight: 600;">${timeStr}</span>
+                <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-primary);">${dims}</span>
+                <span style="font-size: 0.62rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 600;">${timeStr}</span>
             </div>
 
-            <div style="font-weight: 900; color: #fff; font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.5;">PTS</small></div>
+            <div style="font-weight: 900; color: var(--text-primary); font-size: 0.95rem;">${round.total_score} <small style="font-size: 0.6rem; opacity: 0.6;">PTS</small></div>
 
-            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#60a5fa' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">${round.performance_value ? (round.performance_value / 100).toFixed(2) + 'x' : '-'}</div>
+            <div style="font-weight: 900; color: ${round.performance_value >= 140 ? '#3b82f6' : 'var(--text-40, rgba(var(--text-primary-rgb), 0.4))'}; font-size: 0.85rem;">${round.performance_value ? (round.performance_value / 100).toFixed(2) + 'x' : '-'}</div>
             <div style="display: flex; flex-direction: column; gap: 1px;">
-                <span style="color: #fff; font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
-                <span style="color: rgba(255,255,255,0.3); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
+                <span style="color: var(--text-primary); font-size: 0.7rem; font-weight: 700;">${round.num_words} words</span>
+                <span style="color: var(--text-50, rgba(var(--text-primary-rgb), 0.5)); font-size: 0.6rem;">Avg: ${round.avg_len}</span>
             </div>
-            <div style="color: #ffd700; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
+            <div style="color: #d97706; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;" title="${round.top_word}">${round.top_word}</div>
 
             <!-- Date Column -->
-            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; text-align: right;">${dateStr}</div>
+            <div style="font-size: 0.7rem; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); font-weight: 600; text-align: right;">${dateStr}</div>
         </div>
         `;
     };
 
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Mode</div>
             <div style="text-align: left;">Board</div>
             <div>Score</div>
@@ -1823,9 +1823,9 @@ async function renderProfile(user) {
             const greatestPE = user.max_pe || 0;
             const peFormatted = greatestPE ? (greatestPE / 100).toFixed(2) + 'x' : '0.00x';
             const peHeader = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 8px;">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
-                    <span style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">Greatest PE: <span style="color: #fff;">${peFormatted}</span></span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #3b82f6;">Greatest PE: <span style="color: var(--text-primary);">${peFormatted}</span></span>
                 </div>
             `;
             exceptionalList.innerHTML = peHeader + window.roundGridHeader + displayRounds.map(r => window.renderRoundGridItem(r)).join('');
@@ -2924,18 +2924,18 @@ function renderRatingsGrid(configRatings, user = null) {
                 const box = document.createElement('div');
                 box.className = 'rating-box clickable';
                 box.title = "Click to view achievements for this room type";
-                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s, transform 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; outline: none;';
-                box.onmouseenter = () => { box.style.background = 'rgba(255,255,255,0.08)'; };
-                box.onmouseleave = () => { box.style.background = 'rgba(255,255,255,0.03)'; };
+                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); transition: background 0.2s, transform 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; outline: none;';
+                box.onmouseenter = () => { box.style.background = 'rgba(var(--text-primary-rgb), 0.08)'; };
+                box.onmouseleave = () => { box.style.background = 'rgba(var(--text-primary-rgb), 0.04)'; };
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-info" style="flex: 1;">
-                        <div class="rating-box-mode" style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800;">${mode === '3d' ? 'CUBE' : mode}</div>
-                        <div class="rating-box-config" style="font-weight: 700;">${board} | ${formatTimeShort(time)}</div>
-                        <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-weight: 700;">
-                           <div>Played: <span style="color: #fff;">${configData.games_played || 0}</span> | Wins: <span style="color: #fff;">${configData.wins || 0}</span></div>
-                           <div>Avg Score: <span style="color: #fff;">${configData.avg_score || 0}</span> | Total Points: <span style="color: #fff;">${configData.point_sum || 0}</span></div>
-                           <div>Avg Words: <span style="color: #fff;">${configData.avg_words || 0}</span> | Avg Found: <span style="color: #fff;">${configData.avg_pct_found || 0}%</span></div>
+                        <div class="rating-box-mode" style="font-size: 0.65rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); text-transform: uppercase; font-weight: 800;">${mode === '3d' ? 'CUBE' : mode}</div>
+                        <div class="rating-box-config" style="font-weight: 700; color: var(--text-primary);">${board} | ${formatTimeShort(time)}</div>
+                        <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 0.65rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 700;">
+                           <div>Played: <span style="color: var(--text-primary);">${configData.games_played || 0}</span> | Wins: <span style="color: var(--text-primary);">${configData.wins || 0}</span></div>
+                           <div>Avg Score: <span style="color: var(--text-primary);">${configData.avg_score || 0}</span> | Total Points: <span style="color: var(--text-primary);">${configData.point_sum || 0}</span></div>
+                           <div>Avg Words: <span style="color: var(--text-primary);">${configData.avg_words || 0}</span> | Avg Found: <span style="color: var(--text-primary);">${configData.avg_pct_found || 0}%</span></div>
                         </div>
                     </div>
                     <div class="rating-box-value" style="color: ${rColor}; font-size: 1.25rem; font-weight: 900; margin: 0 15px;">${rating}</div>
@@ -3211,12 +3211,12 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             }
 
             return `
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
-                onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+            <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); cursor: pointer; transition: background 0.2s;" 
+                onmouseenter="this.style.background='rgba(var(--text-primary-rgb), 0.04)'" 
                 onmouseleave="this.style.background='transparent'" 
                 onclick="watchRoundHistory('${r.room_id}', ${r.round_number}, true, ${r.game_id || 'null'});">
                 ${cols.map(c => `<td style="padding: 10px 15px; ${c.style || ''}">${c.val}</td>`).join('')}
-                <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+                <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(var(--text-primary-rgb), 0.06); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
             </tr>`;
         };
 
@@ -3230,11 +3230,11 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 return b.ratio - a.ratio;
             });
             tablePerf.innerHTML = sortedByTimestamp.map(r => renderAchRow(r, [
-                { val: r.performance_value, style: 'font-weight: 800; color: #60a5fa;' },
-                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.6);' },
-                { val: r.total_score, style: 'font-weight: 700;' },
-                { val: `<div style="font-size: 0.75rem;">${r.num_words} words</div><div style="font-size: 0.6rem; color: rgba(255,255,255,0.3);">${r.top_word}</div>` },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.performance_value, style: 'font-weight: 800; color: #3b82f6;' },
+                { val: r.ratio + 'x', style: 'color: var(--text-70, rgba(var(--text-primary-rgb), 0.7));' },
+                { val: r.total_score, style: 'font-weight: 700; color: var(--text-primary);' },
+                { val: `<div style="font-size: 0.75rem; color: var(--text-primary);">${r.num_words} words</div><div style="font-size: 0.6rem; color: var(--text-50, rgba(var(--text-primary-rgb), 0.5));">${r.top_word}</div>` },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3247,10 +3247,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 return window.parseUTCTimestamp(b.timestamp) - window.parseUTCTimestamp(a.timestamp);
             });
             tableWins.innerHTML = sortedWins.map(r => renderAchRow(r, [
-                { val: r.total_score, style: 'font-weight: 800; color: #4ade80;' },
-                { val: r.performance_value, style: 'font-weight: 700;' },
-                { val: r.all_players.length, style: 'color: rgba(255,255,255,0.5);' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.total_score, style: 'font-weight: 800; color: #10b981;' },
+                { val: r.performance_value, style: 'font-weight: 700; color: var(--text-primary);' },
+                { val: r.all_players.length, style: 'color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3260,10 +3260,10 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             // Sort by Timestamp (True Recency for "Recent" list)
             const sortedRecent = [...stats.recent_rounds].sort((a, b) => window.parseUTCTimestamp(b.timestamp) - window.parseUTCTimestamp(a.timestamp));
             tableRecent.innerHTML = sortedRecent.map(r => renderAchRow(r, [
-                { val: r.total_score, style: 'font-weight: 700;' },
-                { val: r.ratio + 'x', style: 'color: rgba(255,255,255,0.4); font-size: 0.75rem;' },
-                { val: r.is_win ? '<span style="color:#4ade80">WIN</span>' : '<span style="color:rgba(255,255,255,0.3)">-</span>', style: 'font-weight: 800;' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.total_score, style: 'font-weight: 700; color: var(--text-primary);' },
+                { val: r.ratio + 'x', style: 'color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-size: 0.75rem;' },
+                { val: r.is_win ? '<span style="color:#10b981">WIN</span>' : '<span style="color:var(--text-40, rgba(var(--text-primary-rgb), 0.4))">-</span>', style: 'font-weight: 800;' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3272,9 +3272,9 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (tableScores && stats.best_scores) {
             const sortedByScore = [...stats.best_scores].sort((a, b) => b.total_score - a.total_score);
             tableScores.innerHTML = sortedByScore.map(r => renderAchRow(r, [
-                { val: r.total_score, style: 'font-weight: 800; color: #ffd700;' },
-                { val: r.performance_value, style: 'font-weight: 700;' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.total_score, style: 'font-weight: 800; color: #d97706;' },
+                { val: r.performance_value, style: 'font-weight: 700; color: var(--text-primary);' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3283,9 +3283,9 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (tableWordCounts && stats.best_word_counts) {
             const sortedByCount = [...stats.best_word_counts].sort((a, b) => b.num_words - a.num_words);
             tableWordCounts.innerHTML = sortedByCount.map(r => renderAchRow(r, [
-                { val: r.num_words, style: 'font-weight: 800; color: #a5b4fc;' },
-                { val: `${r.avg_len} len | ${r.pct_found || 0}%`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.num_words, style: 'font-weight: 800; color: #8b5cf6;' },
+                { val: `${r.avg_len} len | ${r.pct_found || 0}%`, style: 'color: var(--text-70, rgba(var(--text-primary-rgb), 0.7));' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3294,9 +3294,9 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (tablePcts && stats.best_pcts) {
             const sortedByPct = [...stats.best_pcts].sort((a, b) => b.pct_found - a.pct_found);
             tablePcts.innerHTML = sortedByPct.map(r => renderAchRow(r, [
-                { val: `${r.pct_found}%`, style: 'font-weight: 800; color: #ff4a4a;' },
-                { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: `${r.pct_found}%`, style: 'font-weight: 800; color: #ef4444;' },
+                { val: `Pts: ${r.total_score}`, style: 'color: var(--text-70, rgba(var(--text-primary-rgb), 0.7));' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3305,9 +3305,9 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         if (tableObscure && stats.best_obscure) {
             const sortedByObscure = [...stats.best_obscure].sort((a, b) => b.obscure_count - a.obscure_count);
             tableObscure.innerHTML = sortedByObscure.map(r => renderAchRow(r, [
-                { val: r.obscure_count, style: 'font-weight: 800; color: #60a5fa;' },
-                { val: `Pts: ${r.total_score}`, style: 'color: rgba(255,255,255,0.6);' },
-                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: rgba(255,255,255,0.4);' }
+                { val: r.obscure_count, style: 'font-weight: 800; color: #3b82f6;' },
+                { val: `Pts: ${r.total_score}`, style: 'color: var(--text-70, rgba(var(--text-primary-rgb), 0.7));' },
+                { val: dateToShort(parseDate(r.timestamp)), style: 'font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));' }
             ])).join('');
         }
 
@@ -3318,15 +3318,15 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             tableWords.innerHTML = sortedByPoints.map(w => {
                 const date = new Date(w.timestamp);
                 return `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s;" 
-                    onmouseenter="this.style.background='rgba(255,255,255,0.02)'" 
+                <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); cursor: pointer; transition: background 0.2s;" 
+                    onmouseenter="this.style.background='rgba(var(--text-primary-rgb), 0.04)'" 
                     onmouseleave="this.style.background='transparent'" 
                     onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'});">
-                    <td style="padding: 10px 15px; font-weight: 800; color: #fff; text-transform: uppercase;">${w.word}</td>
-                    <td style="padding: 10px 15px; font-weight: 700; color: #ffd700;">${w.points}</td>
-                    <td style="padding: 10px 15px; color: rgba(255,255,255,0.5);">${w.word.length}</td>
-                    <td style="padding: 10px 15px; font-size: 0.75rem; color: rgba(255,255,255,0.4);">${dateToShort(date)}</td>
-                    <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
+                    <td style="padding: 10px 15px; font-weight: 800; color: var(--text-primary); text-transform: uppercase;">${w.word}</td>
+                    <td style="padding: 10px 15px; font-weight: 700; color: #d97706;">${w.points}</td>
+                    <td style="padding: 10px 15px; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));">${w.word.length}</td>
+                    <td style="padding: 10px 15px; font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));">${dateToShort(date)}</td>
+                    <td style="padding: 10px 15px; text-align: right;"><div style="background: rgba(var(--text-primary-rgb), 0.06); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 6px; padding: 4px 8px; display: inline-block;">📷</div></td>
                 </tr>`;
             }).join('');
         }

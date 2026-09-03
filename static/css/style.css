@@ -268,12 +268,56 @@ body.theme-orange,
 body.theme-gray,
 body.theme-light-brown {
     color: var(--text-primary);
-    --muted-text: rgba(0, 0, 0, 0.75);
+    --muted-text: rgba(var(--text-primary-rgb), 0.75);
     /* Increased contrast for light themes */
-    --card-bg: rgba(0, 0, 0, 0.05);
-    --card-border: rgba(0, 0, 0, 0.15);
-    --text-muted-fixed: rgba(0, 0, 0, 0.75);
+    --card-bg: rgba(var(--text-primary-rgb), 0.05);
+    --card-border: rgba(var(--text-primary-rgb), 0.15);
+    --text-muted-fixed: rgba(var(--text-primary-rgb), 0.75);
     --toast-bg: rgba(255, 255, 255, 0.98);
+    --input-bg: rgba(var(--text-primary-rgb), 0.08);
+    --input-border: rgba(var(--text-primary-rgb), 0.25);
+    --text-100: rgba(var(--text-primary-rgb), 1);
+    --text-90: rgba(var(--text-primary-rgb), 0.9);
+    --text-80: rgba(var(--text-primary-rgb), 0.8);
+    --text-70: rgba(var(--text-primary-rgb), 0.7);
+    --text-60: rgba(var(--text-primary-rgb), 0.6);
+    --text-50: rgba(var(--text-primary-rgb), 0.5);
+    --text-40: rgba(var(--text-primary-rgb), 0.4);
+    --text-30: rgba(var(--text-primary-rgb), 0.3);
+}
+
+select {
+    background: var(--bg-card, rgba(var(--text-primary-rgb), 0.08));
+    color: var(--text-primary);
+    border: 1px solid var(--input-border, rgba(var(--text-primary-rgb), 0.2));
+}
+
+select option {
+    background: var(--bg-primary, #1a1a2e);
+    color: var(--text-primary, #ffffff);
+}
+
+[class*="theme-white"] select,
+[class*="theme-light-"] select,
+body.theme-yellow select,
+body.theme-pink select,
+body.theme-orange select,
+body.theme-gray select,
+body.theme-light-brown select {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+[class*="theme-white"] select option,
+[class*="theme-light-"] select option,
+body.theme-yellow select option,
+body.theme-pink select option,
+body.theme-orange select option,
+body.theme-gray select option,
+body.theme-light-brown select option {
+    background: #ffffff !important;
+    color: #111111 !important;
 }
 
 [class*="theme-white"] .achievement-card,

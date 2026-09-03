@@ -1595,7 +1595,35 @@ body.theme-light-brown .field-hint {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: var(--text-primary, #fff);
+    color: #ffffff !important;
+}
+
+.lobby-chat-slide-panel,
+.lobby-chat-slide-panel * {
+    color-scheme: dark;
+}
+
+.lobby-chat-slide-panel .lobby-half-title,
+.lobby-chat-slide-panel .lobby-player-name,
+.lobby-chat-slide-panel .lobby-chat-text {
+    color: #ffffff !important;
+}
+
+.lobby-chat-slide-panel .lobby-chat-time,
+.lobby-chat-slide-panel .lobby-chat-limit-note,
+.lobby-chat-slide-panel .lobby-empty-players {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.lobby-chat-slide-panel .lobby-chat-input {
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.lobby-chat-toggle-btn .lobby-toggle-text,
+.lobby-chat-toggle-btn .lobby-drawer-arrow {
+    color: #ffffff !important;
 }
 
 .lobby-chat-limit-note {
