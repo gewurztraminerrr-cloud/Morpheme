@@ -7217,8 +7217,8 @@ select option,
     -webkit-touch-callout: none !important;
     outline: none !important;
 
-    /* Realistic 3D Elevated Resting State */
-    transform: translateY(-12px);
+    /* Realistic 3D Elevated Resting State (Stationary) */
+    transform: none;
     box-shadow:
         inset 0 2px 1px rgba(255, 255, 255, 0.85),
         inset 0 -2px 3px rgba(0, 0, 0, 0.4),
@@ -7241,12 +7241,12 @@ select option,
         0 -1px 1px rgba(0, 0, 0, 0.35),
         0 1px 2px rgba(255, 255, 255, 0.4),
         0 0 14px rgba(255, 255, 255, 0.7);
-    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
+    transition: box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
 }
 
 .neon-gateway-btn:hover:not(.pressed):not(.flattened) {
     background: linear-gradient(180deg, #ff5cae 0%, #ff148b 35%, #e00070 75%, #bf005f 100%);
-    transform: translateY(-14px) scale(1.015);
+    transform: none;
     box-shadow:
         inset 0 2px 1px rgba(255, 255, 255, 0.95),
         inset 0 -2px 3px rgba(0, 0, 0, 0.4),
@@ -7273,7 +7273,7 @@ select option,
         0 0 18px rgba(255, 255, 255, 0.9);
 }
 
-/* Completely Flattened & Sunken State (Stays flattened upon release) */
+/* Completely Flattened & Sunken State (Stays strictly stationary without shifting down) */
 .neon-gateway-btn:active:not(.dragged-out),
 .neon-gateway-btn.pressed:not(.dragged-out),
 .neon-gateway-btn.flattened:not(.dragged-out),
@@ -7281,7 +7281,7 @@ select option,
 .neon-gateway-btn.flattened:not(.dragged-out):hover,
 .neon-gateway-btn.pressed:not(.dragged-out):focus,
 .neon-gateway-btn.flattened:not(.dragged-out):focus {
-    transform: translateY(0px) scale(0.985) !important;
+    transform: none !important;
     background: linear-gradient(180deg, #c40062 0%, #aa0055 45%, #8a0045 100%) !important;
     border-color: rgba(255, 0, 127, 0.4) !important;
     box-shadow:
@@ -7294,12 +7294,12 @@ select option,
         0 1px 2px rgba(0, 0, 0, 0.95),
         0 0 6px rgba(255, 0, 127, 0.7) !important;
     filter: brightness(0.85) !important;
-    transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
+    transition: box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
 }
 
 /* Force 3D Elevated Standing Position when dragged out */
 .neon-gateway-btn.dragged-out {
-    transform: translateY(-12px) !important;
+    transform: none !important;
     background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.3) !important;
