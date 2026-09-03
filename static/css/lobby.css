@@ -248,6 +248,11 @@
     gap: 6px;
     width: 100%;
     align-items: stretch;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-sizing: border-box;
 }
 
 #rating-filter {
@@ -419,6 +424,11 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
         gap: 8px;
         width: 100%;
         align-items: stretch;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-sizing: border-box;
     }
     #rating-filter {
         grid-column: 1 / -1;
