@@ -4596,6 +4596,38 @@ input[type=range]::-moz-range-track {
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    touch-action: manipulation !important;
+    outline: none !important;
+}
+
+.lb-user-cell *,
+.lb-user-cell .rating-square,
+.lb-user-cell .username,
+.lb-user-cell .user-flag,
+.rating-square {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    touch-action: manipulation !important;
+    outline: none !important;
+}
+
+.lb-user-cell .rating-square:focus,
+.lb-user-cell .rating-square:active,
+.rating-square:focus,
+.rating-square:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    box-shadow: none !important;
 }
 
 .lb-user-cell:hover .username {
