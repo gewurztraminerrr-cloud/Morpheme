@@ -5161,7 +5161,7 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
         updateSubanagramsHeader();
         renderSubanagramsResults();
         
-        const modeDesc = (_subCurrentMode === 'random') ? 'Totally Random Letters' : 'Full Word Guaranteed';
+        const modeDesc = (_subCurrentMode === 'random') ? 'Totally Random Letters' : 'Word of Max Length Guaranteed';
         showSubFeedback(`Generated ${_subCurrentLetters.length}-letter sequence (${modeDesc} • ${_subAllWords.length} subanagrams)`, 'info');
 
     } catch (err) {
