@@ -4049,6 +4049,16 @@ if (fullListJumpInputEl) {
             handleFullListWordJump();
         }
     });
+    fullListJumpInputEl.addEventListener('focus', () => {
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+        });
+    });
+    fullListJumpInputEl.addEventListener('blur', () => {
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+        });
+    });
 }
 
 const viewFullBtnEl = document.getElementById('list-view-full-btn');
