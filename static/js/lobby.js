@@ -1520,50 +1520,15 @@ function setupLobbyMobileKeyboardSupport() {
     });
 
     input.addEventListener('focus', () => {
-        if (drawer) {
-            drawer.classList.add('keyboard-open');
-        }
         setTimeout(() => {
             const chatHistory = document.getElementById('lobby-chat-history');
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
-            if (input.scrollIntoView) {
-                input.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-            }
-        }, 120);
+        }, 100);
     });
 
     input.addEventListener('blur', () => {
-        setTimeout(() => {
-            if (document.activeElement !== input && drawer) {
-                drawer.classList.remove('keyboard-open');
-                drawer.style.bottom = '';
-            }
-        }, 150);
+        // Keep size completely constant
     });
-
-    if (window.visualViewport) {
-        const handleViewportChange = () => {
-            if (!drawer || !drawer.classList.contains('open')) return;
-            if (window.innerWidth <= 900) {
-                const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
-                const isFocused = document.activeElement === input;
-                if (keyboardHeight > 80 || isFocused) {
-                    drawer.classList.add('keyboard-open');
-                    drawer.style.bottom = `${keyboardHeight}px`;
-                    const chatHistory = document.getElementById('lobby-chat-history');
-                    if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
-                } else {
-                    drawer.classList.remove('keyboard-open');
-                    drawer.style.bottom = '0px';
-                }
-            } else {
-                drawer.classList.remove('keyboard-open');
-                drawer.style.bottom = '';
-            }
-        };
-        window.visualViewport.addEventListener('resize', handleViewportChange);
-        window.visualViewport.addEventListener('scroll', handleViewportChange);
-    }
 }
 window.setupLobbyMobileKeyboardSupport = setupLobbyMobileKeyboardSupport;
 
