@@ -45,7 +45,10 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             overscroll-behavior: none;
-            touch-action: manipulation;
+            touch-action: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
         .page {
             display: none;
@@ -66,7 +69,10 @@
             overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
-            touch-action: manipulation !important;
+            touch-action: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -webkit-touch-callout: none !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
@@ -140,9 +146,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33335" as="style">
+    <link rel="preload" href="/css/style.css?v=33340" as="style">
     <link rel="preload" href="/css/lobby.css?v=33500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33335">
+    <link rel="stylesheet" href="/css/style.css?v=33340">
     <link rel="stylesheet" href="/css/lobby.css?v=33500">
     <link rel="stylesheet" href="/css/play.css?v=33400">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
@@ -1489,7 +1495,10 @@
                 overflow: hidden !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                touch-action: manipulation !important;
+                touch-action: none !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                -webkit-touch-callout: none !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: center !important;
@@ -7016,7 +7025,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33385"></script>
+    <script src="/js/app.js?v=33390"></script>
     <script src="/js/lobby.js?v=33400"></script>
     <script src="/js/play.js?v=33215"></script>
     <script src="/js/tournaments.js?v=33180"></script>
