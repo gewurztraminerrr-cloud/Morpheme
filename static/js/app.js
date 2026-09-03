@@ -1403,6 +1403,17 @@ function showPage(pageId) {
         }
     }
     window.currentPageId = pageId;
+    if (pageId !== 'page-play') {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().catch(() => {});
+                }
+            } catch(e) {}
+        }
+    }
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
