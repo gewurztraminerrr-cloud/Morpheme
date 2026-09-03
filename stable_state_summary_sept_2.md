@@ -1,22 +1,23 @@
 # Morpheme Stable State Summary — September 2, 2026
 
 **Synchronization Checkpoint**: Complete alignment across GitHub (`origin/main`), Production (`morpheme.games`), Localhost, and Mobile App.
-**Latest Commit ID**: `0da98ef9`
-**Timestamp**: September 2, 2026
+**Latest Commit ID**: `0de74a33`
+**Timestamp**: September 2, 2026 (End of Day Baseline)
 
 ---
 
 ## 1. Summary of Work & Fixes Consolidated in this Baseline
 
-### A. Lobby Layout, drawer, and Scrollbars
-1. **Lobby Players & Chat Drawer Default Closed**:
+### A. Lobby Layout, Drawer, Boundaries & Scrollbars
+1. **Calibrated Mobile Viewport Boundaries**:
+   - Adjusted `#page-lobby.active` height on mobile to `calc(100dvh - 150px)`.
+   - All 3 panels (**Play Solo or with Friends**, **Main Lobby**, and **Active Rooms**) have their bottom border positioned evenly, snugly, and directly above the fixed 38px "Players in Lobby & Chat" drawer button with no wasted gap.
+2. **Lobby Players & Chat Drawer Default Closed**:
    - Initialized `closeLobbyChatDrawer()` to ensure the bottom drawer is collapsed on initial page load, login, registration, and view transitions.
-2. **Constant Height During Chat Typing**:
+3. **Constant Height During Chat Typing**:
    - Removed mobile keyboard shrink CSS and JavaScript viewport-resizing hacks so the open chatbox maintains a smooth, constant height when typing messages.
-3. **Themed Cyan/Blue Scrollbar Thumbs**:
+4. **Themed Cyan/Blue Scrollbar Thumbs**:
    - Replaced magenta/red scrollbars with the themed cyan/blue gradient (`rgba(0, 240, 255, 0.7)` and `linear-gradient(...)`) across the Game Types panel, Solo/Friends panel, and Active Rooms list on mobile.
-4. **Calibrated Mobile Viewport**:
-   - Aligned the bottom boundary of the Active Rooms panel (`calc(100dvh - 166px)`) to sit 6px directly above the fixed 38px "Players in Lobby & Chat" drawer button.
 5. **Mobile Morpheme Logo Placeholder**:
    - Scaled placeholder logo image inside `#rooms-list` to 190px (`drop-shadow(0 0 15px rgba(255, 255, 255, 0.2))`).
 6. **Desktop Drawer Proportions**:
@@ -55,7 +56,7 @@
 
 | Target | Status | Commit / Version |
 | :--- | :--- | :--- |
-| **Local Repository** | Clean (`main`) | `0da98ef9` |
-| **GitHub Remote** | Synchronized (`origin/main`) | `0da98ef9` |
-| **Production Server** | Synchronized (`132.148.72.249`) | `0da98ef9` |
+| **Local Repository** | Clean (`main`) | `0de74a33` |
+| **GitHub Remote** | Synchronized (`origin/main`) | `0de74a33` |
+| **Production Server** | Synchronized (`132.148.72.249`) | `0de74a33` |
 | **PM2 Process** | Online (`morpheme` id: 0) | Restarted & Verified |
