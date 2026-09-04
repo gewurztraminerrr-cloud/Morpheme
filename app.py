@@ -8295,7 +8295,7 @@ def get_tournament_status():
         'history': history,
         'round_scores': round_scores,
         'standings': tournament_manager.get_tournament_standings(t['id']),
-        'all_matchups': tournament_manager.get_all_matchups(t['id'], t['current_round']) if t['status'] == 'active' else [],
+        'all_matchups': tournament_manager.get_all_matchups(t['id'], t['current_round']) if t['status'] in ('active', 'completed') else [],
         'all_tournament_matchups': tournament_manager.get_all_tournament_matchups(t['id']) if t['status'] in ('active', 'completed') else [],
         'total_participants': total_participants,
         'is_guest': session.get('is_guest', False)

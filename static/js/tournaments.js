@@ -193,9 +193,18 @@ function renderTournament(data) {
         if (hasMatchups) {
             mCard.classList.remove('hidden');
 
-            const curRoundMatchups = (data.all_matchups && data.all_matchups.length > 0) ? data.all_matchups : (data.all_tournament_matchups || []);
-            // USER REQUEST: Display the pairing for yourself only by default
+            const targetRound = data.current_round || (data.all_tournament_matchups && data.all_tournament_matchups.length > 0 
+                ? Math.max(...data.all_tournament_matchups.map(m => m.round_number || 1)) 
+                : 1);
+
+            const curRoundMatchups = (data.all_matchups && data.all_matchups.length > 0) 
+                ? data.all_matchups 
+                : (data.all_tournament_matchups || []).filter(m => (m.round_number || 1) === targetRound);
+
+            // USER REQUEST: Display the pairing for yourself only by default (from current/latest round)
             const myMatchup = curRoundMatchups.find(m => 
+                m.u1_name === window.currentUser || m.u2_name === window.currentUser
+            ) || (data.all_tournament_matchups || []).slice().reverse().find(m => 
                 m.u1_name === window.currentUser || m.u2_name === window.currentUser
             );
             
