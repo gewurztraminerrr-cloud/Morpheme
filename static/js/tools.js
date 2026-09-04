@@ -446,6 +446,7 @@ async function runComboSearch() {
         const comboScroll = document.getElementById('combo-scroll-container');
         if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
             comboScroll._updateCustomScrollbar();
+            setTimeout(() => { if (comboScroll._updateCustomScrollbar) comboScroll._updateCustomScrollbar(); }, 100);
         }
 
     } catch (error) {
