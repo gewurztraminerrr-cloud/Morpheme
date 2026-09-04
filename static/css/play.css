@@ -155,11 +155,15 @@
 
 .play-grid {
     display: grid;
-    /* User Request: Make side panels larger horizontally while preserving board space */
-    grid-template-columns: var(--left-panel-w, 400px) 1fr var(--right-panel-w, 450px);
+    /* Equal side panels so center board is mathematically centered on the screen */
+    grid-template-columns: var(--left-panel-w, 420px) 1fr var(--right-panel-w, 420px);
     gap: 12px; /* Slightly tighter gap to gain a few pixels */
     flex: 1;
     min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
     /* Important for scrolling children */
 }
 
@@ -716,7 +720,8 @@ body.theme-light-brown .player-score-val {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: center !important;
+    text-align: center !important;
     width: 100% !important;
     max-width: 500px !important;
     box-sizing: border-box !important;
@@ -726,7 +731,10 @@ body.theme-light-brown .player-score-val {
     display: inline-flex !important;
     flex-direction: row !important;
     align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
     gap: 8px !important;
+    margin: 0 auto !important;
 }
 
 .spinner-set-label {
@@ -1329,19 +1337,20 @@ body.theme-light-brown .player-score-val {
 
 .word-input-section {
     display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 8px;
-    /* Reduced gap slightly */
     width: 100%;
     max-width: 640px;
-    /* Increased to match board panel */
     margin: 0 auto;
     flex-wrap: nowrap;
-    /* Prevent wrapping */
 }
 
 @media (min-width: 993px) {
     .word-input-section {
         display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 }
 
@@ -1358,12 +1367,12 @@ body.theme-light-brown .player-score-val {
 }
 
 .status-valid {
-    color: #48bb78;
+    color: #4ade80;
     /* Green */
 }
 
 .status-invalid {
-    color: #f56565;
+    color: #f87171;
     /* Red */
 }
 
@@ -1382,6 +1391,7 @@ body.theme-light-brown .player-score-val {
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 1rem;
+    text-align: center;
 }
 
 #word-input::placeholder {
@@ -5311,8 +5321,8 @@ input[type=range]::-moz-range-track {
         --cell-size: 50px; /* Scale board cells down gracefully on small displays */
     }
     .play-grid {
-        --left-panel-w: 320px;
-        --right-panel-w: 380px;
+        --left-panel-w: 350px;
+        --right-panel-w: 350px;
     }
 }
 
@@ -5461,12 +5471,12 @@ input[type=range]::-moz-range-track {
     }
     .header-title-group {
         display: flex !important;
-
         align-items: center !important;
         gap: 8px !important;
         justify-content: center !important;
+        text-align: center !important;
         width: 100% !important;
-        padding-right: 100px !important; /* Leave space for return button on right */
+        padding: 0 40px !important;
         box-sizing: border-box !important;
         order: 1 !important; /* Force first */
     }
@@ -5585,8 +5595,8 @@ input[type=range]::-moz-range-track {
         --cell-size: 64px; /* Slightly larger board cells for better legibility */
     }
     .play-grid {
-        --left-panel-w: 440px;
-        --right-panel-w: 480px;
+        --left-panel-w: 460px;
+        --right-panel-w: 460px;
         gap: 16px !important;
     }
     .player-item {
@@ -5608,8 +5618,8 @@ input[type=range]::-moz-range-track {
         --def-font-size: 16px !important;
     }
     .play-grid {
-        --left-panel-w: 480px;
-        --right-panel-w: 520px;
+        --left-panel-w: 500px;
+        --right-panel-w: 500px;
         gap: 20px !important;
     }
     .player-item {
@@ -5631,8 +5641,8 @@ input[type=range]::-moz-range-track {
         --def-font-size: 17px !important;
     }
     .play-grid {
-        --left-panel-w: 520px; /* Tons of space for users and scores */
-        --right-panel-w: 560px; /* Massive space for words list and tabs */
+        --left-panel-w: 540px; /* Tons of space for users and scores */
+        --right-panel-w: 540px; /* Massive space for words list and tabs */
         gap: 24px !important;
     }
     .player-item {
@@ -9825,7 +9835,7 @@ body.is-desktop .left-panel-container .chat-panel {
 
 body.is-desktop .play-grid {
     display: grid !important;
-    grid-template-columns: var(--left-panel-w, 340px) 1fr var(--right-panel-w, 400px) !important;
+    grid-template-columns: var(--left-panel-w, 380px) 1fr var(--right-panel-w, 380px) !important;
     gap: 15px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -9833,7 +9843,7 @@ body.is-desktop .play-grid {
     overflow: hidden !important;
     flex: 1 !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
 }
 
 body.is-desktop .left-panel-container,
@@ -9864,8 +9874,11 @@ body.is-desktop .word-input-section {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
     width: 100% !important;
+    max-width: 500px !important;
+    margin: 0 auto !important;
 }
 
 body.is-desktop .word-input-section #submit-word-btn {
@@ -9875,6 +9888,7 @@ body.is-desktop .word-input-section #submit-word-btn {
 body.is-desktop .word-input-section #word-input {
     flex: 1 1 auto !important;
     width: 100% !important;
+    text-align: center !important;
 }
 
 body.is-desktop .word-input-section .timer-controls-group {
