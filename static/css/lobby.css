@@ -4,67 +4,69 @@
     display: none;
 }
 
-#page-lobby.active {
-    display: flex !important;
-    flex-direction: column !important;
-    height: calc(100vh - 68px) !important;
-    max-height: calc(100vh - 68px) !important;
-    overflow: hidden !important;
-    position: relative !important;
-    box-sizing: border-box !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
+@media (min-width: 901px) {
+    #page-lobby.active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: calc(100vh - 68px) !important;
+        max-height: calc(100vh - 68px) !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
 
-.lobby-grid {
-    display: grid !important;
-    grid-template-columns: 1.7fr 1.3fr !important;
-    gap: 16px !important;
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: calc(100% - 41px) !important;
-    margin-top: 0 !important;
-    margin-bottom: 3px !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-    transition: grid-template-columns 0.3s ease, gap 0.3s ease;
-}
+    .lobby-grid {
+        display: grid !important;
+        grid-template-columns: 1.7fr 1.3fr !important;
+        gap: 16px !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: calc(100% - 41px) !important;
+        margin-top: 0 !important;
+        margin-bottom: 3px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        transition: grid-template-columns 0.3s ease, gap 0.3s ease;
+    }
 
-#mobile-panel-main {
-    grid-column: 1;
-    margin-top: 10px;
-    margin-bottom: 8px;
-    height: calc(100% - 18px) !important;
-    max-height: calc(100% - 18px) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box;
-}
+    #mobile-panel-main {
+        grid-column: 1;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        height: calc(100% - 18px) !important;
+        max-height: calc(100% - 18px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
 
-#mobile-panel-solo {
-    grid-column: 1;
-    background: var(--bg-panel);
-    border-radius: 12px;
-    padding: 16px 20px 14px 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--input-border);
-    margin-top: 10px;
-    margin-bottom: 8px;
-    height: calc(100% - 18px) !important;
-    max-height: calc(100% - 18px) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box;
-}
+    #mobile-panel-solo {
+        grid-column: 1;
+        background: var(--bg-panel);
+        border-radius: 12px;
+        padding: 16px 20px 14px 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--input-border);
+        margin-top: 10px;
+        margin-bottom: 8px;
+        height: calc(100% - 18px) !important;
+        max-height: calc(100% - 18px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
 
-#mobile-panel-rooms {
-    grid-column: 2;
-    margin-top: 10px;
-    margin-bottom: 8px;
-    height: calc(100% - 18px) !important;
-    max-height: calc(100% - 18px) !important;
-    overflow: hidden !important;
-    box-sizing: border-box;
+    #mobile-panel-rooms {
+        grid-column: 2;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        height: calc(100% - 18px) !important;
+        max-height: calc(100% - 18px) !important;
+        overflow: hidden !important;
+        box-sizing: border-box;
+    }
 }
 
 /* Hide mobile navigation buttons on desktop */
@@ -1113,7 +1115,12 @@ body.theme-light-brown .field-hint {
 /* Tablet & Mobile Layout for Lobby Grid */
 @media (max-width: 900px) {
     #page-lobby.active {
-        padding-bottom: 56px !important;
+        height: calc(100vh - 165px) !important;
+        height: calc(100dvh - 165px) !important;
+        max-height: calc(100vh - 165px) !important;
+        max-height: calc(100dvh - 165px) !important;
+        overflow: hidden !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -2205,11 +2212,13 @@ body.theme-light-brown .lobby-chat-input:focus {
     #page-lobby.active {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100vh - 165px) !important;
+        height: calc(100dvh - 165px) !important;
+        max-height: calc(100vh - 165px) !important;
+        max-height: calc(100dvh - 165px) !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 0 0 56px 0 !important;
+        padding: 0 !important;
         margin: 0 !important;
         display: flex !important;
         flex-direction: column !important;
