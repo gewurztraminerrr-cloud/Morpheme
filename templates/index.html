@@ -1539,20 +1539,13 @@
                     }
                 } catch(e) {}
 
-                var targetPageId = 'page-lobby';
-                var hash = window.location.hash || '';
-                if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
-                    targetPageId = hash.substring(1);
-                }
-                var targetNavName = targetPageId.replace('page-', '');
-
                 // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                 setTimeout(function() {
                     window._currentLobbyPanel = 'main';
-                    var pLobby = document.getElementById(targetPageId) || document.getElementById('page-lobby');
+                    var pLobby = document.getElementById('page-lobby');
                     var lobbyGrid = document.querySelector('.lobby-grid');
                     var mainPanel = document.getElementById('mobile-panel-main');
-                    if (targetPageId === 'page-lobby' && pLobby && lobbyGrid && mainPanel) {
+                    if (pLobby && lobbyGrid && mainPanel) {
                         pLobby.classList.add('active');
                         pLobby.style.display = 'flex';
                         lobbyGrid.scrollLeft = mainPanel.offsetLeft;
@@ -1565,15 +1558,19 @@
                     }
 
                     if (typeof window.showPage === 'function') {
-                        window.showPage(targetPageId);
+                        window.showPage('page-lobby');
                     } else if (typeof showPage === 'function') {
-                        showPage(targetPageId);
+                        showPage('page-lobby');
                     } else if (pLobby) {
                         pLobby.classList.add('active');
-                        pLobby.style.display = (targetPageId === 'page-lobby') ? 'flex' : 'block';
+                        pLobby.style.display = 'flex';
                     }
 
-                    var navBtn = document.querySelector('.nav-btn[data-page="' + targetNavName + '"]') || document.querySelector('.nav-btn[data-page="lobby"]');
+                    try {
+                        history.replaceState(null, null, '#page-lobby');
+                    } catch(e) {}
+
+                    var navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
                     if (navBtn && typeof window.updateActiveNav === 'function') {
                         window.updateActiveNav(navBtn);
                     }
@@ -6893,16 +6890,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33805"></script>
-    <script src="/js/lobby.js?v=33805"></script>
-    <script src="/js/play.js?v=33805"></script>
-    <script src="/js/tournaments.js?v=33805"></script>
-    <script src="/js/leaderboard.js?v=33805"></script>
-    <script src="/js/tools.js?v=33805"></script>
-    <script src="/js/mouse_selection.js?v=33805"></script>
-    <script src="/js/mods.js?v=33805"></script>
-    <script src="/js/private_matches.js?v=33805"></script>
-    <script src="/js/donate.js?v=33805"></script>
+    <script src="/js/app.js?v=33806"></script>
+    <script src="/js/lobby.js?v=33806"></script>
+    <script src="/js/play.js?v=33806"></script>
+    <script src="/js/tournaments.js?v=33806"></script>
+    <script src="/js/leaderboard.js?v=33806"></script>
+    <script src="/js/tools.js?v=33806"></script>
+    <script src="/js/mouse_selection.js?v=33806"></script>
+    <script src="/js/mods.js?v=33806"></script>
+    <script src="/js/private_matches.js?v=33806"></script>
+    <script src="/js/donate.js?v=33806"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>

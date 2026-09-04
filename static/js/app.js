@@ -398,13 +398,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Gateway button always displays ENTER LOBBY
                 gatewayBtn.textContent = 'ENTER LOBBY';
 
-                let targetPageId = 'page-lobby';
-                let targetNavName = 'lobby';
-                if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
-                    targetPageId = hash.substring(1);
-                    targetNavName = targetPageId.replace('page-', '');
-                }
-
                 let gatewayTransitioning = false;
                 const executeGatewayTransition = (e) => {
                     if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
@@ -451,8 +444,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             pLoad.style.display = 'none';
                         }
                         try {
-                            showPage(targetPageId);
-                            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNavName}"]`);
+                            showPage('page-lobby');
+                            const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
                             if (navBtn) updateActiveNav(navBtn);
                             handleLobbyMusicState();
                             if (typeof window.scrollLobbyToMainPanel === 'function') {
@@ -462,9 +455,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 setTimeout(window.scrollLobbyToMainPanel, 150);
                                 setTimeout(window.scrollLobbyToMainPanel, 300);
                             }
-                            if (hash === '#page-login') {
+                            try {
                                 history.replaceState(null, null, '#page-lobby');
-                            }
+                            } catch (e) {}
                             if (typeof window.fetchLobbyStats === 'function') {
                                 window.fetchLobbyStats('all');
                             }
