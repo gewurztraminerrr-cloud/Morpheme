@@ -154,12 +154,12 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33416" as="style">
     <link rel="preload" href="/css/lobby.css?v=33622" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33740">
-    <link rel="stylesheet" href="/css/lobby.css?v=33740">
-    <link rel="stylesheet" href="/css/play.css?v=33740">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33740">
-    <link rel="stylesheet" href="/css/forum.css?v=33740">
-    <link rel="stylesheet" href="/css/donate.css?v=33740">
+    <link rel="stylesheet" href="/css/style.css?v=33750">
+    <link rel="stylesheet" href="/css/lobby.css?v=33750">
+    <link rel="stylesheet" href="/css/play.css?v=33750">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33750">
+    <link rel="stylesheet" href="/css/forum.css?v=33750">
+    <link rel="stylesheet" href="/css/donate.css?v=33750">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2195,10 +2195,6 @@
                             <span class="timer-label">Time:</span>
                             <span class="timer-value" id="timer-value">0:00</span>
                         </div>
-                        <div class="timer-controls-group" id="timer-controls-group">
-                            <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
-                            <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
-                        </div>
                     </div>
 
                     <div id="game-board" class="game-board"></div>
@@ -2206,6 +2202,10 @@
                     <div class="word-input-section">
                         <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
                         <button id="submit-word-btn">Submit</button>
+                        <div class="timer-controls-group" id="timer-controls-group">
+                            <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
+                            <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
+                        </div>
                     </div>
                     <div id="cube-rotate-hint" class="cube-rotate-hint hidden">ARROWS TO ROTATE</div>
                     <div class="mobile-nav-indicators">
