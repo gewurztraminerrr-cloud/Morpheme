@@ -5541,13 +5541,12 @@ input[type=range]::-moz-range-track {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: center !important;
+        justify-content: space-between !important;
         align-items: center !important;
-        text-align: center !important;
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto 12px auto !important;
-        padding: 5px 15px !important;
+        padding: 5px 12px !important;
         box-sizing: border-box !important;
     }
     .play-header .timer-display {
@@ -6862,9 +6861,8 @@ input[type=range]::-moz-range-track {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: center !important;
+        justify-content: space-between !important;
         align-items: center !important;
-        text-align: center !important;
         height: 38px !important;
         box-sizing: border-box !important;
     }
@@ -6876,10 +6874,13 @@ input[type=range]::-moz-range-track {
         font-size: 1.3rem !important;
     }
     .board-panel .timer-display .timer-left-group {
-        display: flex !important;
+        display: inline-flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: center !important;
-        margin: 0 auto !important;
+        justify-content: flex-start !important;
+        margin: 0 !important;
+        gap: 6px !important;
     }
 
     .board-panel .game-board:not(.game-board-loading),
@@ -8394,8 +8395,7 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
+        justify-content: space-between !important;
         width: 100% !important;
         max-width: 100% !important;
         height: 38px !important;
@@ -8408,8 +8408,8 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: center !important;
-        margin: 0 auto !important;
+        justify-content: flex-start !important;
+        margin: 0 !important;
         gap: 6px !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
