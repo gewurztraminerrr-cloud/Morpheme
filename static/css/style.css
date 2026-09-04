@@ -3588,41 +3588,111 @@ body {
     }
 }
 
-/* Aesthetic Close Button */
-.close-overlay {
-    background: rgba(var(--text-primary-rgb), 0.05);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    color: var(--text-60);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 0;
-    line-height: 1;
-    position: sticky;
-    top: 20px;
-    right: 20px;
-    margin-right: 10px;
-    z-index: 10001;
-    align-self: flex-end;
-    float: right;
-    flex-shrink: 0;
+/* Aesthetic Close Button for Overlays & Replay */
+.close-overlay,
+#close-history-review,
+#close-integrated-replay {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    z-index: 10001 !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
-.close-overlay:hover {
-    background: rgba(244, 63, 94, 0.15);
-    border-color: rgba(244, 63, 94, 0.3);
-    color: #f43f5e;
-    transform: rotate(90deg) scale(1.1);
+.close-overlay:hover,
+#close-history-review:hover,
+#close-integrated-replay:hover {
+    background: rgba(244, 63, 94, 0.25) !important;
+    border-color: rgba(244, 63, 94, 0.6) !important;
+    color: #ff4d6d !important;
+    transform: rotate(90deg) scale(1.1) !important;
 }
 
-.close-overlay:active {
-    transform: rotate(90deg) scale(0.95);
+.close-overlay:active,
+#close-history-review:active,
+#close-integrated-replay:active {
+    transform: rotate(90deg) scale(0.95) !important;
+}
+
+/* Close button for light layout themes */
+[class*="theme-white"] .close-overlay,
+[class*="theme-white"] #close-history-review,
+[class*="theme-white"] #close-integrated-replay,
+[class*="theme-light-"] .close-overlay,
+[class*="theme-light-"] #close-history-review,
+[class*="theme-light-"] #close-integrated-replay,
+body.theme-white .close-overlay,
+body.theme-white #close-history-review,
+body.theme-white #close-integrated-replay,
+body.theme-light-gray .close-overlay,
+body.theme-light-gray #close-history-review,
+body.theme-light-gray #close-integrated-replay,
+body.theme-yellow .close-overlay,
+body.theme-yellow #close-history-review,
+body.theme-yellow #close-integrated-replay,
+body.theme-pink .close-overlay,
+body.theme-pink #close-history-review,
+body.theme-pink #close-integrated-replay,
+body.theme-orange .close-overlay,
+body.theme-orange #close-history-review,
+body.theme-orange #close-integrated-replay,
+body.theme-gray .close-overlay,
+body.theme-gray #close-history-review,
+body.theme-gray #close-integrated-replay,
+body.theme-light-brown .close-overlay,
+body.theme-light-brown #close-history-review,
+body.theme-light-brown #close-integrated-replay {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[class*="theme-white"] .close-overlay:hover,
+[class*="theme-white"] #close-history-review:hover,
+[class*="theme-white"] #close-integrated-replay:hover,
+[class*="theme-light-"] .close-overlay:hover,
+[class*="theme-light-"] #close-history-review:hover,
+[class*="theme-light-"] #close-integrated-replay:hover,
+body.theme-white .close-overlay:hover,
+body.theme-white #close-history-review:hover,
+body.theme-white #close-integrated-replay:hover,
+body.theme-light-gray .close-overlay:hover,
+body.theme-light-gray #close-history-review:hover,
+body.theme-light-gray #close-integrated-replay:hover,
+body.theme-yellow .close-overlay:hover,
+body.theme-yellow #close-history-review:hover,
+body.theme-yellow #close-integrated-replay:hover,
+body.theme-pink .close-overlay:hover,
+body.theme-pink #close-history-review:hover,
+body.theme-pink #close-integrated-replay:hover,
+body.theme-orange .close-overlay:hover,
+body.theme-orange #close-history-review:hover,
+body.theme-orange #close-integrated-replay:hover,
+body.theme-gray .close-overlay:hover,
+body.theme-gray #close-history-review:hover,
+body.theme-gray #close-integrated-replay:hover,
+body.theme-light-brown .close-overlay:hover,
+body.theme-light-brown #close-history-review:hover,
+body.theme-light-brown #close-integrated-replay:hover {
+    background: #fee2e2 !important;
+    border-color: #f87171 !important;
+    color: #ef4444 !important;
 }
 
 /* Profile Content Tabs */
@@ -3711,13 +3781,17 @@ body {
     background: rgba(var(--text-primary-rgb), 0.05);
     padding: 20px 30px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
 .integrated-replay-header .header-main {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
 }
 
 .integrated-replay-header h3 {

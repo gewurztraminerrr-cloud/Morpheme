@@ -2153,32 +2153,57 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     const useOverlay = !!overlay;
     const prefix = useOverlay ? 'review' : 'integrated';
 
+    const closeReplay = () => {
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('forced-show');
+        }
+        if (integratedPanel) {
+            integratedPanel.classList.add('hidden');
+        }
+        if (window.replayInterval) {
+            clearInterval(window.replayInterval);
+            window.replayInterval = null;
+        }
+    };
+
     if (useOverlay) {
         overlay.classList.add('forced-show');
         overlay.classList.remove('hidden');
         // Setup Close Handler
         const closeBtn = document.getElementById('close-history-review');
         if (closeBtn) {
-            closeBtn.onclick = () => {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('forced-show');
-                if (window.replayInterval) {
-                    clearInterval(window.replayInterval);
-                    window.replayInterval = null;
-                }
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                closeReplay();
             };
         }
         overlay.onclick = (e) => {
             if (e.target === overlay) {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('forced-show');
-                if (window.replayInterval) {
-                    clearInterval(window.replayInterval);
-                    window.replayInterval = null;
-                }
+                closeReplay();
             }
         };
-    } else if (integratedPanel) {
+
+        // ESC key support to close replay overlay
+        const onEscReplay = (e) => {
+            if (e.key === 'Escape') {
+                closeReplay();
+                window.removeEventListener('keydown', onEscReplay);
+            }
+        };
+        window.addEventListener('keydown', onEscReplay);
+    }
+
+    // Setup close button handler for integrated replay panel
+    const closeIntegratedBtn = document.getElementById('close-integrated-replay');
+    if (closeIntegratedBtn) {
+        closeIntegratedBtn.onclick = (e) => {
+            e.stopPropagation();
+            closeReplay();
+        };
+    }
+
+    if (!useOverlay && integratedPanel) {
         integratedPanel.classList.remove('hidden');
         integratedPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
