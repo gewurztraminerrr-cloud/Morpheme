@@ -1200,13 +1200,14 @@ body.theme-light-brown .field-hint {
     .active-rooms-panel,
     #mobile-panel-rooms {
         gap: 8px !important;
-        margin-bottom: 12px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 0 !important;
     }
 
     .split-points-section,
     .solo-friends-section:last-child {
-        margin-bottom: 75px !important;
-        padding-bottom: 15px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 0 !important;
     }
 
     .game-title,
@@ -2399,6 +2400,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         font-size: 0.78rem !important;
     }
 
+    .game-types-panel .game-section,
     .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
         margin-bottom: 6px !important;
