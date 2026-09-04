@@ -2184,7 +2184,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 4px 6px 44px 6px !important;
+        padding: 4px 6px 54px 6px !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
