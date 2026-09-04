@@ -1457,9 +1457,28 @@ function showPage(pageId) {
         document.body.classList.remove('loading-active');
     }
     document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (pageId === 'page-play' && isMobileDevice) {
+        const hideHeaderOnMobile = () => {
+            if (typeof window.hideGameRoomTopMenu === 'function') {
+                window.hideGameRoomTopMenu(true);
+            } else {
+                const header = document.querySelector('.header');
+                const sep = document.querySelector('.separator');
+                const headerH = (header ? header.offsetHeight : 0) + (sep ? sep.offsetHeight : 0);
+                if (headerH > 0) window.scrollTo(0, headerH);
+            }
+        };
+        hideHeaderOnMobile();
+        requestAnimationFrame(hideHeaderOnMobile);
+        setTimeout(hideHeaderOnMobile, 50);
+        setTimeout(hideHeaderOnMobile, 150);
+        setTimeout(hideHeaderOnMobile, 300);
+    } else {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }
     if (typeof handleLobbyMusicState === 'function') {
         handleLobbyMusicState();
     }
@@ -1578,22 +1597,20 @@ function showPage(pageId) {
             const isMobile = window.innerWidth <= 992;
             if (input && !input.disabled && !isMobile) {
                 input.focus();
-    if (window.innerWidth <= 768 && !window.hasCenteredBoard) {
-        window.hasCenteredBoard = true;
-        setTimeout(() => {
-            const board = document.getElementById('play-panel-board');
-            if (board) board.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'start' });
-        }, 500);
-    }
-    
             }
 
-            // Mobile carousel: Ensure board is centered by default
+            // Mobile carousel: Ensure board is centered by default and top menu is hidden
             if (window.innerWidth <= 992) {
-                const boardPanel = document.querySelector('.board-panel');
-                if (boardPanel) {
-                    console.log('[app.js] Centering board panel in mobile carousel.');
-                    boardPanel.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+                if (typeof window.switchPlayPanel === 'function') {
+                    window.switchPlayPanel('board', false);
+                } else {
+                    const playGrid = document.querySelector('.play-grid');
+                    if (playGrid) {
+                        playGrid.scrollLeft = playGrid.clientWidth;
+                    }
+                }
+                if (typeof window.hideGameRoomTopMenu === 'function') {
+                    window.hideGameRoomTopMenu(true);
                 }
             }
         }, 100);

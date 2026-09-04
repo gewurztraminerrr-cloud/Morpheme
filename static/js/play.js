@@ -75,7 +75,38 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Mobile Game Room: Ultra-fast instant reveal for MORPHEME header and top menu buttons when swiping down
+// Mobile Game Room: Top Menu (Logo & Nav Tabs) Management
+function getTopHeaderHeight() {
+    const header = document.querySelector('.header');
+    const sep = document.querySelector('.separator');
+    return (header ? header.offsetHeight : 0) + (sep ? sep.offsetHeight : 0);
+}
+
+window.hideGameRoomTopMenu = function(immediate = true) {
+    if (window.innerWidth > 992) return;
+    const playPage = document.getElementById('page-play');
+    if (!playPage || !playPage.classList.contains('active')) return;
+    const headerH = getTopHeaderHeight();
+    if (headerH > 0) {
+        if (immediate) {
+            window.scrollTo(0, headerH);
+        } else {
+            window.scrollTo({ top: headerH, behavior: 'smooth' });
+        }
+    }
+};
+
+window.showGameRoomTopMenu = function(immediate = false) {
+    if (window.innerWidth > 992) return;
+    const playPage = document.getElementById('page-play');
+    if (!playPage || !playPage.classList.contains('active')) return;
+    if (immediate) {
+        window.scrollTo(0, 0);
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
+
 (function _setupMobileGameRoomHeaderReveal() {
     let touchStartY = 0;
     let touchStartX = 0;
@@ -85,10 +116,40 @@ window.addEventListener('resize', () => {
         if (window.innerWidth > 992) return;
         const playPage = document.getElementById('page-play');
         if (!playPage || !playPage.classList.contains('active')) return;
+        
+        // Strict Exclusion: Never track touches that start on the game board, cells, controls, or inputs
+        if (e.target.closest('#game-board, .board-cell, .game-board, input, textarea, button, select, .timer-controls-group')) {
+            isTracking = false;
+            // If the top header was temporarily visible and user taps the board to play, hide it
+            const headerH = getTopHeaderHeight();
+            if (window.scrollY < headerH - 5 && e.target.closest('#game-board, .board-cell, .game-board')) {
+                window.hideGameRoomTopMenu(true);
+            }
+            return;
+        }
+
         if (e.touches && e.touches.length === 1) {
             touchStartY = e.touches[0].clientY;
             touchStartX = e.touches[0].clientX;
-            isTracking = true;
+            
+            // Only start tracking a reveal gesture if the touch starts near the top of the mobile screen (or on play-header)
+            // when the panel is at the top of its scroll container
+            const panel = e.target.closest('.left-panel-container, .board-panel, .words-panel, #page-play');
+            const panelAtTop = !panel || panel.scrollTop <= 5;
+            
+            // Top menu is currently hidden (window.scrollY >= headerH - 10)
+            const headerH = getTopHeaderHeight();
+            const headerHidden = window.scrollY >= Math.max(10, headerH - 10);
+            
+            if (headerHidden) {
+                // To reveal: swipe down from the top region (touchStartY <= 120 or inside .play-header)
+                if (panelAtTop && (touchStartY <= 120 || e.target.closest('.play-header'))) {
+                    isTracking = true;
+                }
+            } else {
+                // Top menu is currently visible: allow swiping up from header/page to hide it
+                isTracking = true;
+            }
         }
     }, { passive: true });
 
@@ -98,24 +159,30 @@ window.addEventListener('resize', () => {
         if (!playPage || !playPage.classList.contains('active')) return;
         if (!e.touches || e.touches.length !== 1) return;
         
+        // Safety guard: If board selection or mouseState is down, immediately cancel tracking
+        if (mouseState.isDown || (window.activeTouchIdentifier !== undefined)) {
+            isTracking = false;
+            return;
+        }
+
         const currentY = e.touches[0].clientY;
         const currentX = e.touches[0].clientX;
         const diffY = currentY - touchStartY;
         const diffX = Math.abs(currentX - touchStartX);
+        const headerH = getTopHeaderHeight();
 
-        // Immediate responsive trigger: swiping down (diffY > 8px)
-        if (diffY > 8 && diffY > diffX * 0.8) {
-            const panel = e.target.closest('.left-panel-container, .board-panel, .words-panel, #page-play');
-            if (panel) {
-                if (panel.scrollTop <= 12) {
-                    if (window.scrollY > 0) {
-                        isTracking = false;
-                        window.scrollTo(0, 0);
-                    }
-                }
-            } else if (window.scrollY > 0) {
+        // 1. Swiping down from top to REVEAL top menu (diffY > 25, dominant vertical movement)
+        if (diffY > 25 && diffY > diffX * 1.5) {
+            if (window.scrollY > 0) {
                 isTracking = false;
-                window.scrollTo(0, 0);
+                window.showGameRoomTopMenu(false);
+            }
+        } 
+        // 2. Swiping up to HIDE top menu (diffY < -20, dominant vertical movement)
+        else if (diffY < -20 && Math.abs(diffY) > diffX * 1.2) {
+            if (window.scrollY < headerH - 5) {
+                isTracking = false;
+                window.hideGameRoomTopMenu(false);
             }
         }
     }, { passive: true });
@@ -2206,11 +2273,12 @@ async function updateGameState(incomingState = null) {
                         if (wordInput) wordInput.focus();
                     } else {
                         // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up).
-                        // Instead, scroll the timer into view at the very top of the panel.
+                        // Keep the board panel at top and ensure the top menu stays hidden.
                         setTimeout(() => {
-                            const timerDisplay = document.querySelector('.timer-display');
-                            if (timerDisplay) {
-                                timerDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            const boardPanel = document.querySelector('.board-panel');
+                            if (boardPanel) boardPanel.scrollTop = 0;
+                            if (typeof window.hideGameRoomTopMenu === 'function') {
+                                window.hideGameRoomTopMenu(true);
                             }
                         }, 100); // Small delay to let board rendering settle
                     }
@@ -8520,6 +8588,14 @@ function handleCellTouchStart(e) {
     // Unconditionally prevent default scroll/gestures immediately on any board touch start
     if (e.cancelable !== false) {
         e.preventDefault();
+    }
+
+    // If top menu was revealed on mobile, ensure touching the board hides it so the full game room is in view
+    if (window.innerWidth <= 992) {
+        const headerH = (document.querySelector('.header')?.offsetHeight || 0) + (document.querySelector('.separator')?.offsetHeight || 0);
+        if (headerH > 0 && window.scrollY < headerH - 5) {
+            window.scrollTo(0, headerH);
+        }
     }
 
     if (isCubeBoard()) return; // Cube: typing-only, no touch tile selection
