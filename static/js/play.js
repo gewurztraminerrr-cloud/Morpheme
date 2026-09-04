@@ -224,28 +224,29 @@ const BoardAudio = {
         if (!this.ctx) return;
         const sampleRate = this.ctx.sampleRate || 44100;
 
-        // 1. Pre-render 16 pitch levels of tile selection sounds with fast acoustic click transients
+        // 1. Pre-render 16 pitch levels of tile selection sounds (Warm acoustic wooden/marimba tap)
         this.tileBuffers = [];
-        const baseFreq = 400;
-        const step = 50;
+        const baseFreq = 320;
         for (let pathLen = 1; pathLen <= 16; pathLen++) {
-            const freq = Math.min(1200, baseFreq + (pathLen * step));
-            const duration = 0.045;
+            const freq = baseFreq * Math.pow(1.059463, (pathLen - 1)); // Chromatic ascending scale
+            const duration = 0.05;
             const numSamples = Math.floor(sampleRate * duration);
             const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
             const data = buffer.getChannelData(0);
 
+            let phase = 0;
             for (let i = 0; i < numSamples; i++) {
                 const t = i / sampleRate;
-                const env = Math.exp(-t * (1 / (duration * 0.35)));
-                let sample = Math.sin(2 * Math.PI * freq * t);
-                
-                // Add ultra-crisp 2ms high-transient click onset for instant auditory recognition through Bluetooth
-                if (i < sampleRate * 0.0025) {
-                    const clickEnv = 1 - (i / (sampleRate * 0.0025));
-                    sample = sample * 0.65 + (Math.sin(2 * Math.PI * 3600 * t) * clickEnv * 0.35);
-                }
-                data[i] = sample * env * 0.16;
+                // Pitch drop attack envelope for acoustic wooden/marimba percussion tap
+                const curFreq = freq * (1.0 + 0.35 * Math.exp(-t / 0.005));
+                phase += 2 * Math.PI * curFreq / sampleRate;
+                // Harmonic richness: fundamental + 2nd overtone + 3rd overtone
+                let sample = Math.sin(phase) * 0.72 + Math.sin(phase * 2) * 0.20 + Math.sin(phase * 3) * 0.08;
+                // Smooth 1ms attack ramp to avoid digital click
+                if (t < 0.001) sample *= (t / 0.001);
+                // Snappy exponential decay envelope
+                const env = Math.exp(-t / 0.022);
+                data[i] = sample * env * 0.22;
             }
             this.tileBuffers.push(buffer);
         }
