@@ -152,11 +152,11 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33858" as="style">
+    <link rel="preload" href="/css/style.css?v=33859" as="style">
     <link rel="preload" href="/css/lobby.css?v=33841" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33858">
+    <link rel="stylesheet" href="/css/style.css?v=33859">
     <link rel="stylesheet" href="/css/lobby.css?v=33841">
-    <link rel="stylesheet" href="/css/play.css?v=33858">
+    <link rel="stylesheet" href="/css/play.css?v=33859">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
     <link rel="stylesheet" href="/css/forum.css?v=33804">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
@@ -2119,27 +2119,6 @@
 
         <!-- Play Page -->
         <div id="page-play" class="page">
-            <!-- Header - Above Players, Board, and Words panels on Desktop/Laptop -->
-            <div class="play-header">
-                <div class="header-title-group">
-                    <h2 id="game-title">Accumulative</h2>
-                    <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
-                </div>
-
-                <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                    <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
-                </div>
-                <div class="game-params">
-                    Diff: <span id="param-diff">-</span> |
-                    Min: <span id="param-min">-</span> |
-                    Dict: <span id="param-dict">-</span> |
-                    Words: <span id="param-range">-</span> |
-                    Format: <span id="param-format">-</span> |
-                    Bonus: <span id="param-bonus">-</span>
-                </div>
-                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
-            </div>
-
             <div class="play-grid">
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
@@ -2180,6 +2159,27 @@
 
                 <!-- Center Panel: Board -->
                 <div class="board-panel" id="play-panel-board">
+                    <!-- Constant Parameters & Spinner Set above Timer in Board Window (Mobile markup default) -->
+                    <div class="play-header">
+                        <div class="header-title-group">
+                            <h2 id="game-title">Accumulative</h2>
+                            <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
+                        </div>
+
+                        <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                            <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
+                        </div>
+                        <div class="game-params">
+                            Diff: <span id="param-diff">-</span> |
+                            Min: <span id="param-min">-</span> |
+                            Dict: <span id="param-dict">-</span> |
+                            Words: <span id="param-range">-</span> |
+                            Format: <span id="param-format">-</span> |
+                            Bonus: <span id="param-bonus">-</span>
+                        </div>
+                        <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+                    </div>
+
                     <!-- Timer above the board within the same panel -->
                     <div class="timer-display">
                         <div class="timer-left-group">
@@ -6884,9 +6884,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33858"></script>
+    <script src="/js/app.js?v=33859"></script>
     <script src="/js/lobby.js?v=33806"></script>
-    <script src="/js/play.js?v=33858"></script>
+    <script src="/js/play.js?v=33859"></script>
     <script src="/js/tournaments.js?v=33806"></script>
     <script src="/js/leaderboard.js?v=33806"></script>
     <script src="/js/tools.js?v=33831"></script>
