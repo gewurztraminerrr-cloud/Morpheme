@@ -190,15 +190,48 @@ const unlockAudio = () => {
 document.addEventListener('click', unlockAudio, { once: true });
 document.addEventListener('touchstart', unlockAudio, { once: true });
 
-// Sound effects system using Web Audio API
+// Sound effects system using Web Audio API (Optimized for ultra-low latency & Bluetooth earpieces)
 const BoardAudio = {
     ctx: null,
+    keepAliveNode: null,
+    keepAliveGain: null,
     
     init() {
         if (this.ctx) return;
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            this.ctx = new AudioContext();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            try {
+                this.ctx = new AudioContextClass({ latencyHint: 'interactive' });
+            } catch (e) {
+                this.ctx = new AudioContextClass();
+            }
+            this.startKeepAlive();
+        }
+    },
+
+    startKeepAlive() {
+        if (!this.ctx || this.keepAliveNode) return;
+        try {
+            // Continuous inaudible silent audio carrier:
+            // Prevents Bluetooth wireless earpieces & mobile OS audio stacks (CoreAudio/AudioTrack)
+            // from entering low-power standby mode between letter selections and word validations.
+            const sampleRate = this.ctx.sampleRate || 44100;
+            const buffer = this.ctx.createBuffer(1, sampleRate, sampleRate);
+            const source = this.ctx.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+
+            const gain = this.ctx.createGain();
+            gain.gain.value = 0.00001; // Inaudible non-zero carrier stream to keep hardware pipeline active
+
+            source.connect(gain);
+            gain.connect(this.ctx.destination);
+            source.start();
+
+            this.keepAliveNode = source;
+            this.keepAliveGain = gain;
+        } catch (e) {
+            console.warn('[BoardAudio] Keep-alive stream setup warning:', e);
         }
     },
     
@@ -220,6 +253,7 @@ const BoardAudio = {
         }
         
         try {
+            const now = this.ctx.currentTime;
             const osc = this.ctx.createOscillator();
             const gainNode = this.ctx.createGain();
             
@@ -233,13 +267,13 @@ const BoardAudio = {
             const step = 50;
             const freq = Math.min(1200, baseFreq + (pathLen * step));
             
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            osc.frequency.setValueAtTime(freq, now);
             
-            gainNode.gain.setValueAtTime(0.08, this.ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(0.08, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
             
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.045);
         } catch (e) {
             console.warn('Failed to play tile sound:', e);
         }
@@ -263,6 +297,7 @@ const BoardAudio = {
         }
         
         try {
+            const now = this.ctx.currentTime;
             const playBeep = (freq, startTime, duration, volume) => {
                 const osc = this.ctx.createOscillator();
                 const gainNode = this.ctx.createGain();
@@ -280,7 +315,6 @@ const BoardAudio = {
                 osc.stop(startTime + duration);
             };
             
-            const now = this.ctx.currentTime;
             playBeep(523.25, now, 0.08, 0.15); // C5
             playBeep(783.99, now + 0.06, 0.15, 0.15); // G5
         } catch (e) {
@@ -306,6 +340,7 @@ const BoardAudio = {
         }
         
         try {
+            const now = this.ctx.currentTime;
             const osc = this.ctx.createOscillator();
             const gainNode = this.ctx.createGain();
             
@@ -314,14 +349,14 @@ const BoardAudio = {
             
             osc.type = 'sawtooth';
             
-            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.18);
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.18);
             
-            gainNode.gain.setValueAtTime(0.12, this.ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+            gainNode.gain.setValueAtTime(0.12, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
             
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.18);
+            osc.start(now);
+            osc.stop(now + 0.18);
         } catch (e) {
             console.warn('Failed to play failure sound:', e);
         }
@@ -336,9 +371,12 @@ const initAudioOnUserInteraction = () => {
     if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
         BoardAudio.ctx.resume();
     }
+    BoardAudio.startKeepAlive();
 };
 document.addEventListener('click', initAudioOnUserInteraction);
-document.addEventListener('touchstart', initAudioOnUserInteraction);
+document.addEventListener('touchstart', initAudioOnUserInteraction, { passive: true });
+document.addEventListener('pointerdown', initAudioOnUserInteraction, { passive: true });
+document.addEventListener('keydown', initAudioOnUserInteraction, { passive: true });
 
 // Mouse selection state
 let mouseState = {
@@ -7368,6 +7406,11 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             updateGameState();
                         }
                     }
+                } else if (!isPenaltyMode) {
+                    // Optimistic Instant Feedback: Word not in dictionary, trigger failure sound immediately without waiting for network roundtrip
+                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath, true);
+                    optimisticColor = 'red';
+                    optimisticIsDefinitive = true;
                 }
             }
         }
