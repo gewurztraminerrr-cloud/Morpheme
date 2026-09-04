@@ -1112,6 +1112,11 @@ body.theme-light-brown .field-hint {
 }
 /* Tablet & Mobile Layout for Lobby Grid */
 @media (max-width: 900px) {
+    #page-lobby.active {
+        padding-bottom: 56px !important;
+        box-sizing: border-box !important;
+    }
+
     .lobby-grid {
         display: flex !important;
         flex-direction: row !important;
@@ -2204,7 +2209,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
-        padding: 0 !important;
+        padding: 0 0 56px 0 !important;
         margin: 0 !important;
         display: flex !important;
         flex-direction: column !important;
