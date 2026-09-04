@@ -423,17 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         window.triggerMobileFullscreen();
                     }
 
-                    // 1. Play audio synchronously first
-                    try {
-                        const lobbyMusic = document.getElementById('lobby-music');
-                        if (lobbyMusic) {
-                            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-                        }
-                    } catch (audioErr) {
-                        console.error('[LobbyMusic] Exception during gateway play initialization:', audioErr);
-                    }
-
-                    // 2. Non-blocking background room cleanup
+                    // 1. Non-blocking background room cleanup
                     try {
                         localStorage.removeItem('private_match_active');
                         localStorage.removeItem('tournament_play_active');
@@ -554,15 +544,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Immediately trigger mobile fullscreen synchronously on touch start of the button
                     if (typeof window.triggerMobileFullscreen === 'function') {
                         window.triggerMobileFullscreen();
-                    }
-
-                    try {
-                        const lobbyMusic = document.getElementById('lobby-music');
-                        if (lobbyMusic) {
-                            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
-                        }
-                    } catch (audioErr) {
-                        console.error('[LobbyMusic] Synchronous play error:', audioErr);
                     }
                 };
 
@@ -734,18 +715,16 @@ function handleLobbyMusicState() {
     // Use window.currentPageId if available to avoid DOM ID race conditions during transition
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onLobby = (activePage === 'page-lobby');
-    const onLoading = (activePage === 'page-loading');
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
-    // STRICT REQUIREMENT: Only play the Lobby music if the user has passed the gateway or is on the Main Lobby!
-    const shouldPlay = (onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && lobbyMusicSetting;
+    // STRICT REQUIREMENT: Only play the Lobby music when the user enters the Main Lobby (page-lobby)!
+    const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         activePage,
         onLobby,
-        onLoading,
         inGameRoom,
         lobbyMusicSetting,
         shouldPlay,
@@ -755,11 +734,11 @@ function handleLobbyMusicState() {
 
     if (shouldPlay) {
         if (lobbyMusic.paused) {
-            console.log('[LobbyMusic] Attempting programmatic .play()...');
-            playLobbyMusicHelper(lobbyMusic, null);
+            console.log('[LobbyMusic] Entering Lobby — starting lobby music...');
+            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
         }
     } else {
-        console.log('[LobbyMusic] shouldPlay is false (not on ENTER LOBBY or Main Lobby), ensuring audio is paused.');
+        console.log('[LobbyMusic] shouldPlay is false (not on Main Lobby), ensuring audio is paused.');
         if (!lobbyMusic.paused) {
             lobbyMusic.pause();
             console.log('[LobbyMusic] Paused active playback.');
@@ -771,19 +750,11 @@ function handleLobbyMusicState() {
 function playMusicOnFirstInteraction(e) {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onLobby = (activePage === 'page-lobby');
-    const onLoading = (activePage === 'page-loading');
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
-    if (onLoading && !window._gatewayPassed) {
-        const gb = document.getElementById('btn-enter-lobby-gateway');
-        if (e && e.target && e.target !== gb && !gb.contains(e.target)) {
-            return;
-        }
-    }
-
-    const shouldPlay = (onLobby || (onLoading && window._gatewayPassed)) && !inGameRoom && lobbyMusicSetting;
+    const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     if (shouldPlay) {
         const lobbyMusic = document.getElementById('lobby-music');
