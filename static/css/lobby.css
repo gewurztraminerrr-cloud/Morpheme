@@ -1414,8 +1414,8 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.8rem;
         letter-spacing: 0.8px;
-        margin: 15px auto 20px auto;
-        padding: 12px 16px;
+        margin: 12px auto 14px auto;
+        padding: 14px 16px 12px 16px;
         background: rgba(255, 0, 127, 0.06);
         border: 1px solid rgba(255, 0, 127, 0.15);
         border-radius: 8px;
@@ -1429,18 +1429,22 @@ body.theme-light-brown .field-hint {
 
 @media (max-width: 480px) {
     .lobby-journey-message {
-        font-size: 0.65rem;
-        letter-spacing: 0.5px;
-        margin: 15px auto 25px auto;
-        padding: 14px 16px;
-        background: rgba(255, 0, 127, 0.08);
-        border: 1px solid rgba(255, 0, 127, 0.2);
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        display: block;
-        width: 90%;
-        margin-left: auto;
-        margin-right: auto;
+        font-size: 2.8vw !important;
+        letter-spacing: 0.5px !important;
+        margin: 14px auto 14px auto !important;
+        padding: 16px 14px 12px 14px !important;
+        background: rgba(255, 0, 127, 0.08) !important;
+        border: 1px solid rgba(255, 0, 127, 0.2) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+        display: block !important;
+        width: 90% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        text-overflow: clip !important;
+        overflow: visible !important;
     }
 }
 
