@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `03831315`
-- **Commit Message**: `fix(desktop): hide game room on desktops and laptops unless active`
+- **Commit ID**: `7f1d0099`
+- **Commit Message**: `fix(tournaments): display user's current/final round matchup in Current Pairings`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,15 +13,19 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`03831315` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`03831315` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`03831315`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`7f1d0099` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`7f1d0099` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`7f1d0099`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Desktop / Laptop Game Room Isolation & Visibility**:
+1. **Tournament Current Pairings Resolution**:
+   - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
+   - Updated both backend `/api/tournament/status` (to include the final round's matchups in `all_matchups` when completed) and frontend `static/js/tournaments.js` (to prioritize the current/final round and search backwards for latest active pairings).
+
+2. **Desktop / Laptop Game Room Isolation & Visibility**:
    - Fixed a CSS selector issue in `static/css/play.css` where `body.is-desktop #page-play` previously forced `display: flex !important` on the game room container regardless of whether the page was active.
    - Constrained the rule strictly to `body.is-desktop #page-play.active`, ensuring the game room is completely hidden when viewing the Lobby, Login, Settings, Tools, or Leaderboards, and only rendered when a room button or match is selected.
 
