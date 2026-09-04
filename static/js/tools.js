@@ -5610,9 +5610,24 @@ async function runValidationCheck() {
 
         const color = data.is_valid ? '#4ade80' : '#f43f5e';
         const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
+        const fullText = `${data.word} ${statusText}`;
 
         displayEl.style.color = color;
-        displayEl.innerText = `${data.word} ${statusText}`;
+        displayEl.innerText = fullText;
+
+        // Dynamically calibrate font-size based on character length so long words fit completely
+        const textLen = fullText.length;
+        if (textLen <= 14) {
+            displayEl.style.fontSize = 'clamp(1.6rem, 4.2vw, 2.8rem)';
+        } else if (textLen <= 22) {
+            displayEl.style.fontSize = 'clamp(1.3rem, 3.4vw, 2.2rem)';
+        } else if (textLen <= 30) {
+            displayEl.style.fontSize = 'clamp(1.1rem, 2.7vw, 1.75rem)';
+        } else if (textLen <= 38) {
+            displayEl.style.fontSize = 'clamp(0.95rem, 2.2vw, 1.45rem)';
+        } else {
+            displayEl.style.fontSize = 'clamp(0.85rem, 1.8vw, 1.2rem)';
+        }
 
         // Re-trigger animation
         displayEl.classList.remove('random-word-large');
