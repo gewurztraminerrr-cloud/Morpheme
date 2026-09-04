@@ -193,8 +193,12 @@ document.addEventListener('touchstart', unlockAudio, { once: true });
 // Sound effects system using Web Audio API (Optimized for ultra-low latency & Bluetooth earpieces)
 const BoardAudio = {
     ctx: null,
+    masterGain: null,
     keepAliveNode: null,
     keepAliveGain: null,
+    tileBuffers: [],
+    successBuffer: null,
+    failureBuffer: null,
     
     init() {
         if (this.ctx) return;
@@ -205,7 +209,96 @@ const BoardAudio = {
             } catch (e) {
                 this.ctx = new AudioContextClass();
             }
+            try {
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 1.0;
+                this.masterGain.connect(this.ctx.destination);
+            } catch (_) {}
+            
+            this.preRenderBuffers();
             this.startKeepAlive();
+        }
+    },
+
+    preRenderBuffers() {
+        if (!this.ctx) return;
+        const sampleRate = this.ctx.sampleRate || 44100;
+
+        // 1. Pre-render 16 pitch levels of tile selection sounds with fast acoustic click transients
+        this.tileBuffers = [];
+        const baseFreq = 400;
+        const step = 50;
+        for (let pathLen = 1; pathLen <= 16; pathLen++) {
+            const freq = Math.min(1200, baseFreq + (pathLen * step));
+            const duration = 0.045;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const env = Math.exp(-t * (1 / (duration * 0.35)));
+                let sample = Math.sin(2 * Math.PI * freq * t);
+                
+                // Add ultra-crisp 2ms high-transient click onset for instant auditory recognition through Bluetooth
+                if (i < sampleRate * 0.0025) {
+                    const clickEnv = 1 - (i / (sampleRate * 0.0025));
+                    sample = sample * 0.65 + (Math.sin(2 * Math.PI * 3600 * t) * clickEnv * 0.35);
+                }
+                data[i] = sample * env * 0.16;
+            }
+            this.tileBuffers.push(buffer);
+        }
+
+        // 2. Pre-render Success Chord (C5: 523.25Hz + G5: 783.99Hz)
+        {
+            const duration = 0.16;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                let sample = 0;
+                // Tone 1: C5
+                const env1 = Math.exp(-t * (1 / (0.08 * 0.35)));
+                const t1 = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * 523.25 * t));
+                sample += t1 * env1 * 0.22;
+
+                // Tone 2: G5 (starts at 0.05s)
+                if (t >= 0.05) {
+                    const t2_time = t - 0.05;
+                    const env2 = Math.exp(-t2_time * (1 / (0.11 * 0.35)));
+                    const t2 = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * 783.99 * t2_time));
+                    sample += t2 * env2 * 0.24;
+                }
+
+                // Initial crisp click transient
+                if (i < sampleRate * 0.003) {
+                    const clickEnv = 1 - (i / (sampleRate * 0.003));
+                    sample += Math.sin(2 * Math.PI * 4000 * t) * clickEnv * 0.15;
+                }
+                data[i] = Math.max(-1, Math.min(1, sample));
+            }
+            this.successBuffer = buffer;
+        }
+
+        // 3. Pre-render Failure Buzz (Sawtooth downward chirp)
+        {
+            const duration = 0.18;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const env = Math.exp(-t * (1 / (duration * 0.4)));
+                const freq = 150 - (50 * (t / duration)); // Linear sweep from 150Hz to 100Hz
+                const period = 1 / freq;
+                const saw = 2 * ((t % period) / period) - 1;
+                data[i] = saw * env * 0.18;
+            }
+            this.failureBuffer = buffer;
         }
     },
 
@@ -245,6 +338,12 @@ const BoardAudio = {
             }
             return;
         }
+        
+        // Instant micro-haptic feedback (0ms physical tactile sensation)
+        try {
+            if (navigator.vibrate) navigator.vibrate(6);
+        } catch (_) {}
+
         this.init();
         if (!this.ctx) return;
         
@@ -253,27 +352,14 @@ const BoardAudio = {
         }
         
         try {
-            const now = this.ctx.currentTime;
-            const osc = this.ctx.createOscillator();
-            const gainNode = this.ctx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(this.ctx.destination);
-            
-            osc.type = 'sine';
-            
-            // Ascending pitch scaling based on path length (50Hz steps from 400Hz)
-            const baseFreq = 400;
-            const step = 50;
-            const freq = Math.min(1200, baseFreq + (pathLen * step));
-            
-            osc.frequency.setValueAtTime(freq, now);
-            
-            gainNode.gain.setValueAtTime(0.08, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-            
-            osc.start(now);
-            osc.stop(now + 0.045);
+            const idx = Math.max(0, Math.min(this.tileBuffers.length - 1, (pathLen || 1) - 1));
+            const buffer = this.tileBuffers[idx];
+            if (buffer) {
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.masterGain || this.ctx.destination);
+                source.start(0);
+            }
         } catch (e) {
             console.warn('Failed to play tile sound:', e);
         }
@@ -289,6 +375,12 @@ const BoardAudio = {
             }
             return;
         }
+
+        // Distinctive success micro-haptic pattern
+        try {
+            if (navigator.vibrate) navigator.vibrate([8, 30, 12]);
+        } catch (_) {}
+
         this.init();
         if (!this.ctx) return;
         
@@ -297,26 +389,12 @@ const BoardAudio = {
         }
         
         try {
-            const now = this.ctx.currentTime;
-            const playBeep = (freq, startTime, duration, volume) => {
-                const osc = this.ctx.createOscillator();
-                const gainNode = this.ctx.createGain();
-                
-                osc.connect(gainNode);
-                gainNode.connect(this.ctx.destination);
-                
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, startTime);
-                
-                gainNode.gain.setValueAtTime(volume, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-                
-                osc.start(startTime);
-                osc.stop(startTime + duration);
-            };
-            
-            playBeep(523.25, now, 0.08, 0.15); // C5
-            playBeep(783.99, now + 0.06, 0.15, 0.15); // G5
+            if (this.successBuffer) {
+                const source = this.ctx.createBufferSource();
+                source.buffer = this.successBuffer;
+                source.connect(this.masterGain || this.ctx.destination);
+                source.start(0);
+            }
         } catch (e) {
             console.warn('Failed to play success sound:', e);
         }
@@ -332,6 +410,12 @@ const BoardAudio = {
             }
             return;
         }
+
+        // Invalid buzz micro-haptic
+        try {
+            if (navigator.vibrate) navigator.vibrate(22);
+        } catch (_) {}
+
         this.init();
         if (!this.ctx) return;
         
@@ -340,23 +424,12 @@ const BoardAudio = {
         }
         
         try {
-            const now = this.ctx.currentTime;
-            const osc = this.ctx.createOscillator();
-            const gainNode = this.ctx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(this.ctx.destination);
-            
-            osc.type = 'sawtooth';
-            
-            osc.frequency.setValueAtTime(150, now);
-            osc.frequency.linearRampToValueAtTime(100, now + 0.18);
-            
-            gainNode.gain.setValueAtTime(0.12, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-            
-            osc.start(now);
-            osc.stop(now + 0.18);
+            if (this.failureBuffer) {
+                const source = this.ctx.createBufferSource();
+                source.buffer = this.failureBuffer;
+                source.connect(this.masterGain || this.ctx.destination);
+                source.start(0);
+            }
         } catch (e) {
             console.warn('Failed to play failure sound:', e);
         }
