@@ -400,23 +400,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let gatewayTransitioning = false;
                 const executeGatewayTransition = (e) => {
-                    if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
-                    gatewayTransitioning = true;
                     window._gatewayTransitioning = true;
                     window._gatewayPassed = true;
+                    window.currentPageId = 'page-lobby';
 
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
 
                     console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
-                    window._gatewayPassed = true;
 
                     // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
                     if (typeof window.triggerMobileFullscreen === 'function') {
                         window.triggerMobileFullscreen();
                     }
 
-                    // 1. Non-blocking background room cleanup
+                    // 1. Trigger audio playback synchronously on direct user gesture so Chrome, Safari & Firefox start music instantly
+                    try {
+                        const lobbyMusic = document.getElementById('lobby-music');
+                        if (lobbyMusic) {
+                            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
+                        }
+                    } catch (audioErr) {
+                        console.error('[LobbyMusic] Exception during synchronous gateway play initialization:', audioErr);
+                    }
+
+                    // 2. Non-blocking background room cleanup
                     try {
                         localStorage.removeItem('private_match_active');
                         localStorage.removeItem('tournament_play_active');
@@ -707,12 +715,12 @@ function handleLobbyMusicState() {
 
     // Use window.currentPageId if available to avoid DOM ID race conditions during transition
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onLobby = (activePage === 'page-lobby');
+    const onLobby = (activePage === 'page-lobby' || (activePage === 'page-loading' && window._gatewayPassed));
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
-    // STRICT REQUIREMENT: Only play the Lobby music when the user enters the Main Lobby (page-lobby)!
+    // Play lobby music when in lobby or transitioning into lobby after gateway click
     const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
@@ -742,7 +750,7 @@ function handleLobbyMusicState() {
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction(e) {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onLobby = (activePage === 'page-lobby');
+    const onLobby = (activePage === 'page-lobby' || (activePage === 'page-loading' && window._gatewayPassed));
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
