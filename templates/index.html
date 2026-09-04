@@ -154,12 +154,12 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33416" as="style">
     <link rel="preload" href="/css/lobby.css?v=33622" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33730">
-    <link rel="stylesheet" href="/css/lobby.css?v=33730">
-    <link rel="stylesheet" href="/css/play.css?v=33730">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33730">
-    <link rel="stylesheet" href="/css/forum.css?v=33730">
-    <link rel="stylesheet" href="/css/donate.css?v=33730">
+    <link rel="stylesheet" href="/css/style.css?v=33740">
+    <link rel="stylesheet" href="/css/lobby.css?v=33740">
+    <link rel="stylesheet" href="/css/play.css?v=33740">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33740">
+    <link rel="stylesheet" href="/css/forum.css?v=33740">
+    <link rel="stylesheet" href="/css/donate.css?v=33740">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2128,10 +2128,32 @@
 
         <!-- Play Page -->
         <div id="page-play" class="page">
+            <div class="play-header">
+                <div class="header-title-group">
+                    <h2 id="game-title">Accumulative</h2>
+                    <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
+                </div>
+
+                <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                    <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
+                </div>
+                <div class="game-params">
+                    Diff: <span id="param-diff">-</span> |
+                    Min: <span id="param-min">-</span> |
+                    Dict: <span id="param-dict">-</span> |
+                    Words: <span id="param-range">-</span> |
+                    Format: <span id="param-format">-</span> |
+                    Bonus: <span id="param-bonus">-</span>
+                </div>
+                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+            </div>
+
+            <!-- Color Chart extends across and above Players, Board, and Words panels -->
+            <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
+
             <div class="play-grid">
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
-                    <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
 
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
@@ -2167,35 +2189,16 @@
 
                 <!-- Center Panel: Board -->
                 <div class="board-panel" id="play-panel-board">
-                    <div class="play-header">
-                        <div class="header-title-group">
-                            <h2 id="game-title">Accumulative</h2>
-                            <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
+                    <!-- Timer above the board within the same panel -->
+                    <div class="timer-display">
+                        <div class="timer-left-group">
+                            <span class="timer-label">Time:</span>
+                            <span class="timer-value" id="timer-value">0:00</span>
                         </div>
-
-                        <!-- Timer Panel moved here -->
-                        <div class="timer-display">
-                            <div class="timer-left-group">
-                                <span class="timer-label">Time:</span>
-                                <span class="timer-value" id="timer-value">0:00</span>
-                            </div>
-                            <div class="timer-controls-group" id="timer-controls-group">
-                                <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
-                                <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
-                            </div>
+                        <div class="timer-controls-group" id="timer-controls-group">
+                            <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
+                            <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
                         </div>
-                        <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                            <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
-                        </div>
-                        <div class="game-params">
-                            Diff: <span id="param-diff">-</span> |
-                            Min: <span id="param-min">-</span> |
-                            Dict: <span id="param-dict">-</span> |
-                            Words: <span id="param-range">-</span> |
-                            Format: <span id="param-format">-</span> |
-                            Bonus: <span id="param-bonus">-</span>
-                        </div>
-                        <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
                     </div>
 
                     <div id="game-board" class="game-board"></div>
@@ -6888,18 +6891,18 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=33130"></script>
-    <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33567"></script>
-    <script src="/js/lobby.js?v=33410"></script>
-    <script src="/js/play.js?v=33247"></script>
-    <script src="/js/tournaments.js?v=33180"></script>
-    <script src="/js/leaderboard.js?v=33275"></script>
-    <script src="/js/tools.js?v=33451"></script>
-    <script src="/js/mouse_selection.js?v=33172"></script>
-    <script src="/js/mods.js?v=33215"></script>
-    <script src="/js/private_matches.js?v=33173"></script>
-    <script src="/js/donate.js?v=33185"></script>
+    <script src="/js/settings.js?v=33740"></script>
+    <script src="/js/forum.js?v=33740"></script>
+    <script src="/js/app.js?v=33740"></script>
+    <script src="/js/lobby.js?v=33740"></script>
+    <script src="/js/play.js?v=33740"></script>
+    <script src="/js/tournaments.js?v=33740"></script>
+    <script src="/js/leaderboard.js?v=33740"></script>
+    <script src="/js/tools.js?v=33740"></script>
+    <script src="/js/mouse_selection.js?v=33740"></script>
+    <script src="/js/mods.js?v=33740"></script>
+    <script src="/js/private_matches.js?v=33740"></script>
+    <script src="/js/donate.js?v=33740"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->
     <script>
