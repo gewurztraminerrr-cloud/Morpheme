@@ -3932,7 +3932,15 @@ window.openFullListModal = function() {
         return;
     }
 
-
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen().catch(() => {});
+            }
+        } catch(e) {}
+    }
 
     if (modal.parentElement !== document.body) {
         document.body.appendChild(modal);

@@ -1409,6 +1409,17 @@ function showPage(pageId) {
         }
     }
     window.currentPageId = pageId;
+    if (pageId !== 'page-play') {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().catch(() => {});
+                }
+            } catch(e) {}
+        }
+    }
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
@@ -2779,6 +2790,16 @@ document.addEventListener('visibilitychange', () => {
 
     function attemptFullscreen() {
         if (!isMobileDevice() || !window._gatewayPassed) return;
+        const pLoad = document.getElementById('page-loading');
+        if (pLoad && (pLoad.classList.contains('active') || pLoad.style.display !== 'none')) return;
+        
+        // Never trigger fullscreen on Tools, Settings, Profile, Forum, or when any modal/input is active
+        const activePage = document.querySelector('.page.active');
+        if (activePage && (activePage.id === 'page-tools' || activePage.id === 'page-settings' || activePage.id === 'page-profile' || activePage.id === 'page-forum' || activePage.id === 'page-howtoplay' || activePage.id === 'page-donate')) {
+            return;
+        }
+        const fullListModal = document.getElementById('full-list-modal');
+        if (fullListModal && (fullListModal.classList.contains('forced-show') || !fullListModal.classList.contains('hidden'))) return;
         if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
