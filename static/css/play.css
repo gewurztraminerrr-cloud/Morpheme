@@ -5416,16 +5416,18 @@ input[type=range]::-moz-range-track {
 
     .play-header {
         padding: 8px 12px !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 6px !important;
         border-radius: 12px !important;
         height: auto !important;
-        width: 100% !important; /* Expand horizontally to full width */
+        width: calc(100% - 20px) !important; /* Aligned with timer and board controls */
+        margin-left: auto !important;
+        margin-right: auto !important;
         box-sizing: border-box !important;
         
         /* Use Flex Column to strictly enforce stacking order */
         display: flex !important;
         flex-direction: column !important;
-        gap: 10px !important;
+        gap: 6px !important;
         align-items: center !important;
         position: relative !important; /* For absolute positioning of return button */
 
