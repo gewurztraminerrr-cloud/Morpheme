@@ -8317,8 +8317,8 @@ body .board-cell.tile-flash-purple * {
 @media (min-width: 993px) {
     .timer-display {
         background: rgba(var(--text-primary-rgb), 0.1) !important;
-        padding: 8px 20px !important;
-        border-radius: 10px !important;
+        padding: 3px 20px !important;
+        border-radius: 8px !important;
         font-size: 1.5rem !important;
         font-weight: 700 !important;
         color: var(--text-primary) !important;
@@ -8326,7 +8326,7 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
-        margin: 0 auto 15px auto !important;
+        margin: 0 auto 3px auto !important;
         width: fit-content !important;
         max-width: 500px !important;
         box-sizing: border-box !important;
@@ -9940,15 +9940,19 @@ body.is-desktop .words-panel {
     scroll-snap-align: none !important;
 }
 
+body.is-desktop .board-panel {
+    padding: 8px 16px 16px 16px !important;
+}
+
 body.is-desktop .board-panel .timer-display {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    width: 100% !important;
+    width: fit-content !important;
     max-width: 400px !important;
-    margin: 0 auto 6px auto !important;
-    padding: 8px 24px !important;
-    border-radius: 10px !important;
+    margin: 0 auto 3px auto !important;
+    padding: 3px 20px !important;
+    border-radius: 8px !important;
     background: rgba(var(--text-primary-rgb), 0.1) !important;
 }
 
