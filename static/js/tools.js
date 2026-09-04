@@ -2215,24 +2215,47 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
     if (boardContainer && round.board && round.board.length > 0) {
-        // Mobile Board Transposition for Replay: orient so the longest side runs HORIZONTALLY
-        // (saves vertical space on mobile screens; Replay ≠ gameplay orientation)
+        // Board Orientation for Replay:
+        // - On Mobile: orient so the longest side runs HORIZONTALLY (saves vertical space on mobile screens)
+        // - On Desktop/Laptop: orient so the longest side runs VERTICALLY (gives more horizontal space to words found)
         try {
-            if (window.innerWidth <= 900 && Array.isArray(round.board[0])) {
+            if (Array.isArray(round.board) && Array.isArray(round.board[0])) {
                 const isReplay3D = round.board.length === 6 && Array.isArray(round.board[0]) && Array.isArray(round.board[0][0]);
                 if (!isReplay3D) {
-                    const rows = round.board.length;
-                    const cols = round.board[0].length;
-                    // Transpose only when board is taller than wide (so longest side ends up horizontal)
-                    if (rows > cols) {
-                        const transposed = [];
-                        for (let c = 0; c < cols; c++) {
-                            transposed[c] = [];
-                            for (let r = 0; r < rows; r++) {
-                                transposed[c][r] = (round.board[r] && round.board[r][c] !== undefined) ? round.board[r][c] : '';
+                    if (!round.original_board) {
+                        round.original_board = JSON.parse(JSON.stringify(round.board));
+                    } else {
+                        round.board = JSON.parse(JSON.stringify(round.original_board));
+                    }
+
+                    let rows = round.board.length;
+                    let cols = round.board[0].length;
+                    const isMobile = (window.innerWidth <= 900) || (typeof window.isMobileDevice === 'function' && window.isMobileDevice());
+
+                    if (isMobile) {
+                        // Mobile: transpose only when board is taller than wide (so longest side ends up horizontal)
+                        if (rows > cols) {
+                            const transposed = [];
+                            for (let c = 0; c < cols; c++) {
+                                transposed[c] = [];
+                                for (let r = 0; r < rows; r++) {
+                                    transposed[c][r] = (round.board[r] && round.board[r][c] !== undefined) ? round.board[r][c] : '';
+                                }
                             }
+                            round.board = transposed;
                         }
-                        round.board = transposed;
+                    } else {
+                        // Desktop & Laptop: transpose only when board is wider than tall (so longest side ends up vertical)
+                        if (cols > rows) {
+                            const transposed = [];
+                            for (let c = 0; c < cols; c++) {
+                                transposed[c] = [];
+                                for (let r = 0; r < rows; r++) {
+                                    transposed[c][r] = (round.board[r] && round.board[r][c] !== undefined) ? round.board[r][c] : '';
+                                }
+                            }
+                            round.board = transposed;
+                        }
                     }
                 }
             }
