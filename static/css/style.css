@@ -5388,6 +5388,15 @@ body .tab-btn.active {
     .pages {
         padding: 5px 10px !important;
     }
+    body:has(#page-play.active) .pages,
+    body.play-active .pages,
+    .pages:has(#page-play.active) {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
     .user-display {
         border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
         margin-left: 6px !important;

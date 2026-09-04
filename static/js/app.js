@@ -1457,6 +1457,7 @@ function showPage(pageId) {
         document.body.classList.remove('loading-active');
     }
     document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
+    document.body.classList.toggle('play-active', pageId === 'page-play');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {
         const hideHeaderOnMobile = () => {
