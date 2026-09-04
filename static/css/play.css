@@ -720,7 +720,7 @@ body.theme-light-brown .player-score-val {
     width: 100% !important;
     max-width: 500px !important;
     box-sizing: border-box !important;
-    margin: 0 auto 10px auto !important;
+    margin: 0 auto 18px auto !important;
 }
 .timer-left-group {
     display: inline-flex !important;
@@ -5481,7 +5481,7 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 10px auto !important;
+        margin: 10px auto 18px auto !important;
         padding: 5px 15px !important;
         box-sizing: border-box !important;
     }
@@ -6755,7 +6755,7 @@ input[type=range]::-moz-range-track {
         padding: 6px 12px !important;
         width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 10px auto !important;
+        margin: 10px auto 18px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -8290,7 +8290,7 @@ body .board-cell.tile-flash-purple * {
         max-width: none !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 10px auto !important;
+        margin: 10px auto 18px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
@@ -9831,7 +9831,7 @@ body.is-desktop .board-panel .timer-display {
     align-items: center !important;
     width: 100% !important;
     max-width: 400px !important;
-    margin: 0 auto 12px auto !important;
+    margin: 0 auto 18px auto !important;
     padding: 8px 24px !important;
     border-radius: 10px !important;
     background: rgba(var(--text-primary-rgb), 0.1) !important;
