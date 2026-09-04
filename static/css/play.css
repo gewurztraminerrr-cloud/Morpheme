@@ -10512,6 +10512,354 @@ body.theme-gray #global-loading-overlay #loading-message {
     font-weight: 800 !important;
 }
 
+/* ==========================================================================
+   ROUND REPLAY MODAL & INTEGRATED PANEL FOR WHITE / LIGHT THEMES
+   ========================================================================== */
+
+/* Overlay backdrop */
+[class*="theme-white"] #history-review-overlay,
+[class*="theme-light-"] #history-review-overlay,
+body.theme-white #history-review-overlay,
+body.theme-light-gray #history-review-overlay,
+body.theme-light-red #history-review-overlay,
+body.theme-light-orange #history-review-overlay,
+body.theme-light-yellow #history-review-overlay,
+body.theme-light-green #history-review-overlay,
+body.theme-light-blue #history-review-overlay,
+body.theme-light-purple #history-review-overlay,
+body.theme-light-pink #history-review-overlay,
+body.theme-light-brown #history-review-overlay,
+body.theme-yellow #history-review-overlay,
+body.theme-pink #history-review-overlay,
+body.theme-orange #history-review-overlay,
+body.theme-gray #history-review-overlay {
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Main Modal Card */
+[class*="theme-white"] .history-review-modal,
+[class*="theme-light-"] .history-review-modal,
+body.theme-white .history-review-modal,
+body.theme-light-gray .history-review-modal,
+body.theme-light-red .history-review-modal,
+body.theme-light-orange .history-review-modal,
+body.theme-light-yellow .history-review-modal,
+body.theme-light-green .history-review-modal,
+body.theme-light-blue .history-review-modal,
+body.theme-light-purple .history-review-modal,
+body.theme-light-pink .history-review-modal,
+body.theme-light-brown .history-review-modal,
+body.theme-yellow .history-review-modal,
+body.theme-pink .history-review-modal,
+body.theme-orange .history-review-modal,
+body.theme-gray .history-review-modal {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+}
+
+/* Modal Header */
+[class*="theme-white"] .history-review-modal .overlay-header,
+[class*="theme-light-"] .history-review-modal .overlay-header,
+body.theme-white .history-review-modal .overlay-header,
+body.theme-light-gray .history-review-modal .overlay-header,
+body.theme-yellow .history-review-modal .overlay-header,
+body.theme-pink .history-review-modal .overlay-header,
+body.theme-orange .history-review-modal .overlay-header,
+body.theme-gray .history-review-modal .overlay-header,
+body.theme-light-brown .history-review-modal .overlay-header {
+    background: #f8fafc !important;
+    border-bottom: 1.5px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .history-review-modal .header-main h2,
+[class*="theme-light-"] .history-review-modal .header-main h2,
+body.theme-white .history-review-modal .header-main h2,
+body.theme-light-gray .history-review-modal .header-main h2 {
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .history-review-modal .header-subtitle,
+[class*="theme-light-"] .history-review-modal .header-subtitle,
+body.theme-white .history-review-modal .header-subtitle {
+    color: #2563eb !important;
+}
+
+[class*="theme-white"] #history-review-game-type,
+[class*="theme-light-"] #history-review-game-type,
+body.theme-white #history-review-game-type,
+body.theme-light-gray #history-review-game-type {
+    color: #0284c7 !important;
+}
+
+[class*="theme-white"] #history-review-date,
+[class*="theme-light-"] #history-review-date,
+body.theme-white #history-review-date,
+body.theme-light-gray #history-review-date {
+    color: #64748b !important;
+}
+
+/* Walkthrough Section Header */
+[class*="theme-white"] .history-walkthrough-section .section-header,
+[class*="theme-light-"] .history-walkthrough-section .section-header,
+body.theme-white .history-walkthrough-section .section-header,
+body.theme-light-gray .history-walkthrough-section .section-header {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .history-walkthrough-section .section-header h3,
+[class*="theme-light-"] .history-walkthrough-section .section-header h3,
+body.theme-white .history-walkthrough-section .section-header h3 {
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .history-walkthrough-section .replay-subheader,
+[class*="theme-light-"] .history-walkthrough-section .replay-subheader,
+body.theme-white .history-walkthrough-section .replay-subheader {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .history-walkthrough-section .section-hint,
+[class*="theme-light-"] .history-walkthrough-section .section-hint,
+body.theme-white .history-walkthrough-section .section-hint {
+    color: #64748b !important;
+}
+
+/* Replay Buttons in light mode */
+[class*="theme-white"] .replay-btn.primary,
+[class*="theme-light-"] .replay-btn.primary,
+body.theme-white .replay-btn.primary,
+body.theme-light-gray .replay-btn.primary {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+[class*="theme-white"] .replay-btn.primary:hover,
+[class*="theme-light-"] .replay-btn.primary:hover,
+body.theme-white .replay-btn.primary:hover {
+    background: #1d4ed8 !important;
+}
+
+[class*="theme-white"] .replay-btn.secondary,
+[class*="theme-light-"] .replay-btn.secondary,
+body.theme-white .replay-btn.secondary,
+body.theme-light-gray .replay-btn.secondary {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[class*="theme-white"] .replay-btn.secondary:hover,
+[class*="theme-light-"] .replay-btn.secondary:hover,
+body.theme-white .replay-btn.secondary:hover {
+    background: #cbd5e1 !important;
+}
+
+/* Progress bar container in light mode */
+[class*="theme-white"] .replay-progress-container,
+[class*="theme-light-"] .replay-progress-container,
+body.theme-white .replay-progress-container,
+body.theme-light-gray .replay-progress-container {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] #replay-current-time,
+[class*="theme-light-"] #replay-current-time,
+body.theme-white #replay-current-time {
+    color: #2563eb !important;
+}
+
+[class*="theme-white"] #replay-current-score,
+[class*="theme-light-"] #replay-current-score,
+body.theme-white #replay-current-score {
+    color: #d97706 !important;
+}
+
+[class*="theme-white"] .progress-bar-bg,
+[class*="theme-light-"] .progress-bar-bg,
+body.theme-white .progress-bar-bg {
+    background: #e2e8f0 !important;
+}
+
+/* Walkthrough List & Items in light mode */
+[class*="theme-white"] .walkthrough-list,
+[class*="theme-light-"] .walkthrough-list,
+body.theme-white .walkthrough-list {
+    scrollbar-color: #cbd5e1 transparent !important;
+}
+
+[class*="theme-white"] .walkthrough-list::before,
+[class*="theme-light-"] .walkthrough-list::before,
+body.theme-white .walkthrough-list::before {
+    background: #cbd5e1 !important;
+}
+
+[class*="theme-white"] .walkthrough-item,
+[class*="theme-light-"] .walkthrough-item,
+body.theme-white .walkthrough-item {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+[class*="theme-white"] .walkthrough-item::before,
+[class*="theme-light-"] .walkthrough-item::before,
+body.theme-white .walkthrough-item::before {
+    background: #3b82f6 !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 0 0 1px #cbd5e1 !important;
+}
+
+[class*="theme-white"] .walkthrough-time,
+[class*="theme-light-"] .walkthrough-time,
+body.theme-white .walkthrough-time {
+    color: #2563eb !important;
+}
+
+[class*="theme-white"] .walkthrough-word,
+[class*="theme-light-"] .walkthrough-word,
+body.theme-white .walkthrough-word {
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .walkthrough-pts,
+[class*="theme-light-"] .walkthrough-pts,
+body.theme-white .walkthrough-pts {
+    color: #1e293b !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+}
+
+[class*="theme-white"] .walkthrough-pts.bonus,
+[class*="theme-light-"] .walkthrough-pts.bonus,
+body.theme-white .walkthrough-pts.bonus {
+    color: #b45309 !important;
+    background: #fef3c7 !important;
+    border: 1px solid #fcd34d !important;
+    box-shadow: none !important;
+}
+
+[class*="theme-white"] .walkthrough-pts.penalty,
+[class*="theme-light-"] .walkthrough-pts.penalty,
+body.theme-white .walkthrough-pts.penalty {
+    color: #b91c1c !important;
+    background: #fee2e2 !important;
+    border: 1px solid #fca5a5 !important;
+    box-shadow: none !important;
+}
+
+[class*="theme-white"] .walkthrough-list .placeholder,
+[class*="theme-light-"] .walkthrough-list .placeholder,
+body.theme-white .walkthrough-list .placeholder {
+    color: #64748b !important;
+}
+
+/* Review Board & Cells in light mode */
+[class*="theme-white"] .review-board-main,
+[class*="theme-light-"] .review-board-main,
+body.theme-white .review-board-main,
+body.theme-light-gray .review-board-main,
+body.theme-yellow .review-board-main,
+body.theme-pink .review-board-main,
+body.theme-orange .review-board-main,
+body.theme-gray .review-board-main,
+body.theme-light-brown .review-board-main {
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+[class*="theme-white"] .review-cell,
+[class*="theme-light-"] .review-cell,
+body.theme-white .review-cell,
+body.theme-light-gray .review-cell,
+body.theme-light-red .review-cell,
+body.theme-light-orange .review-cell,
+body.theme-light-yellow .review-cell,
+body.theme-light-green .review-cell,
+body.theme-light-blue .review-cell,
+body.theme-light-purple .review-cell,
+body.theme-light-pink .review-cell,
+body.theme-light-brown .review-cell,
+body.theme-yellow .review-cell,
+body.theme-pink .review-cell,
+body.theme-orange .review-cell,
+body.theme-gray .review-cell {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+[class*="theme-white"] .review-cell.highlight,
+[class*="theme-light-"] .review-cell.highlight,
+body.theme-white .review-cell.highlight,
+body.theme-light-gray .review-cell.highlight {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+}
+
+[class*="theme-white"] .review-cell.highlight-bonus,
+[class*="theme-light-"] .review-cell.highlight-bonus,
+body.theme-white .review-cell.highlight-bonus,
+body.theme-light-gray .review-cell.highlight-bonus {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45) !important;
+}
+
+/* Integrated Replay in Profile for light mode */
+[class*="theme-white"] .integrated-replay-container,
+[class*="theme-light-"] .integrated-replay-container,
+body.theme-white .integrated-replay-container,
+body.theme-light-gray .integrated-replay-container {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .integrated-replay-header,
+[class*="theme-light-"] .integrated-replay-header,
+body.theme-white .integrated-replay-header,
+body.theme-light-gray .integrated-replay-header {
+    background: #f8fafc !important;
+    border-bottom: 1.5px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .integrated-replay-header h3,
+[class*="theme-light-"] .integrated-replay-header h3,
+body.theme-white .integrated-replay-header h3 {
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .integrated-walkthrough-list,
+[class*="theme-light-"] .integrated-walkthrough-list,
+body.theme-white .integrated-walkthrough-list {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .integrated-review-board,
+[class*="theme-light-"] .integrated-review-board,
+body.theme-white .integrated-review-board {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+
 
 
 

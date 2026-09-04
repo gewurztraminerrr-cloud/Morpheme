@@ -2235,7 +2235,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         progressBar.offsetHeight; // Force reflow
         progressBar.style.transition = '';
     }
-    if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.3); text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
+    if (walkthroughList) walkthroughList.innerHTML = '<p class="placeholder walkthrough-empty-placeholder" style="text-align:center; padding:40px; font-weight:700;">Ready to watch the walkthrough...</p>';
 
     // 3. Render Board with Dynamic Scaling
     const boardContainer = document.getElementById(`${prefix}-board-container`);
@@ -2532,7 +2532,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             const htmlContent = displayWords.map(w => renderWord(w)).join('');
             walkthroughList.innerHTML = htmlContent;
             if (sortedWords.length === 0) {
-                walkthroughList.innerHTML = '<p class="placeholder" style="color:rgba(255,255,255,0.2); text-align:center; padding:40px;">No words found in this round.</p>';
+                walkthroughList.innerHTML = '<p class="placeholder walkthrough-empty-placeholder" style="text-align:center; padding:40px;">No words found in this round.</p>';
             }
             walkthroughList.scrollTop = 0;
         }
