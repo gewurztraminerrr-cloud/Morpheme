@@ -2251,6 +2251,7 @@ async function updateGameState(incomingState = null) {
                 document.querySelectorAll('.board-cell.intermission-highlight, .board-cell.review-highlight, .board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(el => {
                     el.classList.remove('intermission-highlight', 'review-highlight', 'selected', 'current', 'typing-highlight');
                 });
+                document.querySelectorAll('.low-time-warning').forEach(el => el.classList.remove('low-time-warning'));
                 const existingFilterBtn = document.getElementById('intermission-filter-btn-container');
                 if (existingFilterBtn) {
                     existingFilterBtn.remove();
@@ -4787,12 +4788,15 @@ function updateLocalTimer() {
     }
 
     // Low time visual
+    const headerEl = document.querySelector('.play-header');
     if (cachedBoardPanelEl) {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         if (remaining <= 10 && remaining > 0 && currentState === 'active') {
             cachedBoardPanelEl.classList.add('low-time-warning');
+            if (headerEl) headerEl.classList.add('low-time-warning');
         } else {
             cachedBoardPanelEl.classList.remove('low-time-warning');
+            if (headerEl) headerEl.classList.remove('low-time-warning');
         }
     }
 
@@ -4800,6 +4804,7 @@ function updateLocalTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
+        if (headerEl) headerEl.classList.remove('low-time-warning');
 
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
