@@ -2316,7 +2316,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         padding: 8px 10px 10px 10px !important;
-        margin: 0 !important;
+        margin: 0 0 6px 0 !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
         border-radius: 8px !important;
         background: rgba(0, 0, 0, 0.18) !important;
