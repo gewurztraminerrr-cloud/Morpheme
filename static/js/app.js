@@ -550,6 +550,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
                     addWindowTracking();
+
+                    // Immediately trigger mobile fullscreen synchronously on touch start of the button
+                    if (typeof window.triggerMobileFullscreen === 'function') {
+                        window.triggerMobileFullscreen();
+                    }
+
                     try {
                         const lobbyMusic = document.getElementById('lobby-music');
                         if (lobbyMusic) {

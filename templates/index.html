@@ -1435,7 +1435,7 @@
         <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -1497,6 +1497,15 @@
                 if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
                 window._gatewayPassed = true;
                 window._gatewayTransitioning = true;
+                if (typeof window.triggerMobileFullscreen === 'function') {
+                    window.triggerMobileFullscreen();
+                } else {
+                    try {
+                        var docEl = document.documentElement;
+                        var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+                        if (req) req.call(docEl, { navigationUI: 'hide' }).catch(function() {});
+                    } catch(e) {}
+                }
                 if (gb) {
                     gb.classList.remove('dragged-out');
                     gb.classList.add('pressed', 'flattened');
@@ -6912,7 +6921,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33550"></script>
+    <script src="/js/app.js?v=33555"></script>
     <script src="/js/lobby.js?v=33410"></script>
     <script src="/js/play.js?v=33245"></script>
     <script src="/js/tournaments.js?v=33180"></script>
