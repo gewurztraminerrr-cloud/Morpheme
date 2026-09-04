@@ -5307,8 +5307,8 @@ body .tab-btn.active {
         justify-content: center !important;
         align-items: center !important;
         overflow-x: hidden !important; /* No horizontal scrolling at all */
-        padding: 22px 12px 4px 12px !important;
-        gap: 8px !important; /* Space between logo and buttons grid */
+        padding: 22px 12px 8px 12px !important;
+        gap: 10px !important; /* Space between logo and buttons grid */
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
@@ -5348,7 +5348,7 @@ body .tab-btn.active {
         gap: 10px !important; 
         justify-content: flex-start !important; /* Start from the left so scrolling works */
         align-items: center !important;
-        padding: 4px 5px 8px 5px !important; /* top padding prevents translateY clip */
+        padding: 8px 5px 12px 5px !important; /* Padding above and below menu tabs */
         box-sizing: border-box !important;
         /* Ensure active button glow renders above the logo row */
         position: relative !important;
