@@ -1464,6 +1464,8 @@ function showPage(pageId) {
     }
     document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     if (typeof handleLobbyMusicState === 'function') {
         handleLobbyMusicState();
     }
@@ -2777,8 +2779,6 @@ document.addEventListener('visibilitychange', () => {
 
     function attemptFullscreen() {
         if (!isMobileDevice() || !window._gatewayPassed) return;
-        const pLoad = document.getElementById('page-loading');
-        if (pLoad && (pLoad.classList.contains('active') || pLoad.style.display !== 'none')) return;
         if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
