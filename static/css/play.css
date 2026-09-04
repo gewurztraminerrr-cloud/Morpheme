@@ -5378,9 +5378,9 @@ input[type=range]::-moz-range-track {
     .board-panel, 
     .words-panel {
         flex: 0 0 100% !important;
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        max-width: 100vw !important;
         scroll-snap-align: start !important;
         scroll-snap-stop: always !important;
         box-sizing: border-box !important;
@@ -5388,7 +5388,7 @@ input[type=range]::-moz-range-track {
         overflow-y: auto !important;
         height: 100% !important; /* Take full height of play-grid */
         padding: 10px 10px 0 10px !important; /* Remove bottom padding to let buttons touch bottom */
-        margin: 0 !important;
+        margin: 0 auto !important;
         position: relative !important;
         box-shadow: none !important;
         border: none !important;
@@ -5397,9 +5397,11 @@ input[type=range]::-moz-range-track {
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
         
-        /* Force flex column layout to allow stretching children */
+        /* Force flex column layout to allow centering children */
         display: flex !important;
         flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
     }
 
     /* USER REQUEST: Make Words and Definitions panels touch on mobile */
@@ -5408,9 +5410,17 @@ input[type=range]::-moz-range-track {
     }
     .words-panel .words-table-box {
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
     .words-panel .definitions-panel {
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 10px auto 0 auto !important;
+        box-sizing: border-box !important;
     }
 
     /* USER REQUEST: Make Players and Chat panels touch on mobile */
@@ -5426,18 +5436,29 @@ input[type=range]::-moz-range-track {
     }
     .left-panel-container #game-color-bar {
         display: flex !important;
-        margin-bottom: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto 10px auto !important;
         border-radius: 6px !important;
         overflow: hidden !important;
         height: 14px !important;
         border: none !important;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+        box-sizing: border-box !important;
     }
     .left-panel-container .players-panel {
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
     .left-panel-container .chat-panel {
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 10px auto 0 auto !important;
+        box-sizing: border-box !important;
     }
 
     .play-header {
@@ -5506,11 +5527,12 @@ input[type=range]::-moz-range-track {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: space-between !important;
+        justify-content: center !important;
         align-items: center !important;
-        width: calc(100% - 20px) !important;
-        max-width: none !important;
-        margin: 4px auto 18px auto !important;
+        text-align: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto 12px auto !important;
         padding: 5px 15px !important;
         box-sizing: border-box !important;
     }
@@ -5540,22 +5562,35 @@ input[type=range]::-moz-range-track {
         min-height: 350px !important; /* Made larger to give more space to players list */
         max-height: none !important;
         flex: 1 !important; /* Grow to fill space */
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
 
     .words-table-box {
         height: auto !important; /* Allow it to flex */
         flex: 1 1 0% !important; /* Allow it to shrink if needed */
         max-height: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
     .chat-panel {
         height: 190px !important;
         flex: none !important;
         max-height: none !important;
         margin-top: 10px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         padding: 8px 10px !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
+        box-sizing: border-box !important;
     }
 
     .definitions-panel {
@@ -5563,7 +5598,12 @@ input[type=range]::-moz-range-track {
         height: 125px !important;
         max-height: 125px !important;
         margin-top: 10px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         padding: 8px 12px !important;
+        box-sizing: border-box !important;
     }
 
 
@@ -5573,6 +5613,10 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: flex-start !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        margin: 0 auto !important;
     }
     /* Hide word input section on mobile as requested */
     .word-input-section {
@@ -6641,11 +6685,12 @@ input[type=range]::-moz-range-track {
     /* Keep side spacing for non-board panels so content is snug and elegant */
     .players-panel,
     .definitions-panel,
-    .chat-panel {
-        margin-left: 10px !important;
-        margin-right: 10px !important;
-        width: calc(100% - 20px) !important;
-        max-width: calc(100% - 20px) !important;
+    .chat-panel,
+    .words-table-box {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
     }
@@ -6659,6 +6704,10 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 auto 6px auto !important;
     }
 
     .player-actions-row .find-me-btn {
@@ -6681,6 +6730,8 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
+        margin: 0 auto !important;
+        text-align: center !important;
     }
 
     .player-item {
@@ -6689,6 +6740,7 @@ input[type=range]::-moz-range-track {
         min-width: 0 !important;
         padding: 6px 10px !important;
         overflow: hidden !important;
+        margin: 0 auto !important;
     }
 
 
@@ -6705,11 +6757,12 @@ input[type=range]::-moz-range-track {
     }
 
     .chat-panel {
-        width: calc(100% - 20px) !important;
-        max-width: calc(100% - 20px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
         overflow-x: hidden !important;
+        margin: 10px auto 0 auto !important;
     }
 
     .chat-input-section {
@@ -6732,25 +6785,26 @@ input[type=range]::-moz-range-track {
     /* Full bleed styling for 2D board panel and grid cells */
     .board-panel,
     .board-panel.full-bleed-mobile {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding: 10px 10px 0 10px !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
         border-radius: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important; /* Allow shrinking to screen size on mobile */
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 100vw !important; /* Allow shrinking to screen size on mobile */
         box-sizing: border-box !important;
         overflow-x: hidden !important; /* Prevent horizontal wiggle */
 
         background: rgba(0, 0, 0, 0.15); /* Premium subtle row dark theme */
         border-left: none !important;
         border-right: none !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        align-items: flex-start !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
         justify-content: flex-start !important;
-        justify-self: start !important;
+        justify-self: center !important;
+        text-align: center !important;
     }
 
     @keyframes mobile-low-time-pulse {
@@ -6775,10 +6829,12 @@ input[type=range]::-moz-range-track {
     .board-panel.full-bleed-mobile .validation-status,
     .board-panel.full-bleed-mobile .word-input-section,
     .board-panel.full-bleed-mobile .cube-rotate-hint {
-        margin-left: 10px !important;
-        margin-right: 10px !important;
-        width: calc(100% - 20px) !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
+        text-align: center !important;
     }
 
 
@@ -6786,14 +6842,15 @@ input[type=range]::-moz-range-track {
     .board-panel .timer-display,
     .play-header .timer-display {
         padding: 6px 12px !important;
-        width: calc(100% - 20px) !important;
-        max-width: none !important;
-        margin: 4px auto 18px auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto 12px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: space-between !important;
+        justify-content: center !important;
         align-items: center !important;
+        text-align: center !important;
         height: 38px !important;
         box-sizing: border-box !important;
     }
@@ -6803,6 +6860,12 @@ input[type=range]::-moz-range-track {
     }
     .board-panel .timer-display .timer-value {
         font-size: 1.3rem !important;
+    }
+    .board-panel .timer-display .timer-left-group {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
     }
 
     .board-panel .game-board:not(.game-board-loading),
@@ -6815,16 +6878,15 @@ input[type=range]::-moz-range-track {
         display: grid !important;
         justify-content: center !important;
         align-content: start !important;
+        justify-self: center !important;
         overflow-x: auto !important;
         grid-template-columns: repeat(var(--board-cols, 4), var(--cell-size, 50px)) !important;
         grid-template-rows: repeat(var(--board-rows, 4), var(--cell-size, 50px)) !important;
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
-        margin: -15px auto 0 auto !important; /* Move up 15px total and center */
+        margin: 0 auto !important;
         float: none !important;
-
-
     }
 
     .board-panel .game-board .board-cell,
@@ -8318,12 +8380,13 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        width: calc(100% - 20px) !important;
-        max-width: none !important;
+        justify-content: center !important;
+        text-align: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 4px auto 18px auto !important;
+        margin: 0 auto 12px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
@@ -8331,6 +8394,8 @@ body .board-cell.tile-flash-purple * {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
         gap: 6px !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
