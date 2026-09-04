@@ -395,15 +395,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-                // Customize button text based on destination
+                // Gateway button always displays ENTER LOBBY
+                gatewayBtn.textContent = 'ENTER LOBBY';
+
                 let targetPageId = 'page-lobby';
                 let targetNavName = 'lobby';
                 if (hash && hash.startsWith('#page-') && hash !== '#page-play' && hash !== '#page-login' && hash !== '#page-loading') {
                     targetPageId = hash.substring(1);
                     targetNavName = targetPageId.replace('page-', '');
-                    gatewayBtn.textContent = 'ENTER ' + targetNavName.toUpperCase();
-                } else {
-                    gatewayBtn.textContent = 'ENTER LOBBY';
                 }
 
                 let gatewayTransitioning = false;
