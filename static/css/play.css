@@ -10320,5 +10320,198 @@ body.theme-white label[for="toggle-use-added-words"] {
     color: #0f172a !important;
 }
 
+/* ==========================================================================
+   GAME ROOM LOADING CARD & OVERLAY FOR WHITE / LIGHT LAYOUT THEMES
+   ========================================================================== */
+@keyframes spin-glow-light {
+    0%   { transform: rotate(0deg);   box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+    50%  { box-shadow: 0 0 22px rgba(59, 130, 246, 0.4); }
+    100% { transform: rotate(360deg); box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+}
+
+@keyframes pulse-light {
+    0%, 100% { opacity: 0.85; }
+    50%      { opacity: 1; }
+}
+
+[class*="theme-white"] .loading-container,
+[class*="theme-light-"] .loading-container,
+body.theme-white .loading-container,
+body.theme-light-gray .loading-container,
+body.theme-light-red .loading-container,
+body.theme-light-orange .loading-container,
+body.theme-light-yellow .loading-container,
+body.theme-light-green .loading-container,
+body.theme-light-blue .loading-container,
+body.theme-light-purple .loading-container,
+body.theme-light-pink .loading-container,
+body.theme-light-brown .loading-container,
+body.theme-yellow .loading-container,
+body.theme-pink .loading-container,
+body.theme-orange .loading-container,
+body.theme-gray .loading-container {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .glow-spinner,
+[class*="theme-light-"] .glow-spinner,
+body.theme-white .glow-spinner,
+body.theme-light-gray .glow-spinner,
+body.theme-light-red .glow-spinner,
+body.theme-light-orange .glow-spinner,
+body.theme-light-yellow .glow-spinner,
+body.theme-light-green .glow-spinner,
+body.theme-light-blue .glow-spinner,
+body.theme-light-purple .glow-spinner,
+body.theme-light-pink .glow-spinner,
+body.theme-light-brown .glow-spinner,
+body.theme-yellow .glow-spinner,
+body.theme-pink .glow-spinner,
+body.theme-orange .glow-spinner,
+body.theme-gray .glow-spinner {
+    border: 3.5px solid #e2e8f0 !important;
+    border-top: 3.5px solid var(--accent-color, #2563eb) !important;
+    border-right: 3.5px solid var(--accent-color, #2563eb) !important;
+    animation: spin-glow-light 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+[class*="theme-white"] .glow-title,
+[class*="theme-light-"] .glow-title,
+body.theme-white .glow-title,
+body.theme-light-gray .glow-title,
+body.theme-light-red .glow-title,
+body.theme-light-orange .glow-title,
+body.theme-light-yellow .glow-title,
+body.theme-light-green .glow-title,
+body.theme-light-blue .glow-title,
+body.theme-light-purple .glow-title,
+body.theme-light-pink .glow-title,
+body.theme-light-brown .glow-title,
+body.theme-yellow .glow-title,
+body.theme-pink .glow-title,
+body.theme-orange .glow-title,
+body.theme-gray .glow-title {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.2px !important;
+    text-shadow: none !important;
+    animation: pulse-light 2s ease-in-out infinite !important;
+}
+
+[class*="theme-white"] .status-ticker,
+[class*="theme-light-"] .status-ticker,
+body.theme-white .status-ticker,
+body.theme-light-gray .status-ticker,
+body.theme-light-red .status-ticker,
+body.theme-light-orange .status-ticker,
+body.theme-light-yellow .status-ticker,
+body.theme-light-green .status-ticker,
+body.theme-light-blue .status-ticker,
+body.theme-light-purple .status-ticker,
+body.theme-light-pink .status-ticker,
+body.theme-light-brown .status-ticker,
+body.theme-yellow .status-ticker,
+body.theme-pink .status-ticker,
+body.theme-orange .status-ticker,
+body.theme-gray .status-ticker {
+    background: #f1f5f9 !important;
+    color: #1e40af !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+[class*="theme-white"] .why-text,
+[class*="theme-light-"] .why-text,
+body.theme-white .why-text,
+body.theme-light-gray .why-text,
+body.theme-light-red .why-text,
+body.theme-light-orange .why-text,
+body.theme-light-yellow .why-text,
+body.theme-light-green .why-text,
+body.theme-light-blue .why-text,
+body.theme-light-purple .why-text,
+body.theme-light-pink .why-text,
+body.theme-light-brown .why-text,
+body.theme-yellow .why-text,
+body.theme-pink .why-text,
+body.theme-orange .why-text,
+body.theme-gray .why-text {
+    color: #475569 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+}
+
+/* Global Loading Overlay in White/Light Themes */
+[class*="theme-white"] #global-loading-overlay,
+[class*="theme-light-"] #global-loading-overlay,
+body.theme-white #global-loading-overlay,
+body.theme-light-gray #global-loading-overlay,
+body.theme-light-red #global-loading-overlay,
+body.theme-light-orange #global-loading-overlay,
+body.theme-light-yellow #global-loading-overlay,
+body.theme-light-green #global-loading-overlay,
+body.theme-light-blue #global-loading-overlay,
+body.theme-light-purple #global-loading-overlay,
+body.theme-light-pink #global-loading-overlay,
+body.theme-light-brown #global-loading-overlay,
+body.theme-yellow #global-loading-overlay,
+body.theme-pink #global-loading-overlay,
+body.theme-orange #global-loading-overlay,
+body.theme-gray #global-loading-overlay {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[class*="theme-white"] #global-loading-overlay .loading-spinner,
+[class*="theme-light-"] #global-loading-overlay .loading-spinner,
+body.theme-white #global-loading-overlay .loading-spinner,
+body.theme-light-gray #global-loading-overlay .loading-spinner,
+body.theme-light-red #global-loading-overlay .loading-spinner,
+body.theme-light-orange #global-loading-overlay .loading-spinner,
+body.theme-light-yellow #global-loading-overlay .loading-spinner,
+body.theme-light-green #global-loading-overlay .loading-spinner,
+body.theme-light-blue #global-loading-overlay .loading-spinner,
+body.theme-light-purple #global-loading-overlay .loading-spinner,
+body.theme-light-pink #global-loading-overlay .loading-spinner,
+body.theme-light-brown #global-loading-overlay .loading-spinner,
+body.theme-yellow #global-loading-overlay .loading-spinner,
+body.theme-pink #global-loading-overlay .loading-spinner,
+body.theme-orange #global-loading-overlay .loading-spinner,
+body.theme-gray #global-loading-overlay .loading-spinner {
+    border: 4px solid #e2e8f0 !important;
+    border-top-color: var(--accent-color, #2563eb) !important;
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.25) !important;
+}
+
+[class*="theme-white"] #global-loading-overlay #loading-message,
+[class*="theme-light-"] #global-loading-overlay #loading-message,
+body.theme-white #global-loading-overlay #loading-message,
+body.theme-light-gray #global-loading-overlay #loading-message,
+body.theme-light-red #global-loading-overlay #loading-message,
+body.theme-light-orange #global-loading-overlay #loading-message,
+body.theme-light-yellow #global-loading-overlay #loading-message,
+body.theme-light-green #global-loading-overlay #loading-message,
+body.theme-light-blue #global-loading-overlay #loading-message,
+body.theme-light-purple #global-loading-overlay #loading-message,
+body.theme-light-pink #global-loading-overlay #loading-message,
+body.theme-light-brown #global-loading-overlay #loading-message,
+body.theme-yellow #global-loading-overlay #loading-message,
+body.theme-pink #global-loading-overlay #loading-message,
+body.theme-orange #global-loading-overlay #loading-message,
+body.theme-gray #global-loading-overlay #loading-message {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    font-weight: 800 !important;
+}
+
+
 
 
