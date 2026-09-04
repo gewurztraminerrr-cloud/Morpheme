@@ -5476,7 +5476,7 @@ input[type=range]::-moz-range-track {
     }
 
     .play-header {
-        background: var(--bg-panel) !important;
+        background: transparent !important;
         box-shadow: none !important;
         padding: 8px 12px !important;
         margin-top: 6px !important;
