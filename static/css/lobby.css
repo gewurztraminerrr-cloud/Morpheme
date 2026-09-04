@@ -1170,7 +1170,7 @@ body.theme-light-brown .field-hint {
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 6px 8px 8px 8px !important;
+        padding: 8px 10px 10px 10px !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
@@ -1178,7 +1178,7 @@ body.theme-light-brown .field-hint {
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.22)) !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2294,14 +2294,14 @@ body.theme-light-brown .lobby-chat-input:focus {
         min-height: 0 !important;
         scroll-snap-align: center !important;
         scroll-snap-stop: always !important;
-        padding: 6px 8px 8px 8px !important;
+        padding: 8px 10px 10px 10px !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         clip-path: none !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.22)) !important;
+        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2312,7 +2312,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 6px 8px 8px 8px !important;
+        padding: 8px 10px 10px 10px !important;
         margin: 0 !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.25)) !important;
         border-radius: 8px !important;
