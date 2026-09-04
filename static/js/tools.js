@@ -5615,18 +5615,18 @@ async function runValidationCheck() {
         displayEl.style.color = color;
         displayEl.innerText = fullText;
 
-        // Dynamically calibrate font-size based on character length so long words fit completely
+        // Dynamically calibrate font-size based on character length so words are prominent and fit completely
         const textLen = fullText.length;
         if (textLen <= 14) {
-            displayEl.style.fontSize = 'clamp(1.6rem, 4.2vw, 2.8rem)';
+            displayEl.style.fontSize = 'clamp(2.0rem, 5.2vw, 3.5rem)';
         } else if (textLen <= 22) {
-            displayEl.style.fontSize = 'clamp(1.3rem, 3.4vw, 2.2rem)';
+            displayEl.style.fontSize = 'clamp(1.65rem, 4.2vw, 2.8rem)';
         } else if (textLen <= 30) {
-            displayEl.style.fontSize = 'clamp(1.1rem, 2.7vw, 1.75rem)';
+            displayEl.style.fontSize = 'clamp(1.35rem, 3.3vw, 2.25rem)';
         } else if (textLen <= 38) {
-            displayEl.style.fontSize = 'clamp(0.95rem, 2.2vw, 1.45rem)';
+            displayEl.style.fontSize = 'clamp(1.15rem, 2.6vw, 1.75rem)';
         } else {
-            displayEl.style.fontSize = 'clamp(0.85rem, 1.8vw, 1.2rem)';
+            displayEl.style.fontSize = 'clamp(1.0rem, 2.1vw, 1.4rem)';
         }
 
         // Re-trigger animation
