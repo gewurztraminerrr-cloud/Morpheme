@@ -1,7 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit Message**: `docs: update Start Over Stable State Summary for September 4, 2026`
+- **Commit ID**: `03831315`
+- **Commit Message**: `fix(desktop): hide game room on desktops and laptops unless active`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
