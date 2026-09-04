@@ -6836,14 +6836,6 @@ input[type=range]::-moz-range-track {
         will-change: background-color, box-shadow !important;
     }
 
-    .board-panel.low-time-warning .play-header,
-    .board-panel.full-bleed-mobile.low-time-warning .play-header,
-    .play-header.low-time-warning {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
     /* Keep non-board sub-controls inside board panel snug and aligned */
     .board-panel .timer-display,
     .board-panel .validation-status,
