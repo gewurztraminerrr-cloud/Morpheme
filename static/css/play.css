@@ -9838,7 +9838,6 @@ body.is-mobile #page-settings .theme-selector-grid {
 /* ==========================================================================
    DESKTOP & LAPTOP PLAY PAGE LAYOUT (STRICT: NOT MOBILE)
    ========================================================================== */
-body.is-desktop #page-play,
 body.is-desktop #page-play.active {
     display: flex !important;
     flex-direction: column !important;
