@@ -5472,18 +5472,21 @@ input[type=range]::-moz-range-track {
     .spinner-set-label {
         display: block !important;
     }
-    .play-header .timer-display {
+    .play-header .timer-display,
+    .board-panel .timer-display {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         justify-content: space-between !important;
         align-items: center !important;
-        width: 100% !important;
+        width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 5px 0 !important;
+        margin: 10px auto !important;
         padding: 5px 15px !important;
-        order: 3 !important; /* Force third inside play-header */
         box-sizing: border-box !important;
+    }
+    .play-header .timer-display {
+        order: 3 !important; /* Force third inside play-header */
     }
     .board-panel .timer-display {
         order: 0 !important;
@@ -6731,9 +6734,11 @@ input[type=range]::-moz-range-track {
     }
 
     /* Keep non-board sub-controls inside board panel snug and aligned */
+    .board-panel .timer-display,
     .board-panel .validation-status,
     .board-panel .word-input-section,
     .board-panel .cube-rotate-hint,
+    .board-panel.full-bleed-mobile .timer-display,
     .board-panel.full-bleed-mobile .validation-status,
     .board-panel.full-bleed-mobile .word-input-section,
     .board-panel.full-bleed-mobile .cube-rotate-hint {
@@ -6748,9 +6753,9 @@ input[type=range]::-moz-range-track {
     .board-panel .timer-display,
     .play-header .timer-display {
         padding: 6px 12px !important;
-        width: 100% !important;
+        width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 5px 0 !important;
+        margin: 10px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -8281,11 +8286,11 @@ body .board-cell.tile-flash-purple * {
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: space-between !important;
-        width: 100% !important;
+        width: calc(100% - 20px) !important;
         max-width: none !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 5px 0 !important;
+        margin: 10px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
