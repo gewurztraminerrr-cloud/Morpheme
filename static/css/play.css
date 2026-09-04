@@ -414,7 +414,7 @@
 #players-list {
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Tighter gap */
+    gap: 3px; /* Reduced gap between players */
     overflow-y: auto;
     max-height: none !important; /* Remove restriction to fill space */
     flex: 1 !important; /* Expand to fill available space */
@@ -425,16 +425,16 @@
 
 .player-item {
     background: rgba(var(--text-primary-rgb), 0.1);
-    padding: 6px 15px;
-    height: 60px; /* Reduced from 65px for compactness */
+    padding: 4px 12px;
+    height: 52px; /* Reduced for tighter padding */
     flex-shrink: 0;
-    border-radius: 12px;
-    font-size: 0.95rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
     display: flex;
     flex-direction: column;
     /* Two lines */
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     border: 1px solid transparent;
     transition: all 0.2s;
     cursor: pointer;
@@ -5565,12 +5565,12 @@ input[type=range]::-moz-range-track {
         gap: 16px !important;
     }
     .player-item {
-        padding: 10px 18px !important;
-        height: 68px !important;
-        gap: 6px !important;
+        padding: 5px 14px !important;
+        height: 54px !important;
+        gap: 3px !important;
     }
     #players-list {
-        gap: 10px !important;
+        gap: 4px !important;
         max-height: none !important;
     }
 }
@@ -5588,12 +5588,12 @@ input[type=range]::-moz-range-track {
         gap: 20px !important;
     }
     .player-item {
-        padding: 12px 20px !important;
-        height: 74px !important;
-        gap: 8px !important;
+        padding: 6px 14px !important;
+        height: 56px !important;
+        gap: 3px !important;
     }
     #players-list {
-        gap: 12px !important;
+        gap: 4px !important;
         max-height: none !important;
     }
 }
@@ -5611,13 +5611,13 @@ input[type=range]::-moz-range-track {
         gap: 24px !important;
     }
     .player-item {
-        padding: 14px 24px !important;
-        height: 80px !important;
-        gap: 10px !important;
-        font-size: 1rem !important;
+        padding: 6px 16px !important;
+        height: 58px !important;
+        gap: 3px !important;
+        font-size: 0.95rem !important;
     }
     #players-list {
-        gap: 14px !important;
+        gap: 4px !important;
         max-height: 600px !important;
     }
 }
