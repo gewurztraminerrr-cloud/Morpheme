@@ -246,7 +246,7 @@ const BoardAudio = {
 
         // 2. Pre-render Success Chord (C5: 523.25Hz + G5: 783.99Hz)
         {
-            const duration = 0.16;
+            const duration = 0.25;
             const numSamples = Math.floor(sampleRate * duration);
             const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
             const data = buffer.getChannelData(0);
@@ -255,22 +255,16 @@ const BoardAudio = {
                 const t = i / sampleRate;
                 let sample = 0;
                 // Tone 1: C5
-                const env1 = Math.exp(-t * (1 / (0.08 * 0.35)));
+                const env1 = Math.exp(-t * (Math.log(0.15 / 0.001) / 0.08));
                 const t1 = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * 523.25 * t));
-                sample += t1 * env1 * 0.22;
+                sample += t1 * env1 * 0.15;
 
-                // Tone 2: G5 (starts at 0.05s)
-                if (t >= 0.05) {
-                    const t2_time = t - 0.05;
-                    const env2 = Math.exp(-t2_time * (1 / (0.11 * 0.35)));
+                // Tone 2: G5 (starts at 0.06s)
+                if (t >= 0.06) {
+                    const t2_time = t - 0.06;
+                    const env2 = Math.exp(-t2_time * (Math.log(0.15 / 0.001) / 0.15));
                     const t2 = (2 / Math.PI) * Math.asin(Math.sin(2 * Math.PI * 783.99 * t2_time));
-                    sample += t2 * env2 * 0.24;
-                }
-
-                // Initial crisp click transient
-                if (i < sampleRate * 0.003) {
-                    const clickEnv = 1 - (i / (sampleRate * 0.003));
-                    sample += Math.sin(2 * Math.PI * 4000 * t) * clickEnv * 0.15;
+                    sample += t2 * env2 * 0.15;
                 }
                 data[i] = Math.max(-1, Math.min(1, sample));
             }
@@ -279,14 +273,14 @@ const BoardAudio = {
 
         // 3. Pre-render Failure Buzz (Sawtooth downward chirp)
         {
-            const duration = 0.18;
+            const duration = 0.20;
             const numSamples = Math.floor(sampleRate * duration);
             const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
             const data = buffer.getChannelData(0);
 
             for (let i = 0; i < numSamples; i++) {
                 const t = i / sampleRate;
-                const env = Math.exp(-t * (1 / (duration * 0.4)));
+                const env = Math.exp(-t * (Math.log(0.18 / 0.001) / 0.18));
                 const freq = 150 - (50 * (t / duration)); // Linear sweep from 150Hz to 100Hz
                 const period = 1 / freq;
                 const saw = 2 * ((t % period) / period) - 1;
