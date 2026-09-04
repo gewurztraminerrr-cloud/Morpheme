@@ -5476,6 +5476,8 @@ input[type=range]::-moz-range-track {
     }
 
     .play-header {
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+        box-shadow: none !important;
         padding: 8px 12px !important;
         margin-top: 6px !important;
         margin-bottom: 0 !important;
