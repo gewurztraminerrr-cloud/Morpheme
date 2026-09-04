@@ -156,7 +156,7 @@
     <link rel="preload" href="/css/lobby.css?v=33823" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33828">
     <link rel="stylesheet" href="/css/lobby.css?v=33823">
-    <link rel="stylesheet" href="/css/play.css?v=33823">
+    <link rel="stylesheet" href="/css/play.css?v=33829">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
     <link rel="stylesheet" href="/css/forum.css?v=33804">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
@@ -2118,6 +2118,27 @@
 
         <!-- Play Page -->
         <div id="page-play" class="page">
+            <!-- Header - Above Players, Board, and Words panels on Desktop/Laptop -->
+            <div class="play-header">
+                <div class="header-title-group">
+                    <h2 id="game-title">Accumulative</h2>
+                    <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
+                </div>
+
+                <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                    <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
+                </div>
+                <div class="game-params">
+                    Diff: <span id="param-diff">-</span> |
+                    Min: <span id="param-min">-</span> |
+                    Dict: <span id="param-dict">-</span> |
+                    Words: <span id="param-range">-</span> |
+                    Format: <span id="param-format">-</span> |
+                    Bonus: <span id="param-bonus">-</span>
+                </div>
+                <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
+            </div>
+
             <div class="play-grid">
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
@@ -2158,27 +2179,6 @@
 
                 <!-- Center Panel: Board -->
                 <div class="board-panel" id="play-panel-board">
-                    <!-- Constant Parameters & Spinner Set above Timer in Board Window -->
-                    <div class="play-header">
-                        <div class="header-title-group">
-                            <h2 id="game-title">Accumulative</h2>
-                            <span class="header-meta"> <span id="param-board">-</span> | <span id="param-time">-</span></span>
-                        </div>
-
-                        <div class="spinner-set-label" style="font-size: 0.75rem; opacity: 0.7; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                            <span id="label-game-type">Accumulative</span> <span id="label-board">-</span> | <span id="label-time">-</span>
-                        </div>
-                        <div class="game-params">
-                            Diff: <span id="param-diff">-</span> |
-                            Min: <span id="param-min">-</span> |
-                            Dict: <span id="param-dict">-</span> |
-                            Words: <span id="param-range">-</span> |
-                            Format: <span id="param-format">-</span> |
-                            Bonus: <span id="param-bonus">-</span>
-                        </div>
-                        <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
-                    </div>
-
                     <!-- Timer above the board within the same panel -->
                     <div class="timer-display">
                         <div class="timer-left-group">
@@ -6962,7 +6962,7 @@
     <script>
         function checkIsDesktop() {
             const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobileUA || window.innerWidth <= 992) {
+            if (isMobileUA || window.innerWidth <= 900) {
                 document.body.classList.remove('is-desktop');
                 document.body.classList.add('is-mobile');
                 return false;
@@ -6991,20 +6991,22 @@
             if (isDesktop) {
                 // Desktops and laptops only: Header sits in its own space above Players, Board, and Words panels and below top menu
                 if (header.parentElement !== pagePlay) {
-                    pagePlay.prepend(header);
+                    if (playGrid && playGrid.parentElement === pagePlay) {
+                        playGrid.insertAdjacentElement('beforebegin', header);
+                    } else {
+                        pagePlay.prepend(header);
+                    }
                 }
                 // Color bar sits above Players panel inside the left panel container
                 if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
                     playersPanel.prepend(colorBar);
                 }
-                // Timer sits inside boardPanel above the board
-                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
-                    const gameBoard = document.getElementById('game-board');
-                    if (gameBoard) {
-                        gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
-                    } else {
-                        boardPanel.prepend(timerDisplay);
-                    }
+                // Timer sits inside boardPanel directly above the board
+                const gameBoard = document.getElementById('game-board');
+                if (timerDisplay && gameBoard && timerDisplay.nextElementSibling !== gameBoard) {
+                    gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
+                } else if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+                    boardPanel.prepend(timerDisplay);
                 }
                 // Rotate & Transpose buttons sit in wordInputSection
                 if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
