@@ -9749,15 +9749,35 @@ body.is-desktop #return-lobby-btn {
     flex-shrink: 0 !important;
 }
 
-body.is-desktop #page-play > #game-color-bar {
+body.is-desktop .left-panel-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+body.is-desktop .left-panel-container #game-color-bar {
     display: flex !important;
     width: 100% !important;
     height: 14px !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 6px !important;
     border-radius: 6px !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
 }
+
+body.is-desktop .left-panel-container .players-panel {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body.is-desktop .left-panel-container .chat-panel {
+    flex-shrink: 0 !important;
+}
+
 
 body.is-desktop .play-grid {
     display: grid !important;

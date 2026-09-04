@@ -154,12 +154,12 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33416" as="style">
     <link rel="preload" href="/css/lobby.css?v=33622" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33750">
-    <link rel="stylesheet" href="/css/lobby.css?v=33750">
-    <link rel="stylesheet" href="/css/play.css?v=33750">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33750">
-    <link rel="stylesheet" href="/css/forum.css?v=33750">
-    <link rel="stylesheet" href="/css/donate.css?v=33750">
+    <link rel="stylesheet" href="/css/style.css?v=33760">
+    <link rel="stylesheet" href="/css/lobby.css?v=33760">
+    <link rel="stylesheet" href="/css/play.css?v=33760">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33760">
+    <link rel="stylesheet" href="/css/forum.css?v=33760">
+    <link rel="stylesheet" href="/css/donate.css?v=33760">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2148,12 +2148,11 @@
                 <button class="return-btn" id="return-lobby-btn">Return to Lobby</button>
             </div>
 
-            <!-- Color Chart extends across and above Players, Board, and Words panels -->
-            <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
-
             <div class="play-grid">
                 <!-- Left Panel: Players -->
                 <div class="left-panel-container" id="play-panel-players">
+                    <!-- Color Chart sits above the Players panel creating room for it -->
+                    <div id="game-color-bar" class="global-rating-bar" style="display: none;"></div>
 
                     <div class="players-panel">
                         <h3 id="players-heading">Players</h3>
@@ -6997,9 +6996,9 @@
                 if (header.parentElement !== pagePlay) {
                     pagePlay.prepend(header);
                 }
-                // Color bar sits below header and above the 3 panels
-                if (colorBar && playGrid && colorBar.parentElement !== pagePlay) {
-                    playGrid.insertAdjacentElement('beforebegin', colorBar);
+                // Color bar sits above Players panel inside the left panel container
+                if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
+                    playersPanel.prepend(colorBar);
                 }
                 // Timer sits inside boardPanel above the board
                 if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
