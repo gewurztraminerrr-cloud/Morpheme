@@ -2273,12 +2273,21 @@ async function updateGameState(incomingState = null) {
                         if (wordInput) wordInput.focus();
                     } else {
                         // Mobile Device: Do NOT auto-focus the textbox (prevents keyboard from popping up).
-                        // Keep the board panel at top and ensure the top menu stays hidden.
+                        // Slide the user to the Board window and slide the top menu up and out of view if visible.
+                        if (typeof window.switchPlayPanel === 'function') {
+                            window.switchPlayPanel('board', true);
+                        }
+                        if (typeof window.hideGameRoomTopMenu === 'function') {
+                            window.hideGameRoomTopMenu(false);
+                        }
                         setTimeout(() => {
                             const boardPanel = document.querySelector('.board-panel');
                             if (boardPanel) boardPanel.scrollTop = 0;
+                            if (typeof window.switchPlayPanel === 'function') {
+                                window.switchPlayPanel('board', true);
+                            }
                             if (typeof window.hideGameRoomTopMenu === 'function') {
-                                window.hideGameRoomTopMenu(true);
+                                window.hideGameRoomTopMenu(false);
                             }
                         }, 100); // Small delay to let board rendering settle
                     }
