@@ -3932,6 +3932,8 @@ window.openFullListModal = function() {
         return;
     }
 
+    // PERMANENT INVARIANT (DO NOT REMOVE): Android Chrome produces a 2-3s black screen if soft keyboard opens in fullscreen.
+    // Must immediately and explicitly exit fullscreen before rendering full list modal / focusing inputs.
     if (document.fullscreenElement || document.webkitFullscreenElement) {
         try {
             if (document.exitFullscreen) {

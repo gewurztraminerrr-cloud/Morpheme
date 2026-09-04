@@ -1415,6 +1415,7 @@ function showPage(pageId) {
         }
     }
     window.currentPageId = pageId;
+    // PERMANENT INVARIANT (DO NOT REMOVE): Always exit fullscreen when leaving play/lobby to prevent keyboard black screens on utility pages
     if (pageId !== 'page-play' && pageId !== 'page-lobby') {
         if (document.fullscreenElement || document.webkitFullscreenElement) {
             try {
