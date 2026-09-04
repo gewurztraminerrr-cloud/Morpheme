@@ -152,11 +152,11 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33857" as="style">
+    <link rel="preload" href="/css/style.css?v=33858" as="style">
     <link rel="preload" href="/css/lobby.css?v=33841" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33857">
+    <link rel="stylesheet" href="/css/style.css?v=33858">
     <link rel="stylesheet" href="/css/lobby.css?v=33841">
-    <link rel="stylesheet" href="/css/play.css?v=33857">
+    <link rel="stylesheet" href="/css/play.css?v=33858">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
     <link rel="stylesheet" href="/css/forum.css?v=33804">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
@@ -2186,10 +2186,6 @@
                             <span class="timer-label">Time:</span>
                             <span class="timer-value" id="timer-value">0:00</span>
                         </div>
-                        <div class="timer-controls-group" id="timer-controls-group">
-                            <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
-                            <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
-                        </div>
                     </div>
 
                     <div id="game-board" class="game-board"></div>
@@ -2197,6 +2193,10 @@
                     <div class="word-input-section">
                         <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
                         <button id="submit-word-btn">Submit</button>
+                        <div class="timer-controls-group" id="timer-controls-group">
+                            <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
+                            <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
+                        </div>
                     </div>
                     <div id="cube-rotate-hint" class="cube-rotate-hint hidden">ARROWS TO ROTATE</div>
                     <div class="mobile-nav-indicators">
@@ -6884,9 +6884,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33857"></script>
+    <script src="/js/app.js?v=33858"></script>
     <script src="/js/lobby.js?v=33806"></script>
-    <script src="/js/play.js?v=33857"></script>
+    <script src="/js/play.js?v=33858"></script>
     <script src="/js/tournaments.js?v=33806"></script>
     <script src="/js/leaderboard.js?v=33806"></script>
     <script src="/js/tools.js?v=33831"></script>
@@ -6963,7 +6963,7 @@
     <script>
         function checkIsDesktop() {
             const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobileUA || window.innerWidth <= 900) {
+            if (isMobileUA || window.innerWidth <= 992) {
                 document.body.classList.remove('is-desktop');
                 document.body.classList.add('is-mobile');
                 return false;
