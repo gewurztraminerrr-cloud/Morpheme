@@ -5415,8 +5415,9 @@ input[type=range]::-moz-range-track {
     }
 
     .play-header {
-        padding: 8px 12px !important;
-        margin-bottom: 6px !important;
+        padding: 6px 12px 4px 12px !important;
+        margin-top: 6px !important;
+        margin-bottom: 2px !important;
         border-radius: 12px !important;
         height: auto !important;
         width: calc(100% - 20px) !important; /* Aligned with timer and board controls */
@@ -5427,7 +5428,7 @@ input[type=range]::-moz-range-track {
         /* Use Flex Column to strictly enforce stacking order */
         display: flex !important;
         flex-direction: column !important;
-        gap: 6px !important;
+        gap: 4px !important;
         align-items: center !important;
         position: relative !important; /* For absolute positioning of return button */
 
@@ -5483,7 +5484,7 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 10px auto 18px auto !important;
+        margin: 4px auto 18px auto !important;
         padding: 5px 15px !important;
         box-sizing: border-box !important;
     }
@@ -6757,7 +6758,7 @@ input[type=range]::-moz-range-track {
         padding: 6px 12px !important;
         width: calc(100% - 20px) !important;
         max-width: none !important;
-        margin: 10px auto 18px auto !important;
+        margin: 4px auto 18px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -8292,7 +8293,7 @@ body .board-cell.tile-flash-purple * {
         max-width: none !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 10px auto 18px auto !important;
+        margin: 4px auto 18px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
