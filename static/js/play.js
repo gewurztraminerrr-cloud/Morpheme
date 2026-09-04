@@ -224,29 +224,22 @@ const BoardAudio = {
         if (!this.ctx) return;
         const sampleRate = this.ctx.sampleRate || 44100;
 
-        // 1. Pre-render 16 pitch levels of tile selection sounds (Warm acoustic wooden/marimba tap)
+        // 1. Pre-render 16 pitch levels of tile selection sounds (Original pure sine blip)
         this.tileBuffers = [];
-        const baseFreq = 320;
+        const baseFreq = 400;
+        const step = 50;
+        const duration = 0.05;
+        const numSamples = Math.floor(sampleRate * duration);
         for (let pathLen = 1; pathLen <= 16; pathLen++) {
-            const freq = baseFreq * Math.pow(1.059463, (pathLen - 1)); // Chromatic ascending scale
-            const duration = 0.05;
-            const numSamples = Math.floor(sampleRate * duration);
+            const freq = Math.min(1200, baseFreq + (pathLen * step));
             const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
             const data = buffer.getChannelData(0);
 
-            let phase = 0;
             for (let i = 0; i < numSamples; i++) {
                 const t = i / sampleRate;
-                // Pitch drop attack envelope for acoustic wooden/marimba percussion tap
-                const curFreq = freq * (1.0 + 0.35 * Math.exp(-t / 0.005));
-                phase += 2 * Math.PI * curFreq / sampleRate;
-                // Harmonic richness: fundamental + 2nd overtone + 3rd overtone
-                let sample = Math.sin(phase) * 0.72 + Math.sin(phase * 2) * 0.20 + Math.sin(phase * 3) * 0.08;
-                // Smooth 1ms attack ramp to avoid digital click
-                if (t < 0.001) sample *= (t / 0.001);
-                // Snappy exponential decay envelope
-                const env = Math.exp(-t / 0.022);
-                data[i] = sample * env * 0.22;
+                const env = Math.exp(-t * (Math.log(0.08 / 0.001) / duration));
+                const sample = Math.sin(2 * Math.PI * freq * t);
+                data[i] = sample * env * 0.08;
             }
             this.tileBuffers.push(buffer);
         }
