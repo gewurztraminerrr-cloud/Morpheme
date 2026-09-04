@@ -1409,7 +1409,7 @@ function showPage(pageId) {
         }
     }
     window.currentPageId = pageId;
-    if (pageId !== 'page-play') {
+    if (pageId !== 'page-play' && pageId !== 'page-lobby') {
         if (document.fullscreenElement || document.webkitFullscreenElement) {
             try {
                 if (document.exitFullscreen) {
