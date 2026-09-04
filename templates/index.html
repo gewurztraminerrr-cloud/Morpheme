@@ -152,11 +152,11 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="preload" href="/css/style.css?v=33415" as="style">
+    <link rel="preload" href="/css/style.css?v=33416" as="style">
     <link rel="preload" href="/css/lobby.css?v=33620" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33415">
+    <link rel="stylesheet" href="/css/style.css?v=33416">
     <link rel="stylesheet" href="/css/lobby.css?v=33620">
-    <link rel="stylesheet" href="/css/play.css?v=33430">
+    <link rel="stylesheet" href="/css/play.css?v=33431">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
     <link rel="stylesheet" href="/css/forum.css?v=33180">
     <link rel="stylesheet" href="/css/donate.css?v=33190">
@@ -3206,61 +3206,67 @@
                     <!-- ... omitted combo/list content to match target ... -->
 
                     <!-- Combo Checker Interface -->
-                    <div id="tool-combo" class="tool-pane">
-                        <div class="tool-header">
-                            <h2>Combo Checker</h2>
-                            <p>Find connected words via MP and LIC.</p>
-                        </div>
-
-                        <div class="combo-control-panel">
-                            <div class="input-row">
-                                <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                    autocomplete="off">
-                                <select id="combo-dict">
-                                    <option value="ALL">ALL (Full)</option>
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW" selected>CSW (Intl)</option>
-                                    <option value="added_words">AW</option>
-                                </select>
-                                <button id="combo-search-btn">Check</button>
+                    <div id="tool-combo" class="tool-pane" style="position: relative; width: 100%; height: 100%; overflow: hidden; display: none;">
+                        <div id="combo-scroll-container" class="combo-scroll-container" style="width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; box-sizing: border-box; padding-right: 18px; padding-bottom: 70px;">
+                            <div class="tool-header">
+                                <h2>Combo Checker</h2>
+                                <p>Find connected words via MP and LIC.</p>
                             </div>
-                        </div>
 
-                        <div id="combo-results" class="combo-results-container hidden">
-                            <!-- MP Section: Horizontal Groups (0MP to 3MP) -->
-                            <div class="result-section">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
-                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
-                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                        autocomplete="off">
+                                    <select id="combo-dict">
+                                        <option value="ALL">ALL (Full)</option>
+                                        <option value="NWL">NWL (US)</option>
+                                        <option value="CSW" selected>CSW (Intl)</option>
+                                        <option value="added_words">AW</option>
+                                    </select>
+                                    <button id="combo-search-btn">Check</button>
+                                </div>
+                            </div>
+
+                            <div id="combo-results" class="combo-results-container hidden">
+                                <!-- MP Section: Horizontal Groups (0MP to 3MP) -->
+                                <div class="result-section">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
+                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
+                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                                        </div>
+                                    </div>
+                                    <div class="chart-desc">
+                                        Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
+                                    </div>
+                                    <div class="horizontal-scroll-container" id="mp-container">
+                                        <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
                                     </div>
                                 </div>
-                                <div class="chart-desc">
-                                    Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
-                                </div>
-                                <div class="horizontal-scroll-container" id="mp-container">
-                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
-                                </div>
-                            </div>
 
-                            <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
-                            <div class="result-section">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <h3 style="margin: 0;">LIC (Letters In Common)</h3>
-                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
-                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
+                                <div class="result-section">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <h3 style="margin: 0;">LIC (Letters In Common)</h3>
+                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
+                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                        </div>
+                                    </div>
+                                    <div class="chart-desc">The letters are there, but are they
+                                        arranged in such a way
+                                        so as
+                                        to have both be present?</div>
+                                    <div class="horizontal-scroll-container" id="lic-container">
+                                        <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
                                     </div>
                                 </div>
-                                <div class="chart-desc">The letters are there, but are they
-                                    arranged in such a way
-                                    so as
-                                    to have both be present?</div>
-                                <div class="horizontal-scroll-container" id="lic-container">
-                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
-                                </div>
                             </div>
+                        </div>
+
+                        <div class="custom-scrollbar-track" id="combo-scrollbar-track">
+                            <div class="custom-scrollbar-thumb" id="combo-scrollbar-thumb"></div>
                         </div>
                     </div>
 
@@ -6926,7 +6932,7 @@
     <script src="/js/play.js?v=33245"></script>
     <script src="/js/tournaments.js?v=33180"></script>
     <script src="/js/leaderboard.js?v=33275"></script>
-    <script src="/js/tools.js?v=33450"></script>
+    <script src="/js/tools.js?v=33451"></script>
     <script src="/js/mouse_selection.js?v=33172"></script>
     <script src="/js/mods.js?v=33215"></script>
     <script src="/js/private_matches.js?v=33173"></script>

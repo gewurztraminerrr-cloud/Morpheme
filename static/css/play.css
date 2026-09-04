@@ -2728,8 +2728,26 @@ body.theme-light-brown .word-item.missed {
     #tool-combo.tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
+        position: relative !important;
+        width: 100% !important;
         height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+
+    #tool-combo .combo-scroll-container,
+    .combo-scroll-container {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        padding: 4px 18px 40px 4px !important;
     }
 
     #tool-combo .combo-results-container,
@@ -2833,9 +2851,26 @@ body.theme-light-brown .word-item.missed {
     #tool-combo.tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
+        position: relative !important;
+        width: 100% !important;
         height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+
+    #tool-combo .combo-scroll-container,
+    .combo-scroll-container {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        padding: 4px 16px 80px 4px !important;
     }
 
     #tool-combo .combo-results-container,
@@ -7547,6 +7582,7 @@ body .board-cell.tile-flash-purple * {
     #tool-sequence.tool-pane.active,
     #tool-subanagrams.tool-pane.active,
     #tool-lists.tool-pane.active,
+    #tool-combo.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -7856,6 +7892,50 @@ body .board-cell.tile-flash-purple * {
     border: 1px solid rgba(0, 210, 255, 0.9) !important;
     box-shadow: 0 0 16px rgba(0, 210, 255, 0.8) !important;
     cursor: grabbing !important;
+}
+
+/* Combo Checker Entire Panel Custom Scrollbar Track & Thumb */
+#combo-scrollbar-track {
+    position: absolute !important;
+    top: 6px !important;
+    bottom: 6px !important;
+    right: 4px !important;
+    width: 16px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    z-index: 100 !important;
+    touch-action: none !important;
+    display: none;
+}
+
+#combo-scrollbar-thumb {
+    position: absolute !important;
+    top: 0 !important;
+    left: 2px !important;
+    width: 12px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.75), rgba(58, 123, 213, 0.75)) !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(0, 210, 255, 0.5) !important;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3) !important;
+    z-index: 101 !important;
+    cursor: grab !important;
+    touch-action: none !important;
+    min-height: 36px !important;
+}
+
+#combo-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.6) !important;
+}
+
+#combo-scrollbar-thumb:active,
+#combo-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 1), rgba(58, 123, 213, 1)) !important;
+    border: 1px solid rgba(0, 210, 255, 0.9) !important;
+    box-shadow: 0 0 16px rgba(0, 210, 255, 0.8) !important;
+    cursor: grabbing !important;
+    width: 14px !important;
 }
 
 #full-list-modal-results::-webkit-scrollbar,

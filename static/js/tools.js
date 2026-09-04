@@ -63,7 +63,7 @@ window.showTool = function(toolId) {
             if (p.id === `tool-${toolId}`) p.classList.add('active');
             else p.classList.remove('active');
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists' || toolId === 'combo') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
@@ -71,6 +71,14 @@ window.showTool = function(toolId) {
     }
 
     // Trigger lazy loads
+    if (toolId === 'combo') {
+        const comboScroll = document.getElementById('combo-scroll-container');
+        if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
+            comboScroll._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
+        }
+    }
     if (toolId === 'profile') {
         if (typeof refreshProfileTool === 'function') refreshProfileTool();
     }
@@ -313,6 +321,10 @@ function setupComboChecker() {
         });
     }
 
+    if (typeof initCustomScrollbarForElement === 'function') {
+        initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
+    }
+
     // Prevent horizontal scroll/swipe chaining to the parent .tools-split-layout and enable direct touch dragging across tables
     const containers = [document.getElementById('mp-container'), document.getElementById('lic-container')];
     containers.forEach(container => {
@@ -400,6 +412,10 @@ async function runComboSearch() {
         if (licContainer) licContainer.innerHTML = '';
         renderGroups(cachedData.mp_groups, 'mp-container', 'MP');
         renderGroups(cachedData.lic_groups, 'lic-container', 'LIC');
+        const comboScroll = document.getElementById('combo-scroll-container');
+        if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
+            comboScroll._updateCustomScrollbar();
+        }
         return;
     }
 
@@ -426,6 +442,11 @@ async function runComboSearch() {
         if (mpContainer) mpContainer.innerHTML = '';
         renderGroups(data.mp_groups, 'mp-container', 'MP');
         renderGroups(data.lic_groups, 'lic-container', 'LIC');
+
+        const comboScroll = document.getElementById('combo-scroll-container');
+        if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
+            comboScroll._updateCustomScrollbar();
+        }
 
     } catch (error) {
         console.error('Combo Search Error:', error);
@@ -4307,6 +4328,7 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
 function initCustomScrollbar() {
     initCustomScrollbarForElement('main-list-results', 'list-scrollbar-track', 'list-scrollbar-thumb');
     initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
+    initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
 }
 
 
