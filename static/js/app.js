@@ -301,6 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModalListeners();
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
+    setupFirstInteractionMusic(); // Ensure immediate audio unlock on first user gesture
     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
     if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
     
@@ -785,6 +786,10 @@ function setupFirstInteractionMusic() {
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
     });
 }
+
+window.playLobbyMusicHelper = playLobbyMusicHelper;
+window.handleLobbyMusicState = handleLobbyMusicState;
+window.setupFirstInteractionMusic = setupFirstInteractionMusic;
 
 // Setup contact form submission
 function setupContactForm() {

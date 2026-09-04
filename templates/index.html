@@ -1390,8 +1390,8 @@
                         </div>
         </div>
 
-        <!-- Global Audio Elements (Loaded on Demand / Preloaded for Instant Playback) -->
-        <audio id="lobby-music" data-src="/music/lobby.mp3" preload="none" playsinline webkit-playsinline loop></audio>
+        <!-- Global Audio Elements (Preloaded for Instant Playback) -->
+        <audio id="lobby-music" src="/music/lobby.mp3" preload="auto" playsinline webkit-playsinline loop></audio>
         <audio id="triple-music" data-src="/music/triple.mp3" preload="none" loop></audio>
 
         <style>
@@ -1514,10 +1514,17 @@
                 try {
                     var music = document.getElementById('lobby-music');
                     if (music) {
+                        if (!music.src || !music.src.includes('/music/lobby.mp3')) {
+                            music.src = '/music/lobby.mp3';
+                        }
+                        music.loop = true;
+                        music.volume = 0.5;
+                        music.muted = false;
                         if (typeof window.playLobbyMusicHelper === 'function') {
                             window.playLobbyMusicHelper(music);
                         } else if (typeof music.play === 'function') {
-                            music.play().catch(function() {});
+                            var p = music.play();
+                            if (p !== undefined) p.catch(function() {});
                         }
                     }
                 } catch(e) {}
@@ -1675,50 +1682,6 @@
                     } else {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
-                    }
-
-                    // Start Lobby music the literal exact moment Loading screen appears
-                    const tryStartLobbyMusic = function() {
-                        const music = document.getElementById('lobby-music');
-                        if (!music) return;
-
-                        const enableAudioOutput = function() {
-                            music.muted = false;
-                            if (music.paused) {
-                                music.play().catch(function() {});
-                            }
-                        };
-
-                        // Attempt instant unmuted play, fallback to muted play + gesture unmute
-                        const p = music.play();
-                        if (p !== undefined) {
-                            p.then(function() {
-                                music.muted = false;
-                            }).catch(function() {
-                                music.muted = true;
-                                music.play().catch(function() {});
-                            });
-                        }
-
-                        // Attach interaction listeners to window & document for instant unmuting/playback
-                        const events = ['click', 'keydown', 'mousedown', 'touchstart', 'mousemove', 'pointermove', 'pointerdown', 'mouseenter', 'mouseover', 'focus', 'wheel', 'scroll'];
-                        const onInteraction = function() {
-                            enableAudioOutput();
-                            if (!music.paused && !music.muted) {
-                                events.forEach(function(evt) {
-                                    window.removeEventListener(evt, onInteraction, { capture: true });
-                                    document.removeEventListener(evt, onInteraction, { capture: true });
-                                });
-                            }
-                        };
-                        events.forEach(function(evt) {
-                            window.addEventListener(evt, onInteraction, { capture: true, passive: true });
-                            document.addEventListener(evt, onInteraction, { capture: true, passive: true });
-                        });
-                    };
-
-                    if (loggedIn || (pageLoading && pageLoading.classList.contains('active'))) {
-                        tryStartLobbyMusic();
                     }
                 } catch(e) {
                     console.warn('LocalStorage check failed:', e);
@@ -6927,7 +6890,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33566"></script>
+    <script src="/js/app.js?v=33567"></script>
     <script src="/js/lobby.js?v=33410"></script>
     <script src="/js/play.js?v=33247"></script>
     <script src="/js/tournaments.js?v=33180"></script>
