@@ -8,6 +8,90 @@
 // Fix: direct scrollLeft assignment + strict snap enforcement on touchend/resize/visibility.
 // =============================================================================
 
+function checkIsDesktop() {
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileUA || window.innerWidth <= 992) {
+        document.body.classList.remove('is-desktop');
+        document.body.classList.add('is-mobile');
+        return false;
+    }
+    document.body.classList.add('is-desktop');
+    document.body.classList.remove('is-mobile');
+    return true;
+}
+
+function adjustPlayHeaderForDevice() {
+    const pagePlay = document.getElementById('page-play');
+    if (!pagePlay) return;
+    const header = document.querySelector('.play-header');
+    const boardPanel = document.querySelector('.board-panel');
+    const timerDisplay = document.querySelector('.timer-display');
+    const timerControlsGroup = document.getElementById('timer-controls-group');
+    const wordInputSection = document.querySelector('.word-input-section');
+    const colorBar = document.getElementById('game-color-bar');
+    const playersPanel = document.getElementById('play-panel-players');
+    const playGrid = document.querySelector('.play-grid');
+    
+    if (!header || !boardPanel) return;
+    
+    const isDesktop = checkIsDesktop();
+    
+    if (isDesktop) {
+        // Desktops and laptops only: Header sits in its own space above Players, Board, and Words panels and below top menu
+        if (header.parentElement !== pagePlay) {
+            if (playGrid && playGrid.parentElement === pagePlay) {
+                playGrid.insertAdjacentElement('beforebegin', header);
+            } else {
+                pagePlay.prepend(header);
+            }
+        }
+        // Color bar sits above Players panel inside the left panel container
+        if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
+            playersPanel.prepend(colorBar);
+        }
+        // Timer sits inside boardPanel directly above the board
+        const gameBoard = document.getElementById('game-board');
+        if (timerDisplay && gameBoard && timerDisplay.nextElementSibling !== gameBoard) {
+            gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
+        } else if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+            boardPanel.prepend(timerDisplay);
+        }
+        // Rotate & Transpose buttons sit in wordInputSection on laptops and desktops
+        if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
+            wordInputSection.appendChild(timerControlsGroup);
+        }
+    } else {
+        // Mobile only: Move play-header strictly inside board panel so it ONLY appears in the Board window above the Timer
+        if (header.parentElement !== boardPanel) {
+            boardPanel.prepend(header);
+        }
+        // Move Timer inside board panel directly above the board (after play-header)
+        const gameBoard = document.getElementById('game-board');
+        if (timerDisplay && gameBoard && timerDisplay.nextElementSibling !== gameBoard) {
+            gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
+        } else if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+            if (header && header.parentElement === boardPanel) {
+                header.insertAdjacentElement('afterend', timerDisplay);
+            } else {
+                boardPanel.prepend(timerDisplay);
+            }
+        }
+        // Move Rotate & Transpose buttons inside timerDisplay on mobile
+        if (timerControlsGroup && timerDisplay && timerControlsGroup.parentElement !== timerDisplay) {
+            timerDisplay.appendChild(timerControlsGroup);
+        }
+        // Move Color Chart (Color Bar) strictly inside the left panel (above Players) on mobile
+        if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
+            playersPanel.prepend(colorBar);
+        }
+    }
+}
+window.checkIsDesktop = checkIsDesktop;
+window.adjustPlayHeaderForDevice = adjustPlayHeaderForDevice;
+
+// Run device adjustment immediately
+adjustPlayHeaderForDevice();
+
 const _PLAY_PANELS = ['players', 'board', 'words'];
 window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
