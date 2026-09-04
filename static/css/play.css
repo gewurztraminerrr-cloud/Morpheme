@@ -9695,3 +9695,112 @@ body.is-mobile #page-settings .theme-selector-grid {
     border-color: rgba(167, 139, 250, 0.7) !important;
     color: #a78bfa !important;
 }
+
+/* ==========================================================================
+   DESKTOP & LAPTOP PLAY PAGE LAYOUT (STRICT: NOT MOBILE)
+   ========================================================================== */
+body.is-desktop #page-play,
+body.is-desktop #page-play.active {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+body.is-desktop .play-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-bottom: 10px !important;
+    padding: 10px 20px !important;
+    border-radius: 12px !important;
+    background: var(--bg-panel) !important;
+    box-sizing: border-box !important;
+    min-height: 48px !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-desktop .header-title-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-desktop .game-params {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex: 1 !important;
+    text-align: center !important;
+    gap: 4px !important;
+}
+
+body.is-desktop #return-lobby-btn {
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-desktop #page-play > #game-color-bar {
+    display: flex !important;
+    width: 100% !important;
+    height: 14px !important;
+    margin-bottom: 10px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-desktop .play-grid {
+    display: grid !important;
+    grid-template-columns: var(--left-panel-w, 340px) 1fr var(--right-panel-w, 400px) !important;
+    gap: 15px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body.is-desktop .left-panel-container,
+body.is-desktop .board-panel,
+body.is-desktop .words-panel {
+    flex: unset !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    scroll-snap-align: none !important;
+}
+
+body.is-desktop .board-panel .timer-display {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto 12px auto !important;
+    padding: 8px 24px !important;
+    border-radius: 10px !important;
+    background: rgba(var(--text-primary-rgb), 0.1) !important;
+}
+
+body.is-desktop .word-input-section {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+

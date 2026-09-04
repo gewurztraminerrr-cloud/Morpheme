@@ -154,12 +154,12 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/css/style.css?v=33416" as="style">
     <link rel="preload" href="/css/lobby.css?v=33622" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33416">
-    <link rel="stylesheet" href="/css/lobby.css?v=33622">
-    <link rel="stylesheet" href="/css/play.css?v=33431">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33180">
-    <link rel="stylesheet" href="/css/forum.css?v=33180">
-    <link rel="stylesheet" href="/css/donate.css?v=33190">
+    <link rel="stylesheet" href="/css/style.css?v=33730">
+    <link rel="stylesheet" href="/css/lobby.css?v=33730">
+    <link rel="stylesheet" href="/css/play.css?v=33730">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=33730">
+    <link rel="stylesheet" href="/css/forum.css?v=33730">
+    <link rel="stylesheet" href="/css/donate.css?v=33730">
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -6983,11 +6983,36 @@
             const wordInputSection = document.querySelector('.word-input-section');
             const colorBar = document.getElementById('game-color-bar');
             const playersPanel = document.getElementById('play-panel-players');
+            const playGrid = document.querySelector('.play-grid');
             
             if (!header || !boardPanel) return;
             
-            if (window.innerWidth <= 992) {
-                // Mobile: Move play-header inside board panel so it ONLY shows above the board, never above Players or Words
+            const isDesktop = document.body.classList.contains('is-desktop') || (!isMobileDevice && window.innerWidth > 768);
+            
+            if (isDesktop) {
+                // Desktops and laptops only: Header sits in its own space above Players, Board, and Words panels and below top menu
+                if (header.parentElement !== pagePlay) {
+                    pagePlay.prepend(header);
+                }
+                // Color bar sits below header and above the 3 panels
+                if (colorBar && playGrid && colorBar.parentElement !== pagePlay) {
+                    playGrid.insertAdjacentElement('beforebegin', colorBar);
+                }
+                // Timer sits inside boardPanel above the board
+                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+                    const gameBoard = document.getElementById('game-board');
+                    if (gameBoard) {
+                        gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
+                    } else {
+                        boardPanel.prepend(timerDisplay);
+                    }
+                }
+                // Rotate & Transpose buttons sit in wordInputSection
+                if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
+                    wordInputSection.appendChild(timerControlsGroup);
+                }
+            } else {
+                // Mobile only: Move play-header inside board panel
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
                 }
@@ -7002,23 +7027,6 @@
                 // Move Color Chart (Color Bar) strictly inside the left panel (above Players) on mobile
                 if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
                     playersPanel.prepend(colorBar);
-                }
-            } else {
-                // Desktop: Move back to the top of the page
-                if (header.parentElement !== pagePlay) {
-                    pagePlay.prepend(header);
-                }
-                // Move Timer above the board (prepend to boardPanel)
-                if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
-                    boardPanel.prepend(timerDisplay);
-                }
-                // Move Rotate & Transpose buttons next to Submit in wordInputSection on desktop
-                if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
-                    wordInputSection.appendChild(timerControlsGroup);
-                }
-                // Move Color Chart (Color Bar) above header and below top menu
-                if (colorBar && header) {
-                    header.insertAdjacentElement('beforebegin', colorBar);
                 }
             }
         }
