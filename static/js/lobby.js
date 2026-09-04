@@ -1614,8 +1614,14 @@ startLobbyChatPolling();
 window.addEventListener('visibilitychange', () => {
     if (document.hidden || document.visibilityState === 'hidden') {
         leaveLobbyPresence();
-    } else if (isOnLobby()) {
-        startLobbyChatPolling();
+    } else {
+        if (typeof window.fetchLobbyStats === 'function') {
+            window.fetchLobbyStats('all');
+        }
+        if (isOnLobby()) {
+            startLobbyChatPolling();
+            startStatsPolling();
+        }
     }
 });
 
@@ -1628,8 +1634,12 @@ window.addEventListener('freeze', () => {
 });
 
 window.addEventListener('focus', () => {
+    if (typeof window.fetchLobbyStats === 'function') {
+        window.fetchLobbyStats('all');
+    }
     if (isOnLobby()) {
         startLobbyChatPolling();
+        startStatsPolling();
     }
 });
 

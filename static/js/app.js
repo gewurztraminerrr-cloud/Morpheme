@@ -3058,6 +3058,9 @@ function touchMorphemeActivity() {
 window.addEventListener('beforeunload', touchMorphemeActivity);
 window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
+        if (typeof window.fetchLobbyStats === 'function') {
+            window.fetchLobbyStats('all').catch(() => {});
+        }
         try {
             const last = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
             if (last > 0 && (Date.now() - last >= 60 * 60 * 1000)) {

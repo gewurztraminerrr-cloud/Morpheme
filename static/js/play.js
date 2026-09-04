@@ -508,6 +508,9 @@ async function ejectToLobby(reason = "inactivity") {
     window._isEjectingToLobby = true;
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
 
+    // Capture targetRoomId BEFORE clearing local variables
+    const targetRoomId = window.currentRoomId || (typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : null) || localStorage.getItem('last_joined_room');
+
     // Stop all polling and timer intervals immediately to prevent cascading polls
     stopPolling();
     if (timerInterval) {
@@ -525,6 +528,25 @@ async function ejectToLobby(reason = "inactivity") {
         localStorage.removeItem('last_joined_room');
     } catch(e) {}
 
+    // 1. Notify server immediately so lobby counts decrease
+    if (targetRoomId) {
+        try {
+            const url = `/api/room/${targetRoomId}/leave`;
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(url);
+            } else {
+                fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+            }
+        } catch (e) {
+            console.error('[play.js] Failed to notify server of leave during ejection:', e);
+        }
+    }
+
+    // Proactively refresh lobby stats so all buttons in Lobby update their counts
+    if (typeof window.fetchLobbyStats === 'function') {
+        window.fetchLobbyStats('all').catch(() => {});
+    }
+
     // Check if inactivity notice should be suppressed (e.g. absent >= 1 hour)
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
@@ -537,15 +559,6 @@ async function ejectToLobby(reason = "inactivity") {
             const exceededOneHourMemory = (typeof lastGameInteractionTime === 'number') && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
             shouldSuppressNotice = isSuppressedFlag || exceededOneHourStorage || exceededOneHourMemory;
         } catch(e) {}
-    }
-
-    // 1. Notify server immediately so lobby counts decrease
-    if (window.leaveCurrentRoom) {
-        try {
-            await window.leaveCurrentRoom();
-        } catch (e) {
-            console.error('[play.js] Failed to notify server of leave during ejection:', e);
-        }
     }
 
     if (shouldSuppressNotice) {
@@ -664,6 +677,9 @@ async function ejectToLobby(reason = "inactivity") {
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
         else window.location.href = '#page-lobby';
+        if (typeof window.fetchLobbyStats === 'function') {
+            window.fetchLobbyStats('all').catch(() => {});
+        }
         window._isEjectingToLobby = false;
     }, 400);
 }
