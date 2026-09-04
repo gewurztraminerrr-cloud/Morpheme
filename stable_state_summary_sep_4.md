@@ -28,18 +28,22 @@
    - On laptops and desktops (and **ONLY** laptops and desktops), the `Rotate` and `Transpose` buttons are positioned immediately to the right of the word input textbox (`#word-input`) inside `.word-input-section`.
    - Styled with matching capsule aesthetics, hover states, border radiuses, and height (`44px`).
 
-3. **Mobile Device Board Window Isolation**:
+3. **Desktop / Laptop Timer Padding & Spacing Reduction**:
+   - Reduced the internal vertical padding on `body.is-desktop .board-panel .timer-display` from `8px 24px` to `3px 20px` (`border-radius: 8px`), creating a slim, snug capsule around `Time: 0:00`.
+   - Decreased the board panel top padding to `8px` and the timer bottom margin to `3px` (`margin: 0 auto 3px auto !important;`), reducing excess space above and below the timer and above the game board on laptops and desktops.
+
+4. **Mobile Device Board Window Isolation**:
    - On mobile devices (`is-mobile` / `max-width: 992px`), `.play-header` (Spinner Set & constant parameters) is dynamically and strictly isolated inside the **Board window** (`.board-panel`) directly above the timer (`.timer-display`).
    - When swiping horizontally to the **Players panel** (which sits below the Color Chart) or to the **Words panel**, the parameters and Spinner Set are **not displayed**.
    - On mobile devices, `Rotate` and `Transpose` buttons remain positioned on the right side of the timer display bar (`.timer-display`) directly above the board.
 
-4. **Mobile Low-Time Red Pulse Warning (<= 10s)**:
+5. **Mobile Low-Time Red Pulse Warning (<= 10s)**:
    - On mobile devices during low-time warnings (`<= 10s`), the entire Board view—including space above and below the light grey timer panel—glows and pulses red continuously in unison (`mobile-low-time-pulse`).
    - On mobile, `.play-header` remains transparent with no separate card backgrounds or border outlines.
 
-5. **Mobile Viewport Snap & Round Navigation**:
+6. **Mobile Viewport Snap & Round Navigation**:
    - Reduced bottom margin of the light grey timer panel (`.timer-display`) to `3px` on mobile screens.
    - Smoothly slides mobile users to the **Board window** upon round start and slides the top navigation menu up and out of view.
 
-6. **Cache Busting & Versioning**:
-   - Incremented query parameter versions for `style.css`, `play.css`, `app.js`, and `play.js` to `v=33860` in `templates/index.html`.
+7. **Cache Busting & Versioning**:
+   - Incremented query parameter versions for `style.css`, `play.css`, `app.js`, and `play.js` to `v=33862` in `templates/index.html`.
