@@ -9946,7 +9946,7 @@ body.is-desktop .board-panel .timer-display {
     align-items: center !important;
     width: 100% !important;
     max-width: 400px !important;
-    margin: 0 auto 18px auto !important;
+    margin: 0 auto 6px auto !important;
     padding: 8px 24px !important;
     border-radius: 10px !important;
     background: rgba(var(--text-primary-rgb), 0.1) !important;
