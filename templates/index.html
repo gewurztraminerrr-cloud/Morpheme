@@ -156,7 +156,7 @@
     <link rel="preload" href="/css/lobby.css?v=33807" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33804">
     <link rel="stylesheet" href="/css/lobby.css?v=33807">
-    <link rel="stylesheet" href="/css/play.css?v=33804">
+    <link rel="stylesheet" href="/css/play.css?v=33812">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
     <link rel="stylesheet" href="/css/forum.css?v=33804">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
@@ -7016,9 +7016,12 @@
                 if (header.parentElement !== boardPanel) {
                     boardPanel.prepend(header);
                 }
-                // Move Timer inside play-header (appended to end)
-                if (timerDisplay && timerDisplay.parentElement !== header) {
-                    header.appendChild(timerDisplay);
+                // Move Timer inside board panel directly above the board
+                const gameBoard = document.getElementById('game-board');
+                if (timerDisplay && gameBoard && timerDisplay.nextElementSibling !== gameBoard) {
+                    gameBoard.insertAdjacentElement('beforebegin', timerDisplay);
+                } else if (timerDisplay && boardPanel && timerDisplay.parentElement !== boardPanel) {
+                    boardPanel.prepend(timerDisplay);
                 }
                 // Move Rotate & Transpose buttons inside timerDisplay on mobile
                 if (timerControlsGroup && timerDisplay && timerControlsGroup.parentElement !== timerDisplay) {

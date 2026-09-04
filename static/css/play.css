@@ -5472,7 +5472,7 @@ input[type=range]::-moz-range-track {
     .spinner-set-label {
         display: block !important;
     }
-    .timer-display {
+    .play-header .timer-display {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -5482,8 +5482,11 @@ input[type=range]::-moz-range-track {
         max-width: none !important;
         margin: 5px 0 !important;
         padding: 5px 15px !important;
-        order: 3 !important; /* Force third (below params) */
+        order: 3 !important; /* Force third inside play-header */
         box-sizing: border-box !important;
+    }
+    .board-panel .timer-display {
+        order: 0 !important;
     }
 
 
