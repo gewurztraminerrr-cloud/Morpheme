@@ -2795,9 +2795,7 @@ document.addEventListener('visibilitychange', () => {
     }
 
     function attemptFullscreen() {
-        if (!isMobileDevice() || !window._gatewayPassed) return;
-        const pLoad = document.getElementById('page-loading');
-        if (pLoad && (pLoad.classList.contains('active') || pLoad.style.display !== 'none')) return;
+        if (!isMobileDevice()) return;
         
         // Never trigger fullscreen on Tools, Settings, Profile, Forum, or when any modal/input is active
         const activePage = document.querySelector('.page.active');
@@ -2846,11 +2844,10 @@ document.addEventListener('visibilitychange', () => {
         }
     });
 
-    // On any user tap after returning / minimizing, re-engage fullscreen
-    ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+    // On any user tap/press on the screen (including on the ENTER LOBBY screen), engage fullscreen
+    ['pointerdown', 'touchstart', 'mousedown', 'click'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
             if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
-            if (!window._gatewayPassed) return;
 
             // Skip typing in inputs or interacting inside full list modal
             const tag = e.target && e.target.tagName;

@@ -1432,8 +1432,8 @@
         </style>
 
         <!-- Loading / Gateway Page (Instantly Visible) -->
-        <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
-            <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div id="page-loading" class="page active" onpointerdown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="color: #fff; font-family: 'Inter', sans-serif;">
+            <div id="loading-gateway-container" onpointerdown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                 </div>
@@ -6921,7 +6921,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33130"></script>
     <script src="/js/forum.js?v=33178"></script>
-    <script src="/js/app.js?v=33555"></script>
+    <script src="/js/app.js?v=33560"></script>
     <script src="/js/lobby.js?v=33410"></script>
     <script src="/js/play.js?v=33245"></script>
     <script src="/js/tournaments.js?v=33180"></script>
