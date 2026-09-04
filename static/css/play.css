@@ -6830,9 +6830,12 @@ input[type=range]::-moz-range-track {
     }
 
     .board-panel.low-time-warning,
-    .board-panel.full-bleed-mobile.low-time-warning {
+    .board-panel.full-bleed-mobile.low-time-warning,
+    .board-panel.low-time-warning .play-header,
+    .play-header.low-time-warning {
         animation: mobile-low-time-pulse 3s infinite ease-in-out !important;
-        border: 1px solid rgba(255, 50, 50, 0.4) !important;
+        border: none !important;
+        box-shadow: none !important;
         will-change: background-color, box-shadow !important;
     }
 

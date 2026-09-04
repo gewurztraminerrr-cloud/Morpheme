@@ -4872,12 +4872,17 @@ function updateLocalTimer() {
     }
 
     // Low time visual
+    const headerEl = document.querySelector('.play-header');
     if (cachedBoardPanelEl) {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         if (remaining <= 10 && remaining > 0 && currentState === 'active') {
             cachedBoardPanelEl.classList.add('low-time-warning');
+            if (headerEl && (window.innerWidth <= 992 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+                headerEl.classList.add('low-time-warning');
+            }
         } else {
             cachedBoardPanelEl.classList.remove('low-time-warning');
+            if (headerEl) headerEl.classList.remove('low-time-warning');
         }
     }
 
@@ -4885,6 +4890,7 @@ function updateLocalTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
+        if (headerEl) headerEl.classList.remove('low-time-warning');
 
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
