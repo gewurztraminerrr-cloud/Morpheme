@@ -9868,4 +9868,457 @@ body.is-desktop .word-input-section .timer-controls-group .rotate-btn {
     box-sizing: border-box !important;
 }
 
+/* ==========================================================================
+   WHITE & LIGHT THEME COMPREHENSIVE READABILITY & CONTRAST OVERHAUL
+   ========================================================================== */
+
+/* 1. All Words / Submitted Words List in Game Rooms for Light Themes */
+[class*="theme-white"] .word-item,
+[class*="theme-light-"] .word-item,
+body.theme-white .word-item,
+body.theme-light-gray .word-item,
+body.theme-light-red .word-item,
+body.theme-light-orange .word-item,
+body.theme-light-yellow .word-item,
+body.theme-light-green .word-item,
+body.theme-light-blue .word-item,
+body.theme-light-purple .word-item,
+body.theme-light-pink .word-item,
+body.theme-light-brown .word-item,
+body.theme-yellow .word-item,
+body.theme-pink .word-item,
+body.theme-orange .word-item,
+body.theme-gray .word-item {
+    color: #111111 !important;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+[class*="theme-white"] .word-item .word-text,
+[class*="theme-light-"] .word-item .word-text,
+body.theme-white .word-item .word-text,
+body.theme-light-gray .word-item .word-text,
+body.theme-light-red .word-item .word-text,
+body.theme-light-orange .word-item .word-text,
+body.theme-light-yellow .word-item .word-text,
+body.theme-light-green .word-item .word-text,
+body.theme-light-blue .word-item .word-text,
+body.theme-light-purple .word-item .word-text,
+body.theme-light-pink .word-item .word-text,
+body.theme-light-brown .word-item .word-text,
+body.theme-yellow .word-item .word-text,
+body.theme-pink .word-item .word-text,
+body.theme-orange .word-item .word-text,
+body.theme-gray .word-item .word-text {
+    color: #111111 !important;
+}
+
+[class*="theme-white"] .word-item.unfound,
+[class*="theme-light-"] .word-item.unfound,
+body.theme-white .word-item.unfound,
+body.theme-light-gray .word-item.unfound,
+body.theme-light-red .word-item.unfound,
+body.theme-light-orange .word-item.unfound,
+body.theme-light-yellow .word-item.unfound,
+body.theme-light-green .word-item.unfound,
+body.theme-light-blue .word-item.unfound,
+body.theme-light-purple .word-item.unfound,
+body.theme-light-pink .word-item.unfound,
+body.theme-light-brown .word-item.unfound,
+body.theme-yellow .word-item.unfound,
+body.theme-pink .word-item.unfound,
+body.theme-orange .word-item.unfound,
+body.theme-gray .word-item.unfound {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    color: #111111 !important;
+}
+
+[class*="theme-white"] .nwl-word,
+[class*="theme-light-"] .nwl-word,
+body.theme-white .nwl-word,
+body.theme-light-gray .nwl-word,
+body.theme-light-red .nwl-word,
+body.theme-light-orange .nwl-word,
+body.theme-light-yellow .nwl-word,
+body.theme-light-green .nwl-word,
+body.theme-light-blue .nwl-word,
+body.theme-light-purple .nwl-word,
+body.theme-light-pink .nwl-word,
+body.theme-light-brown .nwl-word,
+body.theme-yellow .nwl-word,
+body.theme-pink .nwl-word,
+body.theme-orange .nwl-word,
+body.theme-gray .nwl-word {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    color: #111111 !important;
+}
+
+[class*="theme-white"] .word-item.player-word,
+[class*="theme-light-"] .word-item.player-word,
+body.theme-white .word-item.player-word,
+body.theme-light-gray .word-item.player-word,
+body.theme-light-red .word-item.player-word,
+body.theme-light-orange .word-item.player-word,
+body.theme-light-yellow .word-item.player-word,
+body.theme-light-green .word-item.player-word,
+body.theme-light-blue .word-item.player-word,
+body.theme-light-purple .word-item.player-word,
+body.theme-light-pink .word-item.player-word,
+body.theme-light-brown .word-item.player-word,
+body.theme-yellow .word-item.player-word,
+body.theme-pink .word-item.player-word,
+body.theme-orange .word-item.player-word,
+body.theme-gray .word-item.player-word {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border: 2px solid #2563eb !important;
+    color: #1e40af !important;
+}
+
+[class*="theme-white"] .word-item.player-word .word-text,
+[class*="theme-light-"] .word-item.player-word .word-text,
+body.theme-white .word-item.player-word .word-text,
+body.theme-light-gray .word-item.player-word .word-text,
+body.theme-yellow .word-item.player-word .word-text,
+body.theme-pink .word-item.player-word .word-text,
+body.theme-orange .word-item.player-word .word-text,
+body.theme-gray .word-item.player-word .word-text,
+body.theme-light-brown .word-item.player-word .word-text {
+    color: #1e40af !important;
+}
+
+[class*="theme-white"] .added-word,
+[class*="theme-light-"] .added-word,
+body.theme-white .added-word,
+body.theme-light-gray .added-word,
+body.theme-light-red .added-word,
+body.theme-light-orange .added-word,
+body.theme-light-yellow .added-word,
+body.theme-light-green .added-word,
+body.theme-light-blue .added-word,
+body.theme-light-purple .added-word,
+body.theme-light-pink .added-word,
+body.theme-light-brown .added-word,
+body.theme-yellow .added-word,
+body.theme-pink .added-word,
+body.theme-orange .added-word,
+body.theme-gray .added-word {
+    background: rgba(147, 51, 234, 0.18) !important;
+    border: 2px solid #9333ea !important;
+    color: #6b21a8 !important;
+}
+
+[class*="theme-white"] .added-word .word-text,
+[class*="theme-light-"] .added-word .word-text,
+body.theme-white .added-word .word-text,
+body.theme-light-gray .added-word .word-text,
+body.theme-yellow .added-word .word-text,
+body.theme-pink .added-word .word-text,
+body.theme-orange .added-word .word-text,
+body.theme-gray .added-word .word-text,
+body.theme-light-brown .added-word .word-text {
+    color: #6b21a8 !important;
+}
+
+[class*="theme-white"] .word-item.csw-only,
+[class*="theme-light-"] .word-item.csw-only,
+body.theme-white .word-item.csw-only,
+body.theme-light-gray .word-item.csw-only,
+body.theme-light-red .word-item.csw-only,
+body.theme-light-orange .word-item.csw-only,
+body.theme-light-yellow .word-item.csw-only,
+body.theme-light-green .word-item.csw-only,
+body.theme-light-blue .word-item.csw-only,
+body.theme-light-purple .word-item.csw-only,
+body.theme-light-pink .word-item.csw-only,
+body.theme-light-brown .word-item.csw-only,
+body.theme-yellow .word-item.csw-only,
+body.theme-pink .word-item.csw-only,
+body.theme-orange .word-item.csw-only,
+body.theme-gray .word-item.csw-only {
+    background: rgba(234, 179, 8, 0.22) !important;
+    border: 2px solid #ca8a04 !important;
+    color: #713f12 !important;
+}
+
+[class*="theme-white"] .word-item.csw-only .word-text,
+[class*="theme-light-"] .word-item.csw-only .word-text,
+body.theme-white .word-item.csw-only .word-text,
+body.theme-light-gray .word-item.csw-only .word-text,
+body.theme-yellow .word-item.csw-only .word-text,
+body.theme-pink .word-item.csw-only .word-text,
+body.theme-orange .word-item.csw-only .word-text,
+body.theme-gray .word-item.csw-only .word-text,
+body.theme-light-brown .word-item.csw-only .word-text {
+    color: #713f12 !important;
+}
+
+[class*="theme-white"] .word-item.opponent-word,
+[class*="theme-light-"] .word-item.opponent-word,
+body.theme-white .word-item.opponent-word,
+body.theme-light-gray .word-item.opponent-word,
+body.theme-yellow .word-item.opponent-word,
+body.theme-pink .word-item.opponent-word,
+body.theme-orange .word-item.opponent-word,
+body.theme-gray .word-item.opponent-word,
+body.theme-light-brown .word-item.opponent-word {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    color: #991b1b !important;
+}
+
+[class*="theme-white"] .word-item.opponent-word .word-text,
+[class*="theme-light-"] .word-item.opponent-word .word-text,
+body.theme-white .word-item.opponent-word .word-text,
+body.theme-light-gray .word-item.opponent-word .word-text {
+    color: #991b1b !important;
+}
+
+[class*="theme-white"] .word-item.found-by-other,
+[class*="theme-light-"] .word-item.found-by-other,
+body.theme-white .word-item.found-by-other,
+body.theme-light-gray .word-item.found-by-other,
+body.theme-yellow .word-item.found-by-other,
+body.theme-pink .word-item.found-by-other,
+body.theme-orange .word-item.found-by-other,
+body.theme-gray .word-item.found-by-other,
+body.theme-light-brown .word-item.found-by-other {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    color: #111111 !important;
+}
+
+[class*="theme-white"] .word-item .points-math,
+[class*="theme-light-"] .word-item .points-math,
+body.theme-white .word-item .points-math,
+body.theme-light-gray .word-item .points-math,
+body.theme-yellow .word-item .points-math,
+body.theme-pink .word-item .points-math,
+body.theme-orange .word-item .points-math,
+body.theme-gray .word-item .points-math,
+body.theme-light-brown .word-item .points-math {
+    color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 2. Mods Tab Content High-Contrast & Clean Organization for Light Themes */
+[class*="theme-white"] #page-mods,
+[class*="theme-light-"] #page-mods,
+body.theme-white #page-mods,
+body.theme-light-gray #page-mods,
+body.theme-light-red #page-mods,
+body.theme-light-orange #page-mods,
+body.theme-light-yellow #page-mods,
+body.theme-light-green #page-mods,
+body.theme-light-blue #page-mods,
+body.theme-light-purple #page-mods,
+body.theme-light-pink #page-mods,
+body.theme-light-brown #page-mods,
+body.theme-yellow #page-mods,
+body.theme-pink #page-mods,
+body.theme-orange #page-mods,
+body.theme-gray #page-mods {
+    color: #0f172a;
+}
+
+[class*="theme-white"] #page-mods .mod-action-card,
+[class*="theme-white"] #page-mods .def-entry-card,
+[class*="theme-white"] #page-mods .def-guidelines-card,
+[class*="theme-white"] #page-mods .mod-section,
+[class*="theme-white"] #page-mods .mod-add-section,
+[class*="theme-light-"] #page-mods .mod-action-card,
+[class*="theme-light-"] #page-mods .def-entry-card,
+[class*="theme-light-"] #page-mods .def-guidelines-card,
+[class*="theme-light-"] #page-mods .mod-section,
+[class*="theme-light-"] #page-mods .mod-add-section,
+body.theme-white #page-mods .mod-action-card,
+body.theme-white #page-mods .def-entry-card,
+body.theme-white #page-mods .def-guidelines-card,
+body.theme-white #page-mods .mod-section,
+body.theme-white #page-mods .mod-add-section,
+body.theme-light-gray #page-mods .mod-action-card,
+body.theme-light-gray #page-mods .def-entry-card,
+body.theme-light-gray #page-mods .def-guidelines-card,
+body.theme-light-gray #page-mods .mod-section,
+body.theme-light-gray #page-mods .mod-add-section,
+body.theme-yellow #page-mods .mod-action-card,
+body.theme-yellow #page-mods .def-entry-card,
+body.theme-yellow #page-mods .def-guidelines-card,
+body.theme-yellow #page-mods .mod-section,
+body.theme-yellow #page-mods .mod-add-section,
+body.theme-pink #page-mods .mod-action-card,
+body.theme-pink #page-mods .def-entry-card,
+body.theme-pink #page-mods .def-guidelines-card,
+body.theme-pink #page-mods .mod-section,
+body.theme-pink #page-mods .mod-add-section,
+body.theme-orange #page-mods .mod-action-card,
+body.theme-orange #page-mods .def-entry-card,
+body.theme-orange #page-mods .def-guidelines-card,
+body.theme-orange #page-mods .mod-section,
+body.theme-orange #page-mods .mod-add-section,
+body.theme-gray #page-mods .mod-action-card,
+body.theme-gray #page-mods .def-entry-card,
+body.theme-gray #page-mods .def-guidelines-card,
+body.theme-gray #page-mods .mod-section,
+body.theme-gray #page-mods .mod-add-section,
+body.theme-light-brown #page-mods .mod-action-card,
+body.theme-light-brown #page-mods .def-entry-card,
+body.theme-light-brown #page-mods .def-guidelines-card,
+body.theme-light-brown #page-mods .mod-section,
+body.theme-light-brown #page-mods .mod-add-section {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    color: #1e293b !important;
+}
+
+[class*="theme-white"] #page-mods input,
+[class*="theme-white"] #page-mods textarea,
+[class*="theme-white"] #page-mods select,
+[class*="theme-light-"] #page-mods input,
+[class*="theme-light-"] #page-mods textarea,
+[class*="theme-light-"] #page-mods select,
+body.theme-white #page-mods input,
+body.theme-white #page-mods textarea,
+body.theme-white #page-mods select,
+body.theme-light-gray #page-mods input,
+body.theme-light-gray #page-mods textarea,
+body.theme-light-gray #page-mods select,
+body.theme-yellow #page-mods input,
+body.theme-yellow #page-mods textarea,
+body.theme-yellow #page-mods select,
+body.theme-pink #page-mods input,
+body.theme-pink #page-mods textarea,
+body.theme-pink #page-mods select,
+body.theme-orange #page-mods input,
+body.theme-orange #page-mods textarea,
+body.theme-orange #page-mods select,
+body.theme-gray #page-mods input,
+body.theme-gray #page-mods textarea,
+body.theme-gray #page-mods select,
+body.theme-light-brown #page-mods input,
+body.theme-light-brown #page-mods textarea,
+body.theme-light-brown #page-mods select {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[class*="theme-white"] #page-mods input::placeholder,
+[class*="theme-white"] #page-mods textarea::placeholder,
+[class*="theme-light-"] #page-mods input::placeholder,
+[class*="theme-light-"] #page-mods textarea::placeholder,
+body.theme-white #page-mods input::placeholder,
+body.theme-white #page-mods textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Mod Definition Guidelines text contrast in light mode */
+[class*="theme-white"] #page-mods .def-guidelines-card div[style*="border-left"],
+[class*="theme-light-"] #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-white #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-light-gray #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-yellow #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-pink #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-orange #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-gray #page-mods .def-guidelines-card div[style*="border-left"],
+body.theme-light-brown #page-mods .def-guidelines-card div[style*="border-left"] {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-radius: 6px !important;
+    margin-bottom: 6px !important;
+}
+
+[class*="theme-white"] #page-mods .def-guidelines-card span[style*="color: #fff"],
+[class*="theme-white"] #page-mods .def-guidelines-card span[style*="color:#fff"],
+[class*="theme-light-"] #page-mods .def-guidelines-card span[style*="color: #fff"],
+[class*="theme-light-"] #page-mods .def-guidelines-card span[style*="color:#fff"],
+body.theme-white #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-white #page-mods .def-guidelines-card span[style*="color:#fff"],
+body.theme-light-gray #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-light-gray #page-mods .def-guidelines-card span[style*="color:#fff"],
+body.theme-yellow #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-pink #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-orange #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-gray #page-mods .def-guidelines-card span[style*="color: #fff"],
+body.theme-light-brown #page-mods .def-guidelines-card span[style*="color: #fff"] {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+[class*="theme-white"] #page-mods .def-guidelines-card div[style*="color: #a5b4fc"],
+[class*="theme-light-"] #page-mods .def-guidelines-card div[style*="color: #a5b4fc"],
+body.theme-white #page-mods .def-guidelines-card div[style*="color: #a5b4fc"],
+body.theme-light-gray #page-mods .def-guidelines-card div[style*="color: #a5b4fc"] {
+    color: #4338ca !important;
+}
+
+/* Notice Preview Box */
+[class*="theme-white"] #current-notice-preview,
+[class*="theme-light-"] #current-notice-preview,
+body.theme-white #current-notice-preview,
+body.theme-light-gray #current-notice-preview {
+    background: #f8fafc !important;
+    border: 1px dashed #94a3b8 !important;
+    color: #1e293b !important;
+}
+
+/* Mod Tables (IP bans, donations, undefined words) */
+[class*="theme-white"] #ip-bans-list-container,
+[class*="theme-white"] #mod-donations-list-container,
+[class*="theme-white"] .undef-words-box,
+[class*="theme-white"] .undef-words-list-scroll,
+[class*="theme-light-"] #ip-bans-list-container,
+[class*="theme-light-"] #mod-donations-list-container,
+[class*="theme-light-"] .undef-words-box,
+[class*="theme-light-"] .undef-words-list-scroll,
+body.theme-white #ip-bans-list-container,
+body.theme-white #mod-donations-list-container,
+body.theme-white .undef-words-box,
+body.theme-white .undef-words-list-scroll {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] #ip-bans-table th,
+[class*="theme-white"] #mod-donations-table th,
+[class*="theme-light-"] #ip-bans-table th,
+[class*="theme-light-"] #mod-donations-table th,
+body.theme-white #ip-bans-table th,
+body.theme-white #mod-donations-table th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+}
+
+[class*="theme-white"] #ip-bans-table td,
+[class*="theme-white"] #mod-donations-table td,
+[class*="theme-light-"] #ip-bans-table td,
+[class*="theme-light-"] #mod-donations-table td,
+body.theme-white #ip-bans-table td,
+body.theme-white #mod-donations-table td {
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Mod Items list & badges */
+[class*="theme-white"] .mod-item,
+[class*="theme-light-"] .mod-item,
+body.theme-white .mod-item,
+body.theme-light-gray .mod-item {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] label[for="toggle-use-added-words"],
+[class*="theme-light-"] label[for="toggle-use-added-words"],
+body.theme-white label[for="toggle-use-added-words"] {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+
 
