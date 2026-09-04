@@ -416,12 +416,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     gatewayBtn.classList.add('pressed', 'flattened');
 
                     console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
-                    window._gatewayPassed = true;
-
-                    // Immediately trigger mobile fullscreen synchronously on user gesture so lobby opens already in fullscreen
-                    if (typeof window.triggerMobileFullscreen === 'function') {
-                        window.triggerMobileFullscreen();
-                    }
 
                     // 1. Play audio synchronously first
                     try {
@@ -1409,7 +1403,7 @@ function showPage(pageId) {
         }
     }
     window.currentPageId = pageId;
-    if (pageId !== 'page-play' && pageId !== 'page-lobby') {
+    if (pageId !== 'page-play') {
         if (document.fullscreenElement || document.webkitFullscreenElement) {
             try {
                 if (document.exitFullscreen) {
