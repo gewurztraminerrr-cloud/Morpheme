@@ -5475,14 +5475,6 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
-    /* Mobile: Strictly hide play-header if placed directly in page-play; only show inside board-panel */
-    #page-play > .play-header {
-        display: none !important;
-    }
-    .board-panel .play-header {
-        display: flex !important;
-    }
-
     .play-header {
         background: transparent !important;
         border: none !important;
