@@ -7030,7 +7030,16 @@ window.showWordDefinitionPopup = async function (word, event) {
     const contentEl = document.getElementById('tool-def-content');
     const isValidBtn = document.getElementById('tool-def-isvalid-btn');
 
-    if (wordTextEl) wordTextEl.textContent = cleanWord;
+    if (wordTextEl) {
+        wordTextEl.textContent = cleanWord;
+        if (cleanWord.length > 18) {
+            wordTextEl.style.fontSize = '0.98rem';
+        } else if (cleanWord.length > 14) {
+            wordTextEl.style.fontSize = '1.05rem';
+        } else {
+            wordTextEl.style.fontSize = '';
+        }
+    }
     if (lenBadgeEl) lenBadgeEl.textContent = `${cleanWord.length}L`;
     if (pronEl) pronEl.style.display = 'none';
     if (isValidBtn) {
@@ -7043,23 +7052,26 @@ window.showWordDefinitionPopup = async function (word, event) {
     // Smart Positioning
     const evt = event || window.event;
     const target = evt ? (evt.currentTarget || evt.target) : null;
-    popover.style.display = 'block';
+    popover.style.display = 'flex';
     popover.style.setProperty('z-index', '2147483647', 'important');
 
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
-        const popWidth = Math.min(320, window.innerWidth - 24);
+        const popWidth = Math.min(340, window.innerWidth - 16);
         let left = rect.left;
-        if (left + popWidth > window.innerWidth - 12) {
-            left = window.innerWidth - popWidth - 12;
+        if (left + popWidth > window.innerWidth - 10) {
+            left = window.innerWidth - popWidth - 10;
         }
-        if (left < 12) left = 12;
+        if (left < 10) left = 10;
 
+        const popHeight = popover.offsetHeight || 220;
         let top = rect.bottom + 8;
-        if (top + 220 > window.innerHeight && rect.top > 220) {
-            top = rect.top - 210;
+        if (top + popHeight > window.innerHeight - 10 && rect.top > popHeight + 10) {
+            top = rect.top - popHeight - 8;
+        } else if (top + popHeight > window.innerHeight - 10) {
+            top = Math.max(10, window.innerHeight - popHeight - 10);
         }
-        if (top < 12) top = 12;
+        if (top < 10) top = 10;
 
         popover.style.left = `${left}px`;
         popover.style.top = `${top}px`;
