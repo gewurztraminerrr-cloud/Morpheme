@@ -71,7 +71,8 @@
         margin-bottom: 0 !important;
     }
 
-    #mobile-panel-rooms {
+    #mobile-panel-rooms,
+    .active-rooms-panel {
         grid-column: 2;
         margin-top: 10px;
         margin-bottom: 8px;
@@ -79,6 +80,12 @@
         max-height: calc(100% - 18px) !important;
         overflow: hidden !important;
         box-sizing: border-box;
+        padding: 16px 20px 12px 20px !important;
+    }
+
+    #mobile-panel-rooms #rooms-list,
+    .active-rooms-panel #rooms-list {
+        margin: 0 !important;
     }
 }
 
@@ -2730,6 +2737,14 @@ body.theme-light-brown .lobby-chat-input:focus {
     .game-types-panel .solo-friends-panel {
         margin-bottom: 0 !important;
     }
+    #mobile-panel-rooms,
+    .active-rooms-panel {
+        padding-bottom: 12px !important;
+    }
+    #mobile-panel-rooms #rooms-list,
+    .active-rooms-panel #rooms-list {
+        margin: 0 !important;
+    }
 }
 
 body.is-desktop #mobile-panel-main,
@@ -2748,5 +2763,15 @@ body.is-desktop #mobile-panel-main #mobile-panel-solo .solo-friends-section,
 body.is-desktop #mobile-panel-main #mobile-panel-solo .solo-friends-section:last-child,
 body.is-desktop .solo-friends-panel .solo-friends-section:last-child {
     margin-bottom: 0 !important;
+}
+
+body.is-desktop #mobile-panel-rooms,
+body.is-desktop .active-rooms-panel {
+    padding-bottom: 12px !important;
+}
+
+body.is-desktop #mobile-panel-rooms #rooms-list,
+body.is-desktop .active-rooms-panel #rooms-list {
+    margin: 0 !important;
 }
 
