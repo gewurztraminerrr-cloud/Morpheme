@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `3cac319d`
-- **Commit Message**: `fix(audio): eliminate dual music echo and enhance lustrous shimmer on journey box`
+- **Commit ID**: `d8840e61`
+- **Commit Message**: `feat(ui): redesign journey message box to obsidian-diamond glass with refined silver shimmer`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,26 +13,27 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`3cac319d` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`3cac319d` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`3cac319d`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`d8840e61` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`d8840e61` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`d8840e61`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Elimination of Dual Music Echo & Single-Stream Lock**:
+1. **Obsidian-Diamond Frosted Glass Journey Banner (Mobile, Laptops, Desktops)**:
+   - Completely replaced the pink-to-black gradient design with an ultra-sleek, prestigious **Obsidian-Diamond Frosted Glass** container (`linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 30, 0.78) 40%, rgba(10, 10, 18, 0.88) 100%)`).
+   - Added a crisp top specular bevel highlight (`.lobby-journey-message::after`) with a diamond-bright sheen.
+   - Implemented a smooth, luminous diamond light shimmer sweep (`.lobby-journey-message::before` with `@keyframes journey-diamond-shimmer`) that traverses the banner every 4.8s.
+   - Styled the text with pure, high-contrast metallic pearl-white typography (`linear-gradient(180deg, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%)` via `-webkit-background-clip: text`) with subtle back-glow drop shadow.
+   - Applied responsive font sizing and letter-spacing for standard phones, small displays (<= 360px), tablets, laptops, and wide monitors.
+
+2. **Elimination of Dual Music Echo & Single-Stream Lock**:
    - Completely eliminated the slight millisecond echo/double-playing issue where the HTML5 `<audio id="lobby-music">` fallback element and Web Audio API `AudioBufferSourceNode` could trigger concurrently.
    - Enforced strict single-engine playback: whenever Web Audio buffer playback initiates, the HTML5 audio element is immediately paused, reset (`currentTime = 0`), and muted.
    - Added a trigger latch (`_gatewayAudioTriggered`) and singleton guard (`isPlaying` / `this.source` verification) so rapid pointer/touch/click events cannot create overlapping audio streams.
 
-2. **Ultra-Lustrous, Radiant Shimmer Journey Message Box (Mobile, Laptops, Desktops)**:
-   - Enhanced the `"ENTER A ROOM TO CONTINUE YOUR JOURNEY"` message box with deep obsidian-magenta crystalline glassmorphism (`linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(26, 4, 30, 0.94) 38%, rgba(14, 2, 18, 0.96) 68%, rgba(255, 0, 128, 0.16) 100%)`).
-   - Added a top specular glass edge highlight (`.lobby-journey-message::after`) and dual-layer prismatic light sweep (`.lobby-journey-message::before` with `@keyframes journey-shimmer-sweep`).
-   - Implemented metallic platinum-rose typography with glowing back-drop shadows (`linear-gradient(180deg, #ffffff 0%, #ffe6f3 35%, #ff66b2 75%, #ff007f 100%)` via `-webkit-background-clip: text`).
-   - Added a slow, breathing aura glow (`@keyframes journey-box-glow`) across dark themes.
-
-2. **Tournament Current Pairings Resolution**:
+3. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
    - Updated both backend `/api/tournament/status` (to include the final round's matchups in `all_matchups` when completed) and frontend `static/js/tournaments.js` (to prioritize the current/final round and search backwards for latest active pairings).
 
