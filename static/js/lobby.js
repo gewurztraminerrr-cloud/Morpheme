@@ -1374,6 +1374,15 @@ function openLobbyChatDrawer() {
     const drawer = document.getElementById('lobby-chat-drawer');
     if (drawer) {
         drawer.classList.add('open');
+        // Android Chrome virtual keyboard black screen prevention
+        if (typeof window.exitFullscreenForKeyboard === 'function') {
+            window.exitFullscreenForKeyboard();
+        } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+            } catch (e) {}
+        }
         fetchLobbyState();
         setTimeout(() => {
             const chatHistory = document.getElementById('lobby-chat-history');
@@ -1568,7 +1577,21 @@ function setupLobbyMobileKeyboardSupport() {
         }
     });
 
+    const exitFullscreenIfActive = () => {
+        if (typeof window.exitFullscreenForKeyboard === 'function') {
+            window.exitFullscreenForKeyboard();
+        } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+            } catch (e) {}
+        }
+    };
+
+    input.addEventListener('pointerdown', exitFullscreenIfActive, { passive: true });
+    input.addEventListener('touchstart', exitFullscreenIfActive, { passive: true });
     input.addEventListener('focus', () => {
+        exitFullscreenIfActive();
         setTimeout(() => {
             const chatHistory = document.getElementById('lobby-chat-history');
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;

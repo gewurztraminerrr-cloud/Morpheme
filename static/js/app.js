@@ -2972,7 +2972,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen and popup on tap after minimizing/leaving (only inside app, never on gateway)
+// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen on tap after minimizing/leaving, but exits immediately before virtual keyboard opens
 (function _setupMobileFullscreenManager() {
     let needsReEngage = true;
 
@@ -2980,16 +2980,32 @@ document.addEventListener('visibilitychange', () => {
         return (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
+    function exitFullscreenForKeyboard() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            try {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().catch(() => {});
+                }
+            } catch(e) {}
+        }
+    }
+
     function attemptFullscreen() {
         if (!isMobileDevice()) return;
         
-        // Never trigger fullscreen on Tools, Settings, Profile, Forum, or when any modal/input is active
+        // Never trigger fullscreen on Tools, Settings, Profile, Forum, How to Play, Donate
         const activePage = document.querySelector('.page.active');
         if (activePage && (activePage.id === 'page-tools' || activePage.id === 'page-settings' || activePage.id === 'page-profile' || activePage.id === 'page-forum' || activePage.id === 'page-howtoplay' || activePage.id === 'page-donate')) {
             return;
         }
         const fullListModal = document.getElementById('full-list-modal');
         if (fullListModal && (fullListModal.classList.contains('forced-show') || !fullListModal.classList.contains('hidden'))) return;
+        const lobbyDrawer = document.getElementById('lobby-chat-drawer');
+        if (lobbyDrawer && lobbyDrawer.classList.contains('open')) return;
+        const activeOverlay = document.querySelector('.modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), .overlay:not(.hidden), .modal-window:not(.hidden)');
+        if (activeOverlay && activeOverlay.style.display !== 'none') return;
         if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
@@ -3030,14 +3046,32 @@ document.addEventListener('visibilitychange', () => {
         }
     });
 
+    // PERMANENT INVARIANT: Immediately exit fullscreen before virtual keyboard opens to prevent Android Chrome black screen flash
+    document.addEventListener('focusin', (e) => {
+        const target = e.target;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+            if (isMobileDevice()) {
+                exitFullscreenForKeyboard();
+            }
+        }
+    }, { capture: true, passive: true });
+
     // On any user tap/press on the screen (including on the ENTER LOBBY screen), engage fullscreen
     ['pointerdown', 'touchstart', 'mousedown', 'click'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
-            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
-
-            // Skip typing in inputs or interacting inside full list modal
             const tag = e.target && e.target.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.closest && e.target.closest('#full-list-modal'))) return;
+            const isInputTarget = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+            const isInsideDrawerOrModal = e.target && e.target.closest && e.target.closest('#full-list-modal, #lobby-chat-drawer, .modal-overlay, .mini-profile-overlay, .modal-window, .sf-modal');
+
+            if (isInputTarget || (isInsideDrawerOrModal && (evtType === 'pointerdown' || evtType === 'touchstart'))) {
+                if (isMobileDevice()) {
+                    exitFullscreenForKeyboard();
+                }
+                return;
+            }
+
+            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
+            if (isInputTarget || isInsideDrawerOrModal) return;
 
             attemptFullscreen();
             needsReEngage = false;
@@ -3045,6 +3079,7 @@ document.addEventListener('visibilitychange', () => {
     });
 
     window.triggerMobileFullscreen = attemptFullscreen;
+    window.exitFullscreenForKeyboard = exitFullscreenForKeyboard;
 })();
 
 // Export utility for other files

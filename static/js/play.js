@@ -3631,6 +3631,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatSend = document.getElementById('chat-send-btn');
 
     if (chatInput) {
+        const exitFullscreenIfActive = () => {
+            if (typeof window.exitFullscreenForKeyboard === 'function') {
+                window.exitFullscreenForKeyboard();
+            } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+                try {
+                    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+                } catch (e) {}
+            }
+        };
+        chatInput.addEventListener('pointerdown', exitFullscreenIfActive, { passive: true });
+        chatInput.addEventListener('touchstart', exitFullscreenIfActive, { passive: true });
+        chatInput.addEventListener('focus', exitFullscreenIfActive, { passive: true });
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendChatMessage();
         });
