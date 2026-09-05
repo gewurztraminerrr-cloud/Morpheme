@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `d1de7d0c`
-- **Commit Message**: `perf(audio): trigger instant 0ms lobby music on touch/press down for Chrome and mobile`
+- **Commit ID**: `28e4f130`
+- **Commit Message**: `perf(audio): implement Web Audio decoded buffer for instant 0ms lobby music on Chrome and mobile`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,17 +13,19 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`d1de7d0c` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`d1de7d0c` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`d1de7d0c`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`28e4f130` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`28e4f130` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`28e4f130`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Instant 0ms Lobby Music Playback (Chrome, Mobile, Safari & Firefox)**:
-   - Fixed audio latency on Chrome and mobile devices by initiating pre-fetching (`<link rel="preload" as="fetch">` and `fetch('/music/lobby.mp3')` cache warm-up) during initial HTML parsing.
-   - Attached synchronous audio playback directly to `pointerdown`, `touchstart`, and `mousedown` on the `ENTER LOBBY` button, ensuring playback begins on the exact millisecond the user touches the button rather than waiting for finger release or click event callbacks.
+1. **Instant 0ms Lobby Music Playback via Web Audio API Decoded Buffers (Chrome, Mobile, Safari & Firefox)**:
+   - Completely resolved delayed music start on Chrome (desktop/Android) and mobile devices by migrating lobby audio playback to the **Web Audio API (`AudioContext`)** with in-memory pre-decoded `AudioBuffer` caching (`LobbyMusicEngine`).
+   - Added early pre-fetching and in-memory background decoding (`window._morphemeAudioCtx.decodeAudioData()`) during initial HTML parsing.
+   - Attached synchronous `AudioContext.resume()` + `source.start(0)` directly to `pointerdown`, `touchstart`, and `mousedown` on `ENTER LOBBY` (`#btn-enter-lobby-gateway`) and the gateway screen container.
+   - Zero-latency playback begins instantaneously on the user's initial touch down, with transparent fallback to HTML5 `<audio>` and full volume and pause integration across all app views.
 
 2. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
