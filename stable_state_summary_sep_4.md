@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `22a84ad8`
-- **Commit Message**: `fix(ui): center mobile game board with strictly equal left/right margins`
+- **Commit ID**: `ac60b1be`
+- **Commit Message**: `Adjust mobile lobby game section title padding and spacing to match active rooms`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,21 +13,28 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`22a84ad8` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`22a84ad8` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`22a84ad8`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`ac60b1be` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`ac60b1be` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`ac60b1be`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Mobile Game Board Perfect Centering & Equal Side Margins**:
+1. **Mobile Lobby Game Type Title Spacing & Active Rooms Parity**:
+   - Adjusted the spacing below each game type title (`ACCUMULATIVE`, `FIRST COME FIRST SERVE`, and `SPLIT POINTS`) in the mobile Lobby to `gap: 6px !important;` and `margin: 0 !important; padding: 0 !important;` on `.game-title`, matching the snug spacing of `ACTIVE ROOMS` above its content.
+   - Increased top breathing room above each game section (`margin-bottom: 22px !important;` on `.game-types-panel .game-section` and `margin-bottom: 16px–18px !important;` below the Journey banner), clearly grouping each title with its own game configuration matrix below it.
+
+1. **Lobby Drawer Players Count Bracket Format**:
+   - Changed the player count display inside the opened "Players in Lobby & Chat" sliding panel header from parentheses `(1)` to square brackets `[1]` (`👥 Players in Lobby [<span id="lobby-players-count-header">0</span>]`), matching the outer drawer button notation.
+
+2. **Mobile Game Board Perfect Centering & Equal Side Margins**:
    - Updated mobile `.board-panel` to use 0 side padding (`padding: 10px 0 0 0 !important;`) so that the game board (`#game-board`) centers mathematically to the exact pixel midpoint of the device screen with 100% equal empty space on the left and right sides.
    - Configured `#game-board` on mobile to `width: max-content !important; max-width: 100vw !important; margin: 0 auto !important; align-self: center !important; justify-self: center !important; justify-content: center !important; overflow: visible !important;`.
    - Constrained non-board controls (the timer, input textbox, play-header, and status alerts) to centered capsules (`width: calc(100% - 24px) !important; max-width: 480px !important; margin: 0 auto 3px auto !important;`).
    - Side panels (`Players` and `Words/Definitions`) retain their comfortable `15px` side padding.
 
-2. **Mobile Chatbox Left-Aligned Message Display**:
+3. **Mobile Chatbox Left-Aligned Message Display**:
    - Resolved an issue where mobile chat messages inside the in-game chat box and lobby chat drawer were inadvertently centering due to column flex alignment.
    - Enforced explicit `text-align: left !important;` and `align-items: stretch !important;` across `.chat-panel`, `#chat-history`, `.chat-message`, `.chat-sys`, `.chat-user`, `.chat-text`, and placeholder messages.
    - Messages are now anchored neatly along the left edge of the chat box on all mobile devices and desktop views.
