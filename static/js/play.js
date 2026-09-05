@@ -10314,8 +10314,26 @@ window.showFinderModal = function (word) {
     const modal = document.getElementById('generic-info-modal');
     const title = document.getElementById('generic-modal-title');
     const body = document.getElementById('generic-modal-body');
+    const okBtn = document.getElementById('generic-modal-ok-btn');
+    const closeBtn = document.getElementById('close-generic-modal');
 
     if (modal && title && body) {
+        const closeModal = (e) => {
+            if (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch(err) {}
+            }
+            modal.classList.remove('forced-show');
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            window._hasPriorityModal = false;
+        };
+
+        if (okBtn) okBtn.onclick = closeModal;
+        if (closeBtn) closeBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal(e);
+        };
+
         const wordUpper = word.toUpperCase();
         
         // Calculate base word points

@@ -6611,7 +6611,7 @@
             <div class="modal-header"
                 style="padding: 16px 20px; border-bottom: 1px solid var(--input-border, #334155); display: flex; justify-content: space-between; align-items: center; background: var(--input-bg, rgba(15, 23, 42, 0.6));">
                 <h2 id="generic-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-primary, #ffffff);">Notice</h2>
-                <button class="close-overlay" id="close-generic-modal"
+                <button class="close-overlay" id="close-generic-modal" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
                     style="position: static; transform: none; background: transparent; border: none; color: var(--text-secondary, #94a3b8); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0;">&times;</button>
             </div>
             <div id="generic-modal-body"
@@ -6620,7 +6620,7 @@
             </div>
             <div class="modal-footer"
                 style="padding: 14px 20px; display: flex; justify-content: center; background: var(--input-bg, rgba(15, 23, 42, 0.4)); border-top: 1px solid var(--input-border, #334155);">
-                <button id="generic-modal-ok-btn" class="sf-action-btn"
+                <button id="generic-modal-ok-btn" class="sf-action-btn" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
                     style="padding: 9px 36px; background: #3b82f6; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">OK</button>
             </div>
         </div>
@@ -7064,9 +7064,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33870"></script>
+    <script src="/js/app.js?v=33871"></script>
     <script src="/js/lobby.js?v=33806"></script>
-    <script src="/js/play.js?v=33864"></script>
+    <script src="/js/play.js?v=33871"></script>
     <script src="/js/tournaments.js?v=33865"></script>
     <script src="/js/leaderboard.js?v=33806"></script>
     <script src="/js/tools.js?v=33831"></script>

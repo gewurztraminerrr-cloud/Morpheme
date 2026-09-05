@@ -1496,17 +1496,40 @@ function setupModalListeners() {
 
     const genericModal = document.getElementById('generic-info-modal');
     const closeGenericBtn = document.getElementById('close-generic-modal');
-    if (genericModal && closeGenericBtn) {
-        const closeModal = () => {
+    const genericOkBtn = document.getElementById('generic-modal-ok-btn');
+    if (genericModal) {
+        const closeModal = (e) => {
+            if (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+            }
             genericModal.classList.remove('forced-show');
             genericModal.classList.add('hidden');
+            genericModal.style.display = 'none';
             window._hasPriorityModal = false; // Reset priority flag on close
         };
-        closeGenericBtn.onclick = closeModal;
+        if (closeGenericBtn) closeGenericBtn.onclick = closeModal;
+        if (genericOkBtn) genericOkBtn.onclick = closeModal;
         genericModal.onclick = (e) => { 
-            if (e.target === genericModal) closeModal(); 
+            if (e.target === genericModal) closeModal(e); 
         };
     }
+
+    // App-wide global OK button dismiss handler for any popup / modal
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const isOkBtn = target.id === 'generic-modal-ok-btn' || 
+                        (target.tagName === 'BUTTON' && target.textContent && target.textContent.trim().toUpperCase() === 'OK');
+        if (isOkBtn) {
+            const modal = target.closest('.modal-overlay, .modal-window, .modal, .modal-container, #generic-info-modal, #generic-confirm-modal, .overlay, .sf-modal');
+            if (modal) {
+                modal.classList.remove('forced-show');
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                window._hasPriorityModal = false;
+            }
+        }
+    }, true);
 
     // Spinner Set modal trigger (Desktop header title, Mobile spinner label, and Parameter text)
     const gameParams = document.querySelector('.game-params');
