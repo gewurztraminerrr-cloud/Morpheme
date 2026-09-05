@@ -11060,14 +11060,20 @@ body.theme-white .integrated-review-board {
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {
         --bg-panel: rgba(45, 45, 75, 0.82);
     }
-    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .play-header,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .play-header:not(.low-time-warning),
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .players-panel,
-    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .board-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .board-panel:not(.low-time-warning),
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-table-box,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .chat-panel,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .definitions-panel,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .spectator-panel {
         background: rgba(45, 45, 75, 0.82) !important;
+    }
+
+    .board-panel.low-time-warning {
+        animation: low-time-pulse 3s infinite ease-in-out !important;
+        border: 1px solid rgba(255, 100, 100, 0.3) !important;
+        will-change: background-color, box-shadow !important;
     }
 }
 
