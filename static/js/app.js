@@ -416,9 +416,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     // 1. Trigger audio playback synchronously on direct user gesture so Chrome, Safari & Firefox start music instantly
                     try {
-                        const lobbyMusic = document.getElementById('lobby-music');
-                        if (lobbyMusic) {
-                            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
+                        if (window.lobbyMusicEngine) {
+                            window.lobbyMusicEngine.play();
+                            if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
+                        } else if (typeof window.triggerGatewayAudioImmediate === 'function') {
+                            window.triggerGatewayAudioImmediate();
+                            if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
                         }
                     } catch (audioErr) {
                         console.error('[LobbyMusic] Exception during synchronous gateway play initialization:', audioErr);
@@ -548,11 +551,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     // Immediately trigger audio playback synchronously on user gesture press down
-                    if (typeof window.triggerGatewayAudioImmediate === 'function') {
+                    if (window.lobbyMusicEngine) {
+                        window.lobbyMusicEngine.play();
+                    } else if (typeof window.triggerGatewayAudioImmediate === 'function') {
                         window.triggerGatewayAudioImmediate();
-                    } else {
-                        const lobbyMusic = document.getElementById('lobby-music');
-                        if (lobbyMusic) playLobbyMusicHelper(lobbyMusic);
                     }
                 };
 
@@ -687,6 +689,14 @@ class LobbyMusicEngine {
             } catch (e) {}
         }
 
+        // Ensure HTML audio element is stopped if Web Audio is already active
+        if (this.isPlaying) {
+            const htmlAudio = document.getElementById('lobby-music');
+            if (htmlAudio && !htmlAudio.paused) {
+                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+            }
+        }
+
         if (!this.buffer) {
             this.loadBuffer();
         }
@@ -704,6 +714,11 @@ class LobbyMusicEngine {
                         this.isLoaded = true;
                         if (this._pendingPlay) {
                             this._pendingPlay = false;
+                            // Silence any fallback HTML audio before switching to Web Audio
+                            const htmlAudio = document.getElementById('lobby-music');
+                            if (htmlAudio && !htmlAudio.paused) {
+                                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+                            }
                             this.play();
                         }
                     }, err => {
@@ -725,6 +740,9 @@ class LobbyMusicEngine {
 
         // Adopt early web audio source if one was created during button press
         if (window._earlyWebAudioSource) {
+            if (this.source && this.source !== window._earlyWebAudioSource) {
+                try { this.source.stop(); this.source.disconnect(); } catch(e) {}
+            }
             this.source = window._earlyWebAudioSource;
             this.gainNode = window._earlyWebAudioGain;
             this.isPlaying = true;
@@ -732,13 +750,21 @@ class LobbyMusicEngine {
             window._earlyWebAudioGain = null;
         }
 
+        // If already playing smoothly via Web Audio, do NOT duplicate playback
+        if (this.isPlaying && this.source) {
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            const htmlAudio = document.getElementById('lobby-music');
+            if (htmlAudio && !htmlAudio.paused) {
+                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+            }
+            return;
+        }
+
         if (this.ctx) {
             if (this.ctx.state === 'suspended') {
                 this.ctx.resume().catch(() => {});
-            }
-
-            if (this.isPlaying && this.source) {
-                return; // Already playing smoothly
             }
 
             if (this.buffer) {
@@ -746,6 +772,7 @@ class LobbyMusicEngine {
                     if (this.source) {
                         try { this.source.stop(); } catch(e) {}
                         try { this.source.disconnect(); } catch(e) {}
+                        this.source = null;
                     }
                     this.source = this.ctx.createBufferSource();
                     this.source.buffer = this.buffer;
@@ -760,7 +787,13 @@ class LobbyMusicEngine {
                     this.source.start(0);
                     this.isPlaying = true;
                     this._pendingPlay = false;
-                    console.log('[LobbyMusicEngine] Web Audio buffer playback started (0ms latency).');
+
+                    // Unconditionally stop & mute HTML5 fallback audio so only 1 stream plays
+                    const fallbackAudio = document.getElementById('lobby-music');
+                    if (fallbackAudio && !fallbackAudio.paused) {
+                        try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; fallbackAudio.muted = true; } catch(e) {}
+                    }
+                    console.log('[LobbyMusicEngine] Web Audio buffer playback started single stream (0ms latency).');
                     return;
                 } catch (e) {
                     console.warn('[LobbyMusicEngine] Failed to start Web Audio source:', e);
@@ -771,26 +804,28 @@ class LobbyMusicEngine {
             }
         }
 
-        // Fallback to HTML5 <audio> element if Web Audio API buffer is not ready / supported
-        const fallbackAudio = document.getElementById('lobby-music');
-        if (fallbackAudio) {
-            if (!fallbackAudio.src || !fallbackAudio.src.includes('/music/lobby.mp3')) {
-                fallbackAudio.src = fallbackAudio.getAttribute('data-src') || '/music/lobby.mp3';
-            }
-            fallbackAudio.loop = true;
-            fallbackAudio.volume = this._volume;
-            fallbackAudio.muted = false;
-            if (fallbackAudio.paused) {
-                const p = fallbackAudio.play();
-                if (p !== undefined) {
-                    p.then(() => {
-                        this.isPlaying = true;
-                    }).catch(err => {
-                        console.warn('[LobbyMusicEngine] HTML5 Audio play deferred until gesture:', err);
-                    });
+        // Fallback to HTML5 <audio> element ONLY if Web Audio buffer source is not playing
+        if (!this.isPlaying) {
+            const fallbackAudio = document.getElementById('lobby-music');
+            if (fallbackAudio) {
+                if (!fallbackAudio.src || !fallbackAudio.src.includes('/music/lobby.mp3')) {
+                    fallbackAudio.src = fallbackAudio.getAttribute('data-src') || '/music/lobby.mp3';
                 }
-            } else {
-                this.isPlaying = true;
+                fallbackAudio.loop = true;
+                fallbackAudio.volume = this._volume;
+                fallbackAudio.muted = false;
+                if (fallbackAudio.paused) {
+                    const p = fallbackAudio.play();
+                    if (p !== undefined) {
+                        p.then(() => {
+                            this.isPlaying = true;
+                        }).catch(err => {
+                            console.warn('[LobbyMusicEngine] HTML5 Audio play deferred until gesture:', err);
+                        });
+                    }
+                } else {
+                    this.isPlaying = true;
+                }
             }
         }
     }
@@ -814,7 +849,7 @@ class LobbyMusicEngine {
 
         const fallbackAudio = document.getElementById('lobby-music');
         if (fallbackAudio && !fallbackAudio.paused) {
-            try { fallbackAudio.pause(); } catch(e) {}
+            try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; } catch(e) {}
         }
     }
 
