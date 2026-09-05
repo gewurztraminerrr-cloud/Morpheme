@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `da9925d9`
-- **Commit Message**: `feat(ui): add lustrous shimmer effect to lobby journey message box across all devices`
+- **Commit ID**: `3cac319d`
+- **Commit Message**: `fix(audio): eliminate dual music echo and enhance lustrous shimmer on journey box`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,19 +13,24 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`da9925d9` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`da9925d9` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`da9925d9`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`3cac319d` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`3cac319d` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`3cac319d`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Lustrous Shimmering Journey Message Box (Mobile, Laptops, and Desktops)**:
-   - Enclosed the `"ENTER A ROOM TO CONTINUE YOUR JOURNEY"` message in a crystalline glassmorphic container with an inner highlight and soft neon aura (`background: linear-gradient(135deg, rgba(255, 0, 127, 0.12) 0%, rgba(20, 5, 25, 0.85) 45%, rgba(35, 10, 45, 0.8) 75%, rgba(255, 0, 127, 0.09) 100%)`).
-   - Implemented an elegant, smooth diagonal light sweep (`@keyframes journey-shimmer-sweep`) that glides across the box surface periodically with a calming rest interval.
-   - Added a gentle breathing glow (`@keyframes journey-box-glow`) to the border and depth shadows without causing visual noise or distraction.
-   - Fully optimized across breakpoints with responsive typography and padding on mobile devices, tablets, laptops, and desktops.
+1. **Elimination of Dual Music Echo & Single-Stream Lock**:
+   - Completely eliminated the slight millisecond echo/double-playing issue where the HTML5 `<audio id="lobby-music">` fallback element and Web Audio API `AudioBufferSourceNode` could trigger concurrently.
+   - Enforced strict single-engine playback: whenever Web Audio buffer playback initiates, the HTML5 audio element is immediately paused, reset (`currentTime = 0`), and muted.
+   - Added a trigger latch (`_gatewayAudioTriggered`) and singleton guard (`isPlaying` / `this.source` verification) so rapid pointer/touch/click events cannot create overlapping audio streams.
+
+2. **Ultra-Lustrous, Radiant Shimmer Journey Message Box (Mobile, Laptops, Desktops)**:
+   - Enhanced the `"ENTER A ROOM TO CONTINUE YOUR JOURNEY"` message box with deep obsidian-magenta crystalline glassmorphism (`linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(26, 4, 30, 0.94) 38%, rgba(14, 2, 18, 0.96) 68%, rgba(255, 0, 128, 0.16) 100%)`).
+   - Added a top specular glass edge highlight (`.lobby-journey-message::after`) and dual-layer prismatic light sweep (`.lobby-journey-message::before` with `@keyframes journey-shimmer-sweep`).
+   - Implemented metallic platinum-rose typography with glowing back-drop shadows (`linear-gradient(180deg, #ffffff 0%, #ffe6f3 35%, #ff66b2 75%, #ff007f 100%)` via `-webkit-background-clip: text`).
+   - Added a slow, breathing aura glow (`@keyframes journey-box-glow`) across dark themes.
 
 2. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
