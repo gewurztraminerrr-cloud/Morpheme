@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `ac60b1be`
-- **Commit Message**: `Adjust mobile lobby game section title padding and spacing to match active rooms`
+- **Commit ID**: `25bfcb67`
+- **Commit Message**: `docs: update Stable State Summary with mobile game title spacing specs`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,9 +13,9 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`ac60b1be` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`ac60b1be` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`ac60b1be`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`25bfcb67` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`25bfcb67` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`25bfcb67`), PM2 online, HTTP 200 OK
 
 ---
 
