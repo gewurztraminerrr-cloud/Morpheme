@@ -1203,9 +1203,19 @@ body.theme-light-brown .field-hint {
         margin-bottom: 12px !important;
     }
 
-    .split-points-section,
-    .solo-friends-section:last-child {
-        margin-bottom: 12px !important;
+    .game-types-panel .game-section,
+    .solo-friends-panel .solo-friends-section {
+        gap: 6px !important;
+        margin-top: 0 !important;
+        margin-bottom: 22px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .game-types-panel .game-section:last-of-type,
+    .game-types-panel .game-section:last-child,
+    .game-types-panel .split-points-section,
+    .solo-friends-panel .solo-friends-section:last-child {
+        margin-bottom: 14px !important;
         padding-bottom: 0 !important;
     }
 
@@ -1531,7 +1541,7 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.8rem;
         letter-spacing: 1.4px;
-        margin: 6px auto 14px auto;
+        margin: 6px auto 18px auto !important;
         padding: 9.5px 18px;
         width: 92%;
         max-width: 480px;
@@ -1546,7 +1556,7 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.72rem !important;
         letter-spacing: 0.8px !important;
-        margin: 6px auto 12px auto !important;
+        margin: 6px auto 16px auto !important;
         padding: 9px 12px !important;
         width: 92% !important;
         max-width: 420px !important;
@@ -1564,6 +1574,7 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.64rem !important;
         letter-spacing: 0.4px !important;
+        margin: 4px auto 14px auto !important;
         padding: 8px 8px !important;
     }
     .lobby-journey-message span {
@@ -2507,9 +2518,18 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .game-types-panel .game-section,
+    .solo-friends-panel .solo-friends-section {
+        gap: 6px !important;
+        margin-top: 0 !important;
+        margin-bottom: 22px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .game-types-panel .game-section:last-of-type,
+    .game-types-panel .game-section:last-child,
     .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
-        margin-bottom: 12px !important;
+        margin-bottom: 14px !important;
         padding-bottom: 0 !important;
     }
 
