@@ -11055,7 +11055,7 @@ body.theme-white .integrated-review-board {
     border: 1px solid #e2e8f0 !important;
 }
 
-/* Desktop & Laptop Game Room Canvas Darkening */
+/* Desktop & Laptop Game Room Canvas Darkening & Panel Lightening */
 @media (min-width: 901px) {
     html:has(#page-play.active),
     body:has(#page-play.active),
@@ -11070,6 +11070,19 @@ body.theme-white .integrated-review-board {
     body:has(#page-play.active) .header,
     body.play-active .header {
         background: #000000 !important;
+    }
+
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {
+        --bg-panel: rgba(45, 45, 75, 0.82);
+    }
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .play-header,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .players-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .board-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-table-box,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .chat-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .definitions-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .spectator-panel {
+        background: rgba(45, 45, 75, 0.82) !important;
     }
 }
 
