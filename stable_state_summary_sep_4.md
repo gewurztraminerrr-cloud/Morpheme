@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `d8840e61`
-- **Commit Message**: `feat(ui): redesign journey message box to obsidian-diamond glass with refined silver shimmer`
+- **Commit ID**: `bb9f8f29`
+- **Commit Message**: `fix(ui): restore left alignment for mobile chatbox messages`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,27 +13,32 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`d8840e61` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`d8840e61` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`d8840e61`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`bb9f8f29` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`bb9f8f29` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`bb9f8f29`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Obsidian-Diamond Frosted Glass Journey Banner (Mobile, Laptops, Desktops)**:
+1. **Mobile Chatbox Left-Aligned Message Display**:
+   - Resolved an issue where mobile chat messages inside the in-game chat box and lobby chat drawer were inadvertently centering due to column flex alignment.
+   - Enforced explicit `text-align: left !important;` and `align-items: stretch !important;` across `.chat-panel`, `#chat-history`, `.chat-message`, `.chat-sys`, `.chat-user`, `.chat-text`, and placeholder messages.
+   - Messages are now anchored neatly along the left edge of the chat box on all mobile devices and desktop views.
+
+2. **Obsidian-Diamond Frosted Glass Journey Banner (Mobile, Laptops, Desktops)**:
    - Completely replaced the pink-to-black gradient design with an ultra-sleek, prestigious **Obsidian-Diamond Frosted Glass** container (`linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 30, 0.78) 40%, rgba(10, 10, 18, 0.88) 100%)`).
    - Added a crisp top specular bevel highlight (`.lobby-journey-message::after`) with a diamond-bright sheen.
    - Implemented a smooth, luminous diamond light shimmer sweep (`.lobby-journey-message::before` with `@keyframes journey-diamond-shimmer`) that traverses the banner every 4.8s.
    - Styled the text with pure, high-contrast metallic pearl-white typography (`linear-gradient(180deg, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%)` via `-webkit-background-clip: text`) with subtle back-glow drop shadow.
    - Applied responsive font sizing and letter-spacing for standard phones, small displays (<= 360px), tablets, laptops, and wide monitors.
 
-2. **Elimination of Dual Music Echo & Single-Stream Lock**:
+3. **Elimination of Dual Music Echo & Single-Stream Lock**:
    - Completely eliminated the slight millisecond echo/double-playing issue where the HTML5 `<audio id="lobby-music">` fallback element and Web Audio API `AudioBufferSourceNode` could trigger concurrently.
    - Enforced strict single-engine playback: whenever Web Audio buffer playback initiates, the HTML5 audio element is immediately paused, reset (`currentTime = 0`), and muted.
    - Added a trigger latch (`_gatewayAudioTriggered`) and singleton guard (`isPlaying` / `this.source` verification) so rapid pointer/touch/click events cannot create overlapping audio streams.
 
-3. **Tournament Current Pairings Resolution**:
+4. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
    - Updated both backend `/api/tournament/status` (to include the final round's matchups in `all_matchups` when completed) and frontend `static/js/tournaments.js` (to prioritize the current/final round and search backwards for latest active pairings).
 
