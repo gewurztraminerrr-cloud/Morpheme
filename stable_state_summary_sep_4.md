@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `1c670f66`
-- **Commit Message**: `style(forum): move Back to Category button higher on mobile devices`
+- **Commit ID**: `99a6dd2e`
+- **Commit Message**: `docs: update Stable State Summary with Forum Back to Category specs`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,9 +13,9 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`1c670f66` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`1c670f66` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`1c670f66`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`99a6dd2e` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`99a6dd2e` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`99a6dd2e`), PM2 online, HTTP 200 OK
 
 ---
 
