@@ -477,7 +477,7 @@ async function loadLobbyNotice() {
         } else {
             input.value = '';
             if (previewEl) {
-                previewEl.textContent = 'No announcement is currently set. Type a message below and click "Update Lobby Notice" to publish.';
+                previewEl.textContent = 'No announcement is currently set. Type a message below and click "Broadcast Notice" to publish.';
                 previewEl.style.fontStyle = 'italic';
                 previewEl.style.opacity = '0.7';
             }

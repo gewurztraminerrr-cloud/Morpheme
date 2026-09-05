@@ -9460,6 +9460,16 @@ body .board-cell.tile-flash-purple * {
         order: 5 !important;
     }
 
+    /* Mod Lobby Notice buttons full-width on mobile */
+    #mod-tab-notice #set-notice-btn,
+    #mod-tab-notice #clear-notice-btn {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     /* Mobile settings & appearance panels width constraint */
     #page-settings,
     #page-settings * {
@@ -9637,6 +9647,15 @@ body.is-mobile #mod-tab-ban #lift-timeout-btn {
 }
 body.is-mobile #mod-tab-ban #check-timeout-btn {
     order: 5 !important;
+}
+
+body.is-mobile #mod-tab-notice #set-notice-btn,
+body.is-mobile #mod-tab-notice #clear-notice-btn {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 body.is-mobile #page-settings,
