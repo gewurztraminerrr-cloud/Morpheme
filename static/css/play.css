@@ -5666,6 +5666,22 @@ input[type=range]::-moz-range-track {
         padding: 8px 12px !important;
         box-sizing: border-box !important;
     }
+    .definitions-panel .definition-header,
+    .definitions-panel #definition-header,
+    .definitions-panel .definition-word,
+    .definitions-panel #definition-word {
+        text-align: center !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    .definitions-panel #definition-content,
+    .definitions-panel .definition-text,
+    .definitions-panel .pronunciation,
+    .definitions-panel #definition-content .placeholder {
+        text-align: left !important;
+        display: block !important;
+        width: 100% !important;
+    }
 
 
     .board-panel {
