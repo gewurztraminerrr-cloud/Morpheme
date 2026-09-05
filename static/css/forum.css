@@ -1121,6 +1121,21 @@ body.theme-gray .forum-back-btn:hover {
         box-sizing: border-box !important;
         border-top: none !important;
     }
+    .forum-sub-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+        background: var(--bg-panel, rgba(13, 17, 23, 0.95)) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        margin: -15px -15px 12px -15px !important;
+        padding: 4px 15px 6px 15px !important;
+    }
+    .forum-back-btn {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        margin: 0 !important;
+    }
     .mobile-back-btn {
         display: inline-block !important;
     }
