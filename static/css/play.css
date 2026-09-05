@@ -11055,16 +11055,8 @@ body.theme-white .integrated-review-board {
     border: 1px solid #e2e8f0 !important;
 }
 
-/* Desktop & Laptop Game Room Canvas & Panel Harmonization */
+/* Desktop & Laptop Game Room Panel Harmonization */
 @media (min-width: 901px) {
-    .pages:has(#page-play.active),
-    body:has(#page-play.active) .pages,
-    body.play-active .pages,
-    body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play.active {
-        background: #141526 !important;
-        background-color: #141526 !important;
-    }
-
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {
         --bg-panel: rgba(45, 45, 75, 0.82);
     }
