@@ -250,6 +250,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    text-align: left !important;
 }
 
 #chat-history {
@@ -257,16 +258,19 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    align-items: stretch !important;
     gap: 4px;
     padding: 4px 6px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
+    text-align: left !important;
 }
 
 .chat-message {
     font-size: var(--chat-font-size);
     line-height: 1.2;
     word-break: break-word;
+    text-align: left !important;
 }
 
 .chat-user {
@@ -275,11 +279,13 @@
     /* User contrast outline: replaces blur with sharp definition */
     -webkit-text-stroke: 0.5px rgba(0,0,0,0.4);
     text-shadow: 0.5px 0.5px 0 rgba(0,0,0,0.1); 
+    text-align: left !important;
 }
 
 .chat-text {
     color: var(--text-primary);
     text-shadow: 0 0 1px rgba(0,0,0,0.1);
+    text-align: left !important;
 }
 
 .chat-sys {
@@ -287,6 +293,7 @@
     opacity: 1;
     font-size: var(--chat-font-size);
     padding: 3px 0;
+    text-align: left !important;
 }
 
 /* Premium Gold Styling for Winner Announcements */
@@ -5473,6 +5480,7 @@ input[type=range]::-moz-range-track {
         max-width: 100% !important;
         margin: 10px auto 0 auto !important;
         box-sizing: border-box !important;
+        text-align: left !important;
     }
 
     .play-header {
@@ -5607,6 +5615,18 @@ input[type=range]::-moz-range-track {
         flex-direction: column !important;
         overflow: hidden !important; /* Prevent content from overflowing or stretching the box */
         box-sizing: border-box !important;
+        text-align: left !important;
+    }
+    .chat-panel #chat-history,
+    .chat-panel .chat-message,
+    .chat-panel .chat-sys,
+    .chat-panel .chat-text,
+    .chat-panel .chat-user,
+    .chat-panel #chat-history .placeholder {
+        text-align: left !important;
+    }
+    .chat-panel #chat-history {
+        align-items: stretch !important;
     }
 
     .definitions-panel {
@@ -6779,6 +6799,18 @@ input[type=range]::-moz-range-track {
         min-width: 0 !important;
         overflow-x: hidden !important;
         margin: 10px auto 0 auto !important;
+        text-align: left !important;
+    }
+    .chat-panel #chat-history,
+    .chat-panel .chat-message,
+    .chat-panel .chat-sys,
+    .chat-panel .chat-text,
+    .chat-panel .chat-user,
+    .chat-panel #chat-history .placeholder {
+        text-align: left !important;
+    }
+    .chat-panel #chat-history {
+        align-items: stretch !important;
     }
 
     .chat-input-section {
@@ -7436,6 +7468,8 @@ body.is-desktop .word-input-section {
     box-sizing: border-box !important;
     user-select: text;
     -webkit-user-select: text;
+    text-align: left !important;
+    align-items: stretch !important;
 }
 
 #chat-input {
