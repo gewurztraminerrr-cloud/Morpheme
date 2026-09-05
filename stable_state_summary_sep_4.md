@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `3f39fe64`
-- **Commit Message**: `docs: checkpoint September 4 stable start over point`
+- **Commit ID**: `1c670f66`
+- **Commit Message**: `style(forum): move Back to Category button higher on mobile devices`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,15 +13,18 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`3f39fe64` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`3f39fe64` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`3f39fe64`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`1c670f66` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`1c670f66` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`1c670f66`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Mobile Lobby Game Type Title Spacing & Active Rooms Parity**:
+1. **Mobile Forum "Back to Category" Higher Elevation**:
+   - Adjusted `.forum-sub-header` and `.forum-back-btn` (`#forum-back-to-list`) on mobile devices with `margin: -15px -15px 12px -15px !important;` and `padding: 4px 15px 6px 15px !important;`, raising the button higher to the top edge of the single post view container with compact padding (`padding: 8px 12px !important;`).
+
+2. **Mobile Lobby Game Type Title Spacing & Active Rooms Parity**:
    - Adjusted the spacing below each game type title (`ACCUMULATIVE`, `FIRST COME FIRST SERVE`, and `SPLIT POINTS`) in the mobile Lobby to `gap: 6px !important;` and `margin: 0 !important; padding: 0 !important;` on `.game-title`, matching the snug spacing of `ACTIVE ROOMS` above its content.
    - Increased top breathing room above each game section (`margin-bottom: 22px !important;` on `.game-types-panel .game-section` and `margin-bottom: 16px–18px !important;` below the Journey banner), clearly grouping each title with its own game configuration matrix below it.
 
