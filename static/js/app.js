@@ -653,72 +653,202 @@ async function fetchUserCount() {
 }
 
 
-// Helper to play lobby music safely across all platforms (desktops, laptops, tablets, mobile).
+// ==========================================
+// LobbyMusicEngine: Web Audio API 0ms Playback
+// ==========================================
+class LobbyMusicEngine {
+    constructor() {
+        this.ctx = window._morphemeAudioCtx || null;
+        this.buffer = window._preDecodedLobbyBuffer || null;
+        this.source = null;
+        this.gainNode = null;
+        this.isPlaying = false;
+        this.isLoaded = !!this.buffer;
+        this._pendingPlay = false;
+        this._volume = 0.5;
+
+        // Adopt any early source started by triggerGatewayAudioImmediate in index.html
+        if (window._earlyWebAudioSource) {
+            this.source = window._earlyWebAudioSource;
+            this.gainNode = window._earlyWebAudioGain;
+            this.isPlaying = true;
+            window._earlyWebAudioSource = null;
+            window._earlyWebAudioGain = null;
+        }
+
+        // Initialize AudioContext if not already present
+        if (!this.ctx) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx({ latencyHint: 'interactive' });
+                    window._morphemeAudioCtx = this.ctx;
+                }
+            } catch (e) {}
+        }
+
+        if (!this.buffer) {
+            this.loadBuffer();
+        }
+    }
+
+    loadBuffer() {
+        if (this.buffer || !this.ctx) return;
+        fetch('/music/lobby.mp3', { cache: 'force-cache' })
+            .then(res => res.arrayBuffer())
+            .then(arrayBuf => {
+                if (this.ctx) {
+                    this.ctx.decodeAudioData(arrayBuf, decoded => {
+                        this.buffer = decoded;
+                        window._preDecodedLobbyBuffer = decoded;
+                        this.isLoaded = true;
+                        if (this._pendingPlay) {
+                            this._pendingPlay = false;
+                            this.play();
+                        }
+                    }, err => {
+                        console.warn('[LobbyMusicEngine] decodeAudioData failed:', err);
+                    });
+                }
+            })
+            .catch(err => {
+                console.warn('[LobbyMusicEngine] fetch lobby.mp3 failed:', err);
+            });
+    }
+
+    play() {
+        // Respect user lobby_music setting
+        if (window.userSettings && window.userSettings.lobby_music === false) {
+            this.pause();
+            return;
+        }
+
+        // Adopt early web audio source if one was created during button press
+        if (window._earlyWebAudioSource) {
+            this.source = window._earlyWebAudioSource;
+            this.gainNode = window._earlyWebAudioGain;
+            this.isPlaying = true;
+            window._earlyWebAudioSource = null;
+            window._earlyWebAudioGain = null;
+        }
+
+        if (this.ctx) {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+
+            if (this.isPlaying && this.source) {
+                return; // Already playing smoothly
+            }
+
+            if (this.buffer) {
+                try {
+                    if (this.source) {
+                        try { this.source.stop(); } catch(e) {}
+                        try { this.source.disconnect(); } catch(e) {}
+                    }
+                    this.source = this.ctx.createBufferSource();
+                    this.source.buffer = this.buffer;
+                    this.source.loop = true;
+
+                    if (!this.gainNode) {
+                        this.gainNode = this.ctx.createGain();
+                        this.gainNode.connect(this.ctx.destination);
+                    }
+                    this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime);
+                    this.source.connect(this.gainNode);
+                    this.source.start(0);
+                    this.isPlaying = true;
+                    this._pendingPlay = false;
+                    console.log('[LobbyMusicEngine] Web Audio buffer playback started (0ms latency).');
+                    return;
+                } catch (e) {
+                    console.warn('[LobbyMusicEngine] Failed to start Web Audio source:', e);
+                }
+            } else {
+                this._pendingPlay = true;
+                this.loadBuffer();
+            }
+        }
+
+        // Fallback to HTML5 <audio> element if Web Audio API buffer is not ready / supported
+        const fallbackAudio = document.getElementById('lobby-music');
+        if (fallbackAudio) {
+            if (!fallbackAudio.src || !fallbackAudio.src.includes('/music/lobby.mp3')) {
+                fallbackAudio.src = fallbackAudio.getAttribute('data-src') || '/music/lobby.mp3';
+            }
+            fallbackAudio.loop = true;
+            fallbackAudio.volume = this._volume;
+            fallbackAudio.muted = false;
+            if (fallbackAudio.paused) {
+                const p = fallbackAudio.play();
+                if (p !== undefined) {
+                    p.then(() => {
+                        this.isPlaying = true;
+                    }).catch(err => {
+                        console.warn('[LobbyMusicEngine] HTML5 Audio play deferred until gesture:', err);
+                    });
+                }
+            } else {
+                this.isPlaying = true;
+            }
+        }
+    }
+
+    pause() {
+        this._pendingPlay = false;
+        if (window._earlyWebAudioSource) {
+            try { window._earlyWebAudioSource.stop(); } catch(e) {}
+            try { window._earlyWebAudioSource.disconnect(); } catch(e) {}
+            window._earlyWebAudioSource = null;
+            window._earlyWebAudioGain = null;
+        }
+        if (this.source) {
+            try {
+                this.source.stop();
+                this.source.disconnect();
+            } catch (e) {}
+            this.source = null;
+        }
+        this.isPlaying = false;
+
+        const fallbackAudio = document.getElementById('lobby-music');
+        if (fallbackAudio && !fallbackAudio.paused) {
+            try { fallbackAudio.pause(); } catch(e) {}
+        }
+    }
+
+    setVolume(vol) {
+        this._volume = Math.max(0, Math.min(1, vol));
+        if (this.gainNode && this.ctx) {
+            try {
+                this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime);
+            } catch(e) {}
+        }
+        const fallbackAudio = document.getElementById('lobby-music');
+        if (fallbackAudio) {
+            try { fallbackAudio.volume = this._volume; } catch(e) {}
+        }
+    }
+}
+
+// Global engine singleton
+window.lobbyMusicEngine = new LobbyMusicEngine();
+
 // Helper to play lobby music safely across all platforms (Safari, iOS, Chrome, Firefox, desktops, mobile).
 function playLobbyMusicHelper(lobbyMusic, onSuccess) {
-    if (!lobbyMusic) return;
-    if (!lobbyMusic.src || !lobbyMusic.src.includes('/music/lobby.mp3')) {
-        lobbyMusic.src = lobbyMusic.getAttribute('data-src') || '/music/lobby.mp3';
+    if (!window.lobbyMusicEngine) {
+        window.lobbyMusicEngine = new LobbyMusicEngine();
     }
-    lobbyMusic.loop = true;
-    lobbyMusic.volume = 0.5;
-    lobbyMusic.muted = false;
-
-    // Unlock Web Audio Context for Safari / iOS CoreAudio
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) {
-            if (!window._morphemeAudioCtx) {
-                window._morphemeAudioCtx = new AudioCtx();
-            }
-            if (window._morphemeAudioCtx.state === 'suspended') {
-                window._morphemeAudioCtx.resume();
-            }
-            if (window._morphemeAudioCtx.state === 'running') {
-                const buffer = window._morphemeAudioCtx.createBuffer(1, 1, 22050);
-                const source = window._morphemeAudioCtx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(window._morphemeAudioCtx.destination);
-                source.start(0);
-            }
-        }
-    } catch(e) {}
-
-    // If already playing smoothly and unmuted, continue playback without restarting!
-    if (!lobbyMusic.paused && !lobbyMusic.muted && lobbyMusic.currentTime > 0) {
-        if (onSuccess) onSuccess();
-        return;
-    }
-
-    // Force load if not ready
-    if (lobbyMusic.readyState === 0) {
-        try { lobbyMusic.load(); } catch(e) {}
-    }
-
-    try {
-        const playPromise = lobbyMusic.play();
-        if (playPromise !== undefined) {
-            playPromise
-                .then(() => {
-                    console.log('[LobbyMusic] Play succeeded on Safari/Chrome.');
-                    if (onSuccess) onSuccess();
-                })
-                .catch(err => {
-                    console.warn('[LobbyMusic] Play deferred until user gesture:', err ? err.name : '');
-                });
-        }
-    } catch(err) {
-        console.warn('[LobbyMusic] Play exception:', err);
-    }
+    window.lobbyMusicEngine.play();
+    if (onSuccess) onSuccess();
 }
 
 // Helper to start/stop music based on Page AND Setting
 function handleLobbyMusicState() {
     console.log('[LobbyMusic] handleLobbyMusicState() triggered.');
-    const lobbyMusic = document.getElementById('lobby-music');
-    if (!lobbyMusic) {
-        console.warn('[LobbyMusic] #lobby-music element not found in DOM.');
-        return;
+    if (!window.lobbyMusicEngine) {
+        window.lobbyMusicEngine = new LobbyMusicEngine();
     }
 
     // Use window.currentPageId if available to avoid DOM ID race conditions during transition
@@ -737,21 +867,17 @@ function handleLobbyMusicState() {
         inGameRoom,
         lobbyMusicSetting,
         shouldPlay,
-        paused: lobbyMusic.paused,
-        currentTime: lobbyMusic.currentTime
+        isPlaying: window.lobbyMusicEngine.isPlaying
     });
 
     if (shouldPlay) {
-        if (lobbyMusic.paused) {
-            console.log('[LobbyMusic] Entering Lobby — starting lobby music...');
-            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
+        window.lobbyMusicEngine.play();
+        if (typeof removeInteractionListeners === 'function') {
+            removeInteractionListeners();
         }
     } else {
         console.log('[LobbyMusic] shouldPlay is false (not on Main Lobby), ensuring audio is paused.');
-        if (!lobbyMusic.paused) {
-            lobbyMusic.pause();
-            console.log('[LobbyMusic] Paused active playback.');
-        }
+        window.lobbyMusicEngine.pause();
     }
 }
 
@@ -766,15 +892,14 @@ function playMusicOnFirstInteraction(e) {
     const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     if (shouldPlay) {
-        const lobbyMusic = document.getElementById('lobby-music');
-        if (lobbyMusic) {
-            console.log('[LobbyMusic] Attempting play() on gesture to unlock/unmute stream...');
-            playLobbyMusicHelper(lobbyMusic, removeInteractionListeners);
+        if (!window.lobbyMusicEngine) {
+            window.lobbyMusicEngine = new LobbyMusicEngine();
         }
+        window.lobbyMusicEngine.play();
+        removeInteractionListeners();
     } else {
-        const lobbyMusic = document.getElementById('lobby-music');
-        if (lobbyMusic && !lobbyMusic.paused) {
-            lobbyMusic.pause();
+        if (window.lobbyMusicEngine) {
+            window.lobbyMusicEngine.pause();
         }
     }
 }

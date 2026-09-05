@@ -1397,49 +1397,86 @@
         <audio id="triple-music" data-src="/music/triple.mp3" preload="none" loop></audio>
 
         <script>
-            // 0ms Instant Audio Playback Trigger (Chrome / Safari / Firefox / Mobile)
-            window.triggerGatewayAudioImmediate = function() {
+            // 0ms Instant Audio Playback Trigger & Early Web Audio Decoding (Chrome / Safari / Firefox / Mobile)
+            (function() {
                 try {
-                    var music = document.getElementById('lobby-music');
-                    if (music) {
-                        if (!music.src || !music.src.includes('/music/lobby.mp3')) {
-                            music.src = '/music/lobby.mp3';
-                        }
-                        music.loop = true;
-                        music.volume = 0.5;
-                        music.muted = false;
-
-                        // Unlock Web Audio Context for Safari & WebKit/Blink audio engines
-                        try {
-                            var AudioCtx = window.AudioContext || window.webkitAudioContext;
-                            if (AudioCtx) {
-                                if (!window._morphemeAudioCtx) {
-                                    window._morphemeAudioCtx = new AudioCtx();
-                                }
-                                if (window._morphemeAudioCtx.state === 'suspended') {
-                                    window._morphemeAudioCtx.resume();
-                                }
-                            }
-                        } catch(e) {}
-
-                        if (music.paused) {
-                            var p = music.play();
-                            if (p !== undefined) {
-                                p.catch(function() {});
-                            }
-                        }
+                    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx && !window._morphemeAudioCtx) {
+                        window._morphemeAudioCtx = new AudioCtx({ latencyHint: 'interactive' });
                     }
                 } catch(e) {}
-            };
 
-            // Pre-warm audio element and network cache immediately on initial HTML parsing
-            (function() {
+                // Preload and pre-decode lobby music into AudioBuffer early during HTML parsing
+                try {
+                    fetch('/music/lobby.mp3', { cache: 'force-cache' })
+                        .then(function(r) { return r.arrayBuffer(); })
+                        .then(function(buf) {
+                            if (window._morphemeAudioCtx) {
+                                window._morphemeAudioCtx.decodeAudioData(buf, function(decoded) {
+                                    window._preDecodedLobbyBuffer = decoded;
+                                    if (window.lobbyMusicEngine) {
+                                        window.lobbyMusicEngine.buffer = decoded;
+                                        window.lobbyMusicEngine.isLoaded = true;
+                                        if (window.lobbyMusicEngine._pendingPlay) {
+                                            window.lobbyMusicEngine._pendingPlay = false;
+                                            window.lobbyMusicEngine.play();
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .catch(function(){});
+                } catch(e) {}
+
+                window.triggerGatewayAudioImmediate = function() {
+                    if (window.lobbyMusicEngine) {
+                        window.lobbyMusicEngine.play();
+                        return;
+                    }
+                    try {
+                        if (window._morphemeAudioCtx && window._morphemeAudioCtx.state === 'suspended') {
+                            window._morphemeAudioCtx.resume();
+                        }
+                    } catch(e) {}
+
+                    if (window._morphemeAudioCtx && window._preDecodedLobbyBuffer && !window._earlyWebAudioSource) {
+                        try {
+                            var src = window._morphemeAudioCtx.createBufferSource();
+                            src.buffer = window._preDecodedLobbyBuffer;
+                            src.loop = true;
+                            var gain = window._morphemeAudioCtx.createGain();
+                            gain.gain.setValueAtTime(0.5, window._morphemeAudioCtx.currentTime);
+                            src.connect(gain);
+                            gain.connect(window._morphemeAudioCtx.destination);
+                            src.start(0);
+                            window._earlyWebAudioSource = src;
+                            window._earlyWebAudioGain = gain;
+                            return;
+                        } catch(e) {}
+                    }
+
+                    // Fallback to HTML5 audio element
+                    try {
+                        var music = document.getElementById('lobby-music');
+                        if (music) {
+                            if (!music.src || !music.src.includes('/music/lobby.mp3')) {
+                                music.src = '/music/lobby.mp3';
+                            }
+                            music.loop = true;
+                            music.volume = 0.5;
+                            music.muted = false;
+                            if (music.paused) {
+                                var p = music.play();
+                                if (p !== undefined) p.catch(function(){});
+                            }
+                        }
+                    } catch(e) {}
+                };
+
+                // Warm HTML audio tag as well
                 try {
                     var m = document.getElementById('lobby-music');
                     if (m && typeof m.load === 'function') m.load();
-                    if (typeof fetch === 'function') {
-                        fetch('/music/lobby.mp3', { cache: 'force-cache' }).catch(function(){});
-                    }
                 } catch(e) {}
             })();
         </script>
@@ -1554,17 +1591,21 @@
                 }
 
                 try {
-                    var music = document.getElementById('lobby-music');
-                    if (music) {
-                        if (!music.src || !music.src.includes('/music/lobby.mp3')) {
-                            music.src = '/music/lobby.mp3';
-                        }
-                        music.loop = true;
-                        music.volume = 0.5;
-                        music.muted = false;
-                        if (typeof window.playLobbyMusicHelper === 'function') {
-                            window.playLobbyMusicHelper(music);
-                        } else if (typeof music.play === 'function') {
+                    if (typeof window.triggerGatewayAudioImmediate === 'function') {
+                        window.triggerGatewayAudioImmediate();
+                    } else if (window.lobbyMusicEngine) {
+                        window.lobbyMusicEngine.play();
+                    } else if (typeof window.playLobbyMusicHelper === 'function') {
+                        window.playLobbyMusicHelper();
+                    } else {
+                        var music = document.getElementById('lobby-music');
+                        if (music) {
+                            if (!music.src || !music.src.includes('/music/lobby.mp3')) {
+                                music.src = '/music/lobby.mp3';
+                            }
+                            music.loop = true;
+                            music.volume = 0.5;
+                            music.muted = false;
                             var p = music.play();
                             if (p !== undefined) p.catch(function() {});
                         }
@@ -6933,7 +6974,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33866"></script>
+    <script src="/js/app.js?v=33867"></script>
     <script src="/js/lobby.js?v=33806"></script>
     <script src="/js/play.js?v=33864"></script>
     <script src="/js/tournaments.js?v=33865"></script>
