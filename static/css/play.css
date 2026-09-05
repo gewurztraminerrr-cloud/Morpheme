@@ -11057,19 +11057,12 @@ body.theme-white .integrated-review-board {
 
 /* Desktop & Laptop Game Room Canvas & Panel Harmonization */
 @media (min-width: 901px) {
-    html:has(#page-play.active),
-    body:has(#page-play.active),
-    body.play-active,
+    .pages:has(#page-play.active),
     body:has(#page-play.active) .pages,
     body.play-active .pages,
-    .pages:has(#page-play.active),
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play.active {
         background: #141526 !important;
         background-color: #141526 !important;
-    }
-    body:has(#page-play.active) .header,
-    body.play-active .header {
-        background: #141526 !important;
     }
 
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {
