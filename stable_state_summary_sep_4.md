@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `bb9f8f29`
-- **Commit Message**: `fix(ui): restore left alignment for mobile chatbox messages`
+- **Commit ID**: `22a84ad8`
+- **Commit Message**: `fix(ui): center mobile game board with strictly equal left/right margins`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,20 +13,26 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`bb9f8f29` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`bb9f8f29` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`bb9f8f29`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`22a84ad8` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`22a84ad8` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`22a84ad8`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Mobile Chatbox Left-Aligned Message Display**:
+1. **Mobile Game Board Perfect Centering & Equal Side Margins**:
+   - Updated mobile `.board-panel` to use 0 side padding (`padding: 10px 0 0 0 !important;`) so that the game board (`#game-board`) centers mathematically to the exact pixel midpoint of the device screen with 100% equal empty space on the left and right sides.
+   - Configured `#game-board` on mobile to `width: max-content !important; max-width: 100vw !important; margin: 0 auto !important; align-self: center !important; justify-self: center !important; justify-content: center !important; overflow: visible !important;`.
+   - Constrained non-board controls (the timer, input textbox, play-header, and status alerts) to centered capsules (`width: calc(100% - 24px) !important; max-width: 480px !important; margin: 0 auto 3px auto !important;`).
+   - Side panels (`Players` and `Words/Definitions`) retain their comfortable `15px` side padding.
+
+2. **Mobile Chatbox Left-Aligned Message Display**:
    - Resolved an issue where mobile chat messages inside the in-game chat box and lobby chat drawer were inadvertently centering due to column flex alignment.
    - Enforced explicit `text-align: left !important;` and `align-items: stretch !important;` across `.chat-panel`, `#chat-history`, `.chat-message`, `.chat-sys`, `.chat-user`, `.chat-text`, and placeholder messages.
    - Messages are now anchored neatly along the left edge of the chat box on all mobile devices and desktop views.
 
-2. **Obsidian-Diamond Frosted Glass Journey Banner (Mobile, Laptops, Desktops)**:
+3. **Obsidian-Diamond Frosted Glass Journey Banner (Mobile, Laptops, Desktops)**:
    - Completely replaced the pink-to-black gradient design with an ultra-sleek, prestigious **Obsidian-Diamond Frosted Glass** container (`linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 30, 0.78) 40%, rgba(10, 10, 18, 0.88) 100%)`).
    - Added a crisp top specular bevel highlight (`.lobby-journey-message::after`) with a diamond-bright sheen.
    - Implemented a smooth, luminous diamond light shimmer sweep (`.lobby-journey-message::before` with `@keyframes journey-diamond-shimmer`) that traverses the banner every 4.8s.
