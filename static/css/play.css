@@ -5581,7 +5581,7 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         width: 100% !important;
         max-width: 100% !important;
-        margin: 0 auto 3px auto !important;
+        margin: 6px auto 3px auto !important;
         padding: 5px 12px !important;
         box-sizing: border-box !important;
     }
@@ -6936,7 +6936,7 @@ input[type=range]::-moz-range-track {
         padding: 6px 12px !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
-        margin: 0 auto 3px auto !important;
+        margin: 6px auto 3px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -8484,7 +8484,7 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 0 auto 3px auto !important;
+        margin: 6px auto 3px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
