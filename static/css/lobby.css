@@ -31,7 +31,8 @@
         transition: grid-template-columns 0.3s ease, gap 0.3s ease;
     }
 
-    #mobile-panel-main {
+    #mobile-panel-main,
+    .game-types-panel {
         grid-column: 1;
         margin-top: 10px;
         margin-bottom: 8px;
@@ -40,9 +41,11 @@
         overflow-y: auto !important;
         overflow-x: hidden !important;
         box-sizing: border-box;
+        padding: 16px 20px 0 20px !important;
     }
 
-    #mobile-panel-solo {
+    #mobile-panel-solo,
+    .solo-friends-panel {
         grid-column: 1;
         background: var(--bg-panel);
         border-radius: 12px;
@@ -50,12 +53,22 @@
         backdrop-filter: blur(10px);
         border: 1px solid var(--input-border);
         margin-top: 10px;
-        margin-bottom: 8px;
-        height: calc(100% - 18px) !important;
-        max-height: calc(100% - 18px) !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
+        margin-bottom: 0 !important;
         box-sizing: border-box;
+    }
+
+    #mobile-panel-main #mobile-panel-solo,
+    .game-types-panel .solo-friends-panel {
+        margin-bottom: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    #mobile-panel-main #mobile-panel-solo .solo-friends-section,
+    #mobile-panel-main #mobile-panel-solo .solo-friends-section:last-child,
+    .solo-friends-panel .solo-friends-section:last-child {
+        margin-bottom: 0 !important;
     }
 
     #mobile-panel-rooms {
@@ -2707,4 +2720,33 @@ body.theme-light-brown .lobby-chat-input:focus {
     .mobile-lobby-spacer {
         display: none !important;
     }
+    #mobile-panel-main,
+    .game-types-panel {
+        padding-bottom: 0 !important;
+    }
+    #mobile-panel-solo,
+    .solo-friends-panel,
+    #mobile-panel-main #mobile-panel-solo,
+    .game-types-panel .solo-friends-panel {
+        margin-bottom: 0 !important;
+    }
 }
+
+body.is-desktop #mobile-panel-main,
+body.is-desktop .game-types-panel {
+    padding-bottom: 0 !important;
+}
+
+body.is-desktop #mobile-panel-solo,
+body.is-desktop .solo-friends-panel,
+body.is-desktop #mobile-panel-main #mobile-panel-solo,
+body.is-desktop .game-types-panel .solo-friends-panel {
+    margin-bottom: 0 !important;
+}
+
+body.is-desktop #mobile-panel-main #mobile-panel-solo .solo-friends-section,
+body.is-desktop #mobile-panel-main #mobile-panel-solo .solo-friends-section:last-child,
+body.is-desktop .solo-friends-panel .solo-friends-section:last-child {
+    margin-bottom: 0 !important;
+}
+
