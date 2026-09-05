@@ -11055,7 +11055,7 @@ body.theme-white .integrated-review-board {
     border: 1px solid #e2e8f0 !important;
 }
 
-/* Desktop & Laptop Game Room Canvas Darkening & Panel Lightening */
+/* Desktop & Laptop Game Room Canvas & Panel Harmonization */
 @media (min-width: 901px) {
     html:has(#page-play.active),
     body:has(#page-play.active),
@@ -11064,12 +11064,12 @@ body.theme-white .integrated-review-board {
     body.play-active .pages,
     .pages:has(#page-play.active),
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play.active {
-        background: #000000 !important;
-        background-color: #000000 !important;
+        background: #141526 !important;
+        background-color: #141526 !important;
     }
     body:has(#page-play.active) .header,
     body.play-active .header {
-        background: #000000 !important;
+        background: #141526 !important;
     }
 
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {
