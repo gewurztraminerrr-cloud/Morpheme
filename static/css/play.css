@@ -6792,7 +6792,7 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         margin: 0 auto !important;
-        text-align: center !important;
+        text-align: left !important;
     }
 
     .player-item {
@@ -6802,19 +6802,34 @@ input[type=range]::-moz-range-track {
         padding: 6px 10px !important;
         overflow: hidden !important;
         margin: 0 auto !important;
+        text-align: left !important;
     }
 
 
 
     .player-row-top,
     .player-row-bottom {
+        display: flex !important;
+        align-items: center !important;
         min-width: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        gap: 8px !important;
+    }
+
+    .player-row-top {
+        justify-content: flex-start !important;
     }
 
     .player-username {
         min-width: 0 !important;
+        text-align: left !important;
+        flex: 1 !important;
+    }
+
+    .player-rating-val {
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
     }
 
     .chat-panel {
