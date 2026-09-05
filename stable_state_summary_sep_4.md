@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `7f1d0099`
-- **Commit Message**: `fix(tournaments): display user's current/final round matchup in Current Pairings`
+- **Commit ID**: `d1de7d0c`
+- **Commit Message**: `perf(audio): trigger instant 0ms lobby music on touch/press down for Chrome and mobile`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,15 +13,19 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`7f1d0099` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`7f1d0099` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`7f1d0099`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`d1de7d0c` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`d1de7d0c` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`d1de7d0c`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Tournament Current Pairings Resolution**:
+1. **Instant 0ms Lobby Music Playback (Chrome, Mobile, Safari & Firefox)**:
+   - Fixed audio latency on Chrome and mobile devices by initiating pre-fetching (`<link rel="preload" as="fetch">` and `fetch('/music/lobby.mp3')` cache warm-up) during initial HTML parsing.
+   - Attached synchronous audio playback directly to `pointerdown`, `touchstart`, and `mousedown` on the `ENTER LOBBY` button, ensuring playback begins on the exact millisecond the user touches the button rather than waiting for finger release or click event callbacks.
+
+2. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
    - Updated both backend `/api/tournament/status` (to include the final round's matchups in `all_matchups` when completed) and frontend `static/js/tournaments.js` (to prioritize the current/final round and search backwards for latest active pairings).
 
