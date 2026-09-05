@@ -1228,6 +1228,21 @@ window.showModTab = function(tabId) {
     }
 };
 
+window.resetModsTab = function() {
+    const sidebar = document.querySelector('#page-mods .tools-sidebar');
+    const content = document.querySelector('#page-mods .tools-content');
+    if (sidebar) {
+        sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    if (content) {
+        content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+    }
+    const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+    if (layoutEl) {
+        layoutEl.scrollLeft = 0;
+    }
+};
+
 function setupModsNavigation() {
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
     if (!sidebar) return;
@@ -1242,17 +1257,13 @@ function setupModsNavigation() {
         }
     });
 
-    // Mobile Layout snapping on navigation
+    // Mobile Layout snapping and menu reset on navigation
     const modsPage = document.getElementById('page-mods');
     if (modsPage) {
         const observer = new MutationObserver(() => {
             if (modsPage.classList.contains('active')) {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    setTimeout(() => {
-                        const layoutEl = document.querySelector('#page-mods .tools-split-layout');
-                        if (layoutEl) layoutEl.scrollLeft = 0;
-                    }, 100);
+                if (typeof window.resetModsTab === 'function') {
+                    window.resetModsTab();
                 }
             }
         });

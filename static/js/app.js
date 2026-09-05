@@ -1753,6 +1753,9 @@ function showPage(pageId) {
     }
 
     if (pageId === 'page-mods') {
+        if (typeof window.resetModsTab === 'function') {
+            window.resetModsTab();
+        }
         if (typeof window.loadAddedWordsConfig === 'function') {
             window.loadAddedWordsConfig();
         }
