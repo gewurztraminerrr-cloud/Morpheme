@@ -546,6 +546,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (typeof window.triggerMobileFullscreen === 'function') {
                         window.triggerMobileFullscreen();
                     }
+
+                    // Immediately trigger audio playback synchronously on user gesture press down
+                    if (typeof window.triggerGatewayAudioImmediate === 'function') {
+                        window.triggerGatewayAudioImmediate();
+                    } else {
+                        const lobbyMusic = document.getElementById('lobby-music');
+                        if (lobbyMusic) playLobbyMusicHelper(lobbyMusic);
+                    }
                 };
 
                 const handlePressMove = (e) => {
