@@ -154,9 +154,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=33864" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33869" as="style">
+    <link rel="preload" href="/css/lobby.css?v=33870" as="style">
     <link rel="stylesheet" href="/css/style.css?v=33864">
-    <link rel="stylesheet" href="/css/lobby.css?v=33869">
+    <link rel="stylesheet" href="/css/lobby.css?v=33870">
     <link rel="stylesheet" href="/css/play.css?v=33864">
     <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
     <link rel="stylesheet" href="/css/forum.css?v=33804">
@@ -1767,93 +1767,88 @@
         <div id="page-lobby" class="page">
             <style>
                 /* Lustrous, Shimmer-Inspiring Journey Message Box */
+                /* Premium Obsidian-Diamond Glass Journey Banner */
                 .lobby-journey-message {
                     text-align: center;
-                    margin: 5px auto 20px auto;
-                    font-size: 0.95rem;
-                    font-weight: 800;
-                /* Ultra-Lustrous, Radiant Shimmer Journey Message Box */
-                .lobby-journey-message {
-                    text-align: center;
-                    margin: 6px auto 22px auto;
-                    font-size: 0.95rem;
-                    font-weight: 800;
-                    letter-spacing: 1.8px;
+                    margin: 6px auto 20px auto;
+                    font-size: 0.92rem;
+                    font-weight: 700;
+                    letter-spacing: 2.2px;
                     text-transform: uppercase;
                     white-space: nowrap;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    padding: 12px 28px;
-                    max-width: 560px;
+                    padding: 11px 26px;
+                    max-width: 540px;
                     width: 92%;
                     box-sizing: border-box;
                     position: relative;
                     overflow: hidden;
-                    background: linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(26, 4, 30, 0.94) 38%, rgba(14, 2, 18, 0.96) 68%, rgba(255, 0, 128, 0.16) 100%);
-                    border: 1.5px solid rgba(255, 0, 128, 0.5);
-                    border-radius: 14px;
-                    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 0 20px rgba(255, 0, 128, 0.2), 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 22px rgba(255, 0, 128, 0.28);
+                    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 30, 0.78) 40%, rgba(10, 10, 18, 0.88) 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.16);
+                    border-radius: 12px;
+                    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -1px 1px rgba(0, 0, 0, 0.5), 0 6px 20px rgba(0, 0, 0, 0.45);
                     backdrop-filter: blur(12px);
                     -webkit-backdrop-filter: blur(12px);
-                    animation: journey-box-glow 3.6s ease-in-out infinite;
+                    animation: journey-box-aura 5s ease-in-out infinite;
                     user-select: none;
                     -webkit-user-select: none;
                 }
 
-                /* Gleaming top specular edge highlight */
+                /* Crisp specular top-edge bevel */
                 .lobby-journey-message::after {
                     content: '';
                     position: absolute;
                     top: 0;
-                    left: 10%;
-                    right: 10%;
-                    height: 1.5px;
-                    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.85) 50%, transparent 100%);
+                    left: 8%;
+                    right: 8%;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.7) 50%, transparent 100%);
                     pointer-events: none;
                     z-index: 1;
                 }
 
-                /* Lustrous diagonal shimmer light sweep */
+                /* Polished Diamond Shimmer Light Sweep */
                 .lobby-journey-message::before {
                     content: '';
                     position: absolute;
                     top: -60%;
                     left: -160%;
-                    width: 75%;
+                    width: 70%;
                     height: 220%;
                     background: linear-gradient(
                         115deg,
                         transparent 0%,
-                        rgba(255, 255, 255, 0) 25%,
-                        rgba(255, 255, 255, 0.35) 45%,
-                        rgba(255, 180, 230, 0.8) 50%,
-                        rgba(255, 255, 255, 0.55) 55%,
-                        rgba(255, 255, 255, 0) 75%,
+                        rgba(255, 255, 255, 0) 30%,
+                        rgba(255, 255, 255, 0.15) 45%,
+                        rgba(255, 255, 255, 0.45) 50%,
+                        rgba(255, 255, 255, 0.25) 55%,
+                        rgba(255, 255, 255, 0) 70%,
                         transparent 100%
                     );
                     transform: skewX(-24deg);
                     pointer-events: none;
                     z-index: 2;
-                    animation: journey-shimmer-sweep 4.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
-                    filter: drop-shadow(0 0 10px rgba(255, 120, 210, 0.9));
+                    animation: journey-diamond-shimmer 4.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+                    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
                 }
 
-                /* Radiant Metallic Platinum-Rose Typography */
+                /* Pure luminous pearl-white typography */
                 .lobby-journey-message span {
                     position: relative;
                     z-index: 3;
-                    background: linear-gradient(180deg, #ffffff 0%, #ffe6f3 35%, #ff66b2 75%, #ff007f 100%);
+                    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    color: #ff3399;
-                    filter: drop-shadow(0 0 12px rgba(255, 0, 128, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
-                    font-weight: 900;
-                    letter-spacing: 1.8px;
+                    color: #ffffff;
+                    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+                    font-weight: 800;
+                    letter-spacing: 2px;
                     text-transform: uppercase;
                 }
 
-                @keyframes journey-shimmer-sweep {
+                @keyframes journey-diamond-shimmer {
                     0% {
                         left: -140%;
                         opacity: 0;
@@ -1861,68 +1856,68 @@
                     8% {
                         opacity: 1;
                     }
-                    40% {
+                    38% {
                         left: 175%;
                         opacity: 1;
                     }
-                    41%, 100% {
+                    39%, 100% {
                         left: 175%;
                         opacity: 0;
                     }
                 }
 
-                @keyframes journey-box-glow {
+                @keyframes journey-box-aura {
                     0%, 100% {
-                        border-color: rgba(255, 0, 128, 0.45);
-                        box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), inset 0 0 18px rgba(255, 0, 128, 0.16), 0 6px 25px rgba(0, 0, 0, 0.6), 0 0 18px rgba(255, 0, 128, 0.22);
+                        border-color: rgba(255, 255, 255, 0.16);
+                        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.5), 0 6px 20px rgba(0, 0, 0, 0.45);
                     }
                     50% {
-                        border-color: rgba(255, 80, 180, 0.8);
-                        box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.6), inset 0 0 26px rgba(255, 0, 128, 0.32), 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 32px rgba(255, 0, 128, 0.45);
+                        border-color: rgba(255, 255, 255, 0.32);
+                        box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), inset 0 -1px 1px rgba(0, 0, 0, 0.5), 0 8px 25px rgba(0, 0, 0, 0.55), 0 0 15px rgba(255, 255, 255, 0.12);
                     }
                 }
 
                 @media (max-width: 900px) {
                     .lobby-journey-message {
-                        font-size: 0.82rem;
-                        letter-spacing: 1.0px;
+                        font-size: 0.8rem;
+                        letter-spacing: 1.4px;
                         margin: 6px auto 14px auto;
-                        padding: 10px 20px;
+                        padding: 9.5px 18px;
                         width: 92%;
                         max-width: 480px;
-                        border-radius: 12px;
+                        border-radius: 10px;
                     }
                     .lobby-journey-message span {
-                        letter-spacing: 1.2px;
+                        letter-spacing: 1.4px;
                     }
                 }
 
                 @media (max-width: 480px) {
                     .lobby-journey-message {
                         font-size: 0.72rem !important;
-                        letter-spacing: 0.6px !important;
+                        letter-spacing: 0.8px !important;
                         margin: 6px auto 12px auto !important;
-                        padding: 9.5px 12px !important;
+                        padding: 9px 12px !important;
                         width: 92% !important;
                         max-width: 420px !important;
-                        border-radius: 11px !important;
+                        border-radius: 10px !important;
                         white-space: nowrap !important;
                         text-overflow: clip !important;
                         overflow: hidden !important;
                     }
                     .lobby-journey-message span {
-                        letter-spacing: 0.6px !important;
+                        letter-spacing: 0.8px !important;
                     }
                 }
 
                 @media (max-width: 360px) {
                     .lobby-journey-message {
                         font-size: 0.64rem !important;
-                        letter-spacing: 0.3px !important;
+                        letter-spacing: 0.4px !important;
                         padding: 8px 8px !important;
                     }
                     .lobby-journey-message span {
-                        letter-spacing: 0.3px !important;
+                        letter-spacing: 0.4px !important;
                     }
                 }
             </style>
@@ -7069,7 +7064,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
-    <script src="/js/app.js?v=33869"></script>
+    <script src="/js/app.js?v=33870"></script>
     <script src="/js/lobby.js?v=33806"></script>
     <script src="/js/play.js?v=33864"></script>
     <script src="/js/tournaments.js?v=33865"></script>
