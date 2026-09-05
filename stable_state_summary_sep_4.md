@@ -1,8 +1,8 @@
 # Stable State Summary – September 4, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `28e4f130`
-- **Commit Message**: `perf(audio): implement Web Audio decoded buffer for instant 0ms lobby music on Chrome and mobile`
+- **Commit ID**: `da9925d9`
+- **Commit Message**: `feat(ui): add lustrous shimmer effect to lobby journey message box across all devices`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_4`
@@ -13,19 +13,19 @@
 ---
 
 ## Synchronization Status
-- **Localhost**: Synchronized (`28e4f130` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`28e4f130` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`28e4f130`), PM2 online, HTTP 200 OK
+- **Localhost**: Synchronized (`da9925d9` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`da9925d9` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`da9925d9`), PM2 online, HTTP 200 OK
 
 ---
 
 ## Changes Implemented & Stable Specifications
 
-1. **Instant 0ms Lobby Music Playback via Web Audio API Decoded Buffers (Chrome, Mobile, Safari & Firefox)**:
-   - Completely resolved delayed music start on Chrome (desktop/Android) and mobile devices by migrating lobby audio playback to the **Web Audio API (`AudioContext`)** with in-memory pre-decoded `AudioBuffer` caching (`LobbyMusicEngine`).
-   - Added early pre-fetching and in-memory background decoding (`window._morphemeAudioCtx.decodeAudioData()`) during initial HTML parsing.
-   - Attached synchronous `AudioContext.resume()` + `source.start(0)` directly to `pointerdown`, `touchstart`, and `mousedown` on `ENTER LOBBY` (`#btn-enter-lobby-gateway`) and the gateway screen container.
-   - Zero-latency playback begins instantaneously on the user's initial touch down, with transparent fallback to HTML5 `<audio>` and full volume and pause integration across all app views.
+1. **Lustrous Shimmering Journey Message Box (Mobile, Laptops, and Desktops)**:
+   - Enclosed the `"ENTER A ROOM TO CONTINUE YOUR JOURNEY"` message in a crystalline glassmorphic container with an inner highlight and soft neon aura (`background: linear-gradient(135deg, rgba(255, 0, 127, 0.12) 0%, rgba(20, 5, 25, 0.85) 45%, rgba(35, 10, 45, 0.8) 75%, rgba(255, 0, 127, 0.09) 100%)`).
+   - Implemented an elegant, smooth diagonal light sweep (`@keyframes journey-shimmer-sweep`) that glides across the box surface periodically with a calming rest interval.
+   - Added a gentle breathing glow (`@keyframes journey-box-glow`) to the border and depth shadows without causing visual noise or distraction.
+   - Fully optimized across breakpoints with responsive typography and padding on mobile devices, tablets, laptops, and desktops.
 
 2. **Tournament Current Pairings Resolution**:
    - Fixed an issue where the "Current Pairings" card on the Tournaments page scanned from Round 1 and showed an earlier round's pairing rather than the user's latest/final round matchup.
