@@ -2069,7 +2069,7 @@ body.theme-light-brown .word-item.missed {
     word-break: keep-all;
     overflow-wrap: normal;
     white-space: normal;
-    padding: 4px 40px;
+    padding: 4px 12px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
