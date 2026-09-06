@@ -4753,7 +4753,10 @@ input[type=range]::-moz-range-track {
 }
 
 @media (min-width: 993px) {
-    .card-best-words .lb-table td.col-val {
+    .card-best-words .lb-table td.col-val,
+    .card-efficiency .lb-table td.col-val,
+    .card-pct-found .lb-table td.col-val,
+    .card-hard-words .lb-table td.col-val {
         text-align: left !important;
         padding-left: 15px !important;
     }
@@ -4765,7 +4768,19 @@ input[type=range]::-moz-range-track {
         text-align: right !important;
     }
 
-    .card-best-words .lb-table td.col-user {
+    .card-efficiency .lb-table td.col-meta,
+    .card-pct-found .lb-table td.col-meta,
+    .card-hard-words .lb-table td.col-meta {
+        width: 145px !important;
+        min-width: 135px !important;
+        white-space: nowrap !important;
+        text-align: right !important;
+    }
+
+    .card-best-words .lb-table td.col-user,
+    .card-efficiency .lb-table td.col-user,
+    .card-pct-found .lb-table td.col-user,
+    .card-hard-words .lb-table td.col-user {
         width: auto !important;
         white-space: nowrap !important;
     }

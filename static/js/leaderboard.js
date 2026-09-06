@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${renderReplayBtn(row)}
                 </td>
             `;
-        });
+        }, 'card-efficiency');
 
         createTableCard(contentArea, "Highest Percentage of Words Found", data.best_pcts, (row, i) => {
             const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
@@ -507,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      ${renderReplayBtn(row)}
                  </td>
             `;
-        });
+        }, 'card-pct-found');
 
         createTableCard(contentArea, "Highest Avg Percentage of Words Found", data.best_avg_pcts, (row, i) => {
             return `
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      ${renderReplayBtn(row)}
                  </td>
             `;
-        });
+        }, 'card-hard-words');
 
         createTableCard(contentArea, "Peak Ratings Achieved", data.best_ratings, (row, i) => {
             const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
