@@ -1,7 +1,7 @@
 # Stable State Summary – September 6, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `f81427f8`
+- **Code Commit ID**: `bf90f76f`
 - **Commit Message**: `docs: checkpoint September 6 stable start over state (updated)`
 - **Active Git Tags**:
   - `START_OVER_POINT`
@@ -13,9 +13,9 @@
 ---
 
 ## Synchronization Status
-- **Localhost (`/Users/jeffbabiak`)**: Synchronized (`f81427f8` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`f81427f8` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`f81427f8`), PM2 online, HTTP 200 OK
+- **Localhost (`/Users/jeffbabiak`)**: Synchronized
+- **GitHub (`origin/main` & Tags)**: Synchronized
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized, PM2 online, HTTP 200 OK
 - **Flutter Mobile App (`morpheme_word_game`)**: Synchronized (loads `https://morpheme.games/` with native SoLoud audio bridge)
 
 ---
@@ -78,5 +78,9 @@
     - Expanded metadata column widths (`110px` for Best Words; `145px` for Efficiency, Pct Found, and Hard Words) with `white-space: nowrap !important; text-align: right !important;`, preventing multi-line text breaking of board dimensions, separator dots, and durations. Normalized row heights from 105–137px down to 56.5px.
     - Mobile viewports remain completely responsive and compact.
 
-12. **Asset & Cache Versioning**:
-    - Incremented query parameter versions in `templates/index.html` (`play.css?v=1788724200`, `leaderboard.js?v=1788724200`, `mods.js?v=1788724000`, `tools.js?v=1788724000`).
+12. **Mobile Lobby Title Spacing Alignment**:
+    - In `static/css/lobby.css`, added `height: auto !important; min-height: 0 !important;` to `.matrix-header .corner-cell` under `@media (max-width: 900px)`.
+    - Removed the 5px dead space above `.dim-label` badges (`4×4`, `4×6`, `5×7`, `6×8`) within the matrix header row, reducing the distance below `ACCUMULATIVE`, `FIRST COME FIRST SERVE`, and `SPLIT POINTS` titles to exactly **6px**, matching `ACTIVE ROOMS`.
+
+13. **Asset & Cache Versioning**:
+    - Incremented query parameter versions in `templates/index.html` (`lobby.css?v=1788726626`, `play.css?v=1788724200`, `leaderboard.js?v=1788724200`, `mods.js?v=1788724000`, `tools.js?v=1788724000`).
