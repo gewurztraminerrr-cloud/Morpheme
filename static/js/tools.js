@@ -91,8 +91,11 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     wordEl.style.setProperty('letter-spacing', '2px', 'important');
     wordEl.style.setProperty('max-width', 'none', 'important');
 
-    // Measure the available width: the display element's full client width, near edge-to-edge
-    const availWidth = Math.max((el.clientWidth || 300) - 2, 60); // 1px breathing room each side
+    // Measure available width: el.clientWidth minus its own CSS padding, so the word
+    // fills exactly to the inner padded edge (CSS controls the padding, JS respects it)
+    const cs = window.getComputedStyle(el);
+    const elPad = parseFloat(cs.paddingLeft || 0) + parseFloat(cs.paddingRight || 0);
+    const availWidth = Math.max((el.clientWidth || 300) - elPad - 2, 60); // 1px each side
 
     // Binary-search: find the largest font-size (px) where scrollWidth <= availWidth
     let lo = 10, hi = 96, best = lo;
