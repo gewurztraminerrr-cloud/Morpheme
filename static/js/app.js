@@ -22,6 +22,15 @@ const CURRENT_APP_BUILD = '33127';
     } catch(e) {}
 })();
 
+// Fetch with a hard timeout so slow/stalled API calls never hang the gateway screen
+function fetchWithTimeout(url, options, timeoutMs) {
+    timeoutMs = timeoutMs || 6000;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const opts = Object.assign({}, options || {}, { signal: controller.signal });
+    return fetch(url, opts).finally(() => clearTimeout(timer));
+}
+
 // Navigation system
 const pages = {
     'nav-login-btn': 'page-login',
@@ -348,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tournamentActive = localStorage.getItem('tournament_play_active');
     if (tournamentActive) {
         try {
-            const tCheck = await fetch('/api/tournament/game-state', { cache: 'no-store' });
+            const tCheck = await fetchWithTimeout('/api/tournament/game-state', { cache: 'no-store' }, 4000);
             const tData = await tCheck.json();
             if (tData.error) {
                 console.log('[app.js] Clearing stale tournament_play_active:', tData.error);
@@ -1009,7 +1018,7 @@ function setupContactForm() {
 // Check if user is already logged in
 async function checkSession() {
     try {
-        let response = await fetch('/api/session');
+        let response = await fetchWithTimeout('/api/session', {}, 6000);
         let data = await response.json();
 
         const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
@@ -1035,11 +1044,11 @@ async function checkSession() {
             if (token) {
                 console.info('[Auth] Session empty. Attempting auto-login via stored token...');
                 try {
-                    const autoLoginRes = await fetch('/api/auth/auto-login', {
+                    const autoLoginRes = await fetchWithTimeout('/api/auth/auto-login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ auth_token: token })
-                    });
+                    }, 5000);
                     const autoLoginData = await autoLoginRes.json();
                     if (autoLoginData.success) {
                         console.info('[Auth] Auto-login succeeded.');
@@ -1089,7 +1098,7 @@ async function checkSession() {
 
             // NEW: Check if user is already in a room
             try {
-                const roomRes = await fetch('/api/user/current-room');
+                const roomRes = await fetchWithTimeout('/api/user/current-room', {}, 4000);
                 const roomData = await roomRes.json();
                 if (roomData && roomData.room_id) {
                     console.log('Session Check: User is currently in room:', roomData.room_id);
