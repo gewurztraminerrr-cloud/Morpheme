@@ -597,6 +597,29 @@ document.addEventListener('DOMContentLoaded', () => {
         removeDefBtn.addEventListener('click', removeDefinition);
     }
 
+    const defWordInput = document.getElementById('def-word-input');
+    const defTextInput = document.getElementById('def-text-input');
+    if (defWordInput) {
+        defWordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (defTextInput && defTextInput.value.trim()) {
+                    addDefinition();
+                } else if (defTextInput) {
+                    defTextInput.focus();
+                }
+            }
+        });
+    }
+    if (defTextInput) {
+        defTextInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addDefinition();
+            }
+        });
+    }
+
     const refreshUndefBtn = document.getElementById('refresh-undef-btn');
     if (refreshUndefBtn) {
         refreshUndefBtn.addEventListener('click', () => loadUndefinedWords(true));
@@ -946,9 +969,12 @@ async function addDefinition() {
     const def = textInput ? textInput.value.trim() : '';
 
     if (!word || !def) {
-        alert("Both word and definition are required.");
+        showModStatus("Both word and definition are required.", true, 'def-status-area');
         return;
     }
+
+    const addDefBtn = document.getElementById('add-def-btn');
+    if (addDefBtn) addDefBtn.disabled = true;
 
     try {
         const response = await fetch('/api/mods/definitions/add', {
@@ -958,18 +984,28 @@ async function addDefinition() {
         });
         const data = await response.json();
         if (data.success) {
-            if (wordInput) wordInput.value = '';
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.focus();
+            }
             if (textInput) textInput.value = '';
             const wordsStr = data.words ? data.words.join(', ') : word;
             showModStatus(`Definition for "${wordsStr}" updated.`, false, 'def-status-area');
-            alert(`Success: Definition for "${wordsStr}" has been set.`);
-            if (typeof loadUndefinedWords === 'function') loadUndefinedWords();
+            
+            // Instantly remove added words from undefined list in-memory without blocking network reload
+            if (Array.isArray(undefinedWordsList) && undefinedWordsList.length > 0) {
+                const wordsSet = new Set((data.words || [word]).map(w => w.toUpperCase()));
+                undefinedWordsList = undefinedWordsList.filter(w => !wordsSet.has(w));
+                renderUndefinedWords();
+            }
         } else {
-            alert("Error: " + (data.error || "Failed to set definition."));
+            showModStatus("Error: " + (data.error || "Failed to set definition."), true, 'def-status-area');
         }
     } catch (err) {
         console.error("Error setting definition:", err);
         showModStatus("Network error setting definition.", true, 'def-status-area');
+    } finally {
+        if (addDefBtn) addDefBtn.disabled = false;
     }
 }
 
@@ -978,9 +1014,12 @@ async function removeDefinition() {
     const word = wordInput ? wordInput.value.trim().toUpperCase() : '';
 
     if (!word) {
-        alert("Word is required to remove definition.");
+        showModStatus("Word is required to remove definition.", true, 'def-status-area');
         return;
     }
+
+    const removeDefBtn = document.getElementById('remove-def-btn');
+    if (removeDefBtn) removeDefBtn.disabled = true;
 
     try {
         const response = await fetch('/api/mods/definitions/remove', {
@@ -990,17 +1029,30 @@ async function removeDefinition() {
         });
         const data = await response.json();
         if (data.success) {
-            if (wordInput) wordInput.value = '';
+            if (wordInput) {
+                wordInput.value = '';
+                wordInput.focus();
+            }
             const wordsStr = data.words ? data.words.join(', ') : word;
             showModStatus(`Definition for "${wordsStr}" removed.`, false, 'def-status-area');
-            alert(`Success: Definition for "${wordsStr}" has been removed.`);
-            if (typeof loadUndefinedWords === 'function') loadUndefinedWords();
+            
+            // Instantly re-add removed words to undefined list in-memory
+            if (Array.isArray(undefinedWordsList)) {
+                const wordsSet = (data.words || [word]).map(w => w.toUpperCase());
+                wordsSet.forEach(w => {
+                    if (!undefinedWordsList.includes(w)) undefinedWordsList.push(w);
+                });
+                undefinedWordsList.sort((a, b) => a.length - b.length || a.localeCompare(b));
+                renderUndefinedWords();
+            }
         } else {
-            alert("Error: " + (data.error || "Failed to remove definition."));
+            showModStatus("Error: " + (data.error || "Failed to remove definition."), true, 'def-status-area');
         }
     } catch (err) {
         console.error("Error removing definition:", err);
         showModStatus("Network error removing definition.", true, 'def-status-area');
+    } finally {
+        if (removeDefBtn) removeDefBtn.disabled = false;
     }
 }
 

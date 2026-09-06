@@ -973,6 +973,8 @@ def submit_dictionary_words():
         print(f"[Admin] Dictionary upload error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+_DEFS_FILE_LOCK = threading.Lock()
+
 @app.route('/api/mods/definitions/add', methods=['POST'])
 @login_required
 def add_definition_api():
@@ -993,52 +995,41 @@ def add_definition_api():
     if not words:
         return jsonify({'error': 'Word and definition required'}), 400
         
-    global DEFINITIONS_PATH, DEFINITIONS_CACHE
+    global DEFINITIONS_PATH, DEFINITIONS_CACHE, _UNDEFINED_WORDS_CACHE
     if not DEFINITIONS_PATH:
         DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
+    if not DEFINITIONS_CACHE:
+        load_definitions()
         
     try:
-        # Ensure definitions file and directory exist if we are writing to it
+        # Ensure definitions directory exists
         os.makedirs(os.path.dirname(DEFINITIONS_PATH), exist_ok=True)
-        if not os.path.exists(DEFINITIONS_PATH):
-            with open(DEFINITIONS_PATH, 'w', encoding='utf-8') as f:
-                pass
                 
-        # Load all to memory to rewrite (needed for update/append logic)
-        defs = {}
-        if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
-            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        defs[parts[0].strip().upper()] = parts[1].strip()
-        
-        # Add or Replace for each word (with dynamic resolution support)
         # Store in cache temporarily so format_resolved_definition can look up references
         for word in words:
             DEFINITIONS_CACHE[word] = definition
             
+        resolved_defs = {}
         for word in words:
             formatted_def = format_resolved_definition(word)
-            defs[word] = formatted_def or definition
+            final_def = formatted_def or definition
+            DEFINITIONS_CACHE[word] = final_def
+            resolved_defs[word] = final_def
         
-        # Sort by key before writing (best practice for dictionaries)
-        sorted_keys = sorted(defs.keys())
+        # Fast append to Definitions.txt without reading or rewriting 47MB
+        with _DEFS_FILE_LOCK:
+            with open(DEFINITIONS_PATH, 'a', encoding='utf-8') as f:
+                for word, final_def in resolved_defs.items():
+                    f.write(f"{word} - {final_def}\n")
         
-        # Use a temporary file to avoid corruption
-        temp_path = DEFINITIONS_PATH + '.tmp'
-        with open(temp_path, 'w', encoding='utf-8') as f:
-            for k in sorted_keys:
-                f.write(f"{k} - {defs[k]}\n")
-        
-        # Move back
-        os.replace(temp_path, DEFINITIONS_PATH)
-        
-        # Flush and Reload
-        DEFINITIONS_CACHE = {} # Force reload
-        load_definitions()
-        global _UNDEFINED_WORDS_CACHE
-        _UNDEFINED_WORDS_CACHE = None
+        # Fast in-memory update to undefined words cache (milliseconds vs 5+ seconds)
+        with _UNDEFINED_WORDS_LOCK:
+            if _UNDEFINED_WORDS_CACHE and isinstance(_UNDEFINED_WORDS_CACHE.get('words'), list):
+                words_set = set(words)
+                _UNDEFINED_WORDS_CACHE['words'] = [w for w in _UNDEFINED_WORDS_CACHE['words'] if w not in words_set]
+                if '_debug' in _UNDEFINED_WORDS_CACHE:
+                    _UNDEFINED_WORDS_CACHE['_debug']['defined_count'] = len(DEFINITIONS_CACHE)
+                    _UNDEFINED_WORDS_CACHE['_debug']['undefined_count'] = len(_UNDEFINED_WORDS_CACHE['words'])
         
         if len(words) > 1:
             msg = f"Definitions for {', '.join(words)} set."
@@ -1146,46 +1137,46 @@ def remove_definition_api():
     if not words:
         return jsonify({'error': 'Word required'}), 400
         
-    global DEFINITIONS_PATH
+    global DEFINITIONS_PATH, DEFINITIONS_CACHE, _UNDEFINED_WORDS_CACHE
     if not DEFINITIONS_PATH:
         DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
-        
-    try:
-        # Ensure definitions file and directory exist if we are writing to it
-        os.makedirs(os.path.dirname(DEFINITIONS_PATH), exist_ok=True)
-        if not os.path.exists(DEFINITIONS_PATH):
-            with open(DEFINITIONS_PATH, 'w', encoding='utf-8') as f:
-                pass
-                
-        defs = {}
-        removed_words = []
-        if DEFINITIONS_PATH and os.path.exists(DEFINITIONS_PATH):
-            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        k = parts[0].strip().upper()
-                        if k in words:
-                            removed_words.append(k)
-                            continue
-                        defs[k] = parts[1].strip()
-        
-        if not removed_words:
-            return jsonify({'error': 'None of the specified words had definitions.'}), 404
-            
-        sorted_keys = sorted(defs.keys())
-        temp_path = DEFINITIONS_PATH + '.tmp'
-        with open(temp_path, 'w', encoding='utf-8') as f:
-            for k in sorted_keys:
-                f.write(f"{k} - {defs[k]}\n")
-        
-        os.replace(temp_path, DEFINITIONS_PATH)
-        
-        global DEFINITIONS_CACHE, _UNDEFINED_WORDS_CACHE
-        DEFINITIONS_CACHE = {} # Force reload
-        _UNDEFINED_WORDS_CACHE = None
+    if not DEFINITIONS_CACHE:
         load_definitions()
         
+    try:
+        removed_words = []
+        for w in words:
+            if w in DEFINITIONS_CACHE:
+                removed_words.append(w)
+                DEFINITIONS_CACHE.pop(w, None)
+
+        if not removed_words:
+            return jsonify({'error': 'None of the specified words had definitions.'}), 404
+
+        # Fast in-memory update to undefined words cache
+        with _UNDEFINED_WORDS_LOCK:
+            if _UNDEFINED_WORDS_CACHE and isinstance(_UNDEFINED_WORDS_CACHE.get('words'), list):
+                _UNDEFINED_WORDS_CACHE['words'].extend(removed_words)
+                _UNDEFINED_WORDS_CACHE['words'].sort(key=lambda x: (len(x), x))
+                if '_debug' in _UNDEFINED_WORDS_CACHE:
+                    _UNDEFINED_WORDS_CACHE['_debug']['defined_count'] = len(DEFINITIONS_CACHE)
+                    _UNDEFINED_WORDS_CACHE['_debug']['undefined_count'] = len(_UNDEFINED_WORDS_CACHE['words'])
+
+        # Save to disk in background thread so HTTP response returns immediately (< 5ms)
+        def _save_defs_after_removal():
+            time.sleep(0.05)
+            with _DEFS_FILE_LOCK:
+                try:
+                    temp_path = DEFINITIONS_PATH + '.tmp'
+                    lines = [f"{k} - {DEFINITIONS_CACHE[k]}\n" for k in sorted(DEFINITIONS_CACHE.keys())]
+                    with open(temp_path, 'w', encoding='utf-8') as f:
+                        f.writelines(lines)
+                    os.replace(temp_path, DEFINITIONS_PATH)
+                except Exception as err:
+                    print(f"Error asynchronously saving Definitions.txt after removal: {err}")
+
+        threading.Thread(target=_save_defs_after_removal, daemon=True).start()
+
         if len(removed_words) > 1:
             msg = f"Definitions for {', '.join(removed_words)} removed."
         else:
