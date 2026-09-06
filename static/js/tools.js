@@ -80,29 +80,37 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     const str = wordOrText ? String(wordOrText).trim() : '';
     if (!str) return;
 
-    // Target the word div if present, else the container itself
     const wordEl = el.querySelector('.valid-word-val') || el;
 
-    // Set up for measurement — overflow MUST be visible so scrollWidth reflects true text width
-    wordEl.style.setProperty('white-space', 'nowrap', 'important');
-    wordEl.style.setProperty('display', 'inline-block', 'important');
-    wordEl.style.setProperty('overflow', 'visible', 'important');
-    wordEl.style.setProperty('font-weight', '900', 'important');
-    wordEl.style.setProperty('letter-spacing', '2px', 'important');
-    wordEl.style.setProperty('max-width', 'none', 'important');
+    // --- Measure available width from the panel container ---
+    // Walk up to the results container to get the true rendered panel width
+    const panel = el.closest('.random-word-container') || el.parentElement || el;
+    const panelCs = window.getComputedStyle(panel);
+    const panelPad = parseFloat(panelCs.paddingLeft || 0) + parseFloat(panelCs.paddingRight || 0);
+    const availWidth = Math.max((panel.clientWidth || 600) - panelPad - 24, 60); // 12px each side
 
-    // Measure available width: el.clientWidth minus its own CSS padding, so the word
-    // fills exactly to the inner padded edge (CSS controls the padding, JS respects it)
-    const cs = window.getComputedStyle(el);
-    const elPad = parseFloat(cs.paddingLeft || 0) + parseFloat(cs.paddingRight || 0);
-    const availWidth = Math.max((el.clientWidth || 300) - elPad - 2, 60); // 1px each side
+    // --- Create an off-screen probe element to measure text at each font size ---
+    const probe = document.createElement('span');
+    probe.style.cssText = [
+        'position:fixed',
+        'top:-9999px',
+        'left:-9999px',
+        'white-space:nowrap',
+        'visibility:hidden',
+        'font-family:' + (window.getComputedStyle(wordEl).fontFamily || 'inherit'),
+        'font-weight:900',
+        'letter-spacing:2px',
+        'pointer-events:none'
+    ].join(';');
+    probe.textContent = str;
+    document.body.appendChild(probe);
 
-    // Binary-search: find the largest font-size (px) where scrollWidth <= availWidth
+    // Binary-search: largest font-size (px) where probe.scrollWidth <= availWidth
     let lo = 10, hi = 96, best = lo;
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 18; i++) {
         const mid = (lo + hi) / 2;
-        wordEl.style.setProperty('font-size', mid + 'px', 'important');
-        if (wordEl.scrollWidth <= availWidth) {
+        probe.style.fontSize = mid + 'px';
+        if (probe.scrollWidth <= availWidth) {
             best = mid;
             lo = mid + 0.25;
         } else {
@@ -110,13 +118,20 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
         }
     }
 
-    // Apply best-fit size and restore block display
+    document.body.removeChild(probe);
+
+    // Apply best-fit size to the real word element
     wordEl.style.setProperty('font-size', best + 'px', 'important');
+    wordEl.style.setProperty('font-weight', '900', 'important');
+    wordEl.style.setProperty('letter-spacing', '2px', 'important');
+    wordEl.style.setProperty('white-space', 'nowrap', 'important');
     wordEl.style.setProperty('display', 'block', 'important');
     wordEl.style.setProperty('width', '100%', 'important');
     wordEl.style.setProperty('box-sizing', 'border-box', 'important');
     wordEl.style.setProperty('text-align', 'center', 'important');
     wordEl.style.setProperty('line-height', '1.25', 'important');
+    wordEl.style.setProperty('overflow', 'visible', 'important');
+    wordEl.style.setProperty('max-width', 'none', 'important');
 };
 
 // NEW: Global Tool Switcher Helper
