@@ -2094,6 +2094,14 @@ body.theme-light-brown .word-item.missed {
     line-height: 1.25;
 }
 
+#valid-definition-display {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px 12px;
+    margin: 0 auto;
+}
+
 /* --- WORD OF THE DAY STYLING --- */
 .wotd-container {
     flex: 1;
@@ -6173,6 +6181,9 @@ input[type=range]::-moz-range-track {
     }
     #valid-definition-display {
         max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 4px 6px !important;
         font-size: 1rem !important;
     }
     #random-word-definition .pronunciation {
