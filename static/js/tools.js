@@ -35,6 +35,82 @@ window.parseUTCTimestamp = function(isoStr) {
     return new Date(dateStr);
 };
 
+// NEW: Dynamic Text Size Calibrator for Sequences and Words in Tools
+window.applyDynamicSequenceStyle = function(el, textOrLength) {
+    if (!el) return;
+    const len = typeof textOrLength === 'number' ? textOrLength : (textOrLength ? String(textOrLength).trim().length : 0);
+    if (!len) return;
+
+    let fontSize, letterSpacing;
+    if (len <= 6) {
+        fontSize = 'clamp(2.3rem, 6.2vw, 3.4rem)';
+        letterSpacing = 'clamp(6px, 1.4vw, 14px)';
+    } else if (len <= 8) {
+        fontSize = 'clamp(1.9rem, 4.8vw, 2.8rem)';
+        letterSpacing = 'clamp(4px, 1.0vw, 9px)';
+    } else if (len <= 10) {
+        fontSize = 'clamp(1.55rem, 3.8vw, 2.3rem)';
+        letterSpacing = 'clamp(3px, 0.75vw, 6px)';
+    } else if (len <= 12) {
+        fontSize = 'clamp(1.3rem, 3.0vw, 1.9rem)';
+        letterSpacing = 'clamp(2px, 0.5vw, 4px)';
+    } else if (len <= 15) {
+        fontSize = 'clamp(1.12rem, 2.4vw, 1.6rem)';
+        letterSpacing = 'clamp(1px, 0.3vw, 2.5px)';
+    } else if (len <= 18) {
+        fontSize = 'clamp(0.98rem, 2.0vw, 1.38rem)';
+        letterSpacing = 'clamp(0.5px, 0.15vw, 1.5px)';
+    } else {
+        fontSize = 'clamp(0.85rem, 1.7vw, 1.2rem)';
+        letterSpacing = '0px';
+    }
+
+    el.style.setProperty('font-size', fontSize, 'important');
+    el.style.setProperty('letter-spacing', letterSpacing, 'important');
+    el.style.setProperty('max-width', '100%', 'important');
+    el.style.setProperty('box-sizing', 'border-box', 'important');
+    el.style.setProperty('word-break', 'break-all', 'important');
+    el.style.setProperty('overflow-wrap', 'anywhere', 'important');
+    el.style.setProperty('white-space', 'normal', 'important');
+    el.style.setProperty('line-height', '1.25', 'important');
+};
+
+window.applyDynamicValidationStyle = function(el, fullText) {
+    if (!el) return;
+    const len = fullText ? String(fullText).trim().length : 0;
+    if (!len) return;
+
+    let fontSize, letterSpacing;
+    if (len <= 10) {
+        fontSize = 'clamp(2.2rem, 5.8vw, 3.4rem)';
+        letterSpacing = '2px';
+    } else if (len <= 15) {
+        fontSize = 'clamp(1.85rem, 4.8vw, 2.85rem)';
+        letterSpacing = '1.5px';
+    } else if (len <= 20) {
+        fontSize = 'clamp(1.5rem, 3.8vw, 2.35rem)';
+        letterSpacing = '1px';
+    } else if (len <= 26) {
+        fontSize = 'clamp(1.25rem, 3.0vw, 1.9rem)';
+        letterSpacing = '0.5px';
+    } else if (len <= 32) {
+        fontSize = 'clamp(1.05rem, 2.3vw, 1.55rem)';
+        letterSpacing = '0.2px';
+    } else {
+        fontSize = 'clamp(0.92rem, 1.9vw, 1.3rem)';
+        letterSpacing = '0px';
+    }
+
+    el.style.setProperty('font-size', fontSize, 'important');
+    el.style.setProperty('letter-spacing', letterSpacing, 'important');
+    el.style.setProperty('max-width', '100%', 'important');
+    el.style.setProperty('box-sizing', 'border-box', 'important');
+    el.style.setProperty('word-break', 'break-word', 'important');
+    el.style.setProperty('overflow-wrap', 'break-word', 'important');
+    el.style.setProperty('white-space', 'normal', 'important');
+    el.style.setProperty('line-height', '1.3', 'important');
+};
+
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
     // Save lists scroll position before navigating away from Lists tool
@@ -70,7 +146,7 @@ window.showTool = function(toolId) {
         }
     }
 
-    // Trigger lazy loads
+    // Trigger lazy loads & dynamic style refreshes
     if (toolId === 'combo') {
         const comboScroll = document.getElementById('combo-scroll-container');
         if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
@@ -97,6 +173,22 @@ window.showTool = function(toolId) {
     }
     if (toolId === 'wotd') {
         if (typeof updateWotd === 'function') updateWotd();
+        const displayEl = document.getElementById('wotd-display');
+        if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== 'Loading...') {
+            window.applyDynamicSequenceStyle(displayEl, displayEl.innerText.trim());
+        }
+    }
+    if (toolId === 'random') {
+        const displayEl = document.getElementById('random-word-display');
+        if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== 'Loading...') {
+            window.applyDynamicSequenceStyle(displayEl, displayEl.innerText.trim());
+        }
+    }
+    if (toolId === 'is-valid') {
+        const displayEl = document.getElementById('valid-result-display');
+        if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== '') {
+            window.applyDynamicValidationStyle(displayEl, displayEl.innerText.trim());
+        }
     }
     if (toolId === 'manual') {
         fetch('/api/tools/flag_manual', { method: 'POST' }).catch(e => console.error(e));
@@ -116,6 +208,10 @@ window.showTool = function(toolId) {
             }
         } else {
             renderUnscrambleFound();
+            const display = document.getElementById('unscramble-jumbled');
+            if (display && unscrambleState.jumbled) {
+                window.applyDynamicSequenceStyle(display, unscrambleState.jumbled);
+            }
         }
     }
     if (toolId === 'subanagrams') {
@@ -127,6 +223,11 @@ window.showTool = function(toolId) {
             const dict = dictSelect ? dictSelect.value : 'CSW';
             const mode = modeSelect ? modeSelect.value : 'word';
             generateRandomSubanagrams(len, dict, mode, false);
+        } else {
+            const lettersDisplay = document.getElementById('sub-letters-display');
+            if (lettersDisplay && _subCurrentLetters) {
+                window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
+            }
         }
     }
 
@@ -4883,6 +4984,16 @@ function setupRandomWordTool() {
     if (genBtn) {
         genBtn.addEventListener('click', generateRandomWord);
     }
+    const lengthEl = document.getElementById('random-length');
+    if (lengthEl) {
+        lengthEl.addEventListener('change', () => {
+            const displayEl = document.getElementById('random-word-display');
+            const val = parseInt(lengthEl.value, 10);
+            if (displayEl && !isNaN(val)) {
+                window.applyDynamicSequenceStyle(displayEl, val);
+            }
+        });
+    }
 }
 
 async function generateRandomWord() {
@@ -4919,6 +5030,8 @@ async function generateRandomWord() {
         displayEl.classList.add('random-word-large');
 
         displayEl.innerText = word;
+        window.applyDynamicSequenceStyle(displayEl, word);
+
         if (defEl) {
             defEl.style.opacity = '0';
             let html = '';
@@ -4986,6 +5099,8 @@ async function updateWotd() {
         }
 
         displayEl.innerText = data.word;
+        window.applyDynamicSequenceStyle(displayEl, data.word);
+
         lastWotdDate = data.date; // Use the date confirmed by the server
         const defEl = document.getElementById('wotd-definition');
         if (defEl) {
@@ -5104,6 +5219,8 @@ function setupSubanagramsTool() {
             const len = parseInt(lengthSelect.value) || 8;
             const dict = dictSelect ? dictSelect.value : 'CSW';
             const mode = modeSelect ? modeSelect.value : 'word';
+            const lettersDisplay = document.getElementById('sub-letters-display');
+            if (lettersDisplay) window.applyDynamicSequenceStyle(lettersDisplay, len);
             generateRandomSubanagrams(len, dict, mode, _subIsRevealed);
         });
     }
@@ -5169,7 +5286,10 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
         return;
     }
 
-    if (lettersDisplay) lettersDisplay.textContent = clean;
+    if (lettersDisplay) {
+        lettersDisplay.textContent = clean;
+        window.applyDynamicSequenceStyle(lettersDisplay, clean);
+    }
     if (countInfo) countInfo.textContent = 'Finding all subanagrams...';
     if (resultsContainer) {
         resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding all subanagrams...</div>';
@@ -5200,7 +5320,10 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
         _subIsRevealed = true;
 
         if (customInput) customInput.value = _subCurrentLetters;
-        if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
+        if (lettersDisplay) {
+            lettersDisplay.textContent = _subCurrentLetters;
+            window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
+        }
 
         updateSubanagramsHeader();
         renderSubanagramsResults();
@@ -5231,7 +5354,10 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     const wordInput = document.getElementById('sub-word-input');
     const customInput = document.getElementById('sub-input');
 
-    if (lettersDisplay) lettersDisplay.textContent = '...';
+    if (lettersDisplay) {
+        lettersDisplay.textContent = '...';
+        window.applyDynamicSequenceStyle(lettersDisplay, length);
+    }
     if (countInfo) countInfo.textContent = 'Loading sequence...';
     if (resultsContainer) {
         resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Generating letters...</div>';
@@ -5258,7 +5384,10 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
         _subCurrentMode = data.mode || mode;
 
         if (customInput) customInput.value = _subCurrentLetters;
-        if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
+        if (lettersDisplay) {
+            lettersDisplay.textContent = _subCurrentLetters;
+            window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
+        }
         if (wordInput) {
             wordInput.value = '';
             if (!instantReveal) wordInput.focus();
@@ -5302,7 +5431,10 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
         return;
     }
 
-    if (lettersDisplay) lettersDisplay.textContent = clean;
+    if (lettersDisplay) {
+        lettersDisplay.textContent = clean;
+        window.applyDynamicSequenceStyle(lettersDisplay, clean);
+    }
     if (countInfo) countInfo.textContent = 'Analyzing sequence...';
     if (resultsContainer) {
         resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
@@ -5333,7 +5465,10 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
         _subIsRevealed = false;
 
         if (customInput) customInput.value = _subCurrentLetters;
-        if (lettersDisplay) lettersDisplay.textContent = _subCurrentLetters;
+        if (lettersDisplay) {
+            lettersDisplay.textContent = _subCurrentLetters;
+            window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
+        }
         if (wordInput) {
             wordInput.value = '';
             wordInput.focus();
@@ -5614,20 +5749,7 @@ async function runValidationCheck() {
 
         displayEl.style.color = color;
         displayEl.innerText = fullText;
-
-        // Dynamically calibrate font-size based on character length so words are prominent and fit completely
-        const textLen = fullText.length;
-        if (textLen <= 14) {
-            displayEl.style.fontSize = 'clamp(2.0rem, 5.2vw, 3.5rem)';
-        } else if (textLen <= 22) {
-            displayEl.style.fontSize = 'clamp(1.65rem, 4.2vw, 2.8rem)';
-        } else if (textLen <= 30) {
-            displayEl.style.fontSize = 'clamp(1.35rem, 3.3vw, 2.25rem)';
-        } else if (textLen <= 38) {
-            displayEl.style.fontSize = 'clamp(1.15rem, 2.6vw, 1.75rem)';
-        } else {
-            displayEl.style.fontSize = 'clamp(1.0rem, 2.1vw, 1.4rem)';
-        }
+        window.applyDynamicValidationStyle(displayEl, fullText);
 
         // Re-trigger animation
         displayEl.classList.remove('random-word-large');
@@ -6204,6 +6326,16 @@ function setupUnscrambleTool() {
     const dictSel = document.getElementById('unscramble-dict');
     const mustSel = document.getElementById('unscramble-must-have');
 
+    if (lengthSel) {
+        lengthSel.addEventListener('change', () => {
+            const display = document.getElementById('unscramble-jumbled');
+            const val = parseInt(lengthSel.value, 10);
+            if (display && !isNaN(val)) {
+                window.applyDynamicSequenceStyle(display, val);
+            }
+        });
+    }
+
     [lengthSel, dictSel, mustSel].forEach(sel => {
         if (sel) {
             sel.addEventListener('change', () => {
@@ -6247,7 +6379,10 @@ async function startNewUnscramble(keepFound = false) {
     const genBtn = document.getElementById('unscramble-gen-btn');
     const checkBtn = document.getElementById('unscramble-check-btn');
 
-    if (display) display.innerText = "Generating...";
+    if (display) {
+        display.innerText = "Generating...";
+        window.applyDynamicSequenceStyle(display, parseInt(len, 10) || 7);
+    }
 
     const resContainer = document.getElementById('unscramble-found-container');
     if (resContainer) {
@@ -6296,7 +6431,10 @@ async function startNewUnscramble(keepFound = false) {
         unscrambleState.jumbled = data.jumbled;
         unscrambleState.solution = new Set(data.words.map(w => w.toUpperCase()));
 
-        if (display) display.innerText = data.jumbled.toUpperCase();
+        if (display) {
+            display.innerText = data.jumbled.toUpperCase();
+            window.applyDynamicSequenceStyle(display, data.jumbled);
+        }
         if (info) info.innerText = `${data.count} word${data.count !== 1 ? 's' : ''} possible`;
 
         // FINAL SAFETY CHECK: If we requested a letter and it's missing, FORCE RE-FETCH
@@ -6463,7 +6601,7 @@ function renderUnscrambleFound(revealMissed = false) {
         const solutions = Array.from(unscrambleState.solution).sort();
 
         html += `<div style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="font-size: 0.85rem; text-transform: uppercase; color: #ffd700; letter-spacing: 2px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Active: ${unscrambleState.jumbled.toUpperCase()} (${unscrambleState.found.length}/${solutions.length} Found)</div>
+                    <div style="font-size: 0.85rem; text-transform: uppercase; color: #ffd700; letter-spacing: 1.5px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: anywhere;">Active: ${unscrambleState.jumbled.toUpperCase()} (${unscrambleState.found.length}/${solutions.length} Found)</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%;">`;
 
         solutions.forEach(w => {
@@ -6482,16 +6620,20 @@ function renderUnscrambleFound(revealMissed = false) {
                 isClickable = true;
             }
 
+            const fontSize = w.length > 18 ? '0.82rem' : (w.length > 14 ? '0.9rem' : '1rem');
+            const padding = w.length > 18 ? '6px 8px' : (w.length > 14 ? '6px 10px' : '8px 16px');
+
             if (isClickable) {
-                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${displayWord}</div>`;
+                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
             } else {
-                html += `<div style="${style} padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 1rem; letter-spacing: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${displayWord}</div>`;
+                html += `<div style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; letter-spacing: ${w.length > 14 ? '1px' : '3px'}; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
             }
         });
 
         // Incorrect Guesses for current round
         unscrambleState.incorrect.forEach(w => {
-            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: 7px 14px; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: 0.95rem; text-decoration: line-through; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box;">${w}</div>`;
+            const fontSize = w.length > 18 ? '0.82rem' : (w.length > 14 ? '0.88rem' : '0.95rem');
+            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: 7px 12px; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: ${fontSize}; text-decoration: line-through; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${w}</div>`;
         });
 
         html += `   </div>
@@ -6515,11 +6657,12 @@ function renderUnscrambleFound(revealMissed = false) {
             const foundCount = h.found.length;
             const totalCount = h.solutions.length;
             const isPerfect = (foundCount === totalCount && totalCount > 0);
+            const jumbledFontSize = h.jumbled.length > 16 ? '0.85rem' : (h.jumbled.length > 12 ? '0.92rem' : '1.05rem');
 
             html += `
                 <div class="unscramble-history-item" style="background: rgba(15, 20, 38, 0.9); border-radius: 12px; padding: 12px 14px 14px 14px; border: 1.5px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); width: 100%; box-sizing: border-box; min-height: fit-content; overflow: visible;">
                     <div class="unscramble-history-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; flex-wrap: nowrap; gap: 6px; width: 100%;">
-                        <span class="unscramble-history-jumbled" style="font-weight: 800; color: #ffd700; font-size: 1.05rem; letter-spacing: 1.5px; white-space: nowrap; flex-shrink: 0;">${h.jumbled.toUpperCase()}</span>
+                        <span class="unscramble-history-jumbled" style="font-weight: 800; color: #ffd700; font-size: ${jumbledFontSize}; letter-spacing: 1.5px; white-space: nowrap; flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis;">${h.jumbled.toUpperCase()}</span>
                         <div class="unscramble-history-meta" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                             <span class="unscramble-history-pill" style="font-size: 0.8rem; color: ${isPerfect ? '#4ade80' : '#e2e8f0'}; font-weight: 700; background: ${isPerfect ? 'rgba(46, 204, 113, 0.18)' : 'rgba(255, 255, 255, 0.08)'}; padding: 2px 7px; border-radius: 5px; border: 1px solid ${isPerfect ? 'rgba(46, 204, 113, 0.4)' : 'rgba(255, 255, 255, 0.12)'}; white-space: nowrap;">
                                 ${foundCount}/${totalCount} Found
@@ -6534,7 +6677,9 @@ function renderUnscrambleFound(revealMissed = false) {
                             const color = wereFound ? '#4ade80' : '#fca5a5';
                             const bg = wereFound ? 'rgba(46, 204, 113, 0.22)' : 'rgba(239, 68, 68, 0.18)';
                             const bdr = wereFound ? 'rgba(46, 204, 113, 0.5)' : 'rgba(239, 68, 68, 0.4)';
-                            return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: 0.9rem; font-weight: 700; background: ${bg}; padding: 6px 12px; border-radius: 8px; color: ${color}; border: 1.5px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.25); min-height: 34px; height: auto; line-height: 1.2; box-sizing: border-box; text-decoration: none; overflow: visible;">${s}</span>`;
+                            const sFontSize = s.length > 18 ? '0.78rem' : (s.length > 14 ? '0.84rem' : '0.9rem');
+                            const sPadding = s.length > 18 ? '4px 8px' : '6px 12px';
+                            return `<span class="clickable-word-link" onclick="window.lookupWord('${s}', event)" style="font-size: ${sFontSize}; font-weight: 700; background: ${bg}; padding: ${sPadding}; border-radius: 8px; color: ${color}; border: 1.5px solid ${bdr}; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.25); min-height: 34px; height: auto; line-height: 1.2; box-sizing: border-box; text-decoration: none; overflow: visible; max-width: 100%; word-break: break-all;">${s}</span>`;
                         }).join('')}
                     </div>
                 </div>

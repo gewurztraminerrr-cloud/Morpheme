@@ -2027,7 +2027,7 @@ body.theme-light-brown .word-item.missed {
 }
 
 .random-word-large {
-    font-size: 5.5rem;
+    font-size: clamp(2.2rem, 5.5vw, 4.5rem);
     font-weight: 900;
     color: #f8fafc;
     text-transform: uppercase;
@@ -2036,6 +2036,13 @@ body.theme-light-brown .word-item.missed {
     text-shadow: 0 0 25px rgba(var(--text-primary-rgb), 0.4),
         0 0 50px rgba(56, 189, 248, 0.3);
     animation: fadeInWord 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.25;
 }
 
 @keyframes fadeInWord {
@@ -6031,14 +6038,32 @@ input[type=range]::-moz-range-track {
         line-height: normal !important;
     }
 
-    /* Random Word / Is Valid Mobile Fixes */
-    .random-word-large {
-        font-size: clamp(1.2rem, 8vw, 2.5rem) !important;
-        letter-spacing: 1px !important;
+    /* Random Word / Is Valid / Subanagrams / Unscramble Mobile Base & Fitting */
+    .random-word-large,
+    .wotd-gold-showy,
+    #unscramble-jumbled,
+    #sub-letters-display,
+    #random-word-display,
+    #wotd-display {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-all !important;
+        white-space: normal !important;
+        text-align: center !important;
+        line-height: 1.25 !important;
     }
     #valid-result-display {
-        font-size: clamp(1.15rem, 6.2vw, 2.1rem) !important;
-        padding: 2px 5px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+        text-align: center !important;
+        line-height: 1.3 !important;
+        padding: 4px 6px !important;
     }
     .random-word-container {
         padding: 15px !important;
@@ -6221,18 +6246,20 @@ input[type=range]::-moz-range-track {
         transition: padding 0.3s ease, gap 0.3s ease;
     }
     #unscramble-jumbled {
-        font-size: 2.5rem !important;
-        letter-spacing: 5px !important;
         transition: font-size 0.3s ease, margin-bottom 0.3s ease;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-all !important;
+        white-space: normal !important;
     }
     .unscramble-game-area:focus-within {
         padding: 14px 18px !important;
         gap: 12px !important;
     }
     .unscramble-game-area:focus-within #unscramble-jumbled {
-        font-size: 2.2rem !important;
         margin-bottom: 2px !important;
-        letter-spacing: 4px !important;
     }
     .unscramble-game-area:focus-within .input-dashboard {
         margin-top: 8px !important;
@@ -6241,8 +6268,12 @@ input[type=range]::-moz-range-track {
 
     /* Word of the Day Mobile Fixes */
     .wotd-gold-showy {
-        font-size: clamp(1.2rem, 8vw, 2.5rem) !important;
-        letter-spacing: 1px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-all !important;
+        white-space: normal !important;
     }
     .wotd-definition {
         font-size: 1rem !important;
@@ -7970,12 +8001,12 @@ body .board-cell.tile-flash-purple * {
     #tool-unscramble #unscramble-jumbled {
         width: 100% !important;
         max-width: 100% !important;
-        white-space: nowrap !important;
-        overflow: visible !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-all !important;
+        white-space: normal !important;
         text-align: center !important;
-        font-size: clamp(1.6rem, 3.8vw, 3.2rem) !important;
-        letter-spacing: clamp(5px, 1.2vw, 15px) !important;
         box-sizing: border-box !important;
+        line-height: 1.25 !important;
     }
 }
 
