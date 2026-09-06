@@ -79,44 +79,37 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     if (!el) return;
     const str = wordOrText ? String(wordOrText).trim() : '';
     if (!str) return;
-    const word = str.split(/\s+/)[0];
-    const len = word ? word.length : str.length;
 
-    let fontSize, letterSpacing;
-    if (len <= 4) {
-        fontSize = 'clamp(2.4rem, 6.5vw, 4.4rem)';
-        letterSpacing = 'clamp(1.5px, 0.35vw, 3.5px)';
-    } else if (len <= 7) {
-        fontSize = 'clamp(2.1rem, 5.8vw, 3.8rem)';
-        letterSpacing = 'clamp(1px, 0.25vw, 2.5px)';
-    } else if (len <= 10) {
-        fontSize = 'clamp(1.75rem, 5.0vw, 3.2rem)';
-        letterSpacing = 'clamp(0.8px, 0.2vw, 2px)';
-    } else if (len <= 13) {
-        fontSize = 'clamp(1.45rem, 4.2vw, 2.7rem)';
-        letterSpacing = 'clamp(0.5px, 0.15vw, 1.5px)';
-    } else if (len <= 16) {
-        fontSize = 'clamp(1.22rem, 3.6vw, 2.3rem)';
-        letterSpacing = 'clamp(0.3px, 0.1vw, 1px)';
-    } else if (len <= 19) {
-        fontSize = 'clamp(1.05rem, 3.0vw, 1.95rem)';
-        letterSpacing = 'clamp(0px, 0.08vw, 0.8px)';
-    } else if (len <= 22) {
-        fontSize = 'clamp(0.92rem, 2.5vw, 1.7rem)';
-        letterSpacing = 'clamp(0px, 0.06vw, 0.6px)';
-    } else {
-        fontSize = 'clamp(0.82rem, 2.2vw, 1.5rem)';
-        letterSpacing = '0px';
+    // Target the word span if present, else the container itself
+    const wordEl = el.querySelector('.valid-word-val') || el;
+
+    // Ensure no wrapping before measuring
+    wordEl.style.setProperty('white-space', 'nowrap', 'important');
+    wordEl.style.setProperty('display', 'block', 'important');
+    wordEl.style.setProperty('width', '100%', 'important');
+    wordEl.style.setProperty('box-sizing', 'border-box', 'important');
+    wordEl.style.setProperty('overflow', 'hidden', 'important');
+    wordEl.style.setProperty('font-weight', '900', 'important');
+    wordEl.style.setProperty('letter-spacing', '2px', 'important');
+
+    // Get the container width available (with 16px horizontal padding safety margin per side)
+    const container = el.closest('.random-word-container') || el.parentElement || el;
+    const availWidth = Math.max((container.clientWidth || el.clientWidth || 320) - 32, 80);
+
+    // Binary-search for the largest font-size (in px) where scrollWidth <= availWidth
+    let lo = 12, hi = 100, best = lo;
+    for (let i = 0; i < 14; i++) {
+        const mid = (lo + hi) / 2;
+        wordEl.style.setProperty('font-size', mid + 'px', 'important');
+        if (wordEl.scrollWidth <= availWidth) {
+            best = mid;
+            lo = mid + 0.5;
+        } else {
+            hi = mid - 0.5;
+        }
     }
-
-    el.style.setProperty('font-size', fontSize, 'important');
-    el.style.setProperty('letter-spacing', letterSpacing, 'important');
-    el.style.setProperty('max-width', '100%', 'important');
-    el.style.setProperty('box-sizing', 'border-box', 'important');
-    el.style.setProperty('word-break', 'keep-all', 'important');
-    el.style.setProperty('overflow-wrap', 'normal', 'important');
-    el.style.setProperty('white-space', 'normal', 'important');
-    el.style.setProperty('line-height', '1.3', 'important');
+    wordEl.style.setProperty('font-size', best + 'px', 'important');
+    wordEl.style.setProperty('line-height', '1.25', 'important');
 };
 
 // NEW: Global Tool Switcher Helper
@@ -238,8 +231,21 @@ window.showTool = function(toolId) {
             }
         }
     }
+    if (toolId === 'is-valid') {
+        const displayEl = document.getElementById('valid-result-display');
+        if (displayEl && displayEl.querySelector('.valid-word-val')) {
+            const word = displayEl.querySelector('.valid-word-val').textContent.trim();
+            if (word) {
+                // Re-fit the word text to the (possibly resized) container
+                requestAnimationFrame(() => {
+                    window.applyDynamicValidationStyle(displayEl, word);
+                });
+            }
+        }
+    }
 
     // Scroll tools content into view horizontally to the right pane on mobile with smooth sliding
+
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
         const layoutEl = document.querySelector('#page-tools .tools-split-layout');
@@ -5755,8 +5761,11 @@ async function runValidationCheck() {
         const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
 
         displayEl.style.color = color;
-        displayEl.innerHTML = `<span class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; display: inline-block;">${data.word}</span> <span class="valid-status-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; display: inline-block; margin-left: 6px; font-size: 0.88em; opacity: 0.92;">${statusText}</span>`;
-        window.applyDynamicValidationStyle(displayEl, data.word);
+        displayEl.innerHTML = `<div class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; text-align: center; width: 100%; font-weight: 900; line-height: 1.25;">${data.word}</div><div class="valid-status-val" style="white-space: nowrap !important; text-align: center; width: 100%; font-size: clamp(1.1rem, 3.2vw, 1.8rem); font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; opacity: 0.95; line-height: 1.25; margin-top: 4px;">${statusText}</div>`;
+        // Defer font-size fitting until after the DOM has fully laid out
+        requestAnimationFrame(() => {
+            window.applyDynamicValidationStyle(displayEl, data.word);
+        });
 
         // Re-trigger animation
         displayEl.classList.remove('random-word-large');
