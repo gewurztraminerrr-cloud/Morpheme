@@ -43,25 +43,25 @@ window.applyDynamicSequenceStyle = function(el, textOrLength) {
 
     let fontSize, letterSpacing;
     if (len <= 6) {
-        fontSize = 'clamp(2.4rem, 6.5vw, 4.8rem)';
-        letterSpacing = 'clamp(6px, 1.4vw, 16px)';
+        fontSize = 'clamp(2.85rem, 8.5vw, 5.0rem)';
+        letterSpacing = 'clamp(6px, 1.5vw, 16px)';
     } else if (len <= 8) {
-        fontSize = 'clamp(2.05rem, 5.5vw, 4.1rem)';
-        letterSpacing = 'clamp(4px, 1.0vw, 12px)';
+        fontSize = 'clamp(2.45rem, 7.2vw, 4.4rem)';
+        letterSpacing = 'clamp(4px, 1.2vw, 12px)';
     } else if (len <= 10) {
-        fontSize = 'clamp(1.75rem, 4.6vw, 3.4rem)';
-        letterSpacing = 'clamp(3px, 0.75vw, 8px)';
+        fontSize = 'clamp(2.1rem, 6.0vw, 3.8rem)';
+        letterSpacing = 'clamp(3px, 0.9vw, 9px)';
     } else if (len <= 12) {
-        fontSize = 'clamp(1.5rem, 3.8vw, 2.85rem)';
-        letterSpacing = 'clamp(2px, 0.5vw, 6px)';
+        fontSize = 'clamp(1.8rem, 5.0vw, 3.2rem)';
+        letterSpacing = 'clamp(2px, 0.6vw, 6px)';
     } else if (len <= 15) {
-        fontSize = 'clamp(1.25rem, 3.2vw, 2.4rem)';
+        fontSize = 'clamp(1.45rem, 4.0vw, 2.6rem)';
         letterSpacing = 'clamp(1px, 0.35vw, 4px)';
     } else if (len <= 18) {
-        fontSize = 'clamp(1.1rem, 2.6vw, 2.05rem)';
+        fontSize = 'clamp(1.2rem, 3.2vw, 2.2rem)';
         letterSpacing = 'clamp(0.5px, 0.2vw, 2.5px)';
     } else {
-        fontSize = 'clamp(0.95rem, 2.2vw, 1.75rem)';
+        fontSize = 'clamp(1.02rem, 2.6vw, 1.85rem)';
         letterSpacing = 'clamp(0px, 0.1vw, 1.5px)';
     }
 
@@ -75,38 +75,46 @@ window.applyDynamicSequenceStyle = function(el, textOrLength) {
     el.style.setProperty('line-height', '1.25', 'important');
 };
 
-window.applyDynamicValidationStyle = function(el, fullText) {
+window.applyDynamicValidationStyle = function(el, wordOrText) {
     if (!el) return;
-    const len = fullText ? String(fullText).trim().length : 0;
-    if (!len) return;
+    const str = wordOrText ? String(wordOrText).trim() : '';
+    if (!str) return;
+    const word = str.split(/\s+/)[0];
+    const len = word ? word.length : str.length;
 
     let fontSize, letterSpacing;
-    if (len <= 12) {
-        fontSize = 'clamp(2.4rem, 6.0vw, 4.2rem)';
+    if (len <= 4) {
+        fontSize = 'clamp(2.4rem, 6.5vw, 4.4rem)';
         letterSpacing = 'clamp(1.5px, 0.35vw, 3.5px)';
-    } else if (len <= 18) {
-        fontSize = 'clamp(2.05rem, 5.0vw, 3.6rem)';
+    } else if (len <= 7) {
+        fontSize = 'clamp(2.1rem, 5.8vw, 3.8rem)';
         letterSpacing = 'clamp(1px, 0.25vw, 2.5px)';
-    } else if (len <= 24) {
-        fontSize = 'clamp(1.75rem, 4.2vw, 3.1rem)';
+    } else if (len <= 10) {
+        fontSize = 'clamp(1.75rem, 5.0vw, 3.2rem)';
         letterSpacing = 'clamp(0.8px, 0.2vw, 2px)';
-    } else if (len <= 30) {
-        fontSize = 'clamp(1.5rem, 3.5vw, 2.65rem)';
+    } else if (len <= 13) {
+        fontSize = 'clamp(1.45rem, 4.2vw, 2.7rem)';
         letterSpacing = 'clamp(0.5px, 0.15vw, 1.5px)';
-    } else if (len <= 38) {
-        fontSize = 'clamp(1.25rem, 2.8vw, 2.2rem)';
+    } else if (len <= 16) {
+        fontSize = 'clamp(1.22rem, 3.6vw, 2.3rem)';
         letterSpacing = 'clamp(0.3px, 0.1vw, 1px)';
-    } else {
-        fontSize = 'clamp(1.05rem, 2.3vw, 1.85rem)';
+    } else if (len <= 19) {
+        fontSize = 'clamp(1.05rem, 3.0vw, 1.95rem)';
         letterSpacing = 'clamp(0px, 0.08vw, 0.8px)';
+    } else if (len <= 22) {
+        fontSize = 'clamp(0.92rem, 2.5vw, 1.7rem)';
+        letterSpacing = 'clamp(0px, 0.06vw, 0.6px)';
+    } else {
+        fontSize = 'clamp(0.82rem, 2.2vw, 1.5rem)';
+        letterSpacing = '0px';
     }
 
     el.style.setProperty('font-size', fontSize, 'important');
     el.style.setProperty('letter-spacing', letterSpacing, 'important');
     el.style.setProperty('max-width', '100%', 'important');
     el.style.setProperty('box-sizing', 'border-box', 'important');
-    el.style.setProperty('word-break', 'break-word', 'important');
-    el.style.setProperty('overflow-wrap', 'break-word', 'important');
+    el.style.setProperty('word-break', 'keep-all', 'important');
+    el.style.setProperty('overflow-wrap', 'normal', 'important');
     el.style.setProperty('white-space', 'normal', 'important');
     el.style.setProperty('line-height', '1.3', 'important');
 };
@@ -5745,11 +5753,10 @@ async function runValidationCheck() {
 
         const color = data.is_valid ? '#4ade80' : '#f43f5e';
         const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
-        const fullText = `${data.word} ${statusText}`;
 
         displayEl.style.color = color;
-        displayEl.innerText = fullText;
-        window.applyDynamicValidationStyle(displayEl, fullText);
+        displayEl.innerHTML = `<span class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; display: inline-block;">${data.word}</span> <span class="valid-status-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; display: inline-block; margin-left: 6px; font-size: 0.88em; opacity: 0.92;">${statusText}</span>`;
+        window.applyDynamicValidationStyle(displayEl, data.word);
 
         // Re-trigger animation
         displayEl.classList.remove('random-word-large');
