@@ -80,35 +80,41 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     const str = wordOrText ? String(wordOrText).trim() : '';
     if (!str) return;
 
-    // Target the word span if present, else the container itself
+    // Target the word div if present, else the container itself
     const wordEl = el.querySelector('.valid-word-val') || el;
 
-    // Ensure no wrapping before measuring
+    // Set up for measurement — overflow MUST be visible so scrollWidth reflects true text width
     wordEl.style.setProperty('white-space', 'nowrap', 'important');
-    wordEl.style.setProperty('display', 'block', 'important');
-    wordEl.style.setProperty('width', '100%', 'important');
-    wordEl.style.setProperty('box-sizing', 'border-box', 'important');
-    wordEl.style.setProperty('overflow', 'hidden', 'important');
+    wordEl.style.setProperty('display', 'inline-block', 'important');
+    wordEl.style.setProperty('overflow', 'visible', 'important');
     wordEl.style.setProperty('font-weight', '900', 'important');
     wordEl.style.setProperty('letter-spacing', '2px', 'important');
+    wordEl.style.setProperty('max-width', 'none', 'important');
 
-    // Get the container width available (with 16px horizontal padding safety margin per side)
-    const container = el.closest('.random-word-container') || el.parentElement || el;
-    const availWidth = Math.max((container.clientWidth || el.clientWidth || 320) - 32, 80);
+    // Measure the available width from the display container minus its own padding
+    const style = window.getComputedStyle(el);
+    const elPad = parseFloat(style.paddingLeft || 0) + parseFloat(style.paddingRight || 0);
+    const availWidth = Math.max((el.clientWidth || 300) - elPad - 8, 60); // 8px extra safety
 
-    // Binary-search for the largest font-size (in px) where scrollWidth <= availWidth
-    let lo = 12, hi = 100, best = lo;
-    for (let i = 0; i < 14; i++) {
+    // Binary-search: find the largest font-size (px) where scrollWidth <= availWidth
+    let lo = 10, hi = 96, best = lo;
+    for (let i = 0; i < 16; i++) {
         const mid = (lo + hi) / 2;
         wordEl.style.setProperty('font-size', mid + 'px', 'important');
         if (wordEl.scrollWidth <= availWidth) {
             best = mid;
-            lo = mid + 0.5;
+            lo = mid + 0.25;
         } else {
-            hi = mid - 0.5;
+            hi = mid - 0.25;
         }
     }
+
+    // Apply best-fit size and restore block display
     wordEl.style.setProperty('font-size', best + 'px', 'important');
+    wordEl.style.setProperty('display', 'block', 'important');
+    wordEl.style.setProperty('width', '100%', 'important');
+    wordEl.style.setProperty('box-sizing', 'border-box', 'important');
+    wordEl.style.setProperty('text-align', 'center', 'important');
     wordEl.style.setProperty('line-height', '1.25', 'important');
 };
 
