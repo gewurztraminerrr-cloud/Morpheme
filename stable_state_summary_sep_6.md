@@ -1,8 +1,8 @@
 # Stable State Summary – September 6, 2026
 
 ## Latest Commit Information
-- **Commit ID**: `e535a0d8`
-- **Commit Message**: `docs: checkpoint September 6 stable start over state`
+- **Commit ID**: `f81427f8`
+- **Commit Message**: `docs: checkpoint September 6 stable start over state (updated)`
 - **Active Git Tags**:
   - `START_OVER_POINT`
   - `START_OVER_POINT_SEPTEMBER_6`
@@ -13,9 +13,9 @@
 ---
 
 ## Synchronization Status
-- **Localhost (`/Users/jeffbabiak`)**: Synchronized (`e535a0d8` / tags updated)
-- **GitHub (`origin/main` & Tags)**: Synchronized (`e535a0d8` / tags updated)
-- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`e535a0d8`), PM2 online, HTTP 200 OK
+- **Localhost (`/Users/jeffbabiak`)**: Synchronized (`f81427f8` / tags updated)
+- **GitHub (`origin/main` & Tags)**: Synchronized (`f81427f8` / tags updated)
+- **Production Server (`132.148.72.249` / `morpheme.games`)**: Synchronized (`f81427f8`), PM2 online, HTTP 200 OK
 - **Flutter Mobile App (`morpheme_word_game`)**: Synchronized (loads `https://morpheme.games/` with native SoLoud audio bridge)
 
 ---
@@ -60,5 +60,23 @@
 8. **Mobile Fullscreen & Keyboard Invariant Safeguards**:
    - All mobile fullscreen rules remain strictly enforced: `openFullListModal` exits fullscreen immediately, fullscreen is deactivated on non-game utility pages (Tools, Settings, Profile, Forum, How to Play, Donate) to prevent mobile display surface rebuilds, and gateway screen touches seamlessly transition into the Lobby.
 
-9. **Asset & Cache Versioning**:
-   - Incremented query parameter versions in `templates/index.html` (`tools.js?v=18989`, `tournaments.js?v=15467`, CSS bundles).
+9. **Tools: Equal Side Padding for Definitions in "Is Valid"**:
+   - In `static/css/play.css`, aligned side padding of `#valid-definition-display` and `.definition-card` to match the exact lateral padding of `#valid-result-display` (`padding: 18px 24px` on desktop, `14px 16px` on mobile), ensuring definition text, status headers, and words align flush along both edges.
+
+10. **Mods & Tools Speed & Concurrency Optimizations**:
+    - In `word_validator.py`, added a non-blocking thread lock and `_added_words_mtime` cache guard to `reload_added_words()`, eliminating synchronous blocking during word submission and removal.
+    - In `app.py`, optimized Tools endpoints (`wotd`, `find-count`, `load_tools_dictionary`) with thread-safe in-memory caching.
+    - In `static/js/mods.js`, added client-side tab state caching and inline status feedback container (`#def-inline-status`) with 401 Unauthorized handling.
+
+11. **Leaderboard Table Spacing & Alignment (Desktop & Laptop)**:
+    - In `static/js/leaderboard.js` and `static/css/play.css`, customized desktop layout (`@media (min-width: 993px)`) for four major tables:
+      - **Best Words Played** (`.card-best-words`)
+      - **Highest Efficiency (PE)** (`.card-efficiency`)
+      - **Highest Percentage of Words Found** (`.card-pct-found`)
+      - **Highest number of Hard words found** (`.card-hard-words`)
+    - Left-aligned values (`.col-val { text-align: left !important; padding-left: 15px !important; }`) so words and scores begin immediately next to player usernames and badges.
+    - Expanded metadata column widths (`110px` for Best Words; `145px` for Efficiency, Pct Found, and Hard Words) with `white-space: nowrap !important; text-align: right !important;`, preventing multi-line text breaking of board dimensions, separator dots, and durations. Normalized row heights from 105–137px down to 56.5px.
+    - Mobile viewports remain completely responsive and compact.
+
+12. **Asset & Cache Versioning**:
+    - Incremented query parameter versions in `templates/index.html` (`play.css?v=1788724200`, `leaderboard.js?v=1788724200`, `mods.js?v=1788724000`, `tools.js?v=1788724000`).
