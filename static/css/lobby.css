@@ -1316,6 +1316,11 @@ body.theme-light-brown .field-hint {
         gap: 4px !important;
     }
 
+    .matrix-header .corner-cell {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
     .corner-cell,
     .dim-label,
     .time-label {
