@@ -63,9 +63,10 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
         delete _modStatusTimeouts[targetId];
     }
     
+    statusArea.style.display = 'block';
     statusArea.style.transition = '';
     statusArea.textContent = message;
-    statusArea.style.color = isError ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing')) ? '#38bdf8' : '#4ade80';
+    statusArea.style.color = isError ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing') || message.includes('Saving')) ? '#38bdf8' : '#4ade80';
     statusArea.style.opacity = '1';
     
     // Clear after 5 seconds if not a loading message
@@ -75,7 +76,10 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
                 statusArea.style.transition = 'opacity 1s ease';
                 statusArea.style.opacity = '0';
                 setTimeout(() => {
-                    if (statusArea.textContent === message) statusArea.textContent = '';
+                    if (statusArea.textContent === message) {
+                        statusArea.textContent = '';
+                        statusArea.style.display = 'none';
+                    }
                     statusArea.style.opacity = '1';
                     statusArea.style.transition = '';
                 }, 1000);
@@ -106,6 +110,7 @@ async function loadModList() {
         const response = await fetch('/api/mods/list');
         const data = await response.json();
         if (data.mods) {
+            window._modListLoaded = true;
             listEl.innerHTML = data.mods.map(m => `
                 <div class="mod-item">
                     <span class="mod-name">${m}</span>
@@ -141,6 +146,7 @@ async function addModerator() {
         if (data.success) {
             if (input) input.value = '';
             showModStatus(`User ${username} added as moderator.`);
+            window._modListLoaded = false;
             loadModList();
         } else {
             showModStatus(data.error || "Failed to add moderator.", true);
@@ -170,6 +176,7 @@ async function removeModerator(username) {
         const data = await response.json();
         if (data.success) {
             showModStatus(`User ${username} removed from moderators.`);
+            window._modListLoaded = false;
             loadModList();
         } else {
             showModStatus(data.error || "Failed to remove moderator.", true);
@@ -908,6 +915,7 @@ async function loadIpBans() {
         const response = await fetch('/api/mods/ip_bans');
         const data = await response.json();
         if (data.success && Array.isArray(data.bans)) {
+            window._bannedIpsLoaded = true;
             if (countEl) countEl.textContent = data.bans.length;
             if (data.bans.length === 0) {
                 if (emptyEl) emptyEl.style.display = 'block';
@@ -969,12 +977,17 @@ async function addDefinition() {
     const def = textInput ? textInput.value.trim() : '';
 
     if (!word || !def) {
+        showModStatus("Both word and definition are required.", true, 'def-inline-status');
         showModStatus("Both word and definition are required.", true, 'def-status-area');
         return;
     }
 
     const addDefBtn = document.getElementById('add-def-btn');
-    if (addDefBtn) addDefBtn.disabled = true;
+    const origText = addDefBtn ? addDefBtn.textContent : 'Set Definition';
+    if (addDefBtn) {
+        addDefBtn.disabled = true;
+        addDefBtn.textContent = 'Saving...';
+    }
 
     try {
         const response = await fetch('/api/mods/definitions/add', {
@@ -982,6 +995,14 @@ async function addDefinition() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ word, definition: def })
         });
+        
+        if (response.status === 401) {
+            const authMsg = "⚠️ Authentication required: Please log in as moderator or refresh your session.";
+            showModStatus(authMsg, true, 'def-inline-status');
+            showModStatus(authMsg, true, 'def-status-area');
+            return;
+        }
+
         const data = await response.json();
         if (data.success) {
             if (wordInput) {
@@ -990,7 +1011,9 @@ async function addDefinition() {
             }
             if (textInput) textInput.value = '';
             const wordsStr = data.words ? data.words.join(', ') : word;
-            showModStatus(`Definition for "${wordsStr}" updated.`, false, 'def-status-area');
+            const successMsg = `✅ Definition for "${wordsStr}" updated successfully.`;
+            showModStatus(successMsg, false, 'def-inline-status');
+            showModStatus(successMsg, false, 'def-status-area');
             
             // Instantly remove added words from undefined list in-memory without blocking network reload
             if (Array.isArray(undefinedWordsList) && undefinedWordsList.length > 0) {
@@ -999,13 +1022,19 @@ async function addDefinition() {
                 renderUndefinedWords();
             }
         } else {
-            showModStatus("Error: " + (data.error || "Failed to set definition."), true, 'def-status-area');
+            const errMsg = "❌ Error: " + (data.error || "Failed to set definition.");
+            showModStatus(errMsg, true, 'def-inline-status');
+            showModStatus(errMsg, true, 'def-status-area');
         }
     } catch (err) {
         console.error("Error setting definition:", err);
-        showModStatus("Network error setting definition.", true, 'def-status-area');
+        showModStatus("❌ Network error setting definition.", true, 'def-inline-status');
+        showModStatus("❌ Network error setting definition.", true, 'def-status-area');
     } finally {
-        if (addDefBtn) addDefBtn.disabled = false;
+        if (addDefBtn) {
+            addDefBtn.disabled = false;
+            addDefBtn.textContent = origText;
+        }
     }
 }
 
@@ -1014,12 +1043,17 @@ async function removeDefinition() {
     const word = wordInput ? wordInput.value.trim().toUpperCase() : '';
 
     if (!word) {
+        showModStatus("Word is required to remove definition.", true, 'def-inline-status');
         showModStatus("Word is required to remove definition.", true, 'def-status-area');
         return;
     }
 
     const removeDefBtn = document.getElementById('remove-def-btn');
-    if (removeDefBtn) removeDefBtn.disabled = true;
+    const origText = removeDefBtn ? removeDefBtn.textContent : 'Remove Definition';
+    if (removeDefBtn) {
+        removeDefBtn.disabled = true;
+        removeDefBtn.textContent = 'Removing...';
+    }
 
     try {
         const response = await fetch('/api/mods/definitions/remove', {
@@ -1027,6 +1061,14 @@ async function removeDefinition() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ word })
         });
+
+        if (response.status === 401) {
+            const authMsg = "⚠️ Authentication required: Please log in as moderator or refresh your session.";
+            showModStatus(authMsg, true, 'def-inline-status');
+            showModStatus(authMsg, true, 'def-status-area');
+            return;
+        }
+
         const data = await response.json();
         if (data.success) {
             if (wordInput) {
@@ -1034,7 +1076,9 @@ async function removeDefinition() {
                 wordInput.focus();
             }
             const wordsStr = data.words ? data.words.join(', ') : word;
-            showModStatus(`Definition for "${wordsStr}" removed.`, false, 'def-status-area');
+            const successMsg = `🗑️ Definition for "${wordsStr}" removed.`;
+            showModStatus(successMsg, false, 'def-inline-status');
+            showModStatus(successMsg, false, 'def-status-area');
             
             // Instantly re-add removed words to undefined list in-memory
             if (Array.isArray(undefinedWordsList)) {
@@ -1046,13 +1090,19 @@ async function removeDefinition() {
                 renderUndefinedWords();
             }
         } else {
-            showModStatus("Error: " + (data.error || "Failed to remove definition."), true, 'def-status-area');
+            const errMsg = "❌ Error: " + (data.error || "Failed to remove definition.");
+            showModStatus(errMsg, true, 'def-inline-status');
+            showModStatus(errMsg, true, 'def-status-area');
         }
     } catch (err) {
         console.error("Error removing definition:", err);
-        showModStatus("Network error removing definition.", true, 'def-status-area');
+        showModStatus("❌ Network error removing definition.", true, 'def-inline-status');
+        showModStatus("❌ Network error removing definition.", true, 'def-status-area');
     } finally {
-        if (removeDefBtn) removeDefBtn.disabled = false;
+        if (removeDefBtn) {
+            removeDefBtn.disabled = false;
+            removeDefBtn.textContent = origText;
+        }
     }
 }
 
@@ -1121,6 +1171,11 @@ async function loadUndefinedWords(force = false) {
     }
     
     container.style.display = 'block';
+    
+    if (!force && Array.isArray(undefinedWordsList) && undefinedWordsList.length > 0) {
+        renderUndefinedWords();
+        return;
+    }
     
     const countEl = document.getElementById('undef-words-count');
     const tbody = document.getElementById('undef-words-tbody');
@@ -1257,17 +1312,17 @@ window.showModTab = function(tabId) {
     });
 
     if (tabId === 'ban') {
-        loadIpBans();
+        if (!window._bannedIpsLoaded) loadIpBans();
     } else if (tabId === 'notice') {
         loadLobbyNotice();
     } else if (tabId === 'donations') {
-        loadModDonations();
+        if (!window._donationsLoaded) loadModDonations();
     } else if (tabId === 'def') {
-        loadUndefinedWords();
+        loadUndefinedWords(false);
     } else if (tabId === 'access') {
-        loadModList();
+        if (!window._modListLoaded) loadModList();
     } else if (tabId === 'added') {
-        if (typeof loadAddedWordsConfig === 'function') loadAddedWordsConfig();
+        if (!window._addedWordsConfigLoaded && typeof loadAddedWordsConfig === 'function') loadAddedWordsConfig();
     }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
@@ -1399,6 +1454,7 @@ async function loadModDonations() {
         const res = await fetch('/api/mods/donations/list');
         const data = await res.json();
         const donations = data.donations || [];
+        window._donationsLoaded = true;
         if (countEl) countEl.innerText = donations.length;
 
         if (donations.length === 0) {
@@ -1422,20 +1478,20 @@ async function loadModDonations() {
                     <td style="padding: 8px; color: ${isAnon ? '#f43f5e' : 'var(--text-secondary)'};">${isAnon ? 'Yes (Anon)' : 'Public'}</td>
                     <td style="padding: 8px;"><span style="font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: #4ade80; font-weight: 600;">Confirmed</span></td>
                     <td style="padding: 8px; text-align: right;">
-                        <button class="mini-action-btn remove" onclick="deleteModDonation(${d.id})" style="padding: 3px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;">🗑️ Delete</button>
+                        <button class="mini-action-btn secondary" style="background: rgba(244, 63, 94, 0.15); border-color: rgba(244, 63, 94, 0.4); color: #f43f5e; padding: 3px 8px; font-size: 0.75rem;" onclick="deleteModDonation(${d.id})">🗑️ Delete</button>
                     </td>
                 </tr>
             `;
         }).join('');
     } catch (err) {
-        console.error("Error loading mod donations:", err);
+        console.error("Error loading donations:", err);
     }
 }
 
 async function addModDonation() {
     const nameInput = document.getElementById('mod-donor-name');
     const amountInput = document.getElementById('mod-donor-amount');
-    const anonCheckbox = document.getElementById('mod-donor-anonymous');
+    const anonCheckbox = document.getElementById('mod-donor-anon');
 
     const donor_name = nameInput ? nameInput.value.trim() : '';
     const amount = amountInput ? parseFloat(amountInput.value) : 0;
@@ -1462,6 +1518,7 @@ async function addModDonation() {
             if (nameInput) nameInput.value = '';
             if (amountInput) amountInput.value = '';
             if (anonCheckbox) anonCheckbox.checked = false;
+            window._donationsLoaded = false;
             loadModDonations();
             if (typeof window.initDonatePage === 'function') {
                 window.initDonatePage();
@@ -1489,6 +1546,7 @@ async function deleteModDonation(id) {
         const data = await res.json();
         if (data.success) {
             showModStatus("Donation record deleted.", false, 'donation-status-area');
+            window._donationsLoaded = false;
             loadModDonations();
             if (typeof window.initDonatePage === 'function') {
                 window.initDonatePage();

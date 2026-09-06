@@ -698,7 +698,7 @@ def list_added_words_api():
 @mod_required
 def get_added_words_config():
     return jsonify({
-        'use_added_words': word_validator.get_use_added_words(force=True)
+        'use_added_words': word_validator.get_use_added_words(force=False)
     })
 
 @app.route('/api/mods/added_words/toggle', methods=['POST'])
@@ -2565,10 +2565,19 @@ def get_dictionary_stats():
         'long_dist': get_dist(long_words)
     })
 
+_WORD_FINDS_CACHE = {}
+
 def _get_word_finds(word):
     word = word.strip().upper()
     if not word:
         return []
+        
+    global _WORD_FINDS_CACHE
+    import time
+    now = time.time()
+    cached = _WORD_FINDS_CACHE.get(word)
+    if cached and (now - cached[0] < 60.0):
+        return cached[1]
         
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
@@ -2677,6 +2686,9 @@ def _get_word_finds(word):
 
     # Sort finds descending by timestamp string (newest first, oldest last)
     finds.sort(key=lambda x: str(x['timestamp']), reverse=True)
+    if len(_WORD_FINDS_CACHE) > 1000:
+        _WORD_FINDS_CACHE.clear()
+    _WORD_FINDS_CACHE[word] = (now, finds)
     return finds
 
 @app.route('/api/word_tally/<word>', methods=['GET'])
@@ -5801,38 +5813,23 @@ def ensure_definitions_for_words(words_list):
     for w_upper in needed_fetch:
         get_definition_cached_or_online_with_guess(w_upper)
         
-    # 2. Write resolved definitions to Definitions.txt
+    # 2. Append new resolved definitions to Definitions.txt
     try:
-        defs = {}
-        if os.path.exists(DEFINITIONS_PATH):
-            with open(DEFINITIONS_PATH, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        defs[parts[0].strip().upper()] = parts[1].strip()
-                        
-        written = False
+        new_entries = []
         for w in words_list:
             w_upper = w.upper().strip()
-            if w_upper not in defs:
+            if w_upper not in DEFINITIONS_CACHE or not DEFINITIONS_CACHE[w_upper]:
                 formatted_def = format_resolved_definition(w_upper)
                 if formatted_def:
-                    defs[w_upper] = formatted_def
                     DEFINITIONS_CACHE[w_upper] = formatted_def
-                    written = True
+                    new_entries.append((w_upper, formatted_def))
                     
-        if written:
-            sorted_keys = sorted(defs.keys())
-            temp_path = DEFINITIONS_PATH + '.tmp'
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                for k in sorted_keys:
-                    f.write(f"{k} - {defs[k]}\n")
-            os.replace(temp_path, DEFINITIONS_PATH)
-            
-            # Reload to sync memory
-            DEFINITIONS_CACHE = {}
-            load_definitions()
-            print(f"[DefinitionsManager] Successfully auto-saved definitions for {len(words_list)} words.")
+        if new_entries:
+            with _DEFS_FILE_LOCK:
+                with open(DEFINITIONS_PATH, 'a', encoding='utf-8') as f:
+                    for w_upper, formatted_def in new_entries:
+                        f.write(f"{w_upper} - {formatted_def}\n")
+            print(f"[DefinitionsManager] Successfully appended definitions for {len(new_entries)} words.")
     except Exception as e:
         print(f"[DefinitionsManager] Error auto-saving definitions: {e}")
 
@@ -6026,12 +6023,13 @@ def load_tools_dictionary(dict_name):
         curr_mtime = os.path.getmtime(added_path)
 
     if LAST_ADDED_WORDS_MTIME is not None and curr_mtime != LAST_ADDED_WORDS_MTIME:
-        print("[Tools] added_words.txt changed. Clearing tools dictionary cache.")
-        TOOLS_DICT_CACHE.clear()
+        print("[Tools] added_words.txt changed. Invalidating added_words tools dictionary cache.")
+        TOOLS_DICT_CACHE.pop('added_words', None)
+        TOOLS_DICT_CACHE.pop('ALL', None)
         global LISTS_CACHE
         LISTS_CACHE.clear()
         if word_validator:
-            word_validator.get_use_added_words(force=True)
+            word_validator.get_use_added_words(force=False)
 
     LAST_ADDED_WORDS_MTIME = curr_mtime
 
@@ -6167,23 +6165,12 @@ def warm_up_server_resources():
         except Exception as e:
             print(f"[Warmup] Error pre-computing undefined words: {e}")
 
-        # 6. Warm up Tools Lists & Endpoint Routes via test_client
+        # 6. Priming Tools endpoint routes
         with app.app_context():
             client = app.test_client()
-            for lt in ['all', 'nwl', 'csw', 'added', 'likelihood', 'uniques']:
-                url = f'/api/tools/lists?list_type={lt}&length=all&starts_with=all'
-                print(f"[Warmup] Pre-caching lists for list_type={lt}...")
-                client.get(url)
-            
-            print("[Warmup] Pre-caching added words list...")
-            client.get('/api/added_words/list')
-            
-            print("[Warmup] Priming Tools endpoint routes (Is Valid, WOTD, Unscramble, Find & Count, Sequence, Subanagrams, Combo)...")
             for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
                 client.post('/api/tools/validate', json={'word': 'APPLE', 'dictionary': dict_name})
             client.get('/api/tools/wotd')
-            client.get('/api/tools/unscramble/random')
-            client.get('/api/tools/find-count')
             client.post('/api/tools/sequence', json={'sequence': 'WORD', 'dictionary': 'NWL'})
             client.post('/api/tools/subanagrams', json={'input': 'TESTING', 'dictionary': 'NWL'})
             client.post('/api/tools/combo', json={'search_term': 'TEST', 'dictionary': 'NWL'})
@@ -7174,6 +7161,8 @@ def tools_random_word():
         'image_url': image_url
     })
 
+_WOTD_CACHE = {}
+
 @app.route('/api/tools/wotd', methods=['GET'])
 def tools_wotd():
     """Returns a deterministic Word of the Day based on the current date in Chicago timezone."""
@@ -7185,6 +7174,12 @@ def tools_wotd():
     chicago_tz = ZoneInfo("America/Chicago")
     today_str = datetime.now(chicago_tz).strftime('%Y-%m-%d')
     
+    global _WOTD_CACHE
+    if _WOTD_CACHE.get('date') == today_str and 'payload' in _WOTD_CACHE:
+        response = jsonify(_WOTD_CACHE['payload'])
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
+
     # Load NWL dictionary (default for WOTD)
     dictionary = load_tools_dictionary('NWL')
     if not dictionary:
@@ -7206,13 +7201,17 @@ def tools_wotd():
         definition = "No definition available for this word."
     image_url = lookup_definition_image(wotd)
     
-    response = jsonify({
+    payload = {
         'word': wotd,
         'date': today_str,
         'definition': definition,
         'pronunciation': pronunciation,
         'image_url': image_url
-    })
+    }
+    _WOTD_CACHE['date'] = today_str
+    _WOTD_CACHE['payload'] = payload
+
+    response = jsonify(payload)
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return response
 
