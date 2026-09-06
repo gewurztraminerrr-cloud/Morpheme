@@ -43,26 +43,26 @@ window.applyDynamicSequenceStyle = function(el, textOrLength) {
 
     let fontSize, letterSpacing;
     if (len <= 6) {
-        fontSize = 'clamp(2.3rem, 6.2vw, 3.4rem)';
-        letterSpacing = 'clamp(6px, 1.4vw, 14px)';
+        fontSize = 'clamp(2.4rem, 6.5vw, 4.8rem)';
+        letterSpacing = 'clamp(6px, 1.4vw, 16px)';
     } else if (len <= 8) {
-        fontSize = 'clamp(1.9rem, 4.8vw, 2.8rem)';
-        letterSpacing = 'clamp(4px, 1.0vw, 9px)';
+        fontSize = 'clamp(2.05rem, 5.5vw, 4.1rem)';
+        letterSpacing = 'clamp(4px, 1.0vw, 12px)';
     } else if (len <= 10) {
-        fontSize = 'clamp(1.55rem, 3.8vw, 2.3rem)';
-        letterSpacing = 'clamp(3px, 0.75vw, 6px)';
+        fontSize = 'clamp(1.75rem, 4.6vw, 3.4rem)';
+        letterSpacing = 'clamp(3px, 0.75vw, 8px)';
     } else if (len <= 12) {
-        fontSize = 'clamp(1.3rem, 3.0vw, 1.9rem)';
-        letterSpacing = 'clamp(2px, 0.5vw, 4px)';
+        fontSize = 'clamp(1.5rem, 3.8vw, 2.85rem)';
+        letterSpacing = 'clamp(2px, 0.5vw, 6px)';
     } else if (len <= 15) {
-        fontSize = 'clamp(1.12rem, 2.4vw, 1.6rem)';
-        letterSpacing = 'clamp(1px, 0.3vw, 2.5px)';
+        fontSize = 'clamp(1.25rem, 3.2vw, 2.4rem)';
+        letterSpacing = 'clamp(1px, 0.35vw, 4px)';
     } else if (len <= 18) {
-        fontSize = 'clamp(0.98rem, 2.0vw, 1.38rem)';
-        letterSpacing = 'clamp(0.5px, 0.15vw, 1.5px)';
+        fontSize = 'clamp(1.1rem, 2.6vw, 2.05rem)';
+        letterSpacing = 'clamp(0.5px, 0.2vw, 2.5px)';
     } else {
-        fontSize = 'clamp(0.85rem, 1.7vw, 1.2rem)';
-        letterSpacing = '0px';
+        fontSize = 'clamp(0.95rem, 2.2vw, 1.75rem)';
+        letterSpacing = 'clamp(0px, 0.1vw, 1.5px)';
     }
 
     el.style.setProperty('font-size', fontSize, 'important');
@@ -81,24 +81,24 @@ window.applyDynamicValidationStyle = function(el, fullText) {
     if (!len) return;
 
     let fontSize, letterSpacing;
-    if (len <= 10) {
-        fontSize = 'clamp(2.2rem, 5.8vw, 3.4rem)';
-        letterSpacing = '2px';
-    } else if (len <= 15) {
-        fontSize = 'clamp(1.85rem, 4.8vw, 2.85rem)';
-        letterSpacing = '1.5px';
-    } else if (len <= 20) {
-        fontSize = 'clamp(1.5rem, 3.8vw, 2.35rem)';
-        letterSpacing = '1px';
-    } else if (len <= 26) {
-        fontSize = 'clamp(1.25rem, 3.0vw, 1.9rem)';
-        letterSpacing = '0.5px';
-    } else if (len <= 32) {
-        fontSize = 'clamp(1.05rem, 2.3vw, 1.55rem)';
-        letterSpacing = '0.2px';
+    if (len <= 12) {
+        fontSize = 'clamp(2.4rem, 6.0vw, 4.2rem)';
+        letterSpacing = 'clamp(1.5px, 0.35vw, 3.5px)';
+    } else if (len <= 18) {
+        fontSize = 'clamp(2.05rem, 5.0vw, 3.6rem)';
+        letterSpacing = 'clamp(1px, 0.25vw, 2.5px)';
+    } else if (len <= 24) {
+        fontSize = 'clamp(1.75rem, 4.2vw, 3.1rem)';
+        letterSpacing = 'clamp(0.8px, 0.2vw, 2px)';
+    } else if (len <= 30) {
+        fontSize = 'clamp(1.5rem, 3.5vw, 2.65rem)';
+        letterSpacing = 'clamp(0.5px, 0.15vw, 1.5px)';
+    } else if (len <= 38) {
+        fontSize = 'clamp(1.25rem, 2.8vw, 2.2rem)';
+        letterSpacing = 'clamp(0.3px, 0.1vw, 1px)';
     } else {
-        fontSize = 'clamp(0.92rem, 1.9vw, 1.3rem)';
-        letterSpacing = '0px';
+        fontSize = 'clamp(1.05rem, 2.3vw, 1.85rem)';
+        letterSpacing = 'clamp(0px, 0.08vw, 0.8px)';
     }
 
     el.style.setProperty('font-size', fontSize, 'important');
@@ -5635,14 +5635,14 @@ function renderSubanagramsResults() {
                 <table class="group-table" style="width: 100%; margin-bottom: 8px;">
                     <tbody>
             `;
-            wordsInLen.forEach(w => {
+                wordsInLen.forEach(w => {
                 const isFound = _subFoundWords.has(w);
                 const color = isFound ? '#34d399' : '#94a3b8';
-                const badge = isFound ? '<span style="color: #34d399; font-size: 0.75rem; font-weight: 700; margin-right: 6px;">✓</span>' : '<span style="opacity: 0.3; font-size: 0.75rem; margin-right: 6px;">•</span>';
+                const badge = isFound ? '<span style="color: #34d399; font-size: 0.85rem; font-weight: 700; margin-right: 6px;">✓</span>' : '<span style="opacity: 0.3; font-size: 0.85rem; margin-right: 6px;">•</span>';
                 html += `
-                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <tr><td style="padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         ${badge}
-                        <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: ${color}; font-weight: ${isFound ? '700' : '500'};">${w}</span>
+                        <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: ${color}; font-weight: ${isFound ? '700' : '500'}; font-size: 1.05rem; letter-spacing: 0.5px;">${w}</span>
                     </td></tr>
                 `;
             });
@@ -5667,12 +5667,12 @@ function renderSubanagramsResults() {
             html += `<table class="group-table" style="width: 100%;"><tbody>`;
             foundList.forEach(w => {
                 html += `
-                    <tr><td style="padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <tr><td style="padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span style="color: #34d399; font-weight: 700; margin-right: 6px;">✓</span>
-                            <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: #fff; font-weight: 700;">${w}</span>
+                            <span style="color: #34d399; font-weight: 700; font-size: 0.85rem; margin-right: 6px;">✓</span>
+                            <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: #fff; font-weight: 700; font-size: 1.08rem; letter-spacing: 0.5px;">${w}</span>
                         </div>
-                        <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">+${w.length} pts</span>
+                        <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600;">+${w.length} pts</span>
                     </td></tr>
                 `;
             });
@@ -6601,7 +6601,7 @@ function renderUnscrambleFound(revealMissed = false) {
         const solutions = Array.from(unscrambleState.solution).sort();
 
         html += `<div style="width: 100%; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="font-size: 0.85rem; text-transform: uppercase; color: #ffd700; letter-spacing: 1.5px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: anywhere;">Active: ${unscrambleState.jumbled.toUpperCase()} (${unscrambleState.found.length}/${solutions.length} Found)</div>
+                    <div style="font-size: 0.95rem; text-transform: uppercase; color: #ffd700; letter-spacing: 1.5px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: anywhere;">Active: ${unscrambleState.jumbled.toUpperCase()} (${unscrambleState.found.length}/${solutions.length} Found)</div>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%;">`;
 
         solutions.forEach(w => {
@@ -6620,20 +6620,21 @@ function renderUnscrambleFound(revealMissed = false) {
                 isClickable = true;
             }
 
-            const fontSize = w.length > 18 ? '0.82rem' : (w.length > 14 ? '0.9rem' : '1rem');
-            const padding = w.length > 18 ? '6px 8px' : (w.length > 14 ? '6px 10px' : '8px 16px');
+            const fontSize = w.length > 18 ? '0.92rem' : (w.length > 14 ? '1.02rem' : (w.length > 10 ? '1.12rem' : '1.22rem'));
+            const padding = w.length > 18 ? '6px 10px' : (w.length > 14 ? '7px 12px' : '9px 18px');
 
             if (isClickable) {
-                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
+                html += `<div class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.2s ease; text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
             } else {
-                html += `<div style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; letter-spacing: ${w.length > 14 ? '1px' : '3px'}; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
+                html += `<div style="${style} padding: ${padding}; border-radius: 8px; font-weight: 700; font-size: ${fontSize}; letter-spacing: ${w.length > 14 ? '1px' : '3px'}; box-shadow: 0 2px 6px rgba(0,0,0,0.2); user-select: none; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${displayWord}</div>`;
             }
         });
 
         // Incorrect Guesses for current round
         unscrambleState.incorrect.forEach(w => {
-            const fontSize = w.length > 18 ? '0.82rem' : (w.length > 14 ? '0.88rem' : '0.95rem');
-            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: 7px 12px; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: ${fontSize}; text-decoration: line-through; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 36px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${w}</div>`;
+            const fontSize = w.length > 18 ? '0.88rem' : (w.length > 14 ? '0.98rem' : '1.08rem');
+            const padding = w.length > 18 ? '6px 10px' : '7px 14px';
+            html += `<div style="background: rgba(239, 68, 68, 0.18); color: #f87171; padding: ${padding}; border-radius: 8px; font-weight: 700; border: 1.5px dotted rgba(239, 68, 68, 0.5); font-size: ${fontSize}; text-decoration: line-through; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; box-sizing: border-box; max-width: 100%; word-break: break-all;">${w}</div>`;
         });
 
         html += `   </div>
