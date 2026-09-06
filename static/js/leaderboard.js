@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${renderReplayBtn(row)}
                 </td>
             `;
-        });
+        }, 'card-best-words');
 
         createTableCard(contentArea, "Highest Efficiency (PE)", data.best_pes, (row, i) => {
             const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);

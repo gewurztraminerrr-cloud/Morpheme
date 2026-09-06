@@ -4752,6 +4752,25 @@ input[type=range]::-moz-range-track {
     text-align: center;
 }
 
+@media (min-width: 993px) {
+    .card-best-words .lb-table td.col-val {
+        text-align: left !important;
+        padding-left: 15px !important;
+    }
+
+    .card-best-words .lb-table td.col-meta {
+        width: 110px !important;
+        min-width: 105px !important;
+        white-space: nowrap !important;
+        text-align: right !important;
+    }
+
+    .card-best-words .lb-table td.col-user {
+        width: auto !important;
+        white-space: nowrap !important;
+    }
+}
+
 .lb-user-cell {
     display: flex;
     align-items: center;
