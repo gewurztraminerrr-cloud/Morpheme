@@ -153,12 +153,12 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=33864" as="style">
-    <link rel="preload" href="/css/lobby.css?v=33877" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=33864">
-    <link rel="stylesheet" href="/css/lobby.css?v=33877">
-    <link rel="stylesheet" href="/css/play.css?v=33940">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=33804">
+    <link rel="preload" href="/css/style.css?v=1788720953" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1788720953" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1788720953">
+    <link rel="stylesheet" href="/css/lobby.css?v=1788720953">
+    <link rel="stylesheet" href="/css/play.css?v=1788721121">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=33874">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
     <script>
@@ -3670,9 +3670,6 @@
                                 </select>
                                 <button id="list-update-btn">Update</button>
                             </div>
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 8px; text-align: center; color: rgba(255,255,255,0.6);">
-                                Note: Select a word length or starting letter to filter the list.
-                            </div>
                         </div>
 
                         <div class="lists-container" id="lists-container" onselectstart="return false;" ondragstart="return false;">
@@ -5189,7 +5186,9 @@
                         <button class="faq-nav-link" data-target="faq-hidden-features">Are there any additional features in game rooms that aren’t obvious?</button>
                         <button class="faq-nav-link" data-target="faq-cube-mobile">Why is 3D Cube mode and Cube Scale not available on mobile devices?</button>
                         <button class="faq-nav-link" data-target="faq-spinner-mismatch">The parameters indicated on the Spinner Set did not align with the parameters shown on the next round.</button>
-                        <button class="faq-nav-link" data-target="faq-exit-fullscreen">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</button>
+                        <button class="faq-nav-link" data-target="faq-achievements-leaderboards">Can you explain every table in Achievements and Leaderboards?</button>
+                        <button class="faq-nav-link" data-target="faq-view-full-list">How does the "View Full List" feature work in Lists in Tools?</button>
+                        <button class="faq-nav-link" data-target="faq-exit-fullscreen">How does full screen work on mobile, and why doesn't dragging from the top or pressing back exit it?</button>
                         <button class="faq-nav-link" data-target="faq-qu-tile">How does the QU tile work?</button>
                         <button class="faq-nav-link" data-target="faq-tools-position">Does using Tools tab while in a room affect your position in the room?</button>
                         <button class="faq-nav-link" data-target="faq-zoom">The features seem to be oversized or undersized.</button>
@@ -5769,14 +5768,66 @@
                         </div>
                     </div>
 
-                    <div class="faq-item" id="faq-exit-fullscreen">
-                        <div class="faq-question">Why does dragging from the top and pressing the back arrow at the bottom not exit full screen on mobile?</div>
+                    <!-- Q_achievements_leaderboards -->
+                    <div class="faq-item" id="faq-achievements-leaderboards">
+                        <div class="faq-question">Can you explain every table in Achievements and Leaderboards?</div>
                         <div class="faq-answer">
-                            <p>When playing Morpheme in PWA/standalone mode, the app uses immersive full screen to maximize space for the game board. 
-                            Note that the Android system prompt to "drag from the top and touch the back button" (or pressing the back arrow at the bottom) 
-                            will not exit full screen because the app is configured to remain immersive during play. 
-                            To minimize or close the app, swipe up from the bottom edge of your screen to reveal your device's home indicator/bar, 
-                            then swipe up again to return to your home screen or view the app switcher.</p>
+                            <p>While both screens celebrate competitive mastery in Morpheme, they fulfill two distinct roles:</p>
+                            <ul style="margin-top: 6px; margin-bottom: 12px; padding-left: 20px; line-height: 1.6;">
+                                <li><strong>Achievements (Personal Records):</strong> Tracks <em>your individual player records and statistics</em> in the current room/game format across five selectable timeframes: <strong>Day, Week, Month, Year, and All-Time</strong>.</li>
+                                <li><strong>Leaderboards (Global Ladder):</strong> Tracks the <em>top players worldwide</em> across all competitive non-24h rooms, filterable by timeframe, game mode, board dimensions, and round time.</li>
+                            </ul>
+
+                            <h4 style="color: #c4b5fd; margin-top: 18px; margin-bottom: 8px;">🏆 Achievements Tables (Top to Bottom)</h4>
+                            <ol style="padding-left: 20px; line-height: 1.6; margin-bottom: 16px;">
+                                <li><strong>Exceptional Performances:</strong> Records your rounds with the highest Point Efficiency (PE) percentages alongside your running average point efficiency and word discovery rate.</li>
+                                <li><strong>Winning Rounds:</strong> Displays your first-place game victories, total wins, and your overall win rate percentage.</li>
+                                <li><strong>Games Played:</strong> A chronological log of your completed games, tracking total volume and recent competitive activity.</li>
+                                <li><strong>Best Scores:</strong> <em>(Same metric as Highest Single Round Scores on Leaderboards)</em> Ranks your personal highest single-round point totals, including the board dimensions, difficulty level, and your running average score.</li>
+                                <li><strong>Best Word Counts:</strong> Highlights the rounds where you discovered the greatest total number of valid words on a single board.</li>
+                                <li><strong>Highest Percentage of Words Found:</strong> <em>(Same metric as on Leaderboards)</em> Ranks rounds where you found the highest percentage of the total words available on the grid.</li>
+                                <li><strong>Highest Number of Hard Words Found:</strong> <em>(Same metric as on Leaderboards)</em> Tracks rounds where you successfully uncovered the most Hard-difficulty (obscure vocabulary) words.</li>
+                                <li><strong>Best Individual Words Played:</strong> <em>(Same metric as Best Words Played on Leaderboards)</em> Details the highest point-value individual words you have ever formed, including word length, point value, and date played.</li>
+                            </ol>
+
+                            <h4 style="color: #c4b5fd; margin-top: 18px; margin-bottom: 8px;">🌐 Leaderboards Tables (Top to Bottom)</h4>
+                            <ol style="padding-left: 20px; line-height: 1.6; margin-bottom: 12px;">
+                                <li><strong>Highest Single Round Scores:</strong> <em>(Same metric as Best Scores in Achievements)</em> The all-time highest scores achieved in a single round by any player worldwide.</li>
+                                <li><strong>Highest Average Score (Min 3 Games):</strong> <em>(Global Leaderboard only)</em> Ranks the players with the highest average point output per round across qualifying games.</li>
+                                <li><strong>Best Words Played:</strong> <em>(Same metric as in Achievements)</em> The highest-scoring individual words found by any player across all games.</li>
+                                <li><strong>Highest Efficiency (PE):</strong> <em>(Same metric as Exceptional Performances in Achievements)</em> Ranks the most efficient rounds in Morpheme history based on Point Efficiency percentage (points scored vs. total board points available).</li>
+                                <li><strong>Highest Percentage of Words Found:</strong> <em>(Same metric as in Achievements)</em> The highest percentages of total board words uncovered in a single round.</li>
+                                <li><strong>Highest Avg Percentage of Words Found:</strong> <em>(Global Leaderboard only)</em> Measures long-term consistency by ranking players with the highest average percentage of available words found across multiple games.</li>
+                                <li><strong>Highest Number of Hard Words Found:</strong> <em>(Same metric as in Achievements)</em> Global records for the most Hard words located in a single round.</li>
+                                <li><strong>Peak Ratings Achieved:</strong> <em>(Global Leaderboard only)</em> Chronicles the highest skill rating (Glicko-2) ever reached by players in competitive play.</li>
+                                <li><strong>Most Games Played:</strong> <em>(Same metric as Games Played in Achievements)</em> Recognizes the most active and dedicated players by total competitive rounds completed.</li>
+                                <li><strong>Current Top Rated Active Players:</strong> <em>(Global Leaderboard only)</em> The live competitive ladder ranking the highest-rated active players currently competing on Morpheme.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Q_view_full_list -->
+                    <div class="faq-item" id="faq-view-full-list">
+                        <div class="faq-question">How does the "View Full List" feature work in Lists in Tools?</div>
+                        <div class="faq-answer">
+                            <p>Clicking <strong>"⛶ View Full List"</strong> in the Lists tab opens a high-speed, full-screen explorer capable of smoothly navigating entire dictionaries containing over 300,000 words.</p>
+                            <ul style="margin-top: 8px; margin-bottom: 12px; padding-left: 20px; line-height: 1.6;">
+                                <li><strong>Rapid Scrubbing with the Scroll Thumb:</strong> Clicking and dragging the purple scrollbar thumb on the right acts as a rapid scrubber, whisking you across the entire alphabet of the dictionary in a fraction of a second.</li>
+                                <li><strong>Nearby Word Browsing:</strong> Swiping or scrolling up and down with your finger, mouse, or trackpad lets you smoothly inspect neighboring words in any section of the list.</li>
+                                <li><strong>Instant Word Jump:</strong> To jump directly to a specific word, type it into the <strong>"ENTER WORD TO JUMP TO..."</strong> bar at the top and press <kbd>Enter</kbd> (or click <strong>Go</strong>). The list will instantly center on the word, animate with a pulse, and highlight it with a persistent amber badge so you never lose your place.</li>
+                                <li><strong>Instant Word Definitions:</strong> Tapping or clicking any word in the list immediately opens its definition, part of speech, and pronunciation in an overlay card.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Q_exit_fullscreen -->
+                    <div class="faq-item" id="faq-exit-fullscreen">
+                        <div class="faq-question">How does full screen work on mobile, and why doesn't dragging from the top or pressing back exit it?</div>
+                        <div class="faq-answer">
+                            <p>Morpheme engages an immersive full screen layout during active gameplay and in the Lobby to maximize screen space for the board and game controls.</p>
+                            <p><strong>The Android System Prompt:</strong> On Android devices, the operating system may display a notification saying <em>"To exit full screen, drag from the top and touch the back button"</em>. However, in modern web browsers and PWAs, the back gesture or back button navigates through page history or game views rather than toggling display modes.</p>
+                            <p><strong>Automatic Fullscreen Management:</strong> To prevent keyboard display glitches on mobile, Morpheme automatically exits full screen whenever you open non-game utility pages (Tools, Settings, Profile, Forum, How to Play, Donate) or dialogs that require typing (such as the Full List Word Jump modal).</p>
+                            <p><strong>Minimizing or Switching Apps:</strong> To return to your device's home screen or switch apps, swipe up from the bottom edge of your screen to reveal your device's home indicator bar, then swipe up or tap the app switcher button.</p>
                         </div>
                     </div>
 
@@ -7067,9 +7118,9 @@
     <script src="/js/app.js?v=33960"></script>
     <script src="/js/lobby.js?v=33807"></script>
     <script src="/js/play.js?v=33872"></script>
-    <script src="/js/tournaments.js?v=33865"></script>
+    <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=33806"></script>
-    <script src="/js/tools.js?v=33950"></script>
+    <script src="/js/tools.js?v=18989"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=33808"></script>
     <script src="/js/private_matches.js?v=33806"></script>

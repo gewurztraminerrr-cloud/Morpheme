@@ -5730,9 +5730,17 @@ def format_resolved_definition(word_upper, visited=None):
     # Strip any leading (noun) from raw
     raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
 
-    # Comprehensive pointer pattern: matches "plural of X", "diminutive of X", "synonym of X", etc.
+    # Comprehensive pointer pattern: matches "plural of X", "diminutive of X", "synonym of X", "of or pertaining to X", etc.
+    # Note: (?!\s+[a-zA-Z0-9]) ensures X is a standalone word and not part of a multi-word phrase like "mean girl"
     pointer_pattern = re.compile(
-        r'(?i)\b((?:plural|present participle|past participle|simple past|past tense|past|third-person singular simple present indicative|third-person singular present|third-person singular|conjugation|gerund|alternative form|alternative spelling|variant form|variant spelling|variant|diminutive|diminutive form|synonym|synonym for|comparative form|comparative|superlative form|superlative|female equivalent|feminine form|masculine form|agent noun|frequentative|verbal noun|spelling)\s+(?:of|for)\s+)([a-zA-Z\-]+)',
+        r'(?i)\b((?:'
+        r'(?:plural|present participle|past participle|simple past|past tense|past|'
+        r'third-person singular simple present indicative|third-person singular present|third-person singular|'
+        r'conjugation|gerund|alternative form|alternative spelling|variant form|variant spelling|variant|'
+        r'diminutive|diminutive form|synonym|synonym for|comparative form|comparative|superlative form|superlative|'
+        r'female equivalent|feminine form|masculine form|agent noun|frequentative|verbal noun|spelling)\s+(?:of|for)|'
+        r'(?:of\s+or\s+)?(?:pertaining|relating)\s+to'
+        r')\s+(?:a\s+|an\s+|the\s+)?)\b([a-zA-Z\-]+)\b(?!\s+[a-zA-Z0-9])',
         re.DOTALL
     )
 
@@ -5743,18 +5751,20 @@ def format_resolved_definition(word_upper, visited=None):
             target_resolved = format_resolved_definition(target, visited.copy())
             if target_resolved:
                 target_clean = re.sub(r'^\s*\(noun\)\s*', '', target_resolved.strip(), flags=re.IGNORECASE)
-                if target_clean and f"({target_clean})" not in raw:
+                target_clean_cmp = target_clean.rstrip(".")
+                if target_clean_cmp and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
                     end_idx = m.end(2)
                     raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
 
     # Check if raw starts with leading parenthesis (e.g. (verb) meaning, (hawaiian) meaning)
+    # Preserve exact casing of domain/regional tags (e.g. (East Africa, chiefly Kenya), (motor racing))
     m = re.match(r'^\s*\(([^)]+)\)\s*(.*)', raw, re.IGNORECASE)
     if m:
-        pos = m.group(1).lower()
+        pos_raw = m.group(1).strip()
         meaning = m.group(2).strip()
-        if pos == 'noun':
+        if pos_raw.lower() == 'noun':
             return meaning
-        return f"({pos}) {meaning}"
+        return f"({pos_raw}) {meaning}"
 
     # Convert legacy format to clean format (no leading '(noun)')
     meaning, pos = clean_def_text(raw)
@@ -5772,7 +5782,6 @@ def format_resolved_definition(word_upper, visited=None):
     if pos_full == 'noun':
         return meaning
     return f"({pos_full}) {meaning}"
-
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:

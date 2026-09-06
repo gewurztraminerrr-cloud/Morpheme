@@ -534,7 +534,7 @@ function updateCountdown(data) {
             clearInterval(countdownInterval);
             countdownInterval = null;
             const el = document.getElementById('tournament-countdown');
-            if (el) el.textContent = '00:00:00';
+            if (el) el.textContent = '0m 0s';
             // Always re-fetch on timer expiry — this triggers the backend to advance the cycle
             console.log('[Tournament] Countdown expired, re-fetching status...');
             setTimeout(() => fetchTournamentStatus(), 1500);
@@ -546,7 +546,7 @@ function updateCountdown(data) {
         const m = Math.floor((diff % 3600) / 60);
         const s = Math.floor(diff % 60);
 
-        const str = d > 0 ? `${d}d ${h}h ${m}m ${s}s` : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const str = d > 0 ? `${d}d ${h}h ${m}m ${s}s` : h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
         const el = document.getElementById('tournament-countdown');
         if (el) el.textContent = str;
     };

@@ -19,7 +19,7 @@
 
     .lobby-grid {
         display: grid !important;
-        grid-template-columns: 1.7fr 1.3fr !important;
+        grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.3fr) !important;
         gap: 16px !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
@@ -28,6 +28,9 @@
         margin-bottom: 3px !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         transition: grid-template-columns 0.3s ease, gap 0.3s ease;
     }
 
@@ -102,20 +105,20 @@
 /* Widescreen balanced columns and expanded Active Rooms panel */
 @media (min-width: 1440px) {
     .lobby-grid {
-        grid-template-columns: 1.6fr 1.2fr; /* Stretch active rooms horizontally */
-        gap: 24px;
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) !important;
+        gap: 24px !important;
     }
 }
 @media (min-width: 1680px) {
     .lobby-grid {
-        grid-template-columns: 1.5fr 1.3fr; /* Give even more room to the active rooms panel on ultra-wide */
-        gap: 32px;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.3fr) !important;
+        gap: 32px !important;
     }
 }
 @media (min-width: 1920px) {
     .lobby-grid {
-        grid-template-columns: 1.4fr 1.4fr; /* Perfectly balanced panels on ultra-wide screens */
-        gap: 40px;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) !important;
+        gap: 40px !important;
     }
 }
 

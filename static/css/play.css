@@ -2302,10 +2302,67 @@ body.theme-light-brown .word-item.missed {
         flex: unset !important;
     }
     .tools-content {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
         background: rgba(0, 0, 0, 0.25) !important;
         border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
         padding: 8px 12px !important;
         box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        height: 100% !important;
+    }
+    .tool-pane {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    #tool-store,
+    #tool-store .store-grid,
+    #tool-store .store-item,
+    #tool-store .store-item-info,
+    #tool-store .store-item-features,
+    #tool-store .store-item-features li {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #tool-store .store-item-image {
+        max-width: 260px !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+    }
+    #tool-store .store-item-info {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    #tool-store .store-item-features {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)) !important;
+        gap: 8px !important;
+    }
+    #tool-store .store-item-features li {
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+    #tool-store,
+    #page-mods .mod-action-card,
+    #page-mods .def-entry-card,
+    #page-mods .def-guidelines-card,
+    #page-mods .mod-section,
+    #page-mods table,
+    #page-tools table,
+    #page-settings .settings-tab-grid,
+    #page-settings .setting-panel {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
     }
 
     /* Uniform Title & Description Sizes across all Content Panels in Tools */
@@ -11250,3 +11307,42 @@ body.theme-white .integrated-review-board {
     }
 }
 
+
+
+/* Highlight for word searched in Enter word to jump to */
+.full-list-item.jump-target-highlight {
+    background: rgba(245, 158, 11, 0.32) !important;
+    border: 1.5px solid #fbbf24 !important;
+    border-radius: 6px !important;
+    padding: 2px 7px !important;
+    margin: -2px 1px !important;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.5) !important;
+    transition: all 0.2s ease;
+}
+
+.full-list-item.jump-target-highlight .clickable-word-link {
+    color: #fef08a !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.8) !important;
+}
+
+@keyframes jumpTargetGlow {
+    0% {
+        transform: scale(1.18);
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.95), 0 0 10px #fbbf24;
+    }
+    50% {
+        transform: scale(1.06);
+        box-shadow: 0 0 18px rgba(245, 158, 11, 0.7);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.5);
+    }
+}
+
+.full-list-item.jump-target-pulse {
+    animation: jumpTargetGlow 1.4s ease-out !important;
+}

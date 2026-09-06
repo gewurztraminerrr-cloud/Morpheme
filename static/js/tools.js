@@ -3674,9 +3674,7 @@ function startProgressiveRendering() {
                         noticeHtml = `
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
                                 ⚠️ Showing first ${currentWordsList.length.toLocaleString()} words.<br>
-                                <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                                    Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to filter and see more.
-                                </span>
+
                             </div>
                         `;
                     } else {
@@ -3684,7 +3682,6 @@ function startProgressiveRendering() {
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
                                 ⚠️ Showing first 10,000 words.<br>
                                 <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                                    Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
                                     <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
                                 </span>
                             </div>
@@ -3854,13 +3851,23 @@ function showFullListToast(msg, isError = false) {
 }
 window.showFullListToast = showFullListToast;
 
+let _currentFullListJumpedWord = null;
+
 function generateFullListItemsHtml(slice) {
     if (!slice || slice.length === 0) return '';
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
     if (wordType === 'likelihood') {
-        return slice.map(item => `<span class="full-list-item" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`).join('');
+        return slice.map(item => {
+            const isMatch = (_currentFullListJumpedWord && item.word.toUpperCase() === _currentFullListJumpedWord);
+            const extraClass = isMatch ? ' jump-target-highlight' : '';
+            return `<span class="full-list-item${extraClass}" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`;
+        }).join('');
     } else {
-        return slice.map(w => `<span class="full-list-item" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></span>`).join('');
+        return slice.map(w => {
+            const isMatch = (_currentFullListJumpedWord && w.toUpperCase() === _currentFullListJumpedWord);
+            const extraClass = isMatch ? ' jump-target-highlight' : '';
+            return `<span class="full-list-item${extraClass}" data-word="${w}"><span class="clickable-word-link" onclick="window.lookupWord('${w}', event)">${w}</span></span>`;
+        }).join('');
     }
 }
 
@@ -4127,6 +4134,7 @@ function handleFullListWordJump() {
 
     // Center window around target word
     const targetStart = Math.max(0, targetIdx - 40);
+    _currentFullListJumpedWord = query;
     renderFullListWindow(targetStart, query);
 }
 window.handleFullListWordJump = handleFullListWordJump;
@@ -4177,6 +4185,7 @@ window.openFullListModal = function() {
 
     window._lastFullListFilterKey = currentFilterKey;
     _fullListWindowStart = 0;
+    _currentFullListJumpedWord = null;
 
     results.innerHTML = '<div style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
     results.scrollTop = 0;
@@ -4272,6 +4281,14 @@ if (fullListJumpInputEl) {
         if (e.key === 'Enter') {
             e.preventDefault();
             handleFullListWordJump();
+        }
+    });
+    fullListJumpInputEl.addEventListener('input', () => {
+        if (!fullListJumpInputEl.value.trim() && _currentFullListJumpedWord) {
+            _currentFullListJumpedWord = null;
+            document.querySelectorAll('.full-list-item.jump-target-highlight').forEach(el => {
+                el.classList.remove('jump-target-highlight', 'jump-target-pulse');
+            });
         }
     });
     fullListJumpInputEl.addEventListener('focus', () => {
@@ -4608,8 +4625,7 @@ async function fetchListsData(typeOverride) {
                     <div style="font-size: 1.5rem; margin-bottom: 10px;">⚠️ Heavy Computation Warning</div>
                     <div>This list is taking longer than 3 minutes to load, especially if you are using data, and not wi-fi.</div>
                     <div style="margin-top: 15px; font-size: 0.95rem; opacity: 0.9; line-height: 1.6;">
-                        Loading massive list configurations without filters can overload the browser or server.<br>
-                        <strong>Please select a specific word length</strong> or a <strong>starting letter</strong> to reduce the size of the request.
+                        Loading massive list configurations can overload the browser or server.
                     </div>
                 </div>
             `;
