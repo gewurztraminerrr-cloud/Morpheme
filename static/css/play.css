@@ -6799,7 +6799,6 @@ input[type=range]::-moz-range-track {
 
     /* Mobile overrides for page-tools, page-settings, page-mods, and page-forums */
     #page-tools,
-    #page-settings,
     #page-mods,
     #page-forums {
         display: none;
@@ -6809,6 +6808,18 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
+        padding: 0 !important;
+        height: calc(100vh - 120px) !important;
+        flex-direction: column !important;
+    }
+
+    #page-settings {
+        display: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
         padding: 0 !important;
         height: calc(100vh - 120px) !important;
         flex-direction: column !important;
@@ -6824,11 +6835,18 @@ input[type=range]::-moz-range-track {
 
 
     #page-tools .tools-split-layout,
-    #page-settings .tools-split-layout,
     #page-mods .tools-split-layout {
         flex: 1 1 100% !important;
         height: 100% !important;
         min-height: 100% !important;
+    }
+
+    #page-settings .tools-split-layout {
+        flex: 1 1 auto !important;
+        height: calc(100% - 40px) !important;
+        min-height: 0 !important;
+        max-height: calc(100% - 40px) !important;
+        overflow-y: hidden !important;
     }
 
     #page-forums .forum-container {
@@ -8086,6 +8104,35 @@ body .board-cell.tile-flash-purple * {
 
 #tool-store .store-item-info::-webkit-scrollbar-thumb:hover {
     background: var(--accent-color, #ff007f) !important;
+}
+
+/* Explicitly re-enable and style thin grey scrollbars for Settings content tabs */
+#page-settings .tools-content {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
+    -ms-overflow-style: auto !important;
+}
+
+#page-settings .tools-content::-webkit-scrollbar {
+    width: 6px !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+#page-settings .tools-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-radius: 4px !important;
+    margin: 4px 0 !important;
+}
+
+#page-settings .tools-content::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.35) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#page-settings .tools-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-primary-rgb), 0.5) !important;
 }
 
 .tools-content.no-outer-scroll,
@@ -9803,12 +9850,14 @@ body .board-cell.tile-flash-purple * {
         min-width: 0 !important;
         padding: 0 !important;
         overflow-x: hidden !important;
+        overflow-y: hidden !important;
     }
     #page-settings .tools-split-layout {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
+        overflow-y: hidden !important;
     }
     #page-settings .tools-content {
         width: 100% !important;
@@ -9818,6 +9867,9 @@ body .board-cell.tile-flash-purple * {
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
     }
     #page-settings .tool-pane {
         width: 100% !important;
@@ -9990,6 +10042,7 @@ body.is-mobile #page-settings {
     min-width: 0 !important;
     padding: 0 !important;
     overflow-x: hidden !important;
+    overflow-y: hidden !important;
 }
 body.is-mobile #page-settings .tools-content {
     width: 100% !important;
@@ -9998,6 +10051,10 @@ body.is-mobile #page-settings .tools-content {
     padding: 12px 10px 60px 10px !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
 }
 body.is-mobile #page-settings .tool-pane {
     width: 100% !important;
