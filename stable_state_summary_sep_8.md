@@ -82,3 +82,8 @@
 - **Clean In-Memory Initialization**: Provided a canonical `getDefaultSettings()` definition. When a user logs in, settings cleanly initialize from user-specific defaults before applying server settings, preventing unconfigured settings from inheriting a previous user's values.
 - **Synesthesia Reset & DOM Cleanup**: `applySettings` explicitly strips all 26 CSS custom properties (`--letter-*-color`) from `document.documentElement` before applying the authenticated user's specific colors. If a user has no custom colors, all pickers reset to `#111111` and no custom variables remain active.
 - **Logout Memory & DOM Purge**: Integrated `window.resetSettingsToDefault()` directly into `handleLogout()`, immediately purging letter color styles, UI pickers, and in-memory state so nothing leaks into the login screen or subsequent user sessions.
+
+### 15. Tile Selectable Space (Corner Cutoff) 39% Default Consistency
+- **HTML Initial State**: Updated `#setting-corner-cutoff-val` (39%), `#setting-corner-cutoff` (value 39), and `#preview-hitbox-shape` (clip-path polygon using 39%/61%) in `templates/index.html` so the UI renders 39% immediately without waiting on JS.
+- **Client-Side Fallback (`applySettings`)**: In `static/js/settings.js`, if `settings.corner_cutoff` is missing or undefined from the server, `applySettings` unconditionally applies `39%` to the CSS variable `--corner-cutoff`, the slider, the value label, and the preview tile hitbox clip-path.
+- **Guest Database Initialization**: Updated `guest_login()` in `app.py` to insert `('corner_cutoff', '39')` and default `board_sizes` into the `user_settings` table upon creation, guaranteeing guest API responses deliver `corner_cutoff: '39'`.
