@@ -601,28 +601,21 @@ function setupLobbyEvents() {
 
     const ratingFilterInput = document.getElementById('rating-filter');
     if (ratingFilterInput) {
+        let handledByEnter = false;
         ratingFilterInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
+                handledByEnter = true;
                 handleRatingFilterSearch();
+                ratingFilterInput.blur();
+                setTimeout(() => {
+                    handledByEnter = false;
+                }, 100);
             }
         });
-        ratingFilterInput.addEventListener('input', () => {
-            if (isOnLobby() && currentLobbyConfig) {
-                const val = ratingFilterInput.value.trim();
-                if (val === '') {
-                    window.activeRatingFilterValue = null;
-                } else {
-                    const parsed = parseInt(val);
-                    window.activeRatingFilterValue = isNaN(parsed) ? null : parsed;
-                }
-                fetchAndRenderRooms(
-                    currentLobbyConfig.gameType,
-                    currentLobbyConfig.timeLimit,
-                    currentLobbyConfig.boardDimensions,
-                    false
-                );
-            }
+        ratingFilterInput.addEventListener('blur', () => {
+            if (handledByEnter) return;
+            handleRatingFilterSearch();
         });
     }
 

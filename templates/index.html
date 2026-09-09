@@ -2244,7 +2244,7 @@
                     <h3 class="game-title">ACTIVE ROOMS</h3>
                     <div id="selected-game-info">Select a game type</div>
                     <div class="rating-filter-container">
-                        <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100">
+                        <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100" enterkeyhint="go">
                         <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)"><span class="my-rating-label">My Rating</span></button>
                         <button id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')"><span>Open</span> <span>Rooms</span></button>
                         <button id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')"><span>Closed</span> <span>Rooms</span></button>
@@ -5194,6 +5194,7 @@
                         <button class="faq-nav-link" data-target="faq-tools-position">Does using Tools tab while in a room affect your position in the room?</button>
                         <button class="faq-nav-link" data-target="faq-zoom">The features seem to be oversized or undersized.</button>
                         <button class="faq-nav-link" data-target="faq-active-rooms-guide">How do Active Rooms (Open Rooms, Closed Rooms, Spectating, Refresh, and My Rating) work in the Lobby?</button>
+                        <button class="faq-nav-link" data-target="faq-lobby-rating-search">How do I search or sort rooms by average rating in the Lobby?</button>
                         <button class="faq-nav-link" data-target="faq-slide-neighboring-windows">It's difficult to slide over to neighboring windows in game rooms. Is there an easier way to do this?</button>
                         <button class="faq-nav-link" data-target="faq-date-format">How are the dates formatted throughout the app?</button>
                         <button class="faq-nav-link" data-target="faq-report-cheating">I think somebody is cheating! Where to I go to report it?</button>
@@ -5998,6 +5999,19 @@
                                 <li><strong>Room Full Notification:</strong> If an open room reaches maximum capacity (8 players) right before you click Join, a notification will inform you that the room has become full and prompt you to press Refresh to update the list of Open Rooms and Closed Rooms.</li>
                                 <li><strong>Proximity & Average Ratings:</strong> You can sort rooms by closeness to an average rating using the search input, or click <strong>My Rating</strong> to sort active rooms closest to your rating in that specific configuration.</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-lobby-rating-search">
+                        <div class="faq-question">How do I search or sort rooms by average rating in the Lobby?</div>
+                        <div class="faq-answer">
+                            <p>In the <strong>Active Rooms</strong> panel in the Lobby, you can enter any target skill rating into the <em>Sort rooms by proximity to average rating</em> field to display rooms closest to that skill level at the top of the list:</p>
+                            <ul>
+                                <li><strong>Mobile Devices:</strong> Type your desired rating into the field and press the <strong>"Go"</strong> button on your device's on-screen keyboard (or tap outside the input box).</li>
+                                <li><strong>Laptops, Desktops, and Other Platforms:</strong> Type your desired rating (e.g., <code>1300</code>) and press <strong>Enter</strong> (or click outside the input box).</li>
+                                <li><strong>My Rating Button:</strong> Clicking or tapping <strong>My Rating</strong> automatically populates the field with your current skill rating in that specific configuration and sorts the active rooms immediately.</li>
+                            </ul>
+                            <p>Requiring "Enter" or "Go" (or tapping out of the box) prevents the room list from repeatedly jumping, flickering, or sorting intermediate numbers (such as rating <code>130</code>) while you are still typing <code>1300</code>.</p>
                         </div>
                     </div>
 
@@ -7117,7 +7131,7 @@
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
     <script src="/js/app.js?v=33960"></script>
-    <script src="/js/lobby.js?v=33807"></script>
+    <script src="/js/lobby.js?v=1788916480"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
