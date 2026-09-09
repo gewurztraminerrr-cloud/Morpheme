@@ -69,8 +69,9 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
     statusArea.style.color = isError ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing') || message.includes('Saving')) ? '#38bdf8' : '#4ade80';
     statusArea.style.opacity = '1';
     
-    // Clear after 5 seconds if not a loading message
+    // Clear after 8 seconds for errors/explanations or 5 seconds for normal messages
     if (!message.endsWith('...')) {
+        const duration = isError ? 8500 : 5000;
         _modStatusTimeouts[targetId] = setTimeout(() => {
             if (statusArea.textContent === message) {
                 statusArea.style.transition = 'opacity 1s ease';
@@ -84,7 +85,7 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
                     statusArea.style.transition = '';
                 }, 1000);
             }
-        }, 5000);
+        }, duration);
     }
 }
 

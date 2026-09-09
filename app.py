@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import base64
 import requests
+import re
 from db import get_db, get_db_connection, DB_PATH, execute_with_retry
 
 # Load environment variables from .env file
@@ -714,6 +715,176 @@ def toggle_added_words():
         print(f"[API] Error toggling added words: {e}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': f"Failed to save configuration: {str(e)}"}), 500
 
+# ---------------------------------------------------------------------------
+# Strict Validation for Added Words: Reject Obsolete, Abbreviation, Misspelling
+# ---------------------------------------------------------------------------
+_AW_DISALLOWED_OB_REGEX = re.compile(
+    r'(?i)(?:'
+    r'\((?:[^)]*?\b)?(?:obsolete|archaic)\b[^)]*?\)|'
+    r'\[(?:[^\]]*?\b)?(?:obsolete|archaic)\b[^\]]*?\]|'
+    r'\b(?:obsolete|archaic)\s+(?:form|spelling|variant|term|word|use|meaning)\b|'
+    r'^\s*(?:obsolete|archaic)\b|'
+    r'\bnow\s+obsolete\b'
+    r')'
+)
+
+_AW_DISALLOWED_ABBREV_REGEX = re.compile(
+    r'(?i)(?:'
+    r'\b(?:abbreviation|acronym|initialism)\s+(?:of|for)\b|'
+    r'\b(?:short|shortened|clipped)\s+form\s+(?:of|for)\b|'
+    r'\bclipping\s+of\b|'
+    r'^\s*(?:\([^)]+\)\s*)?short\s+for\s+[a-zA-Z]|'
+    r'\((?:[^)]*?\b)?(?:abbreviation|acronym|initialism)\b[^)]*?\)|'
+    r'\[(?:[^\]]*?\b)?(?:abbreviation|acronym|initialism)\b[^\]]*?\]|'
+    r'^\s*(?:abbreviation|acronym|initialism)\b|'
+    r'\b(?:stands?|standing)\s+for\b'
+    r')'
+)
+
+_AW_DISALLOWED_MISSPELLED_REGEX = re.compile(
+    r'(?i)(?:'
+    r'\b(?:misspelling|misspelled|erroneous\s+spelling|erroneously\s+spelled|spelling\s+error|misconstructed|misconstruction)\b|'
+    r'\((?:[^)]*?\b)?(?:misspelling|misspelled)\b[^)]*?\)'
+    r')'
+)
+
+_AW_POINTER_PATTERN = re.compile(
+    r'(?i)\b((?:'
+    r'(?:plural|present participle|past participle|simple past|past tense|past|'
+    r'third-person singular simple present indicative|third-person singular present|third-person singular|'
+    r'conjugation|gerund|alternative form|alternative spelling|alternative letter-case form|variant form|variant spelling|variant|'
+    r'diminutive|diminutive form|synonym|synonym for|comparative form|comparative|superlative form|superlative|'
+    r'female equivalent|feminine form|masculine form|agent noun|frequentative|verbal noun|spelling)\s+(?:of|for)|'
+    r'(?:of\s+or\s+)?(?:pertaining|relating)\s+to'
+    r')\s+(?:a\s+|an\s+|the\s+)?)\b([a-zA-Z\-]+)\b(?!\s+[a-zA-Z0-9])',
+    re.DOTALL
+)
+
+def get_word_definitions_for_aw_check(word):
+    w_upper = word.upper().strip()
+    defs = []
+    seen = set()
+
+    # 1. Check in-memory definitions cache
+    global DEFINITIONS_CACHE
+    if DEFINITIONS_CACHE and w_upper in DEFINITIONS_CACHE and DEFINITIONS_CACHE[w_upper]:
+        d = DEFINITIONS_CACHE[w_upper].strip()
+        defs.append(d)
+        seen.add(d)
+
+    # 2. Query local database wiktionary_definitions
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=5)
+        cursor = conn.cursor()
+        cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0]:
+            d_raw = row[0].strip()
+            if not re.match(r'^(?:\([^)]+\)\s*)?alternative\s+letter-case\s+form\s+of\b', d_raw, re.IGNORECASE):
+                if d_raw not in seen:
+                    defs.append(d_raw)
+                    seen.add(d_raw)
+    except Exception as e:
+        print(f"[AW Validation] Error querying local wiki definition: {e}")
+
+    # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (both lowercase and uppercase)
+    needs_online = (not defs) or all(d.startswith('(Proper noun)') for d in defs)
+    if needs_online:
+        import urllib.request, json, html
+        for term in [w_upper.lower(), w_upper]:
+            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{term}"
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=2.5) as resp:
+                    api_data = json.loads(resp.read().decode('utf-8'))
+                    if isinstance(api_data, dict) and "en" in api_data:
+                        for item in api_data["en"]:
+                            pos = item.get("partOfSpeech", "")
+                            for d in item.get("definitions", []):
+                                raw = d.get("definition", "")
+                                text = re.sub(r"<[^>]+>", "", raw)
+                                text = re.sub(r"\s+", " ", text).strip()
+                                text = html.unescape(text)
+                                if text and text not in seen:
+                                    seen.add(text)
+                                    defs.append(f"({pos}) {text}" if pos else text)
+            except Exception:
+                pass
+
+    return defs
+
+def check_disallowed_direct_def(defn):
+    if not defn:
+        return None
+    m = _AW_DISALLOWED_MISSPELLED_REGEX.search(defn)
+    if m:
+        return ('a misspelling', defn)
+    m = _AW_DISALLOWED_ABBREV_REGEX.search(defn)
+    if m:
+        return ('an abbreviation', defn)
+    m = _AW_DISALLOWED_OB_REGEX.search(defn)
+    if m:
+        return ('an obsolete word', defn)
+    return None
+
+def check_word_disallowed_with_reason(word, visited=None, depth=0):
+    if visited is None:
+        visited = set()
+    w_upper = word.upper().strip()
+    if w_upper in visited or depth > 3:
+        return None
+    visited.add(w_upper)
+
+    defs = get_word_definitions_for_aw_check(w_upper)
+    
+    # 1. Direct check on word's definitions
+    for d in defs:
+        direct = check_disallowed_direct_def(d)
+        if direct:
+            reason_type, full_def = direct
+            clean_def = re.sub(r'\s+', ' ', full_def).strip()
+            if len(clean_def) > 85:
+                clean_def = clean_def[:82] + '...'
+            return (True, reason_type, f"'{w_upper}' is {reason_type} ({clean_def})")
+
+    # 2. Check pointers inside definitions (e.g. "plural of FOO", "alternative form of BAR")
+    for d in defs:
+        for m in _AW_POINTER_PATTERN.finditer(d):
+            root = m.group(2).upper().strip()
+            if root and root != w_upper and root not in visited:
+                root_res = check_word_disallowed_with_reason(root, visited.copy(), depth + 1)
+                if root_res:
+                    _, reason_type, _ = root_res
+                    return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{root}')")
+
+    # 3. Morphological suffix stripping fallback (e.g. FOOS -> FOO, BAKED -> BAKE)
+    candidate_roots = []
+    if w_upper.endswith('IES') and len(w_upper) > 4:
+        candidate_roots.append(w_upper[:-3] + 'Y')
+    if w_upper.endswith('ES') and len(w_upper) > 4:
+        candidate_roots.append(w_upper[:-2])
+    if w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
+        candidate_roots.append(w_upper[:-1])
+    if w_upper.endswith('ED') and len(w_upper) > 4:
+        candidate_roots.append(w_upper[:-2])
+        candidate_roots.append(w_upper[:-1])
+    if w_upper.endswith('ING') and len(w_upper) > 5:
+        candidate_roots.append(w_upper[:-3])
+        candidate_roots.append(w_upper[:-3] + 'E')
+
+    for r in candidate_roots:
+        if r not in visited:
+            root_res = check_word_disallowed_with_reason(r, visited.copy(), depth + 1)
+            if root_res:
+                _, reason_type, _ = root_res
+                return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{r}')")
+
+    return None
+
 @app.route('/api/mods/added_words/add', methods=['POST'])
 @mod_required
 def add_added_word_api():
@@ -741,6 +912,28 @@ def add_added_word_api():
             'error': f"All specified words are already in the official dictionaries.",
             'is_authoritative': True
         }), 400
+
+    # Strict Validation: do not add word if it is or derives from an obsolete, abbreviation, or misspelling
+    disallowed_reasons = []
+    accepted_words = []
+    for w in valid_to_add:
+        rejected = check_word_disallowed_with_reason(w)
+        if rejected:
+            disallowed_reasons.append(rejected[2])
+        else:
+            accepted_words.append(w)
+
+    if not accepted_words:
+        if len(disallowed_reasons) == 1:
+            err_msg = f"{disallowed_reasons[0]} and was not added to Added Words."
+        else:
+            err_msg = f"Words not added: {'; '.join(disallowed_reasons)}."
+        return jsonify({
+            'error': err_msg,
+            'disallowed': True
+        }), 400
+
+    valid_to_add = accepted_words
         
     try:
         # Update in-memory sets instantly (in reverse so words[0] ends up at index 0)
@@ -794,6 +987,8 @@ def add_added_word_api():
         ensure_definitions_background(valid_to_add)
 
         msg = f'New word "{valid_to_add[0]}" added to Added Words list successfully.' if len(valid_to_add) == 1 else f'{len(valid_to_add)} words added to Added Words list successfully.'
+        if disallowed_reasons:
+            msg += f" (Note: {'; '.join(disallowed_reasons)})"
         return jsonify({
             'success': True, 
             'message': msg,
