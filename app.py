@@ -898,7 +898,25 @@ def add_added_word_api():
     if not words:
         return jsonify({'error': 'Word required'}), 400
     
-    # Check for words already in official dictionaries
+    # Ensure in-memory added words are fresh
+    word_validator.get_use_added_words()
+
+    def _is_in_added_words(w):
+        w_u = w.strip().upper()
+        if not w_u:
+            return False
+        if word_validator.is_added_word(w_u):
+            return True
+        if hasattr(word_validator, 'added_words') and w_u in word_validator.added_words:
+            return True
+        if hasattr(word_validator, 'added_words_list') and w_u in word_validator.added_words_list:
+            return True
+        global ADDED_WORDS_LIST_CACHE
+        if ADDED_WORDS_LIST_CACHE is not None and w_u in ADDED_WORDS_LIST_CACHE:
+            return True
+        return False
+
+    # 1. Check for words already in official dictionaries (CSW/NWL/16plus)
     official_words = [w for w in words if word_validator.is_valid_word_authoritative(w)]
     if official_words and len(words) == 1:
         return jsonify({
@@ -906,12 +924,32 @@ def add_added_word_api():
             'is_authoritative': True
         }), 400
 
-    valid_to_add = [w for w in words if not word_validator.is_valid_word_authoritative(w)]
-    if not valid_to_add:
+    # 2. Check for words already in Added Words (AW)
+    aw_words = [w for w in words if w not in official_words and _is_in_added_words(w)]
+    if aw_words and len(words) == 1:
         return jsonify({
-            'error': f"All specified words are already in the official dictionaries.",
-            'is_authoritative': True
+            'error': f"'{aw_words[0]}' is already a valid word in Added Words (AW).",
+            'is_added_word': True
         }), 400
+
+    # 3. Filter out words already present in either official dictionaries or Added Words
+    valid_to_add = [w for w in words if not word_validator.is_valid_word_authoritative(w) and not _is_in_added_words(w)]
+    if not valid_to_add:
+        if official_words and not aw_words:
+            return jsonify({
+                'error': "All specified words are already in the official dictionaries (CSW/NWL/16plus).",
+                'is_authoritative': True
+            }), 400
+        elif aw_words and not official_words:
+            return jsonify({
+                'error': "All specified words are already in Added Words (AW).",
+                'is_added_word': True
+            }), 400
+        else:
+            return jsonify({
+                'error': "All specified words are already present in the dictionaries (official dictionaries or Added Words).",
+                'is_authoritative': True
+            }), 400
 
     # Strict Validation: do not add word if it is or derives from an obsolete, abbreviation, or misspelling
     disallowed_reasons = []
@@ -987,8 +1025,15 @@ def add_added_word_api():
         ensure_definitions_background(valid_to_add)
 
         msg = f'New word "{valid_to_add[0]}" added to Added Words list successfully.' if len(valid_to_add) == 1 else f'{len(valid_to_add)} words added to Added Words list successfully.'
+        skipped_info = []
+        if official_words:
+            skipped_info.append(f"already in official dictionaries: {', '.join(official_words)}")
+        if aw_words:
+            skipped_info.append(f"already in Added Words: {', '.join(aw_words)}")
         if disallowed_reasons:
-            msg += f" (Note: {'; '.join(disallowed_reasons)})"
+            skipped_info.append(f"disallowed: {'; '.join(disallowed_reasons)}")
+        if skipped_info:
+            msg += f" (Note: {'; '.join(skipped_info)})"
         return jsonify({
             'success': True, 
             'message': msg,
