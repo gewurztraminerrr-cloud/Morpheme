@@ -1133,6 +1133,7 @@ body.theme-light-brown .field-hint {
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: filter 0.2s;
+    flex-shrink: 0 !important;
 }
 
 .buy-now-btn:hover {
@@ -1421,43 +1422,49 @@ body.theme-light-brown .field-hint {
         flex-direction: row !important;
         align-items: stretch !important;
         min-height: 280px !important;
-        max-height: 340px !important;
+        max-height: 380px !important;
     }
 
     .store-item-image {
-        width: 340px !important;
-        min-width: 340px !important;
+        width: 320px !important;
+        min-width: 320px !important;
         height: 100% !important;
     }
 
     .store-item-info {
         flex: 1 !important;
-        padding: 30px !important;
+        padding: 24px 28px !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
-        gap: 15px !important;
+        justify-content: flex-start !important;
+        gap: 14px !important;
         overflow-y: auto !important; /* Enable inner text scrolling if content overflows max-height */
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.25) !important;
     }
 
     /* Premium styled scrollbars for the Store text panels */
     .store-item-info::-webkit-scrollbar {
-        width: 6px;
+        width: 8px !important;
+        display: block !important;
+        opacity: 1 !important;
     }
 
     .store-item-info::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.15);
-        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.25) !important;
+        border-radius: 10px !important;
     }
 
     .store-item-info::-webkit-scrollbar-thumb {
-        background: rgba(var(--text-primary-rgb), 0.15);
-        border-radius: 10px;
+        background: rgba(var(--text-primary-rgb), 0.4) !important;
+        border-radius: 10px !important;
         transition: background 0.3s ease;
     }
 
     .store-item-info::-webkit-scrollbar-thumb:hover {
-        background: var(--accent-color, #ff007f);
+        background: var(--accent-color, #ff007f) !important;
     }
 
     .store-item-features {

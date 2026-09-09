@@ -2348,7 +2348,40 @@ body.theme-light-brown .word-item.missed {
         flex: 1 1 0% !important;
         min-width: 0 !important;
         max-width: 100% !important;
-        overflow: hidden !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        gap: 14px !important;
+        padding: 24px 28px !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.25) !important;
+        -ms-overflow-style: auto !important;
+    }
+    #tool-store .store-item-info::-webkit-scrollbar {
+        width: 8px !important;
+        height: 8px !important;
+        display: block !important;
+        opacity: 1 !important;
+    }
+    #tool-store .store-item-info::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.25) !important;
+        border-radius: 8px !important;
+    }
+    #tool-store .store-item-info::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.4) !important;
+        border-radius: 8px !important;
+        transition: background 0.2s ease !important;
+    }
+    #tool-store .store-item-info::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-color, #ff007f) !important;
+    }
+    #tool-store .buy-now-btn {
+        margin-top: auto !important;
+        flex-shrink: 0 !important;
+        margin-bottom: 4px !important;
     }
     #tool-store .store-item-features {
         display: grid !important;
@@ -8020,6 +8053,34 @@ body .board-cell.tile-flash-purple * {
 #tool-subanagrams {
     scrollbar-width: none !important; /* Firefox */
     -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+/* Explicitly re-enable and style visible scrollbars for Store item info panels */
+#tool-store .store-item-info {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.25) !important;
+    -ms-overflow-style: auto !important;
+}
+
+#tool-store .store-item-info::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+#tool-store .store-item-info::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-radius: 8px !important;
+}
+
+#tool-store .store-item-info::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.4) !important;
+    border-radius: 8px !important;
+}
+
+#tool-store .store-item-info::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color, #ff007f) !important;
 }
 
 .tools-content.no-outer-scroll,
