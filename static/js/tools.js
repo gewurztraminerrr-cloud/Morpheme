@@ -3670,18 +3670,18 @@ function startProgressiveRendering() {
                 const scrollArea = document.getElementById('main-list-results');
                 if (scrollArea) {
                     let noticeHtml = '';
+                    const viewFullListSpan = `<span role="button" tabindex="0" style="text-decoration: underline; cursor: pointer; color: #a78bfa;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
                     if (window.listsServerTruncated) {
                         noticeHtml = `
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                                ⚠️ Showing first ${currentWordsList.length.toLocaleString()} words.<br>
-
+                                ⚠️ Showing the first 10,000 words. Please select the parameters above for more words and/or use ${viewFullListSpan}
                             </div>
                         `;
                     } else {
                         noticeHtml = `
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                                ⚠️ Showing first 10,000 words.<br>
-                                <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
+                                ⚠️ Showing the first 10,000 words. Please select the parameters above for more words and/or use ${viewFullListSpan}<br>
+                                <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal; display: inline-block; margin-top: 6px;">
                                     <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
                                 </span>
                             </div>
@@ -3717,21 +3717,18 @@ function renderNextWordsPage() {
     if (currentWordsRenderedCount >= maxAllowed) {
         if (!document.getElementById('list-truncation-notice')) {
             let noticeHtml = '';
+            const viewFullListSpan = `<span role="button" tabindex="0" style="text-decoration: underline; cursor: pointer; color: #a78bfa;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
             if (window.listsServerTruncated) {
                 noticeHtml = `
                     <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                        ⚠️ Showing first ${currentWordsList.length.toLocaleString()} words.<br>
-                        <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                            Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to filter and see more.
-                        </span>
+                        ⚠️ Showing the first 10,000 words. Please select the parameters above for more words and/or use ${viewFullListSpan}
                     </div>
                 `;
             } else {
                 noticeHtml = `
                     <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
-                        ⚠️ Showing first 10,000 words.<br>
-                        <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal;">
-                            Please select a specific <strong>word length</strong> or <strong>starting letter</strong> to narrow down the list, or 
+                        ⚠️ Showing the first 10,000 words. Please select the parameters above for more words and/or use ${viewFullListSpan}<br>
+                        <span style="font-size: 0.82rem; opacity: 0.8; font-weight: normal; display: inline-block; margin-top: 6px;">
                             <button id="show-all-words-btn" style="background: rgba(255, 183, 3, 0.15); border: 1px solid #ffb703; color: #ffb703; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 5px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 183, 3, 0.3)'" onmouseout="this.style.background='rgba(255, 183, 3, 0.15)'">Load All ${currentWordsList.length.toLocaleString()} Words</button>
                         </span>
                     </div>
