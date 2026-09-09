@@ -4565,21 +4565,6 @@ def create_room():
             if min_rating > 0 or max_rating < 9999:
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
-        # Accumulative and 24h rooms are permanent singletons per dimension; custom FCFS/Split rooms get unique IDs
-        if str(game_type).lower() == 'accumulative' or int(time_limit) >= 7200:
-            generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
-        else:
-            generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
-        print(f"[app.py] Generated ID for room: {generated_id}")
-            
-        room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating, is_private=False)
-        
-        # Ensure user is not in any other room
-        cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
-        
-        # Use the actual ID (could be existing one if singleton)
-        room_id = room.room_id
-        
         # Get configuration-specific rating & stats in 1 single connection
         config_key = f"{game_type}|{board_dimensions}|{time_limit}"
         rating = 1200
@@ -4609,6 +4594,30 @@ def create_room():
                 print(f"[create_room] user stats query warning: {e}")
             finally:
                 conn.close()
+
+        has_limits = (min_rating > 0 or max_rating < 9999)
+        if has_limits:
+            if min_rating > max_rating:
+                return jsonify({'error': f'Minimum rating ({min_rating}) cannot be greater than maximum rating ({max_rating}).'}), 400
+            if rating < min_rating or rating > max_rating:
+                max_str = str(max_rating) if max_rating < 9999 else "∞"
+                range_str = f"{min_rating} - {max_str}"
+                return jsonify({'error': f'Your rating ({rating}) does not fall within your specified range ({range_str}).<br><br>Your rating has to be in your specified range for the room creation to continue.'}), 400
+
+        # Accumulative and 24h rooms are permanent singletons per dimension; custom FCFS/Split rooms get unique IDs
+        if str(game_type).lower() == 'accumulative' or int(time_limit) >= 7200:
+            generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
+        else:
+            generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
+        print(f"[app.py] Generated ID for room: {generated_id}")
+            
+        room = room_manager.create_room(generated_id, game_type, time_limit, board_dimensions, min_rating, max_rating, is_private=False)
+        
+        # Ensure user is not in any other room
+        cleanup_user_rooms(session['user_id'], exclude_room_id=room.room_id)
+        
+        # Use the actual ID (could be existing one if singleton)
+        room_id = room.room_id
         
         room.add_player(session['user_id'], session['username'], rating, 
                         games_played=games_played, country_flag=country_flag, 

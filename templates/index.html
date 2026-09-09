@@ -720,6 +720,34 @@
             if (isNaN(minRating)) minRating = 0;
             if (isNaN(maxRating)) maxRating = 9999;
 
+            var hasLimits = (minRating > 0 || maxRating < 9999);
+            if (hasLimits) {
+                if (minRating > maxRating) {
+                    var rangeMsg = 'Minimum rating (' + minRating + ') cannot be greater than maximum rating (' + maxRating + ').';
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Invalid Rating Range', rangeMsg);
+                    } else {
+                        alert(rangeMsg);
+                    }
+                    return;
+                }
+                var userRating = 1200;
+                if (typeof window.getUserConfigRating === 'function') {
+                    userRating = window.getUserConfigRating(activeConfig.gameType, activeConfig.boardDimensions, activeConfig.timeLimit);
+                }
+                if (userRating < minRating || userRating > maxRating) {
+                    var maxStr = maxRating < 9999 ? maxRating : '∞';
+                    var rangeStr = minRating + ' - ' + maxStr;
+                    var ratingMsg = 'Your rating (' + userRating + ') does not fall within your specified range (' + rangeStr + ').<br><br>Your rating has to be in your specified range for the room creation to continue.';
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Rating Limit Notice', ratingMsg);
+                    } else {
+                        alert(ratingMsg.replace(/<br\s*[\/]?>/gi, '\n'));
+                    }
+                    return;
+                }
+            }
+
             if (typeof window.createRoom === 'function') {
                 return window.createRoom(activeConfig, minRating, maxRating);
             }
@@ -758,7 +786,7 @@
                 } else {
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (window.showAlertModal) {
-                        window.showAlertModal('Room Creation Error', 'Failed to create room: ' + (data.error || 'Unknown error'));
+                        window.showAlertModal('Rating Limit Notice', data.error || 'Failed to create room.');
                     } else {
                         showLobbyToast('Failed to create room: ' + (data.error || 'Unknown error'), 'error');
                     }
@@ -7132,7 +7160,7 @@
     <script src="/js/settings.js?v=33780"></script>
     <script src="/js/forum.js?v=33780"></script>
     <script src="/js/app.js?v=33960"></script>
-    <script src="/js/lobby.js?v=1788916480"></script>
+    <script src="/js/lobby.js?v=1788922200"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>

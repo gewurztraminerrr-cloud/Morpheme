@@ -213,6 +213,43 @@ async function createRoom(config, minRating, maxRating) {
     if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
         return;
     }
+    const hasLimits = (minRating > 0 || maxRating < 9999);
+    if (hasLimits) {
+        if (minRating > maxRating) {
+            const msg = `Minimum rating (${minRating}) cannot be greater than maximum rating (${maxRating}).`;
+            if (window.showAlertModal) {
+                window.showAlertModal('Invalid Rating Range', msg);
+            } else {
+                alert(msg);
+            }
+            return;
+        }
+
+        // Ensure current user ratings are loaded
+        if (typeof window.loadCurrentUserConfigRatings === 'function' && (!window.currentUserConfigRatings || Object.keys(window.currentUserConfigRatings).length === 0)) {
+            try {
+                await window.loadCurrentUserConfigRatings();
+            } catch(e) {}
+        }
+
+        let userRating = 1200;
+        if (typeof window.getUserConfigRating === 'function') {
+            userRating = window.getUserConfigRating(config.gameType, config.boardDimensions, config.timeLimit);
+        }
+
+        if (userRating < minRating || userRating > maxRating) {
+            const maxStr = maxRating < 9999 ? maxRating : '∞';
+            const rangeStr = `${minRating} - ${maxStr}`;
+            const msg = `Your rating (${userRating}) does not fall within your specified range (${rangeStr}).<br><br>Your rating has to be in your specified range for the room creation to continue.`;
+            if (window.showAlertModal) {
+                window.showAlertModal('Rating Limit Notice', msg);
+            } else {
+                alert(msg.replace(/<br\s*[\/]?>/gi, '\n'));
+            }
+            return;
+        }
+    }
+
     if (window._isCreatingRoom) {
         console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
         return;
@@ -238,12 +275,24 @@ async function createRoom(config, minRating, maxRating) {
             })
         });
 
-        if (!createResp.ok) {
-            const createErr = await createResp.text();
-            throw new Error(`Creation failed (${createResp.status}): ${createErr}`);
+        let data = null;
+        try {
+            data = await createResp.json();
+        } catch (e) {
+            const txt = await createResp.text().catch(() => 'Error parsing response');
+            data = { error: txt };
         }
 
-        const data = await createResp.json();
+        if (!createResp.ok || !data || !data.success) {
+            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+            const errMsg = (data && data.error) ? data.error : `Failed to create room (${createResp.status})`;
+            if (window.showAlertModal) {
+                window.showAlertModal('Rating Limit Notice', errMsg);
+            } else {
+                alert(errMsg.replace(/<br\s*[\/]?>/gi, '\n'));
+            }
+            return;
+        }
 
         if (data.success) {
             console.log('Room Created, Joining:', data.room_id);
