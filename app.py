@@ -3707,6 +3707,15 @@ def guest_login():
             cursor = conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
                                  (guest_username, password_hash))
             new_user_id = cursor.lastrowid
+
+            # Insert default settings for the guest user
+            default_settings = [
+                ('board_sizes', '{"4x4":82,"4x6":82,"5x7":65,"6x8":54}'),
+                ('corner_cutoff', '39')
+            ]
+            for key, val in default_settings:
+                conn.execute('INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)', (new_user_id, key, val))
+
             conn.commit()
             
             session['user_id'] = new_user_id

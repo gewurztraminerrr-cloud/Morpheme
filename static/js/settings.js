@@ -135,20 +135,23 @@ function debounce(func, wait) {
         }
 
         // Corner Cutoff (Octagon vs Diamond Selectable Space)
-        if (settings.corner_cutoff !== undefined) {
-            const val = parseInt(settings.corner_cutoff);
-            if (!isNaN(val)) {
-                document.documentElement.style.setProperty('--corner-cutoff', `${val}%`);
-                const slider = document.getElementById('setting-corner-cutoff');
-                if (slider) slider.value = val;
-                const label = document.getElementById('setting-corner-cutoff-val');
-                if (label) label.textContent = `${val}%`;
-                const shape = document.getElementById('preview-hitbox-shape');
-                if (shape) {
-                    shape.style.clipPath = `polygon(${val}% 0%, calc(100% - ${val}%) 0%, 100% ${val}%, 100% calc(100% - ${val}%), calc(100% - ${val}%) 100%, ${val}% 100%, 0% calc(100% - ${val}%), 0% ${val}%)`;
-                }
-            }
+        const cutoffVal = (settings && settings.corner_cutoff !== undefined)
+            ? parseInt(settings.corner_cutoff)
+            : ((window.userSettings && window.userSettings.corner_cutoff !== undefined)
+                ? parseInt(window.userSettings.corner_cutoff)
+                : 39);
+        const finalCutoff = !isNaN(cutoffVal) ? cutoffVal : 39;
+        document.documentElement.style.setProperty('--corner-cutoff', `${finalCutoff}%`);
+        const cutoffSlider = document.getElementById('setting-corner-cutoff');
+        if (cutoffSlider) cutoffSlider.value = finalCutoff;
+        const cutoffLabel = document.getElementById('setting-corner-cutoff-val');
+        if (cutoffLabel) cutoffLabel.textContent = `${finalCutoff}%`;
+        const shape = document.getElementById('preview-hitbox-shape');
+        if (shape) {
+            shape.style.clipPath = `polygon(${finalCutoff}% 0%, calc(100% - ${finalCutoff}%) 0%, 100% ${finalCutoff}%, 100% calc(100% - ${finalCutoff}%), calc(100% - ${finalCutoff}%) 100%, ${finalCutoff}% 100%, 0% calc(100% - ${finalCutoff}%), 0% ${finalCutoff}%)`;
         }
+        if (!window.userSettings) window.userSettings = getDefaultSettings();
+        window.userSettings.corner_cutoff = finalCutoff;
 
         // Chat Font Size
         if (settings.chat_font_size) {
