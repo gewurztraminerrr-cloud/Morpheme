@@ -2258,7 +2258,6 @@ async function handleLogout() {
         // Preserve global "read" states (Notices, Forum markers) across login sessions
         const noticeId = localStorage.getItem('morpheme_read_notice_id');
         const forumViewed = localStorage.getItem('forum_last_viewed');
-        const userSettings = localStorage.getItem('morpheme_user_settings');
 
         // Clear session and auth data
         localStorage.clear();
@@ -2269,7 +2268,11 @@ async function handleLogout() {
         // Restore non-sensitive global markers
         if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
         if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
-        if (userSettings) localStorage.setItem('morpheme_user_settings', userSettings);
+        
+        // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
+        if (typeof window.resetSettingsToDefault === 'function') {
+            window.resetSettingsToDefault();
+        }
         
         window.currentUserConfigRatings = {};
         window.currentUserIsMod = false;

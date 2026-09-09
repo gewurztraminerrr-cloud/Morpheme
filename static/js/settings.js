@@ -12,56 +12,85 @@ function debounce(func, wait) {
 (function () {
     console.log('[settings.js] Loading settings module...');
 
-    // Global Settings State - Load from localStorage for instant availability (prevents race conditions)
-    const savedSettings = localStorage.getItem('morpheme_settings');
-    window.userSettings = savedSettings ? JSON.parse(savedSettings) : {
-        lobby_music: true,
-        triple_music: true,
-        chat_font_size: 13,
-        def_font_size: 15,
-        board_size: 54,
-        corner_cutoff: 39,
-        board_sizes: { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 },
-        cube_size: 220,
-        highlight_typing: true,
-        highlight_mouse: true,
-        next_round_bell_enabled: true,
-        vibration_alert: true,
-        letter_colors: {},
-        word_flash: true,
-        board_sounds: true
-    };
+    // Canonical default settings definition
+    function getDefaultSettings() {
+        return {
+            lobby_music: true,
+            triple_music: true,
+            chat_font_size: 13,
+            def_font_size: 15,
+            board_size: 54,
+            corner_cutoff: 39,
+            board_sizes: { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 },
+            cube_size: 220,
+            highlight_typing: true,
+            highlight_typing_color: '#ffcc00',
+            highlight_mouse: true,
+            highlight_mouse_color: '#00ffff',
+            next_round_bell_enabled: true,
+            next_round_bell_type: 'bell1',
+            vibration_alert: true,
+            letter_colors: {},
+            word_flash: true,
+            board_sounds: true,
+            app_theme: 'default',
+            allow_pm: true,
+            allow_invites: true
+        };
+    }
+    window.getDefaultSettings = getDefaultSettings;
 
-    if (window.userSettings) {
-        if (typeof window.userSettings.board_sounds === 'undefined') {
-            window.userSettings.board_sounds = true;
+    // Get strictly namespaced localStorage key per user to guarantee zero cross-user data bleeding
+    function getSettingsStorageKey() {
+        const username = (window.currentUser || (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('morpheme_username') || '').trim();
+        if (username) {
+            return `morpheme_settings_${username.toLowerCase()}`;
         }
-        if (typeof window.userSettings.triple_music === 'undefined') {
-            window.userSettings.triple_music = true;
-        }
-        if (typeof window.userSettings.vibration_alert === 'undefined') {
-            window.userSettings.vibration_alert = true;
-        }
+        return 'morpheme_settings_guest';
+    }
+    window.getSettingsStorageKey = getSettingsStorageKey;
+
+    function saveSettingsToStorage() {
+        try {
+            if (window.userSettings) {
+                localStorage.setItem(getSettingsStorageKey(), JSON.stringify(window.userSettings));
+            }
+        } catch (e) {}
     }
 
-    // DOM Elements
-    // (Global boardSizeSlider removed as per user request)
+    function loadCachedSettings() {
+        try {
+            // Remove legacy shared unpartitioned key that previously leaked across different users
+            localStorage.removeItem('morpheme_settings');
 
-    // 1. Load Settings on Startup
+            const key = getSettingsStorageKey();
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                return Object.assign(getDefaultSettings(), JSON.parse(saved));
+            }
+        } catch (e) {}
+        return getDefaultSettings();
+    }
+
+    // Global Settings State - Isolated per user
+    window.userSettings = loadCachedSettings();
+
+    // 1. Load Settings on Startup / User Login
     async function loadSettings() {
         try {
             const response = await fetch('/api/settings');
             const data = await response.json();
 
-            if (data.settings) {
-                console.log('[settings.js] Settings loaded:', data.settings);
+            if (data && data.settings) {
+                console.log('[settings.js] Settings loaded from server:', data.settings);
                 applySettings(data.settings);
             } else {
-                console.log('[settings.js] No server settings, providing default view');
-                applySettings(window.userSettings || {});
+                console.log('[settings.js] No server settings, providing clean user defaults');
+                applySettings({});
             }
         } catch (error) {
             console.error('[settings.js] Failed to load settings:', error);
+            applySettings(loadCachedSettings());
         }
     }
 
@@ -286,9 +315,8 @@ function debounce(func, wait) {
             const container = document.getElementById('bell-selection-container');
             if (container) container.style.display = val ? 'flex' : 'none';
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.next_round_bell_enabled = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Intermission Vibration Alert
@@ -300,9 +328,8 @@ function debounce(func, wait) {
             const vibrationToggle = document.getElementById('setting-vibration-alert');
             if (vibrationToggle) vibrationToggle.checked = val;
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.vibration_alert = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Time Zone
@@ -321,9 +348,8 @@ function debounce(func, wait) {
             const pmToggle = document.getElementById('setting-allow-pm');
             if (pmToggle) pmToggle.checked = val;
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.allow_pm = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Allow Game Invitations
@@ -335,9 +361,8 @@ function debounce(func, wait) {
             const invitesToggle = document.getElementById('setting-allow-invites');
             if (invitesToggle) invitesToggle.checked = val;
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.allow_invites = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
         }
 
         // Next Round Bell Type
@@ -349,9 +374,8 @@ function debounce(func, wait) {
                 else btn.classList.remove('active');
             });
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.next_round_bell_type = type;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
 
             if (typeof window.updateIntermissionBellSource === 'function') {
                 window.updateIntermissionBellSource();
@@ -359,6 +383,12 @@ function debounce(func, wait) {
         }
 
         // Synesthesia: Letter Colors
+        // CRITICAL: Always strip all 26 previous CSS variables first so previous user's colors never bleed into this session
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        alphabet.forEach(letter => {
+            document.documentElement.style.removeProperty(`--letter-${letter}-color`);
+        });
+
         if (settings.letter_colors) {
             let colors = settings.letter_colors;
             if (typeof colors === 'string') {
@@ -369,22 +399,23 @@ function debounce(func, wait) {
                     colors = {};
                 }
             }
-            if (!window.userSettings) window.userSettings = {};
-            window.userSettings.letter_colors = colors;
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.letter_colors = colors || {};
 
-            // Apply all variables
-            Object.keys(colors).forEach(letter => {
-                document.documentElement.style.setProperty(`--letter-${letter}-color`, colors[letter]);
+            // Apply all variables for this user only
+            Object.keys(window.userSettings.letter_colors).forEach(letter => {
+                document.documentElement.style.setProperty(`--letter-${letter}-color`, window.userSettings.letter_colors[letter]);
             });
-
-            // Update UI if grid is built
-            updateSynesthesiaUI();
+        } else {
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.letter_colors = {};
         }
 
-        // Cache the fully merged settings locally so the warm cache matches server configurations immediately
-        if (window.userSettings) {
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
-        }
+        // Update UI pickers
+        updateSynesthesiaUI();
+
+        // Cache the fully merged settings under this specific user's namespaced key
+        saveSettingsToStorage();
     }
 
     // 3. Update Helpers
@@ -395,8 +426,8 @@ function debounce(func, wait) {
         }
         console.log(`[settings.js] Saving ${key}: ${saveVal}`);
         try {
-            // Cache locally for instant next load
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+            // Cache locally for this user
+            saveSettingsToStorage();
 
             await fetch('/api/settings/update', {
                 method: 'POST',
@@ -424,9 +455,10 @@ function debounce(func, wait) {
         alphabet.forEach(letter => {
             const unit = document.createElement('div');
             unit.className = 'synesthesia-unit';
+            const curColor = (window.userSettings && window.userSettings.letter_colors && window.userSettings.letter_colors[letter]) || '#111111';
             unit.innerHTML = `
                 <label>${letter}</label>
-                <input type="color" data-letter="${letter}" value="${window.userSettings.letter_colors[letter] || '#111111'}">
+                <input type="color" data-letter="${letter}" value="${curColor}">
             `;
             grid.appendChild(unit);
 
@@ -434,21 +466,24 @@ function debounce(func, wait) {
             picker.addEventListener('input', (e) => {
                 const color = e.target.value;
                 document.documentElement.style.setProperty(`--letter-${letter}-color`, color);
+                if (!window.userSettings) window.userSettings = getDefaultSettings();
+                if (!window.userSettings.letter_colors) window.userSettings.letter_colors = {};
                 window.userSettings.letter_colors[letter] = color;
                 saveSettingDebounced('letter_colors', window.userSettings.letter_colors);
             });
         });
         const resetBtn = document.getElementById('setting-synesthesia-reset');
         if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
+            resetBtn.onclick = () => {
                 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
                 alphabet.forEach(letter => {
                     document.documentElement.style.removeProperty(`--letter-${letter}-color`);
-                    delete window.userSettings.letter_colors[letter];
                 });
+                if (!window.userSettings) window.userSettings = getDefaultSettings();
+                window.userSettings.letter_colors = {};
                 updateSynesthesiaUI();
-                saveSettingDebounced('letter_colors', window.userSettings.letter_colors);
-            });
+                saveSettingDebounced('letter_colors', {});
+            };
         }
     }
 
@@ -456,10 +491,11 @@ function debounce(func, wait) {
         const grid = document.getElementById('synesthesia-letters-grid');
         if (!grid) return;
 
+        const colors = (window.userSettings && window.userSettings.letter_colors) || {};
         const pickers = grid.querySelectorAll('input[type="color"]');
         pickers.forEach(p => {
             const letter = p.getAttribute('data-letter');
-            p.value = window.userSettings.letter_colors[letter] || '#111111';
+            p.value = colors[letter] || '#111111';
         });
     }
 
@@ -477,10 +513,10 @@ function debounce(func, wait) {
                 previewBoard.style.setProperty('--cell-size', `${val}px`);
             }
 
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             if (!window.userSettings.board_sizes) window.userSettings.board_sizes = {};
             window.userSettings.board_sizes[dim] = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+            saveSettingsToStorage();
             saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
 
             // Check if the active room matches this dimension; if so apply immediately
@@ -567,9 +603,9 @@ function debounce(func, wait) {
             if (shape) {
                 shape.style.clipPath = `polygon(${val}% 0%, calc(100% - ${val}%) 0%, 100% ${val}%, 100% calc(100% - ${val}%), calc(100% - ${val}%) 100%, ${val}% 100%, 0% calc(100% - ${val}%), 0% ${val}%)`;
             }
-            if (!window.userSettings) window.userSettings = {};
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.corner_cutoff = val;
-            localStorage.setItem('morpheme_settings', JSON.stringify(window.userSettings));
+            saveSettingsToStorage();
             saveSettingDebounced('corner_cutoff', val);
         });
     }
@@ -956,5 +992,6 @@ function debounce(func, wait) {
 
     window.loadSettings = loadSettings;
     window.applySettings = applySettings;
+    window.resetSettingsToDefault = function() { applySettings({}); };
     window.applyMobileSettingsVisibility = applyMobileSettingsVisibility;
 })();
