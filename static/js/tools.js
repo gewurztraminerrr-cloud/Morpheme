@@ -2995,8 +2995,7 @@ function updateRankingsFilterDropdowns(selectedMode) {
                 { value: '45', text: '45 Seconds' },
                 { value: '180', text: '3 Minutes' },
                 { value: '300', text: '5 Minutes' },
-                { value: '600', text: '10 Minutes' },
-                { value: '86400', text: '24 Hours' }
+                { value: '600', text: '10 Minutes' }
             ]
         },
         'accumulative': {
@@ -3009,8 +3008,7 @@ function updateRankingsFilterDropdowns(selectedMode) {
             times: [
                 { value: '45', text: '45 Seconds' },
                 { value: '180', text: '3 Minutes' },
-                { value: '600', text: '10 Minutes' },
-                { value: '86400', text: '24 Hours' }
+                { value: '600', text: '10 Minutes' }
             ]
         },
         'fcfs': {
@@ -3096,14 +3094,13 @@ function renderRatingsGrid(configRatings, user = null) {
 
     const modes = ['accumulative', 'fcfs', 'split', '3d'];
     const boards = ['4x4', '4x6', '5x7', '6x8', '3x3x3'];
-    const allTimes = [45, 180, 300, 600, 86400];
+    const allTimes = [45, 180, 300, 600];
 
     const formatTimeShort = (s) => {
         if (s === 45) return '45s';
         if (s === 180) return '3m';
         if (s === 300) return '5m';
         if (s === 600) return '10m';
-        if (s === 86400) return '24h';
         return s + 's';
     };
 
@@ -3120,13 +3117,14 @@ function renderRatingsGrid(configRatings, user = null) {
             if (mode !== '3d' && board === '3x3x3') return;
 
             allTimes.forEach(time => {
+                if (time >= 7200) return;
                 if (filterTime !== 'all' && String(time) !== filterTime) return;
 
                 // COMPATIBILITY FILTER: Cube supports 3m (180), 5m (300), 10m (600)
                 if (mode === '3d' && time !== 180 && time !== 300 && time !== 600) return;
 
-                // COMPATIBILITY FILTER: Accumulative supports 45s (45), 3m (180), 10m (600), 24h (86400)
-                if (mode === 'accumulative' && time !== 45 && time !== 180 && time !== 600 && time !== 86400) return;
+                // COMPATIBILITY FILTER: Accumulative supports 45s (45), 3m (180), 10m (600)
+                if (mode === 'accumulative' && time !== 45 && time !== 180 && time !== 600) return;
 
                 // COMPATIBILITY FILTER: FCFS and Split support 45s (45) and 3m (180)
                 if ((mode === 'fcfs' || mode === 'split') && time !== 45 && time !== 180) return;

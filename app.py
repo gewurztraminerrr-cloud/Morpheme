@@ -3992,7 +3992,7 @@ def get_public_profile(username):
         try:
             gtype, dims, dur = cfg_key.split('|')
             if int(dur) >= 7200:
-                rating = user[2]
+                continue
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
             matching_standard = [p for p in matching if 'valued' not in str(p.get('board_format', '')).lower()]
             matching_valid = [p for p in matching if p.get('total_words_avail', 0) > 0]
@@ -4566,7 +4566,10 @@ def create_room():
                 return jsonify({'error': 'RANK_REJECT: Guest users are not allowed to create rooms with rating limits. Please register to unlock this feature.'}), 403
         
         # Get configuration-specific rating & stats in 1 single connection
-        config_key = f"{game_type}|{board_dimensions}|{time_limit}"
+        clean_game_type = str(game_type).lower().replace('solo_', '')
+        clean_board_dims = str(board_dimensions).lower()
+        clean_time_limit = int(time_limit)
+        config_key = f"{clean_game_type}|{clean_board_dims}|{clean_time_limit}"
         rating = 1200
         games_played = 0
         country_flag = '🏳️'
@@ -4576,22 +4579,24 @@ def create_room():
         else:
             conn = sqlite3.connect(DB_PATH, timeout=10)
             try:
-                cur = conn.execute('SELECT rating, games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
+                cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (session['user_id'],))
                 u_row = cur.fetchone()
                 if u_row:
-                    rating = u_row[0] if u_row[0] is not None else 1200
-                    games_played = u_row[1] if u_row[1] is not None else 0
-                    if u_row[2]: country_flag = u_row[2]
+                    games_played = u_row[0] if u_row[0] is not None else 0
+                    if u_row[1]: country_flag = u_row[1]
                 
-                is_24h = (int(time_limit) >= 7200)
+                is_24h = (clean_time_limit >= 7200)
                 if not is_24h:
                     r_cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
                                          (session['user_id'], config_key))
                     r_row = r_cur.fetchone()
                     if r_row and r_row[0] is not None:
                         rating = r_row[0]
+                    else:
+                        rating = 1200
             except Exception as e:
                 print(f"[create_room] user stats query warning: {e}")
+                rating = 1200
             finally:
                 conn.close()
 
