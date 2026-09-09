@@ -3828,12 +3828,16 @@ function setupListsTool() {
         }
     }
 
-// --- View Full List Modal & High-Performance Virtual Windowing ---
+// --- View Full List Modal & Dynamic Incremental Word Loading ---
 window.isFullListLoading = false;
-let _fullListAllWords = [];
-let _fullListWindowStart = 0;
-const FULL_LIST_WINDOW_SIZE = 400; // Optimal rendering chunk: instant 60fps render, lightweight DOM
-let _isRenderingFullListWindow = false;
+var _fullListAllWords = [];
+var _fullListRenderedStart = 0;
+var _fullListRenderedEnd = 0;
+const FULL_LIST_INITIAL_BATCH = 350; // Initial batch of words rendered on open / jump
+const FULL_LIST_CHUNK_SIZE = 150;     // Words appended/prepended as user scrolls
+const FULL_LIST_MAX_DOM = 3000;       // Maximum items retained in DOM to preserve 60fps
+var _isGrowingFullList = false;
+let _currentFullListJumpedWord = null;
 
 function showFullListToast(msg, isError = false) {
     const toast = document.getElementById('full-list-jump-toast');
@@ -3850,8 +3854,6 @@ function showFullListToast(msg, isError = false) {
     }, 2800);
 }
 window.showFullListToast = showFullListToast;
-
-let _currentFullListJumpedWord = null;
 
 function generateFullListItemsHtml(slice) {
     if (!slice || slice.length === 0) return '';
@@ -3870,8 +3872,87 @@ function generateFullListItemsHtml(slice) {
         }).join('');
     }
 }
+window.generateFullListItemsHtml = generateFullListItemsHtml;
 
-function renderFullListWindow(startIndex, targetWordToHighlight = null) {
+function appendNextFullListBatch() {
+    const resultsEl = document.getElementById('full-list-modal-results');
+    if (_isGrowingFullList || !resultsEl || !_fullListAllWords || _fullListRenderedEnd >= _fullListAllWords.length) {
+        return false;
+    }
+    _isGrowingFullList = true;
+
+    const total = _fullListAllWords.length;
+    const nextEnd = Math.min(total, _fullListRenderedEnd + FULL_LIST_CHUNK_SIZE);
+    if (nextEnd <= _fullListRenderedEnd) {
+        _isGrowingFullList = false;
+        return false;
+    }
+
+    const slice = _fullListAllWords.slice(_fullListRenderedEnd, nextEnd);
+    const html = generateFullListItemsHtml(slice);
+    resultsEl.insertAdjacentHTML('beforeend', html);
+    _fullListRenderedEnd = nextEnd;
+
+    // Smooth buffer management: trim from top only if DOM exceeds MAX_DOM
+    if (_fullListRenderedEnd - _fullListRenderedStart > FULL_LIST_MAX_DOM) {
+        const trimCount = FULL_LIST_CHUNK_SIZE;
+        const anchor = resultsEl.children[trimCount];
+        if (anchor) {
+            const anchorTopBefore = anchor.getBoundingClientRect().top;
+            for (let i = 0; i < trimCount; i++) {
+                if (resultsEl.firstElementChild) resultsEl.firstElementChild.remove();
+            }
+            const anchorTopAfter = anchor.getBoundingClientRect().top;
+            resultsEl.scrollTop += (anchorTopAfter - anchorTopBefore);
+            _fullListRenderedStart += trimCount;
+        }
+    }
+
+    updateFullListVirtualScrollbar();
+    _isGrowingFullList = false;
+    return true;
+}
+
+function prependPrevFullListBatch() {
+    const resultsEl = document.getElementById('full-list-modal-results');
+    if (_isGrowingFullList || !resultsEl || !_fullListAllWords || _fullListRenderedStart <= 0) {
+        return false;
+    }
+    _isGrowingFullList = true;
+
+    const prevStart = Math.max(0, _fullListRenderedStart - FULL_LIST_CHUNK_SIZE);
+    if (prevStart >= _fullListRenderedStart) {
+        _isGrowingFullList = false;
+        return false;
+    }
+
+    const slice = _fullListAllWords.slice(prevStart, _fullListRenderedStart);
+    const html = generateFullListItemsHtml(slice);
+
+    const oldScrollHeight = resultsEl.scrollHeight;
+    const oldScrollTop = resultsEl.scrollTop;
+
+    resultsEl.insertAdjacentHTML('afterbegin', html);
+    _fullListRenderedStart = prevStart;
+
+    const heightDiff = resultsEl.scrollHeight - oldScrollHeight;
+    resultsEl.scrollTop = oldScrollTop + heightDiff;
+
+    // Smooth buffer management: trim from bottom only if DOM exceeds MAX_DOM
+    if (_fullListRenderedEnd - _fullListRenderedStart > FULL_LIST_MAX_DOM) {
+        const trimCount = FULL_LIST_CHUNK_SIZE;
+        for (let i = 0; i < trimCount; i++) {
+            if (resultsEl.lastElementChild) resultsEl.lastElementChild.remove();
+        }
+        _fullListRenderedEnd -= trimCount;
+    }
+
+    updateFullListVirtualScrollbar();
+    _isGrowingFullList = false;
+    return true;
+}
+
+function renderFullListInitial(startIndex, targetWordToHighlight = null) {
     const resultsEl = document.getElementById('full-list-modal-results');
     const countEl = document.getElementById('full-list-modal-count');
     if (!resultsEl) return;
@@ -3884,12 +3965,13 @@ function renderFullListWindow(startIndex, targetWordToHighlight = null) {
     }
 
     const total = _fullListAllWords.length;
-    const maxStart = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
-    const clampedStart = Math.max(0, Math.min(maxStart, startIndex));
-    _fullListWindowStart = clampedStart;
+    const clampedStart = Math.max(0, Math.min(Math.max(0, total - FULL_LIST_INITIAL_BATCH), startIndex));
+    const clampedEnd = Math.min(total, clampedStart + FULL_LIST_INITIAL_BATCH);
 
-    const slice = _fullListAllWords.slice(clampedStart, clampedStart + FULL_LIST_WINDOW_SIZE);
-    _isRenderingFullListWindow = true;
+    _fullListRenderedStart = clampedStart;
+    _fullListRenderedEnd = clampedEnd;
+
+    const slice = _fullListAllWords.slice(clampedStart, clampedEnd);
     resultsEl.innerHTML = generateFullListItemsHtml(slice);
 
     if (countEl) {
@@ -3911,14 +3993,13 @@ function renderFullListWindow(startIndex, targetWordToHighlight = null) {
                 targetEl.classList.add('jump-target-pulse');
                 setTimeout(() => { targetEl.classList.remove('jump-target-pulse'); }, 2500);
             }
-            _isRenderingFullListWindow = false;
         });
     } else {
-        requestAnimationFrame(() => {
-            _isRenderingFullListWindow = false;
-        });
+        resultsEl.scrollTop = 0;
     }
 }
+window.renderFullListWindow = renderFullListInitial;
+window.renderFullListInitial = renderFullListInitial;
 
 function updateFullListVirtualScrollbar() {
     const track = document.getElementById('full-list-scrollbar-track');
@@ -3937,14 +4018,17 @@ function updateFullListVirtualScrollbar() {
     track.style.display = 'block';
 
     const trackHeight = track.clientHeight || resultsEl.clientHeight || 400;
-    const ratio = Math.max(0.08, Math.min(1, FULL_LIST_WINDOW_SIZE / total));
+    const renderedSpan = Math.max(1, _fullListRenderedEnd - _fullListRenderedStart);
+    const ratio = Math.max(0.06, Math.min(1, renderedSpan / total));
     const thumbHeight = Math.max(36, Math.min(trackHeight, trackHeight * ratio));
     thumb.style.height = `${thumbHeight}px`;
 
     const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-    const maxStartIndex = Math.max(1, total - FULL_LIST_WINDOW_SIZE);
-    const progress = Math.min(1, Math.max(0, _fullListWindowStart / maxStartIndex));
-    const thumbTop = progress * maxThumbTop;
+    const maxScrollTop = Math.max(1, resultsEl.scrollHeight - resultsEl.clientHeight);
+    const internalProgress = Math.min(1, Math.max(0, resultsEl.scrollTop / maxScrollTop));
+    const currentWordIndex = _fullListRenderedStart + (internalProgress * renderedSpan);
+    const overallProgress = Math.min(1, Math.max(0, currentWordIndex / total));
+    const thumbTop = overallProgress * maxThumbTop;
 
     thumb.style.top = `${thumbTop}px`;
     thumb.style.setProperty('top', `${thumbTop}px`, 'important');
@@ -3982,13 +4066,13 @@ function initFullListVirtualScrollbar() {
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
         const progress = newThumbTop / maxThumbTop;
-        const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
-        const targetIndex = Math.floor(progress * maxStartIndex);
+        const targetIndex = Math.floor(progress * total);
 
         if (_dragRafId) cancelAnimationFrame(_dragRafId);
         _dragRafId = requestAnimationFrame(() => {
             _dragRafId = null;
-            renderFullListWindow(targetIndex);
+            const start = Math.max(0, targetIndex - Math.floor(FULL_LIST_INITIAL_BATCH / 2));
+            renderFullListInitial(start);
         });
     }
 
@@ -4065,33 +4149,70 @@ function initFullListVirtualScrollbar() {
         applyDragPosition(getClientY(e));
     });
 
-    // Smooth continuous window pagination with animation frame throttling and recursion protection
+    // Smooth continuous window pagination with animation frame throttling
     let _scrollRafId = null;
-    results.addEventListener('scroll', () => {
-        if (isDragging || _isRenderingFullListWindow) return;
+    function checkAndGrowList() {
+        if (isDragging || _isGrowingFullList) return;
         if (!_fullListAllWords || _fullListAllWords.length === 0) return;
+
+        const scrollHeight = results.scrollHeight;
+        const scrollTop = results.scrollTop;
+        const clientHeight = results.clientHeight;
+        const total = _fullListAllWords.length;
+
+        // Approaching bottom -> grow downwards bit by bit smoothly
+        if (scrollTop + clientHeight >= scrollHeight - 350 && _fullListRenderedEnd < total) {
+            appendNextFullListBatch();
+        }
+        // Approaching top -> grow upwards bit by bit smoothly (if jumped or scrolled up)
+        else if (scrollTop <= 300 && _fullListRenderedStart > 0) {
+            prependPrevFullListBatch();
+        }
+    }
+
+    results.addEventListener('scroll', () => {
+        if (isDragging || _isGrowingFullList) return;
+        updateFullListVirtualScrollbar();
 
         if (_scrollRafId) return;
         _scrollRafId = requestAnimationFrame(() => {
             _scrollRafId = null;
-            if (isDragging || _isRenderingFullListWindow) return;
-
-            const total = _fullListAllWords.length;
-            const maxStartIndex = Math.max(0, total - FULL_LIST_WINDOW_SIZE);
-            const scrollHeight = results.scrollHeight;
-            const scrollTop = results.scrollTop;
-            const clientHeight = results.clientHeight;
-
-            if (scrollTop + clientHeight >= scrollHeight - 60 && _fullListWindowStart < maxStartIndex) {
-                const nextStart = Math.min(maxStartIndex, _fullListWindowStart + 150);
-                renderFullListWindow(nextStart);
-                results.scrollTop = Math.max(10, scrollTop - 80);
-            } else if (scrollTop <= 30 && _fullListWindowStart > 0) {
-                const prevStart = Math.max(0, _fullListWindowStart - 150);
-                renderFullListWindow(prevStart);
-                results.scrollTop = 100;
-            }
+            checkAndGrowList();
         });
+    }, { passive: true });
+
+    // Wheel listener safety: guarantees continuous scrolling if user scrolls fast or at container boundaries
+    results.addEventListener('wheel', (e) => {
+        if (isDragging || _isGrowingFullList || !_fullListAllWords || _fullListAllWords.length === 0) return;
+        const total = _fullListAllWords.length;
+
+        if (e.deltaY > 0 && (results.scrollTop + results.clientHeight >= results.scrollHeight - 60) && _fullListRenderedEnd < total) {
+            appendNextFullListBatch();
+        } else if (e.deltaY < 0 && results.scrollTop <= 60 && _fullListRenderedStart > 0) {
+            prependPrevFullListBatch();
+        }
+    }, { passive: true });
+
+    // Touch swipe listener safety: ensures mobile continuous swiping never deadlocks
+    let _touchStartY = 0;
+    results.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) _touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    results.addEventListener('touchmove', (e) => {
+        if (isDragging || _isGrowingFullList || !_fullListAllWords || _fullListAllWords.length === 0) return;
+        if (!e.touches || e.touches.length === 0) return;
+        const currentY = e.touches[0].clientY;
+        const deltaY = _touchStartY - currentY; // positive = swipe up = scroll down
+        const total = _fullListAllWords.length;
+
+        if (deltaY > 10 && (results.scrollTop + results.clientHeight >= results.scrollHeight - 60) && _fullListRenderedEnd < total) {
+            _touchStartY = currentY;
+            appendNextFullListBatch();
+        } else if (deltaY < -10 && results.scrollTop <= 60 && _fullListRenderedStart > 0) {
+            _touchStartY = currentY;
+            prependPrevFullListBatch();
+        }
     }, { passive: true });
 }
 
@@ -4132,10 +4253,11 @@ function handleFullListWordJump() {
         return;
     }
 
-    // Center window around target word
-    const targetStart = Math.max(0, targetIdx - 40);
+    // Center window around target word with equal runway above and below
+    const halfBatch = Math.floor(FULL_LIST_INITIAL_BATCH / 2);
+    const targetStart = Math.max(0, targetIdx - halfBatch);
     _currentFullListJumpedWord = query;
-    renderFullListWindow(targetStart, query);
+    renderFullListInitial(targetStart, query);
 }
 window.handleFullListWordJump = handleFullListWordJump;
 
@@ -4184,7 +4306,8 @@ window.openFullListModal = function() {
     const fullListCount = document.getElementById('full-list-modal-count');
 
     window._lastFullListFilterKey = currentFilterKey;
-    _fullListWindowStart = 0;
+    _fullListRenderedStart = 0;
+    _fullListRenderedEnd = 0;
     _currentFullListJumpedWord = null;
 
     results.innerHTML = '<div style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
@@ -4530,7 +4653,6 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
 
 function initCustomScrollbar() {
     initCustomScrollbarForElement('main-list-results', 'list-scrollbar-track', 'list-scrollbar-thumb');
-    initCustomScrollbarForElement('full-list-modal-results', 'full-list-scrollbar-track', 'full-list-scrollbar-thumb');
     initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
 }
 
