@@ -1073,6 +1073,8 @@ body.theme-light-brown .field-hint {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .store-item-header h3 {
@@ -1082,9 +1084,10 @@ body.theme-light-brown .field-hint {
 }
 
 .store-item-price {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 900;
     color: var(--accent-color);
+    white-space: nowrap;
 }
 
 .store-item-desc {
