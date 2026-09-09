@@ -105,8 +105,12 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     probe.textContent = str;
     document.body.appendChild(probe);
 
+    // Dynamic max ceiling so short words don't balloon vertically and cut off status text
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const maxCeiling = isMobile ? 48 : 68;
+
     // Binary-search: largest font-size (px) where probe.scrollWidth <= availWidth
-    let lo = 10, hi = 96, best = lo;
+    let lo = 10, hi = maxCeiling, best = lo;
     for (let i = 0; i < 18; i++) {
         const mid = (lo + hi) / 2;
         probe.style.fontSize = mid + 'px';
@@ -132,6 +136,14 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     wordEl.style.setProperty('line-height', '1.25', 'important');
     wordEl.style.setProperty('overflow', 'visible', 'important');
     wordEl.style.setProperty('max-width', 'none', 'important');
+    wordEl.style.setProperty('flex-shrink', '0', 'important');
+
+    const statusEl = el.querySelector('.valid-status-val');
+    if (statusEl) {
+        statusEl.style.setProperty('flex-shrink', '0', 'important');
+        statusEl.style.setProperty('line-height', '1.35', 'important');
+        statusEl.style.setProperty('padding-bottom', '2px', 'important');
+    }
 };
 
 // NEW: Global Tool Switcher Helper
@@ -205,12 +217,6 @@ window.showTool = function(toolId) {
         const displayEl = document.getElementById('random-word-display');
         if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== 'Loading...') {
             window.applyDynamicSequenceStyle(displayEl, displayEl.innerText.trim());
-        }
-    }
-    if (toolId === 'is-valid') {
-        const displayEl = document.getElementById('valid-result-display');
-        if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== '') {
-            window.applyDynamicValidationStyle(displayEl, displayEl.innerText.trim());
         }
     }
     if (toolId === 'manual') {
@@ -5918,7 +5924,7 @@ async function runValidationCheck() {
         const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
 
         displayEl.style.color = color;
-        displayEl.innerHTML = `<div class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; text-align: center; width: 100%; font-weight: 900; line-height: 1.25;">${data.word}</div><div class="valid-status-val" style="white-space: nowrap !important; text-align: center; width: 100%; font-size: clamp(1.1rem, 3.2vw, 1.8rem); font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; opacity: 0.95; line-height: 1.25; margin-top: 4px;">${statusText}</div>`;
+        displayEl.innerHTML = `<div class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; text-align: center; width: 100%; font-weight: 900; line-height: 1.25; flex-shrink: 0;">${data.word}</div><div class="valid-status-val" style="white-space: nowrap !important; text-align: center; width: 100%; font-size: clamp(1.1rem, 3.2vw, 1.8rem); font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; opacity: 0.95; line-height: 1.35; margin-top: 6px; padding-bottom: 2px; flex-shrink: 0;">${statusText}</div>`;
         // Defer font-size fitting until after the DOM has fully laid out
         requestAnimationFrame(() => {
             window.applyDynamicValidationStyle(displayEl, data.word);

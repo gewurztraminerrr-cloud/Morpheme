@@ -6222,6 +6222,8 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         justify-content: center !important;
         gap: 4px !important;
+        flex-shrink: 0 !important;
+        overflow: visible !important;
     }
     #valid-result-display .valid-word-val {
         white-space: nowrap !important;
@@ -6231,13 +6233,16 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         text-align: center !important;
         line-height: 1.25 !important;
+        flex-shrink: 0 !important;
     }
     #valid-result-display .valid-status-val {
         white-space: nowrap !important;
         display: block !important;
         width: 100% !important;
         text-align: center !important;
-        line-height: 1.25 !important;
+        line-height: 1.35 !important;
+        padding-bottom: 2px !important;
+        flex-shrink: 0 !important;
     }
     .random-word-container {
         padding: 15px !important;
@@ -8141,7 +8146,6 @@ body .board-cell.tile-flash-purple * {
     #tool-sequence .seq-results-container,
     #tool-subanagrams #sub-results-container,
     #tool-lists .lists-container,
-    #tool-is-valid #valid-results-container,
     .seq-results-container,
     #sub-results-container,
     .lists-container {
@@ -8159,6 +8163,25 @@ body .board-cell.tile-flash-purple * {
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-is-valid #valid-results-container,
+    #valid-results-container {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 16px 14px !important;
         box-sizing: border-box !important;
     }
 
