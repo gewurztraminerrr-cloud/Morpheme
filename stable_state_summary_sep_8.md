@@ -76,3 +76,9 @@
 
 ### 13. Tools "View Full List" Bidirectional Growth & Amber Highlight
 - **Smooth Virtual Growth**: Implemented smooth, zero-jump bidirectional virtual list expansion and permanent amber highlight tracking for jumped words.
+
+### 14. Settings & Synesthesia Per-User Data Isolation
+- **Per-User Namespacing**: Replaced global, unpartitioned `localStorage['morpheme_settings']` key with user-namespaced storage (`morpheme_settings_<username>`), ensuring no settings or colors ever bleed across accounts on shared browsers or devices.
+- **Clean In-Memory Initialization**: Provided a canonical `getDefaultSettings()` definition. When a user logs in, settings cleanly initialize from user-specific defaults before applying server settings, preventing unconfigured settings from inheriting a previous user's values.
+- **Synesthesia Reset & DOM Cleanup**: `applySettings` explicitly strips all 26 CSS custom properties (`--letter-*-color`) from `document.documentElement` before applying the authenticated user's specific colors. If a user has no custom colors, all pickers reset to `#111111` and no custom variables remain active.
+- **Logout Memory & DOM Purge**: Integrated `window.resetSettingsToDefault()` directly into `handleLogout()`, immediately purging letter color styles, UI pickers, and in-memory state so nothing leaks into the login screen or subsequent user sessions.
