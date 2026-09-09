@@ -7304,6 +7304,49 @@ body.flash-blue::after,
 /* Hide by default on desktop */
 .mobile-nav-indicators {
     display: none;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+.mobile-nav-indicators,
+.mobile-nav-indicators * {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+.mobile-nav-indicators .nav-arrow,
+.mobile-nav-indicators button {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    touch-action: manipulation !important;
+}
+
+.mobile-nav-indicators .nav-arrow:hover,
+.mobile-nav-indicators .nav-arrow:active,
+.mobile-nav-indicators .nav-arrow:focus,
+.mobile-nav-indicators .nav-arrow:focus-visible,
+.mobile-nav-indicators button:hover,
+.mobile-nav-indicators button:active,
+.mobile-nav-indicators button:focus,
+.mobile-nav-indicators button:focus-visible {
+    background: transparent !important;
+    background-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
 /* Show only on mobile carousel */
@@ -7337,13 +7380,33 @@ body.flash-blue::after,
         align-items: center;
         gap: 5px;
         font-weight: 500;
-        background: none;
-        border: none;
-        color: inherit;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
         font-family: inherit;
         font-size: inherit;
         cursor: pointer;
         padding: 0;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        touch-action: manipulation !important;
+    }
+
+    .mobile-nav-indicators .nav-arrow:hover,
+    .mobile-nav-indicators .nav-arrow:active,
+    .mobile-nav-indicators .nav-arrow:focus,
+    .mobile-nav-indicators .nav-arrow:focus-visible {
+        background: transparent !important;
+        background-color: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
     .mobile-nav-indicators .nav-right {
