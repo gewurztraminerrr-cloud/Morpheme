@@ -98,3 +98,9 @@
   - In `#forum-view-create`: docked `.forum-bottom-bar` containing `← Cancel` (`#forum-cancel-create`) at the absolute bottom.
   - In `#forum-view-list`: docked `.forum-bottom-bar.mobile-only-bottom-bar` containing `← Back` (`#forum-category-back-btn`) at the bottom on mobile to smoothly slide back to categories sidebar; hidden on desktop.
 - **Page Container Hierarchy Integrity**: Fixed DOM hierarchy closing tag in `#page-tools` so that all top-level views (`#page-mods`, `#page-settings`, `#page-contact`, `#page-donate`) remain top-level sibling `.page` containers at depth 3 and are never mistakenly hidden when `#page-tools` is set to `display: none`.
+- **Mobile Fixed Bottom Back Button Invariant (Tools, Mods, Settings)**:
+  - Locked `#page-tools`, `#page-mods`, and `#page-settings` to `overflow: hidden; height: calc(100vh - 120px)` (`100dvh` supported) on mobile (`@media (max-width: 900px)` and `body.is-mobile`), preventing the outer page container from scrolling vertically.
+  - `.tools-split-layout` fills available height (`flex: 1 1 0px; min-height: 0; overflow-y: hidden`).
+  - `.tools-content-column` spans 100% width on slide 2 (`height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column`).
+  - `.tools-content` acts as the scroll body (`flex: 1 1 0px; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`), ensuring all content (short or long) scrolls independently above the bottom bar.
+  - `.mobile-bottom-nav` sits docked at the absolute bottom edge (`flex: 0 0 auto; width: 100%`) in a permanently fixed position as the user scrolls, identical to Forum.
