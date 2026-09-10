@@ -6078,8 +6078,10 @@ input[type=range]::-moz-range-track {
         scroll-behavior: auto !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: calc(100vh - 120px) !important;
+        flex: 1 1 0px !important;
+        height: auto !important;
         min-height: 0 !important;
+        max-height: 100% !important;
         box-sizing: border-box !important;
         border-radius: 0 !important;
         border: none !important;
@@ -6916,20 +6918,8 @@ input[type=range]::-moz-range-track {
     /* Mobile overrides for page-tools, page-settings, page-mods, and page-forums */
     #page-tools,
     #page-mods,
+    #page-settings,
     #page-forums {
-        display: none;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding: 0 !important;
-        height: calc(100vh - 120px) !important;
-        flex-direction: column !important;
-    }
-
-    #page-settings {
         display: none;
         width: 100% !important;
         max-width: 100% !important;
@@ -6937,6 +6927,7 @@ input[type=range]::-moz-range-track {
         overflow-x: hidden !important;
         overflow-y: hidden !important;
         padding: 0 !important;
+        margin: 0 !important;
         height: calc(100vh - 120px) !important;
         flex-direction: column !important;
     }
@@ -6948,20 +6939,23 @@ input[type=range]::-moz-range-track {
         display: flex !important;
     }
 
-
-
-    #page-tools .tools-split-layout,
-    #page-mods .tools-split-layout {
-        flex: 1 1 100% !important;
-        height: 100% !important;
-        min-height: 100% !important;
+    #page-tools .page-title-header,
+    #page-mods .page-title-header,
+    #page-settings .page-title-header {
+        flex: 0 0 auto !important;
+        margin: 0 0 6px 0 !important;
+        padding: 0 10px !important;
+        font-size: 1.5rem !important;
+        line-height: 1.2 !important;
     }
 
+    #page-tools .tools-split-layout,
+    #page-mods .tools-split-layout,
     #page-settings .tools-split-layout {
-        flex: 1 1 auto !important;
-        height: calc(100% - 40px) !important;
+        flex: 1 1 0px !important;
+        height: auto !important;
         min-height: 0 !important;
-        max-height: calc(100% - 40px) !important;
+        max-height: 100% !important;
         overflow-y: hidden !important;
     }
 
@@ -8251,15 +8245,10 @@ body .board-cell.tile-flash-purple * {
     background: rgba(var(--text-primary-rgb), 0.5) !important;
 }
 
-.tools-content.no-outer-scroll,
-.tools-content.no-outer-scroll .tool-pane.active {
-    overflow-y: hidden !important;
-    overflow-x: hidden !important;
-}
-
 @media (min-width: 901px) {
     /* Disable outer scroller (Scroller 1) on desktop ONLY for Sequence and Subanagrams */
-    .tools-content.no-outer-scroll {
+    .tools-content.no-outer-scroll,
+    .tools-content.no-outer-scroll .tool-pane.active {
         overflow-y: hidden !important;
         overflow-x: hidden !important;
     }
@@ -9121,16 +9110,20 @@ body .board-cell.tile-flash-purple * {
         box-sizing: border-box !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
-        touch-action: pan-y !important;
     }
     #page-tools {
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        overflow-y: hidden !important;
         padding: 0 !important;
         margin: 0 !important;
+        height: calc(100vh - 120px) !important;
+        display: none;
+        flex-direction: column !important;
+    }
+    #page-tools.active {
+        display: flex !important;
     }
     #page-tools .tools-split-layout {
         width: 100% !important;
@@ -9142,14 +9135,41 @@ body .board-cell.tile-flash-purple * {
         -webkit-overflow-scrolling: touch !important;
         padding: 0 !important;
         margin: 0 !important;
+        flex: 1 1 0px !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    #page-tools .tools-content-column {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
     #page-tools .tools-content {
+        flex: 1 1 0px !important;
+        height: auto !important;
+        min-height: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
-        padding: 4px 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 12px 10px !important;
         margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    #page-tools .mobile-bottom-nav {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
     }
 
     /* Subanagrams Tool Mobile Layout */
@@ -9920,6 +9940,11 @@ body .board-cell.tile-flash-purple * {
         .play-main-content {
             min-height: calc(100dvh - 120px);
         }
+        #page-tools,
+        #page-mods,
+        #page-settings {
+            height: calc(100dvh - 120px) !important;
+        }
     }
 
     /* Hide 3D Cube Scale setting panel on mobile devices */
@@ -9974,18 +9999,43 @@ body .board-cell.tile-flash-purple * {
         min-width: 0 !important;
         box-sizing: border-box !important;
         overflow-y: hidden !important;
+        flex: 1 1 0px !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    #page-settings .tools-content-column {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
     #page-settings .tools-content {
+        flex: 1 1 0px !important;
+        height: auto !important;
+        min-height: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
-        padding: 12px 10px 60px 10px !important;
+        padding: 12px 10px !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
+    }
+    #page-settings .mobile-bottom-nav {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
     }
     #page-settings .tool-pane {
         width: 100% !important;
@@ -10148,10 +10198,16 @@ body.is-mobile #mod-tab-notice #clear-notice-btn {
     box-sizing: border-box !important;
 }
 
+body.is-mobile #page-tools,
+body.is-mobile #page-mods,
 body.is-mobile #page-settings,
+body.is-mobile #page-tools *,
+body.is-mobile #page-mods *,
 body.is-mobile #page-settings * {
     box-sizing: border-box !important;
 }
+body.is-mobile #page-tools,
+body.is-mobile #page-mods,
 body.is-mobile #page-settings {
     width: 100% !important;
     max-width: 100% !important;
@@ -10159,7 +10215,36 @@ body.is-mobile #page-settings {
     padding: 0 !important;
     overflow-x: hidden !important;
     overflow-y: hidden !important;
+    height: calc(100vh - 120px) !important;
+    display: none;
+    flex-direction: column !important;
 }
+@supports (height: 100dvh) {
+    body.is-mobile #page-tools,
+    body.is-mobile #page-mods,
+    body.is-mobile #page-settings {
+        height: calc(100dvh - 120px) !important;
+    }
+}
+body.is-mobile #page-tools.active,
+body.is-mobile #page-mods.active,
+body.is-mobile #page-settings.active {
+    display: flex !important;
+}
+body.is-mobile #page-tools .tools-split-layout,
+body.is-mobile #page-mods .tools-split-layout,
+body.is-mobile #page-settings .tools-split-layout {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-y: hidden !important;
+    flex: 1 1 0px !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+body.is-mobile #page-tools .tools-content-column,
+body.is-mobile #page-mods .tools-content-column,
 body.is-mobile #page-settings .tools-content-column {
     flex: 0 0 100% !important;
     width: 100% !important;
@@ -10174,6 +10259,8 @@ body.is-mobile #page-settings .tools-content-column {
     margin: 0 !important;
     padding: 0 !important;
 }
+body.is-mobile #page-tools .tools-content,
+body.is-mobile #page-mods .tools-content,
 body.is-mobile #page-settings .tools-content {
     flex: 1 1 0px !important;
     width: 100% !important;
@@ -10190,11 +10277,30 @@ body.is-mobile #page-settings .tools-content {
     scrollbar-width: thin !important;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
 }
+body.is-mobile #page-tools .mobile-bottom-nav,
+body.is-mobile #page-mods .mobile-bottom-nav,
+body.is-mobile #page-settings .mobile-bottom-nav {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    z-index: 100 !important;
+    background: var(--bg-panel, #181920) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)) 14px !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+    margin: 0 !important;
+    position: relative !important;
+}
+body.is-mobile #page-tools .tool-pane,
+body.is-mobile #page-mods .tool-pane,
 body.is-mobile #page-settings .tool-pane {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    padding: 0 0 70px 0 !important;
+    padding: 0 0 20px 0 !important;
     box-sizing: border-box !important;
 }
 body.is-mobile #page-settings .settings-tab-grid {
