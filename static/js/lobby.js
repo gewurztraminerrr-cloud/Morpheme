@@ -901,10 +901,11 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             document.querySelectorAll(
                 `.game-btn[data-game="${gameType}"][data-board="${boardDimensions}"][data-time="${timeLimit}"]`
             ).forEach(btn => {
-                const rawText = btn.textContent;
-                const normalizedText = rawText.replace(/\s+/g, ' ').trim();
-                const newNormalized = normalizedText.replace(/\[\d+\]/, `[${totalPlayers}]`);
-                if (normalizedText !== newNormalized) btn.textContent = newNormalized;
+                const rawText = btn.textContent || '';
+                let baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
+                if (!baseText) baseText = (gameType === 'accumulative') ? 'Start' : 'Show Rooms';
+                const targetText = `${baseText}\n[${totalPlayers}]`;
+                if (rawText.trim() !== targetText.trim()) btn.textContent = targetText;
             });
         }
 
@@ -1227,9 +1228,9 @@ function updateLobbyButtons(stats, mode = 'all') {
         if (!baseText) {
             baseText = (game === 'accumulative') ? 'Start' : 'Show Rooms';
         }
-        const targetText = `${baseText} [${count}]`;
+        const targetText = `${baseText}\n[${count}]`;
 
-        if (rawText.trim() !== targetText) {
+        if (rawText.trim() !== targetText.trim()) {
             btn.textContent = targetText;
         }
     });

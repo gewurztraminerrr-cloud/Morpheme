@@ -166,12 +166,13 @@
     display: grid;
     grid-template-columns: 60px repeat(4, 1fr);
     gap: 8px;
-    align-items: center;
+    align-items: stretch;
 }
 
 .matrix-3d .matrix-header,
 .matrix-3d .matrix-row {
     grid-template-columns: 60px 1fr;
+    align-items: stretch;
 }
 
 .corner-cell {
@@ -189,13 +190,16 @@
     text-align: center;
     font-weight: 600;
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-btn {
-    padding: 10px;
+    padding: 7px 4px;
     border: 1px solid var(--input-border);
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -205,6 +209,15 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    white-space: pre-line;
+    line-height: 1.22;
+    text-align: center;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    box-sizing: border-box;
 }
 
 .game-btn::before {
@@ -1318,6 +1331,7 @@ body.theme-light-brown .field-hint {
     .matrix-row {
         grid-template-columns: 45px repeat(4, 1fr) !important;
         gap: 4px !important;
+        align-items: stretch !important;
     }
 
     .matrix-header .corner-cell {
@@ -1333,22 +1347,26 @@ body.theme-light-brown .field-hint {
         font-size: 0.72rem !important;
         border-radius: 4px !important;
         text-align: center !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .game-btn {
         padding: 5px 2px !important;
         font-size: 0.65rem !important;
+        letter-spacing: -0.2px !important;
         border-radius: 6px !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        word-break: break-word !important;
+        white-space: pre-line !important;
+        word-wrap: normal !important;
+        word-break: normal !important;
         line-height: 1.15 !important;
         text-align: center !important;
         display: inline-flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        min-height: 46px !important;
+        min-height: 48px !important;
         box-sizing: border-box !important;
     }
 
