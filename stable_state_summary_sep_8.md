@@ -97,3 +97,4 @@
   - In `#forum-view-post`: docked `.forum-bottom-bar` containing `← Back to category` (`#forum-back-to-list`) at the absolute bottom of the container across all screen sizes so it never sits high or leaves empty space below.
   - In `#forum-view-create`: docked `.forum-bottom-bar` containing `← Cancel` (`#forum-cancel-create`) at the absolute bottom.
   - In `#forum-view-list`: docked `.forum-bottom-bar.mobile-only-bottom-bar` containing `← Back` (`#forum-category-back-btn`) at the bottom on mobile to smoothly slide back to categories sidebar; hidden on desktop.
+- **Page Container Hierarchy Integrity**: Fixed DOM hierarchy closing tag in `#page-tools` so that all top-level views (`#page-mods`, `#page-settings`, `#page-contact`, `#page-donate`) remain top-level sibling `.page` containers at depth 3 and are never mistakenly hidden when `#page-tools` is set to `display: none`.
