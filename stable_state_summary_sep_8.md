@@ -104,3 +104,4 @@
   - `.tools-content-column` spans 100% width on slide 2 (`height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column`).
   - `.tools-content` acts as the scroll body (`flex: 1 1 0px; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`), ensuring all content (short or long) scrolls independently above the bottom bar.
   - `.mobile-bottom-nav` sits docked at the absolute bottom edge (`flex: 0 0 auto; width: 100%`) in a permanently fixed position as the user scrolls, identical to Forum.
+- **Mobile Bottom Back Button Padding Reduction**: Reduced the bottom spacing/padding below the fixed 'Back to Category' button (`.forum-bottom-bar`) and the mobile bottom Back buttons (`.mobile-bottom-nav`) from `10px + env(safe-area)` to `7px 14px 4px 14px`, providing a tight, docked aesthetic with only 4px below the button on mobile viewports.
