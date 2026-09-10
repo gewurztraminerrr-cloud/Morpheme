@@ -330,9 +330,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 2. Parallel Session & Single-Instance Validation (Non-blocking for instant Gateway render)
+    window._sessionCheckPromise = checkSession();
     const [isSingle] = await Promise.all([
         validateSingleInstance(),
-        checkSession()
+        window._sessionCheckPromise
     ]);
     if (!isSingle) return;
 
@@ -408,7 +409,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 gatewayBtn.textContent = 'ENTER LOBBY';
 
                 let gatewayTransitioning = false;
-                const executeGatewayTransition = (e) => {
+                const executeGatewayTransition = async (e) => {
+                    // Ensure session check has completed
+                    if (window._sessionCheckPromise) {
+                        try { await window._sessionCheckPromise; } catch (err) {}
+                    }
+                    if (!currentUser) {
+                        showPage('page-login');
+                        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
+                        return;
+                    }
+
                     window._gatewayTransitioning = true;
                     window._gatewayPassed = true;
                     window.currentPageId = 'page-lobby';
@@ -1608,6 +1619,24 @@ function showPage(pageId) {
         window._gatewayPassed = true;
     }
 
+    if (pageId === 'page-login') {
+        if (typeof window.refreshCaptchas === 'function') {
+            window.refreshCaptchas();
+        }
+        if (typeof fetchUserCount === 'function') {
+            fetchUserCount();
+        }
+        if (!currentUser) {
+            const ud = document.getElementById('user-display');
+            if (ud) {
+                ud.classList.add('hidden');
+                ud.style.display = 'none';
+            }
+            const un = document.getElementById('username-display');
+            if (un) un.textContent = '';
+        }
+    }
+
     // Intercept leaving tournament play mid-round
     if (pageId !== 'page-play' && window.isTournamentPlay && localStorage.getItem('tournament_play_active')) {
         if (typeof window.finishTournamentTurn === 'function') {
@@ -2174,8 +2203,14 @@ function updateAuthUI(rating = null) {
     const usernameEl = document.getElementById('username-display');
 
     if (currentUser) {
-        if (loginNavBtn) loginNavBtn.classList.add('hidden');
-        if (userDisplay) userDisplay.classList.remove('hidden');
+        if (loginNavBtn) {
+            loginNavBtn.classList.add('hidden');
+            loginNavBtn.style.display = 'none';
+        }
+        if (userDisplay) {
+            userDisplay.classList.remove('hidden');
+            userDisplay.style.display = 'flex';
+        }
         if (usernameEl) {
             usernameEl.textContent = currentUser;
             usernameEl.style.color = 'var(--accent-color)';
@@ -2218,8 +2253,18 @@ function updateAuthUI(rating = null) {
         }
 
     } else {
-        if (loginNavBtn) loginNavBtn.classList.remove('hidden');
-        if (userDisplay) userDisplay.classList.add('hidden');
+        if (loginNavBtn) {
+            loginNavBtn.classList.remove('hidden');
+            loginNavBtn.style.display = '';
+        }
+        if (userDisplay) {
+            userDisplay.classList.add('hidden');
+            userDisplay.style.display = 'none';
+        }
+        if (usernameEl) {
+            usernameEl.textContent = '';
+            usernameEl.onclick = null;
+        }
         const modsBtn = document.getElementById('nav-mods-btn');
         if (modsBtn) modsBtn.style.display = 'none';
 
@@ -2252,64 +2297,89 @@ async function handleLogout() {
     try {
         console.info('[Auth] Logout initiated...');
         
-        // Ensure session is cleared on server
-        await fetch('/api/logout', { method: 'POST' });
-        
-        // Preserve global "read" states (Notices, Forum markers) across login sessions
-        const noticeId = localStorage.getItem('morpheme_read_notice_id');
-        const forumViewed = localStorage.getItem('forum_last_viewed');
-
-        // Clear session and auth data
-        localStorage.clear();
-        sessionStorage.clear();
-        sessionStorage.setItem('morpheme_logged_out', 'true');
-        localStorage.setItem('morpheme_logged_out', 'true');
-        
-        // Restore non-sensitive global markers
-        if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
-        if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
-        
-        // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
-        if (typeof window.resetSettingsToDefault === 'function') {
-            window.resetSettingsToDefault();
-        }
-        
-        window.currentUserConfigRatings = {};
-        window.currentUserIsMod = false;
-        window.currentUserIsRootMod = false;
-        window.currentUser = null;
-        window.currentUserIsGuest = false;
-        currentUser = null;
-
-        const modsBtn = document.getElementById('nav-mods-btn');
-        if (modsBtn) modsBtn.style.display = 'none';
-        document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
-
-        // Update auth UI and switch directly to the Login page
-        updateAuthUI();
-        showPage('page-login');
-        const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
-        if (loginBtn) updateActiveNav(loginBtn);
-        window.location.hash = '#page-login';
-
-        // Refresh user count and captcha on login screen
-        if (typeof fetchUserCount === 'function') fetchUserCount();
-        const captchaImg = document.getElementById('guest-captcha-img');
-        if (captchaImg && typeof refreshCaptcha === 'function') refreshCaptcha(captchaImg);
-
-        if (logoutBtn) {
-            logoutBtn.textContent = 'Logout';
-            logoutBtn.style.opacity = '1';
-            logoutBtn.disabled = false;
+        // Ensure session is cleared on server with a strict 2.5s timeout
+        if (typeof fetchWithTimeout === 'function') {
+            await fetchWithTimeout('/api/logout', { method: 'POST', keepalive: true }, 2500).catch(e => {
+                console.warn('[Auth] Server logout request timed out or failed, proceeding with local logout:', e);
+            });
+        } else {
+            await fetch('/api/logout', { method: 'POST', keepalive: true }).catch(e => {
+                console.warn('[Auth] Server logout request failed, proceeding with local logout:', e);
+            });
         }
     } catch (error) {
-        console.error('Logout error:', error);
-        if (logoutBtn) {
-            logoutBtn.textContent = 'Logout';
-            logoutBtn.style.opacity = '1';
-            logoutBtn.disabled = false;
+        console.warn('[Auth] Error notifying server of logout:', error);
+    } finally {
+        // ALWAYS and UNCONDITIONALLY complete complete local logout
+        try {
+            // Preserve global "read" states (Notices, Forum markers) across login sessions
+            const noticeId = localStorage.getItem('morpheme_read_notice_id');
+            const forumViewed = localStorage.getItem('forum_last_viewed');
+
+            // Clear session and auth data
+            localStorage.clear();
+            sessionStorage.clear();
+            sessionStorage.setItem('morpheme_logged_out', 'true');
+            localStorage.setItem('morpheme_logged_out', 'true');
+            
+            // Restore non-sensitive global markers
+            if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
+            if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
+            
+            // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
+            if (typeof window.resetSettingsToDefault === 'function') {
+                window.resetSettingsToDefault();
+            }
+            
+            window.currentUserConfigRatings = {};
+            window.currentUserIsMod = false;
+            window.currentUserIsRootMod = false;
+            window.currentUser = null;
+            window.currentUserIsGuest = false;
+            currentUser = null;
+
+            const modsBtn = document.getElementById('nav-mods-btn');
+            if (modsBtn) modsBtn.style.display = 'none';
+            document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
+
+            // Reset header user display immediately
+            const usernameEl = document.getElementById('username-display');
+            if (usernameEl) {
+                usernameEl.textContent = '';
+                usernameEl.onclick = null;
+            }
+            const userDisplay = document.getElementById('user-display');
+            if (userDisplay) {
+                userDisplay.classList.add('hidden');
+                userDisplay.style.display = 'none';
+            }
+            const loginNavBtn = document.getElementById('nav-login-btn');
+            if (loginNavBtn) {
+                loginNavBtn.classList.remove('hidden');
+                loginNavBtn.style.display = '';
+            }
+
+            // Update auth UI and switch directly to the Login page
+            updateAuthUI();
+            showPage('page-login');
+            const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
+            if (loginBtn) updateActiveNav(loginBtn);
+            window.location.hash = '#page-login';
+
+            // Refresh user count and captcha on login screen
+            if (typeof fetchUserCount === 'function') fetchUserCount();
+            if (typeof window.refreshCaptchas === 'function') {
+                window.refreshCaptchas();
+            }
+        } catch (cleanupErr) {
+            console.error('[Auth] Error during local logout cleanup:', cleanupErr);
+        } finally {
+            if (logoutBtn) {
+                logoutBtn.textContent = 'Logout';
+                logoutBtn.style.opacity = '1';
+                logoutBtn.disabled = false;
+            }
         }
-        alert('Logout failed. Please check your connection.');
     }
 }
 

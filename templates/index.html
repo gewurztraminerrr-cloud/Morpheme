@@ -1046,7 +1046,7 @@
 
 
 
-            <div id="user-display" class="user-display hidden">
+            <div id="user-display" class="user-display hidden" style="display: none;">
                 <span id="username-display"></span>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
@@ -1611,9 +1611,32 @@
                 }
             })();
 
-            window.handleEnterLobbyClick = function(btn, evt) {
+            window.handleEnterLobbyClick = async function(btn, evt) {
                 var gb = document.getElementById('btn-enter-lobby-gateway');
                 if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
+
+                // Ensure session check has completed
+                if (window._sessionCheckPromise) {
+                    try { await window._sessionCheckPromise; } catch(e) {}
+                }
+                var activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
+                if (!activeUser) {
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('page-login');
+                    } else if (typeof showPage === 'function') {
+                        showPage('page-login');
+                    } else {
+                        var pLoad = document.getElementById('page-loading');
+                        var pLogin = document.getElementById('page-login');
+                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
+                        if (pLogin) { pLogin.classList.add('active'); pLogin.style.display = 'flex'; }
+                    }
+                    if (typeof window.refreshCaptchas === 'function') {
+                        window.refreshCaptchas();
+                    }
+                    return;
+                }
+
                 window._gatewayPassed = true;
                 window._gatewayTransitioning = true;
                 window.currentPageId = 'page-lobby';
@@ -1772,14 +1795,26 @@
                 try {
                     const pageLoading = document.getElementById('page-loading');
                     const pageLogin = document.getElementById('page-login');
-                    const loggedIn = localStorage.getItem('morpheme_logged_in') === 'true';
+                    const loggedOut = localStorage.getItem('morpheme_logged_out') === 'true' || sessionStorage.getItem('morpheme_logged_out') === 'true';
+                    const loggedIn = !loggedOut && (localStorage.getItem('morpheme_logged_in') === 'true');
                     
+                    if (loggedOut) {
+                        const ud = document.getElementById('user-display');
+                        if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
+                        const un = document.getElementById('username-display');
+                        if (un) un.textContent = '';
+                    }
+
                     if (loggedIn) {
                         if (pageLoading) pageLoading.classList.add('active');
                         if (pageLogin) pageLogin.classList.remove('active');
                     } else {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
+                        const ud = document.getElementById('user-display');
+                        if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
+                        const un = document.getElementById('username-display');
+                        if (un) un.textContent = '';
                     }
                 } catch(e) {
                     console.warn('LocalStorage check failed:', e);
