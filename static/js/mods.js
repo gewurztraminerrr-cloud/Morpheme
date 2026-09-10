@@ -1365,6 +1365,17 @@ function setupModsNavigation() {
         }
     });
 
+    // Mobile Back button inside mods content
+    const modsBackBtn = document.getElementById('mods-mobile-back-btn');
+    if (modsBackBtn) {
+        modsBackBtn.addEventListener('click', () => {
+            const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+            if (layoutEl) {
+                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
     // Mobile Layout snapping and menu reset on navigation
     const modsPage = document.getElementById('page-mods');
     if (modsPage) {

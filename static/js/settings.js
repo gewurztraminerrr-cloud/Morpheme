@@ -923,6 +923,17 @@ function debounce(func, wait) {
             }
         });
 
+        // Mobile Back button inside settings content
+        const settingsBackBtn = document.getElementById('settings-mobile-back-btn');
+        if (settingsBackBtn) {
+            settingsBackBtn.addEventListener('click', () => {
+                const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                if (layoutEl) {
+                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                }
+            });
+        }
+
         // Mobile Layout snapping on navigation
         const settingsPage = document.getElementById('page-settings');
         if (settingsPage) {

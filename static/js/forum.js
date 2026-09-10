@@ -365,6 +365,15 @@ const Forum = {
             });
         }
 
+        // Fixed bottom Back button on mobile thread list
+        const categoryBackBtn = document.getElementById('forum-category-back-btn');
+        if (categoryBackBtn) {
+            categoryBackBtn.addEventListener('click', () => {
+                const sidebar = document.querySelector('.forum-sidebar');
+                if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            });
+        }
+
         // New post button
         const newPostBtn = document.getElementById('forum-new-post-btn');
         if (newPostBtn) {

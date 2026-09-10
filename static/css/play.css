@@ -2221,6 +2221,59 @@ body.theme-light-brown .word-item.missed {
     box-sizing: border-box;
 }
 
+/* Fixed Bottom Navigation for Tools, Mods, Settings on Mobile */
+.mobile-bottom-nav {
+    display: none;
+}
+
+.bottom-back-btn {
+    background: var(--bg-primary, #0d1117);
+    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15));
+    color: var(--text-primary, #ffffff);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 600;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    min-height: 42px;
+}
+.bottom-back-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color, #4facfe);
+}
+.bottom-back-btn:active {
+    transform: scale(0.985);
+}
+
+[class*="theme-white"] .bottom-back-btn,
+[class*="theme-light-"] .bottom-back-btn,
+body.theme-yellow .bottom-back-btn,
+body.theme-pink .bottom-back-btn,
+body.theme-orange .bottom-back-btn,
+body.theme-gray .bottom-back-btn,
+body.theme-light-brown .bottom-back-btn {
+    background: var(--bg-card, #ffffff);
+    border-color: var(--input-border, rgba(0, 0, 0, 0.15));
+    color: var(--text-primary, #111111);
+}
+[class*="theme-white"] .bottom-back-btn:hover,
+[class*="theme-light-"] .bottom-back-btn:hover,
+body.theme-yellow .bottom-back-btn:hover,
+body.theme-pink .bottom-back-btn:hover,
+body.theme-orange .bottom-back-btn:hover,
+body.theme-gray .bottom-back-btn:hover,
+body.theme-light-brown .bottom-back-btn:hover {
+    background: var(--bg-element, rgba(0, 0, 0, 0.05));
+    border-color: var(--accent-color, #0284c7);
+}
+
 @media (min-width: 901px) {
     #page-tools,
     #page-settings,
@@ -6117,12 +6170,14 @@ input[type=range]::-moz-range-track {
     #page-tools .tools-content,
     #page-mods .tools-content,
     #page-settings .tools-content {
-        padding: 12px 10px !important;
+        padding: 12px 10px 0 10px !important;
         box-sizing: border-box !important;
         height: 100% !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .tool-pane,
@@ -6135,6 +6190,28 @@ input[type=range]::-moz-range-track {
         overflow: visible !important;
         flex: unset !important;
         box-sizing: border-box !important;
+        padding-bottom: 70px !important;
+    }
+
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: calc(100% + 20px) !important;
+        margin-left: -10px !important;
+        margin-right: -10px !important;
+        z-index: 100 !important;
+        background: var(--bg-panel, #181920) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+        padding: 8px 10px !important;
+        box-sizing: border-box !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-top: auto !important;
     }
 
     /* Responsive input rows for all tools and profile */
@@ -10048,11 +10125,13 @@ body.is-mobile #page-settings .tools-content {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    padding: 12px 10px 60px 10px !important;
+    padding: 12px 10px 0 10px !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    flex-direction: column !important;
     scrollbar-width: thin !important;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
 }
@@ -10060,7 +10139,7 @@ body.is-mobile #page-settings .tool-pane {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    padding: 0 !important;
+    padding: 0 0 70px 0 !important;
     box-sizing: border-box !important;
 }
 body.is-mobile #page-settings .settings-tab-grid {

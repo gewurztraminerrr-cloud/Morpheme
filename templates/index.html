@@ -157,9 +157,9 @@
     <link rel="preload" href="/css/lobby.css?v=1788924000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1788720953">
     <link rel="stylesheet" href="/css/lobby.css?v=1788924000">
-    <link rel="stylesheet" href="/css/play.css?v=1788924000">
+    <link rel="stylesheet" href="/css/play.css?v=1788927000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
-    <link rel="stylesheet" href="/css/forum.css?v=33874">
+    <link rel="stylesheet" href="/css/forum.css?v=33875">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
     <script>
         function showLobbyToast(message, type) {
@@ -2670,14 +2670,13 @@
                                     community.</p>
                             </div>
                         </div>
+                        <div class="forum-bottom-bar mobile-only-bottom-bar">
+                            <button id="forum-category-back-btn" class="forum-back-btn bottom-back-btn" type="button">← Back</button>
+                        </div>
                     </div>
 
                     <!-- Single Post View -->
                     <div id="forum-view-post" class="forum-view">
-                        <div class="forum-sub-header">
-                            <button id="forum-back-to-list" class="forum-back-btn">← Back to
-                                category</button>
-                        </div>
                         <div id="forum-delete-post-container" style="display:none; margin-bottom: 10px;">
                             <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
                         </div>
@@ -2715,14 +2714,13 @@
                                 <!-- Comments injected by JS -->
                             </div>
                         </div>
+                        <div class="forum-bottom-bar">
+                            <button id="forum-back-to-list" class="forum-back-btn bottom-back-btn" type="button">← Back to category</button>
+                        </div>
                     </div>
 
                     <!-- Create Post View -->
                     <div id="forum-view-create" class="forum-view">
-                        <div class="forum-sub-header">
-                            <button id="forum-cancel-create" class="forum-back-btn">←
-                                Cancel</button>
-                        </div>
                         <div class="forum-create-card">
                             <h2 id="forum-create-title">Start a New Thread</h2>
                             <form id="forum-post-form" class="forum-form">
@@ -2751,6 +2749,9 @@
                                     <button type="submit" class="forum-action-btn primary">Publish Thread</button>
                                 </div>
                             </form>
+                        </div>
+                        <div class="forum-bottom-bar">
+                            <button id="forum-cancel-create" class="forum-back-btn bottom-back-btn" type="button">← Cancel</button>
                         </div>
                     </div>
 
@@ -3861,6 +3862,10 @@
                         <div id="contact-status" class="contact-status"></div>
                     </form>
                 </div>
+
+                <div class="mobile-bottom-nav tools-bottom-nav">
+                    <button id="tools-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
+                </div>
             </div>
         </div>
 
@@ -4286,6 +4291,10 @@
                         <div id="mod-list-container" class="mod-list" style="width: 100%;">
                             <!-- Loaded by JS -->
                         </div>
+                    </div>
+
+                    <div class="mobile-bottom-nav mods-bottom-nav">
+                        <button id="mods-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
                     </div>
                 </div>
             </div>
@@ -5033,6 +5042,10 @@
                                 </label>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mobile-bottom-nav settings-bottom-nav">
+                        <button id="settings-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
                     </div>
                 </div>
             </div>
@@ -7156,16 +7169,16 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1788926000"></script>
-    <script src="/js/forum.js?v=33780"></script>
+    <script src="/js/settings.js?v=1788927000"></script>
+    <script src="/js/forum.js?v=33781"></script>
     <script src="/js/app.js?v=1788925000"></script>
     <script src="/js/lobby.js?v=1788922200"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1788923000"></script>
+    <script src="/js/tools.js?v=1788927000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1788914044"></script>
+    <script src="/js/mods.js?v=1788927000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
     <script src="/js/donate.js?v=33806"></script>
     

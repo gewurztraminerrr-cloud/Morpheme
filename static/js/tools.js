@@ -297,6 +297,17 @@ function setupToolsNavigation() {
         }
     });
 
+    // Mobile Back button inside tools content
+    const toolsBackBtn = document.getElementById('tools-mobile-back-btn');
+    if (toolsBackBtn) {
+        toolsBackBtn.addEventListener('click', () => {
+            const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+            if (layoutEl) {
+                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
     // Mobile Layout snapping on navigation to Tools page
     const toolsPage = document.getElementById('page-tools');
     if (toolsPage) {
