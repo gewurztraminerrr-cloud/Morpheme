@@ -21,9 +21,9 @@
         display: grid !important;
         grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.3fr) !important;
         gap: 16px !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: calc(100% - 41px) !important;
+        height: auto !important;
         margin-top: 0 !important;
         margin-bottom: 3px !important;
         overflow: hidden !important;
@@ -37,14 +37,17 @@
     #mobile-panel-main,
     .game-types-panel {
         grid-column: 1;
-        margin-top: 10px;
-        margin-bottom: 8px;
-        height: calc(100% - 18px) !important;
-        max-height: calc(100% - 18px) !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         box-sizing: border-box;
         padding: 16px 20px 0 20px !important;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        background: var(--bg-panel);
     }
 
     #mobile-panel-solo,
@@ -55,8 +58,11 @@
         padding: 16px 20px 14px 20px;
         backdrop-filter: blur(10px);
         border: 1px solid var(--input-border);
-        margin-top: 10px;
+        margin-top: 0 !important;
         margin-bottom: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
         box-sizing: border-box;
     }
 
@@ -77,10 +83,10 @@
     #mobile-panel-rooms,
     .active-rooms-panel {
         grid-column: 2;
-        margin-top: 10px;
-        margin-bottom: 8px;
-        height: calc(100% - 18px) !important;
-        max-height: calc(100% - 18px) !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
         box-sizing: border-box;
         padding: 16px 12px 12px 12px !important;
@@ -1493,8 +1499,9 @@ body.theme-light-brown .field-hint {
 
 /* Premium Obsidian-Diamond Glass Journey Banner */
 .lobby-journey-message {
+    flex: 0 0 auto !important;
     text-align: center;
-    margin: 6px auto 20px auto;
+    margin: 6px auto 10px auto !important;
     font-size: 0.92rem;
     font-weight: 700;
     letter-spacing: 1.8px;
@@ -1503,7 +1510,7 @@ body.theme-light-brown .field-hint {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 11px 20px;
+    padding: 10px 20px;
     max-width: 760px;
     width: 100%;
     box-sizing: border-box;
@@ -1518,6 +1525,7 @@ body.theme-light-brown .field-hint {
     animation: journey-box-aura 5s ease-in-out infinite;
     user-select: none;
     -webkit-user-select: none;
+    z-index: 10;
 }
 
 /* Crisp specular top-edge bevel */
@@ -1606,8 +1614,8 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.8rem;
         letter-spacing: 1.4px;
-        margin: 6px auto 18px auto !important;
-        padding: 9.5px 18px;
+        margin: 4px auto 8px auto !important;
+        padding: 8px 16px !important;
         width: 96%;
         max-width: 560px;
         border-radius: 10px;
@@ -1621,8 +1629,8 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.72rem !important;
         letter-spacing: 0.8px !important;
-        margin: 6px auto 16px auto !important;
-        padding: 9px 12px !important;
+        margin: 3px auto 6px auto !important;
+        padding: 7px 12px !important;
         width: 92% !important;
         max-width: 420px !important;
         border-radius: 10px !important;
@@ -1639,8 +1647,8 @@ body.theme-light-brown .field-hint {
     .lobby-journey-message {
         font-size: 0.64rem !important;
         letter-spacing: 0.4px !important;
-        margin: 4px auto 14px auto !important;
-        padding: 8px 8px !important;
+        margin: 2px auto 4px auto !important;
+        padding: 6px 8px !important;
     }
     .lobby-journey-message span {
         letter-spacing: 0.4px !important;
