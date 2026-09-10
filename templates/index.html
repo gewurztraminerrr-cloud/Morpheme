@@ -157,9 +157,9 @@
     <link rel="preload" href="/css/lobby.css?v=1788924000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1788720953">
     <link rel="stylesheet" href="/css/lobby.css?v=1788924000">
-    <link rel="stylesheet" href="/css/play.css?v=1788927000">
+    <link rel="stylesheet" href="/css/play.css?v=1788928000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
-    <link rel="stylesheet" href="/css/forum.css?v=33875">
+    <link rel="stylesheet" href="/css/forum.css?v=33876">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
     <script>
         function showLobbyToast(message, type) {
@@ -2652,22 +2652,24 @@
                 <div class="forum-main">
                     <!-- List View -->
                     <div id="forum-view-list" class="forum-view active">
-                        <div class="forum-header">
-                            <div class="header-titles">
-                                <h2 id="forum-category-title">Community Board</h2>
-                                <p id="forum-category-desc">Connect with other players.</p>
+                        <div class="forum-view-scroll-body">
+                            <div class="forum-header">
+                                <div class="header-titles">
+                                    <h2 id="forum-category-title">Community Board</h2>
+                                    <p id="forum-category-desc">Connect with other players.</p>
+                                </div>
+                                <div class="forum-header-actions" style="display: flex; align-items: center; gap: 8px;">
+                                    <button id="forum-refresh-posts-btn" class="forum-action-btn secondary" style="padding: 10px 15px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span> Refresh</button>
+                                    <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
+                                </div>
                             </div>
-                            <div class="forum-header-actions" style="display: flex; align-items: center; gap: 8px;">
-                                <button id="forum-refresh-posts-btn" class="forum-action-btn secondary" style="padding: 10px 15px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span> Refresh</button>
-                                <button id="forum-new-post-btn" class="forum-action-btn hidden">+ New Thread</button>
-                            </div>
-                        </div>
-                        <div id="forum-posts-list" class="forum-posts-list">
-                            <div class="forum-placeholder">
-                                <div class="placeholder-icon">💬</div>
-                                <h3>Welcome to the Forums</h3>
-                                <p>Select a category from the sidebar to begin exploring the
-                                    community.</p>
+                            <div id="forum-posts-list" class="forum-posts-list">
+                                <div class="forum-placeholder">
+                                    <div class="placeholder-icon">💬</div>
+                                    <h3>Welcome to the Forums</h3>
+                                    <p>Select a category from the sidebar to begin exploring the
+                                        community.</p>
+                                </div>
                             </div>
                         </div>
                         <div class="forum-bottom-bar mobile-only-bottom-bar">
@@ -2677,41 +2679,43 @@
 
                     <!-- Single Post View -->
                     <div id="forum-view-post" class="forum-view">
-                        <div id="forum-delete-post-container" style="display:none; margin-bottom: 10px;">
-                            <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
-                        </div>
-                        <div id="forum-post-detail">
-                            <!-- Post content injected via JS -->
-                        </div>
-                        <div class="forum-comments-section">
-                            <div class="forum-comment-form hidden" id="forum-comment-form-container">
-                                <div class="comment-input-wrapper">
-                                    <textarea id="forum-comment-input"
-                                        placeholder="Join the conversation..."></textarea>
-                                    
-                                    <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 8px 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
-                                        <input type="file" id="forum-comment-image" accept="image/*" multiple style="display: none;">
-                                        <div id="forum-comment-image-wrapper" style="width: 100%; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
-                                            <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
-                                                <span class="file-text">&#128206; Attach images (up to 4)</span>
+                        <div class="forum-view-scroll-body">
+                            <div id="forum-delete-post-container" style="display:none; margin-bottom: 10px;">
+                                <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
+                            </div>
+                            <div id="forum-post-detail">
+                                <!-- Post content injected via JS -->
+                            </div>
+                            <div class="forum-comments-section">
+                                <div class="forum-comment-form hidden" id="forum-comment-form-container">
+                                    <div class="comment-input-wrapper">
+                                        <textarea id="forum-comment-input"
+                                            placeholder="Join the conversation..."></textarea>
+                                        
+                                        <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 8px 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
+                                            <input type="file" id="forum-comment-image" accept="image/*" multiple style="display: none;">
+                                            <div id="forum-comment-image-wrapper" style="width: 100%; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
+                                                <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
+                                                    <span class="file-text">&#128206; Attach images (up to 4)</span>
+                                                </div>
                                             </div>
+                                            <div id="forum-comment-image-preview" class="image-preview hidden"></div>
                                         </div>
-                                        <div id="forum-comment-image-preview" class="image-preview hidden"></div>
-                                    </div>
 
-                                    <div class="comment-controls">
-                                        <button id="forum-submit-comment" class="forum-action-btn">Post
-                                            Comment</button>
+                                        <div class="comment-controls">
+                                            <button id="forum-submit-comment" class="forum-action-btn">Post
+                                                Comment</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="comments-header">
-                                <h3>Discussion</h3>
-                                <span id="forum-comment-count" class="comment-badge">0
-                                    comments</span>
-                            </div>
-                            <div id="forum-comments-list">
-                                <!-- Comments injected by JS -->
+                                <div class="comments-header">
+                                    <h3>Discussion</h3>
+                                    <span id="forum-comment-count" class="comment-badge">0
+                                        comments</span>
+                                </div>
+                                <div id="forum-comments-list">
+                                    <!-- Comments injected by JS -->
+                                </div>
                             </div>
                         </div>
                         <div class="forum-bottom-bar">
@@ -2721,34 +2725,36 @@
 
                     <!-- Create Post View -->
                     <div id="forum-view-create" class="forum-view">
-                        <div class="forum-create-card">
-                            <h2 id="forum-create-title">Start a New Thread</h2>
-                            <form id="forum-post-form" class="forum-form">
-                                <input type="hidden" id="forum-post-category-id">
-                                <div class="form-group">
-                                    <label>What's on your mind?</label>
-                                    <input type="text" id="forum-post-title"
-                                        placeholder="Give your thread a clear, descriptive title" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Details</label>
-                                    <textarea id="forum-post-content" placeholder="Write your post content here..."
-                                        required></textarea>
-                                </div>
-                                <div id="forum-image-upload-section" class="forum-upload-group hidden">
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 4)</label>
-                                    <input type="file" id="forum-post-image" accept="image/*" multiple style="display: none;">
-                                    <div id="forum-post-image-wrapper" style="width: 100%; display: block; cursor: pointer; margin: 0; padding: 0;">
-                                        <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
-                                            <span class="file-text">Click to choose images (up to 4) or drag and drop</span>
-                                        </div>
+                        <div class="forum-view-scroll-body">
+                            <div class="forum-create-card">
+                                <h2 id="forum-create-title">Start a New Thread</h2>
+                                <form id="forum-post-form" class="forum-form">
+                                    <input type="hidden" id="forum-post-category-id">
+                                    <div class="form-group">
+                                        <label>What's on your mind?</label>
+                                        <input type="text" id="forum-post-title"
+                                            placeholder="Give your thread a clear, descriptive title" required>
                                     </div>
-                                    <div id="forum-image-preview" class="image-preview hidden"></div>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="submit" class="forum-action-btn primary">Publish Thread</button>
-                                </div>
-                            </form>
+                                    <div class="form-group">
+                                        <label>Details</label>
+                                        <textarea id="forum-post-content" placeholder="Write your post content here..."
+                                            required></textarea>
+                                    </div>
+                                    <div id="forum-image-upload-section" class="forum-upload-group hidden">
+                                        <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 4)</label>
+                                        <input type="file" id="forum-post-image" accept="image/*" multiple style="display: none;">
+                                        <div id="forum-post-image-wrapper" style="width: 100%; display: block; cursor: pointer; margin: 0; padding: 0;">
+                                            <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
+                                                <span class="file-text">Click to choose images (up to 4) or drag and drop</span>
+                                            </div>
+                                        </div>
+                                        <div id="forum-image-preview" class="image-preview hidden"></div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="forum-action-btn primary">Publish Thread</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                         <div class="forum-bottom-bar">
                             <button id="forum-cancel-create" class="forum-back-btn bottom-back-btn" type="button">← Cancel</button>
@@ -2757,15 +2763,17 @@
 
                     <!-- Restriction View -->
                     <div id="forum-view-restricted" class="forum-view">
-                        <div class="forum-restricted-card">
-                            <div class="restricted-icon">🔒</div>
-                            <h2>Members Only</h2>
-                            <p>You must be a registered member to participate in the forums.
-                                Guests can browse but
-                                cannot post or comment.</p>
-                            <div class="restricted-actions">
-                                <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
-                                    Register</button>
+                        <div class="forum-view-scroll-body">
+                            <div class="forum-restricted-card">
+                                <div class="restricted-icon">🔒</div>
+                                <h2>Members Only</h2>
+                                <p>You must be a registered member to participate in the forums.
+                                    Guests can browse but
+                                    cannot post or comment.</p>
+                                <div class="restricted-actions">
+                                    <button class="forum-action-btn primary" onclick="navigateToPage('login')">Sign In /
+                                        Register</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2829,8 +2837,9 @@
                     </button>
                 </div>
 
-                <!-- Content (2/3) -->
-                <div class="tools-content">
+                <!-- Content Column (2/3) -->
+                <div class="tools-content-column">
+                    <div class="tools-content">
                     <!-- Find Count Interface -->
                     <div id="tool-find-count" class="tool-pane">
                         <div class="tool-header">
@@ -3820,6 +3829,10 @@
                         </div>
 
                     </div>
+
+                    <div class="mobile-bottom-nav tools-bottom-nav">
+                        <button id="tools-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3861,10 +3874,6 @@
 
                         <div id="contact-status" class="contact-status"></div>
                     </form>
-                </div>
-
-                <div class="mobile-bottom-nav tools-bottom-nav">
-                    <button id="tools-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
                 </div>
             </div>
         </div>
@@ -3908,8 +3917,9 @@
                     </button>
                 </div>
 
-                <!-- Content (2/3) -->
-                <div class="tools-content">
+                <!-- Content Column (2/3) -->
+                <div class="tools-content-column">
+                    <div class="tools-content">
 
                     <!-- Moderator Control: Ban / Timeout User -->
                     <div id="mod-tab-ban" class="tool-pane">
@@ -4292,13 +4302,14 @@
                             <!-- Loaded by JS -->
                         </div>
                     </div>
+                </div>
 
-                    <div class="mobile-bottom-nav mods-bottom-nav">
-                        <button id="mods-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
-                    </div>
+                <div class="mobile-bottom-nav mods-bottom-nav">
+                    <button id="mods-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
                 </div>
             </div>
         </div>
+    </div>
 
 
         <!-- Settings Page -->
@@ -4321,8 +4332,9 @@
                     </button>
                 </div>
 
-                <!-- Content (2/3) -->
-                <div class="tools-content">
+                <!-- Content Column (2/3) -->
+                <div class="tools-content-column">
+                    <div class="tools-content">
 
                     <!-- Appearance Tab -->
                     <div id="setting-tab-appearance" class="tool-pane">
@@ -5043,13 +5055,14 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mobile-bottom-nav settings-bottom-nav">
-                        <button id="settings-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
-                    </div>
+                <div class="mobile-bottom-nav settings-bottom-nav">
+                    <button id="settings-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
                 </div>
             </div>
         </div>
+    </div>
 
 
 
@@ -7169,16 +7182,16 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1788927000"></script>
-    <script src="/js/forum.js?v=33781"></script>
+    <script src="/js/settings.js?v=1788928000"></script>
+    <script src="/js/forum.js?v=33782"></script>
     <script src="/js/app.js?v=1788925000"></script>
     <script src="/js/lobby.js?v=1788922200"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1788927000"></script>
+    <script src="/js/tools.js?v=1788928000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1788927000"></script>
+    <script src="/js/mods.js?v=1788928000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
     <script src="/js/donate.js?v=33806"></script>
     

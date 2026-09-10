@@ -153,23 +153,44 @@
 }
 
 .forum-main {
-    flex: 1;
+    flex: 1 1 0px;
+    height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    box-sizing: border-box;
 }
 
 .forum-view {
     display: none;
     flex-direction: column;
     height: 100%;
-    padding: 30px;
-    overflow-y: auto;
+    min-height: 0;
+    max-height: 100%;
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative;
 }
 
 .forum-view.active {
-    display: flex;
+    display: flex !important;
+}
+
+.forum-view-scroll-body {
+    flex: 1 1 0px;
+    min-height: 0;
+    height: auto;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    padding: 30px;
 }
 
 .forum-header {
@@ -307,18 +328,15 @@
 }
 
 .forum-bottom-bar {
-    position: sticky;
-    bottom: 0;
-    margin-top: auto;
+    flex: 0 0 auto;
+    width: 100%;
     z-index: 50;
     background: var(--bg-panel, #0d1117);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.12));
-    padding: 10px 30px;
-    margin-left: -30px;
-    margin-right: -30px;
-    margin-bottom: -30px;
+    padding: 10px 20px;
+    margin: 0 !important;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -1098,8 +1116,7 @@ body.theme-gray .forum-back-btn:hover {
     .forum-container::-webkit-scrollbar {
         display: none !important;
     }
-    .forum-sidebar,
-    .forum-main {
+    .forum-sidebar {
         flex: 0 0 100% !important;
         width: 100% !important;
         min-width: 100% !important;
@@ -1109,15 +1126,30 @@ body.theme-gray .forum-back-btn:hover {
         height: 100% !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        border-right: none !important;
+        border-bottom: none !important;
         border-top: none !important;
         clip-path: inset(0);
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
     }
-    .forum-sidebar {
-        border-right: none !important;
-        border-bottom: none !important;
+    .forum-main {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
         border-top: none !important;
+        clip-path: inset(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
     .forum-sidebar-header {
         border-top: none !important;
@@ -1130,17 +1162,28 @@ body.theme-gray .forum-back-btn:hover {
         border-top: none !important;
     }
     .forum-view {
-        height: auto !important;
-        min-height: 100% !important;
-        padding: 15px !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         border-top: none !important;
+        overflow: hidden !important;
+        display: none;
+        flex-direction: column !important;
+    }
+    .forum-view.active {
+        display: flex !important;
+    }
+    .forum-view-scroll-body {
+        padding: 15px !important;
     }
     .forum-bottom-bar {
-        margin-left: -15px !important;
-        margin-right: -15px !important;
-        margin-bottom: -15px !important;
-        padding: 8px 15px !important;
+        margin: 0 !important;
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)) 14px !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
     }
     .mobile-only-bottom-bar {
         display: flex !important;

@@ -369,6 +369,10 @@ const Forum = {
         const categoryBackBtn = document.getElementById('forum-category-back-btn');
         if (categoryBackBtn) {
             categoryBackBtn.addEventListener('click', () => {
+                const container = document.querySelector('#page-forums .forum-container');
+                if (container) {
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                }
                 const sidebar = document.querySelector('.forum-sidebar');
                 if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
             });
@@ -1161,6 +1165,9 @@ const Forum = {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-list').classList.add('active');
 
+        const activeScroll = document.querySelector('#forum-view-list .forum-view-scroll-body');
+        if (activeScroll) activeScroll.scrollTop = 0;
+
         // Hide static Delete Post button when leaving post view
         const deleteContainer = document.getElementById('forum-delete-post-container');
         if (deleteContainer) deleteContainer.style.display = 'none';
@@ -1178,6 +1185,9 @@ const Forum = {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-post').classList.add('active');
 
+        const activeScroll = document.querySelector('#forum-view-post .forum-view-scroll-body');
+        if (activeScroll) activeScroll.scrollTop = 0;
+
         // On mobile devices, scroll down so they see the post details
         if (window.innerWidth <= 820) {
             const postViewEl = document.getElementById('forum-view-post');
@@ -1193,6 +1203,9 @@ const Forum = {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-create').classList.add('active');
         document.getElementById('forum-post-category-id').value = this.currentCategoryId;
+
+        const activeScroll = document.querySelector('#forum-view-create .forum-view-scroll-body');
+        if (activeScroll) activeScroll.scrollTop = 0;
 
         // User Request Update: Allow all posts in every topic to attach an image
         document.getElementById('forum-image-upload-section').classList.remove('hidden');
