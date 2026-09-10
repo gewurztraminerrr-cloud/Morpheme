@@ -1960,16 +1960,16 @@
 
                 @media (max-width: 900px) {
                     .lobby-journey-sticky-header {
-                        position: sticky;
-                        top: 0;
-                        z-index: 25;
-                        background-color: var(--bg-main, #12121f);
-                        background-image: linear-gradient(var(--bg-panel), var(--bg-panel));
-                        margin: 0 -10px 0 -10px;
-                        padding: 10px 10px 18px 10px;
-                        border-top-left-radius: 10px;
-                        border-top-right-radius: 10px;
-                        box-sizing: border-box;
+                        position: sticky !important;
+                        top: 0 !important;
+                        z-index: 25 !important;
+                        background-color: var(--bg-main, #12121f) !important;
+                        background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+                        margin: 0 -10px 0 -10px !important;
+                        padding: 4px 10px 16px 10px !important;
+                        border-top-left-radius: 10px !important;
+                        border-top-right-radius: 10px !important;
+                        box-sizing: border-box !important;
                     }
                     .lobby-journey-message {
                         font-size: 0.8rem;
@@ -1987,7 +1987,7 @@
 
                 @media (max-width: 480px) {
                     .lobby-journey-sticky-header {
-                        padding: 8px 10px 16px 10px;
+                        padding: 3px 8px 14px 8px !important;
                     }
                     .lobby-journey-message {
                         font-size: 0.72rem !important;
@@ -2008,7 +2008,7 @@
 
                 @media (max-width: 360px) {
                     .lobby-journey-sticky-header {
-                        padding: 6px 8px 14px 8px;
+                        padding: 2px 6px 12px 6px !important;
                     }
                     .lobby-journey-message {
                         font-size: 0.64rem !important;
