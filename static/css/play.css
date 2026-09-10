@@ -6248,7 +6248,7 @@ input[type=range]::-moz-range-track {
         backdrop-filter: blur(12px) !important;
         -webkit-backdrop-filter: blur(12px) !important;
         border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
-        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)) 14px !important;
+        padding: 7px 14px 4px 14px !important;
         box-sizing: border-box !important;
         align-items: center !important;
         margin: 0 !important;
@@ -10288,7 +10288,7 @@ body.is-mobile #page-settings .mobile-bottom-nav {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)) 14px !important;
+    padding: 7px 14px 4px 14px !important;
     box-sizing: border-box !important;
     align-items: center !important;
     margin: 0 !important;
