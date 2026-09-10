@@ -6311,11 +6311,9 @@ input[type=range]::-moz-range-track {
 
     /* Random Word / Is Valid / Subanagrams / Unscramble Mobile Base & Fitting */
     .random-word-large,
-    .wotd-gold-showy,
     #unscramble-jumbled,
     #sub-letters-display,
-    #random-word-display,
-    #wotd-display {
+    #random-word-display {
         max-width: 100% !important;
         width: 100% !important;
         box-sizing: border-box !important;
@@ -6342,6 +6340,17 @@ input[type=range]::-moz-range-track {
         gap: 4px !important;
         flex-shrink: 0 !important;
         overflow: visible !important;
+    }
+    .wotd-gold-showy,
+    #wotd-display {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-wrap: normal !important;
+        word-break: keep-all !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        line-height: 1.25 !important;
     }
     #valid-result-display .valid-word-val {
         white-space: nowrap !important;
@@ -6567,13 +6576,22 @@ input[type=range]::-moz-range-track {
     }
 
     /* Word of the Day Mobile Fixes */
-    .wotd-gold-showy {
+    .wotd-container {
+        padding: 20px 14px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        align-items: center !important;
+    }
+    .wotd-gold-showy,
+    #wotd-display {
         max-width: 100% !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        overflow-wrap: anywhere !important;
-        word-break: break-all !important;
-        white-space: normal !important;
+        overflow-wrap: normal !important;
+        word-break: keep-all !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        line-height: 1.25 !important;
     }
     .wotd-definition {
         font-size: 1rem !important;

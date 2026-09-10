@@ -84,7 +84,7 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
 
     // --- Measure available width from the panel container ---
     // Walk up to the results container to get the true rendered panel width
-    const panel = el.closest('.random-word-container') || el.parentElement || el;
+    const panel = el.closest('.random-word-container') || el.closest('.wotd-container') || el.parentElement || el;
     const panelCs = window.getComputedStyle(panel);
     const panelPad = parseFloat(panelCs.paddingLeft || 0) + parseFloat(panelCs.paddingRight || 0);
     const availWidth = Math.max((panel.clientWidth || 600) - panelPad - 24, 60); // 12px each side
@@ -107,7 +107,8 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
 
     // Dynamic max ceiling so short words don't balloon vertically and cut off status text
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const maxCeiling = isMobile ? 48 : 68;
+    const isWotd = el.id === 'wotd-display' || el.classList.contains('wotd-gold-showy') || (el.closest && el.closest('.wotd-container'));
+    const maxCeiling = isMobile ? (isWotd ? 52 : 48) : (isWotd ? 88 : 68);
 
     // Binary-search: largest font-size (px) where probe.scrollWidth <= availWidth
     let lo = 10, hi = maxCeiling, best = lo;
@@ -129,6 +130,8 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
     wordEl.style.setProperty('font-weight', '900', 'important');
     wordEl.style.setProperty('letter-spacing', '2px', 'important');
     wordEl.style.setProperty('white-space', 'nowrap', 'important');
+    wordEl.style.setProperty('overflow-wrap', 'normal', 'important');
+    wordEl.style.setProperty('word-break', 'keep-all', 'important');
     wordEl.style.setProperty('display', 'block', 'important');
     wordEl.style.setProperty('width', '100%', 'important');
     wordEl.style.setProperty('box-sizing', 'border-box', 'important');
@@ -210,7 +213,12 @@ window.showTool = function(toolId) {
         if (typeof updateWotd === 'function') updateWotd();
         const displayEl = document.getElementById('wotd-display');
         if (displayEl && displayEl.innerText && displayEl.innerText.trim() !== 'Loading...') {
-            window.applyDynamicSequenceStyle(displayEl, displayEl.innerText.trim());
+            requestAnimationFrame(() => {
+                window.applyDynamicValidationStyle(displayEl, displayEl.innerText.trim());
+            });
+            setTimeout(() => {
+                window.applyDynamicValidationStyle(displayEl, displayEl.innerText.trim());
+            }, 60);
         }
     }
     if (toolId === 'random') {
@@ -387,6 +395,22 @@ function setupToolsNavigation() {
             document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
                 requestAnimationFrame(() => enforceSnapForLayout(layoutEl));
             });
+            // Re-fit WOTD and Is Valid on mobile resize/orientation change
+            const wotdEl = document.getElementById('wotd-display');
+            if (wotdEl && wotdEl.innerText && wotdEl.innerText.trim() !== '' && !wotdEl.innerText.includes('Loading')) {
+                requestAnimationFrame(() => {
+                    window.applyDynamicValidationStyle(wotdEl, wotdEl.innerText.trim());
+                });
+            }
+            const validEl = document.getElementById('valid-result-display');
+            if (validEl && validEl.querySelector('.valid-word-val')) {
+                const word = validEl.querySelector('.valid-word-val').textContent.trim();
+                if (word) {
+                    requestAnimationFrame(() => {
+                        window.applyDynamicValidationStyle(validEl, word);
+                    });
+                }
+            }
         });
     }
 
@@ -5285,7 +5309,12 @@ async function updateWotd() {
         }
 
         displayEl.innerText = data.word;
-        window.applyDynamicSequenceStyle(displayEl, data.word);
+        requestAnimationFrame(() => {
+            window.applyDynamicValidationStyle(displayEl, data.word);
+        });
+        setTimeout(() => {
+            window.applyDynamicValidationStyle(displayEl, data.word);
+        }, 60);
 
         lastWotdDate = data.date; // Use the date confirmed by the server
         const defEl = document.getElementById('wotd-definition');
