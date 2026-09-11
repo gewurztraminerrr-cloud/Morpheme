@@ -5982,6 +5982,58 @@ def get_definition_cached_or_online_with_guess(w):
             
     return None
 
+def remove_duplicate_parentheticals(text):
+    if not text or '(' not in text:
+        return text
+    spans = []
+    depth = 0
+    start = -1
+    for i, c in enumerate(text):
+        if c == '(':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif c == ')':
+            depth -= 1
+            if depth == 0 and start != -1:
+                spans.append((start, i + 1))
+                start = -1
+
+    if len(spans) < 2:
+        return text
+
+    to_remove = []
+    for idx in range(len(spans) - 1):
+        s1, e1 = spans[idx]
+        s2, e2 = spans[idx + 1]
+        between = text[e1:s2]
+        if between.strip() == '':
+            content1 = text[s1+1:e1-1].strip().rstrip('.').strip()
+            content2 = text[s2+1:e2-1].strip().rstrip('.').strip()
+            if content1.lower() == content2.lower():
+                to_remove.append((e1, e2))
+
+    if not to_remove:
+        return text
+
+    res = text
+    for start, end in reversed(to_remove):
+        res = res[:start] + res[end:]
+    return res.strip()
+
+def deduplicate_repeated_text(text):
+    if not text:
+        return text
+    text = remove_duplicate_parentheticals(text)
+    s = text.strip()
+    half = len(s) // 2
+    if len(s) >= 20:
+        first_half = s[:half].strip().rstrip('.')
+        second_half = s[half:].strip().rstrip('.')
+        if first_half.lower() == second_half.lower():
+            return s[:half].strip()
+    return text
+
 def format_resolved_definition(word_upper, visited=None):
     if visited is None:
         visited = set()
@@ -5993,8 +6045,9 @@ def format_resolved_definition(word_upper, visited=None):
     if not raw:
         return None
 
-    # Strip any leading (noun) from raw
+    # Strip any leading (noun) from raw and deduplicate
     raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
+    raw = deduplicate_repeated_text(raw)
 
     # Comprehensive pointer pattern: matches "plural of X", "diminutive of X", "synonym of X", "of or pertaining to X", etc.
     # Note: (?!\s+[a-zA-Z0-9]) ensures X is a standalone word and not part of a multi-word phrase like "mean girl"
@@ -6013,14 +6066,18 @@ def format_resolved_definition(word_upper, visited=None):
     m = pointer_pattern.search(raw)
     if m:
         target = m.group(2).upper()
-        if target != word_upper:
+        # If the pointer is already followed by a parenthetical definition, it is already resolved!
+        after_target = raw[m.end(2):].lstrip()
+        if not after_target.startswith('(') and target != word_upper:
             target_resolved = format_resolved_definition(target, visited.copy())
             if target_resolved:
                 target_clean = re.sub(r'^\s*\(noun\)\s*', '', target_resolved.strip(), flags=re.IGNORECASE)
-                target_clean_cmp = target_clean.rstrip(".")
-                if target_clean_cmp and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
+                target_clean_cmp = target_clean.rstrip(".").strip()
+                if target_clean_cmp and target_clean_cmp.lower() not in raw.lower() and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
                     end_idx = m.end(2)
                     raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
+
+    raw = deduplicate_repeated_text(raw)
 
     # Check if raw starts with leading parenthesis (e.g. (verb) meaning, (hawaiian) meaning)
     # Preserve exact casing of domain/regional tags (e.g. (East Africa, chiefly Kenya), (motor racing))
@@ -6029,8 +6086,8 @@ def format_resolved_definition(word_upper, visited=None):
         pos_raw = m.group(1).strip()
         meaning = m.group(2).strip()
         if pos_raw.lower() == 'noun':
-            return meaning
-        return f"({pos_raw}) {meaning}"
+            return deduplicate_repeated_text(meaning)
+        return deduplicate_repeated_text(f"({pos_raw}) {meaning}")
 
     # Convert legacy format to clean format (no leading '(noun)')
     meaning, pos = clean_def_text(raw)
@@ -6046,8 +6103,8 @@ def format_resolved_definition(word_upper, visited=None):
     }
     pos_full = pos_map.get(pos, pos)
     if pos_full == 'noun':
-        return meaning
-    return f"({pos_full}) {meaning}"
+        return deduplicate_repeated_text(meaning)
+    return deduplicate_repeated_text(f"({pos_full}) {meaning}")
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
