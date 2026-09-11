@@ -842,7 +842,7 @@ function ensureRoomsToggleButton() {
         roomsList.appendChild(toggleBtn);
         attachRoomsToggleGestures(toggleBtn);
     } else {
-        if (toggleBtn.parentElement !== roomsList) {
+        if (toggleBtn.parentElement !== roomsList || roomsList.lastElementChild !== toggleBtn) {
             roomsList.appendChild(toggleBtn);
         }
         const textEl = toggleBtn.querySelector('.rooms-toggle-text');
@@ -981,6 +981,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
     // Ensure persistent structure for inputs so they aren't wiped on poll
     let roomsContainer = document.getElementById('dynamic-rooms-container');
+    const placeholderView = document.getElementById('rooms-placeholder-view');
+    if (placeholderView) {
+        placeholderView.remove();
+    }
     const isLoadingText = roomsContainer && roomsContainer.innerHTML.includes('Loading active rooms');
 
     // Safety check if we navigated away (bypass when force=true or when container is currently showing loading indicator)
@@ -990,26 +994,37 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     }
 
     if (!roomsContainer && roomsList) {
+        let createPanel = roomsList.querySelector('.create-room-panel');
         const isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
-        const createButtonHtml = `
-            <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
-                <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
-                    ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
+        if (!createPanel) {
+            const createButtonHtml = `
+                <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                        ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
+                    </div>
+                    <div class="rating-inputs-row">
+                        <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                        <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                    </div>
+                    <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
+                        ${isGuest ? 'Registered Only' : '+ Create Room'}
+                    </button>
                 </div>
-                <div class="rating-inputs-row">
-                    <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
-                    <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
-                </div>
-                <button class="confirm-create-room-btn" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
-                    ${isGuest ? 'Registered Only' : '+ Create Room'}
-                </button>
-            </div>
-            <div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">
-                <p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>
-            </div>
-        `;
-        roomsList.innerHTML = createButtonHtml;
-        roomsContainer = document.getElementById('dynamic-rooms-container');
+            `;
+            roomsList.insertAdjacentHTML('afterbegin', createButtonHtml);
+        }
+        roomsContainer = document.createElement('div');
+        roomsContainer.id = 'dynamic-rooms-container';
+        roomsContainer.style.display = 'flex';
+        roomsContainer.style.flexDirection = 'column';
+        roomsContainer.style.gap = '12px';
+        roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
+        const toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
+        if (toggleBtn && toggleBtn.parentElement === roomsList) {
+            roomsList.insertBefore(roomsContainer, toggleBtn);
+        } else {
+            roomsList.appendChild(roomsContainer);
+        }
         ensureRoomsToggleButton();
     }
 
@@ -1449,11 +1464,35 @@ function resetLobbyButtons() {
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
     });
-    const joinButtons = document.querySelectorAll('.join-room-btn, .confirm-create-room-btn');
+    const isCurrentUserGuest = !window.currentUser || window.currentUser.startsWith('Guest_') || Boolean(window.currentUserIsGuest);
+    const joinButtons = document.querySelectorAll('.join-room-btn');
     joinButtons.forEach(btn => {
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.style.pointerEvents = 'auto';
+    });
+    const createPanels = document.querySelectorAll('.create-room-panel');
+    createPanels.forEach(panel => {
+        if (isCurrentUserGuest) {
+            panel.style.filter = 'grayscale(1)';
+            panel.style.opacity = '0.7';
+        } else {
+            panel.style.filter = '';
+            panel.style.opacity = '';
+        }
+        const textDiv = panel.querySelector('div');
+        if (textDiv) {
+            textDiv.textContent = isCurrentUserGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)';
+        }
+        panel.querySelectorAll('.rating-input').forEach(inp => {
+            inp.disabled = isCurrentUserGuest;
+        });
+        const createBtn = panel.querySelector('.confirm-create-room-btn');
+        if (createBtn) {
+            createBtn.disabled = isCurrentUserGuest;
+            createBtn.style.cursor = isCurrentUserGuest ? 'not-allowed' : 'pointer';
+            createBtn.textContent = isCurrentUserGuest ? 'Registered Only' : '+ Create Room';
+        }
     });
     const myRatingBtn = document.getElementById('my-rating-btn');
     if (myRatingBtn) {
@@ -1477,6 +1516,13 @@ function resetLobbyButtons() {
     }
 }
 window.resetLobbyButtons = resetLobbyButtons;
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        resetLobbyButtons();
+    });
+} else {
+    resetLobbyButtons();
+}
 
 async function updateMyRatingButton(gameType, board, time) {
     const btn = document.getElementById('my-rating-btn');

@@ -400,6 +400,10 @@
             }
             var roomsList = document.getElementById('rooms-list');
             if (roomsList) {
+                var roomsPlaceholder = document.getElementById('rooms-placeholder-view');
+                if (roomsPlaceholder) {
+                    roomsPlaceholder.remove();
+                }
                 var roomsContainer = document.getElementById('dynamic-rooms-container');
                 if (!roomsContainer) {
                     var isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
@@ -409,18 +413,34 @@
                     var guestBtnText = isGuest ? 'Registered Only' : '+ Create Room';
                     var guestBtnStyle = isGuest ? 'disabled style="cursor:not-allowed;"' : '';
 
+                    var existingCreatePanel = roomsList.querySelector('.create-room-panel');
+                    if (!existingCreatePanel) {
+                        var panelHtml = '<div class="create-room-panel" ' + guestStyle + '>' +
+                            '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
+                            '<div class="rating-inputs-row">' +
+                                '<input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ' + guestDis + '>' +
+                                '<input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ' + guestDis + '>' +
+                            '</div>' +
+                            '<button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
+                        '</div>';
+                        roomsList.insertAdjacentHTML('afterbegin', panelHtml);
+                    }
+
                     var noRoomsMsg = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
-                    roomsList.innerHTML = '<div class="create-room-panel" ' + guestStyle + '>' +
-                        '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
-                        '<div class="rating-inputs-row">' +
-                            '<input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ' + guestDis + '>' +
-                            '<input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ' + guestDis + '>' +
-                        '</div>' +
-                        '<button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
-                    '</div>' +
-                    '<div id="dynamic-rooms-container" style="display: flex; flex-direction: column; gap: 12px;">' +
-                        noRoomsMsg +
-                    '</div>';
+                    var containerDiv = document.createElement('div');
+                    containerDiv.id = 'dynamic-rooms-container';
+                    containerDiv.style.display = 'flex';
+                    containerDiv.style.flexDirection = 'column';
+                    containerDiv.style.gap = '12px';
+                    containerDiv.innerHTML = noRoomsMsg;
+
+                    var toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
+                    if (toggleBtn && toggleBtn.parentElement === roomsList) {
+                        roomsList.insertBefore(containerDiv, toggleBtn);
+                    } else {
+                        roomsList.appendChild(containerDiv);
+                    }
+
                     if (typeof window.ensureRoomsToggleButton === 'function') {
                         window.ensureRoomsToggleButton();
                     }
@@ -2411,6 +2431,16 @@
                         <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
                     <div id="rooms-list">
+                        <div class="create-room-panel" id="default-create-room-panel">
+                            <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                                Set Rating Limits (Optional)
+                            </div>
+                            <div class="rating-inputs-row">
+                                <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100">
+                                <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100">
+                            </div>
+                            <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
+                        </div>
                         <div id="rooms-placeholder-view">
                             <p class="placeholder">No "Show Rooms" selected</p>
                             <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
@@ -7442,7 +7472,7 @@
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
     <script src="/js/app.js?v=1788935000"></script>
-    <script src="/js/lobby.js?v=1788935000"></script>
+    <script src="/js/lobby.js?v=1788936000"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=1788936000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
