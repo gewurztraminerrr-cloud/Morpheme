@@ -1926,7 +1926,7 @@ body {
 
 
 .profile-quote-minimal {
-    margin: 5px 0 20px 0;
+    margin: 16px 0 16px 0;
     text-align: left;
     max-width: none;
 }
@@ -7919,6 +7919,10 @@ select option,
     #profile-proof-input {
         max-width: min(100%, 220px) !important;
         box-sizing: border-box !important;
+    }
+    .profile-quote-minimal {
+        text-align: center !important;
+        margin: 14px 0 14px 0 !important;
     }
     .profile-stats-grid {
         grid-template-columns: repeat(3, 1fr) !important;
