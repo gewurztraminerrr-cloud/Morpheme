@@ -108,6 +108,30 @@
         overflow: hidden !important;
         box-sizing: border-box;
         padding: 16px 12px 12px 12px !important;
+        gap: 6px !important;
+    }
+
+    .game-section,
+    .game-types-panel .game-section,
+    .solo-friends-section,
+    .solo-friends-panel .solo-friends-section {
+        gap: 6px !important;
+        margin-top: 0 !important;
+        margin-bottom: 22px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .game-types-panel .game-section:last-of-type,
+    .game-types-panel .game-section:last-child,
+    .game-types-panel .split-points-section,
+    .solo-friends-panel .solo-friends-section:last-child {
+        margin-bottom: 14px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .matrix-header .corner-cell {
+        height: auto !important;
+        min-height: 0 !important;
     }
 
     #mobile-panel-rooms #rooms-list,
@@ -167,14 +191,15 @@
 .solo-friends-section {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
+    gap: 6px;
+    margin-bottom: 22px;
 }
 
 .game-title {
     font-size: 1.0rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin: 0;
+    padding: 0;
     text-align: center;
     color: var(--text-primary);
     opacity: 0.9;
@@ -297,7 +322,7 @@
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
     min-height: 0;
     overflow: hidden !important;
     box-sizing: border-box !important;
@@ -305,7 +330,8 @@
 
 .game-title,
 .active-rooms-panel h3,
-.solo-friends-panel h3 {
+.solo-friends-panel h3,
+.game-section .game-title {
     font-size: 0.85rem !important;
     font-weight: 700 !important;
     margin: 0 !important;
@@ -3195,6 +3221,7 @@ body.is-desktop .active-rooms-panel {
     padding-left: 12px !important;
     padding-right: 12px !important;
     padding-bottom: 12px !important;
+    gap: 6px !important;
 }
 
 body.is-desktop #mobile-panel-rooms #rooms-list,
