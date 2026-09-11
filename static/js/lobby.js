@@ -759,13 +759,9 @@ function setupLobbyEvents() {
         }
     } // end if (isOnLobby())
 
-    // Setup rooms toggle state and gestures
+    // Setup rooms toggle state and gestures (default to Retracted state)
     try {
-        if (localStorage.getItem('morpheme_lobby_rooms_expanded') === 'true') {
-            expandRooms();
-        } else {
-            ensureRoomsToggleButton();
-        }
+        retractRooms();
     } catch(e) {
         ensureRoomsToggleButton();
     }
