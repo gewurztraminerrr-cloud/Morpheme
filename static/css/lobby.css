@@ -45,9 +45,12 @@
         overflow-x: hidden !important;
         box-sizing: border-box;
         padding: 0 20px 20px 20px !important;
+        padding-top: 0 !important;
         border: 1px solid var(--input-border);
         border-radius: 12px;
         background: var(--bg-panel);
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
     #mobile-panel-solo,
@@ -72,6 +75,8 @@
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
     #mobile-panel-main #mobile-panel-solo .solo-friends-section,
@@ -131,9 +136,11 @@
 .game-types-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 16px 20px 16px 20px;
+    padding: 0 20px 16px 20px !important;
+    padding-top: 0 !important;
     overflow-y: auto;
-    backdrop-filter: blur(10px);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     max-height: 100%;
     box-sizing: border-box;
 }
@@ -1503,16 +1510,17 @@ body.theme-light-brown .field-hint {
 
 /* Sticky Header for Lobby Journey Message */
 .lobby-journey-sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 25;
-    background-color: var(--bg-main, #12121f);
-    background-image: linear-gradient(var(--bg-panel), var(--bg-panel));
-    margin: 0 -20px 0 -20px;
-    padding: 14px 20px 24px 20px;
-    border-top-left-radius: 11px;
-    border-top-right-radius: 11px;
-    box-sizing: border-box;
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 25 !important;
+    background-color: var(--bg-primary, var(--bg-main, #12121f)) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    margin: 0 -20px 0 -20px !important;
+    padding: 14px 20px 14px 20px !important;
+    border-top-left-radius: 11px !important;
+    border-top-right-radius: 11px !important;
+    box-sizing: border-box !important;
 }
 
 /* Premium Obsidian-Diamond Glass Journey Banner */
@@ -2828,6 +2836,8 @@ body.theme-light-brown .lobby-chat-input:focus {
     .game-types-panel {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
     #mobile-panel-solo,
     .solo-friends-panel,
@@ -2849,7 +2859,10 @@ body.theme-light-brown .lobby-chat-input:focus {
 
 body.is-desktop #mobile-panel-main,
 body.is-desktop .game-types-panel {
+    padding-top: 0 !important;
     padding-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 body.is-desktop #mobile-panel-solo,
