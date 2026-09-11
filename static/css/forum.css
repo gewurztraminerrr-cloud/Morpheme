@@ -347,6 +347,8 @@
     display: none !important;
 }
 
+#forum-back-to-list,
+#forum-category-back-btn,
 .forum-back-btn {
     background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
     border: 1.5px solid rgba(var(--text-primary-rgb), 0.32) !important;
@@ -369,6 +371,8 @@
     min-height: 42px;
 }
 
+#forum-back-to-list:hover,
+#forum-category-back-btn:hover,
 .forum-back-btn:hover {
     background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
     border-color: var(--accent-color, #ff007f) !important;
@@ -377,6 +381,8 @@
     transform: translateY(-1px);
 }
 
+#forum-back-to-list:active,
+#forum-category-back-btn:active,
 .forum-back-btn:active {
     transform: translateY(1px) scale(0.99) !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
@@ -1087,12 +1093,26 @@ body.theme-light-brown .forum-bottom-bar {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
 }
 
+[class*="theme-white"] #forum-back-to-list,
+[class*="theme-white"] #forum-category-back-btn,
 [class*="theme-white"] .forum-back-btn,
+[class*="theme-light-"] #forum-back-to-list,
+[class*="theme-light-"] #forum-category-back-btn,
 [class*="theme-light-"] .forum-back-btn,
+body.theme-yellow #forum-back-to-list,
+body.theme-yellow #forum-category-back-btn,
 body.theme-yellow .forum-back-btn,
+body.theme-pink #forum-back-to-list,
+body.theme-pink #forum-category-back-btn,
 body.theme-pink .forum-back-btn,
+body.theme-orange #forum-back-to-list,
+body.theme-orange #forum-category-back-btn,
 body.theme-orange .forum-back-btn,
+body.theme-gray #forum-back-to-list,
+body.theme-gray #forum-category-back-btn,
 body.theme-gray .forum-back-btn,
+body.theme-light-brown #forum-back-to-list,
+body.theme-light-brown #forum-category-back-btn,
 body.theme-light-brown .forum-back-btn {
     border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
     background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
@@ -1101,12 +1121,26 @@ body.theme-light-brown .forum-back-btn {
     font-weight: 700 !important;
 }
 
+[class*="theme-white"] #forum-back-to-list:hover,
+[class*="theme-white"] #forum-category-back-btn:hover,
 [class*="theme-white"] .forum-back-btn:hover,
+[class*="theme-light-"] #forum-back-to-list:hover,
+[class*="theme-light-"] #forum-category-back-btn:hover,
 [class*="theme-light-"] .forum-back-btn:hover,
+body.theme-yellow #forum-back-to-list:hover,
+body.theme-yellow #forum-category-back-btn:hover,
 body.theme-yellow .forum-back-btn:hover,
+body.theme-pink #forum-back-to-list:hover,
+body.theme-pink #forum-category-back-btn:hover,
 body.theme-pink .forum-back-btn:hover,
+body.theme-orange #forum-back-to-list:hover,
+body.theme-orange #forum-category-back-btn:hover,
 body.theme-orange .forum-back-btn:hover,
+body.theme-gray #forum-back-to-list:hover,
+body.theme-gray #forum-category-back-btn:hover,
 body.theme-gray .forum-back-btn:hover,
+body.theme-light-brown #forum-back-to-list:hover,
+body.theme-light-brown #forum-category-back-btn:hover,
 body.theme-light-brown .forum-back-btn:hover {
     background: #ffffff !important;
     border-color: var(--accent-color, #0284c7) !important;

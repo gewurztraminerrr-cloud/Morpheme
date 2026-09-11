@@ -159,7 +159,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=1788925002">
     <link rel="stylesheet" href="/css/play.css?v=1788932001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
-    <link rel="stylesheet" href="/css/forum.css?v=33879">
+    <link rel="stylesheet" href="/css/forum.css?v=1788933000">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
     <script>
         function showLobbyToast(message, type) {
@@ -2751,6 +2751,79 @@
 
         <!-- Forum Page -->
         <div id="page-forums" class="page">
+            <style>
+                /* Elevated High-Visibility Back to Category and Forum Back Buttons across desktop and mobile */
+                #page-forums #forum-back-to-list,
+                #page-forums #forum-category-back-btn,
+                #page-forums .forum-back-btn,
+                #page-forums .bottom-back-btn {
+                    background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
+                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+                    font-weight: 700 !important;
+                }
+                #page-forums #forum-back-to-list:hover,
+                #page-forums #forum-category-back-btn:hover,
+                #page-forums .forum-back-btn:hover,
+                #page-forums .bottom-back-btn:hover {
+                    background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
+                    border-color: var(--accent-color, #ff007f) !important;
+                    color: var(--accent-color, #ff007f) !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(255, 0, 127, 0.25) !important;
+                    transform: translateY(-1px);
+                }
+                #page-forums #forum-back-to-list:active,
+                #page-forums #forum-category-back-btn:active,
+                #page-forums .forum-back-btn:active,
+                #page-forums .bottom-back-btn:active {
+                    transform: translateY(1px) scale(0.99) !important;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+                }
+                #page-forums .forum-bottom-bar {
+                    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+                    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+                }
+                /* Light theme overrides */
+                [class*="theme-white"] #page-forums #forum-back-to-list,
+                [class*="theme-white"] #page-forums #forum-category-back-btn,
+                [class*="theme-white"] #page-forums .forum-back-btn,
+                [class*="theme-light-"] #page-forums #forum-back-to-list,
+                [class*="theme-light-"] #page-forums #forum-category-back-btn,
+                [class*="theme-light-"] #page-forums .forum-back-btn,
+                body.theme-yellow #page-forums #forum-back-to-list,
+                body.theme-yellow #page-forums #forum-category-back-btn,
+                body.theme-yellow #page-forums .forum-back-btn,
+                body.theme-pink #page-forums #forum-back-to-list,
+                body.theme-pink #page-forums #forum-category-back-btn,
+                body.theme-pink #page-forums .forum-back-btn,
+                body.theme-orange #page-forums #forum-back-to-list,
+                body.theme-orange #page-forums #forum-category-back-btn,
+                body.theme-orange #page-forums .forum-back-btn,
+                body.theme-gray #page-forums #forum-back-to-list,
+                body.theme-gray #page-forums #forum-category-back-btn,
+                body.theme-gray #page-forums .forum-back-btn,
+                body.theme-light-brown #page-forums #forum-back-to-list,
+                body.theme-light-brown #page-forums #forum-category-back-btn,
+                body.theme-light-brown #page-forums .forum-back-btn {
+                    background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
+                    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
+                    color: #111111 !important;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+                }
+                [class*="theme-white"] #page-forums .forum-bottom-bar,
+                [class*="theme-light-"] #page-forums .forum-bottom-bar,
+                body.theme-yellow #page-forums .forum-bottom-bar,
+                body.theme-pink #page-forums .forum-bottom-bar,
+                body.theme-orange #page-forums .forum-bottom-bar,
+                body.theme-gray #page-forums .forum-bottom-bar,
+                body.theme-light-brown #page-forums .forum-bottom-bar {
+                    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce3 100%) !important;
+                    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+                    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+                }
+            </style>
             <div class="forum-container">
                 <div class="forum-sidebar">
                     <div class="forum-sidebar-header">
