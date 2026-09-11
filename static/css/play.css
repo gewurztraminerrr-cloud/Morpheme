@@ -7654,7 +7654,7 @@ body.flash-blue::after,
 
     .mobile-nav-indicators .nav-right {
         margin-left: auto; /* Push to right if only one */
-        margin-right: 10px !important; /* Shift slightly to the left to guarantee full visibility of the arrow */
+        margin-right: 25px !important; /* Shift inward to the left to ensure the arrow is fully visible */
     }
 }
 
