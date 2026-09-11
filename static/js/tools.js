@@ -3812,7 +3812,7 @@ function startProgressiveRendering() {
                 const scrollArea = document.getElementById('main-list-results');
                 if (scrollArea) {
                     let noticeHtml = '';
-                    const viewFullListSpan = `<span role="button" tabindex="0" style="text-decoration: underline; cursor: pointer; color: #a78bfa;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
+                    const viewFullListSpan = `<span role="button" tabindex="0" class="view-full-list-link" style="text-decoration: underline; cursor: pointer;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
                     if (window.listsServerTruncated) {
                         noticeHtml = `
                             <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
@@ -3859,7 +3859,7 @@ function renderNextWordsPage() {
     if (currentWordsRenderedCount >= maxAllowed) {
         if (!document.getElementById('list-truncation-notice')) {
             let noticeHtml = '';
-            const viewFullListSpan = `<span role="button" tabindex="0" style="text-decoration: underline; cursor: pointer; color: #a78bfa;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
+            const viewFullListSpan = `<span role="button" tabindex="0" class="view-full-list-link" style="text-decoration: underline; cursor: pointer;" onclick="if(window.openFullListModal)window.openFullListModal();">“View Full List”</span>`;
             if (window.listsServerTruncated) {
                 noticeHtml = `
                     <div id="list-truncation-notice" style="padding: 15px; text-align: center; color: #ffb703; font-weight: 500; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 10px;">
@@ -4449,7 +4449,7 @@ window.openFullListModal = function() {
     _fullListRenderedEnd = 0;
     _currentFullListJumpedWord = null;
 
-    results.innerHTML = '<div style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
+    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
     results.scrollTop = 0;
 
     modal.classList.remove('hidden');
@@ -4510,7 +4510,7 @@ window.openFullListModal = function() {
             clearTimeout(fetchTimeout);
             console.error('[Full List] Failed to fetch full word list:', err);
             if (fullListCount) fullListCount.textContent = `Fetch error`;
-            results.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Unable to load words.<br><span style="font-size: 0.85rem; opacity: 0.75; display: inline-block; margin-top: 6px;">Please check your connection and try again.</span><br><button type="button" onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
+            results.innerHTML = `<div class="full-list-error-state" style="padding: 40px 20px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Unable to load words.<br><span style="font-size: 0.85rem; opacity: 0.75; display: inline-block; margin-top: 6px;">Please check your connection and try again.</span><br><button type="button" class="full-list-retry-btn" onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
             window.isFullListLoading = false;
         });
 };

@@ -8229,3 +8229,508 @@ main.pages,
     transform: none !important;
 }
 
+/* ============================================================
+   VIEW FULL LIST & FULL LIST MODAL — HIGH CONTRAST THEME OVERRIDES
+   Ensures button, text links, modal container, jump bar, word grid,
+   and definitions are crystal-clear and readable on White & Light themes
+   ============================================================ */
+
+/* 1. View Full List Trigger Button (#list-view-full-btn) */
+body.theme-white #list-view-full-btn,
+[class*="theme-white"] #list-view-full-btn,
+[class*="theme-light-"] #list-view-full-btn,
+body.theme-yellow #list-view-full-btn,
+body.theme-pink #list-view-full-btn,
+body.theme-orange #list-view-full-btn,
+body.theme-gray #list-view-full-btn,
+body.theme-light-brown #list-view-full-btn {
+    background: #6d28d9 !important;
+    border: 1px solid #5b21b6 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25) !important;
+}
+
+body.theme-white #list-view-full-btn:hover,
+[class*="theme-white"] #list-view-full-btn:hover,
+[class*="theme-light-"] #list-view-full-btn:hover,
+body.theme-yellow #list-view-full-btn:hover,
+body.theme-pink #list-view-full-btn:hover,
+body.theme-orange #list-view-full-btn:hover,
+body.theme-gray #list-view-full-btn:hover,
+body.theme-light-brown #list-view-full-btn:hover {
+    background: #5b21b6 !important;
+    border-color: #4c1d95 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(109, 40, 217, 0.35) !important;
+}
+
+/* 2. Inline "View Full List" Text Link */
+body.theme-white .view-full-list-link,
+[class*="theme-white"] .view-full-list-link,
+[class*="theme-light-"] .view-full-list-link,
+body.theme-yellow .view-full-list-link,
+body.theme-pink .view-full-list-link,
+body.theme-orange .view-full-list-link,
+body.theme-gray .view-full-list-link,
+body.theme-light-brown .view-full-list-link {
+    color: #6d28d9 !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+}
+
+/* 3. Full List Modal Overlay (#full-list-modal) */
+body.theme-white #full-list-modal,
+[class*="theme-white"] #full-list-modal,
+[class*="theme-light-"] #full-list-modal,
+body.theme-yellow #full-list-modal,
+body.theme-pink #full-list-modal,
+body.theme-orange #full-list-modal,
+body.theme-gray #full-list-modal,
+body.theme-light-brown #full-list-modal {
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+}
+
+@media (max-width: 600px) {
+    body.theme-white #full-list-modal,
+    [class*="theme-white"] #full-list-modal,
+    [class*="theme-light-"] #full-list-modal,
+    body.theme-yellow #full-list-modal,
+    body.theme-pink #full-list-modal,
+    body.theme-orange #full-list-modal,
+    body.theme-gray #full-list-modal,
+    body.theme-light-brown #full-list-modal {
+        background: #ffffff !important;
+    }
+}
+
+/* 4. Full List Modal Card Container */
+body.theme-white #full-list-modal-card,
+[class*="theme-white"] #full-list-modal-card,
+[class*="theme-light-"] #full-list-modal-card,
+body.theme-yellow #full-list-modal-card,
+body.theme-pink #full-list-modal-card,
+body.theme-orange #full-list-modal-card,
+body.theme-gray #full-list-modal-card,
+body.theme-light-brown #full-list-modal-card {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 5. Modal Header, Title, and Counter */
+body.theme-white #full-list-modal-header,
+[class*="theme-white"] #full-list-modal-header,
+[class*="theme-light-"] #full-list-modal-header,
+body.theme-yellow #full-list-modal-header,
+body.theme-pink #full-list-modal-header,
+body.theme-orange #full-list-modal-header,
+body.theme-gray #full-list-modal-header,
+body.theme-light-brown #full-list-modal-header {
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+body.theme-white #full-list-modal-title,
+[class*="theme-white"] #full-list-modal-title,
+[class*="theme-light-"] #full-list-modal-title,
+body.theme-yellow #full-list-modal-title,
+body.theme-pink #full-list-modal-title,
+body.theme-orange #full-list-modal-title,
+body.theme-gray #full-list-modal-title,
+body.theme-light-brown #full-list-modal-title {
+    color: #4c1d95 !important;
+}
+
+body.theme-white #full-list-modal-count,
+[class*="theme-white"] #full-list-modal-count,
+[class*="theme-light-"] #full-list-modal-count,
+body.theme-yellow #full-list-modal-count,
+body.theme-pink #full-list-modal-count,
+body.theme-orange #full-list-modal-count,
+body.theme-gray #full-list-modal-count,
+body.theme-light-brown #full-list-modal-count {
+    color: #475569 !important;
+    opacity: 1 !important;
+}
+
+/* 6. Modal Close Button */
+body.theme-white #full-list-modal-close,
+[class*="theme-white"] #full-list-modal-close,
+[class*="theme-light-"] #full-list-modal-close,
+body.theme-yellow #full-list-modal-close,
+body.theme-pink #full-list-modal-close,
+body.theme-orange #full-list-modal-close,
+body.theme-gray #full-list-modal-close,
+body.theme-light-brown #full-list-modal-close {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #full-list-modal-close:hover,
+[class*="theme-white"] #full-list-modal-close:hover,
+[class*="theme-light-"] #full-list-modal-close:hover,
+body.theme-yellow #full-list-modal-close:hover,
+body.theme-pink #full-list-modal-close:hover,
+body.theme-orange #full-list-modal-close:hover,
+body.theme-gray #full-list-modal-close:hover,
+body.theme-light-brown #full-list-modal-close:hover {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    color: #000000 !important;
+}
+
+/* 7. Word Jump Input & Button */
+body.theme-white #full-list-jump-input,
+[class*="theme-white"] #full-list-jump-input,
+[class*="theme-light-"] #full-list-jump-input,
+body.theme-yellow #full-list-jump-input,
+body.theme-pink #full-list-jump-input,
+body.theme-orange #full-list-jump-input,
+body.theme-gray #full-list-jump-input,
+body.theme-light-brown #full-list-jump-input {
+    background: #ffffff !important;
+    border: 1.5px solid #94a3b8 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #full-list-jump-input::placeholder,
+[class*="theme-white"] #full-list-jump-input::placeholder,
+[class*="theme-light-"] #full-list-jump-input::placeholder,
+body.theme-yellow #full-list-jump-input::placeholder,
+body.theme-pink #full-list-jump-input::placeholder,
+body.theme-orange #full-list-jump-input::placeholder,
+body.theme-gray #full-list-jump-input::placeholder,
+body.theme-light-brown #full-list-jump-input::placeholder {
+    color: #64748b !important;
+}
+
+body.theme-white #full-list-jump-input:focus,
+[class*="theme-white"] #full-list-jump-input:focus,
+[class*="theme-light-"] #full-list-jump-input:focus,
+body.theme-yellow #full-list-jump-input:focus,
+body.theme-pink #full-list-jump-input:focus,
+body.theme-orange #full-list-jump-input:focus,
+body.theme-gray #full-list-jump-input:focus,
+body.theme-light-brown #full-list-jump-input:focus {
+    border-color: #6d28d9 !important;
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2) !important;
+}
+
+body.theme-white #full-list-jump-btn,
+[class*="theme-white"] #full-list-jump-btn,
+[class*="theme-light-"] #full-list-jump-btn,
+body.theme-yellow #full-list-jump-btn,
+body.theme-pink #full-list-jump-btn,
+body.theme-orange #full-list-jump-btn,
+body.theme-gray #full-list-jump-btn,
+body.theme-light-brown #full-list-jump-btn {
+    background: #6d28d9 !important;
+    border: 1px solid #5b21b6 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #full-list-jump-btn:hover,
+[class*="theme-white"] #full-list-jump-btn:hover,
+[class*="theme-light-"] #full-list-jump-btn:hover,
+body.theme-yellow #full-list-jump-btn:hover,
+body.theme-pink #full-list-jump-btn:hover,
+body.theme-orange #full-list-jump-btn:hover,
+body.theme-gray #full-list-jump-btn:hover,
+body.theme-light-brown #full-list-jump-btn:hover {
+    background: #5b21b6 !important;
+    border-color: #4c1d95 !important;
+    color: #ffffff !important;
+}
+
+body.theme-white #full-list-jump-toast,
+[class*="theme-white"] #full-list-jump-toast,
+[class*="theme-light-"] #full-list-jump-toast,
+body.theme-yellow #full-list-jump-toast,
+body.theme-pink #full-list-jump-toast,
+body.theme-orange #full-list-jump-toast,
+body.theme-gray #full-list-jump-toast,
+body.theme-light-brown #full-list-jump-toast {
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #f9fafb !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 8. Word Grid Results Area (#full-list-modal-results) */
+body.theme-white #full-list-modal-results,
+[class*="theme-white"] #full-list-modal-results,
+[class*="theme-light-"] #full-list-modal-results,
+body.theme-yellow #full-list-modal-results,
+body.theme-pink #full-list-modal-results,
+body.theme-orange #full-list-modal-results,
+body.theme-gray #full-list-modal-results,
+body.theme-light-brown #full-list-modal-results {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
+
+body.theme-white #full-list-modal-results::-webkit-scrollbar-track,
+[class*="theme-white"] #full-list-modal-results::-webkit-scrollbar-track,
+[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-track,
+body.theme-yellow #full-list-modal-results::-webkit-scrollbar-track,
+body.theme-pink #full-list-modal-results::-webkit-scrollbar-track,
+body.theme-orange #full-list-modal-results::-webkit-scrollbar-track,
+body.theme-gray #full-list-modal-results::-webkit-scrollbar-track,
+body.theme-light-brown #full-list-modal-results::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+}
+
+body.theme-white #full-list-modal-results::-webkit-scrollbar-thumb,
+[class*="theme-white"] #full-list-modal-results::-webkit-scrollbar-thumb,
+[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-thumb,
+body.theme-yellow #full-list-modal-results::-webkit-scrollbar-thumb,
+body.theme-pink #full-list-modal-results::-webkit-scrollbar-thumb,
+body.theme-orange #full-list-modal-results::-webkit-scrollbar-thumb,
+body.theme-gray #full-list-modal-results::-webkit-scrollbar-thumb,
+body.theme-light-brown #full-list-modal-results::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+}
+
+/* 9. Word Items in Full List Modal (.full-list-item) */
+body.theme-white .full-list-item,
+[class*="theme-white"] .full-list-item,
+[class*="theme-light-"] .full-list-item,
+body.theme-yellow .full-list-item,
+body.theme-pink .full-list-item,
+body.theme-orange .full-list-item,
+body.theme-gray .full-list-item,
+body.theme-light-brown .full-list-item {
+    color: #0f172a !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white .full-list-item .clickable-word-link,
+[class*="theme-white"] .full-list-item .clickable-word-link,
+[class*="theme-light-"] .full-list-item .clickable-word-link,
+body.theme-yellow .full-list-item .clickable-word-link,
+body.theme-pink .full-list-item .clickable-word-link,
+body.theme-orange .full-list-item .clickable-word-link,
+body.theme-gray .full-list-item .clickable-word-link,
+body.theme-light-brown .full-list-item .clickable-word-link {
+    color: #0f172a !important;
+}
+
+body.theme-white .full-list-item:hover,
+[class*="theme-white"] .full-list-item:hover,
+[class*="theme-light-"] .full-list-item:hover,
+body.theme-yellow .full-list-item:hover,
+body.theme-pink .full-list-item:hover,
+body.theme-orange .full-list-item:hover,
+body.theme-gray .full-list-item:hover,
+body.theme-light-brown .full-list-item:hover {
+    background: rgba(109, 40, 217, 0.12) !important;
+    color: #4c1d95 !important;
+}
+
+body.theme-white .full-list-item:hover .clickable-word-link,
+[class*="theme-white"] .full-list-item:hover .clickable-word-link,
+[class*="theme-light-"] .full-list-item:hover .clickable-word-link,
+body.theme-yellow .full-list-item:hover .clickable-word-link,
+body.theme-pink .full-list-item:hover .clickable-word-link,
+body.theme-orange .full-list-item:hover .clickable-word-link,
+body.theme-gray .full-list-item:hover .clickable-word-link,
+body.theme-light-brown .full-list-item:hover .clickable-word-link {
+    color: #4c1d95 !important;
+}
+
+body.theme-white .full-list-item .likelihood-score,
+[class*="theme-white"] .full-list-item .likelihood-score,
+[class*="theme-light-"] .full-list-item .likelihood-score,
+body.theme-yellow .full-list-item .likelihood-score,
+body.theme-pink .full-list-item .likelihood-score,
+body.theme-orange .full-list-item .likelihood-score,
+body.theme-gray .full-list-item .likelihood-score,
+body.theme-light-brown .full-list-item .likelihood-score {
+    color: #64748b !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+/* 10. Search Jump Target Highlight on Light Themes */
+body.theme-white .full-list-item.jump-target-highlight,
+[class*="theme-white"] .full-list-item.jump-target-highlight,
+[class*="theme-light-"] .full-list-item.jump-target-highlight,
+body.theme-yellow .full-list-item.jump-target-highlight,
+body.theme-pink .full-list-item.jump-target-highlight,
+body.theme-orange .full-list-item.jump-target-highlight,
+body.theme-gray .full-list-item.jump-target-highlight,
+body.theme-light-brown .full-list-item.jump-target-highlight {
+    background: #fef08a !important;
+    border: 1.5px solid #d97706 !important;
+    box-shadow: 0 0 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+body.theme-white .full-list-item.jump-target-highlight .clickable-word-link,
+[class*="theme-white"] .full-list-item.jump-target-highlight .clickable-word-link,
+[class*="theme-light-"] .full-list-item.jump-target-highlight .clickable-word-link,
+body.theme-yellow .full-list-item.jump-target-highlight .clickable-word-link,
+body.theme-pink .full-list-item.jump-target-highlight .clickable-word-link,
+body.theme-orange .full-list-item.jump-target-highlight .clickable-word-link,
+body.theme-gray .full-list-item.jump-target-highlight .clickable-word-link,
+body.theme-light-brown .full-list-item.jump-target-highlight .clickable-word-link {
+    color: #78350f !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
+}
+
+/* 11. Large Custom Scrollbar Track & Thumb */
+body.theme-white #full-list-scrollbar-track,
+[class*="theme-white"] #full-list-scrollbar-track,
+[class*="theme-light-"] #full-list-scrollbar-track,
+body.theme-yellow #full-list-scrollbar-track,
+body.theme-pink #full-list-scrollbar-track,
+body.theme-orange #full-list-scrollbar-track,
+body.theme-gray #full-list-scrollbar-track,
+body.theme-light-brown #full-list-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-white #full-list-scrollbar-thumb,
+[class*="theme-white"] #full-list-scrollbar-thumb,
+[class*="theme-light-"] #full-list-scrollbar-thumb,
+body.theme-yellow #full-list-scrollbar-thumb,
+body.theme-pink #full-list-scrollbar-thumb,
+body.theme-orange #full-list-scrollbar-thumb,
+body.theme-gray #full-list-scrollbar-thumb,
+body.theme-light-brown #full-list-scrollbar-thumb {
+    background: linear-gradient(180deg, #7c3aed, #5b21b6) !important;
+    border: 1px solid #4c1d95 !important;
+    box-shadow: 0 0 8px rgba(109, 40, 217, 0.3) !important;
+}
+
+/* 12. Loading & Error States in Full List Modal */
+body.theme-white .full-list-loading-state,
+[class*="theme-white"] .full-list-loading-state,
+[class*="theme-light-"] .full-list-loading-state,
+body.theme-yellow .full-list-loading-state,
+body.theme-pink .full-list-loading-state,
+body.theme-orange .full-list-loading-state,
+body.theme-gray .full-list-loading-state,
+body.theme-light-brown .full-list-loading-state {
+    color: #374151 !important;
+}
+
+body.theme-white .full-list-loading-state .full-list-spinner,
+[class*="theme-white"] .full-list-loading-state .full-list-spinner,
+[class*="theme-light-"] .full-list-loading-state .full-list-spinner,
+body.theme-yellow .full-list-loading-state .full-list-spinner,
+body.theme-pink .full-list-loading-state .full-list-spinner,
+body.theme-orange .full-list-loading-state .full-list-spinner,
+body.theme-gray .full-list-loading-state .full-list-spinner,
+body.theme-light-brown .full-list-loading-state .full-list-spinner {
+    border-color: rgba(109, 40, 217, 0.2) !important;
+    border-top-color: #6d28d9 !important;
+}
+
+body.theme-white .full-list-error-state,
+[class*="theme-white"] .full-list-error-state,
+[class*="theme-light-"] .full-list-error-state,
+body.theme-yellow .full-list-error-state,
+body.theme-pink .full-list-error-state,
+body.theme-orange .full-list-error-state,
+body.theme-gray .full-list-error-state,
+body.theme-light-brown .full-list-error-state {
+    color: #dc2626 !important;
+}
+
+body.theme-white .full-list-retry-btn,
+[class*="theme-white"] .full-list-retry-btn,
+[class*="theme-light-"] .full-list-retry-btn,
+body.theme-yellow .full-list-retry-btn,
+body.theme-pink .full-list-retry-btn,
+body.theme-orange .full-list-retry-btn,
+body.theme-gray .full-list-retry-btn,
+body.theme-light-brown .full-list-retry-btn {
+    background: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+    color: #ffffff !important;
+}
+
+/* 13. Word Definition Popover for Light Themes (.tool-def-popover) */
+body.theme-white .tool-def-popover,
+[class*="theme-white"] .tool-def-popover,
+[class*="theme-light-"] .tool-def-popover,
+body.theme-yellow .tool-def-popover,
+body.theme-pink .tool-def-popover,
+body.theme-orange .tool-def-popover,
+body.theme-gray .tool-def-popover,
+body.theme-light-brown .tool-def-popover {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 0, 0, 0.05) !important;
+    color: #111827 !important;
+}
+
+body.theme-white .tool-def-word-title,
+[class*="theme-white"] .tool-def-word-title,
+[class*="theme-light-"] .tool-def-word-title,
+body.theme-yellow .tool-def-word-title,
+body.theme-pink .tool-def-word-title,
+body.theme-orange .tool-def-word-title,
+body.theme-gray .tool-def-word-title,
+body.theme-light-brown .tool-def-word-title {
+    color: #4c1d95 !important;
+}
+
+body.theme-white .tool-def-len-badge,
+[class*="theme-white"] .tool-def-len-badge,
+[class*="theme-light-"] .tool-def-len-badge,
+body.theme-yellow .tool-def-len-badge,
+body.theme-pink .tool-def-len-badge,
+body.theme-orange .tool-def-len-badge,
+body.theme-gray .tool-def-len-badge,
+body.theme-light-brown .tool-def-len-badge {
+    background: #ede9fe !important;
+    border: 1px solid #c4b5fd !important;
+    color: #5b21b6 !important;
+}
+
+body.theme-white .tool-def-close-btn,
+[class*="theme-white"] .tool-def-close-btn,
+[class*="theme-light-"] .tool-def-close-btn,
+body.theme-yellow .tool-def-close-btn,
+body.theme-pink .tool-def-close-btn,
+body.theme-orange .tool-def-close-btn,
+body.theme-gray .tool-def-close-btn,
+body.theme-light-brown .tool-def-close-btn {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+}
+
+body.theme-white .tool-def-content,
+[class*="theme-white"] .tool-def-content,
+[class*="theme-light-"] .tool-def-content,
+body.theme-yellow .tool-def-content,
+body.theme-pink .tool-def-content,
+body.theme-orange .tool-def-content,
+body.theme-gray .tool-def-content,
+body.theme-light-brown .tool-def-content {
+    color: #1e293b !important;
+}
+
+body.theme-white .tool-def-isvalid-link,
+[class*="theme-white"] .tool-def-isvalid-link,
+[class*="theme-light-"] .tool-def-isvalid-link,
+body.theme-yellow .tool-def-isvalid-link,
+body.theme-pink .tool-def-isvalid-link,
+body.theme-orange .tool-def-isvalid-link,
+body.theme-gray .tool-def-isvalid-link,
+body.theme-light-brown .tool-def-isvalid-link {
+    color: #6d28d9 !important;
+}
+
+
