@@ -1743,6 +1743,13 @@ body {
     margin-bottom: 30px;
 }
 
+.profile-meta-break {
+    flex-basis: 100%;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
 .meta-item {
     display: flex;
     align-items: center;
