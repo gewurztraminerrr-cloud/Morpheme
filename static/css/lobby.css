@@ -521,7 +521,9 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     }
     #my-rating-btn {
         flex-direction: row !important;
-        gap: 6px;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 6px !important;
         width: 100%;
         padding: 10px 14px;
         font-size: 0.9rem;
