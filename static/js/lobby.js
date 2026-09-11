@@ -1259,7 +1259,8 @@ function formatTime(seconds) {
 }
 
 function isOnLobby() {
-    if (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'lobby') {
+    const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+    if (activePage && activePage !== 'page-lobby' && activePage !== 'lobby') {
         return false;
     }
     const el = document.getElementById('page-lobby');
@@ -1460,15 +1461,28 @@ function toggleLobbyChatDrawer() {
 }
 window.toggleLobbyChatDrawer = toggleLobbyChatDrawer;
 
+let lastLobbyFetchSuccessTime = 0;
+let isFetchingLobbyState = false;
+
 async function fetchLobbyState() {
     if (!isOnLobby()) return;
+    if (isFetchingLobbyState) return;
+    isFetchingLobbyState = true;
     try {
-        const resp = await fetch('/api/lobby/chat', { cache: 'no-store' });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const resp = await fetch('/api/lobby/chat', { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!resp.ok) return;
         const data = await resp.json();
+        lastLobbyFetchSuccessTime = Date.now();
         renderLobbyState(data);
     } catch (e) {
-        console.error('[Lobby] Error fetching lobby state:', e);
+        if (e && e.name !== 'AbortError') {
+            console.error('[Lobby] Error fetching lobby state:', e);
+        }
+    } finally {
+        isFetchingLobbyState = false;
     }
 }
 window.fetchLobbyState = fetchLobbyState;
@@ -1690,37 +1704,80 @@ window.stopLobbyChatPolling = stopLobbyChatPolling;
 // Start Lobby Chat & Presence Polling
 startLobbyChatPolling();
 
-// Lifecycle & Visibility listeners: remove player from lobby presence when minimized or hidden, restore on return
-window.addEventListener('visibilitychange', () => {
-    if (document.hidden || document.visibilityState === 'hidden') {
-        leaveLobbyPresence();
-    } else {
-        if (typeof window.fetchLobbyStats === 'function') {
-            window.fetchLobbyStats('all');
-        }
-        if (isOnLobby()) {
-            startLobbyChatPolling();
-            startStatsPolling();
-        }
+function resumeLobbyPresenceAndPolling() {
+    if (!isOnLobby()) return;
+    if (typeof window.fetchLobbyStats === 'function') {
+        try { window.fetchLobbyStats('all'); } catch(e) {}
     }
+    if (typeof startStatsPolling === 'function') {
+        startStatsPolling();
+    }
+    startLobbyChatPolling();
+    fetchLobbyState();
+}
+window.resumeLobbyPresenceAndPolling = resumeLobbyPresenceAndPolling;
+
+// Lifecycle & Visibility listeners:
+// When tab/window is hidden or minimized, pause high-frequency polling to conserve battery/network,
+// but DO NOT send /api/lobby/leave (the player is still on the lobby, not navigated away).
+// Genuine abandonment is cleaned up by the server LobbyManager 30-second TTL.
+function handleLobbyVisibilityChange() {
+    if (document.hidden || document.visibilityState === 'hidden') {
+        stopLobbyChatPolling();
+    } else {
+        resumeLobbyPresenceAndPolling();
+    }
+}
+
+// W3C standard specifies visibilitychange on document; register on document AND window for full cross-browser safety
+document.addEventListener('visibilitychange', handleLobbyVisibilityChange);
+window.addEventListener('visibilitychange', handleLobbyVisibilityChange);
+
+// Page Lifecycle events (restore from bfcache, tab switch, unminimize)
+window.addEventListener('pageshow', () => {
+    resumeLobbyPresenceAndPolling();
 });
 
-window.addEventListener('pagehide', () => {
-    leaveLobbyPresence();
-});
-
-window.addEventListener('freeze', () => {
-    leaveLobbyPresence();
+document.addEventListener('resume', () => {
+    resumeLobbyPresenceAndPolling();
 });
 
 window.addEventListener('focus', () => {
-    if (typeof window.fetchLobbyStats === 'function') {
-        window.fetchLobbyStats('all');
-    }
-    if (isOnLobby()) {
-        startLobbyChatPolling();
-        startStatsPolling();
+    resumeLobbyPresenceAndPolling();
+});
+
+// Pause polling if browser freezes tab
+window.addEventListener('freeze', () => {
+    stopLobbyChatPolling();
+});
+
+// Only leave lobby presence when the page is actually unloading/closing or navigated away
+window.addEventListener('pagehide', (e) => {
+    if (!e.persisted) {
+        leaveLobbyPresence();
+    } else {
+        stopLobbyChatPolling();
     }
 });
+
+window.addEventListener('beforeunload', () => {
+    leaveLobbyPresence();
+});
+
+// Fast self-recovery on any user gesture while on lobby:
+['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evtName => {
+    document.addEventListener(evtName, () => {
+        if (isOnLobby() && (!lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 3500))) {
+            resumeLobbyPresenceAndPolling();
+        }
+    }, { passive: true });
+});
+
+// Background Watchdog: if active on lobby and polling was stalled or dropped, revive immediately
+setInterval(() => {
+    if (isOnLobby() && !document.hidden && (!lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 5000))) {
+        resumeLobbyPresenceAndPolling();
+    }
+}, 3000);
 
 console.log('lobby.js fully loaded with Lobby Players & Chat controller');

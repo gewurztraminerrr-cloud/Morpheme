@@ -3415,7 +3415,7 @@ function touchMorphemeActivity() {
     window.addEventListener(evt, touchMorphemeActivity, { passive: true });
 });
 window.addEventListener('beforeunload', touchMorphemeActivity);
-window.addEventListener('visibilitychange', () => {
+function handleAppVisibilityChange() {
     if (document.visibilityState === 'visible') {
         if (typeof window.fetchLobbyStats === 'function') {
             window.fetchLobbyStats('all').catch(() => {});
@@ -3430,6 +3430,8 @@ window.addEventListener('visibilitychange', () => {
             }
         } catch(e) {}
     }
-});
+}
+document.addEventListener('visibilitychange', handleAppVisibilityChange);
+window.addEventListener('visibilitychange', handleAppVisibilityChange);
 
 console.log('app.js fully loaded - version with UI optimizations');
