@@ -678,8 +678,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             showPage('page-leaderboards');
             const lbBtn = document.querySelector('.nav-btn[data-page="leaderboards"]');
             if (lbBtn) updateActiveNav(lbBtn);
-        } else if (hash === '#page-login') {
-            showPage('page-login');
         } else {
             // Unauthenticated on root / entry: keep them on page-loading (ENTER LOBBY)
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
@@ -1699,8 +1697,14 @@ function showPage(pageId) {
         window.hideLoadingOverlay();
     }
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
-    if (window.location.hash !== "#" + pageId) {
-        history.replaceState(null, null, "#" + pageId);
+    if (pageId === 'page-loading' || pageId === 'page-login') {
+        try {
+            history.replaceState(null, null, window.location.pathname + window.location.search);
+        } catch(e) {}
+    } else if (window.location.hash !== "#" + pageId) {
+        try {
+            history.replaceState(null, null, "#" + pageId);
+        } catch(e) {}
     }
 
     // Auto-hide modals/overlays when navigating pages (except active priority alert modals)
@@ -2411,7 +2415,9 @@ async function handleLogout() {
             showPage('page-login');
             const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
             if (loginBtn) updateActiveNav(loginBtn);
-            window.location.hash = '#page-login';
+            try {
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+            } catch(e) {}
 
             // Refresh user count and captcha on login screen
             if (typeof fetchUserCount === 'function') fetchUserCount();

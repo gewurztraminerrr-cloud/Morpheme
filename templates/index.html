@@ -1789,7 +1789,7 @@
         </script>
 
         <!-- Login Page -->
-        <div id="page-login" class="page">
+        <div id="page-login" class="page" style="display: none;">
             <div class="auth-container">
                 <h2>Welcome to Morpheme</h2>
                 <div id="total-user-count"
@@ -1871,8 +1871,6 @@
         <script>
             (function() {
                 try {
-                    const pageLoading = document.getElementById('page-loading');
-                    const pageLogin = document.getElementById('page-login');
                     const loggedOut = localStorage.getItem('morpheme_logged_out') === 'true' || sessionStorage.getItem('morpheme_logged_out') === 'true';
                     
                     if (loggedOut) {
@@ -1882,14 +1880,11 @@
                         if (un) un.textContent = '';
                     }
 
-                    // Only switch directly to the login page if explicitly requested via hash.
-                    // Otherwise, keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
-                    if (window.location.hash === '#page-login') {
-                        if (pageLoading) pageLoading.classList.remove('active');
-                        if (pageLogin) pageLogin.classList.add('active');
-                    } else if (window.location.hash && window.location.hash !== '#page-play' && window.location.hash !== '#page-lobby') {
+                    // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
+                    // Clean up any stale hash so the app cleanly displays the Gateway screen.
+                    if (window.location.hash && window.location.hash !== '#page-play') {
                         try {
-                            history.replaceState(null, null, '#page-lobby');
+                            history.replaceState(null, null, window.location.pathname + window.location.search);
                         } catch(e) {}
                     }
                 } catch(e) {
@@ -7475,7 +7470,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
-    <script src="/js/app.js?v=1788942000"></script>
+    <script src="/js/app.js?v=1788943000"></script>
     <script src="/js/lobby.js?v=1788936000"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=1788941000"></script>
