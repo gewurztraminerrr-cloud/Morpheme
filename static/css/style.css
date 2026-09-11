@@ -2679,13 +2679,13 @@ body {
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--text-primary-rgb), 0.05);
     border-radius: 22px;
-    width: 510px;
-    max-width: min(92vw, 510px);
-    max-height: min(92vh, 700px);
+    width: 620px;
+    max-width: min(92vw, 620px);
+    max-height: min(92vh, 840px);
     overflow-y: auto;
     scrollbar-width: thin;
     box-sizing: border-box;
-    padding: 22px 26px;
+    padding: 24px 28px;
     position: relative;
     animation: miniReveal 0.4s cubic-bezier(0.2, 1, 0.3, 1);
 }
@@ -2890,6 +2890,8 @@ body {
     border-left: 2px solid var(--accent-color);
     padding-left: 12px;
     opacity: 0.9;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .mini-profile-description {
@@ -2902,12 +2904,14 @@ body {
     padding-right: 20px;
     margin-bottom: 16px;
     min-height: 44px;
-    max-height: 90px;
+    max-height: 180px;
     height: auto;
     overflow-y: auto;
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .mini-profile-description::-webkit-scrollbar {
@@ -2960,71 +2964,76 @@ body {
 }
 
 /* Responsive overrides for laptop screens and viewports with limited vertical height */
-@media (max-height: 780px) {
+@media (max-height: 780px) and (min-width: 601px) {
     .mini-profile-card {
-        width: 480px !important;
+        width: 620px !important;
+        max-width: min(94vw, 620px) !important;
         max-height: 94vh !important;
-        padding: 16px 20px !important;
-        border-radius: 18px !important;
+        padding: 18px 24px !important;
+        border-radius: 20px !important;
     }
     .mini-profile-header {
-        margin-bottom: 10px !important;
-        gap: 14px !important;
-        padding-right: 28px !important;
+        margin-bottom: 12px !important;
+        gap: 16px !important;
+        padding-right: 32px !important;
     }
     .mini-avatar {
-        width: 48px !important;
-        height: 48px !important;
-        font-size: 22px !important;
-        border-radius: 13px !important;
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 24px !important;
+        border-radius: 14px !important;
     }
     .mini-username {
-        font-size: 1.15rem !important;
+        font-size: 1.25rem !important;
     }
     .mini-fullname {
-        font-size: 0.8rem !important;
+        font-size: 0.82rem !important;
     }
     .mini-profile-stats {
-        padding: 8px 10px !important;
-        margin-bottom: 10px !important;
+        padding: 9px 12px !important;
+        margin-bottom: 12px !important;
     }
     .mini-stat-label {
-        font-size: 0.64rem !important;
+        font-size: 0.66rem !important;
         margin-bottom: 2px !important;
     }
     .mini-stat-value {
-        font-size: 0.88rem !important;
+        font-size: 0.92rem !important;
     }
     .mini-profile-metadata {
-        gap: 6px 12px !important;
-        margin-bottom: 10px !important;
+        gap: 7px 14px !important;
+        margin-bottom: 12px !important;
     }
     .mini-meta-item {
-        font-size: 0.82rem !important;
-        gap: 7px !important;
+        font-size: 0.84rem !important;
+        gap: 8px !important;
     }
     .mini-profile-section-label {
-        font-size: 0.62rem !important;
-        margin-bottom: 3px !important;
+        font-size: 0.64rem !important;
+        margin-bottom: 4px !important;
     }
     .mini-profile-quote {
-        font-size: 0.8rem !important;
+        font-size: 0.82rem !important;
         margin-bottom: 10px !important;
         padding-left: 10px !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
     .mini-profile-description {
-        max-height: 70px !important;
-        padding: 8px 12px !important;
+        max-height: 130px !important;
+        padding: 9px 14px !important;
         margin-bottom: 12px !important;
-        font-size: 0.82rem !important;
+        font-size: 0.84rem !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
     .mini-profile-actions {
         gap: 8px !important;
     }
     .mini-action-btn {
-        padding: 7px 10px !important;
-        font-size: 0.84rem !important;
-        border-radius: 9px !important;
+        padding: 8px 12px !important;
+        font-size: 0.86rem !important;
+        border-radius: 10px !important;
     }
     #mini-profile-mod-actions {
         margin-top: 8px !important;

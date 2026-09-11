@@ -871,9 +871,15 @@ window.showMiniProfile = async function (username) {
 
         // Populate Modal Basic Info
         const nameEl = document.getElementById('mini-profile-username');
-        if (nameEl) nameEl.innerText = data.username;
+        if (nameEl) {
+            nameEl.innerText = data.username;
+            nameEl.title = data.username;
+        }
         const fullNEl = document.getElementById('mini-profile-fullname');
-        if (fullNEl) fullNEl.innerText = data.full_name || '-';
+        if (fullNEl) {
+            fullNEl.innerText = data.full_name || '-';
+            fullNEl.title = data.full_name || '-';
+        }
 
         // Stats: Games, Wins, Win Rate
         const gamesEl = document.getElementById('mini-profile-games');
@@ -899,6 +905,7 @@ window.showMiniProfile = async function (username) {
             const age = data.age || '-';
             const gender = data.gender || '-';
             demoEl.innerText = `Age: ${age}, Gender: ${gender}`;
+            demoEl.title = demoEl.innerText;
         }
 
         // Render Joined Date with Duration
@@ -920,8 +927,10 @@ window.showMiniProfile = async function (username) {
 
             const formattedJoined = typeof window.formatAppDate === 'function' ? window.formatAppDate(joinedDate) : joinedDate.toLocaleDateString();
             joinedEl.innerText = `Registered: ${formattedJoined} (${durationStr})`;
+            joinedEl.title = joinedEl.innerText;
         } else if (joinedEl) {
             joinedEl.innerText = "Registered: -";
+            joinedEl.title = "Registered: -";
         }
 
         // Render Last Visited
@@ -930,6 +939,7 @@ window.showMiniProfile = async function (username) {
             const isOnline = data.status && data.status.is_online;
             const lvStr = formatLastVisited(data.last_visited, isOnline);
             lastVisitedEl.innerText = `Last Visited: ${lvStr}`;
+            lastVisitedEl.title = lastVisitedEl.innerText;
         }
 
         // Render Timezone and Current Time
@@ -940,6 +950,7 @@ window.showMiniProfile = async function (username) {
             const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
             const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
             tzEl.innerText = `Timezone: ${tzLabel}${timeStr ? ` (${timeStr})` : ''}`;
+            tzEl.title = tzEl.innerText;
         }
 
         // Flag and Meta
@@ -950,7 +961,10 @@ window.showMiniProfile = async function (username) {
         const flagEmoji = data.country_flag || '🏳️';
         const countryLookup = typeof ALL_FLAGS !== 'undefined' ? ALL_FLAGS.find(f => f.flag === flagEmoji) : null;
         const countryNameEl = document.getElementById('mini-profile-country-name');
-        if (countryNameEl) countryNameEl.innerText = countryLookup ? countryLookup.name : 'International';
+        if (countryNameEl) {
+            countryNameEl.innerText = countryLookup ? countryLookup.name : 'International';
+            countryNameEl.title = countryNameEl.innerText;
+        }
 
         // Proof
         const proofEl = document.getElementById('mini-profile-proof');
