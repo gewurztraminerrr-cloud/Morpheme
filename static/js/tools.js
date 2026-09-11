@@ -920,7 +920,7 @@ window.showMiniProfile = async function (username) {
 
         // Flag and Meta
         const flagEl = document.getElementById('mini-profile-flag');
-        if (flagEl) flagEl.innerHTML = window.getFlagHtml ? window.getFlagHtml(data.country_flag) : (data.country_flag || '🏳️');
+        if (flagEl) flagEl.innerHTML = window.getFlagHtml ? window.getFlagHtml(data.country_flag, 'margin: 0 !important; width: 20px !important;') : (data.country_flag || '🏳️');
 
         // Country Name Lookup
         const flagEmoji = data.country_flag || '🏳️';
