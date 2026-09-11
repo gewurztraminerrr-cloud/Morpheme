@@ -105,8 +105,9 @@ class WordValidator:
             self._load_dictionaries()
         elif curr_mtime != old_mtime:
             self._added_words_mtime = curr_mtime
-            # Just words list changed, lightweight reload
-            self.reload_added_words()
+            # Reload words asynchronously in background to never block HTTP request or game loop
+            import threading
+            threading.Thread(target=self.reload_added_words, daemon=True).start()
                  
         return self.use_added_words
     

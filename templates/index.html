@@ -1635,6 +1635,10 @@
                     window.triggerMobileFullscreen();
                 }
 
+                if (gb) {
+                    gb.classList.add('pressed');
+                }
+
                 // Ensure session check has completed only if user is not already resolved
                 var activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
                 if (!activeUser && window._sessionCheckPromise) {
@@ -1642,6 +1646,16 @@
                     activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
                 }
                 if (!activeUser) {
+                    var storedUser = localStorage.getItem('morpheme_username');
+                    var isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+                    if (storedUser && !isLoggedOutExplicitly) {
+                        activeUser = storedUser;
+                        if (typeof currentUser !== 'undefined') currentUser = storedUser;
+                        window.currentUser = storedUser;
+                    }
+                }
+                if (!activeUser) {
+                    if (gb) gb.classList.remove('pressed');
                     if (typeof window.showPage === 'function') {
                         window.showPage('page-login');
                     } else if (typeof showPage === 'function') {

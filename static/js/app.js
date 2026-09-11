@@ -424,6 +424,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         activeUser = currentUser || window.currentUser;
                     }
                     if (!activeUser) {
+                        const storedUser = localStorage.getItem('morpheme_username');
+                        const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+                        if (storedUser && !isLoggedOutExplicitly) {
+                            activeUser = storedUser;
+                            currentUser = storedUser;
+                            window.currentUser = storedUser;
+                        }
+                    }
+                    if (!activeUser) {
                         showPage('page-login');
                         if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
                         return;

@@ -760,8 +760,14 @@ _AW_POINTER_PATTERN = re.compile(
     re.DOTALL
 )
 
-def get_word_definitions_for_aw_check(word):
+_AW_CHECK_DEF_CACHE = {}
+_AW_DISALLOWED_CHECK_CACHE = {}
+
+def get_word_definitions_for_aw_check(word, allow_online=True):
     w_upper = word.upper().strip()
+    if w_upper in _AW_CHECK_DEF_CACHE:
+        return _AW_CHECK_DEF_CACHE[w_upper]
+
     defs = []
     seen = set()
 
@@ -776,7 +782,7 @@ def get_word_definitions_for_aw_check(word):
 
     # 2. Query local database wiktionary_definitions
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=2)
+        conn = sqlite3.connect(DB_PATH, timeout=1)
         cursor = conn.cursor()
         cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
         row = cursor.fetchone()
@@ -788,10 +794,10 @@ def get_word_definitions_for_aw_check(word):
                     defs.append(d_raw)
                     seen.add(d_raw)
     except Exception as e:
-        print(f"[AW Validation] Error querying local wiki definition: {e}")
+        pass
 
-    # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (fast lookup)
-    needs_online = (not defs) or all(d.startswith('(Proper noun)') for d in defs)
+    # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (fast bounded lookup)
+    needs_online = allow_online and ((not defs) or all(d.startswith('(Proper noun)') for d in defs))
     if needs_online:
         import urllib.request, urllib.parse, json, html
         # Try lowercase first (most common) then title-cased if needed
@@ -802,10 +808,10 @@ def get_word_definitions_for_aw_check(word):
             url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{urllib.parse.quote(term)}"
             req = urllib.request.Request(
                 url, 
-                headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
+                headers={'User-Agent': 'MorphemeBot/1.0 (https://morpheme.games; admin@morpheme.games)'}
             )
             try:
-                with urllib.request.urlopen(req, timeout=1.5) as resp:
+                with urllib.request.urlopen(req, timeout=0.8) as resp:
                     api_data = json.loads(resp.read().decode('utf-8'))
                     if isinstance(api_data, dict) and "en" in api_data:
                         for item in api_data["en"]:
@@ -829,13 +835,14 @@ def get_word_definitions_for_aw_check(word):
                 def_str = "; ".join(defs)
                 if DEFINITIONS_CACHE is not None:
                     DEFINITIONS_CACHE[w_upper] = def_str
-                conn = sqlite3.connect(DB_PATH, timeout=2)
+                conn = sqlite3.connect(DB_PATH, timeout=1)
                 with conn:
                     conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w_upper, def_str))
                 conn.close()
             except Exception:
                 pass
 
+    _AW_CHECK_DEF_CACHE[w_upper] = defs
     return defs
 
 def check_disallowed_direct_def(defn):
@@ -852,15 +859,18 @@ def check_disallowed_direct_def(defn):
         return ('an obsolete word', defn)
     return None
 
-def check_word_disallowed_with_reason(word, visited=None, depth=0):
+def check_word_disallowed_with_reason(word, visited=None, depth=0, allow_online=True):
     if visited is None:
         visited = set()
     w_upper = word.upper().strip()
+    if depth == 0 and w_upper in _AW_DISALLOWED_CHECK_CACHE:
+        return _AW_DISALLOWED_CHECK_CACHE[w_upper]
+
     if w_upper in visited or depth > 3:
         return None
     visited.add(w_upper)
 
-    defs = get_word_definitions_for_aw_check(w_upper)
+    defs = get_word_definitions_for_aw_check(w_upper, allow_online=allow_online)
     
     # 1. Direct check on word's definitions
     for d in defs:
@@ -870,25 +880,36 @@ def check_word_disallowed_with_reason(word, visited=None, depth=0):
             clean_def = re.sub(r'\s+', ' ', full_def).strip()
             if len(clean_def) > 85:
                 clean_def = clean_def[:82] + '...'
-            return (True, reason_type, f"'{w_upper}' is {reason_type} ({clean_def})")
+            res = (True, reason_type, f"'{w_upper}' is {reason_type} ({clean_def})")
+            if depth == 0:
+                _AW_DISALLOWED_CHECK_CACHE[w_upper] = res
+            return res
 
     # 2. Check pointers inside definitions (e.g. "plural of FOO", "alternative form of BAR")
     for d in defs:
         for m in _AW_POINTER_PATTERN.finditer(d):
             root = m.group(2).upper().strip()
             if root and root != w_upper and root not in visited:
-                root_res = check_word_disallowed_with_reason(root, visited.copy(), depth + 1)
+                # If root is already an accepted game word, it is inherently approved
+                if word_validator.is_valid_word_authoritative(root) or word_validator.is_added_word(root):
+                    continue
+                root_res = check_word_disallowed_with_reason(root, visited.copy(), depth + 1, allow_online=False)
                 if root_res:
                     _, reason_type, _ = root_res
-                    return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{root}')")
+                    res = (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{root}')")
+                    if depth == 0:
+                        _AW_DISALLOWED_CHECK_CACHE[w_upper] = res
+                    return res
 
     # 3. Morphological suffix stripping fallback (ONLY if word has no definitions of its own)
     if not defs:
         candidate_roots = []
         if w_upper.endswith('IES') and len(w_upper) > 4:
             candidate_roots.append(w_upper[:-3] + 'Y')
-        elif w_upper.endswith('ES') and len(w_upper) > 4 and (w_upper.endswith('SES') or w_upper.endswith('SHES') or w_upper.endswith('CHES') or w_upper.endswith('XES') or w_upper.endswith('ZES')):
-            candidate_roots.append(w_upper[:-2])
+        if w_upper.endswith('ES') and len(w_upper) > 4:
+            if (w_upper.endswith('SES') or w_upper.endswith('SHES') or w_upper.endswith('CHES') or w_upper.endswith('XES') or w_upper.endswith('ZES')):
+                candidate_roots.append(w_upper[:-2])
+            candidate_roots.append(w_upper[:-1]) # e.g. HOSTILISES -> HOSTILISE
         elif w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
             candidate_roots.append(w_upper[:-1])
         if w_upper.endswith('ED') and len(w_upper) > 4:
@@ -900,11 +921,19 @@ def check_word_disallowed_with_reason(word, visited=None, depth=0):
 
         for r in candidate_roots:
             if r not in visited:
-                root_res = check_word_disallowed_with_reason(r, visited.copy(), depth + 1)
+                # If root is already an accepted authoritative word or in Added Words, it's inherently approved
+                if word_validator.is_valid_word_authoritative(r) or word_validator.is_added_word(r):
+                    continue
+                root_res = check_word_disallowed_with_reason(r, visited.copy(), depth + 1, allow_online=False)
                 if root_res:
                     _, reason_type, _ = root_res
-                    return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{r}')")
+                    res = (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{r}')")
+                    if depth == 0:
+                        _AW_DISALLOWED_CHECK_CACHE[w_upper] = res
+                    return res
 
+    if depth == 0:
+        _AW_DISALLOWED_CHECK_CACHE[w_upper] = None
     return None
 
 @app.route('/api/mods/added_words/add', methods=['POST'])
@@ -919,9 +948,6 @@ def add_added_word_api():
         
     if not words:
         return jsonify({'error': 'Word required'}), 400
-    
-    # Ensure in-memory added words are fresh
-    word_validator.get_use_added_words()
 
     def _is_in_added_words(w):
         w_u = w.strip().upper()
@@ -1036,6 +1062,8 @@ def add_added_word_api():
                         curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
                         LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
                         LAST_ADDED_WORDS_MTIME = curr_mtime
+                        if word_validator is not None:
+                            word_validator._added_words_mtime = curr_mtime
                 print(f"[AsyncMods] Finished saving {len(word_list)} new word(s) to disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error saving words to disk: {e}")
@@ -1124,6 +1152,8 @@ def remove_added_word():
                         curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
                         LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
                         LAST_ADDED_WORDS_MTIME = curr_mtime
+                        if word_validator is not None:
+                            word_validator._added_words_mtime = curr_mtime
                 print(f"[AsyncMods] Finished removing {len(word_list)} word(s) from disk and tally.")
             except Exception as e:
                 print(f"[AsyncMods] Error removing words from disk: {e}")
