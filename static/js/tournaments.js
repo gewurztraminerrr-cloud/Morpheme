@@ -167,7 +167,7 @@ function renderTournament(data) {
                     <div class="t-leaderboard-item" style="${highlight}">
                         <div class="user-info">
                             <span class="rank">#${idx + 1}</span>
-                            <span class="username">${s.username} ${isMe ? '(You)' : ''}</span>
+                            <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();" style="cursor: pointer;" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
                         </div>
                         <div class="score-group">
                             <span class="score">${s.score} <small style="font-size:0.6rem; opacity:0.6;">PTS</small></span>
@@ -240,10 +240,11 @@ function renderTournament(data) {
                     : (s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '');
                 const nameStyle = isEliminated ? 'text-decoration: line-through; opacity: 0.45;' : '';
 
+                const clickAction = `if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();`;
                 return `
                     <div class="t-standing-item ${statusClass}" title="${isWinner ? 'Winner' : s.status}">
                         <span class="dot"></span>
-                        <span style="${nameStyle}">${s.username} ${isMe ? '(You)' : ''}</span>
+                        <span class="t-username-clickable" onclick="${clickAction}" style="cursor: pointer; ${nameStyle}" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
                         ${rankInfo}
                     </div>
                 `;
@@ -261,10 +262,11 @@ function renderTournament(data) {
         } else {
             hBody.innerHTML = history.map(h => {
                 const date = typeof window.formatAppDate === 'function' ? window.formatAppDate(h.completed_at) : new Date(h.completed_at * 1000).toLocaleDateString();
+                const clickAction = `if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${h.username}'); } event.stopPropagation();`;
                 return `
                     <tr>
                         <td>${date}</td>
-                        <td style="font-weight:700; color:var(--accent-color);">${h.username}</td>
+                        <td style="font-weight:700; color:var(--accent-color); cursor:pointer;" onclick="${clickAction}" title="View Mini-Profile">${h.username}</td>
                         <td>Championship Edition</td>
                         <td>
                             <div style="display:flex; align-items:center; gap:10px;">
@@ -641,10 +643,16 @@ function renderMatchupItemHTML(m) {
     const u1_winner = m.winner_id && m.winner_id === m.user1_id;
     const u2_winner = m.winner_id && m.winner_id === m.user2_id;
 
+    const u1_canClick = m.u1_name && m.u1_name !== 'Player 1';
+    const u2_canClick = m.user2_id !== -1 && m.u2_name && m.u2_name !== 'Player 2' && m.u2_name !== 'BYE';
+
+    const u1_click = u1_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u1_name}'); } event.stopPropagation();"` : '';
+    const u2_click = u2_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u2_name}'); } event.stopPropagation();"` : '';
+
     return `
         <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <div class="participant" style="flex: 1; display: flex; align-items: center; gap: 6px; font-weight: ${u1_winner ? 'bold' : 'normal'};">
-                <span class="username ${u1_isMe ? 'me' : ''}" style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''}">${u1_name}</span>
+                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''}" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
                 <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s1}</span>
                 ${u1_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-left: 2px;">🏆</span>' : ''}
             </div>
@@ -655,7 +663,7 @@ function renderMatchupItemHTML(m) {
                     : `
                         ${u2_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-right: 2px;">🏆</span>' : ''}
                         <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s2}</span>
-                        <span class="username ${u2_isMe ? 'me' : ''}" style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''}">${u2_name}</span>
+                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''}" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
                     `
                 }
             </div>

@@ -276,7 +276,7 @@ async function addAddedWord() {
     showModStatus(`Adding word(s)...`, false, 'added-word-status-area');
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
         const response = await fetch('/api/mods/added_words/add', {
@@ -332,7 +332,7 @@ async function removeAddedWord() {
     showModStatus(`Removing word(s)...`, false, 'added-word-status-area');
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
         const response = await fetch('/api/mods/added_words/remove', {

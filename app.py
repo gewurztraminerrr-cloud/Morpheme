@@ -767,6 +767,8 @@ def get_word_definitions_for_aw_check(word):
 
     # 1. Check in-memory definitions cache
     global DEFINITIONS_CACHE
+    if not DEFINITIONS_CACHE:
+        load_definitions()
     if DEFINITIONS_CACHE and w_upper in DEFINITIONS_CACHE and DEFINITIONS_CACHE[w_upper]:
         d = DEFINITIONS_CACHE[w_upper].strip()
         defs.append(d)
@@ -774,7 +776,7 @@ def get_word_definitions_for_aw_check(word):
 
     # 2. Query local database wiktionary_definitions
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=5)
+        conn = sqlite3.connect(DB_PATH, timeout=2)
         cursor = conn.cursor()
         cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
         row = cursor.fetchone()
@@ -788,18 +790,22 @@ def get_word_definitions_for_aw_check(word):
     except Exception as e:
         print(f"[AW Validation] Error querying local wiki definition: {e}")
 
-    # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (both lowercase and uppercase)
+    # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (fast lookup)
     needs_online = (not defs) or all(d.startswith('(Proper noun)') for d in defs)
     if needs_online:
-        import urllib.request, json, html
-        for term in [w_upper.lower(), w_upper]:
-            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{term}"
+        import urllib.request, urllib.parse, json, html
+        # Try lowercase first (most common) then title-cased if needed
+        candidates = [w_upper.lower()]
+        if w_upper.lower() != w_upper.capitalize():
+            candidates.append(w_upper.capitalize())
+        for term in candidates:
+            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{urllib.parse.quote(term)}"
             req = urllib.request.Request(
                 url, 
                 headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
             )
             try:
-                with urllib.request.urlopen(req, timeout=2.5) as resp:
+                with urllib.request.urlopen(req, timeout=1.5) as resp:
                     api_data = json.loads(resp.read().decode('utf-8'))
                     if isinstance(api_data, dict) and "en" in api_data:
                         for item in api_data["en"]:
@@ -812,6 +818,21 @@ def get_word_definitions_for_aw_check(word):
                                 if text and text not in seen:
                                     seen.add(text)
                                     defs.append(f"({pos}) {text}" if pos else text)
+                        if defs:
+                            break
+            except Exception:
+                pass
+
+        # Cache definitions locally so future checks in same or subsequent operations are 0ms
+        if defs:
+            try:
+                def_str = "; ".join(defs)
+                if DEFINITIONS_CACHE is not None:
+                    DEFINITIONS_CACHE[w_upper] = def_str
+                conn = sqlite3.connect(DB_PATH, timeout=2)
+                with conn:
+                    conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w_upper, def_str))
+                conn.close()
             except Exception:
                 pass
 
@@ -861,27 +882,28 @@ def check_word_disallowed_with_reason(word, visited=None, depth=0):
                     _, reason_type, _ = root_res
                     return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{root}')")
 
-    # 3. Morphological suffix stripping fallback (e.g. FOOS -> FOO, BAKED -> BAKE)
-    candidate_roots = []
-    if w_upper.endswith('IES') and len(w_upper) > 4:
-        candidate_roots.append(w_upper[:-3] + 'Y')
-    if w_upper.endswith('ES') and len(w_upper) > 4:
-        candidate_roots.append(w_upper[:-2])
-    if w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
-        candidate_roots.append(w_upper[:-1])
-    if w_upper.endswith('ED') and len(w_upper) > 4:
-        candidate_roots.append(w_upper[:-2])
-        candidate_roots.append(w_upper[:-1])
-    if w_upper.endswith('ING') and len(w_upper) > 5:
-        candidate_roots.append(w_upper[:-3])
-        candidate_roots.append(w_upper[:-3] + 'E')
+    # 3. Morphological suffix stripping fallback (ONLY if word has no definitions of its own)
+    if not defs:
+        candidate_roots = []
+        if w_upper.endswith('IES') and len(w_upper) > 4:
+            candidate_roots.append(w_upper[:-3] + 'Y')
+        elif w_upper.endswith('ES') and len(w_upper) > 4 and (w_upper.endswith('SES') or w_upper.endswith('SHES') or w_upper.endswith('CHES') or w_upper.endswith('XES') or w_upper.endswith('ZES')):
+            candidate_roots.append(w_upper[:-2])
+        elif w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
+            candidate_roots.append(w_upper[:-1])
+        if w_upper.endswith('ED') and len(w_upper) > 4:
+            candidate_roots.append(w_upper[:-2])
+            candidate_roots.append(w_upper[:-1])
+        if w_upper.endswith('ING') and len(w_upper) > 5:
+            candidate_roots.append(w_upper[:-3])
+            candidate_roots.append(w_upper[:-3] + 'E')
 
-    for r in candidate_roots:
-        if r not in visited:
-            root_res = check_word_disallowed_with_reason(r, visited.copy(), depth + 1)
-            if root_res:
-                _, reason_type, _ = root_res
-                return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{r}')")
+        for r in candidate_roots:
+            if r not in visited:
+                root_res = check_word_disallowed_with_reason(r, visited.copy(), depth + 1)
+                if root_res:
+                    _, reason_type, _ = root_res
+                    return (True, reason_type, f"'{w_upper}' derives from {reason_type} ('{r}')")
 
     return None
 
@@ -5831,16 +5853,65 @@ def clean_def_text(def_text):
     return def_text.strip(), pos
 
 def lookup_raw_definition_online(word_upper):
-    # Free Dictionary API Fallback
+    # 1. Wiktionary API Primary (Authoritative, Fast & Resolves Case Pointers)
     try:
-        import urllib.request
-        import json
+        import urllib.request, urllib.parse, json, re, html
+        def _fetch_wiktionary_term(term):
+            url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{urllib.parse.quote(term)}"
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
+            )
+            with urllib.request.urlopen(req, timeout=1.5) as response:
+                api_data = json.loads(response.read().decode('utf-8'))
+                if isinstance(api_data, dict) and "en" in api_data:
+                    def_parts = []
+                    for item in api_data["en"]:
+                        part_of_speech = item.get("partOfSpeech", "")
+                        for d in item.get("definitions", []):
+                            text = d.get("definition", "")
+                            text = re.sub(r"<[^>]+>", "", text)
+                            text = re.sub(r"\s+", " ", text).strip()
+                            text = html.unescape(text)
+                            if text:
+                                if part_of_speech.lower() == 'noun':
+                                    def_parts.append(text)
+                                else:
+                                    def_parts.append(f"({part_of_speech}) {text}")
+                    if def_parts:
+                        return "; ".join(def_parts)
+            return None
+
+        result = _fetch_wiktionary_term(word_upper.lower())
+        if not result and word_upper.lower() != word_upper.capitalize():
+            result = _fetch_wiktionary_term(word_upper.capitalize())
+
+        # If definition is a trivial letter-case pointer (e.g. "Alternative letter-case form of Malayophobia"),
+        # resolve it immediately to the target's elaborate definition!
+        if result:
+            m_case = re.search(r'alternative\s+(?:letter-case\s+)?(?:form|spelling)\s+of\s+([a-zA-Z\-]+)', result, re.IGNORECASE)
+            if m_case:
+                target_word = m_case.group(1).strip()
+                target_def = _fetch_wiktionary_term(target_word)
+                if not target_def and target_word.lower() != target_word:
+                    target_def = _fetch_wiktionary_term(target_word.capitalize())
+                if target_def and not re.search(r'alternative\s+(?:letter-case\s+)?(?:form|spelling)\s+of\b', target_def, re.IGNORECASE):
+                    result = target_def
+
+        if result:
+            return result
+    except Exception as e:
+        pass
+
+    # 2. Free Dictionary API Fallback
+    try:
+        import urllib.request, json
         url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word_upper.lower()}"
         req = urllib.request.Request(
             url, 
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=1.0) as response:
+        with urllib.request.urlopen(req, timeout=0.6) as response:
             api_data = json.loads(response.read().decode('utf-8'))
             if isinstance(api_data, list) and len(api_data) > 0:
                 meanings = api_data[0].get('meanings', [])
@@ -5855,38 +5926,6 @@ def lookup_raw_definition_online(word_upper):
                                 def_parts.append(first_def)
                             else:
                                 def_parts.append(f"({part_of_speech}) {first_def}")
-                if def_parts:
-                    return "; ".join(def_parts)
-    except Exception as e:
-        pass
-
-    # Wiktionary API Fallback
-    try:
-        import urllib.request
-        import json
-        import re
-        import html
-        url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word_upper.lower()}"
-        req = urllib.request.Request(
-            url, 
-            headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games) Python-urllib'}
-        )
-        with urllib.request.urlopen(req, timeout=1.0) as response:
-            api_data = json.loads(response.read().decode('utf-8'))
-            if isinstance(api_data, dict) and "en" in api_data:
-                def_parts = []
-                for item in api_data["en"]:
-                    part_of_speech = item.get("partOfSpeech", "")
-                    for d in item.get("definitions", []):
-                        text = d.get("definition", "")
-                        text = re.sub(r"<[^>]+>", "", text)
-                        text = re.sub(r"\s+", " ", text).strip()
-                        text = html.unescape(text)
-                        if text:
-                            if part_of_speech.lower() == 'noun':
-                                def_parts.append(text)
-                            else:
-                                def_parts.append(f"({part_of_speech}) {text}")
                 if def_parts:
                     return "; ".join(def_parts)
     except Exception as e:
@@ -6055,7 +6094,7 @@ def format_resolved_definition(word_upper, visited=None):
         r'(?i)\b((?:'
         r'(?:plural|present participle|past participle|simple past|past tense|past|'
         r'third-person singular simple present indicative|third-person singular present|third-person singular|'
-        r'conjugation|gerund|alternative form|alternative spelling|variant form|variant spelling|variant|'
+        r'conjugation|gerund|alternative form|alternative spelling|alternative letter-case form|variant form|variant spelling|variant|'
         r'diminutive|diminutive form|synonym|synonym for|comparative form|comparative|superlative form|superlative|'
         r'female equivalent|feminine form|masculine form|agent noun|frequentative|verbal noun|spelling)\s+(?:of|for)|'
         r'(?:of\s+or\s+)?(?:pertaining|relating)\s+to'
@@ -6065,17 +6104,29 @@ def format_resolved_definition(word_upper, visited=None):
 
     m = pointer_pattern.search(raw)
     if m:
-        target = m.group(2).upper()
+        target_raw = m.group(2)
+        target = target_raw.upper()
         # If the pointer is already followed by a parenthetical definition, it is already resolved!
         after_target = raw[m.end(2):].lstrip()
-        if not after_target.startswith('(') and target != word_upper:
-            target_resolved = format_resolved_definition(target, visited.copy())
+        if not after_target.startswith('('):
+            is_case_pointer = 'alternative letter-case form' in m.group(1).lower()
+            target_resolved = None
+            if target != word_upper:
+                target_resolved = format_resolved_definition(target, visited.copy())
+            if not target_resolved and target_raw != word_upper:
+                target_resolved = get_definition_cached_or_online(target_raw)
+            if not target_resolved and target == word_upper:
+                # Target is same word in different casing (e.g. Malayophobia vs malayophobia)
+                target_resolved = lookup_raw_definition_online(target_raw)
             if target_resolved:
                 target_clean = re.sub(r'^\s*\(noun\)\s*', '', target_resolved.strip(), flags=re.IGNORECASE)
-                target_clean_cmp = target_clean.rstrip(".").strip()
-                if target_clean_cmp and target_clean_cmp.lower() not in raw.lower() and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
-                    end_idx = m.end(2)
-                    raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
+                if is_case_pointer:
+                    raw = target_clean
+                else:
+                    target_clean_cmp = target_clean.rstrip(".").strip()
+                    if target_clean_cmp and target_clean_cmp.lower() not in raw.lower() and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
+                        end_idx = m.end(2)
+                        raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
 
     raw = deduplicate_repeated_text(raw)
 

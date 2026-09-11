@@ -6181,6 +6181,13 @@ body .tab-btn.active {
     color: var(--accent-color);
 }
 
+.t-matchup-item .participant .username[onclick]:hover,
+.t-standing-item .t-username-clickable:hover,
+#tournament-history-body td[onclick]:hover {
+    text-decoration: underline;
+    filter: brightness(1.25);
+}
+
 .t-matchup-item .participant .pts {
     font-family: monospace;
     font-weight: 700;
