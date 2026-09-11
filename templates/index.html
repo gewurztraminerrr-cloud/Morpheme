@@ -154,9 +154,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1788980000" as="style">
+    <link rel="preload" href="/css/style.css?v=1789160000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1788990000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1788980000">
+    <link rel="stylesheet" href="/css/style.css?v=1789160000">
     <link rel="stylesheet" href="/css/lobby.css?v=1788990000">
     <link rel="stylesheet" href="/css/play.css?v=1788946000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
@@ -1154,22 +1154,22 @@
 
                                             <div class="profile-metadata-row">
                                                 <div class="profile-meta-line">
-                                                    <div class="meta-item" title="Real Name">
+                                                    <div class="meta-item" id="profile-meta-name" title="Real Name">
                                                         <span class="meta-icon">🆔</span>
                                                         <span class="meta-label">Name</span>
                                                         <span id="profile-full-name" class="meta-text">-</span>
                                                     </div>
-                                                    <div class="meta-item" title="Age">
+                                                    <div class="meta-item" id="profile-meta-age" title="Age">
                                                         <span class="meta-icon">🎂</span>
                                                         <span class="meta-label">Age</span>
                                                         <span id="profile-age-val" class="meta-text">-</span>
                                                     </div>
-                                                    <div class="meta-item" title="Gender">
+                                                    <div class="meta-item" id="profile-meta-gender" title="Gender">
                                                         <span class="meta-icon">👤</span>
                                                         <span class="meta-label">Gender</span>
                                                         <span id="profile-gender-val" class="meta-text">-</span>
                                                     </div>
-                                                    <div class="meta-item" title="Location">
+                                                    <div class="meta-item" id="profile-meta-location" title="Location">
                                                         <div class="custom-dropdown-container">
                                                             <span class="profile-flag" id="profile-flag"
                                                                 style="cursor: pointer;">🏳️</span>
@@ -6892,19 +6892,19 @@
                 </div>
 
                 <div class="mini-profile-metadata">
-                    <div class="mini-meta-item">
+                    <div class="mini-meta-item" id="mini-meta-demographics">
                         <span class="mini-meta-icon">👤</span>
                         <span id="mini-profile-demographics" class="mini-meta-text">Age: -, Gender: -</span>
                     </div>
-                    <div class="mini-meta-item">
+                    <div class="mini-meta-item" id="mini-meta-country">
                         <span id="mini-profile-flag" class="mini-meta-icon">🏳️</span>
                         <span id="mini-profile-country-name" class="mini-meta-text">International</span>
                     </div>
-                    <div class="mini-meta-item">
+                    <div class="mini-meta-item" id="mini-meta-joined">
                         <span class="mini-meta-icon">🗓️</span>
                         <span id="mini-profile-joined" class="mini-meta-text">Registered: -</span>
                     </div>
-                    <div class="mini-meta-item">
+                    <div class="mini-meta-item" id="mini-meta-last-visited">
                         <span class="mini-meta-icon">🕒</span>
                         <span id="mini-profile-last-visited" class="mini-meta-text">Last Visited: -</span>
                     </div>
@@ -6912,7 +6912,7 @@
                         <span class="mini-meta-icon">🌐</span>
                         <span id="mini-profile-timezone" class="mini-meta-text">Timezone: -</span>
                     </div>
-                    <div class="mini-meta-item">
+                    <div class="mini-meta-item" id="mini-meta-proof">
                         <span class="mini-meta-icon">🔑</span>
                         <span id="mini-profile-proof" class="mini-meta-text">Proof: -</span>
                     </div>
