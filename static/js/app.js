@@ -435,7 +435,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.currentPageId = 'page-lobby';
                     window._lobbyEnterCooldown = true;
 
-                    gatewayBtn.style.pointerEvents = 'none';
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
 
@@ -474,7 +473,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }).catch(() => {});
                     } catch (e) {}
 
-                    // 4. Speedy 75ms transition: allow the physical 3D flattening animation to complete visually before switching views
+                    // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                     setTimeout(() => {
                         const pLoad = document.getElementById('page-loading');
                         const pLobby = document.getElementById('page-lobby');
@@ -511,13 +510,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         } catch (transitionErr) {
                             console.error('[Gateway] Exception performing page transition:', transitionErr);
                         }
-                    }, 75);
+                    }, 120);
 
-                    // Clear room-entry cooldown after 280ms so intentional clicks on lobby buttons are enabled
+                    // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
                     // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
                     setTimeout(() => {
                         window._lobbyEnterCooldown = false;
-                    }, 280);
+                    }, 350);
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {

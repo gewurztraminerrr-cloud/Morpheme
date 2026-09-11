@@ -128,6 +128,7 @@
             background: linear-gradient(180deg, #c40062 0%, #aa0055 45%, #8a0045 100%) !important;
             border-color: rgba(255, 0, 127, 0.4) !important;
             box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.95), 0 0px 0 #2e0017, 0 4px 15px rgba(255, 0, 127, 0.25) !important;
+            transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
         }
         .neon-gateway-btn.dragged-out {
             transform: translateY(-12px) scale(1) !important;
@@ -153,10 +154,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1788934000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1788934000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1788934000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1788934000">
+    <link rel="preload" href="/css/style.css?v=1788935000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1788935000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1788935000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1788935000">
     <link rel="stylesheet" href="/css/play.css?v=1788932001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=1788933000">
@@ -1663,7 +1664,6 @@
                 window._lobbyEnterCooldown = true;
 
                 if (gb) {
-                    gb.style.pointerEvents = 'none';
                     gb.classList.remove('dragged-out');
                     gb.classList.add('pressed', 'flattened');
                 }
@@ -1685,7 +1685,7 @@
                     }
                 } catch(e) {}
 
-                // Speedy 75ms transition: allow the physical 3D flattening animation to complete visually before switching views
+                // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                 setTimeout(function() {
                     window._currentLobbyPanel = 'main';
                     var pLobby = document.getElementById('page-lobby');
@@ -1729,13 +1729,13 @@
                     if (typeof window.startStatsPolling === 'function') {
                         window.startStatsPolling();
                     }
-                }, 75);
+                }, 120);
 
-                // Clear room-entry cooldown after 280ms so intentional clicks on lobby buttons are enabled
+                // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
                 // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
                 setTimeout(function() {
                     window._lobbyEnterCooldown = false;
-                }, 280);
+                }, 350);
             };
         </script>
 
@@ -7361,8 +7361,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
-    <script src="/js/app.js?v=1788934000"></script>
-    <script src="/js/lobby.js?v=1788934000"></script>
+    <script src="/js/app.js?v=1788935000"></script>
+    <script src="/js/lobby.js?v=1788935000"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>

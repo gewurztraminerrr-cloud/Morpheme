@@ -7329,7 +7329,7 @@ select option,
         0 -1px 1px rgba(0, 0, 0, 0.35),
         0 1px 2px rgba(255, 255, 255, 0.4),
         0 0 14px rgba(255, 255, 255, 0.7);
-    transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.08s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.15s ease, filter 0.08s ease;
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -7383,7 +7383,7 @@ select option,
         0 1px 2px rgba(0, 0, 0, 0.95),
         0 0 6px rgba(255, 0, 127, 0.7) !important;
     filter: brightness(0.85) !important;
-    transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.05s ease-out, filter 0.05s ease-out !important;
+    transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, background 0.06s ease-out, filter 0.06s ease-out !important;
 }
 
 /* Force 3D Elevated Standing Position when dragged out */
