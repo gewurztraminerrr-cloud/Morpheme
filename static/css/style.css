@@ -8173,3 +8173,52 @@ main.pages,
     display: none !important;
 }
 
+/* Tournament SIGN UP FOR TOURNAMENT Button - Green across all layout colors/themes and platforms */
+#tournament-signup-btn,
+.tournament-signup-btn,
+#tournament-action-area button.primary-action {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    font-size: 1.15rem !important;
+    letter-spacing: 0.5px !important;
+    padding: 18px 24px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+}
+
+#tournament-signup-btn:hover,
+.tournament-signup-btn:hover,
+#tournament-action-area button.primary-action:hover {
+    background: linear-gradient(135deg, #27ae60, #219d55) !important;
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.6) !important;
+    transform: translateY(-2px) !important;
+}
+
+#tournament-signup-btn:active,
+.tournament-signup-btn:active,
+#tournament-action-area button.primary-action:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 10px rgba(46, 204, 113, 0.4) !important;
+}
+
+#tournament-signup-btn:disabled,
+.tournament-signup-btn:disabled,
+#tournament-action-area button.primary-action:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+

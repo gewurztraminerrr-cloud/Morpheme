@@ -289,10 +289,20 @@ function renderSignupState(container, data, userStatus) {
         `;
     } else {
         const btn = document.createElement('button');
-        btn.className = 'primary-action';
+        btn.id = 'tournament-signup-btn';
+        btn.className = 'primary-action tournament-signup-btn';
         btn.style.width = '100%';
         btn.style.padding = '18px';
         btn.style.fontSize = '1.1rem';
+        btn.style.fontWeight = '800';
+        btn.style.letterSpacing = '0.5px';
+        btn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+        btn.style.backgroundColor = '#2ecc71';
+        btn.style.color = '#ffffff';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '12px';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 4px 15px rgba(46, 204, 113, 0.4)';
         btn.textContent = 'SIGN UP FOR TOURNAMENT';
         btn.onclick = joinTournament;
         container.appendChild(btn);
@@ -477,7 +487,7 @@ function renderCompletedState(container, data) {
 
 async function joinTournament() {
     try {
-        const btn = document.querySelector('.primary-action');
+        const btn = document.querySelector('.primary-action, #tournament-signup-btn');
         if (btn) btn.disabled = true;
 
         const response = await fetch('/api/tournament/join', { method: 'POST' });
