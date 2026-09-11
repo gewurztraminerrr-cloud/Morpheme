@@ -155,9 +155,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1788980000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1788948000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1788990000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1788980000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1788948000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1788990000">
     <link rel="stylesheet" href="/css/play.css?v=1788946000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=1788945000">
@@ -1906,13 +1906,20 @@
                     position: sticky !important;
                     top: 0 !important;
                     z-index: 25 !important;
-                    background-color: var(--bg-primary, var(--bg-main, #12121f)) !important;
+                    background-color: var(--bg-primary, #12121f) !important;
                     background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
                     margin: 0 -20px 0 -20px !important;
                     padding: 14px 20px 14px 20px !important;
                     border-top-left-radius: 11px !important;
                     border-top-right-radius: 11px !important;
                     box-sizing: border-box !important;
+                }
+
+                /* White & Light theme matching for Lobby Journey Sticky Header */
+                [class*="theme-white"] .lobby-journey-sticky-header,
+                body.theme-white .lobby-journey-sticky-header {
+                    background-color: var(--bg-primary, #ffffff) !important;
+                    background-image: linear-gradient(var(--bg-panel, rgba(0, 0, 0, 0.05)), var(--bg-panel, rgba(0, 0, 0, 0.05))) !important;
                 }
 
                 #mobile-panel-main,
@@ -2040,7 +2047,7 @@
                         position: sticky !important;
                         top: 0 !important;
                         z-index: 25 !important;
-                        background-color: var(--bg-main, #12121f) !important;
+                        background-color: var(--bg-primary, #12121f) !important;
                         background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
                         margin: 0 -10px 0 -10px !important;
                         padding: 16px 10px 16px 10px !important;
