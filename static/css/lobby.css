@@ -771,11 +771,14 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 
 .active-rooms-panel.rooms-expanded .rating-filter-container {
     grid-template-columns: 1fr 1fr auto !important;
+    grid-template-rows: auto !important;
     padding: 6px !important;
-    margin-bottom: 2px !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
     gap: 6px !important;
-    align-items: center !important;
+    align-items: stretch !important;
     min-height: 0 !important;
+    height: auto !important;
     box-sizing: border-box !important;
 }
 
@@ -787,11 +790,21 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     gap: 5px !important;
     white-space: nowrap !important;
     padding: 6px 12px !important;
+    margin: 0 !important;
     font-size: 0.82rem !important;
     line-height: 1 !important;
     min-height: 30px !important;
     height: 30px !important;
     box-sizing: border-box !important;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.active-rooms-panel.rooms-expanded .room-tab-btn.active#open-rooms-filter-btn {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.45) !important;
+}
+
+.active-rooms-panel.rooms-expanded .room-tab-btn.active#closed-rooms-filter-btn {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.45) !important;
 }
 
 .active-rooms-panel.rooms-expanded .room-tab-btn span {
@@ -810,6 +823,7 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     margin: 0 !important;
     font-size: 0.85rem !important;
     box-sizing: border-box !important;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.4) !important;
 }
 
 .active-rooms-panel.rooms-expanded #rooms-list {
@@ -3287,5 +3301,13 @@ body.is-mobile .active-rooms-panel .mobile-lobby-spacer,
 body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
     display: none !important;
 }
+
+/* Ensure expanded rooms buttons have strictly equal padding on all devices */
+.active-rooms-panel.rooms-expanded .rating-filter-container {
+    padding: 6px !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+}
+
 
 

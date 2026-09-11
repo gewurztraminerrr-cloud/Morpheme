@@ -1925,21 +1925,65 @@ body {
 }
 
 
+/* Profile Narrative Row: Quote & About Me Side-by-Side on Desktops/Laptops */
+.profile-narrative-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+    margin-top: 0;
+    margin-bottom: 25px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-quote-box {
+    margin-top: 0;
+    margin-bottom: 0;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.profile-quote-box .meta-label {
+    display: block;
+    margin-bottom: 12px;
+}
+
 .profile-quote-minimal {
-    margin: 16px 0 16px 0;
+    margin: 0;
     text-align: left;
     max-width: none;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .profile-quote-minimal p {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     color: rgba(var(--text-primary-rgb), 0.85);
     font-style: italic;
     line-height: 1.6;
     display: block;
     width: 100%;
-    min-height: 2.5rem;
+    min-height: 110px;
+    max-height: 220px;
+    overflow-y: auto;
     margin: 0;
+    word-break: break-word;
+    scrollbar-width: thin;
+}
+
+.profile-narrative-row .profile-description-minimal {
+    margin-top: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .profile-description-minimal {
@@ -7920,9 +7964,27 @@ select option,
         max-width: min(100%, 220px) !important;
         box-sizing: border-box !important;
     }
+    .profile-narrative-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        margin-bottom: 20px !important;
+    }
+    .profile-quote-box {
+        padding: 14px 16px !important;
+    }
+    .profile-quote-box .profile-quote-minimal p {
+        min-height: auto !important;
+        max-height: 120px !important;
+        font-size: 0.95rem !important;
+        text-align: center !important;
+    }
+    .profile-quote-box .meta-label {
+        text-align: center !important;
+    }
     .profile-quote-minimal {
         text-align: center !important;
-        margin: 14px 0 14px 0 !important;
+        margin: 0 !important;
     }
     .profile-stats-grid {
         grid-template-columns: repeat(3, 1fr) !important;
