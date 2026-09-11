@@ -434,8 +434,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window._gatewayPassed = true;
                     window.currentPageId = 'page-lobby';
                     window._lobbyEnterCooldown = true;
-                    document.body.classList.add('lobby-enter-guard');
 
+                    gatewayBtn.style.pointerEvents = 'none';
                     gatewayBtn.classList.remove('dragged-out');
                     gatewayBtn.classList.add('pressed', 'flattened');
 
@@ -474,53 +474,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }).catch(() => {});
                     } catch (e) {}
 
-                    // 4. Immediately switch views to page-lobby (0ms latency, zero delay)
-                    const pLoad = document.getElementById('page-loading');
-                    const pLobby = document.getElementById('page-lobby');
-                    if (pLoad) {
-                        pLoad.classList.remove('active');
-                        pLoad.style.display = 'none';
-                    }
-                    if (pLobby) {
-                        pLobby.classList.add('active', 'lobby-enter-guard');
-                        pLobby.style.display = 'flex';
-                    }
-
-                    try {
-                        showPage('page-lobby');
-                        if (pLobby) pLobby.classList.add('lobby-enter-guard');
-                        document.body.classList.add('lobby-enter-guard');
-                        const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
-                        if (navBtn) updateActiveNav(navBtn);
-                        handleLobbyMusicState();
-                        if (typeof window.scrollLobbyToMainPanel === 'function') {
-                            window.scrollLobbyToMainPanel();
-                            requestAnimationFrame(window.scrollLobbyToMainPanel);
-                            setTimeout(window.scrollLobbyToMainPanel, 50);
-                            setTimeout(window.scrollLobbyToMainPanel, 150);
-                            setTimeout(window.scrollLobbyToMainPanel, 300);
+                    // 4. Speedy 75ms transition: allow the physical 3D flattening animation to complete visually before switching views
+                    setTimeout(() => {
+                        const pLoad = document.getElementById('page-loading');
+                        const pLobby = document.getElementById('page-lobby');
+                        if (pLoad) {
+                            pLoad.classList.remove('active');
+                            pLoad.style.display = 'none';
                         }
+                        if (pLobby) {
+                            pLobby.classList.add('active');
+                            pLobby.style.display = 'flex';
+                        }
+
                         try {
-                            history.replaceState(null, null, '#page-lobby');
-                        } catch (e) {}
-                        if (typeof window.fetchLobbyStats === 'function') {
-                            window.fetchLobbyStats('all');
+                            showPage('page-lobby');
+                            const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                            if (navBtn) updateActiveNav(navBtn);
+                            handleLobbyMusicState();
+                            if (typeof window.scrollLobbyToMainPanel === 'function') {
+                                window.scrollLobbyToMainPanel();
+                                requestAnimationFrame(window.scrollLobbyToMainPanel);
+                                setTimeout(window.scrollLobbyToMainPanel, 50);
+                                setTimeout(window.scrollLobbyToMainPanel, 150);
+                                setTimeout(window.scrollLobbyToMainPanel, 300);
+                            }
+                            try {
+                                history.replaceState(null, null, '#page-lobby');
+                            } catch (e) {}
+                            if (typeof window.fetchLobbyStats === 'function') {
+                                window.fetchLobbyStats('all');
+                            }
+                            if (typeof window.startStatsPolling === 'function') {
+                                window.startStatsPolling();
+                            }
+                        } catch (transitionErr) {
+                            console.error('[Gateway] Exception performing page transition:', transitionErr);
                         }
-                        if (typeof window.startStatsPolling === 'function') {
-                            window.startStatsPolling();
-                        }
-                    } catch (transitionErr) {
-                        console.error('[Gateway] Exception performing page transition:', transitionErr);
-                    }
+                    }, 75);
 
-                    // Clear input cooldown after 400ms so intentional clicks on lobby buttons are enabled
+                    // Clear room-entry cooldown after 280ms so intentional clicks on lobby buttons are enabled
+                    // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
                     setTimeout(() => {
                         window._lobbyEnterCooldown = false;
-                        document.body.classList.remove('lobby-enter-guard');
-                        if (pLobby) {
-                            pLobby.classList.remove('lobby-enter-guard');
-                        }
-                    }, 400);
+                    }, 280);
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {
