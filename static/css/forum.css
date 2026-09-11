@@ -331,11 +331,12 @@
     flex: 0 0 auto;
     width: 100%;
     z-index: 50;
-    background: var(--bg-panel, #0d1117);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.12));
-    padding: 10px 20px;
+    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    padding: 12px 20px;
     margin: 0 !important;
     box-sizing: border-box;
     display: flex;
@@ -347,23 +348,38 @@
 }
 
 .forum-back-btn {
-    background: var(--bg-primary, #0d1117);
-    border: 1px solid var(--input-border);
-    color: var(--text-primary);
-    padding: 10px 15px;
-    border-radius: 6px;
+    background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
+    border: 1.5px solid rgba(var(--text-primary-rgb), 0.32) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    padding: 10px 20px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
-    width: 100%;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    width: auto;
+    min-width: 180px;
     text-align: left;
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     box-sizing: border-box;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
+    min-height: 42px;
 }
 
 .forum-back-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--accent-color);
+    background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
+    border-color: var(--accent-color, #ff007f) !important;
+    color: var(--accent-color, #ff007f) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(255, 0, 127, 0.25) !important;
+    transform: translateY(-1px);
+}
+
+.forum-back-btn:active {
+    transform: translateY(1px) scale(0.99) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 .forum-post-detail {
@@ -1058,7 +1074,19 @@ body.theme-light-brown .forum-action-btn {
     border: none !important;
 }
 
-/* Ensure Back button has enough contrast on white backgrounds */
+/* Ensure Back button and bottom bar have high contrast on light themes */
+[class*="theme-white"] .forum-bottom-bar,
+[class*="theme-light-"] .forum-bottom-bar,
+body.theme-yellow .forum-bottom-bar,
+body.theme-pink .forum-bottom-bar,
+body.theme-orange .forum-bottom-bar,
+body.theme-gray .forum-bottom-bar,
+body.theme-light-brown .forum-bottom-bar {
+    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce3 100%) !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+}
+
 [class*="theme-white"] .forum-back-btn,
 [class*="theme-light-"] .forum-back-btn,
 body.theme-yellow .forum-back-btn,
@@ -1066,9 +1094,11 @@ body.theme-pink .forum-back-btn,
 body.theme-orange .forum-back-btn,
 body.theme-gray .forum-back-btn,
 body.theme-light-brown .forum-back-btn {
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
-    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
     color: #111111 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+    font-weight: 700 !important;
 }
 
 [class*="theme-white"] .forum-back-btn:hover,
@@ -1076,10 +1106,12 @@ body.theme-light-brown .forum-back-btn {
 body.theme-yellow .forum-back-btn:hover,
 body.theme-pink .forum-back-btn:hover,
 body.theme-orange .forum-back-btn:hover,
-body.theme-gray .forum-back-btn:hover {
-    background: rgba(0, 0, 0, 0.12) !important;
-    border-color: rgba(0, 0, 0, 0.35) !important;
-    color: #000000 !important;
+body.theme-gray .forum-back-btn:hover,
+body.theme-light-brown .forum-back-btn:hover {
+    background: #ffffff !important;
+    border-color: var(--accent-color, #0284c7) !important;
+    color: var(--accent-color, #0284c7) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Tablet & Smaller Mac Device Scaling for Forums Page */
@@ -1181,7 +1213,7 @@ body.theme-gray .forum-back-btn:hover {
     }
     .forum-bottom-bar {
         margin: 0 !important;
-        padding: 7px 14px 4px 14px !important;
+        padding: 8px 14px !important;
         flex: 0 0 auto !important;
         width: 100% !important;
     }
@@ -1189,8 +1221,9 @@ body.theme-gray .forum-back-btn:hover {
         display: flex !important;
     }
     .forum-back-btn {
-        padding: 8px 12px !important;
-        font-size: 0.85rem !important;
+        width: 100% !important;
+        padding: 10px 14px !important;
+        font-size: 0.9rem !important;
         margin: 0 !important;
     }
     .mobile-back-btn {

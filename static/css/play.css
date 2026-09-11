@@ -2243,32 +2243,53 @@ body.theme-light-brown .word-item.missed {
 .tools-content-column > .mobile-bottom-nav,
 .mobile-bottom-nav {
     display: none;
+    background: linear-gradient(180deg, #1b2230 0%, #121722 100%);
+    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22);
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .bottom-back-btn {
-    background: var(--bg-primary, #0d1117);
-    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15));
-    color: var(--text-primary, #ffffff);
+    background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
+    border: 1.5px solid rgba(var(--text-primary-rgb), 0.32) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     padding: 10px 16px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.92rem;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.3px;
     width: 100%;
     text-align: left;
     display: flex;
     align-items: center;
     gap: 8px;
     box-sizing: border-box;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    transition: all 0.2s ease, transform 0.1s ease;
     min-height: 42px;
 }
 .bottom-back-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--accent-color, #4facfe);
+    background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
+    border-color: var(--accent-color, #ff007f) !important;
+    color: var(--accent-color, #ff007f) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(255, 0, 127, 0.25) !important;
+    transform: translateY(-1px);
 }
 .bottom-back-btn:active {
-    transform: scale(0.985);
+    transform: translateY(1px) scale(0.99) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+[class*="theme-white"] .mobile-bottom-nav,
+[class*="theme-light-"] .mobile-bottom-nav,
+body.theme-yellow .mobile-bottom-nav,
+body.theme-pink .mobile-bottom-nav,
+body.theme-orange .mobile-bottom-nav,
+body.theme-gray .mobile-bottom-nav,
+body.theme-light-brown .mobile-bottom-nav {
+    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce3 100%) !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
 }
 
 [class*="theme-white"] .bottom-back-btn,
@@ -2278,9 +2299,11 @@ body.theme-pink .bottom-back-btn,
 body.theme-orange .bottom-back-btn,
 body.theme-gray .bottom-back-btn,
 body.theme-light-brown .bottom-back-btn {
-    background: var(--bg-card, #ffffff);
-    border-color: var(--input-border, rgba(0, 0, 0, 0.15));
-    color: var(--text-primary, #111111);
+    background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
+    color: #111111 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+    font-weight: 700 !important;
 }
 [class*="theme-white"] .bottom-back-btn:hover,
 [class*="theme-light-"] .bottom-back-btn:hover,
@@ -2289,8 +2312,10 @@ body.theme-pink .bottom-back-btn:hover,
 body.theme-orange .bottom-back-btn:hover,
 body.theme-gray .bottom-back-btn:hover,
 body.theme-light-brown .bottom-back-btn:hover {
-    background: var(--bg-element, rgba(0, 0, 0, 0.05));
-    border-color: var(--accent-color, #0284c7);
+    background: #ffffff !important;
+    border-color: var(--accent-color, #0284c7) !important;
+    color: var(--accent-color, #0284c7) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
 }
 
 @media (min-width: 901px) {
@@ -6244,11 +6269,12 @@ input[type=range]::-moz-range-track {
         flex: 0 0 auto !important;
         width: 100% !important;
         z-index: 100 !important;
-        background: var(--bg-panel, #181920) !important;
+        background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
         backdrop-filter: blur(12px) !important;
         -webkit-backdrop-filter: blur(12px) !important;
-        border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
-        padding: 7px 14px 4px 14px !important;
+        border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding: 8px 14px !important;
         box-sizing: border-box !important;
         align-items: center !important;
         margin: 0 !important;
@@ -10302,11 +10328,12 @@ body.is-mobile #page-settings .mobile-bottom-nav {
     flex: 0 0 auto !important;
     width: 100% !important;
     z-index: 100 !important;
-    background: var(--bg-panel, #181920) !important;
+    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
-    border-top: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
-    padding: 7px 14px 4px 14px !important;
+    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    padding: 8px 14px !important;
     box-sizing: border-box !important;
     align-items: center !important;
     margin: 0 !important;
