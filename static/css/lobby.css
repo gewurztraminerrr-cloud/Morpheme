@@ -5,11 +5,24 @@
 }
 
 @media (min-width: 901px) {
+    html:has(#page-lobby.active),
+    body:has(#page-lobby.active),
+    body.lobby-active {
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+    }
+
     #page-lobby.active {
         display: flex !important;
         flex-direction: column !important;
-        height: calc(100vh - 68px) !important;
-        max-height: calc(100vh - 68px) !important;
+        height: calc(100vh - 86px) !important;
+        height: calc(100dvh - 86px) !important;
+        max-height: calc(100vh - 86px) !important;
+        max-height: calc(100dvh - 86px) !important;
         overflow: hidden !important;
         position: relative !important;
         box-sizing: border-box !important;
@@ -3120,9 +3133,11 @@ body.theme-light-brown .lobby-chat-input:focus {
 /* Tighten container padding on desktop when on Lobby to dock drawer cleanly near screen bottom */
 @media (min-width: 901px) {
     .pages:has(#page-lobby.active),
-    body:has(#page-lobby.active) .pages {
+    body:has(#page-lobby.active) .pages,
+    body.lobby-active .pages {
         padding-top: 4px !important;
         padding-bottom: 4px !important;
+        box-sizing: border-box !important;
     }
     .mobile-lobby-spacer {
         display: none !important;

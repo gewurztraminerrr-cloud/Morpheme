@@ -2319,14 +2319,47 @@ body.theme-light-brown .bottom-back-btn:hover {
 }
 
 @media (min-width: 901px) {
+    html:has(#page-tools.active),
+    body:has(#page-tools.active),
+    body.tools-active,
+    html:has(#page-settings.active),
+    body:has(#page-settings.active),
+    body.settings-active,
+    html:has(#page-mods.active),
+    body:has(#page-mods.active),
+    body.mods-active {
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+    }
+
+    .pages:has(#page-tools.active),
+    body:has(#page-tools.active) .pages,
+    body.tools-active .pages,
+    .pages:has(#page-settings.active),
+    body:has(#page-settings.active) .pages,
+    body.settings-active .pages,
+    .pages:has(#page-mods.active),
+    body:has(#page-mods.active) .pages,
+    body.mods-active .pages {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        box-sizing: border-box !important;
+    }
+
     #page-tools,
     #page-settings,
     #page-mods {
-        height: calc(100vh - 80px) !important;
-        max-height: calc(100vh - 80px) !important;
+        height: calc(100vh - 86px) !important;
+        height: calc(100dvh - 86px) !important;
+        max-height: calc(100vh - 86px) !important;
+        max-height: calc(100dvh - 86px) !important;
         overflow: hidden !important;
-        padding-top: 6px !important;
-        padding-bottom: 10px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
         padding-left: 20px !important;
         padding-right: 20px !important;
         box-sizing: border-box !important;
@@ -2334,7 +2367,7 @@ body.theme-light-brown .bottom-back-btn:hover {
     #page-tools .page-title-header,
     #page-settings .page-title-header,
     #page-mods .page-title-header {
-        margin: 0 0 8px 0 !important;
+        margin: 0 0 6px 0 !important;
         padding: 0 !important;
         line-height: 1.15 !important;
         flex-shrink: 0 !important;
@@ -2345,7 +2378,7 @@ body.theme-light-brown .bottom-back-btn:hover {
         flex: 1 1 0 !important;
         height: auto !important;
         min-height: 0 !important;
-        max-height: calc(100% - 38px) !important;
+        max-height: calc(100% - 34px) !important;
         overflow: hidden !important;
     }
     .tools-sidebar {

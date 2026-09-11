@@ -1724,6 +1724,7 @@ function showPage(pageId) {
             page.style.opacity = '1';
             page.style.visibility = 'visible';
             page.scrollTop = 0;
+            window.scrollTo(0, 0);
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
                 layout.scrollLeft = 0;
@@ -1738,6 +1739,9 @@ function showPage(pageId) {
     }
     document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
     document.body.classList.toggle('play-active', pageId === 'page-play');
+    document.body.classList.toggle('tools-active', pageId === 'page-tools');
+    document.body.classList.toggle('settings-active', pageId === 'page-settings');
+    document.body.classList.toggle('mods-active', pageId === 'page-mods');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {
         const hideHeaderOnMobile = () => {
