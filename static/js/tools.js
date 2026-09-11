@@ -746,6 +746,83 @@ function formatLastVisited(lastVisitedStr, isOnline) {
     return `${formattedDate} (${durationStr})`;
 }
 
+window.TIMEZONE_LABELS = {
+    'auto': 'Auto (Device)',
+    'UTC': 'UTC (Universal Time)',
+    'America/New_York': 'US Eastern (ET)',
+    'America/Chicago': 'US Central (CT)',
+    'America/Denver': 'US Mountain (MT)',
+    'America/Phoenix': 'US Arizona (MST)',
+    'America/Los_Angeles': 'US Pacific (PT)',
+    'America/Anchorage': 'US Alaska (AKT)',
+    'Pacific/Honolulu': 'US Hawaii (HST)',
+    'America/Toronto': 'Canada Eastern',
+    'America/Vancouver': 'Canada Pacific',
+    'America/Sao_Paulo': 'Brazil (BRT)',
+    'Europe/London': 'London (GMT/BST)',
+    'Europe/Paris': 'Central Europe (CET)',
+    'Europe/Athens': 'Eastern Europe (EET)',
+    'Europe/Moscow': 'Moscow (MSK)',
+    'Asia/Dubai': 'Dubai (GST)',
+    'Asia/Kolkata': 'India (IST)',
+    'Asia/Bangkok': 'Indochina (ICT)',
+    'Asia/Singapore': 'Singapore (SGT)',
+    'Asia/Hong_Kong': 'Hong Kong (HKT)',
+    'Asia/Shanghai': 'China (CST)',
+    'Asia/Tokyo': 'Japan (JST)',
+    'Asia/Seoul': 'Korea (KST)',
+    'Australia/Perth': 'Australia West (AWST)',
+    'Australia/Adelaide': 'Australia Central (ACST)',
+    'Australia/Sydney': 'Australia East (AEST)',
+    'Pacific/Auckland': 'New Zealand (NZST)'
+};
+
+window.getUserCurrentTime = function(tz) {
+    try {
+        const options = {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        };
+        if (tz && tz !== 'auto') {
+            options.timeZone = tz;
+        }
+        return new Intl.DateTimeFormat('en-US', options).format(new Date());
+    } catch (e) {
+        return '';
+    }
+};
+
+window.updateDisplayedProfileTimes = function() {
+    if (window._activeProfileUserTz !== undefined) {
+        const userTz = window._activeProfileUserTz;
+        const timeStr = window.getUserCurrentTime(userTz);
+        const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
+        const tzValEl = document.getElementById('profile-timezone-val');
+        if (tzValEl && tzValEl.style.display !== 'none') {
+            tzValEl.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
+        }
+        const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
+        if (ownerTimeEl && !ownerTimeEl.classList.contains('hidden')) {
+            ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
+        }
+    }
+    if (window._activeMiniProfileUserTz !== undefined) {
+        const tzEl = document.getElementById('mini-profile-timezone');
+        const miniModal = document.getElementById('mini-profile-modal');
+        if (tzEl && miniModal && !miniModal.classList.contains('hidden')) {
+            const userTz = window._activeMiniProfileUserTz;
+            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
+            const timeStr = window.getUserCurrentTime(userTz);
+            tzEl.innerText = `Timezone: ${tzLabel}${timeStr ? ` (${timeStr})` : ''}`;
+        }
+    }
+};
+
+if (!window._profileTimeIntervalId) {
+    window._profileTimeIntervalId = setInterval(window.updateDisplayedProfileTimes, 30000);
+}
+
 window.showMiniProfile = async function (username) {
     if (!username) return;
     if (window.getSelection) {
@@ -829,6 +906,16 @@ window.showMiniProfile = async function (username) {
             const isOnline = data.status && data.status.is_online;
             const lvStr = formatLastVisited(data.last_visited, isOnline);
             lastVisitedEl.innerText = `Last Visited: ${lvStr}`;
+        }
+
+        // Render Timezone and Current Time
+        window._activeMiniProfileUserTz = data.timezone || 'auto';
+        const tzEl = document.getElementById('mini-profile-timezone');
+        if (tzEl) {
+            const userTz = window._activeMiniProfileUserTz;
+            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
+            const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
+            tzEl.innerText = `Timezone: ${tzLabel}${timeStr ? ` (${timeStr})` : ''}`;
         }
 
         // Flag and Meta
@@ -1706,9 +1793,11 @@ async function renderProfile(user) {
     // Timezone Handling
     const tzValEl = document.getElementById('profile-timezone-val');
     const tzSelectEl = document.getElementById('profile-timezone-select');
+    const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
     const userTz = user.timezone || 'auto';
+    window._activeProfileUserTz = userTz;
 
-    const tzLabels = {
+    const tzLabels = window.TIMEZONE_LABELS || {
         'auto': 'Auto (Device)',
         'UTC': 'UTC (Universal Time)',
         'America/New_York': 'US Eastern (ET)',
@@ -1739,19 +1828,29 @@ async function renderProfile(user) {
         'Pacific/Auckland': 'New Zealand (NZST)'
     };
 
+    const tzLabel = tzLabels[userTz] || userTz;
+    const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
+
     if (tzValEl) {
-        tzValEl.innerText = tzLabels[userTz] || userTz;
+        tzValEl.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
     }
     if (tzSelectEl) {
         tzSelectEl.value = userTz;
         if (isOwner) {
             tzValEl.style.display = 'none';
             tzSelectEl.classList.remove('hidden');
+            if (ownerTimeEl) {
+                ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
+                ownerTimeEl.classList.remove('hidden');
+            }
             tzSelectEl.onchange = async () => {
                 const newTz = tzSelectEl.value;
+                window._activeProfileUserTz = newTz;
                 window.currentUserTimezone = newTz;
                 localStorage.setItem('morpheme_timezone', newTz);
-                if (tzValEl) tzValEl.innerText = tzLabels[newTz] || newTz;
+                const newTimeStr = window.getUserCurrentTime ? window.getUserCurrentTime(newTz) : '';
+                if (tzValEl) tzValEl.innerText = newTimeStr ? `${tzLabels[newTz] || newTz} (${newTimeStr})` : (tzLabels[newTz] || newTz);
+                if (ownerTimeEl) ownerTimeEl.innerText = newTimeStr ? `(${newTimeStr})` : '';
                 await saveProfileField('timezone', newTz);
                 const settingSelect = document.getElementById('setting-timezone-select');
                 if (settingSelect) settingSelect.value = newTz;
@@ -1765,6 +1864,7 @@ async function renderProfile(user) {
         } else {
             tzValEl.style.display = 'inline-block';
             tzSelectEl.classList.add('hidden');
+            if (ownerTimeEl) ownerTimeEl.classList.add('hidden');
             tzSelectEl.onchange = null;
         }
     }

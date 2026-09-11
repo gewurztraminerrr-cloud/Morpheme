@@ -738,7 +738,11 @@ function debounce(func, wait) {
             const profileTzSelect = document.getElementById('profile-timezone-select');
             if (profileTzSelect) profileTzSelect.value = newTz;
             const profileTzVal = document.getElementById('profile-timezone-val');
-            if (profileTzVal && typeof tzLabels !== 'undefined') profileTzVal.innerText = tzLabels[newTz] || newTz;
+            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[newTz]) || newTz;
+            const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(newTz) : '';
+            if (profileTzVal) profileTzVal.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
+            const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
+            if (ownerTimeEl) ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
             fetch('/api/profile/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
