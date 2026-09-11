@@ -2259,12 +2259,12 @@ body.theme-light-brown .word-item.missed {
     font-size: 0.92rem;
     font-weight: 700;
     letter-spacing: 0.3px;
-    width: 100%;
+    width: 100% !important;
     text-align: left;
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 8px;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
     transition: all 0.2s ease, transform 0.1s ease;
     min-height: 42px;
 }
