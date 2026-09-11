@@ -46,64 +46,118 @@ This document records the definitive "Start Over" stable point for Morpheme as o
 * **Implementation**:
   * Adjusted responsive breakpoints and font scaling in `style.css` so the pronunciation remains displayed down to 768px viewports.
 
-### 7. Mini-Profile Modal Dimensions & Spacing Calibration
-* **The Mandate**: Calibrate mini-profile sizing across laptops and desktops to achieve ideal proportions (neither too large nor too small).
-* **Implementation**:
-  * Rebalanced `.mini-profile-card` max-dimensions (`460px` width, `85vh` height), typography, and flag alignment for desktop, laptop, and mobile screens.
-
-### 8. Lobby Logo & "No Show Rooms Selected" Separation
+### 7. Lobby Logo & "No Show Rooms Selected" Separation
 * **The Mandate**: Increase separation and sizing between the logo and "No 'Show Rooms' selected" text on laptops and desktops.
 * **Implementation**:
-  * Enlarged typography and increased margin/padding separation in `lobby.css` to prevent any cramping.
+  * Enlarged typography and increased margin/padding separation in `lobby.css` to prevent cramping.
 
-### 9. Active Rooms Expand / Retract Toggle & FAQ Updates
+### 8. Active Rooms Expand / Retract Toggle & FAQ Updates
 * **The Mandate**: Add an Active Rooms expand/collapse toggle with a thumb handle along the bottom of the rooms panel, hide top elements and Create Room panel when expanded, and document in FAQ.
 * **Implementation**:
   * Implemented bottom-docked expand/retract button with thumb handle.
   * Dynamically collapses the Create Room panel and top lobby elements on expansion, restoring them on retraction.
   * Updated FAQ with detailed operational guidance.
 
-### 10. Lobby Player Row Hover Glow & Scrollbar Fixes
+### 9. Lobby Player Row Hover Glow & Scrollbar Fixes
 * **The Mandate**: Fix clipping on player row hover glow and hide thin grey scrollbars on mobile lobby panels.
 * **Implementation**:
   * Added horizontal list padding and glowing box-shadows.
   * Suppressed unsightly scrollbars on mobile browsers.
 
-### 11. "New Users" Tab in Tools
+### 10. "New Users" Tab in Tools
 * **The Mandate**: Add a "New Users" tab below Personal Timer in Tools with country flags, registration dates, weekly stats, and total user count.
 * **Implementation**:
   * Created `/api/tools/new-users` endpoint filtering registered non-guest users with rolling 7-day stats.
   * Implemented `#tool-new-users` pane with responsive stats cards and scrollable table.
 
-### 12. FAQ Dictionary Breakdown & 15-Letter Cap Clarity
+### 11. FAQ Dictionary Breakdown & 15-Letter Cap Clarity
 * **The Mandate**: Update dictionary descriptions to state 15-letter word caps and remove outdated 16+ letter footnote.
 * **Implementation**:
   * Removed footnote and clarified 15-letter word caps for NWL and CSW dictionaries in `#faq-dictionaries`.
 
-### 13. Suggestions Category Header Description & Voting Notice
+### 12. Suggestions Category Header Description & Voting Notice
 * **The Mandate**: Explain in the Suggestions category header that user agreements and disagreements count as votes for moderator decisions based on popularity.
 * **Implementation**:
   * Updated category description in `app.py` and `forum.js`.
 
-### 14. User Current Time Display Next to Timezone
+### 13. User Current Time Display Next to Timezone
 * **The Mandate**: Display player local time next to their timezone on Profile and mini-profiles.
 * **Implementation**:
   * Integrated live localized time strings using `Intl.DateTimeFormat`.
 
-### 15. Profile Metadata Layout & Mathematically Equal Row Spacing
+### 14. Profile Metadata Layout & Mathematically Equal Row Spacing
 * **The Mandate**: Group Profile metadata into 3 clean semantic flex rows with equal vertical spacing, expand "About Me" height, and reduce excess top padding.
 * **Implementation**:
   * Reorganized into 3 distinct flex rows with equal `gap` spacing across desktop and mobile.
 
-### 16. Guest Session Data Auto-Purge & Auth Hardening
+### 15. Guest Session Data Auto-Purge & Auth Hardening
 * **The Mandate**: Automatically purge guest user data upon logout and prevent numerical collisions.
 * **Implementation**:
   * Built `purge_guest_user(username)` in `app.py` for clean database scrubbing.
 
-### 17. Lexicographical Additions & Invariant Enforcement
+### 16. Lexicographical Additions & Invariant Enforcement
 * **The Mandate**: Add definitions for Added Words (`LENATE`, `LENATES`, `LENATION`, `LENATIONS`, `MALAYOPHOBIA`, `JUFFERS`) strictly adhering to root-sourcing and suffix propagation rules.
 * **Implementation**:
   * Sourced definitions adhering to all dictionary rules in `AGENTS.md`.
+
+### 17. Full-Width Category Back Buttons
+* **The Mandate**: Extend the "Back to category" / "Back" button across the entire containing panel.
+* **Implementation**:
+  * Updated container and button styling so navigation spans full width.
+
+### 18. Lobby & Tools Full-Screen Fit Without Scrolling on Desktop
+* **The Mandate**: Fit entire Lobby content (including Chat buttons) and Tools menu entirely within the screen on desktops and laptops without slight vertical scrolling.
+* **Implementation**:
+  * Calibrated container heights and vertical padding in `lobby.css` and `style.css` so that all elements sit comfortably within 100vh.
+
+### 19. "My Rating" Value Separation on Desktop & Laptop
+* **The Mandate**: Place an explicit space between "My Rating" and the user's rating value on desktop and laptop lobby views.
+* **Implementation**:
+  * Updated `#my-rating-btn` markup and dynamic render formatting in `lobby.js`.
+
+### 20. Lobby Title-to-Button Spacing Harmonization
+* **The Mandate**: Match the desktop/laptop spacing between game titles (`ACCUMULATIVE`, `FIRST COME FIRST SERVE`, `SPLIT POINTS`) and their buttons to the tight, clean 6px margin used on mobile.
+* **Implementation**:
+  * Standardized `.game-title` bottom margin to `6px` across all desktop viewports.
+
+### 21. Mobile Menu Navigation Persistence (Tools, Settings, Mods)
+* **The Mandate**: Ensure that clicking Tools, Settings, or Mods in the top menu on mobile always lands the user on the main menu hub rather than automatically opening the last-visited sub-tab.
+* **Implementation**:
+  * Reset active sub-view state upon top navigation clicks on mobile devices in `tools.js`, `mods.js`, and `app.js`.
+
+### 22. Added Words Plural Audit & Dictionary Invariant Enforcement
+* **The Mandate**: Resolve missing plurals for singulars in Added Words (specifically `ABLEPSIAS`), audit `-IA`/`-IAS` singular-derived plurals, and verify Latin/Greek `-IUM`/`-IUMS`/`-IA` and `-ION`/`-IONS`/`-IA` nouns.
+* **Implementation**:
+  * Added `ABLEPSIAS` with root definition propagated from `ABLEPSIA`.
+  * Audited and added singulars with `-IAS` plurals (`ACARDIAS`, `AGNOSIAS`, `AKINESIAS`, `APROSOPIAS`, etc.).
+  * Audited and added legitimate `-IUMS` and `-IONS` plurals (`COLLOQUIUMS`, `CRITERIONS`, `ELECTRONIUMS`, `PALLADIUMS`, etc.).
+  * Strictly adhered to dictionary rules in `AGENTS.md`.
+
+### 23. Mini-Profile Modal Dimensions & "About Me" Expansion
+* **The Mandate**: Enlarge the vertical length of mini-profiles and make the horizontal length larger on desktops and laptops so that user information is not cut off, giving significantly more room to the ABOUT ME section.
+* **Implementation**:
+  * **Horizontal Length (Width)**: Enlarged base desktop and laptop width to **`750px`** (`max-width: min(94vw, 750px)` desktop, `min(96vw, 750px)` laptop), giving **~335px** to each metadata column (Registered, Last Visited, Timezone, Demographics) so full details never truncate.
+  * **Vertical Length (Height)**: Enlarged desktop `max-height` to **`min(96vh, 1050px)`** and laptop to **`97vh`**.
+  * **ABOUT ME Section (`.mini-profile-description`)**:
+    * Desktop: `min-height: 120px; max-height: 400px; padding: 16px 20px; line-height: 1.55;` (allowing 15–20+ lines of text without tiny scroll cutoffs).
+    * Laptop: `min-height: 90px !important; max-height: 250px !important; padding: 12px 18px !important;` (optimizing surrounding vertical margins to grant max height to bio).
+  * **Visual Calibration**: Avatar (`68px`), username (`1.45rem`), full name (`0.95rem`), stat values (`1.1rem`), metadata items (`0.92rem`), and action buttons (`11px 16px`), plus native hover `title` tooltips for full details.
+  * Mobile viewports (`@media (max-width: 600px)`) strictly preserved.
+
+### 24. Lobby Journey Notice Sticky Header Background Matching
+* **The Mandate**: In the Lobby with a white layout on mobile, the background behind the "ENTER A ROOM TO CONTINUE YOUR JOURNEY" notice was black along with the message. Keep the message black, but make the space around it match the panel below it.
+* **Implementation**:
+  * Replaced the erroneous `var(--bg-main, #12121f)` in `.lobby-journey-sticky-header` with `var(--bg-primary, #12121f)` combined with `background-image: linear-gradient(var(--bg-panel), var(--bg-panel))`.
+  * Added explicit theme matching for `theme-white`:
+    ```css
+    [class*="theme-white"] .lobby-journey-sticky-header,
+    body.theme-white .lobby-journey-sticky-header {
+        background-color: var(--bg-primary, #ffffff) !important;
+        background-image: linear-gradient(var(--bg-panel, rgba(0, 0, 0, 0.05)), var(--bg-panel, rgba(0, 0, 0, 0.05))) !important;
+    }
+    ```
+  * Preserved the black obsidian-diamond glass message banner (`.lobby-journey-message`) with pearl lettering.
+  * Synchronized across both `static/css/lobby.css` and the embedded styles in `templates/index.html` (`lobby.css?v=1788990000`).
 
 ---
 
@@ -126,3 +180,5 @@ This document records the definitive "Start Over" stable point for Morpheme as o
 * **Local Working Directory**: Clean (`git status` clean).
 * **GitHub Remote Repository**: `gewurztraminerrr-cloud/Morpheme` on branch `main`.
 * **Production Deployment**: `morpheme.games` (IP `132.148.72.249`), PM2 process `0` (`morpheme`) online, serving HTTP 200 OK.
+* **Latest Commit ID**: `586df14c193e27b71c93256e4f4b3d657a052c68` (tracked and deployed across all environments).
+
