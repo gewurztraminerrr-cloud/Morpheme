@@ -758,7 +758,96 @@ function setupLobbyEvents() {
             window._restoreLobbyPanel();
         }
     } // end if (isOnLobby())
+
+    // Restore rooms list collapse state if stored
+    try {
+        if (localStorage.getItem('morpheme_lobby_rooms_collapsed') === 'true') {
+            collapseRoomsList();
+        }
+    } catch(e) {}
+
+    // Setup touch gestures on rooms toggle button
+    const roomsToggleBtn = document.getElementById('lobby-rooms-toggle-btn');
+    if (roomsToggleBtn && !roomsToggleBtn._hasSwipeListener) {
+        roomsToggleBtn._hasSwipeListener = true;
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let isTouchTracking = false;
+
+        roomsToggleBtn.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            isTouchTracking = true;
+        }, { passive: true });
+
+        roomsToggleBtn.addEventListener('touchend', (e) => {
+            if (!isTouchTracking || e.changedTouches.length !== 1) return;
+            isTouchTracking = false;
+            const endY = e.changedTouches[0].clientY;
+            const endX = e.changedTouches[0].clientX;
+            const diffY = endY - touchStartY;
+            const diffX = Math.abs(endX - touchStartX);
+
+            if (Math.abs(diffY) > 20 && Math.abs(diffY) > diffX) {
+                if (diffY > 20 && !isRoomsListCollapsed()) {
+                    // Swiped down on button -> collapse
+                    collapseRoomsList();
+                } else if (diffY < -20 && isRoomsListCollapsed()) {
+                    // Swiped up on button -> expand
+                    expandRoomsList();
+                }
+            }
+        }, { passive: true });
+    }
 } // end setupLobbyEvents
+
+// --- ACTIVE ROOMS PANEL EXPAND / COLLAPSE SYSTEM ---
+function isRoomsListCollapsed() {
+    const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
+    return panel ? panel.classList.contains('rooms-collapsed') : false;
+}
+
+function collapseRoomsList() {
+    const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
+    const toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
+    if (!panel) return;
+    panel.classList.add('rooms-collapsed');
+    if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.title = 'Expand active rooms list';
+    }
+    try {
+        localStorage.setItem('morpheme_lobby_rooms_collapsed', 'true');
+    } catch(e) {}
+}
+
+function expandRoomsList() {
+    const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
+    const toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
+    if (!panel) return;
+    panel.classList.remove('rooms-collapsed');
+    if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'true');
+        toggleBtn.title = 'Collapse active rooms list';
+    }
+    try {
+        localStorage.setItem('morpheme_lobby_rooms_collapsed', 'false');
+    } catch(e) {}
+}
+
+function toggleRoomsListCollapse() {
+    if (isRoomsListCollapsed()) {
+        expandRoomsList();
+    } else {
+        collapseRoomsList();
+    }
+}
+
+window.isRoomsListCollapsed = isRoomsListCollapsed;
+window.collapseRoomsList = collapseRoomsList;
+window.expandRoomsList = expandRoomsList;
+window.toggleRoomsListCollapse = toggleRoomsListCollapse;
 
 const _LOBBY_PANELS = ['solo', 'main', 'rooms'];
 window._currentLobbyPanel = 'main'; // tracks which lobby panel is in view
@@ -840,6 +929,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     window.fetchAndRenderRooms = fetchAndRenderRooms;
     currentLobbyConfig = { gameType, timeLimit: parseInt(timeLimit) || 45, boardDimensions: boardDimensions || '4x4' };
     window.currentLobbyConfig = currentLobbyConfig;
+    if (typeof expandRoomsList === 'function') {
+        expandRoomsList();
+    }
     const roomsList = document.getElementById('rooms-list');
 
     // Ensure persistent structure for inputs so they aren't wiped on poll
