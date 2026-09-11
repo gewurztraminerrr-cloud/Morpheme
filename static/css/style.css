@@ -2679,8 +2679,8 @@ body {
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--text-primary-rgb), 0.05);
     border-radius: 24px;
-    width: 750px;
-    max-width: min(94vw, 750px);
+    width: 880px;
+    max-width: min(95vw, 880px);
     max-height: min(96vh, 1050px);
     overflow-y: auto;
     scrollbar-width: thin;
@@ -2821,7 +2821,7 @@ body {
 
 .mini-profile-metadata {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: 11px 22px;
     margin-bottom: 18px;
     padding: 0 4px;
@@ -2972,8 +2972,8 @@ body {
 /* Responsive overrides for laptop screens and viewports with limited vertical height */
 @media (max-height: 780px) and (min-width: 601px) {
     .mini-profile-card {
-        width: 750px !important;
-        max-width: min(96vw, 750px) !important;
+        width: 880px !important;
+        max-width: min(96vw, 880px) !important;
         max-height: 97vh !important;
         padding: 18px 24px !important;
         border-radius: 22px !important;
@@ -3007,6 +3007,7 @@ body {
         font-size: 1rem !important;
     }
     .mini-profile-metadata {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
         gap: 6px 14px !important;
         margin-bottom: 10px !important;
     }
