@@ -777,8 +777,9 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     margin-bottom: 0 !important;
     gap: 6px !important;
     align-items: stretch !important;
-    min-height: 0 !important;
-    height: auto !important;
+    flex-shrink: 0 !important;
+    min-height: 44px !important;
+    height: 44px !important;
     box-sizing: border-box !important;
 }
 
@@ -827,8 +828,9 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 }
 
 .active-rooms-panel.rooms-expanded #rooms-list {
-    flex: 1 1 auto !important;
-    height: 100% !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
 }
 
 #rooms-placeholder-view {
@@ -3307,6 +3309,9 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
     padding: 6px !important;
     margin: 0 !important;
     margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+    min-height: 44px !important;
+    height: 44px !important;
 }
 
 
