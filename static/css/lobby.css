@@ -723,7 +723,8 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 .active-rooms-panel.rooms-expanded .game-title,
 .active-rooms-panel.rooms-expanded #selected-game-info,
 .active-rooms-panel.rooms-expanded #rating-filter,
-.active-rooms-panel.rooms-expanded #my-rating-btn {
+.active-rooms-panel.rooms-expanded #my-rating-btn,
+.active-rooms-panel.rooms-expanded .create-room-panel {
     display: none !important;
 }
 
