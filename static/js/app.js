@@ -641,13 +641,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } else {
-        // UNAUTHENTICATED: Always force login unless it's a known public page
+        // UNAUTHENTICATED: Show explicit public page if requested by hash, otherwise preserve Gateway Screen
         if (hash === '#page-leaderboards') {
             showPage('page-leaderboards');
             const lbBtn = document.querySelector('.nav-btn[data-page="leaderboards"]');
             if (lbBtn) updateActiveNav(lbBtn);
-        } else {
+        } else if (hash === '#page-login') {
             showPage('page-login');
+        } else {
+            // Unauthenticated on root / entry: keep them on page-loading (ENTER LOBBY)
+            const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+            const gatewayCont = document.getElementById('loading-gateway-container');
+            const spinnerCont = document.getElementById('loading-spinner-container');
+            if (gatewayBtn && gatewayCont) {
+                showPage('page-loading');
+                if (spinnerCont) spinnerCont.style.display = 'none';
+                gatewayCont.style.display = 'flex';
+                document.body.classList.remove('loading-active');
+                handleLobbyMusicState();
+                gatewayBtn.textContent = 'ENTER LOBBY';
+            } else {
+                showPage('page-login');
+            }
         }
 
         // Only clear if we aren't in a special match and reached this fallback

@@ -1798,7 +1798,6 @@
                     const pageLoading = document.getElementById('page-loading');
                     const pageLogin = document.getElementById('page-login');
                     const loggedOut = localStorage.getItem('morpheme_logged_out') === 'true' || sessionStorage.getItem('morpheme_logged_out') === 'true';
-                    const loggedIn = !loggedOut && (localStorage.getItem('morpheme_logged_in') === 'true');
                     
                     if (loggedOut) {
                         const ud = document.getElementById('user-display');
@@ -1807,16 +1806,11 @@
                         if (un) un.textContent = '';
                     }
 
-                    if (loggedIn) {
-                        if (pageLoading) pageLoading.classList.add('active');
-                        if (pageLogin) pageLogin.classList.remove('active');
-                    } else {
+                    // Only switch directly to the login page if explicitly requested via hash.
+                    // Otherwise, keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
+                    if (window.location.hash === '#page-login') {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
-                        const ud = document.getElementById('user-display');
-                        if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
-                        const un = document.getElementById('username-display');
-                        if (un) un.textContent = '';
                     }
                 } catch(e) {
                     console.warn('LocalStorage check failed:', e);
@@ -7267,7 +7261,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
-    <script src="/js/app.js?v=1788925000"></script>
+    <script src="/js/app.js?v=1788925001"></script>
     <script src="/js/lobby.js?v=1788922200"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
