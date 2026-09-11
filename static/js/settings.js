@@ -913,6 +913,21 @@ function debounce(func, wait) {
         }
     };
 
+    window.resetSettingsTab = function() {
+        const sidebar = document.querySelector('#page-settings .tools-sidebar');
+        const content = document.querySelector('#page-settings .tools-content');
+        if (sidebar) {
+            sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+        }
+        if (content) {
+            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+        }
+        const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+        if (layoutEl) {
+            layoutEl.scrollLeft = 0;
+        }
+    };
+
     function setupSettingsNavigation() {
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         if (!sidebar) return;
@@ -931,9 +946,13 @@ function debounce(func, wait) {
         const settingsBackBtn = document.getElementById('settings-mobile-back-btn');
         if (settingsBackBtn) {
             settingsBackBtn.addEventListener('click', () => {
-                const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-                if (layoutEl) {
-                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                if (typeof window.resetSettingsTab === 'function') {
+                    window.resetSettingsTab();
+                } else {
+                    const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                    if (layoutEl) {
+                        layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
                 }
             });
         }
@@ -944,11 +963,8 @@ function debounce(func, wait) {
             const observer = new MutationObserver(() => {
                 if (settingsPage.classList.contains('active')) {
                     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                    if (isMobile) {
-                        setTimeout(() => {
-                            const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-                            if (layoutEl) layoutEl.scrollLeft = 0;
-                        }, 100);
+                    if (isMobile && typeof window.resetSettingsTab === 'function') {
+                        window.resetSettingsTab();
                     }
                 }
             });
@@ -978,19 +994,14 @@ function debounce(func, wait) {
                 
                 // If swiped right (diffX > 80) and horizontal movement was dominant
                 if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                    const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-                    if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    if (typeof window.resetSettingsTab === 'function') {
+                        window.resetSettingsTab();
+                    } else {
+                        const layoutEl = document.querySelector('#page-settings .tools-split-layout');
+                        if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
                 }
             }, { passive: true });
-        }
-
-        // Mobile back button inside settings content
-        const mobileBackBtn = document.getElementById('settings-mobile-back-btn');
-        if (mobileBackBtn) {
-            mobileBackBtn.addEventListener('click', () => {
-                const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
-            });
         }
     }
 

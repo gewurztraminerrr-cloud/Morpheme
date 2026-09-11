@@ -1456,6 +1456,16 @@ function setupNavigation() {
 
             // Default Page Navigation
             const pageId = 'page-' + pageTarget;
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                if (pageTarget === 'tools' && typeof window.resetToolsTab === 'function') {
+                    window.resetToolsTab();
+                } else if (pageTarget === 'settings' && typeof window.resetSettingsTab === 'function') {
+                    window.resetSettingsTab();
+                } else if (pageTarget === 'mods' && typeof window.resetModsTab === 'function') {
+                    window.resetModsTab();
+                }
+            }
             showPage(pageId);
             updateActiveNav(btn);
 
@@ -1725,6 +1735,16 @@ function showPage(pageId) {
             page.style.visibility = 'visible';
             page.scrollTop = 0;
             window.scrollTo(0, 0);
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
+                    window.resetToolsTab();
+                } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
+                    window.resetSettingsTab();
+                } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
+                    window.resetModsTab();
+                }
+            }
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
                 layout.scrollLeft = 0;
@@ -3049,11 +3069,15 @@ function _restoreAllMobilePanels() {
     }
 
     // 2. Tools / Settings / Mods (.tools-split-layout)
-    document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
-        const activePane = layoutEl.querySelector('.tools-content .tool-pane.active, .mod-details.active');
-        const targetLeft = activePane ? (layoutEl.clientWidth || layoutEl.scrollWidth) : 0;
-        layoutEl.scrollLeft = targetLeft;
-    });
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const layoutEl = activePage.querySelector('.tools-split-layout');
+        if (layoutEl) {
+            const activePane = layoutEl.querySelector('.tools-content .tool-pane.active, .mod-details.active');
+            const targetLeft = activePane ? (layoutEl.clientWidth || layoutEl.scrollWidth) : 0;
+            layoutEl.scrollLeft = targetLeft;
+        }
+    }
 
     // 3. Forum Page (.forum-container)
     const forumContainer = document.querySelector('.forum-container');

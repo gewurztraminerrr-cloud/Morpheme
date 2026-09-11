@@ -1369,9 +1369,13 @@ function setupModsNavigation() {
     const modsBackBtn = document.getElementById('mods-mobile-back-btn');
     if (modsBackBtn) {
         modsBackBtn.addEventListener('click', () => {
-            const layoutEl = document.querySelector('#page-mods .tools-split-layout');
-            if (layoutEl) {
-                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            if (typeof window.resetModsTab === 'function') {
+                window.resetModsTab();
+            } else {
+                const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+                if (layoutEl) {
+                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                }
             }
         });
     }
@@ -1381,7 +1385,8 @@ function setupModsNavigation() {
     if (modsPage) {
         const observer = new MutationObserver(() => {
             if (modsPage.classList.contains('active')) {
-                if (typeof window.resetModsTab === 'function') {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile && typeof window.resetModsTab === 'function') {
                     window.resetModsTab();
                 }
             }
@@ -1412,19 +1417,14 @@ function setupModsNavigation() {
             
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                const layoutEl = document.querySelector('#page-mods .tools-split-layout');
-                if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                if (typeof window.resetModsTab === 'function') {
+                    window.resetModsTab();
+                } else {
+                    const layoutEl = document.querySelector('#page-mods .tools-split-layout');
+                    if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                }
             }
         }, { passive: true });
-    }
-
-    // Mobile back button inside mods content
-    const mobileBackBtn = document.getElementById('mods-mobile-back-btn');
-    if (mobileBackBtn) {
-        mobileBackBtn.addEventListener('click', () => {
-            const layoutEl = document.querySelector('#page-mods .tools-split-layout');
-            if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
-        });
     }
     // Setup donation management listeners
     const addDonationBtn = document.getElementById('add-donation-btn');

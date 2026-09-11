@@ -294,6 +294,22 @@ window.showTool = function(toolId) {
     }
 };
 
+window.resetToolsTab = function() {
+    const sidebar = document.querySelector('#page-tools .tools-sidebar');
+    const content = document.querySelector('#page-tools .tools-content');
+    if (sidebar) {
+        sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    if (content) {
+        content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+        content.classList.remove('no-outer-scroll');
+    }
+    const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+    if (layoutEl) {
+        layoutEl.scrollLeft = 0;
+    }
+};
+
 function setupToolsNavigation() {
     const sidebar = document.querySelector('#page-tools .tools-sidebar');
     if (!sidebar) return;
@@ -312,9 +328,13 @@ function setupToolsNavigation() {
     const toolsBackBtn = document.getElementById('tools-mobile-back-btn');
     if (toolsBackBtn) {
         toolsBackBtn.addEventListener('click', () => {
-            const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-            if (layoutEl) {
-                layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+            if (typeof window.resetToolsTab === 'function') {
+                window.resetToolsTab();
+            } else {
+                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                if (layoutEl) {
+                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                }
             }
         });
     }
@@ -325,11 +345,8 @@ function setupToolsNavigation() {
         const observer = new MutationObserver(() => {
             if (toolsPage.classList.contains('active')) {
                 const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    setTimeout(() => {
-                        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                        if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
-                    }, 100);
+                if (isMobile && typeof window.resetToolsTab === 'function') {
+                    window.resetToolsTab();
                 }
             }
         });
@@ -367,9 +384,13 @@ function setupToolsNavigation() {
             
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-                if (layoutEl) {
-                    layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                if (typeof window.resetToolsTab === 'function') {
+                    window.resetToolsTab();
+                } else {
+                    const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                    if (layoutEl) {
+                        layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
                 }
             }
         }, { passive: true });
