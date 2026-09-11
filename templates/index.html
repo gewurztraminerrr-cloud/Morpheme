@@ -1127,99 +1127,106 @@
                                             </div>
 
                                             <div class="profile-metadata-row">
-                                                <div class="meta-item" title="Real Name">
-                                                    <span class="meta-icon">🆔</span>
-                                                    <span class="meta-label">Name</span>
-                                                    <span id="profile-full-name" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Age">
-                                                    <span class="meta-icon">🎂</span>
-                                                    <span class="meta-label">Age</span>
-                                                    <span id="profile-age-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Gender">
-                                                    <span class="meta-icon">👤</span>
-                                                    <span class="meta-label">Gender</span>
-                                                    <span id="profile-gender-val" class="meta-text">-</span>
-                                                </div>
-                                                <div class="meta-item" title="Location">
-                                                    <div class="custom-dropdown-container">
-                                                        <span class="profile-flag" id="profile-flag"
-                                                            style="cursor: pointer;">🏳️</span>
-                                                        <div id="flag-dropdown" class="dropdown-menu">
-                                                            <div class="dropdown-header">
-                                                                <input type="text" id="flag-dropdown-search"
-                                                                    class="dropdown-search"
-                                                                    placeholder="Search countries...">
-                                                            </div>
-                                                            <div id="flag-dropdown-list" class="dropdown-list">
-                                                                <!-- Flags injected here -->
+                                                <div class="profile-meta-line">
+                                                    <div class="meta-item" title="Real Name">
+                                                        <span class="meta-icon">🆔</span>
+                                                        <span class="meta-label">Name</span>
+                                                        <span id="profile-full-name" class="meta-text">-</span>
+                                                    </div>
+                                                    <div class="meta-item" title="Age">
+                                                        <span class="meta-icon">🎂</span>
+                                                        <span class="meta-label">Age</span>
+                                                        <span id="profile-age-val" class="meta-text">-</span>
+                                                    </div>
+                                                    <div class="meta-item" title="Gender">
+                                                        <span class="meta-icon">👤</span>
+                                                        <span class="meta-label">Gender</span>
+                                                        <span id="profile-gender-val" class="meta-text">-</span>
+                                                    </div>
+                                                    <div class="meta-item" title="Location">
+                                                        <div class="custom-dropdown-container">
+                                                            <span class="profile-flag" id="profile-flag"
+                                                                style="cursor: pointer;">🏳️</span>
+                                                            <div id="flag-dropdown" class="dropdown-menu">
+                                                                <div class="dropdown-header">
+                                                                    <input type="text" id="flag-dropdown-search"
+                                                                        class="dropdown-search"
+                                                                        placeholder="Search countries...">
+                                                                </div>
+                                                                <div id="flag-dropdown-list" class="dropdown-list">
+                                                                    <!-- Flags injected here -->
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                        <span id="profile-flag-name" class="flag-name-label"></span>
+                                                        <span class="meta-label">Location</span>
+                                                        <span id="profile-location-val" class="meta-text">-</span>
                                                     </div>
-                                                    <span id="profile-flag-name" class="flag-name-label"></span>
-                                                    <span class="meta-label">Location</span>
-                                                    <span id="profile-location-val" class="meta-text">-</span>
                                                 </div>
-                                                <div class="meta-item" id="profile-joined-container"
-                                                    title="Registered Morpheme">
-                                                    <span class="meta-icon">🗓️</span>
-                                                    <span id="profile-joined-val" class="meta-text">Registered: -</span>
+
+                                                <div class="profile-meta-line">
+                                                    <div class="meta-item" id="profile-joined-container"
+                                                        title="Registered Morpheme">
+                                                        <span class="meta-icon">🗓️</span>
+                                                        <span id="profile-joined-val" class="meta-text">Registered: -</span>
+                                                    </div>
+                                                    <div class="meta-item" id="profile-last-visited-container"
+                                                        title="Last Visited Morpheme">
+                                                        <span class="meta-icon">🕒</span>
+                                                        <span id="profile-last-visited-val" class="meta-text">Last Visited: -</span>
+                                                    </div>
                                                 </div>
-                                                <div class="meta-item" id="profile-last-visited-container"
-                                                    title="Last Visited Morpheme">
-                                                    <span class="meta-icon">🕒</span>
-                                                    <span id="profile-last-visited-val" class="meta-text">Last Visited: -</span>
-                                                </div>
-                                                <div class="profile-meta-break"></div>
-                                                <div class="meta-item" id="profile-timezone-container" title="Time Zone">
-                                                    <span class="meta-icon">🌐</span>
-                                                    <span class="meta-label">Timezone</span>
-                                                    <span id="profile-timezone-val" class="meta-text" style="cursor: pointer;">Auto (Device)</span>
-                                                    <select id="profile-timezone-select" class="timezone-edit-select hidden" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 6px; padding: 2px 6px; font-size: 0.82rem; max-width: 170px;">
-                                                        <option value="auto">Auto (Device Local)</option>
-                                                        <option value="UTC">UTC (Universal Time)</option>
-                                                        <option value="America/New_York">US Eastern Time (ET)</option>
-                                                        <option value="America/Chicago">US Central Time (CT)</option>
-                                                        <option value="America/Denver">US Mountain Time (MT)</option>
-                                                        <option value="America/Phoenix">US Arizona (MST, no DST)</option>
-                                                        <option value="America/Los_Angeles">US Pacific Time (PT)</option>
-                                                        <option value="America/Anchorage">US Alaska Time (AKT)</option>
-                                                        <option value="Pacific/Honolulu">US Hawaii Time (HST)</option>
-                                                        <option value="America/Toronto">Canada Eastern (Toronto)</option>
-                                                        <option value="America/Vancouver">Canada Pacific (Vancouver)</option>
-                                                        <option value="America/Sao_Paulo">Brazil (São Paulo - BRT)</option>
-                                                        <option value="Europe/London">UK / Ireland (London - GMT/BST)</option>
-                                                        <option value="Europe/Paris">Central Europe (Paris, Berlin - CET/CEST)</option>
-                                                        <option value="Europe/Athens">Eastern Europe (Athens, Cairo - EET/EEST)</option>
-                                                        <option value="Europe/Moscow">Russia (Moscow - MSK)</option>
-                                                        <option value="Asia/Dubai">Gulf Standard Time (Dubai - GST)</option>
-                                                        <option value="Asia/Kolkata">India Standard Time (IST)</option>
-                                                        <option value="Asia/Bangkok">Indochina Time (Bangkok, Jakarta - ICT)</option>
-                                                        <option value="Asia/Singapore">Singapore / Malaysia (SGT)</option>
-                                                        <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
-                                                        <option value="Asia/Shanghai">China Standard Time (Beijing - CST)</option>
-                                                        <option value="Asia/Tokyo">Japan Standard Time (Tokyo - JST)</option>
-                                                        <option value="Asia/Seoul">Korea Standard Time (Seoul - KST)</option>
-                                                        <option value="Australia/Perth">Australia Western (Perth - AWST)</option>
-                                                        <option value="Australia/Adelaide">Australia Central (Adelaide - ACST)</option>
-                                                        <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
-                                                        <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
-                                                    </select>
-                                                    <span id="profile-timezone-owner-time" class="meta-text hidden" style="font-weight: 500; font-size: 0.85rem; margin-left: 4px; opacity: 0.85;"></span>
-                                                </div>
-                                                <div class="meta-item" id="profile-proof-container"
-                                                    title="Proof of Legitimacy">
-                                                    <span class="meta-icon">🎥</span>
-                                                    <span class="meta-label">Proof</span>
-                                                    <a id="profile-proof-link" href="#" target="_blank"
-                                                        class="proof-link hidden">View
-                                                        Legitimacy Video</a>
-                                                    <span id="profile-proof-placeholder" class="meta-text">No proof
-                                                        provided</span>
-                                                    <input type="text" id="profile-proof-input"
-                                                        class="proof-edit-input hidden"
-                                                        placeholder="Enter YouTube URL...">
+
+                                                <div class="profile-meta-line">
+                                                    <div class="meta-item" id="profile-timezone-container" title="Time Zone">
+                                                        <span class="meta-icon">🌐</span>
+                                                        <span class="meta-label">Timezone</span>
+                                                        <span id="profile-timezone-val" class="meta-text" style="cursor: pointer;">Auto (Device)</span>
+                                                        <select id="profile-timezone-select" class="timezone-edit-select hidden" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 6px; padding: 2px 6px; font-size: 0.82rem; max-width: 170px;">
+                                                            <option value="auto">Auto (Device Local)</option>
+                                                            <option value="UTC">UTC (Universal Time)</option>
+                                                            <option value="America/New_York">US Eastern Time (ET)</option>
+                                                            <option value="America/Chicago">US Central Time (CT)</option>
+                                                            <option value="America/Denver">US Mountain Time (MT)</option>
+                                                            <option value="America/Phoenix">US Arizona (MST, no DST)</option>
+                                                            <option value="America/Los_Angeles">US Pacific Time (PT)</option>
+                                                            <option value="America/Anchorage">US Alaska Time (AKT)</option>
+                                                            <option value="Pacific/Honolulu">US Hawaii Time (HST)</option>
+                                                            <option value="America/Toronto">Canada Eastern (Toronto)</option>
+                                                            <option value="America/Vancouver">Canada Pacific (Vancouver)</option>
+                                                            <option value="America/Sao_Paulo">Brazil (São Paulo - BRT)</option>
+                                                            <option value="Europe/London">UK / Ireland (London - GMT/BST)</option>
+                                                            <option value="Europe/Paris">Central Europe (Paris, Berlin - CET/CEST)</option>
+                                                            <option value="Europe/Athens">Eastern Europe (Athens, Cairo - EET/EEST)</option>
+                                                            <option value="Europe/Moscow">Russia (Moscow - MSK)</option>
+                                                            <option value="Asia/Dubai">Gulf Standard Time (Dubai - GST)</option>
+                                                            <option value="Asia/Kolkata">India Standard Time (IST)</option>
+                                                            <option value="Asia/Bangkok">Indochina Time (Bangkok, Jakarta - ICT)</option>
+                                                            <option value="Asia/Singapore">Singapore / Malaysia (SGT)</option>
+                                                            <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                                                            <option value="Asia/Shanghai">China Standard Time (Beijing - CST)</option>
+                                                            <option value="Asia/Tokyo">Japan Standard Time (Tokyo - JST)</option>
+                                                            <option value="Asia/Seoul">Korea Standard Time (Seoul - KST)</option>
+                                                            <option value="Australia/Perth">Australia Western (Perth - AWST)</option>
+                                                            <option value="Australia/Adelaide">Australia Central (Adelaide - ACST)</option>
+                                                            <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
+                                                            <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
+                                                        </select>
+                                                        <span id="profile-timezone-owner-time" class="meta-text hidden" style="font-weight: 500; font-size: 0.85rem; margin-left: 4px; opacity: 0.85;"></span>
+                                                    </div>
+                                                    <div class="meta-item" id="profile-proof-container"
+                                                        title="Proof of Legitimacy">
+                                                        <span class="meta-icon">🎥</span>
+                                                        <span class="meta-label">Proof</span>
+                                                        <a id="profile-proof-link" href="#" target="_blank"
+                                                            class="proof-link hidden">View
+                                                            Legitimacy Video</a>
+                                                        <span id="profile-proof-placeholder" class="meta-text">No proof
+                                                            provided</span>
+                                                        <input type="text" id="profile-proof-input"
+                                                            class="proof-edit-input hidden"
+                                                            placeholder="Enter YouTube URL...">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div> <!-- End profile-identity -->

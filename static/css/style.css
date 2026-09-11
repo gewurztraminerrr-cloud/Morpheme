@@ -1737,23 +1737,16 @@ body {
 
 .profile-metadata-row {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
     margin-bottom: 0;
 }
 
-.profile-meta-break {
-    flex-basis: 100%;
-    height: 0;
-    margin: -12px 0 0 0;
-    padding: 0;
-}
-
-@media (max-width: 768px) {
-    .profile-meta-break {
-        margin: -8px 0 0 0;
-    }
+.profile-meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
 }
 
 .meta-item {
@@ -7548,6 +7541,10 @@ select option,
         margin-bottom: 15px !important;
     }
     .profile-metadata-row {
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    .profile-meta-line {
         justify-content: center !important;
         gap: 8px !important;
     }
