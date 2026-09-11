@@ -7871,8 +7871,17 @@ main.pages,
         font-size: 1.15rem !important;
         letter-spacing: 1px !important;
     }
+    .logo .pronunciation,
     .pronunciation {
-        display: none !important;
+        display: inline-block !important;
+        font-size: 0.72rem !important;
+        color: var(--text-primary) !important;
+        font-style: italic !important;
+        opacity: 0.85 !important;
+        margin-right: 6px !important;
+        margin-bottom: 0 !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
     .nav {
         gap: 2.5px !important;
@@ -7894,6 +7903,32 @@ main.pages,
     .logout-btn {
         padding: 4px 8px !important;
         font-size: 0.73rem !important;
+    }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+    .header {
+        padding: 5px 8px !important;
+        gap: 4px !important;
+    }
+    .logo {
+        gap: 4px !important;
+    }
+    .logo-text {
+        font-size: 1.08rem !important;
+        letter-spacing: 0.5px !important;
+    }
+    .logo .pronunciation,
+    .pronunciation {
+        font-size: 0.68rem !important;
+        margin-right: 2px !important;
+    }
+    .nav {
+        gap: 2px !important;
+    }
+    .nav-btn {
+        padding: 4px 5px !important;
+        font-size: 0.7rem !important;
     }
 }
 
