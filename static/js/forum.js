@@ -669,7 +669,15 @@ const Forum = {
         }
 
         document.getElementById('forum-category-title').textContent = category.name;
-        document.getElementById('forum-category-desc').textContent = category.description;
+        const isSuggestions = category.name && (
+            category.name.toLowerCase().includes('suggestion') ||
+            category.id === 6
+        );
+        document.getElementById('forum-category-desc').textContent = category.header_description || (
+            isSuggestions
+                ? "Share your ideas for improving Morpheme. A user’s agreement in a user’s thread counts as a vote, and likewise for a disagreement. A decision of the mods will be made based on the level of its popularity, and the feature may be added in the future."
+                : category.description
+        );
 
         // Show/hide New Post button based on guest status
         // restriction: guests cannot post
