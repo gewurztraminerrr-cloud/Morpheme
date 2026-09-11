@@ -58,6 +58,10 @@ function showLobbyToast(message, type = 'info') {
 window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
+    if (window._lobbyEnterCooldown) {
+        console.log('[Lobby] enterLobbyRoom blocked during gateway transition cooldown');
+        return;
+    }
     if (!rawBtn) return;
     if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
@@ -181,11 +185,13 @@ async function enterLobbyRoom(rawBtn) {
 }
 
 async function handleAccumulativeClick(accBtn) {
+    if (window._lobbyEnterCooldown) return;
     return enterLobbyRoom(accBtn);
 }
 window.handleAccumulativeClick = handleAccumulativeClick;
 
 async function handleShowRoomsClick(listBtn) {
+    if (window._lobbyEnterCooldown) return;
     if (typeof window.handleShowRoomsInline === 'function') {
         return window.handleShowRoomsInline(listBtn);
     }
@@ -194,6 +200,13 @@ async function handleShowRoomsClick(listBtn) {
 window.handleShowRoomsClick = handleShowRoomsClick;
 
 async function handleLobbyButtonClickCore(btn, evt) {
+    if (window._lobbyEnterCooldown) {
+        if (evt && typeof evt.preventDefault === 'function') {
+            try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+        }
+        console.log('[Lobby] handleLobbyButtonClickCore blocked during gateway transition cooldown');
+        return;
+    }
     if (!btn) return;
     const realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
     const gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
@@ -210,6 +223,7 @@ window.handleLobbyButtonClickCore = handleLobbyButtonClickCore;
 window.handleLobbyButtonClick = handleLobbyButtonClickCore;
 
 async function createRoom(config, minRating, maxRating) {
+    if (window._lobbyEnterCooldown) return;
     if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
         return;
     }

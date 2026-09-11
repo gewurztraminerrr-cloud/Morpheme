@@ -410,29 +410,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let gatewayTransitioning = false;
                 const executeGatewayTransition = async (e) => {
-                    // Ensure session check has completed
-                    if (window._sessionCheckPromise) {
-                        try { await window._sessionCheckPromise; } catch (err) {}
-                    }
-                    if (!currentUser) {
-                        showPage('page-login');
-                        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
-                        return;
-                    }
-
-                    window._gatewayTransitioning = true;
-                    window._gatewayPassed = true;
-                    window.currentPageId = 'page-lobby';
-
-                    gatewayBtn.classList.remove('dragged-out');
-                    gatewayBtn.classList.add('pressed', 'flattened');
-
-                    console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
+                    if (gatewayTransitioning || window._gatewayTransitioning) return;
 
                     // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
                     if (typeof window.triggerMobileFullscreen === 'function') {
                         window.triggerMobileFullscreen();
                     }
+
+                    // Check if session check completed, only await if user not yet resolved
+                    let activeUser = currentUser || window.currentUser;
+                    if (!activeUser && window._sessionCheckPromise) {
+                        try { await window._sessionCheckPromise; } catch (err) {}
+                        activeUser = currentUser || window.currentUser;
+                    }
+                    if (!activeUser) {
+                        showPage('page-login');
+                        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
+                        return;
+                    }
+
+                    gatewayTransitioning = true;
+                    window._gatewayTransitioning = true;
+                    window._gatewayPassed = true;
+                    window.currentPageId = 'page-lobby';
+                    window._lobbyEnterCooldown = true;
+                    document.body.classList.add('lobby-enter-guard');
+
+                    gatewayBtn.classList.remove('dragged-out');
+                    gatewayBtn.classList.add('pressed', 'flattened');
+
+                    console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
 
                     // 1. Trigger audio playback synchronously on direct user gesture so Chrome, Safari & Firefox start music instantly
                     try {
@@ -467,38 +474,53 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }).catch(() => {});
                     } catch (e) {}
 
-                    // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
-                    setTimeout(() => {
-                        const pLoad = document.getElementById('page-loading');
-                        if (pLoad) {
-                            pLoad.classList.remove('active');
-                            pLoad.style.display = 'none';
+                    // 4. Immediately switch views to page-lobby (0ms latency, zero delay)
+                    const pLoad = document.getElementById('page-loading');
+                    const pLobby = document.getElementById('page-lobby');
+                    if (pLoad) {
+                        pLoad.classList.remove('active');
+                        pLoad.style.display = 'none';
+                    }
+                    if (pLobby) {
+                        pLobby.classList.add('active', 'lobby-enter-guard');
+                        pLobby.style.display = 'flex';
+                    }
+
+                    try {
+                        showPage('page-lobby');
+                        if (pLobby) pLobby.classList.add('lobby-enter-guard');
+                        document.body.classList.add('lobby-enter-guard');
+                        const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                        if (navBtn) updateActiveNav(navBtn);
+                        handleLobbyMusicState();
+                        if (typeof window.scrollLobbyToMainPanel === 'function') {
+                            window.scrollLobbyToMainPanel();
+                            requestAnimationFrame(window.scrollLobbyToMainPanel);
+                            setTimeout(window.scrollLobbyToMainPanel, 50);
+                            setTimeout(window.scrollLobbyToMainPanel, 150);
+                            setTimeout(window.scrollLobbyToMainPanel, 300);
                         }
                         try {
-                            showPage('page-lobby');
-                            const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
-                            if (navBtn) updateActiveNav(navBtn);
-                            handleLobbyMusicState();
-                            if (typeof window.scrollLobbyToMainPanel === 'function') {
-                                window.scrollLobbyToMainPanel();
-                                requestAnimationFrame(window.scrollLobbyToMainPanel);
-                                setTimeout(window.scrollLobbyToMainPanel, 50);
-                                setTimeout(window.scrollLobbyToMainPanel, 150);
-                                setTimeout(window.scrollLobbyToMainPanel, 300);
-                            }
-                            try {
-                                history.replaceState(null, null, '#page-lobby');
-                            } catch (e) {}
-                            if (typeof window.fetchLobbyStats === 'function') {
-                                window.fetchLobbyStats('all');
-                            }
-                            if (typeof window.startStatsPolling === 'function') {
-                                window.startStatsPolling();
-                            }
-                        } catch (transitionErr) {
-                            console.error('[Gateway] Exception performing page transition:', transitionErr);
+                            history.replaceState(null, null, '#page-lobby');
+                        } catch (e) {}
+                        if (typeof window.fetchLobbyStats === 'function') {
+                            window.fetchLobbyStats('all');
                         }
-                    }, 120);
+                        if (typeof window.startStatsPolling === 'function') {
+                            window.startStatsPolling();
+                        }
+                    } catch (transitionErr) {
+                        console.error('[Gateway] Exception performing page transition:', transitionErr);
+                    }
+
+                    // Clear input cooldown after 400ms so intentional clicks on lobby buttons are enabled
+                    setTimeout(() => {
+                        window._lobbyEnterCooldown = false;
+                        document.body.classList.remove('lobby-enter-guard');
+                        if (pLobby) {
+                            pLobby.classList.remove('lobby-enter-guard');
+                        }
+                    }, 400);
                 };
 
                 window.handleEnterLobbyClick = (btn, evt) => {

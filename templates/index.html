@@ -154,9 +154,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1788720953" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1788924000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1788925002" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1788720953">
-    <link rel="stylesheet" href="/css/lobby.css?v=1788924000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1788925002">
     <link rel="stylesheet" href="/css/play.css?v=1788932001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=33879">
@@ -256,6 +256,10 @@
         };
 
         async function enterLobbyRoomInline(rawBtn) {
+            if (window._lobbyEnterCooldown) {
+                console.log('[Lobby] enterLobbyRoomInline blocked during gateway cooldown');
+                return;
+            }
             if (!rawBtn) return;
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
             if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
@@ -854,6 +858,13 @@
         };
 
         window.handleLobbyButtonClick = async function(btn, evt) {
+            if (window._lobbyEnterCooldown) {
+                if (evt && typeof evt.preventDefault === 'function') {
+                    try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+                }
+                console.log('[Lobby] handleLobbyButtonClick blocked during gateway cooldown');
+                return;
+            }
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
             }
@@ -1614,14 +1625,21 @@
             })();
 
             window.handleEnterLobbyClick = async function(btn, evt) {
+                if (window._gatewayTransitioning) return;
                 var gb = document.getElementById('btn-enter-lobby-gateway');
                 if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
 
-                // Ensure session check has completed
-                if (window._sessionCheckPromise) {
-                    try { await window._sessionCheckPromise; } catch(e) {}
+                // Immediately trigger mobile fullscreen synchronously on direct user gesture
+                if (typeof window.triggerMobileFullscreen === 'function') {
+                    window.triggerMobileFullscreen();
                 }
+
+                // Ensure session check has completed only if user is not already resolved
                 var activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
+                if (!activeUser && window._sessionCheckPromise) {
+                    try { await window._sessionCheckPromise; } catch(e) {}
+                    activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
+                }
                 if (!activeUser) {
                     if (typeof window.showPage === 'function') {
                         window.showPage('page-login');
@@ -1642,6 +1660,9 @@
                 window._gatewayPassed = true;
                 window._gatewayTransitioning = true;
                 window.currentPageId = 'page-lobby';
+                window._lobbyEnterCooldown = true;
+                document.body.classList.add('lobby-enter-guard');
+
                 if (gb) {
                     gb.classList.remove('dragged-out');
                     gb.classList.add('pressed', 'flattened');
@@ -1664,51 +1685,63 @@
                     }
                 } catch(e) {}
 
-                // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
+                // Immediately switch to lobby view (0ms latency, zero delay)
+                window._currentLobbyPanel = 'main';
+                var pLobby = document.getElementById('page-lobby');
+                var lobbyGrid = document.querySelector('.lobby-grid');
+                var mainPanel = document.getElementById('mobile-panel-main');
+                if (pLobby) {
+                    pLobby.classList.add('active', 'lobby-enter-guard');
+                    pLobby.style.display = 'flex';
+                }
+                if (lobbyGrid && mainPanel) {
+                    lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                }
+
+                var pLoad = document.getElementById('page-loading');
+                if (pLoad) {
+                    pLoad.classList.remove('active');
+                    pLoad.style.display = 'none';
+                }
+
+                if (typeof window.showPage === 'function') {
+                    window.showPage('page-lobby');
+                } else if (typeof showPage === 'function') {
+                    showPage('page-lobby');
+                } else if (pLobby) {
+                    pLobby.classList.add('active');
+                    pLobby.style.display = 'flex';
+                }
+                if (pLobby) {
+                    pLobby.classList.add('lobby-enter-guard');
+                }
+
+                try {
+                    history.replaceState(null, null, '#page-lobby');
+                } catch(e) {}
+
+                var navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                if (navBtn && typeof window.updateActiveNav === 'function') {
+                    window.updateActiveNav(navBtn);
+                }
+                if (typeof handleLobbyMusicState === 'function') {
+                    handleLobbyMusicState();
+                }
+                if (typeof window.fetchLobbyStats === 'function') {
+                    window.fetchLobbyStats('all');
+                }
+                if (typeof window.startStatsPolling === 'function') {
+                    window.startStatsPolling();
+                }
+
+                // Clear input cooldown after 400ms so intentional clicks on lobby buttons are enabled
                 setTimeout(function() {
-                    window._currentLobbyPanel = 'main';
-                    var pLobby = document.getElementById('page-lobby');
-                    var lobbyGrid = document.querySelector('.lobby-grid');
-                    var mainPanel = document.getElementById('mobile-panel-main');
-                    if (pLobby && lobbyGrid && mainPanel) {
-                        pLobby.classList.add('active');
-                        pLobby.style.display = 'flex';
-                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                    window._lobbyEnterCooldown = false;
+                    document.body.classList.remove('lobby-enter-guard');
+                    if (pLobby) {
+                        pLobby.classList.remove('lobby-enter-guard');
                     }
-
-                    var pLoad = document.getElementById('page-loading');
-                    if (pLoad) {
-                        pLoad.classList.remove('active');
-                        pLoad.style.display = 'none';
-                    }
-
-                    if (typeof window.showPage === 'function') {
-                        window.showPage('page-lobby');
-                    } else if (typeof showPage === 'function') {
-                        showPage('page-lobby');
-                    } else if (pLobby) {
-                        pLobby.classList.add('active');
-                        pLobby.style.display = 'flex';
-                    }
-
-                    try {
-                        history.replaceState(null, null, '#page-lobby');
-                    } catch(e) {}
-
-                    var navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
-                    if (navBtn && typeof window.updateActiveNav === 'function') {
-                        window.updateActiveNav(navBtn);
-                    }
-                    if (typeof handleLobbyMusicState === 'function') {
-                        handleLobbyMusicState();
-                    }
-                    if (typeof window.fetchLobbyStats === 'function') {
-                        window.fetchLobbyStats('all');
-                    }
-                    if (typeof window.startStatsPolling === 'function') {
-                        window.startStatsPolling();
-                    }
-                }, 120);
+                }, 400);
             };
         </script>
 
@@ -1824,6 +1857,14 @@
         <!-- Lobby Page -->
         <div id="page-lobby" class="page">
             <style>
+                /* Transition Cooldown Guard: Disables all click/touch interactions across the lobby for 400ms following gateway transition */
+                body.lobby-enter-guard #page-lobby,
+                body.lobby-enter-guard #page-lobby *,
+                #page-lobby.lobby-enter-guard,
+                #page-lobby.lobby-enter-guard * {
+                    pointer-events: none !important;
+                }
+
                 /* Lustrous, Shimmer-Inspiring Journey Message Box */
                 /* Sticky Header for Lobby Journey Message */
                 .lobby-journey-sticky-header {
@@ -7261,8 +7302,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
-    <script src="/js/app.js?v=1788925001"></script>
-    <script src="/js/lobby.js?v=1788922200"></script>
+    <script src="/js/app.js?v=1788925002"></script>
+    <script src="/js/lobby.js?v=1788925002"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=15467"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>

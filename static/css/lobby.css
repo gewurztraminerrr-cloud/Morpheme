@@ -4,6 +4,14 @@
     display: none;
 }
 
+/* Transition Cooldown Guard: Disables all click/touch interactions across the lobby for 400ms following gateway transition */
+body.lobby-enter-guard #page-lobby,
+body.lobby-enter-guard #page-lobby *,
+#page-lobby.lobby-enter-guard,
+#page-lobby.lobby-enter-guard * {
+    pointer-events: none !important;
+}
+
 @media (min-width: 901px) {
     #page-lobby.active {
         display: flex !important;
