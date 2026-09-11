@@ -7931,38 +7931,7 @@ body.is-desktop .word-input-section {
     transition: opacity 0.25s ease;
 }
 
-/* Chat Drag Handle Indicator */
-.chat-drag-handle {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 16px;
-    margin-bottom: 2px;
-    cursor: grab;
-    touch-action: pan-y;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    flex-shrink: 0;
-    outline: none !important;
-}
-
-.chat-handle-bar {
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.35);
-    transition: background 0.2s, transform 0.2s;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-}
-
-.chat-panel:hover .chat-handle-bar {
-    background: rgba(255, 255, 255, 0.65);
-}
+/* Chat Drag Handle Indicator (Removed) */
 
 .chat-panel,
 .chat-panel * {

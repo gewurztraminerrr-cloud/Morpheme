@@ -3657,7 +3657,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatPanel = document.querySelector('.chat-panel');
     const leftPanelContainer = document.querySelector('.left-panel-container');
     const collapseBtn = document.getElementById('chat-collapse-btn');
-    const chatDragHandle = document.getElementById('chat-drag-handle');
 
     function collapseChat() {
         if (!chatPanel || (!chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
@@ -3707,7 +3706,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expandChat = expandChat;
 
     if (chatPanel) {
-        // Click to expand when collapsed; click drag handle or close button to collapse
+        // Click to expand when collapsed; close button or header/top click collapses
         chatPanel.addEventListener('click', (e) => {
             // Do not toggle if clicking input, send button, interactive links, or users
             if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user') || e.target.closest('#chat-collapse-btn')) {
@@ -3716,8 +3715,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!chatPanel.classList.contains('expanded')) {
                 expandChat();
-            } else if (e.target.closest('#chat-drag-handle')) {
-                collapseChat();
             }
         });
 
@@ -3749,7 +3746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (diffY > 30 && chatPanel.classList.contains('expanded')) {
                     // Swiped down on expanded chat -> collapse
                     const chatHistory = document.getElementById('chat-history');
-                    if (e.target.closest('#chat-drag-handle') || !chatHistory || chatHistory.scrollTop <= 8) {
+                    if (!chatHistory || chatHistory.scrollTop <= 8) {
                         collapseChat();
                     }
                 }
