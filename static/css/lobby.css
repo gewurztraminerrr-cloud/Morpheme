@@ -542,20 +542,24 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     color: var(--text-primary);
 }
 
-/* Active Rooms Expand / Collapse Toggle Button */
+/* Active Rooms Expand / Retract Toggle Button (along bottom within #rooms-list) */
 .lobby-rooms-toggle-btn {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
     width: 100%;
-    height: 18px;
-    min-height: 18px;
-    max-height: 18px;
-    padding: 0;
-    margin: 4px 0 3px 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    padding: 0 10px;
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: rgba(22, 24, 32, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     cursor: pointer;
     touch-action: pan-y;
@@ -566,23 +570,41 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     box-sizing: border-box;
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     flex-shrink: 0;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .lobby-rooms-toggle-btn:hover {
-    background: rgba(0, 240, 255, 0.12);
-    border-color: rgba(0, 240, 255, 0.45);
-    box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+    background: rgba(0, 240, 255, 0.15);
+    border-color: rgba(0, 240, 255, 0.5);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
 
 .lobby-rooms-toggle-btn:active {
-    background: rgba(0, 240, 255, 0.18);
+    background: rgba(0, 240, 255, 0.22);
     transform: scale(0.99);
+}
+
+.rooms-toggle-text {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.2s ease;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.lobby-rooms-toggle-btn:hover .rooms-toggle-text {
+    color: #00f0ff;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
 /* Central Thumb Handle Bar */
 .rooms-toggle-thumb {
-    width: 44px;
-    height: 4px;
+    width: 32px;
+    height: 3.5px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.45);
     transition: background 0.2s ease, width 0.2s ease;
@@ -592,23 +614,23 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
 }
 
 .lobby-rooms-toggle-btn:hover .rooms-toggle-thumb {
-    background: rgba(0, 240, 255, 0.9);
-    width: 52px;
+    background: rgba(0, 240, 255, 0.95);
+    width: 40px;
 }
 
 /* Directional Arrow / Chevron */
 .rooms-toggle-arrow {
-    font-size: 0.55rem;
+    font-size: 0.58rem;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.5);
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.25s ease, color 0.2s ease;
     pointer-events: none;
     user-select: none !important;
     -webkit-user-select: none !important;
 }
 
 .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
-    color: rgba(0, 240, 255, 0.95);
+    color: #00f0ff;
 }
 
 /* Light theme overrides for toggle button */
@@ -619,8 +641,8 @@ body.theme-pink .lobby-rooms-toggle-btn,
 body.theme-orange .lobby-rooms-toggle-btn,
 body.theme-gray .lobby-rooms-toggle-btn,
 body.theme-light-brown .lobby-rooms-toggle-btn {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    background: rgba(245, 247, 250, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
 }
 
 [class*="theme-white"] .lobby-rooms-toggle-btn:hover,
@@ -630,9 +652,30 @@ body.theme-pink .lobby-rooms-toggle-btn:hover,
 body.theme-orange .lobby-rooms-toggle-btn:hover,
 body.theme-gray .lobby-rooms-toggle-btn:hover,
 body.theme-light-brown .lobby-rooms-toggle-btn:hover {
-    background: rgba(37, 99, 235, 0.1) !important;
-    border-color: rgba(37, 99, 235, 0.4) !important;
-    box-shadow: 0 0 8px rgba(37, 99, 235, 0.25) !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-color: rgba(37, 99, 235, 0.45) !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.25) !important;
+}
+
+[class*="theme-white"] .rooms-toggle-text,
+[class*="theme-light-"] .rooms-toggle-text,
+body.theme-yellow .rooms-toggle-text,
+body.theme-pink .rooms-toggle-text,
+body.theme-orange .rooms-toggle-text,
+body.theme-gray .rooms-toggle-text,
+body.theme-light-brown .rooms-toggle-text {
+    color: rgba(0, 0, 0, 0.75) !important;
+}
+
+[class*="theme-white"] .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+[class*="theme-light-"] .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+body.theme-yellow .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+body.theme-pink .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+body.theme-orange .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+body.theme-gray .lobby-rooms-toggle-btn:hover .rooms-toggle-text,
+body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-text {
+    color: #1d4ed8 !important;
+    text-shadow: 0 0 8px rgba(37, 99, 235, 0.3) !important;
 }
 
 [class*="theme-white"] .rooms-toggle-thumb,
@@ -653,6 +696,7 @@ body.theme-orange .lobby-rooms-toggle-btn:hover .rooms-toggle-thumb,
 body.theme-gray .lobby-rooms-toggle-btn:hover .rooms-toggle-thumb,
 body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-thumb {
     background: #1d4ed8 !important;
+    width: 40px !important;
 }
 
 [class*="theme-white"] .rooms-toggle-arrow,
@@ -662,7 +706,7 @@ body.theme-pink .rooms-toggle-arrow,
 body.theme-orange .rooms-toggle-arrow,
 body.theme-gray .rooms-toggle-arrow,
 body.theme-light-brown .rooms-toggle-arrow {
-    color: rgba(0, 0, 0, 0.4) !important;
+    color: rgba(0, 0, 0, 0.5) !important;
 }
 
 [class*="theme-white"] .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow,
@@ -675,25 +719,33 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     color: #1d4ed8 !important;
 }
 
-/* Collapsed State */
-.active-rooms-panel.rooms-collapsed .rooms-toggle-arrow {
-    transform: rotate(180deg);
+/* Active Rooms Panel: Expanded State */
+.active-rooms-panel.rooms-expanded .game-title,
+.active-rooms-panel.rooms-expanded #selected-game-info,
+.active-rooms-panel.rooms-expanded #rating-filter,
+.active-rooms-panel.rooms-expanded #my-rating-btn {
+    display: none !important;
 }
 
-.active-rooms-panel.rooms-collapsed #rooms-list {
-    flex: 0 0 0px !important;
-    max-height: 0 !important;
-    min-height: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    border-top-width: 0 !important;
-    border-bottom-width: 0 !important;
-    opacity: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-    visibility: hidden;
+.active-rooms-panel.rooms-expanded .rating-filter-container {
+    grid-template-columns: 1fr 1fr auto !important;
+    padding: 6px 10px !important;
+    margin-bottom: 2px !important;
+}
+
+.active-rooms-panel.rooms-expanded #rooms-list {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+}
+
+#rooms-placeholder-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-height: 140px;
+    width: 100%;
 }
 
 #rooms-list {
