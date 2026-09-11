@@ -7703,6 +7703,51 @@ def tools_find_count():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/tools/new-users', methods=['GET'])
+def tools_new_users():
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        cur = conn.cursor()
+        
+        # 1. Total registered users (non-guests)
+        cur.execute("SELECT COUNT(*) FROM users WHERE username NOT LIKE 'Guest_%'")
+        total_users = cur.fetchone()[0]
+        
+        # 2. Registrations this week (last 7 days rolling)
+        cur.execute("SELECT COUNT(*) FROM users WHERE username NOT LIKE 'Guest_%' AND created_at >= datetime('now', '-7 days')")
+        registrations_this_week = cur.fetchone()[0]
+        
+        # 3. All registered users ordered newest first
+        cur.execute("""
+            SELECT id, username, country_flag, created_at
+            FROM users
+            WHERE username NOT LIKE 'Guest_%'
+            ORDER BY (created_at IS NULL), created_at DESC, id DESC
+        """)
+        rows = cur.fetchall()
+        users = []
+        for r in rows:
+            users.append({
+                'id': r['id'],
+                'username': r['username'],
+                'country_flag': r['country_flag'] or '',
+                'created_at': r['created_at'] or ''
+            })
+            
+        return jsonify({
+            'total_users': total_users,
+            'registrations_this_week': registrations_this_week,
+            'users': users
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/tools/random-words', methods=['GET'])
 @login_required
 def tools_random_words():

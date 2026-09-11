@@ -3026,6 +3026,10 @@
                         <div class="tool-btn-title">Personal Timer</div>
                         <div class="tool-btn-desc">Set a session alert timer</div>
                     </button>
+                    <button class="tool-nav-btn" data-tool="new-users" onclick="window.showTool('new-users')">
+                        <div class="tool-btn-title">New Users</div>
+                        <div class="tool-btn-desc">Recently registered players</div>
+                    </button>
                     <button class="tool-nav-btn" data-tool="change-account" onclick="window.showTool('change-account')">
                         <div class="tool-btn-title">Change Password/Email</div>
                         <div class="tool-btn-desc">Update your login credentials</div>
@@ -3136,6 +3140,42 @@
                             style="text-align: center; margin-top: 50px; display: none; background: rgba(0,210,255,0.1); border-radius: 20px; padding: 40px; border: 2px solid #00d2ff;">
                             <h3 style="font-family: 'JetBrains Mono', monospace; font-size: 6rem; margin: 0; text-shadow: 0 0 20px rgba(0,210,255,0.6); color: #00d2ff; font-weight: 800;"
                                 id="timer-countdown-display">00:00:00</h3>
+                        </div>
+                    </div>
+                    <!-- New Users Interface -->
+                    <div id="tool-new-users" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>New Users</h2>
+                            <p>Browse recently registered members and community registration statistics.</p>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                            <div class="stat-box">
+                                <span class="stat-num" id="new-users-week-count" style="color: #60a5fa; font-size: 1.8rem;">-</span>
+                                <span class="stat-desc">REGISTRATIONS THIS WEEK</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-num" id="new-users-total-count" style="color: #34d399; font-size: 1.8rem;">-</span>
+                                <span class="stat-desc">TOTAL USERS</span>
+                            </div>
+                        </div>
+
+                        <!-- New Users Table -->
+                        <div class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.1); -webkit-overflow-scrolling: touch; max-height: 550px; overflow-y: auto;">
+                            <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 280px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.05); position: sticky; top: 0; z-index: 2;">
+                                        <th style="padding: 12px 16px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Member</th>
+                                        <th style="padding: 12px 16px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Date of Registration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="new-users-table-body">
+                                    <tr>
+                                        <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">Loading new users...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <!-- Change Password / Email Interface -->

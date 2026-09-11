@@ -233,6 +233,9 @@ window.showTool = function(toolId) {
     if (toolId === 'find-count') {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
+    if (toolId === 'new-users') {
+        if (typeof window.loadNewUsersTool === 'function') window.loadNewUsersTool();
+    }
     if (toolId === 'change-account') {
         if (typeof loadAccountCredentialsInfo === 'function') loadAccountCredentialsInfo();
     }
@@ -7826,3 +7829,75 @@ if (document.readyState === 'loading') {
 } else {
     setupAccountSettings();
 }
+
+// ==========================================
+// NEW USERS TOOL
+// ==========================================
+window.loadNewUsersTool = async function(forceRefresh = false) {
+    const tableBody = document.getElementById('new-users-table-body');
+    const weekCountEl = document.getElementById('new-users-week-count');
+    const totalCountEl = document.getElementById('new-users-total-count');
+    if (!tableBody) return;
+
+    try {
+        const response = await fetch('/api/tools/new-users');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        if (weekCountEl) {
+            weekCountEl.textContent = (data.registrations_this_week || 0).toLocaleString();
+        }
+        if (totalCountEl) {
+            totalCountEl.textContent = (data.total_users || 0).toLocaleString();
+        }
+
+        if (data.users && data.users.length > 0) {
+            tableBody.innerHTML = data.users.map(user => {
+                const formattedDate = user.created_at
+                    ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(user.created_at, true) : user.created_at)
+                    : '-';
+                const flagHtml = window.getFlagHtml ? window.getFlagHtml(user.country_flag) : (user.country_flag || '');
+
+                return `
+                    <tr class="finder-row" data-username="${user.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+                        <td style="padding: 12px 16px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
+                                ${flagHtml} <span style="white-space: nowrap; font-weight: 600; color: var(--text-primary);">${user.username}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 12px 16px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Click listener to open mini-profile
+            tableBody.querySelectorAll('.finder-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const username = row.dataset.username;
+                    if (username && typeof window.showMiniProfile === 'function') {
+                        window.showMiniProfile(username);
+                    }
+                });
+                row.addEventListener('mouseenter', () => {
+                    row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
+                });
+                row.addEventListener('mouseleave', () => {
+                    row.style.background = 'transparent';
+                });
+            });
+        } else {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">No registered users found.</td>
+                </tr>
+            `;
+        }
+    } catch (err) {
+        console.error('[New Users] Failed to load new users:', err);
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="2" style="padding: 20px; text-align: center; color: #f87171;">Failed to load new users. Please try again.</td>
+            </tr>
+        `;
+    }
+};
