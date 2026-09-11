@@ -19,10 +19,10 @@
     #page-lobby.active {
         display: flex !important;
         flex-direction: column !important;
-        height: calc(100vh - 86px) !important;
-        height: calc(100dvh - 86px) !important;
-        max-height: calc(100vh - 86px) !important;
-        max-height: calc(100dvh - 86px) !important;
+        height: calc(100vh - 66px) !important;
+        height: calc(100dvh - 66px) !important;
+        max-height: calc(100vh - 66px) !important;
+        max-height: calc(100dvh - 66px) !important;
         overflow: hidden !important;
         position: relative !important;
         box-sizing: border-box !important;
@@ -3224,7 +3224,7 @@ body.theme-light-brown .lobby-chat-input:focus {
     body:has(#page-lobby.active) .pages,
     body.lobby-active .pages {
         padding-top: 4px !important;
-        padding-bottom: 4px !important;
+        padding-bottom: 2px !important;
         box-sizing: border-box !important;
     }
     .mobile-lobby-spacer {
