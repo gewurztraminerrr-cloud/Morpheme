@@ -391,6 +391,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const playBtn = document.querySelector('.nav-btn[data-page="play"]');
             if (playBtn) updateActiveNav(playBtn);
         } else {
+            if (window.location.hash && window.location.hash !== '#page-login' && window.location.hash !== '#page-play' && window.location.hash !== '#page-lobby') {
+                try {
+                    history.replaceState(null, null, '#page-lobby');
+                } catch(e) {}
+            }
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
             const spinnerCont = document.getElementById('loading-spinner-container');
             const gatewayCont = document.getElementById('loading-gateway-container');
@@ -1711,7 +1716,7 @@ function showPage(pageId) {
         const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
         if (isMatch) {
             page.classList.add('active');
-            page.style.display = (page.id === 'page-lobby') ? 'flex' : 'block';
+            page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile') ? 'flex' : 'block';
             page.style.opacity = '1';
             page.style.visibility = 'visible';
             page.scrollTop = 0;

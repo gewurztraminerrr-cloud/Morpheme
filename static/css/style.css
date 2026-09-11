@@ -1623,9 +1623,16 @@ body {
     max-width: 1050px !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
+}
+
+#page-profile.active {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+}
+
+#page-profile:not(.active) {
+    display: none !important;
 }
 
 @media (min-width: 1400px) {

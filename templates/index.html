@@ -154,9 +154,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1788941000" as="style">
+    <link rel="preload" href="/css/style.css?v=1788942000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1788937000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1788941000">
+    <link rel="stylesheet" href="/css/style.css?v=1788942000">
     <link rel="stylesheet" href="/css/lobby.css?v=1788937000">
     <link rel="stylesheet" href="/css/play.css?v=1788932001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
@@ -1099,7 +1099,7 @@
     <main class="pages">
         <!-- Store Page -->
         <!-- Profile Page -->
-        <div id="page-profile" class="page">
+        <div id="page-profile" class="page" style="display: none;">
                         <div class="tool-header">
                             <h2>User Profile</h2>
                             <p>View player stats and rankings.</p>
@@ -1887,6 +1887,10 @@
                     if (window.location.hash === '#page-login') {
                         if (pageLoading) pageLoading.classList.remove('active');
                         if (pageLogin) pageLogin.classList.add('active');
+                    } else if (window.location.hash && window.location.hash !== '#page-play' && window.location.hash !== '#page-lobby') {
+                        try {
+                            history.replaceState(null, null, '#page-lobby');
+                        } catch(e) {}
                     }
                 } catch(e) {
                     console.warn('LocalStorage check failed:', e);
@@ -7471,7 +7475,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1788928000"></script>
     <script src="/js/forum.js?v=33782"></script>
-    <script src="/js/app.js?v=1788935000"></script>
+    <script src="/js/app.js?v=1788942000"></script>
     <script src="/js/lobby.js?v=1788936000"></script>
     <script src="/js/play.js?v=33872"></script>
     <script src="/js/tournaments.js?v=1788941000"></script>
