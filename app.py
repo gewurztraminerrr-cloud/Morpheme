@@ -3615,13 +3615,72 @@ def auto_login():
         return jsonify({'success': False, 'error': str(e)}), 200
 
 
+def purge_guest_user(user_id, username):
+    """Permanently delete a guest user and all related records across all database tables."""
+    if not user_id or not username:
+        return
+    # Strict safeguard: ensure only accounts starting with 'Guest_' can ever be purged by this function
+    if not str(username).startswith('Guest_'):
+        return
+        
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        with conn:
+            # Foreign-keyed / user_id tables
+            conn.execute("DELETE FROM user_settings WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM user_ratings WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM round_history WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM daily_score_sums WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM match_invites WHERE sender_id = ?", (user_id,))
+            conn.execute("DELETE FROM private_match_players WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM private_match_starts WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM private_match_turns WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM private_matches WHERE creator_id = ?", (user_id,))
+            conn.execute("DELETE FROM private_messages WHERE sender_id = ? OR receiver_id = ?", (user_id, user_id))
+            conn.execute("DELETE FROM friends WHERE user_id = ? OR friend_id = ?", (user_id, user_id))
+            conn.execute("DELETE FROM tournament_participants WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM tournament_scores WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM tournament_matchups WHERE user1_id = ? OR user2_id = ? OR winner_id = ?", (user_id, user_id, user_id))
+            conn.execute("DELETE FROM forum_comments WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM forum_posts WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM donations WHERE user_id = ?", (user_id,))
+            
+            # Name-based string deletions
+            conn.execute("DELETE FROM match_invites WHERE recipient_username = ? COLLATE NOCASE", (username,))
+            conn.execute("DELETE FROM private_match_players WHERE username = ? COLLATE NOCASE", (username,))
+            conn.execute("DELETE FROM private_messages WHERE sender_username = ? COLLATE NOCASE", (username,))
+            
+            # Finally, delete from users table
+            conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            
+        conn.close()
+        
+        # Remove from active lobby/room managers
+        try:
+            from game_room import room_manager, lobby_manager
+            lobby_manager.remove_user(user_id)
+            room_manager.remove_presence(user_id)
+        except Exception:
+            pass
+            
+        print(f"[GuestCleanup] Successfully purged all data for guest {username} (ID: {user_id}) on logout.")
+    except Exception as e:
+        print(f"[GuestCleanup] Error purging guest {username} (ID: {user_id}): {e}")
+
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
     try:
         user_id = session.get('user_id')
+        username = session.get('username')
+        is_guest = session.get('is_guest', False) or (username and str(username).startswith('Guest_'))
+        
         if user_id:
-            with get_db() as conn:
-                conn.execute('UPDATE users SET auth_token = NULL WHERE id = ?', (user_id,))
+            if is_guest:
+                purge_guest_user(user_id, username)
+            else:
+                with get_db() as conn:
+                    conn.execute('UPDATE users SET auth_token = NULL WHERE id = ?', (user_id,))
     except Exception as e:
         print(f"[LogoutError] Error during logout: {e}")
     finally:
