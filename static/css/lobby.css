@@ -1217,11 +1217,20 @@ body.theme-light-brown .field-hint {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: thin !important;
-        scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
+    }
+
+    #mobile-panel-main::-webkit-scrollbar,
+    #mobile-panel-solo::-webkit-scrollbar,
+    .game-types-panel::-webkit-scrollbar,
+    .solo-friends-panel::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
 
     .solo-friends-panel {
@@ -2512,8 +2521,8 @@ body.theme-light-brown .lobby-chat-input:focus {
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         clip-path: none !important;
-        scrollbar-width: thin !important;
-        scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
         border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
@@ -2523,25 +2532,25 @@ body.theme-light-brown .lobby-chat-input:focus {
         padding-top: 8px !important;
     }
 
+    #mobile-panel-main::-webkit-scrollbar,
+    #mobile-panel-solo::-webkit-scrollbar,
     .game-types-panel::-webkit-scrollbar,
     .solo-friends-panel::-webkit-scrollbar {
-        width: 6px !important;
-        display: block !important;
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
 
+    #mobile-panel-main::-webkit-scrollbar-track,
+    #mobile-panel-solo::-webkit-scrollbar-track,
     .game-types-panel::-webkit-scrollbar-track,
-    .solo-friends-panel::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border-radius: 4px !important;
-        margin: 6px 0 !important;
-    }
-
+    .solo-friends-panel::-webkit-scrollbar-track,
+    #mobile-panel-main::-webkit-scrollbar-thumb,
+    #mobile-panel-solo::-webkit-scrollbar-thumb,
     .game-types-panel::-webkit-scrollbar-thumb,
     .solo-friends-panel::-webkit-scrollbar-thumb {
-        background: rgba(var(--text-primary-rgb), 0.35) !important;
-        border-radius: 4px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        box-shadow: none !important;
+        display: none !important;
+        background: transparent !important;
     }
 
     .active-rooms-panel,
