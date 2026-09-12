@@ -19,7 +19,11 @@ async function checkModStatus() {
         window.currentUserIsMod = Boolean(data.is_mod);
         window.currentUserIsRootMod = Boolean(data.is_root);
         if (data.username) {
-            window.currentUser = data.username;
+            if (typeof window.setCurrentUser === 'function') {
+                window.setCurrentUser(data.username, null, false, Boolean(data.is_mod));
+            } else {
+                window.currentUser = data.username;
+            }
         }
         
         const modsBtn = document.getElementById('nav-mods-btn');

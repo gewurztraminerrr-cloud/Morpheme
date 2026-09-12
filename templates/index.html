@@ -1735,8 +1735,11 @@
                     var isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
                     if (storedUser && !isLoggedOutExplicitly) {
                         activeUser = storedUser;
-                        if (typeof currentUser !== 'undefined') currentUser = storedUser;
-                        window.currentUser = storedUser;
+                        if (typeof window.setCurrentUser === 'function') {
+                            window.setCurrentUser(storedUser);
+                        } else {
+                            window.currentUser = storedUser;
+                        }
                     }
                 }
                 if (!activeUser) {
@@ -1755,6 +1758,17 @@
                         window.refreshCaptchas();
                     }
                     return;
+                }
+
+                if (activeUser) {
+                    if (typeof window.setCurrentUser === 'function') {
+                        window.setCurrentUser(activeUser);
+                    } else {
+                        window.currentUser = activeUser;
+                        if (typeof window.updateAuthUI === 'function') {
+                            window.updateAuthUI();
+                        }
+                    }
                 }
 
                 window._gatewayPassed = true;
@@ -1809,6 +1823,10 @@
                     } else if (pLobby) {
                         pLobby.classList.add('active');
                         pLobby.style.display = 'flex';
+                    }
+
+                    if (typeof window.updateAuthUI === 'function') {
+                        window.updateAuthUI();
                     }
 
                     try {
@@ -1928,6 +1946,19 @@
                         if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
                         const un = document.getElementById('username-display');
                         if (un) un.textContent = '';
+                        const loginBtn = document.getElementById('nav-login-btn');
+                        if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.style.display = ''; }
+                    } else {
+                        const storedUser = localStorage.getItem('morpheme_username');
+                        if (storedUser) {
+                            window.currentUser = storedUser;
+                            const ud = document.getElementById('user-display');
+                            if (ud) { ud.classList.remove('hidden'); ud.style.display = 'flex'; }
+                            const un = document.getElementById('username-display');
+                            if (un) { un.textContent = storedUser; un.style.color = 'var(--accent-color)'; }
+                            const loginBtn = document.getElementById('nav-login-btn');
+                            if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.style.display = 'none'; }
+                        }
                     }
 
                     // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!

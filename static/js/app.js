@@ -46,8 +46,12 @@ const pages = {
     'nav-donate-btn': 'page-donate'
 };
 
-let currentUser = null;
-let currentUserEmail = null;
+const _storedUserOnLoad = ((localStorage.getItem('morpheme_logged_out') !== 'true' && sessionStorage.getItem('morpheme_logged_out') !== 'true') ? localStorage.getItem('morpheme_username') : null);
+let currentUser = window.currentUser || _storedUserOnLoad || null;
+if (currentUser) {
+    window.currentUser = currentUser;
+}
+let currentUserEmail = window.currentUserEmail || null;
 let selectedRoom = null;
 let sessionStartTime = Date.now();
 window.sessionStartTime = sessionStartTime;
@@ -56,6 +60,35 @@ window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
 window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
+
+function setCurrentUser(username, email = null, isGuest = false, isMod = false, rating = null) {
+    currentUser = username;
+    window.currentUser = username;
+    if (email !== null) {
+        currentUserEmail = email;
+        window.currentUserEmail = email;
+    }
+    if (isGuest !== null) {
+        window.currentUserIsGuest = Boolean(isGuest);
+    }
+    if (isMod !== null) {
+        window.currentUserIsMod = Boolean(isMod);
+    }
+    if (rating !== null) {
+        window.currentUserRating = rating;
+        window.lastPlayerRating = rating;
+    }
+    if (username) {
+        localStorage.setItem('morpheme_username', username);
+        sessionStorage.removeItem('morpheme_logged_out');
+        localStorage.removeItem('morpheme_logged_out');
+    }
+    if (typeof updateAuthUI === 'function') {
+        updateAuthUI(rating || window.currentUserRating || window.lastPlayerRating);
+    }
+}
+window.setCurrentUser = setCurrentUser;
+window.getCurrentUser = () => currentUser || window.currentUser;
 
 function formatAppDate(val, includeTime = false, customTz = null) {
     if (!val && val !== 0) return '-';
@@ -441,6 +474,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         showPage('page-login');
                         if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
                         return;
+                    }
+
+                    currentUser = activeUser;
+                    window.currentUser = activeUser;
+                    if (typeof updateAuthUI === 'function') {
+                        updateAuthUI();
                     }
 
                     gatewayTransitioning = true;
@@ -1178,13 +1217,21 @@ async function checkSession() {
             } catch (e) { console.warn('Error checking current room', e); }
 
         } else {
-            currentUser = null;
-            window.currentUser = null;
-            window.currentUserIsGuest = false;
-            window.currentUserIsMod = false;
-            localStorage.removeItem('morpheme_logged_in');
-            localStorage.removeItem('morpheme_username');
-            updateAuthUI();
+            const storedUser = localStorage.getItem('morpheme_username');
+            if (storedUser && !isLoggedOutExplicitly) {
+                console.warn('[Auth] Server returned not authenticated, but preserving stored user:', storedUser);
+                currentUser = storedUser;
+                window.currentUser = storedUser;
+                updateAuthUI();
+            } else {
+                currentUser = null;
+                window.currentUser = null;
+                window.currentUserIsGuest = false;
+                window.currentUserIsMod = false;
+                localStorage.removeItem('morpheme_logged_in');
+                localStorage.removeItem('morpheme_username');
+                updateAuthUI();
+            }
         }
     } catch (error) {
         console.warn('[Auth] Session check failed (server may be restarting):', error.message || error);
@@ -1673,6 +1720,15 @@ function showPage(pageId) {
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
+        const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+        const activeUser = isLoggedOut ? null : (currentUser || window.currentUser || localStorage.getItem('morpheme_username'));
+        if (activeUser) {
+            currentUser = activeUser;
+            window.currentUser = activeUser;
+            if (typeof updateAuthUI === 'function') {
+                updateAuthUI();
+            }
+        }
     }
 
     if (pageId === 'page-login') {
@@ -2279,7 +2335,13 @@ function updateAuthUI(rating = null) {
     const userDisplay = document.getElementById('user-display');
     const usernameEl = document.getElementById('username-display');
 
-    if (currentUser) {
+    const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+    const activeUser = isLoggedOut ? null : (currentUser || window.currentUser || localStorage.getItem('morpheme_username'));
+
+    if (activeUser) {
+        currentUser = activeUser;
+        window.currentUser = activeUser;
+
         if (loginNavBtn) {
             loginNavBtn.classList.add('hidden');
             loginNavBtn.style.display = 'none';
@@ -2289,21 +2351,22 @@ function updateAuthUI(rating = null) {
             userDisplay.style.display = 'flex';
         }
         if (usernameEl) {
-            usernameEl.textContent = currentUser;
+            usernameEl.textContent = activeUser;
             usernameEl.style.color = 'var(--accent-color)';
             // RESTORED: Profile navigation on click
             usernameEl.onclick = () => {
                 if (typeof window.performProfileSearch === 'function') {
                     showPage('page-profile');
-                    window.performProfileSearch(currentUser);
+                    window.performProfileSearch(activeUser);
                 }
             };
         }
 
         // Handle Rating Bar
         renderGameColorBar();
-        if (rating || window.lastPlayerRating) {
-            updateUserRatingHighlight(rating || window.lastPlayerRating);
+        const activeRating = rating || window.lastPlayerRating || window.currentUserRating;
+        if (activeRating) {
+            updateUserRatingHighlight(activeRating);
         }
 
         // Load config-specific ratings
@@ -2318,12 +2381,12 @@ function updateAuthUI(rating = null) {
             modsBtn.style.display = isAuthorized ? 'block' : 'none';
         }
 
-        // Auto-scroll header to reveal the menu items when logged in on mobile devices
-        const header = document.querySelector('.header');
-        if (header && window.innerWidth <= 900) {
+        // Auto-scroll nav container to reveal menu items and user display when logged in on mobile devices
+        const navEl = document.querySelector('.header .nav') || document.querySelector('.nav');
+        if (navEl && window.innerWidth <= 900) {
             setTimeout(() => {
-                header.scrollTo({
-                    left: header.clientWidth,
+                navEl.scrollTo({
+                    left: navEl.scrollWidth,
                     behavior: 'smooth'
                 });
             }, 350); // Fluid delay to align with page routing rendering
@@ -2349,16 +2412,17 @@ function updateAuthUI(rating = null) {
         const bar = document.getElementById('game-color-bar');
         if (bar) bar.innerHTML = '';
 
-        // Scroll back to logo on logout on mobile devices
-        const header = document.querySelector('.header');
-        if (header && window.innerWidth <= 900) {
-            header.scrollTo({
+        // Scroll back to start on logout on mobile devices
+        const navEl = document.querySelector('.header .nav') || document.querySelector('.nav');
+        if (navEl && window.innerWidth <= 900) {
+            navEl.scrollTo({
                 left: 0,
                 behavior: 'smooth'
             });
         }
     }
 }
+window.updateAuthUI = updateAuthUI;
 
 
 
