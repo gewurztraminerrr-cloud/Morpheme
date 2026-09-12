@@ -384,6 +384,7 @@
     border-radius: 8px;
     padding: 8px 10px;
     box-sizing: border-box;
+    transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1), min-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), padding 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 #rating-filter {
@@ -790,13 +791,96 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     color: #1d4ed8 !important;
 }
 
-/* Active Rooms Panel: Expanded State */
-.active-rooms-panel.rooms-expanded .game-title,
-.active-rooms-panel.rooms-expanded #selected-game-info,
+/* Active Rooms Panel: Smooth Sliding Transition for Expand / Retract */
+.active-rooms-panel .game-title,
+.active-rooms-panel #selected-game-info {
+    max-height: 40px;
+    opacity: 1;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+    transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease,
+                margin 0.32s ease,
+                padding 0.32s ease,
+                transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.active-rooms-panel.rooms-expanded:not(.rooms-collapsing) .game-title,
+.active-rooms-panel.rooms-expanded:not(.rooms-collapsing) #selected-game-info {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translate3d(0, -15px, 0) !important;
+    pointer-events: none !important;
+}
+
+.active-rooms-panel .create-room-panel {
+    max-height: 250px;
+    opacity: 1;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+    transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease,
+                margin 0.32s ease,
+                padding 0.32s ease,
+                border-width 0.32s ease,
+                transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.active-rooms-panel.rooms-expanded:not(.rooms-collapsing) .create-room-panel {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-top-width: 0 !important;
+    border-bottom-width: 0 !important;
+    border-color: transparent !important;
+    transform: translate3d(0, -25px, 0) !important;
+    pointer-events: none !important;
+}
+
 .active-rooms-panel.rooms-expanded #rating-filter,
-.active-rooms-panel.rooms-expanded #my-rating-btn,
-.active-rooms-panel.rooms-expanded .create-room-panel {
+.active-rooms-panel.rooms-expanded #my-rating-btn {
     display: none !important;
+}
+
+.active-rooms-panel.rooms-expanding #rooms-list {
+    animation: roomsSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.active-rooms-panel.rooms-collapsing #rooms-list {
+    animation: roomsSlideDown 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes roomsSlideUp {
+    0% {
+        transform: translate3d(0, 30px, 0);
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes roomsSlideDown {
+    0% {
+        transform: translate3d(0, -20px, 0);
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.lobby-rooms-toggle-btn .rooms-toggle-arrow {
+    display: inline-block;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center center;
+}
+
+.active-rooms-panel.rooms-expanded:not(.rooms-collapsing) .lobby-rooms-toggle-btn .rooms-toggle-arrow {
+    transform: rotate(180deg);
 }
 
 .active-rooms-panel.rooms-expanded .rating-filter-container {
@@ -889,7 +973,7 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     flex-direction: column;
     gap: 12px;
     box-sizing: border-box !important;
-    transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease, margin 0.28s ease, border-width 0.28s ease;
+    transition: flex 0.32s cubic-bezier(0.16, 1, 0.3, 1), height 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease, margin 0.28s ease;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04);
 }

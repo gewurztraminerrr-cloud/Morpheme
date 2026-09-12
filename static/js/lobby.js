@@ -761,16 +761,18 @@ function setupLobbyEvents() {
 
     // Setup rooms toggle state and gestures (default to Retracted state)
     try {
-        retractRooms();
+        retractRooms(false);
     } catch(e) {
         ensureRoomsToggleButton();
     }
 } // end setupLobbyEvents
 
+let _roomsAnimationTimeout = null;
+
 // --- ACTIVE ROOMS PANEL EXPAND / RETRACT SYSTEM ---
 function isRoomsListExpanded() {
     const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
-    return panel ? panel.classList.contains('rooms-expanded') : false;
+    return panel ? (panel.classList.contains('rooms-expanded') && !panel.classList.contains('rooms-collapsing')) : false;
 }
 
 function attachRoomsToggleGestures(btn) {
@@ -798,10 +800,10 @@ function attachRoomsToggleGestures(btn) {
         if (Math.abs(diffY) > 20 && Math.abs(diffY) > diffX) {
             if (diffY < -20 && !isRoomsListExpanded()) {
                 // Swiped up on button -> expand
-                expandRooms();
+                expandRooms(true);
             } else if (diffY > 20 && isRoomsListExpanded()) {
                 // Swiped down on button -> retract
-                retractRooms();
+                retractRooms(true);
             }
         }
     }, { passive: true });
@@ -813,7 +815,7 @@ function ensureRoomsToggleButton() {
     let toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
     const isExpanded = isRoomsListExpanded();
     const labelText = isExpanded ? 'Retract Rooms' : 'Expand Rooms';
-    const arrowChar = isExpanded ? '▼' : '▲';
+    const arrowChar = '▲';
 
     if (!toggleBtn) {
         toggleBtn = document.createElement('button');
@@ -842,17 +844,31 @@ function ensureRoomsToggleButton() {
             roomsList.appendChild(toggleBtn);
         }
         const textEl = toggleBtn.querySelector('.rooms-toggle-text');
-        if (textEl) textEl.textContent = labelText;
-        toggleBtn.querySelectorAll('.rooms-toggle-arrow').forEach(el => el.textContent = arrowChar);
+        if (textEl && textEl.textContent !== labelText) textEl.textContent = labelText;
+        toggleBtn.querySelectorAll('.rooms-toggle-arrow').forEach(el => {
+            if (el.textContent !== arrowChar) el.textContent = arrowChar;
+        });
         toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
         toggleBtn.title = isExpanded ? 'Retract active rooms display' : 'Expand active rooms display';
         attachRoomsToggleGestures(toggleBtn);
     }
 }
 
-function expandRooms() {
+function expandRooms(animate = true) {
     const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
     if (!panel) return;
+    if (_roomsAnimationTimeout) {
+        clearTimeout(_roomsAnimationTimeout);
+        _roomsAnimationTimeout = null;
+    }
+    panel.classList.remove('rooms-collapsing');
+    if (animate) {
+        panel.classList.add('rooms-expanding');
+        _roomsAnimationTimeout = setTimeout(() => {
+            panel.classList.remove('rooms-expanding');
+            _roomsAnimationTimeout = null;
+        }, 360);
+    }
     panel.classList.add('rooms-expanded');
     ensureRoomsToggleButton();
     try {
@@ -860,11 +876,28 @@ function expandRooms() {
     } catch(e) {}
 }
 
-function retractRooms() {
+function retractRooms(animate = true) {
     const panel = document.querySelector('.active-rooms-panel') || document.getElementById('mobile-panel-rooms');
     if (!panel) return;
-    panel.classList.remove('rooms-expanded');
-    ensureRoomsToggleButton();
+    if (_roomsAnimationTimeout) {
+        clearTimeout(_roomsAnimationTimeout);
+        _roomsAnimationTimeout = null;
+    }
+    panel.classList.remove('rooms-expanding');
+    if (animate && panel.classList.contains('rooms-expanded')) {
+        panel.classList.add('rooms-collapsing');
+        ensureRoomsToggleButton();
+        _roomsAnimationTimeout = setTimeout(() => {
+            panel.classList.remove('rooms-collapsing');
+            panel.classList.remove('rooms-expanded');
+            ensureRoomsToggleButton();
+            _roomsAnimationTimeout = null;
+        }, 320);
+    } else {
+        panel.classList.remove('rooms-collapsing');
+        panel.classList.remove('rooms-expanded');
+        ensureRoomsToggleButton();
+    }
     try {
         localStorage.setItem('morpheme_lobby_rooms_expanded', 'false');
     } catch(e) {}
@@ -872,9 +905,9 @@ function retractRooms() {
 
 function toggleRoomsListExpand() {
     if (isRoomsListExpanded()) {
-        retractRooms();
+        retractRooms(true);
     } else {
-        expandRooms();
+        expandRooms(true);
     }
 }
 
