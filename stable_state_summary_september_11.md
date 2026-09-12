@@ -1,184 +1,115 @@
-# Morpheme Stable State Summary - September 11, 2026
+# Morpheme Stable State Summary - September 11, 2026 (Final Checkpoint)
 
-This document records the definitive "Start Over" stable point for Morpheme as of **September 11, 2026**. Full synchronization has been executed and verified across **Localhost**, **GitHub (`origin/main`)**, and the production deployment on **`morpheme.games`**.
+This document establishes the definitive **"Start Over"** stable point for Morpheme as of **September 11, 2026**. Full synchronization has been executed, verified, and confirmed across **Localhost**, **GitHub (`origin/main`)**, and the live production server on **`morpheme.games`**.
 
----
-
-## 🎯 Executive Summary of Milestones & Features (September 11, 2026)
-
-### 1. View Full List Readability & Contrast on White/Light Layouts
-* **The Mandate**: Fix the illegibility of the "View Full List" modal window on the White layout (where black text rendered on a black/dark background), and make the "View Full List" button clearly visible and readable against light backgrounds.
-* **Implementation**:
-  * **View Full List Trigger Button (`#list-view-full-btn`)**: Styled with solid vibrant royal purple (`#6d28d9`), bold white text (`#ffffff`), border (`#5b21b6`), subtle elevation shadow, and hover effect (`#5b21b6`) under `body.theme-white`, `[class*="theme-white"]`, and all light themes (`[class*="theme-light-"]`, `theme-yellow`, `theme-pink`, `theme-orange`, `theme-gray`, `theme-light-brown`).
-  * **Inline Text Link (`.view-full-list-link`)**: Styled list truncation notice link with bold deep purple text (`#6d28d9`, font-weight 700).
-  * **Modal Overlay (`#full-list-modal`)**: Configured with a soft dimmed backdrop on desktop (`rgba(15, 23, 42, 0.65)`) with backdrop blur, and pure white background on mobile.
-  * **Modal Card (`#full-list-modal-card`)**: Built a clean white surface (`#ffffff`) with subtle border (`#d1d5db`) and soft elevation shadow (`0 20px 45px rgba(0, 0, 0, 0.25)`).
-  * **Word Results Grid (`#full-list-modal-results`)**: Rendered in soft light slate (`#f8fafc`) with light border (`#e2e8f0`).
-  * **Word Items (`.full-list-item`, `.clickable-word-link`)**: High-contrast dark slate font (`#0f172a`, font-weight 700) providing an exceptional 16.5:1 contrast ratio.
-  * **Jump Target Highlight**: Bright yellow highlight (`#fef08a`, border `#d97706`) with high-contrast amber-brown text (`#78350f`).
-  * **Word Definition Popover (`.tool-def-popover`)**: Light theme card with deep purple title, dark slate definition body, and purple action links.
-  * **Invariants**: Mobile fullscreen exit invariant (`openFullListModal`) strictly preserved.
-
-### 2. Elimination of Temporary Login Page Flash on Gateway Entry
-* **The Mandate**: Fix brief flash of `#page-login` when returning users access `morpheme.games`.
-* **Implementation**:
-  * Preserved `#page-loading` (Gateway Screen) actively until credentials and session are verified, preventing any flash of the Login interface.
-  * Sanitized stale `#page-login` location hashes on return.
-
-### 3. Default to Lobby on Gateway Navigation & Profile Page Display Override Fix
-* **The Mandate**: When pressing "ENTER LOBBY" from the gateway, ensure the user lands in the Lobby even if they exited previously from Profile, and ensure all top navigation buttons work properly.
-* **Implementation**:
-  * Set active view explicitly to `#page-lobby` upon clicking ENTER LOBBY and cleared residual hashes.
-  * Resolved CSS display override conflict on `#page-profile`, allowing seamless navigation across all top menu tabs.
-
-### 4. Tournament "SIGN UP FOR TOURNAMENT" Button Styling
-* **The Mandate**: Make the "SIGN UP FOR TOURNAMENT" button consistently green across all platforms and layout colors/themes in Settings.
-* **Implementation**:
-  * Added global high-specificity CSS rules and JavaScript hooks guaranteeing the signature green gradient (`#2ecc71` to `#27ae60`) across all themes.
-
-### 5. Profile Page Centering on Desktops & Laptops
-* **The Mandate**: Center all content in Profile (including the title and search panel) on desktops and laptops where it previously shifted to the left.
-* **Implementation**:
-  * Applied `max-width: 960px; margin: 0 auto;` with centered flex layouts to `#page-profile`, `.profile-content-container`, `.profile-page-header`, and `.profile-search-bar`.
-
-### 6. Laptop Header Pronunciation Visibility
-* **The Mandate**: Ensure the "MORE-FEEM" pronunciation text stays visible next to "MORPHEME" in the top-left corner on laptop screens.
-* **Implementation**:
-  * Adjusted responsive breakpoints and font scaling in `style.css` so the pronunciation remains displayed down to 768px viewports.
-
-### 7. Lobby Logo & "No Show Rooms Selected" Separation
-* **The Mandate**: Increase separation and sizing between the logo and "No 'Show Rooms' selected" text on laptops and desktops.
-* **Implementation**:
-  * Enlarged typography and increased margin/padding separation in `lobby.css` to prevent cramping.
-
-### 8. Active Rooms Expand / Retract Toggle & FAQ Updates
-* **The Mandate**: Add an Active Rooms expand/collapse toggle with a thumb handle along the bottom of the rooms panel, hide top elements and Create Room panel when expanded, and document in FAQ.
-* **Implementation**:
-  * Implemented bottom-docked expand/retract button with thumb handle.
-  * Dynamically collapses the Create Room panel and top lobby elements on expansion, restoring them on retraction.
-  * Updated FAQ with detailed operational guidance.
-
-### 9. Lobby Player Row Hover Glow & Scrollbar Fixes
-* **The Mandate**: Fix clipping on player row hover glow and hide thin grey scrollbars on mobile lobby panels.
-* **Implementation**:
-  * Added horizontal list padding and glowing box-shadows.
-  * Suppressed unsightly scrollbars on mobile browsers.
-
-### 10. "New Users" Tab in Tools
-* **The Mandate**: Add a "New Users" tab below Personal Timer in Tools with country flags, registration dates, weekly stats, and total user count.
-* **Implementation**:
-  * Created `/api/tools/new-users` endpoint filtering registered non-guest users with rolling 7-day stats.
-  * Implemented `#tool-new-users` pane with responsive stats cards and scrollable table.
-
-### 11. FAQ Dictionary Breakdown & 15-Letter Cap Clarity
-* **The Mandate**: Update dictionary descriptions to state 15-letter word caps and remove outdated 16+ letter footnote.
-* **Implementation**:
-  * Removed footnote and clarified 15-letter word caps for NWL and CSW dictionaries in `#faq-dictionaries`.
-
-### 12. Suggestions Category Header Description & Voting Notice
-* **The Mandate**: Explain in the Suggestions category header that user agreements and disagreements count as votes for moderator decisions based on popularity.
-* **Implementation**:
-  * Updated category description in `app.py` and `forum.js`.
-
-### 13. User Current Time Display Next to Timezone
-* **The Mandate**: Display player local time next to their timezone on Profile and mini-profiles.
-* **Implementation**:
-  * Integrated live localized time strings using `Intl.DateTimeFormat`.
-
-### 14. Profile Metadata Layout & Mathematically Equal Row Spacing
-* **The Mandate**: Group Profile metadata into 3 clean semantic flex rows with equal vertical spacing, expand "About Me" height, and reduce excess top padding.
-* **Implementation**:
-  * Reorganized into 3 distinct flex rows with equal `gap` spacing across desktop and mobile.
-
-### 15. Guest Session Data Auto-Purge & Auth Hardening
-* **The Mandate**: Automatically purge guest user data upon logout and prevent numerical collisions.
-* **Implementation**:
-  * Built `purge_guest_user(username)` in `app.py` for clean database scrubbing.
-
-### 16. Lexicographical Additions & Invariant Enforcement
-* **The Mandate**: Add definitions for Added Words (`LENATE`, `LENATES`, `LENATION`, `LENATIONS`, `MALAYOPHOBIA`, `JUFFERS`) strictly adhering to root-sourcing and suffix propagation rules.
-* **Implementation**:
-  * Sourced definitions adhering to all dictionary rules in `AGENTS.md`.
-
-### 17. Full-Width Category Back Buttons
-* **The Mandate**: Extend the "Back to category" / "Back" button across the entire containing panel.
-* **Implementation**:
-  * Updated container and button styling so navigation spans full width.
-
-### 18. Lobby & Tools Full-Screen Fit Without Scrolling on Desktop
-* **The Mandate**: Fit entire Lobby content (including Chat buttons) and Tools menu entirely within the screen on desktops and laptops without slight vertical scrolling.
-* **Implementation**:
-  * Calibrated container heights and vertical padding in `lobby.css` and `style.css` so that all elements sit comfortably within 100vh.
-
-### 19. "My Rating" Value Separation on Desktop & Laptop
-* **The Mandate**: Place an explicit space between "My Rating" and the user's rating value on desktop and laptop lobby views.
-* **Implementation**:
-  * Updated `#my-rating-btn` markup and dynamic render formatting in `lobby.js`.
-
-### 20. Lobby Title-to-Button Spacing Harmonization
-* **The Mandate**: Match the desktop/laptop spacing between game titles (`ACCUMULATIVE`, `FIRST COME FIRST SERVE`, `SPLIT POINTS`) and their buttons to the tight, clean 6px margin used on mobile.
-* **Implementation**:
-  * Standardized `.game-title` bottom margin to `6px` across all desktop viewports.
-
-### 21. Mobile Menu Navigation Persistence (Tools, Settings, Mods)
-* **The Mandate**: Ensure that clicking Tools, Settings, or Mods in the top menu on mobile always lands the user on the main menu hub rather than automatically opening the last-visited sub-tab.
-* **Implementation**:
-  * Reset active sub-view state upon top navigation clicks on mobile devices in `tools.js`, `mods.js`, and `app.js`.
-
-### 22. Added Words Plural Audit & Dictionary Invariant Enforcement
-* **The Mandate**: Resolve missing plurals for singulars in Added Words (specifically `ABLEPSIAS`), audit `-IA`/`-IAS` singular-derived plurals, and verify Latin/Greek `-IUM`/`-IUMS`/`-IA` and `-ION`/`-IONS`/`-IA` nouns.
-* **Implementation**:
-  * Added `ABLEPSIAS` with root definition propagated from `ABLEPSIA`.
-  * Audited and added singulars with `-IAS` plurals (`ACARDIAS`, `AGNOSIAS`, `AKINESIAS`, `APROSOPIAS`, etc.).
-  * Audited and added legitimate `-IUMS` and `-IONS` plurals (`COLLOQUIUMS`, `CRITERIONS`, `ELECTRONIUMS`, `PALLADIUMS`, etc.).
-  * Strictly adhered to dictionary rules in `AGENTS.md`.
-
-### 23. Mini-Profile Modal Dimensions & "About Me" Expansion
-* **The Mandate**: Enlarge the vertical length of mini-profiles and make the horizontal length larger on desktops and laptops so that user information is not cut off, giving significantly more room to the ABOUT ME section.
-* **Implementation**:
-  * **Horizontal Length (Width)**: Enlarged base desktop and laptop width to **`750px`** (`max-width: min(94vw, 750px)` desktop, `min(96vw, 750px)` laptop), giving **~335px** to each metadata column (Registered, Last Visited, Timezone, Demographics) so full details never truncate.
-  * **Vertical Length (Height)**: Enlarged desktop `max-height` to **`min(96vh, 1050px)`** and laptop to **`97vh`**.
-  * **ABOUT ME Section (`.mini-profile-description`)**:
-    * Desktop: `min-height: 120px; max-height: 400px; padding: 16px 20px; line-height: 1.55;` (allowing 15–20+ lines of text without tiny scroll cutoffs).
-    * Laptop: `min-height: 90px !important; max-height: 250px !important; padding: 12px 18px !important;` (optimizing surrounding vertical margins to grant max height to bio).
-  * **Visual Calibration**: Avatar (`68px`), username (`1.45rem`), full name (`0.95rem`), stat values (`1.1rem`), metadata items (`0.92rem`), and action buttons (`11px 16px`), plus native hover `title` tooltips for full details.
-  * Mobile viewports (`@media (max-width: 600px)`) strictly preserved.
-
-### 24. Lobby Journey Notice Sticky Header Background Matching
-* **The Mandate**: In the Lobby with a white layout on mobile, the background behind the "ENTER A ROOM TO CONTINUE YOUR JOURNEY" notice was black along with the message. Keep the message black, but make the space around it match the panel below it.
-* **Implementation**:
-  * Replaced the erroneous `var(--bg-main, #12121f)` in `.lobby-journey-sticky-header` with `var(--bg-primary, #12121f)` combined with `background-image: linear-gradient(var(--bg-panel), var(--bg-panel))`.
-  * Added explicit theme matching for `theme-white`:
-    ```css
-    [class*="theme-white"] .lobby-journey-sticky-header,
-    body.theme-white .lobby-journey-sticky-header {
-        background-color: var(--bg-primary, #ffffff) !important;
-        background-image: linear-gradient(var(--bg-panel, rgba(0, 0, 0, 0.05)), var(--bg-panel, rgba(0, 0, 0, 0.05))) !important;
-    }
-    ```
-  * Preserved the black obsidian-diamond glass message banner (`.lobby-journey-message`) with pearl lettering.
-  * Synchronized across both `static/css/lobby.css` and the embedded styles in `templates/index.html` (`lobby.css?v=1788990000`).
+- **Latest Commit ID**: `86d0100e38208a269ddad4cc4e844656548ee7fb`
+- **Git Branch**: `main` (clean working tree across local, GitHub, and production)
+- **Production Server**: `132.148.72.249` (PM2 Process `morpheme` online, 1.5 GB memory, HTTP 200 OK)
 
 ---
 
-## 🔒 Permanent System Invariants (STRICT / PRESERVED)
+## 🎯 Executive Summary of Milestones & Enhancements (September 11, 2026)
 
-1. **Mobile Fullscreen Invariant (`openFullListModal`)**:
-   * Calling `openFullListModal()` MUST explicitly execute `document.exitFullscreen()` immediately. Never disabled or bypassed.
-2. **Android Virtual Keyboard Black Screen Prevention**:
-   * Fullscreen is exited upon navigating to non-game utility pages (Tools, Settings, Profile, Forum, How to Play, Donate) or when opening modal dialogs with text inputs.
-   * Fullscreen re-engagement is blocked while utility pages or input modals are active.
-3. **Gateway Screen (`#page-loading`)**:
-   * Gateway screen touch/click requests fullscreen smoothly into the Lobby without layout shifts.
-4. **Dictionary Suffix & Plural Sourcing**:
-   * Noun plurals and verb conjugations inherit base word definitions; root definitions are fully validated.
+### 1. Lobby Rooms Sliding Animation & Default Retracted State
+* **Default Retracted State**: Initial page load now defaults the Active Rooms in Lobby to the retracted state (`retractRooms(false)`), allowing players to view game room controls and lobby info cleanly on load.
+* **Smooth Sliding Transition**: Pressing **EXPAND ROOMS** and **RETRACT ROOMS** executes a smooth upward/downward transition matching the game room chat drawer and the "Players In Lobby & Chat" sliding drawer:
+  * Uses `cubic-bezier(0.16, 1, 0.3, 1)` easing over 350ms/320ms.
+  * `.game-title` and `#selected-game-info` smoothly slide up/fade out during expansion and return during retraction.
+  * `.create-room-panel` smoothly collapses its height and translates upward.
+  * `#rooms-list` animates with `@keyframes roomsSlideUp` and `roomsSlideDown`.
+  * The toggle chevron (`▲`) rotates 180° smoothly without text flickering.
+
+### 2. Desktop Lobby Button Layout & Clipping Elimination
+* **The Mandate**: Prevent the "Players in Lobby & Chat" drawer button from being horizontally cut off on desktop displays.
+* **Implementation**:
+  * Transitioned desktop Lobby layout (`body.lobby-active`) to a dynamic flex column where `#page-lobby` flexes (`flex: 1 1 0%`), cleanly accommodating top navigation, lobby content, and the drawer button.
+  * Set `.lobby-chat-drawer` fixed at `38px` above a tight `2px` bottom padding.
+  * Button and drawer are 100% visible and un-clipped across all window dimensions.
+
+### 3. Game Room Chatbox Header Removal & Layout Optimization
+* **The Mandate**: In game rooms, remove the horizontal divider line above the chatbox and expand the chatbox into the reclaimed space.
+* **Implementation**:
+  * Removed `#game-chat-header` divider and adjusted vertical flex boundaries so the chat messages area and input fill the container naturally.
+
+### 4. Mobile Words Bar Left Alignment in Game Rooms
+* **The Mandate**: Shift "Words" along the bottom of the screen to the left on mobile viewports so the toggle arrow is clearly visible.
+* **Implementation**:
+  * Adjusted mobile padding, text alignment, and flex positioning for `#game-words-toggle-btn` to ensure the disclosure chevron remains completely unobstructed.
+
+### 5. Word Lists in Tools Description Update
+* **The Mandate**: Update the description of Lists in Tools to clarify defaults and navigation.
+* **Implementation**:
+  * Updated `#tool-lists .tool-header p` to:
+    > *"Browse official dictionaries and unique collections. Below, without adjusting the parameters, the first 10,000 words in NWL are on display. To see more, change the parameters using the dropdown menus or select “View Full List”.*
+
+### 6. Tournament Start Date Timezone Alignment & AM/PM Standardization
+* **Profile Timezone Alignment**: Replaced browser-default `new Date(data.start_date * 1000).toLocaleString()` with `formatTournamentStartDate(data.start_date)`. The start date is now explicitly computed using the player's selected Profile/Settings timezone (`window.currentUserTimezone` / `morpheme_timezone`), falling back to `Auto (Device)` if unset.
+* **Timezone Declaration**: The timezone is clearly declared alongside the formatted date and time (e.g. `CDT (US Central)`, `EDT (US Eastern)`, `UTC`, or `CDT (Device)`).
+* **AM/PM Standardization**: Standardized meridiem to uppercase `AM` / `PM` without periods, matching `formatAppDate` across the application.
+* **Enrolled State Visibility**: Start date remains displayed both before and after tournament enrollment.
+* **Immediate Reactivity**: If a player updates their timezone in Settings or Profile, the tournament start date updates instantly without page reload.
+
+### 7. Tournament Parameter Card Layout & Value Font Sizing
+* **Preserved Original Vertical Layout**: Parameter cards (`.param-item`) remain in their vertical tile layout (`flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px;`).
+* **Preserved Parameter Titles**: Kept `.param-label` exactly as it was (`font-size: 0.72rem; color: var(--muted-text); text-transform: uppercase; letter-spacing: 0.5px;`).
+* **Reduced Value Font Size & Anti-Wrapping**: Reduced `.param-value` font size to `0.88rem` with `white-space: nowrap !important;` (and cleared unscoped `play.css` pill padding `6px 18px` and backgrounds), ensuring values like `"6x8"` and `"10 Letters"` for Bonus Word stay cleanly on a single line under their title without wrapping onto two lines.
+
+### 8. Is Valid Definition Visibility on White & Light Layouts
+* **The Mandate**: Fix unreadable white definition text on white/light backgrounds in "Is Valid" in Tools.
+* **Implementation**:
+  * Eliminated hardcoded `color: #fff;` inline style on `.definition-text` in `static/js/tools.js` and replaced `#valid-definition-display` `color: #ccc;` in `templates/index.html` with `color: var(--text-primary);`.
+  * Added `.definition-text` and `#valid-definition-display .definition-text` to `static/css/style.css` under all light/white theme selectors (`theme-white`, `theme-light-*`, `theme-yellow`, `theme-pink`, etc.) with `color: var(--text-primary) !important;`.
+  * Definitions now render in crisp dark slate/black against white/light backgrounds and clean white against dark backgrounds.
+
+### 9. View Full List Readability & Contrast on White Layouts
+* **Trigger Button (`#list-view-full-btn`)**: Styled with solid royal purple (`#6d28d9`), bold white text (`#ffffff`), and `#5b21b6` border under `theme-white` and all light themes.
+* **Modal Card & Grid**: High-contrast dark slate font (`#0f172a`, font-weight 700) on white card surface (`#ffffff`) providing a 16.5:1 contrast ratio.
+* **Strict Invariant**: Preserved mobile fullscreen exit invariant (`openFullListModal`) so virtual keyboard never rebuilds display surface.
+
+### 10. Gateway & Navigation Invariants
+* **Login Flash Prevention**: Preserved `#page-loading` (Gateway) actively until user session is confirmed, preventing login flash.
+* **Default to Lobby on Gateway Navigation**: Clicking "ENTER LOBBY" reliably routes to `#page-lobby` and clears residual location hashes.
+* **Fullscreen Continuity**: Initial press on ENTER LOBBY engages fullscreen cleanly without shifting screen dimensions into the Lobby.
+
+### 11. Lexicographical Additions & Invariant Enforcement
+* Added and validated root definitions for Added Words (`LENATE`, `LENATES`, `LENATION`, `LENATIONS`, `MALAYOPHOBIA`, `JUFFERS`), adhering to root-sourcing, noun plurals, and conjugated verb suffix propagation rules in `AGENTS.md`.
 
 ---
 
-## 🌐 Synchronization Verification
+## 🔒 Architectural & Invariant Guardrails (STRICT / PERMANENT)
 
-* **Local Working Directory**: Clean (`git status` clean).
-* **GitHub Remote Repository**: `gewurztraminerrr-cloud/Morpheme` on branch `main`.
-* **Production Deployment**: `morpheme.games` (IP `132.148.72.249`), PM2 process `0` (`morpheme`) online, serving HTTP 200 OK.
-* **Latest Commit ID**: `586df14c193e27b71c93256e4f4b3d657a052c68` (tracked and deployed across all environments).
+1. **Fullscreen & Virtual Keyboard Invariants (`AGENTS.md`)**:
+   - `openFullListModal`: Always calls `document.exitFullscreen()` immediately on modal open.
+   - Non-Game Pages: Fullscreen is exited on utility views (Tools, Settings, Profile, Forum, How to Play, Donate) to prevent mobile display surface rebuild black screens.
+   - Automatic re-engagement of fullscreen is blocked on utility pages.
+2. **Dictionary Suffix & Plural Invariants**:
+   - Noun plurals and conjugated verb endings (`-S`, `-ED`, `-ING`) replicate definitions from base root words. Missing roots are researched and lexicographically defined.
+3. **Session & Security Invariants**:
+   - Guest accounts are automatically scrubbed on logout.
+   - Moderator checks and password hashing follow strict cryptographic standards.
 
+---
+
+## 📊 Complete File Modification Log (September 11, 2026)
+
+| File | Status | Key Modifications |
+| :--- | :--- | :--- |
+| `static/js/lobby.js` | Updated | Smooth sliding animation for room expansion/retraction; default retracted state on load; arrow rotation. |
+| `static/css/lobby.css` | Updated | `@keyframes roomsSlideUp`/`roomsSlideDown`; cubic-bezier transitions on headers and panel; desktop flex drawer placement. |
+| `static/js/tournaments.js` | Updated | `formatTournamentStartDate` respecting profile timezone, declared timezone abbreviation/label, uppercase `AM`/`PM`, and instant setting reactivity. |
+| `static/js/tools.js` | Updated | Replaced hardcoded `color: #fff;` on `.definition-text` with `var(--text-primary)`; added tournament re-render on profile timezone update. |
+| `static/js/settings.js` | Updated | Added tournament re-render trigger on settings timezone change. |
+| `static/css/style.css` | Updated | Added `.definition-text` light theme rules; refined `.tournament-params-grid .param-value` font size (`0.88rem`) and `white-space: nowrap !important;`. |
+| `templates/index.html` | Updated | Word Lists description update; `#valid-definition-display` text color fix; cache-busting version bumps across CSS/JS assets. |
+
+---
+
+## 🚀 Verification & Synchronization Confirmation
+
+1. **Local Working Tree**: Clean, all changes committed (`86d0100e`).
+2. **GitHub Repository**: Pushed and up-to-date (`https://github.com/gewurztraminerrr-cloud/Morpheme`, branch `main`).
+3. **Production Server (`132.148.72.249`)**:
+   - `git status` reports: `HEAD is now at 86d0100e`, clean working tree.
+   - PM2 Process `morpheme` (id 0) is **online**, memory stable at 1.5 GB.
+   - Live HTTP request check: `curl -sI https://morpheme.games/` returns **`HTTP/1.1 200 OK`**.
+4. **Synchronization Status**: **100% SYNCHRONIZED** across Localhost, GitHub, and Production.
