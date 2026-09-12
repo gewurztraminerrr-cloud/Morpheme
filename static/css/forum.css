@@ -1097,9 +1097,9 @@ body.theme-gray .forum-bottom-bar,
 body.theme-gray #page-forums .forum-bottom-bar,
 body.theme-light-brown .forum-bottom-bar,
 body.theme-light-brown #page-forums .forum-bottom-bar {
-    background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
 }
 
 [class*="theme-white"] #forum-back-to-list,
