@@ -3084,7 +3084,7 @@ body.theme-light-brown .lobby-chat-input:focus {
     #mobile-panel-main,
     .game-types-panel {
         padding-top: 0 !important;
-        padding-bottom: 0 !important;
+        padding-bottom: 20px !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
@@ -3109,7 +3109,7 @@ body.theme-light-brown .lobby-chat-input:focus {
 body.is-desktop #mobile-panel-main,
 body.is-desktop .game-types-panel {
     padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    padding-bottom: 20px !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
