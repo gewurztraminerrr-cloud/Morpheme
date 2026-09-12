@@ -6333,57 +6333,6 @@ body .tab-btn.active {
         grid-template-columns: 1fr 1fr;
         gap: 24px;
     }
-
-    .tournament-params-grid {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
-        gap: 10px !important;
-    }
-
-    .tournament-params-grid .param-item {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 8px 12px !important;
-        gap: 8px !important;
-        background: rgba(var(--text-primary-rgb), 0.03) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
-        border-radius: 8px !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        transform: none !important;
-    }
-
-    .tournament-params-grid .param-item:hover {
-        transform: none !important;
-    }
-
-    .tournament-params-grid .param-label {
-        font-size: 0.72rem !important;
-        font-weight: 600 !important;
-        color: var(--muted-text) !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-        text-align: left !important;
-    }
-
-    .tournament-params-grid .param-value {
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        color: var(--text-primary) !important;
-        white-space: nowrap !important;
-        text-align: right !important;
-        padding: 0 !important;
-        background: none !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
 }
 
 .tournament-card {
@@ -6409,47 +6358,40 @@ body .tab-btn.active {
 
 .tournament-params-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
 }
 
-.tournament-params-grid .param-item {
+.tournament-params-grid .param-item,
+.param-item {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
     background: rgba(var(--text-primary-rgb), 0.03);
     border: 1px solid rgba(var(--text-primary-rgb), 0.08);
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 10px;
+    padding: 10px 12px;
     box-sizing: border-box;
-    min-width: 0;
 }
 
-.tournament-params-grid .param-label {
+.tournament-params-grid .param-label,
+.param-label {
     font-size: 0.72rem;
-    font-weight: 600;
     color: var(--muted-text);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .tournament-params-grid .param-value {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
-    text-align: right;
-    padding: 0;
-    background: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    white-space: nowrap !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 .action-panel {
