@@ -2953,9 +2953,9 @@
                                         <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 8px 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
                                             <input type="file" id="forum-comment-image" accept="image/*" multiple style="display: none;">
                                             <div id="forum-comment-image-wrapper" style="width: 100%; display: block; position: relative; cursor: pointer; margin: 0; padding: 0;">
-                                                <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
+                                                <label for="forum-comment-image" class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.8rem; box-sizing: border-box; padding: 8px 10px; transition: all 0.2s ease; min-height: 36px; cursor: pointer;">
                                                     <span class="file-text">&#128206; Attach images (up to 4)</span>
-                                                </div>
+                                                </label>
                                             </div>
                                             <div id="forum-comment-image-preview" class="image-preview hidden"></div>
                                         </div>
@@ -3002,9 +3002,9 @@
                                         <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 4)</label>
                                         <input type="file" id="forum-post-image" accept="image/*" multiple style="display: none;">
                                         <div id="forum-post-image-wrapper" style="width: 100%; display: block; cursor: pointer; margin: 0; padding: 0;">
-                                            <div class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
+                                            <label for="forum-post-image" class="file-upload-box" style="display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid var(--input-border); border-radius: 5px; background: rgba(0, 0, 0, 0.2); color: var(--muted-text); font-size: 0.9rem; box-sizing: border-box; padding: 10px 20px; transition: all 0.2s ease; min-height: 42px; cursor: pointer;">
                                                 <span class="file-text">Click to choose images (up to 4) or drag and drop</span>
-                                            </div>
+                                            </label>
                                         </div>
                                         <div id="forum-image-preview" class="image-preview hidden"></div>
                                     </div>
@@ -7484,7 +7484,7 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789210600"></script>
-    <script src="/js/forum.js?v=33782"></script>
+    <script src="/js/forum.js?v=33783"></script>
     <script src="/js/app.js?v=1788950000"></script>
     <script src="/js/lobby.js?v=1789210500"></script>
     <script src="/js/play.js?v=1789210100"></script>
@@ -7557,9 +7557,8 @@
                 }
             }
         }, true);
+    </script>
 
-
-    
     <!-- Script to handle mobile-only header placement -->
     <script>
         function checkIsDesktop() {

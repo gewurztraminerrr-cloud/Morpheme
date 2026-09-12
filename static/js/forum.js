@@ -450,6 +450,11 @@ const Forum = {
             });
         }
         if (postImageWrapper && postImageInput) {
+            postImageWrapper.addEventListener('click', (e) => {
+                if (e.target !== postImageInput && !e.target.closest('label[for="forum-post-image"]')) {
+                    postImageInput.click();
+                }
+            });
             postImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 const box = postImageWrapper.querySelector('.file-upload-box') || postImageWrapper.querySelector('label') || postImageWrapper.firstElementChild;
@@ -480,6 +485,11 @@ const Forum = {
             });
         }
         if (commentImageWrapper && commentImageInput) {
+            commentImageWrapper.addEventListener('click', (e) => {
+                if (e.target !== commentImageInput && !e.target.closest('label[for="forum-comment-image"]')) {
+                    commentImageInput.click();
+                }
+            });
             commentImageWrapper.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 const box = commentImageWrapper.querySelector('.file-upload-box') || commentImageWrapper.querySelector('label') || commentImageWrapper.firstElementChild;
