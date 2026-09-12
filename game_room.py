@@ -6963,6 +6963,80 @@ class RoomManager:
             with room._state_lock:
                  room.starting_round = False
     
+    def force_instant_board(self, room_id):
+        """Force an instant pregenerated board delivery for a room to break any stall or loading hang (<1ms)."""
+        import random, time
+        room = self.get_room(room_id)
+        if not room:
+            return None
+        with room._state_lock:
+            from board_generator import pop_any_cached_board, pop_compatible_cached_board
+            from word_validator import word_validator
+            
+            # Check if room already has an active board with letters
+            has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
+            if has_letters and room.state == 'active':
+                return room
+
+            # Pop from cached board pool or emergency fallback
+            pre = pop_any_cached_board(room.board_dimensions)
+            if not pre:
+                pre = get_emergency_fallback_board(
+                    room.board_dimensions, 'Normal', room.time_limit,
+                    dictionary='NWL', use_added_words=False, target_range='100-200', min_word_length=3, difficulty='Medium'
+                )
+            if pre:
+                if len(pre) >= 9:
+                    r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre
+                else:
+                    r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, r_params = pre
+                
+                r_params = dict(r_params) if isinstance(r_params, dict) else {}
+                board_min_l = r_params.get('min_word_length', 3)
+                grid_floor = 3
+                if '4x6' in str(room.board_dimensions): grid_floor = 4
+                elif '5x7' in str(room.board_dimensions): grid_floor = 5
+                elif '6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions): grid_floor = 6
+                board_min_l = max(grid_floor, int(board_min_l) if board_min_l is not None else grid_floor)
+
+                raw_dict = r_params.get('dictionary', 'NWL')
+                raw_aw = r_params.get('use_added_words', False)
+                room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                room.all_words = set(room.all_words_paths.keys())
+                room.complete_words = list(room.all_words)
+                
+                bw_candidate = r_bonus_word
+                if not bw_candidate or bw_candidate not in room.all_words:
+                    cand_list = [w for w in (room.all_words or []) if len(w) >= 6 and not str(w).upper().endswith('ING')]
+                    if cand_list:
+                        bw_candidate = random.choice(list(cand_list)).upper()
+                    else:
+                        bw_candidate = self._get_bonus_word(length=8, dictionary=raw_dict)
+
+                room.bonus_word = str(bw_candidate or '').upper().strip()
+                room.previous_bonus_word = room.bonus_word
+                room.board = r_board
+                room.bonus_cell = r_bonus_c
+                room.total_words_count = len(room.all_words)
+                room.initial_total_words = room.total_words_count
+                room.current_board_format = r_fmt
+                room.current_dictionary = raw_dict
+                room.current_min_length = board_min_l
+                room.use_added_words = raw_aw
+                room.current_difficulty = r_params.get('difficulty', 'Medium')
+                room.current_round = max(1, room.current_round)
+                room.round_start_time = time.time()
+                room.state = 'active'
+                room.solving_complete = True
+                room.board_search_loading = False
+                room.starting_round = False
+                room.update_counts_by_len()
+                room.recalculate_total_points()
+                room.initialize_density(r_board, room.all_words_paths, r_fmt)
+                print(f"[force_instant_board] Force-loaded instant board for {room_id} ({len(room.all_words)} words)")
+                return room
+        return room
+    
     def _get_factchecked_wc_range(self, count, use_added_words=False, dictionary=None):
         """Map actual word count to the exact corresponding standard range bucket.
            Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+

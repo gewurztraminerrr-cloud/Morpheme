@@ -501,6 +501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
 
                         try {
+                            window._currentLobbyPanel = 'main';
                             showPage('page-lobby');
                             const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
                             if (navBtn) updateActiveNav(navBtn);
@@ -1805,6 +1806,7 @@ function showPage(pageId) {
 
     // NEW: Load Private Matches & snap to main Lobby window on mobile when entering Lobby
     if (pageId === 'page-lobby') {
+        window._currentLobbyPanel = 'main';
         if (typeof window.scrollLobbyToMainPanel === 'function') {
             window.scrollLobbyToMainPanel();
             requestAnimationFrame(window.scrollLobbyToMainPanel);

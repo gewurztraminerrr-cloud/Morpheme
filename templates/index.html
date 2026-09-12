@@ -2486,6 +2486,9 @@
 
                     <!-- Right Panel: Active Rooms -->
                 <div class="active-rooms-panel" id="mobile-panel-rooms">
+                    <div class="mobile-rooms-back-bar">
+                        <button type="button" class="mobile-rooms-back-btn" onclick="window.switchLobbyPanel('main', true)">← Back to Game Types</button>
+                    </div>
                     <h3 class="game-title">ACTIVE ROOMS</h3>
                     <div id="selected-game-info">Select a game type</div>
                     <div class="rating-filter-container">
@@ -2506,9 +2509,10 @@
                             </div>
                             <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
                         </div>
-                        <div id="rooms-placeholder-view">
+                        <div id="rooms-placeholder-view" onclick="window.switchLobbyPanel('main', true)" style="cursor: pointer;" title="Tap to return to Game Types">
                             <p class="placeholder">No "Show Rooms" selected</p>
                             <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
+                            <span class="placeholder-return-hint">Tap to return to Game Types</span>
                         </div>
                         <button type="button" id="lobby-rooms-toggle-btn" class="lobby-rooms-toggle-btn" onclick="window.toggleRoomsListExpand()" aria-expanded="false" aria-controls="rooms-list" title="Expand active rooms display">
                             <span class="rooms-toggle-arrow">▲</span>

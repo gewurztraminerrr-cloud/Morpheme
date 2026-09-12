@@ -948,7 +948,15 @@ window.scrollLobbyToMainPanel = function(behavior = 'auto') {
 };
 
 window._restoreLobbyPanel = function() {
-    window.switchLobbyPanel(window._currentLobbyPanel || 'main', false);
+    let target = window._currentLobbyPanel || 'main';
+    if (target === 'rooms') {
+        const ph = document.getElementById('rooms-placeholder-view');
+        if (ph && (ph.style.display !== 'none' && ph.offsetParent !== null)) {
+            target = 'main';
+            window._currentLobbyPanel = 'main';
+        }
+    }
+    window.switchLobbyPanel(target, false);
 };
 
 // Track which panel the user swiped to so window._currentLobbyPanel stays in sync.

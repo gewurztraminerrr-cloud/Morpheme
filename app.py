@@ -4903,6 +4903,15 @@ def leave_room(room_id):
     
     return jsonify({'success': True})
 
+@app.route('/api/room/<room_id>/instant-board', methods=['POST'])
+def force_instant_board_route(room_id):
+    if 'user_id' in session:
+        room_manager.update_presence(session['user_id'])
+    room = room_manager.force_instant_board(room_id)
+    if not room:
+        return jsonify({'error': 'Room not found'}), 404
+    return jsonify({'success': True, 'state': room.state, 'round': room.current_round})
+
 @app.route('/api/rooms', methods=['GET'])
 def list_rooms():
     if 'user_id' in session:
@@ -5131,6 +5140,13 @@ def get_room_state(room_id):
         # 1. On-demand state updates & next round transitions safeguard
         room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
+
+        # Safeguard: if room is active but has no board/letters, force instant board immediately!
+        has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
+        if room.state == 'active' and not has_letters:
+            print(f"[get_room_state] Room {room_id} is active but has empty board. Force-loading instant board now...")
+            room_manager.force_instant_board(room_id)
+
         if room.state == 'intermission' and room.time_remaining <= 0:
             if not getattr(room, 'starting_round', False):
                 import threading
@@ -5244,20 +5260,39 @@ def get_room_state(room_id):
                                 if hasattr(room, 'board_search_loading'): delattr(room, 'board_search_loading')
                                 if hasattr(room, 'starting_round'): delattr(room, 'starting_round')
                                 
-                                # Clear all next_round/staging attributes to prevent bleed/outdated data promotion
-                                room.next_round_board = None
-                                room.next_round_words = None
-                                room.next_round_word_paths = None
+                                # Instant Pre-Population: Ensure next_round_board is ready immediately (<1ms) from cache
+                                from board_generator import pop_any_cached_board
+                                from game_room import get_emergency_fallback_board
+                                pre_next = pop_any_cached_board(room.board_dimensions)
+                                if not pre_next:
+                                    pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
+                                if pre_next:
+                                    if len(pre_next) >= 9:
+                                        nb, nw, nc, nf, np, nr, nbw, _, nparams = pre_next
+                                    else:
+                                        nb, nw, nc, nf, np, nr, nbw, nparams = pre_next
+                                    room.next_round_board = nb
+                                    room.next_round_words = nw
+                                    room.next_round_bonus_cell = nc
+                                    room.next_round_bonus = nbw
+                                    room.next_round_format = nf
+                                    room.next_round_word_paths = np or {}
+                                    room.next_round_uniqueness = nr
+                                    room.next_round_spinner_params = nparams or {}
+                                    room.solving_complete = True
+                                else:
+                                    room.next_round_board = None
+                                    room.next_round_words = None
+                                    room.next_round_word_paths = None
+                                    room.next_round_bonus = None
+                                    room.next_round_format = None
                                 room.next_round_word_scores = None
-                                room.next_round_bonus = None
-                                room.next_round_format = None
-                                room.next_round_total_words_count = 0
+                                room.next_round_total_words_count = len(room.next_round_words) if room.next_round_words else 0
                                 room.next_round_counts_by_len = {}
                                 room.next_round_total_points = 0
                                 room.next_round_cell_density = None
                                 room.next_round_initial_cell_density = None
                                 room.next_spinner_params = None
-                                room.next_round_spinner_params = None
                                 room.next_round_difficulty = None
                                 room.next_round_uniqueness = None
 

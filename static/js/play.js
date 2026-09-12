@@ -756,6 +756,7 @@ async function ejectToLobby(reason = "inactivity") {
         return;
     }
     window._isEjectingToLobby = true;
+    window._currentLobbyPanel = 'main';
     console.warn(`[play.js] EVICTING USER. Reason: ${reason}`);
 
     // Capture targetRoomId BEFORE clearing local variables
@@ -1067,6 +1068,41 @@ function ensureLoadingCardStyles() {
         boardPanel.classList.remove('full-bleed-mobile');
     }
 }
+
+window.fetchInstantBoard = async function() {
+    const rId = window.currentRoomId || (typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : null) || localStorage.getItem('last_joined_room');
+    if (!rId) return;
+    try {
+        const btn = document.getElementById('btn-instant-board');
+        if (btn) btn.textContent = '⚡ Loading Instant Board...';
+        const res = await fetch(`/api/room/${rId}/instant-board`, { method: 'POST', cache: 'no-store' });
+        if (res.ok) {
+            if (typeof window.pollRoomState === 'function') {
+                window.pollRoomState();
+            }
+        }
+    } catch(e) {
+        console.error('[play.js] fetchInstantBoard error:', e);
+    }
+};
+
+window.bailoutToLobby = function() {
+    if (window.boardLoadingInterval) {
+        clearInterval(window.boardLoadingInterval);
+        window.boardLoadingInterval = null;
+    }
+    window._boardLoadingStartTime = null;
+    window._autoInstantTriggered = null;
+    window._currentLobbyPanel = 'main';
+    if (typeof window.leaveCurrentRoom === 'function') {
+        window.leaveCurrentRoom().catch(() => {});
+    }
+    if (typeof window.showPage === 'function') {
+        window.showPage('page-lobby');
+    } else if (typeof window.navigateToPage === 'function') {
+        window.navigateToPage('lobby');
+    }
+};
 
 function clearGameUIAndCache() {
     console.log('[play.js] Clearing Game UI and Caches from previous match');
@@ -5192,9 +5228,13 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     }
 
     // Clear loading interval if board has content
-    if (hasLetters && window.boardLoadingInterval) {
-        clearInterval(window.boardLoadingInterval);
-        window.boardLoadingInterval = null;
+    if (hasLetters) {
+        if (window.boardLoadingInterval) {
+            clearInterval(window.boardLoadingInterval);
+            window.boardLoadingInterval = null;
+        }
+        window._boardLoadingStartTime = null;
+        window._autoInstantTriggered = null;
     }
     
     // IF board is empty OR has no letters (and NOT in intermission), show loading spinner
@@ -5208,6 +5248,11 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
             loadingMsg = `GENERATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
         }
         
+        if (!window._boardLoadingStartTime) {
+            window._boardLoadingStartTime = Date.now();
+            window._autoInstantTriggered = false;
+        }
+
         // Clear any existing interval to prevent leaks
         if (window.boardLoadingInterval) {
             clearInterval(window.boardLoadingInterval);
@@ -5227,7 +5272,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         ];
         let statusIdx = 0;
         
-        // Start the interval to rotate status messages
+        // Start the interval to rotate status messages and monitor loading watchdog
         window.boardLoadingInterval = setInterval(() => {
             const el = document.getElementById('board-loading-status');
             if (el) {
@@ -5235,6 +5280,19 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 el.innerText = `[PROCESSING] ${statuses[statusIdx]}`;
             } else {
                 clearInterval(window.boardLoadingInterval);
+                return;
+            }
+
+            const elapsedSec = (Date.now() - (window._boardLoadingStartTime || Date.now())) / 1000;
+            if (elapsedSec >= 8) {
+                const actionsEl = document.getElementById('board-loading-actions');
+                if (actionsEl) actionsEl.style.display = 'flex';
+            }
+            if (elapsedSec >= 12 && !window._autoInstantTriggered) {
+                window._autoInstantTriggered = true;
+                if (typeof window.fetchInstantBoard === 'function') {
+                    window.fetchInstantBoard();
+                }
             }
         }, 1200);
         
@@ -5246,6 +5304,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 <div id="board-loading-status" class="status-ticker">[PROCESSING] ${statuses[0]}</div>
                 <div class="why-text">
                     Morpheme solves and calibrates every board in real-time. We run hundreds of simulations in the background to guarantee your target word count, board difficulty, and letter distribution.
+                </div>
+                <div id="board-loading-actions" class="loading-watchdog-actions">
+                    <button type="button" class="btn-instant-board" id="btn-instant-board" onclick="window.fetchInstantBoard()">⚡ Load Instant Board</button>
+                    <button type="button" class="btn-instant-lobby" onclick="window.bailoutToLobby()">← Return to Lobby</button>
                 </div>
             </div>
         `;
