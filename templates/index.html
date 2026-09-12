@@ -155,9 +155,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1789211400" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789212700" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789213000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1789211400">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789212700">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789213000">
     <link rel="stylesheet" href="/css/play.css?v=1789211500">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=1789211400">
@@ -1654,6 +1654,7 @@
             <div id="loading-gateway-container" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
+                    <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onclick="if(typeof window.showPage==='function'){window.showPage('page-login');}else{var pl=document.getElementById('page-loading');var lg=document.getElementById('page-login');if(pl){pl.classList.remove('active');pl.style.display='none';}if(lg){lg.classList.add('active');lg.style.display='flex';}}if(typeof window.refreshCaptchas==='function'){window.refreshCaptchas();}">LOGIN</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -1948,6 +1949,11 @@
                         if (un) un.textContent = '';
                         const loginBtn = document.getElementById('nav-login-btn');
                         if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.style.display = ''; }
+                        // Swap gateway button: hide ENTER LOBBY, show LOGIN
+                        const enterBtn = document.getElementById('btn-enter-lobby-gateway');
+                        if (enterBtn) enterBtn.style.display = 'none';
+                        const loginGwBtn = document.getElementById('btn-login-gateway');
+                        if (loginGwBtn) loginGwBtn.style.display = '';
                     } else {
                         const storedUser = localStorage.getItem('morpheme_username');
                         if (storedUser) {
