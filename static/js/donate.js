@@ -69,7 +69,7 @@
                 // 1. Update status text
                 const statusText = document.getElementById('funding-status-text');
                 if (statusText) {
-                    statusText.textContent = `$${Math.round(monthlyTotal)} / $${target} USD`;
+                    statusText.textContent = `$${Math.round(monthlyTotal)} / $${target} CAD`;
                 }
 
                 // 2. Update progress bar fill
