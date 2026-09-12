@@ -659,11 +659,11 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
-    padding: 10px 0;
+    padding: 32px 0 10px;
     box-sizing: border-box;
     gap: 22px;
 }
@@ -2823,8 +2823,9 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #rooms-placeholder-view {
+        justify-content: flex-start !important;
         gap: 18px !important;
-        padding: 8px 0 !important;
+        padding: 28px 0 8px !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder {
