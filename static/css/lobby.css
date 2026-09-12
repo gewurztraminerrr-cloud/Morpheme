@@ -3157,14 +3157,6 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
 }
 
 
-.placeholder-return-hint {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--accent-color, #00e676);
-    margin-top: 6px;
-    opacity: 0.85;
-    font-weight: 600;
-}
 
 
 
