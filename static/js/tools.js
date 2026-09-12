@@ -6122,7 +6122,7 @@ async function runValidationCheck() {
                     html += `<div class="pronunciation" style="margin-bottom: 10px; font-size: 1.8rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
                 }
                 if (data.definition) {
-                    html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: #fff; font-style: normal;">${data.definition}</div>`;
+                    html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: var(--text-primary); font-style: normal;">${data.definition}</div>`;
                 }
                 if (data.image_url) {
                     html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
