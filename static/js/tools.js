@@ -1892,6 +1892,9 @@ async function renderProfile(user) {
                 await saveProfileField('timezone', newTz);
                 const settingSelect = document.getElementById('setting-timezone-select');
                 if (settingSelect) settingSelect.value = newTz;
+                if (window.renderTournament && window.currentTournamentState) {
+                    window.renderTournament(window.currentTournamentState);
+                }
                 if (user.recent_rounds) {
                     const listContainer = document.getElementById('profile-history-list');
                     if (listContainer && typeof window.renderRoundItem === 'function') {

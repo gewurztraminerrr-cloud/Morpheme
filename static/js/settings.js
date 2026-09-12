@@ -735,6 +735,9 @@ function debounce(func, wait) {
             if (!window.userSettings) window.userSettings = {};
             window.userSettings.timezone = newTz;
             saveSettingDebounced('timezone', newTz);
+            if (window.renderTournament && window.currentTournamentState) {
+                window.renderTournament(window.currentTournamentState);
+            }
             const profileTzSelect = document.getElementById('profile-timezone-select');
             if (profileTzSelect) profileTzSelect.value = newTz;
             const profileTzVal = document.getElementById('profile-timezone-val');

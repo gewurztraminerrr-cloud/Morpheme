@@ -15,6 +15,102 @@ window.initTournamentsPage = function () {
 };
 
 let currentTournamentState = null;
+window.currentTournamentState = null;
+
+function formatTournamentStartDate(epochSeconds) {
+    if (!epochSeconds) return '';
+    const d = new Date(typeof epochSeconds === 'number' ? (epochSeconds < 1e11 ? epochSeconds * 1000 : epochSeconds) : epochSeconds);
+    if (isNaN(d.getTime())) return '';
+
+    const profileTz = (window.currentUserTimezone && window.currentUserTimezone !== 'auto')
+        ? window.currentUserTimezone
+        : (localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
+            ? localStorage.getItem('morpheme_timezone')
+            : null);
+
+    try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+            timeZoneName: 'short',
+            timeZone: profileTz || undefined
+        });
+
+        const parts = dtf.formatToParts(d);
+        const p = {};
+        for (const part of parts) {
+            p[part.type] = part.value;
+        }
+
+        const year = p.year;
+        const month = p.month;
+        const day = p.day;
+        const hour = p.hour;
+        const minute = p.minute;
+        const second = p.second;
+        let ampm = (p.dayPeriod || (d.getHours() >= 12 ? 'PM' : 'AM')).toUpperCase().replace(/\./g, '').trim();
+
+        const tzAbbr = p.timeZoneName || '';
+        let tzDisplay = tzAbbr;
+        const tzLabels = window.TIMEZONE_LABELS || {
+            'UTC': 'UTC (Universal Time)',
+            'America/New_York': 'US Eastern (ET)',
+            'America/Chicago': 'US Central (CT)',
+            'America/Denver': 'US Mountain (MT)',
+            'America/Phoenix': 'US Arizona (MST)',
+            'America/Los_Angeles': 'US Pacific (PT)',
+            'America/Anchorage': 'US Alaska (AKT)',
+            'Pacific/Honolulu': 'US Hawaii (HST)',
+            'America/Toronto': 'Canada Eastern',
+            'America/Vancouver': 'Canada Pacific',
+            'America/Sao_Paulo': 'Brazil (BRT)',
+            'Europe/London': 'London (GMT/BST)',
+            'Europe/Paris': 'Central Europe (CET)',
+            'Europe/Athens': 'Eastern Europe (EET)',
+            'Europe/Moscow': 'Moscow (MSK)',
+            'Asia/Dubai': 'Dubai (GST)',
+            'Asia/Kolkata': 'India (IST)',
+            'Asia/Bangkok': 'Indochina (ICT)',
+            'Asia/Singapore': 'Singapore (SGT)',
+            'Asia/Hong_Kong': 'Hong Kong (HKT)',
+            'Asia/Shanghai': 'China (CST)',
+            'Asia/Tokyo': 'Japan (JST)',
+            'Asia/Seoul': 'Korea (KST)',
+            'Australia/Perth': 'Australia West (AWST)',
+            'Australia/Adelaide': 'Australia Central (ACST)',
+            'Australia/Sydney': 'Australia East (AEST)',
+            'Pacific/Auckland': 'New Zealand (NZST)'
+        };
+
+        if (profileTz && tzLabels[profileTz]) {
+            const rawLabel = tzLabels[profileTz].replace(/\s*\([^)]*\)$/, '').trim();
+            if (rawLabel && !tzDisplay.toLowerCase().includes(rawLabel.toLowerCase())) {
+                tzDisplay = tzDisplay ? `${tzDisplay} (${rawLabel})` : rawLabel;
+            }
+        } else if (tzDisplay) {
+            tzDisplay = `${tzDisplay} (Device)`;
+        }
+
+        const tzDecl = tzDisplay ? ` ${tzDisplay}` : '';
+        return `${year}-${month}-${day}, ${hour}:${minute}:${second} ${ampm}${tzDecl}`;
+    } catch (e) {
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}, ${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+}
+window.formatTournamentStartDate = formatTournamentStartDate;
 
 async function fetchTournamentStatus() {
     try {
@@ -23,6 +119,7 @@ async function fetchTournamentStatus() {
 
         const data = await response.json();
         currentTournamentState = data;
+        window.currentTournamentState = data;
         renderTournament(data);
         updateNavHighlight(data.user_status?.has_turn);
     } catch (e) {
@@ -46,6 +143,7 @@ function updateNavHighlight(hasTurn) {
 }
 
 function renderTournament(data) {
+    window.renderTournament = renderTournament;
     // Guest Handling
     const guestBlock = document.getElementById('tournament-guest-block');
     const mainContent = document.getElementById('tournament-main-content');
@@ -282,10 +380,12 @@ function renderTournament(data) {
 }
 
 function renderSignupState(container, data, userStatus) {
+    const startDateFormatted = formatTournamentStartDate(data.start_date);
     if (userStatus.status !== 'not_joined') {
         container.innerHTML = `
             <div style="font-size:1.4rem; color:#2ecc71; margin-bottom:15px; font-weight:700;">✅ SUCCESSFULLY ENROLLED</div>
             <p style="opacity:0.8;">You are registered for this event. Prepare yourself! The tournament begins soon.</p>
+            ${startDateFormatted ? `<p style="margin-top:20px; opacity:0.6;">Start Date: ${startDateFormatted}</p>` : ''}
         `;
     } else {
         const btn = document.createElement('button');
@@ -307,11 +407,13 @@ function renderSignupState(container, data, userStatus) {
         btn.onclick = joinTournament;
         container.appendChild(btn);
 
-        const info = document.createElement('p');
-        info.style.marginTop = '20px';
-        info.style.opacity = '0.6';
-        info.innerHTML = `Start Date: ${new Date(data.start_date * 1000).toLocaleString()}`;
-        container.appendChild(info);
+        if (startDateFormatted) {
+            const info = document.createElement('p');
+            info.style.marginTop = '20px';
+            info.style.opacity = '0.6';
+            info.innerHTML = `Start Date: ${startDateFormatted}`;
+            container.appendChild(info);
+        }
     }
 }
 
