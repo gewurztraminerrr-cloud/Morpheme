@@ -488,16 +488,7 @@
                     containerDiv.style.gap = '12px';
                     containerDiv.innerHTML = noRoomsMsg;
 
-                    var toggleBtn = document.getElementById('lobby-rooms-toggle-btn');
-                    if (toggleBtn && toggleBtn.parentElement === roomsList) {
-                        roomsList.insertBefore(containerDiv, toggleBtn);
-                    } else {
-                        roomsList.appendChild(containerDiv);
-                    }
-
-                    if (typeof window.ensureRoomsToggleButton === 'function') {
-                        window.ensureRoomsToggleButton();
-                    }
+                    roomsList.appendChild(containerDiv);
                 } else {
                     roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
                 }
@@ -2511,13 +2502,6 @@
                             <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
                             <span class="placeholder-return-hint">Tap to return to Game Types</span>
                         </div>
-                        <button type="button" id="lobby-rooms-toggle-btn" class="lobby-rooms-toggle-btn" onclick="window.toggleRoomsListExpand()" aria-expanded="false" aria-controls="rooms-list" title="Expand active rooms display">
-                            <span class="rooms-toggle-arrow">▲</span>
-                            <span class="rooms-toggle-thumb" aria-hidden="true"></span>
-                            <span class="rooms-toggle-text">Expand Rooms</span>
-                            <span class="rooms-toggle-thumb" aria-hidden="true"></span>
-                            <span class="rooms-toggle-arrow">▲</span>
-                        </button>
                     </div>
                     <div class="mobile-lobby-spacer"></div>
                 </div>
