@@ -1738,11 +1738,11 @@ function showPage(pageId) {
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
                 if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
-                    window.resetToolsTab();
+                    window.resetToolsTab(true);
                 } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
-                    window.resetSettingsTab();
+                    window.resetSettingsTab(true);
                 } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
-                    window.resetModsTab();
+                    window.resetModsTab(true);
                 }
             }
             const layout = page.querySelector('.tools-split-layout');

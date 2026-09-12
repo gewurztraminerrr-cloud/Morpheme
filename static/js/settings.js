@@ -884,6 +884,10 @@ function debounce(func, wait) {
 
     // --- Settings Tab Navigation ---
     window.showSettingTab = function(tabId) {
+        if (window._settingsSlideTimeout) {
+            clearTimeout(window._settingsSlideTimeout);
+            window._settingsSlideTimeout = null;
+        }
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
         if (!sidebar || !content) return;
@@ -916,19 +920,31 @@ function debounce(func, wait) {
         }
     };
 
-    window.resetSettingsTab = function() {
-        const sidebar = document.querySelector('#page-settings .tools-sidebar');
-        const content = document.querySelector('#page-settings .tools-content');
-        if (sidebar) {
-            sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
-        }
-        if (content) {
-            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+    window.resetSettingsTab = function(immediate = false) {
+        if (window._settingsSlideTimeout) {
+            clearTimeout(window._settingsSlideTimeout);
+            window._settingsSlideTimeout = null;
         }
         const layoutEl = document.querySelector('#page-settings .tools-split-layout');
-        if (layoutEl) {
-            layoutEl.scrollLeft = 0;
+        const sidebar = document.querySelector('#page-settings .tools-sidebar');
+        const content = document.querySelector('#page-settings .tools-content');
+
+        if (immediate) {
+            if (layoutEl) layoutEl.scrollLeft = 0;
+            if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            return;
         }
+
+        if (layoutEl) {
+            layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+
+        window._settingsSlideTimeout = setTimeout(() => {
+            if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            window._settingsSlideTimeout = null;
+        }, 320);
     };
 
     function setupSettingsNavigation() {
@@ -945,12 +961,12 @@ function debounce(func, wait) {
             }
         });
 
-        // Mobile Back button inside settings content
+        // Mobile Back button inside settings content with smooth sliding effect
         const settingsBackBtn = document.getElementById('settings-mobile-back-btn');
         if (settingsBackBtn) {
             settingsBackBtn.addEventListener('click', () => {
                 if (typeof window.resetSettingsTab === 'function') {
-                    window.resetSettingsTab();
+                    window.resetSettingsTab(false);
                 } else {
                     const layoutEl = document.querySelector('#page-settings .tools-split-layout');
                     if (layoutEl) {
@@ -960,14 +976,14 @@ function debounce(func, wait) {
             });
         }
 
-        // Mobile Layout snapping on navigation
+        // Mobile Layout snapping on navigation (immediate reset)
         const settingsPage = document.getElementById('page-settings');
         if (settingsPage) {
             const observer = new MutationObserver(() => {
                 if (settingsPage.classList.contains('active')) {
                     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     if (isMobile && typeof window.resetSettingsTab === 'function') {
-                        window.resetSettingsTab();
+                        window.resetSettingsTab(true);
                     }
                 }
             });

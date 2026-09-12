@@ -2276,7 +2276,7 @@ body.theme-light-brown .word-item.missed {
     transform: translateY(-1px);
 }
 .bottom-back-btn:active {
-    transform: translateY(1px) scale(0.99) !important;
+    transform: translateX(-4px) scale(0.98) !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 }
 

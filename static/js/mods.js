@@ -1290,6 +1290,10 @@ window.renderUndefinedWords = renderUndefinedWords;
 window.appendUndefBatch = appendUndefBatch;
 
 window.showModTab = function(tabId) {
+    if (window._modsSlideTimeout) {
+        clearTimeout(window._modsSlideTimeout);
+        window._modsSlideTimeout = null;
+    }
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
     const content = document.querySelector('#page-mods .tools-content');
     if (!sidebar || !content) return;
@@ -1336,19 +1340,31 @@ window.showModTab = function(tabId) {
     }
 };
 
-window.resetModsTab = function() {
-    const sidebar = document.querySelector('#page-mods .tools-sidebar');
-    const content = document.querySelector('#page-mods .tools-content');
-    if (sidebar) {
-        sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
-    }
-    if (content) {
-        content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+window.resetModsTab = function(immediate = false) {
+    if (window._modsSlideTimeout) {
+        clearTimeout(window._modsSlideTimeout);
+        window._modsSlideTimeout = null;
     }
     const layoutEl = document.querySelector('#page-mods .tools-split-layout');
-    if (layoutEl) {
-        layoutEl.scrollLeft = 0;
+    const sidebar = document.querySelector('#page-mods .tools-sidebar');
+    const content = document.querySelector('#page-mods .tools-content');
+
+    if (immediate) {
+        if (layoutEl) layoutEl.scrollLeft = 0;
+        if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+        if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+        return;
     }
+
+    if (layoutEl) {
+        layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    window._modsSlideTimeout = setTimeout(() => {
+        if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+        if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+        window._modsSlideTimeout = null;
+    }, 320);
 };
 
 function setupModsNavigation() {
@@ -1365,12 +1381,12 @@ function setupModsNavigation() {
         }
     });
 
-    // Mobile Back button inside mods content
+    // Mobile Back button inside mods content with smooth sliding effect
     const modsBackBtn = document.getElementById('mods-mobile-back-btn');
     if (modsBackBtn) {
         modsBackBtn.addEventListener('click', () => {
             if (typeof window.resetModsTab === 'function') {
-                window.resetModsTab();
+                window.resetModsTab(false);
             } else {
                 const layoutEl = document.querySelector('#page-mods .tools-split-layout');
                 if (layoutEl) {
@@ -1380,14 +1396,14 @@ function setupModsNavigation() {
         });
     }
 
-    // Mobile Layout snapping and menu reset on navigation
+    // Mobile Layout snapping and menu reset on navigation (immediate reset)
     const modsPage = document.getElementById('page-mods');
     if (modsPage) {
         const observer = new MutationObserver(() => {
             if (modsPage.classList.contains('active')) {
                 const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile && typeof window.resetModsTab === 'function') {
-                    window.resetModsTab();
+                    window.resetModsTab(true);
                 }
             }
         });
@@ -1418,7 +1434,7 @@ function setupModsNavigation() {
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 if (typeof window.resetModsTab === 'function') {
-                    window.resetModsTab();
+                    window.resetModsTab(false);
                 } else {
                     const layoutEl = document.querySelector('#page-mods .tools-split-layout');
                     if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });

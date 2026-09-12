@@ -151,6 +151,10 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
 
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
+    if (window._toolsSlideTimeout) {
+        clearTimeout(window._toolsSlideTimeout);
+        window._toolsSlideTimeout = null;
+    }
     // Save lists scroll position before navigating away from Lists tool
     const currentActivePane = document.querySelector('.tool-pane.active');
     if (currentActivePane && currentActivePane.id === 'tool-lists') {
@@ -294,20 +298,37 @@ window.showTool = function(toolId) {
     }
 };
 
-window.resetToolsTab = function() {
-    const sidebar = document.querySelector('#page-tools .tools-sidebar');
-    const content = document.querySelector('#page-tools .tools-content');
-    if (sidebar) {
-        sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
-    }
-    if (content) {
-        content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
-        content.classList.remove('no-outer-scroll');
+window.resetToolsTab = function(immediate = false) {
+    if (window._toolsSlideTimeout) {
+        clearTimeout(window._toolsSlideTimeout);
+        window._toolsSlideTimeout = null;
     }
     const layoutEl = document.querySelector('#page-tools .tools-split-layout');
-    if (layoutEl) {
-        layoutEl.scrollLeft = 0;
+    const sidebar = document.querySelector('#page-tools .tools-sidebar');
+    const content = document.querySelector('#page-tools .tools-content');
+
+    if (immediate) {
+        if (layoutEl) layoutEl.scrollLeft = 0;
+        if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+        if (content) {
+            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            content.classList.remove('no-outer-scroll');
+        }
+        return;
     }
+
+    if (layoutEl) {
+        layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    window._toolsSlideTimeout = setTimeout(() => {
+        if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+        if (content) {
+            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            content.classList.remove('no-outer-scroll');
+        }
+        window._toolsSlideTimeout = null;
+    }, 320);
 };
 
 function setupToolsNavigation() {
@@ -324,12 +345,12 @@ function setupToolsNavigation() {
         }
     });
 
-    // Mobile Back button inside tools content
+    // Mobile Back button inside tools content with smooth sliding effect
     const toolsBackBtn = document.getElementById('tools-mobile-back-btn');
     if (toolsBackBtn) {
         toolsBackBtn.addEventListener('click', () => {
             if (typeof window.resetToolsTab === 'function') {
-                window.resetToolsTab();
+                window.resetToolsTab(false);
             } else {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                 if (layoutEl) {
@@ -339,14 +360,14 @@ function setupToolsNavigation() {
         });
     }
 
-    // Mobile Layout snapping on navigation to Tools page
+    // Mobile Layout snapping on navigation to Tools page (immediate reset)
     const toolsPage = document.getElementById('page-tools');
     if (toolsPage) {
         const observer = new MutationObserver(() => {
             if (toolsPage.classList.contains('active')) {
                 const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile && typeof window.resetToolsTab === 'function') {
-                    window.resetToolsTab();
+                    window.resetToolsTab(true);
                 }
             }
         });
@@ -385,7 +406,7 @@ function setupToolsNavigation() {
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                 if (typeof window.resetToolsTab === 'function') {
-                    window.resetToolsTab();
+                    window.resetToolsTab(false);
                 } else {
                     const layoutEl = document.querySelector('#page-tools .tools-split-layout');
                     if (layoutEl) {
