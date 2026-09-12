@@ -663,9 +663,9 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
-    padding: 32px 0 10px;
+    padding: 40px 0 14px;
     box-sizing: border-box;
-    gap: 22px;
+    gap: 26px;
 }
 
 #rooms-list {
@@ -712,15 +712,15 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     color: var(--muted-text);
     font-style: italic;
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.12rem;
     letter-spacing: 0.2px;
 }
 
 #rooms-list .placeholder-icon {
     display: block;
-    width: clamp(125px, 18vh, 180px);
-    max-width: 180px;
-    max-height: 160px;
+    width: clamp(135px, 20vh, 195px);
+    max-width: 195px;
+    max-height: 172px;
     height: auto;
     aspect-ratio: 1024 / 904;
     object-fit: contain;
@@ -1530,9 +1530,9 @@ body.theme-light-brown .field-hint {
     }
 
     #rooms-list .placeholder-icon {
-        width: clamp(115px, 20vw, 160px) !important;
-        max-width: 160px !important;
-        max-height: 140px !important;
+        width: clamp(125px, 22vw, 172px) !important;
+        max-width: 172px !important;
+        max-height: 152px !important;
         height: auto !important;
         aspect-ratio: 1024 / 904 !important;
         object-fit: contain !important;
@@ -1605,9 +1605,9 @@ body.theme-light-brown .field-hint {
     }
 
     #rooms-list .placeholder-icon {
-        width: clamp(115px, 20vw, 160px) !important;
-        max-width: 160px !important;
-        max-height: 140px !important;
+        width: clamp(125px, 22vw, 172px) !important;
+        max-width: 172px !important;
+        max-height: 152px !important;
         height: auto !important;
         aspect-ratio: 1024 / 904 !important;
         object-fit: contain !important;
@@ -2824,19 +2824,19 @@ body.theme-light-brown .lobby-chat-input:focus {
 
     .active-rooms-panel #rooms-placeholder-view {
         justify-content: flex-start !important;
-        gap: 18px !important;
-        padding: 28px 0 8px !important;
+        gap: 22px !important;
+        padding: 36px 0 10px !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder {
         margin: 0 !important;
-        font-size: 0.98rem !important;
+        font-size: 1.05rem !important;
     }
 
     .active-rooms-panel #rooms-list .placeholder-icon {
-        width: clamp(115px, 20vw, 160px) !important;
-        max-width: 160px !important;
-        max-height: 140px !important;
+        width: clamp(125px, 22vw, 172px) !important;
+        max-width: 172px !important;
+        max-height: 152px !important;
         height: auto !important;
         aspect-ratio: 1024 / 904 !important;
         object-fit: contain !important;
