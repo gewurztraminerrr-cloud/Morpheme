@@ -154,14 +154,68 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789210900" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789210500" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789210900">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789210500">
-    <link rel="stylesheet" href="/css/play.css?v=1789211000">
+    <link rel="preload" href="/css/style.css?v=1789211300" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789211300" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1789211300">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789211300">
+    <link rel="stylesheet" href="/css/play.css?v=1789211300">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
-    <link rel="stylesheet" href="/css/forum.css?v=1789211000">
+    <link rel="stylesheet" href="/css/forum.css?v=1789211300">
     <link rel="stylesheet" href="/css/donate.css?v=33804">
+    <style id="mobile-back-nav-theme-override">
+        /* Mobile Back Button Panel: darkish grey for white & light layouts */
+        body.is-mobile[class*="theme-white"] .mobile-bottom-nav,
+        body.is-mobile[class*="theme-white"] .tools-bottom-nav,
+        body.is-mobile[class*="theme-white"] .mods-bottom-nav,
+        body.is-mobile[class*="theme-white"] .settings-bottom-nav,
+        body.is-mobile[class*="theme-white"] #page-tools .mobile-bottom-nav,
+        body.is-mobile[class*="theme-white"] #page-mods .mobile-bottom-nav,
+        body.is-mobile[class*="theme-white"] #page-settings .mobile-bottom-nav,
+        body.is-mobile.theme-white .mobile-bottom-nav,
+        body.is-mobile.theme-white .tools-bottom-nav,
+        body.is-mobile.theme-white .mods-bottom-nav,
+        body.is-mobile.theme-white .settings-bottom-nav,
+        body.is-mobile.theme-white #page-tools .mobile-bottom-nav,
+        body.is-mobile.theme-white #page-mods .mobile-bottom-nav,
+        body.is-mobile.theme-white #page-settings .mobile-bottom-nav,
+        body[class*="theme-white"] .mobile-bottom-nav,
+        body[class*="theme-white"] .tools-bottom-nav,
+        body[class*="theme-white"] .mods-bottom-nav,
+        body[class*="theme-white"] .settings-bottom-nav,
+        body[class*="theme-white"] #page-tools .mobile-bottom-nav,
+        body[class*="theme-white"] #page-mods .mobile-bottom-nav,
+        body[class*="theme-white"] #page-settings .mobile-bottom-nav,
+        body.theme-white .mobile-bottom-nav,
+        body.theme-white .tools-bottom-nav,
+        body.theme-white .mods-bottom-nav,
+        body.theme-white .settings-bottom-nav,
+        body.theme-white #page-tools .mobile-bottom-nav,
+        body.theme-white #page-mods .mobile-bottom-nav,
+        body.theme-white #page-settings .mobile-bottom-nav,
+        body.is-mobile[class*="theme-white"] .forum-bottom-bar,
+        body.is-mobile.theme-white .forum-bottom-bar,
+        body.is-mobile[class*="theme-white"] #page-forums .forum-bottom-bar,
+        body.is-mobile.theme-white #page-forums .forum-bottom-bar,
+        body[class*="theme-white"] .forum-bottom-bar,
+        body[class*="theme-white"] #page-forums .forum-bottom-bar,
+        body.theme-white .forum-bottom-bar,
+        body.theme-white #page-forums .forum-bottom-bar,
+        body.is-mobile[class*="theme-light-"] .mobile-bottom-nav,
+        body.is-mobile.theme-yellow .mobile-bottom-nav,
+        body.is-mobile.theme-pink .mobile-bottom-nav,
+        body.is-mobile.theme-orange .mobile-bottom-nav,
+        body.is-mobile.theme-gray .mobile-bottom-nav,
+        body.is-mobile.theme-light-brown .mobile-bottom-nav,
+        [class*="theme-white"] .mobile-bottom-nav,
+        [class*="theme-white"] .tools-bottom-nav,
+        [class*="theme-white"] .mods-bottom-nav,
+        [class*="theme-white"] .settings-bottom-nav,
+        [class*="theme-white"] .forum-bottom-bar {
+            background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
+            border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        }
+    </style>
     <script>
         function showLobbyToast(message, type) {
             var toast = document.getElementById('lobby-action-toast');
@@ -2891,9 +2945,9 @@
                 body.theme-orange #page-forums .forum-bottom-bar,
                 body.theme-gray #page-forums .forum-bottom-bar,
                 body.theme-light-brown #page-forums .forum-bottom-bar {
-                    background: linear-gradient(180deg, #444954 0%, #323640 100%) !important;
-                    border-top: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-                    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+                    background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
+                    border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+                    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
                 }
             </style>
             <div class="forum-container">

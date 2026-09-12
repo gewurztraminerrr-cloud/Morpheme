@@ -2320,9 +2320,9 @@ body.theme-light-brown .tools-content-column > .mobile-bottom-nav,
 body.theme-light-brown #page-tools .mobile-bottom-nav,
 body.theme-light-brown #page-mods .mobile-bottom-nav,
 body.theme-light-brown #page-settings .mobile-bottom-nav {
-    background: linear-gradient(180deg, #444954 0%, #323640 100%) !important;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 [class*="theme-white"] .bottom-back-btn,
@@ -6387,9 +6387,9 @@ input[type=range]::-moz-range-track {
     body.theme-light-brown #page-tools .mobile-bottom-nav,
     body.theme-light-brown #page-mods .mobile-bottom-nav,
     body.theme-light-brown #page-settings .mobile-bottom-nav {
-        background: linear-gradient(180deg, #444954 0%, #323640 100%) !important;
-        border-top: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+        background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
+        border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
     }
 
     /* Responsive input rows for all tools and profile */
@@ -10418,6 +10418,42 @@ body.is-mobile #page-settings .mobile-bottom-nav {
     align-items: center !important;
     margin: 0 !important;
     position: relative !important;
+}
+body.is-mobile[class*="theme-white"] #page-tools .mobile-bottom-nav,
+body.is-mobile[class*="theme-white"] #page-mods .mobile-bottom-nav,
+body.is-mobile[class*="theme-white"] #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-white #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-white #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-white #page-settings .mobile-bottom-nav,
+body.is-mobile[class*="theme-light-"] #page-tools .mobile-bottom-nav,
+body.is-mobile[class*="theme-light-"] #page-mods .mobile-bottom-nav,
+body.is-mobile[class*="theme-light-"] #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-yellow #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-yellow #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-yellow #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-pink #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-pink #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-pink #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-orange #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-orange #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-orange #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-gray #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-gray #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-gray #page-settings .mobile-bottom-nav,
+body.is-mobile.theme-light-brown #page-tools .mobile-bottom-nav,
+body.is-mobile.theme-light-brown #page-mods .mobile-bottom-nav,
+body.is-mobile.theme-light-brown #page-settings .mobile-bottom-nav,
+[class*="theme-white"] .mobile-bottom-nav,
+[class*="theme-white"] #page-tools .mobile-bottom-nav,
+[class*="theme-white"] #page-mods .mobile-bottom-nav,
+[class*="theme-white"] #page-settings .mobile-bottom-nav,
+body.theme-white .mobile-bottom-nav,
+body.theme-white #page-tools .mobile-bottom-nav,
+body.theme-white #page-mods .mobile-bottom-nav,
+body.theme-white #page-settings .mobile-bottom-nav {
+    background: linear-gradient(180deg, #4d525e 0%, #3b404b 100%) !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 body.is-mobile #page-tools .tool-pane,
 body.is-mobile #page-mods .tool-pane,
