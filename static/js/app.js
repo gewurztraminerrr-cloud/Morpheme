@@ -2381,16 +2381,7 @@ function updateAuthUI(rating = null) {
             modsBtn.style.display = isAuthorized ? 'block' : 'none';
         }
 
-        // Auto-scroll nav container to reveal menu items and user display when logged in on mobile devices
-        const navEl = document.querySelector('.header .nav') || document.querySelector('.nav');
-        if (navEl && window.innerWidth <= 900) {
-            setTimeout(() => {
-                navEl.scrollTo({
-                    left: navEl.scrollWidth,
-                    behavior: 'smooth'
-                });
-            }, 350); // Fluid delay to align with page routing rendering
-        }
+
 
     } else {
         if (loginNavBtn) {
