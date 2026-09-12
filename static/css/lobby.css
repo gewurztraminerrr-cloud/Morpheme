@@ -137,8 +137,8 @@
         max-height: 100% !important;
         overflow: hidden !important;
         box-sizing: border-box;
-        padding: 16px 12px 12px 12px !important;
-        gap: 6px !important;
+        padding: 8px 10px 8px 10px !important;
+        gap: 4px !important;
     }
 
     .game-section,
@@ -348,11 +348,11 @@
     background: var(--bg-panel);
     border-radius: 12px;
     border: 1px solid var(--input-border);
-    padding: 16px 20px 16px 20px;
+    padding: 8px 10px 8px 10px;
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     min-height: 0;
     overflow: hidden !important;
     box-sizing: border-box !important;
@@ -362,7 +362,7 @@
 .active-rooms-panel h3,
 .solo-friends-panel h3,
 .game-section .game-title {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
     font-weight: 700 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -376,13 +376,13 @@
 .rating-filter-container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 6px;
+    gap: 4px;
     width: 100%;
     align-items: stretch;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 8px;
-    padding: 8px 10px;
+    border-radius: 6px;
+    padding: 3px 5px;
     box-sizing: border-box;
     transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1), min-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), padding 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -390,12 +390,15 @@
 #rating-filter {
     grid-column: 1 / -1;
     width: 100%;
-    padding: 12px 8px;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 3px 6px !important;
     background: var(--input-bg);
-    border: 2px solid var(--input-border);
-    border-radius: 8px;
+    border: 1px solid var(--input-border) !important;
+    border-radius: 4px !important;
     color: var(--text-primary);
-    font-size: 0.85rem;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
     box-sizing: border-box;
 }
 
@@ -413,24 +416,28 @@
 .room-tab-btn {
     grid-column: auto;
     width: 100%;
-    padding: 8px 4px;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 2px 4px !important;
     background: rgba(var(--text-primary-rgb), 0.08);
     border: 1px solid rgba(var(--text-primary-rgb), 0.2);
-    border-radius: 8px;
+    border-radius: 4px !important;
     color: var(--text-primary);
     opacity: 0.85;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.68rem !important;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
+    gap: 3px;
     text-align: center;
     line-height: 1.15;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .room-tab-btn span {
@@ -494,41 +501,45 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
 #my-rating-btn {
     grid-column: auto;
     width: 100%;
-    padding: 8px 4px;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 2px 4px !important;
     background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
     border: none;
-    border-radius: 8px;
+    border-radius: 4px !important;
     color: #fff;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.68rem !important;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 3px !important;
     text-align: center;
     line-height: 1.15;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 #my-rating-btn .my-rating-label {
     white-space: nowrap !important;
-    display: block !important;
+    display: inline-block !important;
     line-height: 1.15 !important;
 }
 
 #my-rating-btn .my-rating-val {
     white-space: nowrap !important;
-    display: block !important;
+    display: inline-block !important;
     font-weight: 700 !important;
     line-height: 1.15 !important;
 }
 
 #my-rating-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(37, 117, 252, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(37, 117, 252, 0.35);
     filter: brightness(1.1);
 }
 
@@ -541,10 +552,11 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 8px 10px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 2px 6px !important;
     margin: 0 !important;
-    border-radius: 8px !important;
-    height: 100% !important;
+    border-radius: 4px !important;
     box-sizing: border-box !important;
 }
 
@@ -553,46 +565,60 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     .rating-filter-container {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr auto;
-        gap: 8px;
+        gap: 4px !important;
         width: 100%;
         align-items: stretch;
         background: var(--input-bg);
         border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 10px 12px;
+        border-radius: 6px !important;
+        padding: 3px 5px !important;
         box-sizing: border-box;
     }
     #rating-filter {
         grid-column: 1 / -1;
         width: 100%;
-        padding: 12px 14px;
-        font-size: 0.95rem;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 3px 6px !important;
+        font-size: 0.72rem !important;
+        border: 1px solid var(--input-border) !important;
+        border-radius: 4px !important;
+        box-sizing: border-box;
+        line-height: 1.2 !important;
     }
     .room-tab-btn {
         flex-direction: row;
-        gap: 6px;
+        gap: 3px !important;
         width: 100%;
-        padding: 10px 14px;
-        font-size: 0.9rem;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 2px 4px !important;
+        font-size: 0.68rem !important;
         white-space: nowrap;
+        border-radius: 4px !important;
     }
     #my-rating-btn {
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 3px !important;
         width: 100%;
-        padding: 10px 14px;
-        font-size: 0.9rem;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 2px 4px !important;
+        font-size: 0.68rem !important;
         white-space: nowrap;
+        border-radius: 4px !important;
     }
     #my-rating-btn .my-rating-label,
     #my-rating-btn .my-rating-val {
         display: inline-block !important;
     }
     #lobby-refresh-btn {
-        padding: 10px 14px !important;
-        height: auto !important;
+        padding: 2px 6px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        border-radius: 4px !important;
     }
     .room-meta {
         flex-direction: row;
@@ -606,12 +632,25 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
 #selected-game-info {
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 1.1rem;
+    padding: 3px 6px !important;
+    border-radius: 6px !important;
+    text-align: center !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
     font-weight: 500;
     color: var(--text-primary);
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 6px;
+}
+
+#selected-game-info strong {
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
 }
 
 /* Active Rooms Expand / Retract Toggle Button (along bottom within #rooms-list) */
@@ -792,9 +831,20 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 }
 
 /* Active Rooms Panel: Smooth Sliding Transition for Expand / Retract */
-.active-rooms-panel .game-title,
+.active-rooms-panel .game-title {
+    max-height: 24px;
+    opacity: 1;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+    transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease,
+                margin 0.32s ease,
+                padding 0.32s ease,
+                transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .active-rooms-panel #selected-game-info {
-    max-height: 40px;
+    max-height: 60px;
     opacity: 1;
     overflow: hidden;
     transform: translate3d(0, 0, 0);
@@ -1145,16 +1195,34 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 /* Inline Rating Inputs for Create Room */
 .create-room-panel {
     background: var(--bg-panel);
-    border-radius: 8px;
-    padding: 14px 15px;
-    margin-bottom: 6px;
+    border-radius: 6px !important;
+    padding: 5px 8px !important;
+    margin-bottom: 4px !important;
     border: 1px solid var(--input-border);
+}
+
+.create-room-panel .create-room-header-label {
+    color: var(--text-secondary, rgba(var(--text-primary-rgb), 0.7)) !important;
+    font-size: 0.72rem !important;
+    margin-bottom: 3px !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+}
+
+[class*="theme-white"] .create-room-panel .create-room-header-label,
+[class*="theme-light-"] .create-room-panel .create-room-header-label,
+body.theme-yellow .create-room-panel .create-room-header-label,
+body.theme-pink .create-room-panel .create-room-header-label,
+body.theme-orange .create-room-panel .create-room-header-label,
+body.theme-gray .create-room-panel .create-room-header-label,
+body.theme-light-brown .create-room-panel .create-room-header-label {
+    color: #333333 !important;
 }
 
 .rating-inputs-row {
     display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 4px !important;
+    margin-bottom: 4px !important;
 }
 
 .rating-input {
@@ -1162,10 +1230,13 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 4px;
-    padding: 8px;
+    padding: 3px 4px !important;
+    height: 22px !important;
+    min-height: 22px !important;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 0.75rem !important;
     text-align: center;
+    box-sizing: border-box !important;
 }
 
 .rating-input::placeholder {
@@ -1182,19 +1253,25 @@ body.theme-light-brown .lobby-rooms-toggle-btn:hover .rooms-toggle-arrow {
 .confirm-create-room-btn {
     width: 100%;
     background: linear-gradient(135deg, #2ecc71, #27ae60);
-    color: var(--text-primary);
+    color: #ffffff !important;
     border: none;
-    padding: 10px;
+    padding: 4px 8px !important;
+    height: 26px !important;
+    min-height: 26px !important;
     border-radius: 4px;
     font-weight: bold;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    font-size: 1em;
+    font-size: 0.78rem !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box !important;
 }
 
 .confirm-create-room-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(46, 204, 113, 0.3);
 }
 
 .confirm-create-room-btn:active {
@@ -1890,21 +1967,23 @@ body.theme-light-brown .field-hint {
 
     /* Constrain the Create Room rating inputs to fit snuggly and avoid iOS auto-zoom */
     .create-room-panel {
-        padding: 10px !important;
-        margin-bottom: 15px !important;
+        padding: 5px 8px !important;
+        margin-bottom: 4px !important;
     }
 
     .rating-inputs-row {
-        gap: 6px !important;
+        gap: 4px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        margin-bottom: 4px !important;
     }
 
     .rating-input {
         width: 100% !important;
         min-width: 0 !important;
         font-size: 16px !important; /* Prevent iOS browser auto-zoom layout stretching */
-        padding: 8px 4px !important;
+        padding: 3px 4px !important;
+        height: 24px !important;
         box-sizing: border-box !important;
     }
 }
@@ -3133,24 +3212,26 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .active-rooms-panel #selected-game-info {
-        padding: 4px 8px !important;
-        font-size: 0.88rem !important;
+        padding: 3px 6px !important;
+        font-size: 0.78rem !important;
         margin: 0 !important;
     }
 
     .active-rooms-panel .rating-filter-container {
         background: var(--input-bg) !important;
         border: 1px solid var(--input-border) !important;
-        border-radius: 8px !important;
-        padding: 6px 8px !important;
+        border-radius: 6px !important;
+        padding: 3px 5px !important;
         margin: 0 !important;
-        gap: 6px !important;
+        gap: 4px !important;
         box-sizing: border-box !important;
     }
 
     .active-rooms-panel #rating-filter {
-        padding: 5px 6px !important;
-        font-size: 0.78rem !important;
+        padding: 3px 6px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        font-size: 0.72rem !important;
     }
 
     .game-types-panel .game-section,
@@ -3395,10 +3476,11 @@ body.is-desktop .solo-friends-panel .solo-friends-section:last-child {
 
 body.is-desktop #mobile-panel-rooms,
 body.is-desktop .active-rooms-panel {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    padding-bottom: 12px !important;
-    gap: 6px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-bottom: 8px !important;
+    padding-top: 8px !important;
+    gap: 4px !important;
 }
 
 body.is-desktop #mobile-panel-rooms #rooms-list,
@@ -3423,12 +3505,12 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
 
 /* Ensure expanded rooms buttons have strictly equal padding on all devices */
 .active-rooms-panel.rooms-expanded .rating-filter-container {
-    padding: 6px !important;
+    padding: 4px 5px !important;
     margin: 0 !important;
     margin-bottom: 0 !important;
     flex-shrink: 0 !important;
-    min-height: 44px !important;
-    height: 44px !important;
+    min-height: 34px !important;
+    height: 34px !important;
 }
 
 

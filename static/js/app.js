@@ -2686,9 +2686,9 @@ function updateActiveRoomsPanel(gameType, time, dimensions) {
 
     if (infoDiv) {
         infoDiv.innerHTML = `
-            <p><strong>Game Type:</strong> ${gameType}</p>
-            <p><strong>Board Dimensions:</strong> ${dimensions}</p>
-            <p><strong>Time:</strong> ${time}</p>
+            <span class="selected-game-type"><strong>${gameType}</strong></span>
+            <span class="selected-game-sep"> &bull; </span>
+            <span class="selected-game-params">Board: ${dimensions} | Time: ${time}</span>
         `;
     }
 

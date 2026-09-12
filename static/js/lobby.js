@@ -1028,7 +1028,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         if (!createPanel) {
             const createButtonHtml = `
                 <div class="create-room-panel" ${isGuest ? 'style="filter: grayscale(1); opacity: 0.7;"' : ''}>
-                    <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                    <div class="create-room-header-label">
                         ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
                     </div>
                     <div class="rating-inputs-row">

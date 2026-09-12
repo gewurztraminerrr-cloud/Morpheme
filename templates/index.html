@@ -155,9 +155,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1789211400" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789211400" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789212200" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1789211400">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789211400">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789212200">
     <link rel="stylesheet" href="/css/play.css?v=1789211500">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=1789211400">
@@ -445,7 +445,7 @@
             // 1. Immediately update header info
             var infoEl = document.getElementById('selected-game-info');
             if (infoEl) {
-                infoEl.innerHTML = '<strong>' + (gameNames[gameType] || gameType) + '</strong><br>Board: ' + boardDimensions + ' | Time: ' + timeStr;
+                infoEl.innerHTML = '<span class="selected-game-type"><strong>' + (gameNames[gameType] || gameType) + '</strong></span><span class="selected-game-sep"> &bull; </span><span class="selected-game-params">Board: ' + boardDimensions + ' | Time: ' + timeStr + '</span>';
             }
 
             // 2. Immediately render/prepare room list structure
@@ -2497,7 +2497,7 @@
                     </div>
                     <div id="rooms-list">
                         <div class="create-room-panel" id="default-create-room-panel">
-                            <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">
+                            <div class="create-room-header-label">
                                 Set Rating Limits (Optional)
                             </div>
                             <div class="rating-inputs-row">
@@ -7543,8 +7543,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789211500"></script>
     <script src="/js/forum.js?v=33783"></script>
-    <script src="/js/app.js?v=1789211500"></script>
-    <script src="/js/lobby.js?v=1789210500"></script>
+    <script src="/js/app.js?v=1789212200"></script>
+    <script src="/js/lobby.js?v=1789212200"></script>
     <script src="/js/play.js?v=1789210100"></script>
     <script src="/js/tournaments.js?v=1789210600"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
