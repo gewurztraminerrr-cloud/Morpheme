@@ -526,21 +526,52 @@ function renderActiveState(container, data, userStatus) {
         const oppName = prevMatchup.opponent_name || "Opponent";
         const myPrevScore = (prevMatchup.my_score !== null && prevMatchup.my_score !== undefined) ? prevMatchup.my_score : 0;
         const oppPrevScore = (prevMatchup.opponent_score !== null && prevMatchup.opponent_score !== undefined) ? prevMatchup.opponent_score : 0;
+        const myUserId = userStatus.user_id || window.currentUserId || (matchup && matchup.user_id) || 'user';
+        const proceedKey = `morpheme_t_${data.id}_u_${myUserId}_proceeded_round_${data.current_round}`;
+        const hasProceeded = sessionStorage.getItem(proceedKey) === 'true';
+
+        if (!hasProceeded && userStatus.has_turn) {
+            const prevScoresHtml = isBye ? "" : renderScoresListHTML(myPrevScore, oppPrevScore, oppName);
+            container.innerHTML = `
+                <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(46, 204, 113, 0.15);">
+                    <div style="font-size: 2.2rem; color: #2ecc71; font-weight: 900; margin-bottom: 8px; text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">
+                        🏆 YOU WON ROUND ${prevRoundNum}!
+                    </div>
+                    <div style="font-size: 1.15rem; opacity: 0.95; font-weight: 600; margin-bottom: 12px;">
+                        ${isBye 
+                            ? `Automatic win (BYE). Advanced to Round ${data.current_round}!` 
+                            : `You defeated <strong style="color: #ffffff;">${oppName}</strong> (${myPrevScore} pts vs ${oppPrevScore} pts)`
+                        }
+                    </div>
+                    <div style="display: inline-block; background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 20px; padding: 4px 16px; font-size: 0.9rem; font-weight: 700; margin-bottom: 16px;">
+                        ✓ ADVANCED TO ROUND ${data.current_round}
+                    </div>
+                    ${prevScoresHtml}
+                    <div style="margin-top: 25px;">
+                        <button id="proceed-to-round-btn" class="primary-action" style="width: 100%; padding: 18px; font-size: 1.15rem; background: #2ecc71; font-weight: 800; border-radius: 10px; cursor: pointer;">
+                            PROCEED TO ROUND ${data.current_round} ➔
+                        </button>
+                    </div>
+                </div>
+            `;
+            const proceedBtn = container.querySelector('#proceed-to-round-btn');
+            if (proceedBtn) {
+                proceedBtn.onclick = () => {
+                    sessionStorage.setItem(proceedKey, 'true');
+                    renderTournament(data);
+                };
+            }
+            return;
+        }
 
         prevVictoryHtml = `
-            <div style="background: rgba(46, 204, 113, 0.12); border: 2px solid #2ecc71; border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; text-align: center; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.15);">
-                <div style="font-size: 1.6rem; color: #2ecc71; font-weight: 900; margin-bottom: 6px; text-shadow: 0 0 12px rgba(46, 204, 113, 0.4);">
-                    🏆 YOU WON ROUND ${prevRoundNum}!
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(46, 204, 113, 0.12); border: 1.5px solid #2ecc71; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px;">
+                <div style="font-weight: 700; color: #2ecc71; font-size: 0.95rem;">
+                    🏆 Won Round ${prevRoundNum} (${myPrevScore} vs ${oppPrevScore} pts)
                 </div>
-                <div style="font-size: 1.05rem; opacity: 0.95; font-weight: 600; margin-bottom: 8px;">
-                    ${isBye 
-                        ? `Automatic win (BYE). Advanced to Round ${data.current_round}!` 
-                        : `You defeated <span style="color: #ffffff; font-weight: 700;">${oppName}</span> (${myPrevScore} pts vs ${oppPrevScore} pts)`
-                    }
-                </div>
-                <div style="display: inline-block; background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; font-weight: 700;">
-                    ✓ ADVANCED TO ROUND ${data.current_round}
-                </div>
+                <button id="view-prev-round-btn" style="background: rgba(46, 204, 113, 0.2); border: 1px solid rgba(46, 204, 113, 0.4); color: #2ecc71; border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+                    View Results
+                </button>
             </div>
         `;
     }
@@ -563,6 +594,16 @@ function renderActiveState(container, data, userStatus) {
         </div>
         ${matchupHtml}
     `;
+
+    const viewPrevBtn = container.querySelector('#view-prev-round-btn');
+    if (viewPrevBtn) {
+        viewPrevBtn.onclick = () => {
+            const myUserId = userStatus.user_id || window.currentUserId || (matchup && matchup.user_id) || 'user';
+            const proceedKey = `morpheme_t_${data.id}_u_${myUserId}_proceeded_round_${data.current_round}`;
+            sessionStorage.removeItem(proceedKey);
+            renderTournament(data);
+        };
+    }
 
     // Status / result messaging
     if (!userStatus.has_turn) {
