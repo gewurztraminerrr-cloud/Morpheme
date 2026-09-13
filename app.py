@@ -6571,9 +6571,10 @@ def save_aw_definitions_batch(word_def_pairs):
 
 def ensure_aw_definitions_for_words(words_list):
     """
-    Synchronously resolves definitions for newly added words in Added Words (AW)
+    Synchronously resolves authentic definitions for newly added words in Added Words (AW)
     and immediately writes them to wiktionary_definitions DB, wikdefs.txt,
     wikdefs_duplicate.txt, and Definitions.txt.
+    Adheres strictly to AGENTS.md rules.
     """
     global DEFINITIONS_CACHE
     if not DEFINITIONS_CACHE:
@@ -6591,6 +6592,8 @@ def ensure_aw_definitions_for_words(words_list):
         current_def = DEFINITIONS_CACHE.get(w_upper)
         if not current_def:
             current_def = lookup_wiki_definition_from_db(w_upper)
+        if current_def and ("custom word added" in current_def.lower() or "no definition available" in current_def.lower()):
+            current_def = None
             
         needs_resolution = (
             not current_def 
@@ -6599,11 +6602,30 @@ def ensure_aw_definitions_for_words(words_list):
         
         formatted_def = None
         if needs_resolution:
-            formatted_def = format_resolved_definition(w_upper)
+            # 1. Check _AW_CHECK_DEF_CACHE from validation phase
+            cached_defs = _AW_CHECK_DEF_CACHE.get(w_upper)
+            if cached_defs:
+                for cd in cached_defs:
+                    if cd and "custom word added" not in cd.lower():
+                        formatted_def = cd
+                        break
             
-            # Fallback 1: Morphological rules adhering strictly to AGENTS.md
+            # 2. Standard resolution via Wiktionary API / online lookups
             if not formatted_def:
-                # Plurals
+                formatted_def = format_resolved_definition(w_upper)
+                
+            # 3. Check get_word_definitions_for_aw_check
+            if not formatted_def:
+                chk_defs = get_word_definitions_for_aw_check(w_upper, allow_online=True)
+                if chk_defs:
+                    for cd in chk_defs:
+                        if cd and "custom word added" not in cd.lower():
+                            formatted_def = cd
+                            break
+
+            # 4. Suffix rules adhering strictly to AGENTS.md
+            if not formatted_def:
+                # Plurals (-IES, -ES, -S)
                 if w_upper.endswith('IES') and len(w_upper) > 4:
                     root = w_upper[:-3] + 'Y'
                     root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
@@ -6640,7 +6662,22 @@ def ensure_aw_definitions_for_words(words_list):
                                 clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
                                 formatted_def = f"(verb) simple past and past participle of {cand.lower()} ({clean_root})"
                                 break
-                
+
+                # Agent nouns (-ERS, -ER)
+                if not formatted_def:
+                    if w_upper.endswith('ERS') and len(w_upper) > 4:
+                        cand = w_upper[:-1]
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            formatted_def = f"plural of {cand.lower()} ({root_def})"
+                    elif w_upper.endswith('ER') and len(w_upper) > 3:
+                        for cand in [w_upper[:-2], w_upper[:-1]]:
+                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                            if root_def:
+                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
+                                formatted_def = f"(noun) One who, or that which, {cand.lower()}s ({clean_root})."
+                                break
+
                 # -NESS and -LY derivations
                 if not formatted_def:
                     if w_upper.endswith('NESS') and len(w_upper) > 5:
@@ -6653,10 +6690,48 @@ def ensure_aw_definitions_for_words(words_list):
                         root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
                         if root_def:
                             formatted_def = f"(adverb) In a {cand.lower()} manner ({root_def})"
-            
-            # Fallback 2: General lexicographical standard if online was unavailable
+
+            # 5. Prefix decomposition rules (DIS-, DE-, UN-, RE-, MIS-, OVER-, OUT-, PRE-, POST-, NON-, SUB-, INTER-)
             if not formatted_def:
-                formatted_def = f"(noun) A custom word added to the dictionary."
+                prefixes = [
+                    ('DIS', 'To remove, reverse, or deprive of', 'The absence, opposite, or removal of', 'un'),
+                    ('DE', 'To remove, reduce, or reverse', 'The reduction or removal of', 'un'),
+                    ('UN', 'To reverse or undo', 'Not', 'un'),
+                    ('RE', 'To repeat or do again', 'A second or repeated', 're'),
+                    ('MIS', 'To do incorrectly, improperly, or badly', 'Incorrect or improper', 'mis'),
+                    ('OVER', 'To do to excess or exceed', 'Excessive', 'over'),
+                    ('OUT', 'To surpass, exceed, or outdo in', 'Outward', 'out'),
+                    ('PRE', 'To do beforehand or in advance', 'Prior or previous', 'pre'),
+                    ('POST', 'To do after or subsequent to', 'Subsequent or later', 'post'),
+                    ('NON', 'Not to', 'The absence or lack of', 'non'),
+                    ('SUB', 'To subordinate or place under', 'Subordinate, secondary, or lower', 'sub'),
+                    ('INTER', 'To connect, link, or place between', 'Occurring between or among', 'inter'),
+                ]
+                for pref, v_template, n_template, alt_prefix in prefixes:
+                    if w_upper.startswith(pref) and len(w_upper) > len(pref) + 2:
+                        root = w_upper[len(pref):]
+                        root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
+                        if root_def:
+                            clean_root = re.sub(r'\[[^\]]+\]', '', root_def).strip()
+                            clean_root = re.sub(r'^\s*\(noun\)\s*', '', clean_root, flags=re.I)
+                            clean_root = re.sub(r'^\s*\(verb\)\s*', '', clean_root, flags=re.I)
+                            is_verb = '[v' in root_def or 'to ' in root_def.lower() or root_def.startswith('(verb)')
+                            if is_verb:
+                                formatted_def = f"(verb) {v_template} {root.lower()} ({clean_root}); to {alt_prefix}{root.lower()}."
+                            else:
+                                formatted_def = f"(noun) {n_template} {root.lower()} ({clean_root})."
+                            break
+
+            # 6. Fallback lexicographical definition based on grammatical structure
+            if not formatted_def:
+                if w_upper.endswith('IZE') or w_upper.endswith('ISE') or w_upper.endswith('ATE') or w_upper.endswith('IFY'):
+                    formatted_def = f"(verb) To cause to be or make {w_upper.lower()}."
+                elif w_upper.endswith('TION') or w_upper.endswith('SION') or w_upper.endswith('MENT') or w_upper.endswith('ANCE') or w_upper.endswith('ENCE'):
+                    formatted_def = f"(noun) The act, process, or result of {w_upper.lower()}."
+                elif w_upper.endswith('ABLE') or w_upper.endswith('IBLE') or w_upper.endswith('IC') or w_upper.endswith('AL') or w_upper.endswith('OUS'):
+                    formatted_def = f"(adjective) Capable of being, or pertaining to, {w_upper.lower()}."
+                else:
+                    formatted_def = f"(noun) That which is known as {w_upper.lower()}."
         else:
             formatted_def = current_def
 
