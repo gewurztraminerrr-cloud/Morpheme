@@ -645,7 +645,7 @@ function renderActiveState(container, data, userStatus) {
                     container.innerHTML += `
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto;">
                             <div style="font-size:2rem; color:#2ecc71; font-weight:900; margin-bottom:5px; text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">YOU WON THIS MATCH!</div>
-                            <div style="font-size:1.1rem; opacity:0.9; margin-bottom:15px; font-weight:600;">Match result finalized. Advancing to next round...</div>
+                            <div style="font-size:1.1rem; opacity:0.9; margin-bottom:15px; font-weight:600;">Match result finalized. Round ${data.current_round + 1} will begin when Round ${data.current_round} ends.</div>
                             ${scoresHtml}
                         </div>
                     `;
@@ -663,8 +663,8 @@ function renderActiveState(container, data, userStatus) {
             // Bye
             container.innerHTML += `
                 <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
-                    <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">YOU WON! ADVANCING...</div>
-                    <div style="font-size:1.1rem; opacity:0.8;">Automatic win this round.</div>
+                    <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">ROUND ${data.current_round} BYE</div>
+                    <div style="font-size:1.1rem; opacity:0.8;">Automatic win this round. Round ${data.current_round + 1} will begin when Round ${data.current_round} ends.</div>
                 </div>
             `;
         }

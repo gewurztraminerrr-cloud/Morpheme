@@ -158,10 +158,9 @@ class TournamentManager:
             if has_changes:
                 conn.commit()
 
-            # If all matchups in the active round are completed, advance the round immediately!
-            if all_complete and len(matchups) > 0:
-                print(f"[Tournament] All matchups finished for tournament {tid} round {round_number}. Advancing round!")
-                self.advance_tournament(tid, round_number)
+            # Strict schedule: do not advance round early even if all matchups are complete.
+            # Round advancement strictly waits for the round timer (round_info['end_time'])
+            # via check_round_advancement().
 
         except Exception as e:
             print(f"[Tournament] Error updating matchup winners: {e}")
