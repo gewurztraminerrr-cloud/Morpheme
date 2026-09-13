@@ -974,12 +974,19 @@ function showAllPairingsModal(matchups, currentRound) {
         roundsMap[rNum].push(m);
     });
 
-    const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
+    const curRound = currentRound || 1;
 
-    let html = '<div class="all-pairings-container" style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; text-align: left;">';
+    // Sort round numbers descending, with the current round at the top, decreasing downward
+    const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => b - a);
+    const curRoundIdx = roundNumbers.indexOf(curRound);
+    if (curRoundIdx > 0) {
+        roundNumbers.splice(curRoundIdx, 1);
+        roundNumbers.unshift(curRound);
+    }
 
-    roundNumbers.forEach(rNum => {
-        const roundMatchups = roundsMap[rNum];
+    // Helper to render a round group's HTML
+    const renderRoundGroupHTML = (rNum) => {
+        const roundMatchups = roundsMap[rNum] || [];
         // Sort matchups so user's pairing is at top of round
         const sorted = [...roundMatchups].sort((a, b) => {
             const aHasMe = a.u1_name === curUser || a.u2_name === curUser;
@@ -989,10 +996,10 @@ function showAllPairingsModal(matchups, currentRound) {
             return 0;
         });
 
-        const isCurrent = (rNum === currentRound);
+        const isCurrent = (rNum === curRound);
         const roundLabel = (roundNumbers.length > 1) ? `Round ${rNum}${isCurrent ? ' (Current Round)' : ''}` : `Round ${rNum}`;
 
-        html += `
+        return `
             <div class="tournament-round-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border, rgba(255, 255, 255, 0.1)); border-radius: 10px; padding: 10px 8px; box-sizing: border-box; width: 100%; overflow: hidden;">
                 <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: ${isCurrent ? 'var(--accent-color, #ff6b6b)' : 'var(--text-secondary, #94a3b8)'}; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
                     <span>${roundLabel}</span>
@@ -1003,10 +1010,42 @@ function showAllPairingsModal(matchups, currentRound) {
                 </div>
             </div>
         `;
-    });
+    };
 
-    html += '</div>';
+    let html = `
+        <div class="all-pairings-wrapper" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; text-align: left;">
+            <div class="all-pairings-controls" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box;">
+                <label for="all-pairings-round-select" style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary, #94a3b8); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Round:</label>
+                <select id="all-pairings-round-select" class="all-pairings-round-select" style="flex: 1; padding: 7px 10px; font-size: 0.88rem; font-weight: 600; border-radius: 8px; cursor: pointer; outline: none; box-sizing: border-box;">
+                    ${roundNumbers.map(rNum => {
+                        const isCurrent = (rNum === curRound);
+                        return `<option value="${rNum}">${isCurrent ? `Round ${rNum} (Current Round)` : `Round ${rNum}`}</option>`;
+                    }).join('')}
+                    ${roundNumbers.length > 1 ? '<option value="all">All Rounds</option>' : ''}
+                </select>
+            </div>
+            <div id="all-pairings-list-container" class="all-pairings-container" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
+            </div>
+        </div>
+    `;
     bodyEl.innerHTML = html;
+
+    const selectEl = bodyEl.querySelector('#all-pairings-round-select');
+    const listContainer = bodyEl.querySelector('#all-pairings-list-container');
+
+    const updateDisplay = (val) => {
+        if (!listContainer) return;
+        if (val === 'all') {
+            listContainer.innerHTML = roundNumbers.map(r => renderRoundGroupHTML(r)).join('');
+        } else {
+            listContainer.innerHTML = renderRoundGroupHTML(Number(val));
+        }
+    };
+
+    if (selectEl) {
+        selectEl.onchange = (e) => updateDisplay(e.target.value);
+        updateDisplay(selectEl.value);
+    }
 
     const card = modal.querySelector('.achievement-card');
     if (card) {
