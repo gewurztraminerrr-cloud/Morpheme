@@ -4861,8 +4861,8 @@ function updateLocalTimer() {
 
     if (!localEndTime) return;
 
-    if (!cachedTimerValueEl) cachedTimerValueEl = document.getElementById('timer-value');
-    if (!cachedBoardPanelEl) cachedBoardPanelEl = document.querySelector('.board-panel');
+    if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+    if (!cachedBoardPanelEl || !cachedBoardPanelEl.isConnected) cachedBoardPanelEl = document.getElementById('play-panel-board') || document.querySelector('.board-panel');
 
     const now = Date.now() / 1000;
     let remaining = Math.max(0, localEndTime - now);
@@ -4922,7 +4922,7 @@ function updateLocalTimer() {
 
         // Low time visual for text (User Request)
         if (remaining <= 10 && remaining > 0) {
-            cachedTimerValueEl.style.color = '#ff6b6b';
+            cachedTimerValueEl.style.color = '#ef4444';
         } else {
             cachedTimerValueEl.style.color = '';
         }
@@ -4930,6 +4930,9 @@ function updateLocalTimer() {
 
     // Low time visual
     const headerEl = document.querySelector('.play-header');
+    if (!cachedBoardPanelEl || !cachedBoardPanelEl.isConnected) {
+        cachedBoardPanelEl = document.getElementById('play-panel-board') || document.querySelector('.board-panel');
+    }
     if (cachedBoardPanelEl) {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         if (remaining <= 10 && remaining > 0 && currentState === 'active') {

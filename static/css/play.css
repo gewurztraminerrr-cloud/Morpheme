@@ -720,6 +720,38 @@ body.theme-light-brown .player-score-val {
     will-change: background-color, box-shadow;
 }
 
+@keyframes low-time-pulse-white {
+    0% {
+        background-color: rgba(254, 226, 226, 0.7);
+        box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.25), 0 0 15px rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.45);
+    }
+    50% {
+        background-color: rgba(252, 165, 165, 0.95);
+        box-shadow: inset 0 0 35px rgba(220, 38, 38, 0.55), 0 0 25px rgba(220, 38, 38, 0.35);
+        border-color: rgba(220, 38, 38, 0.95);
+    }
+    100% {
+        background-color: rgba(254, 226, 226, 0.7);
+        box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.25), 0 0 15px rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.45);
+    }
+}
+
+[class*="theme-white"] .board-panel.low-time-warning,
+body.theme-white .board-panel.low-time-warning,
+[class*="theme-light-"] .board-panel.low-time-warning,
+body[class*="theme-light-"] .board-panel.low-time-warning,
+body.theme-yellow .board-panel.low-time-warning,
+body.theme-pink .board-panel.low-time-warning,
+body.theme-orange .board-panel.low-time-warning,
+body.theme-gray .board-panel.low-time-warning,
+body.theme-light-brown .board-panel.low-time-warning {
+    animation: low-time-pulse-white 3s infinite ease-in-out !important;
+    border: 2px solid rgba(220, 38, 38, 0.85) !important;
+    will-change: background-color, box-shadow, border-color !important;
+}
+
 .timer-display {
     background: rgba(var(--text-primary-rgb), 0.15);
     padding: 10px 20px !important;
@@ -7485,13 +7517,58 @@ input[type=range]::-moz-range-track {
         100% { background-color: rgba(255, 50, 50, 0.2); box-shadow: inset 0 0 15px rgba(255, 50, 50, 0.2); }
     }
 
+    @keyframes mobile-low-time-pulse-white {
+        0% {
+            background-color: rgba(254, 226, 226, 0.75);
+            box-shadow: inset 0 0 18px rgba(239, 68, 68, 0.28);
+        }
+        50% {
+            background-color: rgba(252, 165, 165, 0.98);
+            box-shadow: inset 0 0 35px rgba(220, 38, 38, 0.58);
+        }
+        100% {
+            background-color: rgba(254, 226, 226, 0.75);
+            box-shadow: inset 0 0 18px rgba(239, 68, 68, 0.28);
+        }
+    }
+
     .board-panel.low-time-warning,
     .board-panel.full-bleed-mobile.low-time-warning,
     .board-panel.low-time-warning .play-header,
     .play-header.low-time-warning {
         animation: mobile-low-time-pulse 3s infinite ease-in-out !important;
         border: none !important;
-        box-shadow: none !important;
+        will-change: background-color, box-shadow !important;
+    }
+
+    [class*="theme-white"] .board-panel.low-time-warning,
+    body.theme-white .board-panel.low-time-warning,
+    [class*="theme-white"] .board-panel.full-bleed-mobile.low-time-warning,
+    body.theme-white .board-panel.full-bleed-mobile.low-time-warning,
+    [class*="theme-white"] .board-panel.low-time-warning .play-header,
+    body.theme-white .board-panel.low-time-warning .play-header,
+    [class*="theme-white"] .play-header.low-time-warning,
+    body.theme-white .play-header.low-time-warning,
+    [class*="theme-light-"] .board-panel.low-time-warning,
+    body[class*="theme-light-"] .board-panel.low-time-warning,
+    [class*="theme-light-"] .board-panel.full-bleed-mobile.low-time-warning,
+    body[class*="theme-light-"] .board-panel.full-bleed-mobile.low-time-warning,
+    [class*="theme-light-"] .board-panel.low-time-warning .play-header,
+    body[class*="theme-light-"] .board-panel.low-time-warning .play-header,
+    [class*="theme-light-"] .play-header.low-time-warning,
+    body[class*="theme-light-"] .play-header.low-time-warning,
+    body.theme-yellow .board-panel.low-time-warning,
+    body.theme-yellow .play-header.low-time-warning,
+    body.theme-pink .board-panel.low-time-warning,
+    body.theme-pink .play-header.low-time-warning,
+    body.theme-orange .board-panel.low-time-warning,
+    body.theme-orange .play-header.low-time-warning,
+    body.theme-gray .board-panel.low-time-warning,
+    body.theme-gray .play-header.low-time-warning,
+    body.theme-light-brown .board-panel.low-time-warning,
+    body.theme-light-brown .play-header.low-time-warning {
+        animation: mobile-low-time-pulse-white 3s infinite ease-in-out !important;
+        border: none !important;
         will-change: background-color, box-shadow !important;
     }
 
@@ -12040,6 +12117,20 @@ body.theme-white .integrated-review-board {
         animation: low-time-pulse 3s infinite ease-in-out !important;
         border: 1px solid rgba(255, 100, 100, 0.3) !important;
         will-change: background-color, box-shadow !important;
+    }
+
+    [class*="theme-white"] .board-panel.low-time-warning,
+    body.theme-white .board-panel.low-time-warning,
+    [class*="theme-light-"] .board-panel.low-time-warning,
+    body[class*="theme-light-"] .board-panel.low-time-warning,
+    body.theme-yellow .board-panel.low-time-warning,
+    body.theme-pink .board-panel.low-time-warning,
+    body.theme-orange .board-panel.low-time-warning,
+    body.theme-gray .board-panel.low-time-warning,
+    body.theme-light-brown .board-panel.low-time-warning {
+        animation: low-time-pulse-white 3s infinite ease-in-out !important;
+        border: 2px solid rgba(220, 38, 38, 0.85) !important;
+        will-change: background-color, box-shadow, border-color !important;
     }
 }
 
