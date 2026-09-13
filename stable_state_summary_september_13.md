@@ -1,6 +1,6 @@
 # Stable State Summary — September 13, 2026
 
-This document records the official **'Start Over'** stable point for **Morpheme** as of September 13, 2026. The codebase across Localhost, GitHub (`main`), and Production (`morpheme.games` / `132.148.72.249`) is fully synchronized.
+This document records the official **'Start Over'** stable point for **Morpheme** as of September 13, 2026. The codebase, databases, and lexicon across Localhost, GitHub (`main`), and Production (`morpheme.games` / `132.148.72.249`) are 100% synchronized and verified.
 
 ---
 
@@ -56,42 +56,49 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 ---
 
 ### C. Added Words (AW) Lexicon & Definition Pipeline
-1. **Lexicon File Separation & Synchronous Definition Resolution (`app.py`, `dictionaries/wikdefs.txt`)**:
-   - Preserved `Definitions.txt` strictly for official tournament words (CSW / NWL).
-   - Added Words (AW) definitions are stored in `dictionaries/wikdefs.txt` and the SQLite `wiktionary_definitions` table.
-   - Resolved definitions synchronously on word addition, including morphological root derivations (`plural of [singular] ([singular definition])` and verb conjugations) per dictionary invariant rules.
-2. **AW Deletion Validation (`app.py`)**:
+1. **Immediate Synchronous Disk & Dictionary Writes (`app.py`)**:
+   - Replaced deferred asynchronous thread file saving with immediate synchronous writes on both addition and removal under file locks.
+   - Synchronously updates `added_words.txt`, `added_words_duplicate.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, `Definitions.txt`, `word_stats.json`, and SQLite DB `wiktionary_definitions` before returning the response.
+2. **Elimination of Custom Word Added Placeholders & Prefix-Root Decomposition (`app.py`)**:
+   - Permanently eradicated generic strings like `"(noun) A custom word added to the dictionary."` across all dictionaries and database tables.
+   - Built a prefix-root decomposition engine for standard prefixes (`DIS-`, `DE-`, `UN-`, `RE-`, `MIS-`, `OVER-`, `OUT-`, `PRE-`, `POST-`, `NON-`, `SUB-`, `INTER-`), searching base roots against the 827,000-word definition database and synthesizing rich, authentic lexicographical definitions.
+   - Enforced `AGENTS.md` morphological suffix rules for noun plurals (`-IES`, `-ES`, `-S`), verb conjugations (`-ING`, `-ED`, `-S`), agent nouns (`-ER`, `-ERS`), and derived forms (`-NESS`, `-LY`).
+3. **Red Text Notification for Missing Sequences in Added Words (`app.py`, `static/js/mods.js`)**:
+   - Made `"The sequence '[sequence]' is not present in AW"` display with bold red text (`#f43f5e`), matching standard error and warning indicators in the Mods `#added-word-status-area`.
+4. **AW Deletion Validation (`app.py`)**:
    - Validates that words exist in AW before attempting deletion, returning clear feedback if a sequence is not present.
-3. **Chronological Persistence Across Deployments (`dictionaries/added_words.txt`, `app.py`)**:
-   - Reconstructed and committed `added_words.txt` with user additions ordered newest-first at the top, ensuring deploys retain chronological tracking permanently.
+5. **Chronological Persistence Across Deployments (`dictionaries/added_words.txt`, `app.py`)**:
+   - Preserved `added_words.txt` with user additions ordered newest-first at index 0, ensuring deployments retain chronological tracking permanently.
 
 ---
 
-### D. Navigation, Authentication & Lobby Stability
-1. **Mobile Lobby Slider Stability (`static/js/lobby.js`)**:
+### D. Navigation, Authentication & UI Stability
+1. **Tools & Mods Blank Content Panel Default on Laptops & Desktops (`static/js/app.js`, `static/js/tools.js`, `static/js/mods.js`)**:
+   - Synchronously clears and resets the right-side content panel on all desktop and laptop viewports when switching away from or returning to Tools or Mods, preventing the previous tab from briefly flashing before selection.
+2. **Mobile Lobby Slider Stability (`static/js/lobby.js`)**:
    - Fixed an issue where tapping the rating filter panel or room tabs on mobile viewports caused the viewport slider to inadvertently slide back to the main lobby panel.
-2. **Registration Username Limit Clarification (`templates/index.html`, `app.py`)**:
+3. **Registration Username Limit Clarification (`templates/index.html`, `app.py`)**:
    - Updated username input placeholder to `(max 16 characters)` to prevent truncation on mobile devices.
-3. **Resend Email Verification API Renewal (`app.py`)**:
+4. **Resend Email Verification API Renewal (`app.py`)**:
    - Migrated to `RESEND_API_KEY` loaded securely from `.env`. Replaced shell `curl` subprocess with robust Python `requests.post` call.
-4. **Registration Verification Notice Wording (`app.py`, `static/js/app.js`)**:
+5. **Registration Verification Notice Wording (`app.py`, `static/js/app.js`)**:
    - Changed email verification notice to: *"Please check your Junk mail in 1 or 2 minutes if you do not see it."*
-5. **Ghost Session & Registration Session Desync Fix (`static/js/app.js`)**:
+6. **Ghost Session & Registration Session Desync Fix (`static/js/app.js`)**:
    - Atomically updates `localStorage.morpheme_username` and clears `morpheme_logged_out` upon registration to prevent previously logged-out users from reappearing on app reopen.
-6. **Disable Top Menu Navigation on Login Page (`static/js/app.js`, `static/css/style.css`)**:
+7. **Disable Top Menu Navigation on Login Page (`static/js/app.js`, `static/css/style.css`)**:
    - Enforced `login-active` mode disabling top menu tabs with `pointer-events: none` and `opacity: 0.4` while on the Login page.
-7. **3D Tactile Flattening for Gateway LOGIN Button (`static/js/app.js`, `static/css/style.css`, `templates/index.html`)**:
+8. **3D Tactile Flattening for Gateway LOGIN Button (`static/js/app.js`, `static/css/style.css`, `templates/index.html`)**:
    - Added instant mechanical socket sinking and flattening on touch/pointer down identical to the ENTER LOBBY button.
-8. **Private Message Invitation & Unread Persistence (`static/js/tools.js`, `static/css/style.css`, `templates/index.html`)**:
+9. **Private Message Invitation & Unread Persistence (`static/js/tools.js`, `static/css/style.css`, `templates/index.html`)**:
    - Maintained PM invitation toast visibility until explicitly dismissed or read, added unread notification badge to the Profile nav button, and elevated toast z-index above all overlays.
-9. **Settings Appearance Reorganization (`templates/index.html`)**:
-   - Moved Cube Scale (3D) directly below Board Size.
-   - Relocated Synesthesia to the very bottom of the Appearance tab.
-10. **Profile Metadata Dedicated Rows (`templates/index.html`, `static/css/style.css`)**:
+10. **Settings Appearance Reorganization (`templates/index.html`)**:
+    - Moved Cube Scale (3D) directly below Board Size.
+    - Relocated Synesthesia to the very bottom of the Appearance tab.
+11. **Profile Metadata Dedicated Rows (`templates/index.html`, `static/css/style.css`)**:
     - Structured metadata into 3 clean rows: Row 1 (Real Name, Age, Gender), Row 2 (Flag/Country, Timezone), Row 3 (Registered, Last Visited, Proof).
-11. **Mobile Title Header Swipe-Up Collapse (`static/js/tools.js`, `static/js/settings.js`, `static/js/mods.js`, `static/css/play.css`)**:
+12. **Mobile Title Header Swipe-Up Collapse (`static/js/tools.js`, `static/js/settings.js`, `static/js/mods.js`, `static/css/play.css`)**:
     - Enabled swipe-up collapse and swipe-down reveal for Tools, Settings, and Mods headers on mobile devices for full-screen content focus.
-12. **Lobby Panel Ordering (`templates/index.html`, `static/css/lobby.css`)**:
+13. **Lobby Panel Ordering (`templates/index.html`, `static/css/lobby.css`)**:
     - Swapped positions so the "+ Create Room" panel sits directly above the Rating Filter panel.
 
 ---
@@ -100,13 +107,13 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 1. **Full List Modal (`openFullListModal`)**: Explicitly exits fullscreen (`document.exitFullscreen()`) immediately upon invocation.
 2. **Android Virtual Keyboard Black Screen Prevention**: Fullscreen is strictly exited when navigating to utility pages or opening modal dialogs with text inputs.
 3. **Gateway Screen**: Fullscreen requested on initial tap and preserved continuously into the Lobby without layout shifts.
-4. **Dictionary Definitions**: Adheres to noun plural and verb conjugation root pointer sourcing rules.
+4. **Dictionary Definitions**: Adheres strictly to noun plural and verb conjugation root pointer sourcing rules, as well as prefix-root authentic definitions without placeholder text.
 
 ---
 
 ## 4. Verification & Commit Identification
 
-- **Local Python Compilation**: 100% pass (`py_compile`).
+- **Local Python Compilation**: 100% pass (`python3 -m py_compile app.py`).
 - **Strict 2-Day Tournament Schedule Verification**: Passed via automated test suite.
-- **Production Server Health**: PM2 process `morpheme` online (PID 0) with zero downtime.
-- **Commit ID**: **`ec989e16723ba85eb3d149023027b4ae1e27a92b`** (`ec989e16`)
+- **Production Server Health**: PM2 process `morpheme` online (PID 0), zero errors.
+- **Commit ID**: **`d0a0cce078c187a505e6fcfe1dae8a75e3328e96`** (`d0a0cce0`)
