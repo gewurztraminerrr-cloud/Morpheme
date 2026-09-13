@@ -1069,7 +1069,7 @@ def add_added_word_api():
                 print(f"[AsyncMods] Error saving words to disk: {e}")
 
         import threading
-        threading.Thread(target=save_added_words_async, args=(valid_to_add,), daemon=True).start()
+        threading.Thread(target=save_added_words_async, args=(valid_to_add,), daemon=False).start()
         
         # Trigger dynamic definition mapping and auto-saving rules
         ensure_definitions_background(valid_to_add)
