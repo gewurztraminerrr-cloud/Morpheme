@@ -368,13 +368,12 @@ function setupToolsNavigation() {
         });
     }
 
-    // Mobile Layout snapping on navigation to Tools page (immediate reset)
+    // Layout snapping and tab reset on navigation to Tools page (immediate reset on all devices)
     const toolsPage = document.getElementById('page-tools');
     if (toolsPage) {
         const observer = new MutationObserver(() => {
             if (toolsPage.classList.contains('active')) {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile && typeof window.resetToolsTab === 'function') {
+                if (typeof window.resetToolsTab === 'function') {
                     window.resetToolsTab(true);
                 }
             }

@@ -1404,13 +1404,12 @@ function setupModsNavigation() {
         });
     }
 
-    // Mobile Layout snapping and menu reset on navigation (immediate reset)
+    // Layout snapping and menu reset on navigation (immediate reset on all devices)
     const modsPage = document.getElementById('page-mods');
     if (modsPage) {
         const observer = new MutationObserver(() => {
             if (modsPage.classList.contains('active')) {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile && typeof window.resetModsTab === 'function') {
+                if (typeof window.resetModsTab === 'function') {
                     window.resetModsTab(true);
                 }
             }

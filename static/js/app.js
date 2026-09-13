@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33135';
+const CURRENT_APP_BUILD = '33136';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -1522,14 +1522,14 @@ function setupNavigation() {
 
             // Default Page Navigation
             const pageId = 'page-' + pageTarget;
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                if (pageTarget === 'tools' && typeof window.resetToolsTab === 'function') {
-                    window.resetToolsTab();
-                } else if (pageTarget === 'settings' && typeof window.resetSettingsTab === 'function') {
-                    window.resetSettingsTab();
-                } else if (pageTarget === 'mods' && typeof window.resetModsTab === 'function') {
-                    window.resetModsTab();
+            if (pageTarget === 'tools' && typeof window.resetToolsTab === 'function') {
+                window.resetToolsTab(true);
+            } else if (pageTarget === 'mods' && typeof window.resetModsTab === 'function') {
+                window.resetModsTab(true);
+            } else if (pageTarget === 'settings' && typeof window.resetSettingsTab === 'function') {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    window.resetSettingsTab(true);
                 }
             }
             showPage(pageId);
@@ -1804,22 +1804,23 @@ function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
         if (isMatch) {
+            // Default immediately to blank content panel with side menus visible on all screen sizes
+            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
+                window.resetToolsTab(true);
+            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
+                window.resetModsTab(true);
+            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    window.resetSettingsTab(true);
+                }
+            }
             page.classList.add('active');
             page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile') ? 'flex' : 'block';
             page.style.opacity = '1';
             page.style.visibility = 'visible';
             page.scrollTop = 0;
             window.scrollTo(0, 0);
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
-                    window.resetToolsTab(true);
-                } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
-                    window.resetSettingsTab(true);
-                } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
-                    window.resetModsTab(true);
-                }
-            }
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
                 layout.scrollLeft = 0;
@@ -1827,6 +1828,12 @@ function showPage(pageId) {
         } else {
             page.classList.remove('active');
             page.style.display = 'none';
+            // When leaving Tools or Mods, immediately reset tab state so previous tab never flashes upon return
+            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
+                window.resetToolsTab(true);
+            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
+                window.resetModsTab(true);
+            }
         }
     });
     if (pageId !== 'page-loading') {
@@ -1945,7 +1952,7 @@ function showPage(pageId) {
 
     if (pageId === 'page-mods') {
         if (typeof window.resetModsTab === 'function') {
-            window.resetModsTab();
+            window.resetModsTab(true);
         }
         if (typeof window.loadAddedWordsConfig === 'function') {
             window.loadAddedWordsConfig();
