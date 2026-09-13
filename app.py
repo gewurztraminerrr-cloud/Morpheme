@@ -940,6 +940,21 @@ def check_word_disallowed_with_reason(word, visited=None, depth=0, allow_online=
         _AW_DISALLOWED_CHECK_CACHE[w_upper] = None
     return None
 
+def _is_in_added_words(w):
+    w_u = w.strip().upper() if isinstance(w, str) else ''
+    if not w_u:
+        return False
+    if word_validator and word_validator.is_added_word(w_u):
+        return True
+    if hasattr(word_validator, 'added_words') and w_u in word_validator.added_words:
+        return True
+    if hasattr(word_validator, 'added_words_list') and w_u in word_validator.added_words_list:
+        return True
+    global ADDED_WORDS_LIST_CACHE
+    if ADDED_WORDS_LIST_CACHE is not None and w_u in ADDED_WORDS_LIST_CACHE:
+        return True
+    return False
+
 @app.route('/api/mods/added_words/add', methods=['POST'])
 @mod_required
 def add_added_word_api():
@@ -952,21 +967,6 @@ def add_added_word_api():
         
     if not words:
         return jsonify({'error': 'Word required'}), 400
-
-    def _is_in_added_words(w):
-        w_u = w.strip().upper()
-        if not w_u:
-            return False
-        if word_validator.is_added_word(w_u):
-            return True
-        if hasattr(word_validator, 'added_words') and w_u in word_validator.added_words:
-            return True
-        if hasattr(word_validator, 'added_words_list') and w_u in word_validator.added_words_list:
-            return True
-        global ADDED_WORDS_LIST_CACHE
-        if ADDED_WORDS_LIST_CACHE is not None and w_u in ADDED_WORDS_LIST_CACHE:
-            return True
-        return False
 
     # 1. Check for words already in official dictionaries (CSW/NWL/16plus)
     official_words = [w for w in words if word_validator.is_valid_word_authoritative(w)]
@@ -1114,10 +1114,19 @@ def remove_added_word():
         
     if not words:
         return jsonify({'error': 'Word is required'}), 400
+
+    present_in_aw = [w for w in words if _is_in_added_words(w)]
+    missing_from_aw = [w for w in words if not _is_in_added_words(w)]
+
+    if missing_from_aw and not present_in_aw:
+        if len(words) == 1:
+            return jsonify({'error': f"The sequence '{words[0]}' is not present in AW."}), 400
+        else:
+            return jsonify({'error': f"The sequences are not present in AW: {', '.join(missing_from_aw)}."}), 400
         
     try:
-        # Update in-memory sets instantly for all words
-        for w in words:
+        # Update in-memory sets instantly for words present in AW
+        for w in present_in_aw:
             word_validator.remove_word_in_memory(w)
         
         # Clear local/endpoint caches instantly
@@ -1163,10 +1172,15 @@ def remove_added_word():
                 print(f"[AsyncMods] Error removing words from disk: {e}")
 
         import threading
-        threading.Thread(target=remove_added_words_async, args=(words,), daemon=True).start()
+        threading.Thread(target=remove_added_words_async, args=(present_in_aw,), daemon=True).start()
 
-        msg = f'Word "{words[0]}" removed.' if len(words) == 1 else f'{len(words)} words removed successfully.'
-        return jsonify({'success': True, 'message': msg, 'removed_words': words})
+        msg = f'Word "{present_in_aw[0]}" removed.' if len(present_in_aw) == 1 else f'{len(present_in_aw)} words removed successfully.'
+        if missing_from_aw:
+            if len(missing_from_aw) == 1:
+                msg += f" (Note: The sequence '{missing_from_aw[0]}' is not present in AW.)"
+            else:
+                msg += f" (Note: The sequences {', '.join(missing_from_aw)} are not present in AW.)"
+        return jsonify({'success': True, 'message': msg, 'removed_words': present_in_aw, 'not_found': missing_from_aw})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
