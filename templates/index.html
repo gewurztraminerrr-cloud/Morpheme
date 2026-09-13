@@ -155,9 +155,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789308000" as="style">
+    <link rel="preload" href="/css/style.css?v=1789310000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1789223000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789308000">
+    <link rel="stylesheet" href="/css/style.css?v=1789310000">
     <link rel="stylesheet" href="/css/lobby.css?v=1789223000">
     <link rel="stylesheet" href="/css/play.css?v=1789211500">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
@@ -1640,13 +1640,19 @@
                 align-items: center !important;
             }
 
-            /* Disable top menu buttons while Loading... spinner is active */
+            /* Disable top menu buttons while Loading... spinner is active or on Login page */
             body.loading-active .header,
             body.loading-active .nav,
-            body.loading-active .nav-btn {
+            body.loading-active .nav-btn,
+            body.login-active .nav-btn,
+            body.login-active #logout-btn {
                 pointer-events: none !important;
                 user-select: none !important;
                 cursor: not-allowed !important;
+            }
+
+            body.login-active .nav-btn:not(.active) {
+                opacity: 0.4 !important;
             }
         </style>
 
@@ -1879,6 +1885,9 @@
                         var lg = document.getElementById('page-login');
                         if (pl) { pl.classList.remove('active'); pl.style.display = 'none'; }
                         if (lg) { lg.classList.add('active'); lg.style.display = 'flex'; }
+                        document.body.classList.add('login-active');
+                        var lb = document.getElementById('nav-login-btn');
+                        if (lb) lb.classList.add('active');
                     }
                     if (typeof window.refreshCaptchas === 'function') {
                         window.refreshCaptchas();
@@ -7584,7 +7593,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789211500"></script>
     <script src="/js/forum.js?v=33783"></script>
-    <script src="/js/app.js?v=1789309000"></script>
+    <script src="/js/app.js?v=1789310000"></script>
     <script src="/js/lobby.js?v=1789219000"></script>
     <script src="/js/play.js?v=1789210100"></script>
     <script src="/js/tournaments.js?v=1789210600"></script>

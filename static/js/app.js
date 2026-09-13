@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33130';
+const CURRENT_APP_BUILD = '33131';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -1443,6 +1443,12 @@ function setupNavigation() {
     
     navButtons.forEach(btn => {
         btn.addEventListener('click', async (e) => {
+            if (window.currentPageId === 'page-login' || document.body.classList.contains('login-active')) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
+
             const pageTarget = btn.dataset.page;
             console.log(`[setupNavigation] Clicked Target: ${pageTarget}`);
             
@@ -1823,6 +1829,7 @@ function showPage(pageId) {
     document.body.classList.toggle('tools-active', pageId === 'page-tools');
     document.body.classList.toggle('settings-active', pageId === 'page-settings');
     document.body.classList.toggle('mods-active', pageId === 'page-mods');
+    document.body.classList.toggle('login-active', pageId === 'page-login');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {
         const hideHeaderOnMobile = () => {
@@ -2037,6 +2044,9 @@ function showPage(pageId) {
 }
 
 function navigateToPage(pageName) {
+    if (window.currentPageId === 'page-login' || document.body.classList.contains('login-active')) {
+        return;
+    }
     const btn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
     showPage('page-' + pageName);
     if (btn) updateActiveNav(btn);

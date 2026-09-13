@@ -5026,6 +5026,18 @@ body .nav-btn.active {
     pointer-events: none;
 }
 
+/* Disable top menu tabs/buttons while on Login page */
+body.login-active .nav-btn,
+body.login-active #logout-btn {
+    pointer-events: none !important;
+    user-select: none !important;
+    cursor: not-allowed !important;
+}
+
+body.login-active .nav-btn:not(.active) {
+    opacity: 0.4 !important;
+}
+
 .separator {
     height: 2px;
     background: linear-gradient(90deg,
