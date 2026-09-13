@@ -2231,13 +2231,15 @@ async function handleSignUp() {
             if (data.auth_token) {
                 localStorage.setItem('morpheme_auth_token', data.auth_token);
             }
-            currentUser = data.username;
-            window.currentUser = currentUser;
-            currentUserEmail = email; // From the signup form
-            window.currentUserEmail = currentUserEmail;
+            // Clear any stale logged-out flag and persist the new username so that
+            // on re-open the correct account is recognized (not the previously logged-out one)
+            sessionStorage.removeItem('morpheme_logged_out');
+            localStorage.removeItem('morpheme_logged_out');
+            setCurrentUser(data.username, email, false, data.is_mod || false, data.rating);
             window.currentUserIsGuest = false;
             window.lastPlayerRating = data.rating;
             navigateToLobby(data.rating);
+
         } else {
             if (data.banned || data.is_banned) {
                 const rText = data.ban_reason || data.reason || 'Violation of community rules';
