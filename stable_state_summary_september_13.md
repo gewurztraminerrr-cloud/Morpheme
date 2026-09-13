@@ -100,6 +100,8 @@ This document records the official **'Start Over'** stable point for **Morpheme*
     - Enabled swipe-up collapse and swipe-down reveal for Tools, Settings, and Mods headers on mobile devices for full-screen content focus.
 13. **Lobby Panel Ordering (`templates/index.html`, `static/css/lobby.css`)**:
     - Swapped positions so the "+ Create Room" panel sits directly above the Rating Filter panel.
+14. **Elimination of Thin Grey Scrollbars on Mobile Devices Across All Pages (`play.css`, `style.css`, `donate.css`, `howtoplay.css`)**:
+    - Removed native browser scrollbars (`scrollbar-width: none !important; -ms-overflow-style: none !important; ::-webkit-scrollbar { display: none !important; }`) and fixed scroll tracks across all pages (Donate, Profile, Leaderboards, Tournaments, Tools, Settings, Mods, Forums, How to Play, etc.) on mobile devices while keeping touch and swipe scrolling 100% fluid.
 
 ---
 
@@ -116,4 +118,4 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - **Local Python Compilation**: 100% pass (`python3 -m py_compile app.py`).
 - **Strict 2-Day Tournament Schedule Verification**: Passed via automated test suite.
 - **Production Server Health**: PM2 process `morpheme` online (PID 0), zero errors.
-- **Commit ID**: **`d0a0cce078c187a505e6fcfe1dae8a75e3328e96`** (`d0a0cce0`)
+- **Commit ID**: **`4060fa9477028b1755106e22649b5c23e85a5393`** (`4060fa94`)
