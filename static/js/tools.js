@@ -6547,79 +6547,112 @@ async function checkForUnreadPMs() {
         const latestTimestamp = data.latest_timestamp;
         const pmState = getPMState();
 
-        if (count > 0 && senders.length > 0 && latestTimestamp) {
-            const latestSender = senders[senders.length - 1];
-
-            // A message is "new" if its timestamp is strictly greater than what we last notified about.
-            const lastSeen = pmState.lastTimestamp || "";
-            const isNewer = String(latestTimestamp) > String(lastSeen);
-
-            if (isNewer) {
-                const chatModal = document.getElementById('private-chat-modal');
-                const isChatHidden = !chatModal || chatModal.classList.contains('hidden');
-
-                // We are "already chatting" ONLY if the chat is actually open in THIS tab
-                // OR if another tab is actively heart-beating? (For now, let's stick to local visibility + activeChat)
-                const isAlreadyChatting = (currentChatTarget === latestSender && !isChatHidden);
-
-                if (isAlreadyChatting) {
-                    pmState.lastTimestamp = latestTimestamp;
-                } else {
-                    const delay = Math.random() * 500;
-                    setTimeout(() => {
-                        const finalCheck = getPMState();
-                        // Double check against shared lastTimestamp to prevent multi-tab noise
-                        if (String(latestTimestamp) > String(finalCheck.lastTimestamp || "")) {
-                            showPMNotification(latestSender, count);
-                            finalCheck.lastTimestamp = latestTimestamp;
-                            finalCheck.lastUnreadCount = count;
-                            setPMState(finalCheck);
-                        }
-                    }, delay);
-                    return;
-                }
+        // Update nav badge if present
+        const pmBadge = document.getElementById('pm-nav-badge');
+        if (pmBadge) {
+            if (count > 0) {
+                pmBadge.textContent = count;
+                pmBadge.classList.remove('hidden');
+            } else {
+                pmBadge.textContent = '';
+                pmBadge.classList.add('hidden');
             }
         }
 
-        // Always sync the unread count
-        pmState.lastUnreadCount = count;
-        setPMState(pmState);
+        if (count === 0) {
+            // Remove lingering toast once all messages are read
+            document.getElementById('pm-toast')?.remove();
+            pmState.lastUnreadCount = 0;
+            setPMState(pmState);
+            return;
+        }
+
+        if (count > 0 && senders.length > 0 && latestTimestamp) {
+            const latestSender = senders[senders.length - 1];
+            const chatModal = document.getElementById('private-chat-modal');
+            const isChatHidden = !chatModal || chatModal.classList.contains('hidden');
+
+            const isAlreadyChatting = (currentChatTarget === latestSender && !isChatHidden);
+
+            if (isAlreadyChatting) {
+                document.getElementById('pm-toast')?.remove();
+                pmState.lastTimestamp = latestTimestamp;
+                pmState.lastUnreadCount = count;
+                setPMState(pmState);
+                return;
+            }
+
+            // Check if user explicitly clicked Dismiss on this exact message timestamp
+            const dismissedTs = sessionStorage.getItem('morpheme_pm_dismissed_ts');
+            const isDismissed = (dismissedTs && String(dismissedTs) === String(latestTimestamp));
+
+            if (!isDismissed) {
+                // Keep the invitation toast visible and updated so user can open & respond at any time
+                showPMNotification(latestSender, count, latestTimestamp);
+            }
+
+            pmState.lastTimestamp = latestTimestamp;
+            pmState.lastUnreadCount = count;
+            setPMState(pmState);
+        }
     } catch (err) {
         // Silent
     }
 }
 
-function showPMNotification(sender, count) {
+function showPMNotification(sender, count, timestamp) {
     const existing = document.getElementById('pm-toast');
+    const titleText = count > 1 ? `New Private Messages (${count})` : 'New Private Message';
+    const descText = count > 1 ? `<strong>${sender}</strong> and others sent messages` : `<strong>${sender}</strong> sent you a message`;
+
     if (existing) {
-        // Update existing toast content instead of ignoring
+        // Update existing toast content so it stays fresh and accurate
         const title = existing.querySelector('.pm-toast-title');
         const text = existing.querySelector('.pm-toast-text');
-        if (title) title.innerText = `New Messages (${count})`;
-        if (text) text.innerHTML = `<strong>${sender}</strong> and others sent messages`;
+        const respondBtn = existing.querySelector('.pm-toast-btn.respond');
+        const dismissBtn = existing.querySelector('.pm-toast-btn.close');
+
+        if (title) title.innerText = titleText;
+        if (text) text.innerHTML = descText;
+        if (respondBtn) {
+            respondBtn.onclick = () => handleToastRespond(sender);
+        }
+        if (dismissBtn && timestamp) {
+            dismissBtn.onclick = () => handleToastDismiss(timestamp);
+        }
         return;
     }
 
     const toast = document.createElement('div');
     toast.id = 'pm-toast';
     toast.className = 'pm-toast-notification';
+    const tsArg = timestamp ? `'${timestamp}'` : 'null';
+
     toast.innerHTML = `
         <div class="pm-toast-content">
             <div class="pm-toast-icon">✉️</div>
             <div class="pm-toast-details">
-                <div class="pm-toast-title">New Private Message</div>
-                <div class="pm-toast-text"><strong>${sender}</strong> sent you a message</div>
+                <div class="pm-toast-title">${titleText}</div>
+                <div class="pm-toast-text">${descText}</div>
             </div>
             <div class="pm-toast-actions">
                 <button class="pm-toast-btn respond" onclick="handleToastRespond('${sender}')">Respond</button>
-                <button class="pm-toast-btn close" onclick="this.closest('.pm-toast-notification').remove()">Dismiss</button>
+                <button class="pm-toast-btn close" onclick="handleToastDismiss(${tsArg})">Dismiss</button>
             </div>
         </div>
     `;
     document.body.appendChild(toast);
 }
 
+window.handleToastDismiss = (timestamp) => {
+    if (timestamp) {
+        sessionStorage.setItem('morpheme_pm_dismissed_ts', String(timestamp));
+    }
+    document.getElementById('pm-toast')?.remove();
+};
+
 window.handleToastRespond = (sender) => {
+    sessionStorage.removeItem('morpheme_pm_dismissed_ts');
     document.getElementById('pm-toast')?.remove();
     openPrivateChat(sender);
 };
