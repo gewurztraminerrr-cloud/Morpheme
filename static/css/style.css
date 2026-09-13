@@ -8993,10 +8993,12 @@ body.theme-light-brown .tool-def-isvalid-link {
 }
 
 /* ============================================================
-   Hide native scrollbars on all touch/mobile devices
-   pointer:coarse = touchscreens (phones, tablets)
+   Hide native scrollbars on all touch/mobile devices.
+   Two conditions to catch all mobile browsers:
+   - pointer:coarse = touchscreens (phones, tablets)
+   - max-width:900px = established mobile breakpoint for this app
    ============================================================ */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 900px) {
     * {
         scrollbar-width: none !important;
     }
