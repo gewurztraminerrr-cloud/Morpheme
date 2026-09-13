@@ -3299,7 +3299,16 @@ function renderPlayers(players, currentUser = null, state = null) {
     const findFriendsBtn = document.getElementById('find-friends-btn');
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
-    if (state && state.game_type === 'accumulative') {
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const playerActionsRow = document.querySelector('.player-actions-row');
+
+    if (isTournament) {
+        if (headingEl) headingEl.textContent = `Players`;
+        if (playerActionsRow) playerActionsRow.style.display = 'none';
+        if (findMeBtn) findMeBtn.style.display = 'none';
+        if (findFriendsBtn) findFriendsBtn.style.display = 'none';
+        if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
+    } else if (state && state.game_type === 'accumulative') {
         let activePlayerCount = 0;
         if (state.state === 'intermission' || state.intermission === true) {
             // Intermission: Count only players who actively participated (did not DNP)
@@ -3311,6 +3320,7 @@ function renderPlayers(players, currentUser = null, state = null) {
             activePlayerCount = players ? players.length : 0;
         }
         if (headingEl) headingEl.textContent = `Players [${activePlayerCount}]`;
+        if (playerActionsRow) playerActionsRow.style.display = '';
         if (findMeBtn) findMeBtn.style.display = 'block';
         if (findFriendsBtn) findFriendsBtn.style.display = 'block';
         if (showEveryoneBtn) showEveryoneBtn.style.display = 'block';
@@ -3321,6 +3331,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
     } else {
         if (headingEl) headingEl.textContent = `Players`;
+        if (playerActionsRow) playerActionsRow.style.display = 'none';
         if (findMeBtn) findMeBtn.style.display = 'none';
         if (findFriendsBtn) findFriendsBtn.style.display = 'none';
         if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
@@ -9113,6 +9124,19 @@ async function initTournamentPlay() {
     // Stop any standard polling
     stopPolling();
 
+    // Tournament mode: mark body and hide player filters & color chart
+    document.body.classList.add('is-tournament-round');
+    const colorBar = document.getElementById('game-color-bar');
+    if (colorBar) colorBar.style.display = 'none';
+    const playerActionsRow = document.querySelector('.player-actions-row');
+    if (playerActionsRow) playerActionsRow.style.display = 'none';
+    const findMeBtn = document.getElementById('find-me-btn');
+    if (findMeBtn) findMeBtn.style.display = 'none';
+    const findFriendsBtn = document.getElementById('find-friends-btn');
+    if (findFriendsBtn) findFriendsBtn.style.display = 'none';
+    const showEveryoneBtn = document.getElementById('show-everyone-btn');
+    if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
+
     // Clear UI
     resetChat();
     
@@ -9543,6 +9567,9 @@ function exitTournamentPlay(targetPage = 'tournaments') {
     localStorage.removeItem('tournament_play_active');
     isTournamentPlay = false;
     window.isTournamentPlay = false;
+    document.body.classList.remove('is-tournament-round');
+    const playerActionsRow = document.querySelector('.player-actions-row');
+    if (playerActionsRow) playerActionsRow.style.display = '';
     isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
     isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();

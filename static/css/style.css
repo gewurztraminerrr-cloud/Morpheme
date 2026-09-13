@@ -9121,3 +9121,12 @@ body.theme-light-brown .tool-def-isvalid-link {
         height: 0 !important;
     }
 }
+
+/* Hide player filter buttons and color chart during Tournament rounds */
+body.is-tournament-round #game-color-bar,
+body.is-tournament-round .player-actions-row,
+body.is-tournament-round #find-me-btn,
+body.is-tournament-round #find-friends-btn,
+body.is-tournament-round #show-everyone-btn {
+    display: none !important;
+}

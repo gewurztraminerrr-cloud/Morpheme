@@ -1864,10 +1864,11 @@ function showPage(pageId) {
         handleLobbyMusicState();
     }
 
-    // Standardize: Rating color bar ONLY appears on the Play page
+    // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds)
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
     const colorBar = document.getElementById('game-color-bar');
     if (colorBar) {
-        if (pageId === 'page-play') {
+        if (pageId === 'page-play' && !isTournament) {
             colorBar.style.display = 'flex';
             setTimeout(() => {
                 if (typeof adjustPlayHeaderForDevice === 'function') {
@@ -3041,8 +3042,13 @@ window.showConfirmModal = function (title, message, onConfirm) {
 };
 
 function renderGameColorBar() {
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
+    if (isTournament) {
+        bar.style.display = 'none';
+        return;
+    }
     
     // Optimization: Build entire HTML string first to avoid DOM thrashing
     let html = '';
