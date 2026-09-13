@@ -578,129 +578,133 @@ document.addEventListener('DOMContentLoaded', async () => {
                     executeGatewayTransition(evt);
                 };
 
-                const housingEl = document.getElementById('gateway-housing') || gatewayBtn.parentElement;
-                let isPointerDown = false;
-
-                function getCoords(e) {
-                    if (!e) return null;
-                    if (e.touches && e.touches.length > 0) {
-                        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                    }
-                    if (e.changedTouches && e.changedTouches.length > 0) {
-                        return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-                    }
-                    if (typeof e.clientX === 'number' && !isNaN(e.clientX)) {
-                        return { x: e.clientX, y: e.clientY };
-                    }
-                    return null;
-                }
-
-                function isInsideGateway(e) {
-                    const coords = getCoords(e);
-                    if (!coords) return false;
-                    const rect = gatewayBtn.getBoundingClientRect();
-                    return (
-                        coords.x >= rect.left &&
-                        coords.x <= rect.right &&
-                        coords.y >= rect.top &&
-                        coords.y <= rect.bottom
-                    );
-                }
-
-                const addWindowTracking = () => {
-                    window.addEventListener('pointermove', handlePressMove, { passive: true });
-                    window.addEventListener('touchmove', handlePressMove, { passive: true });
-                    window.addEventListener('mousemove', handlePressMove, { passive: true });
-                    window.addEventListener('pointerup', handlePressEnd);
-                    window.addEventListener('touchend', handlePressEnd);
-                    window.addEventListener('mouseup', handlePressEnd);
-                    window.addEventListener('pointercancel', handlePressCancel);
-                    window.addEventListener('touchcancel', handlePressCancel);
-                };
-
-                const removeWindowTracking = () => {
-                    window.removeEventListener('pointermove', handlePressMove);
-                    window.removeEventListener('touchmove', handlePressMove);
-                    window.removeEventListener('mousemove', handlePressMove);
-                    window.removeEventListener('pointerup', handlePressEnd);
-                    window.removeEventListener('touchend', handlePressEnd);
-                    window.removeEventListener('mouseup', handlePressEnd);
-                    window.removeEventListener('pointercancel', handlePressCancel);
-                    window.removeEventListener('touchcancel', handlePressCancel);
-                };
-
-                const handlePressStart = (e) => {
-                    if (gatewayTransitioning) return;
-                    if (e && e.target && e.target !== gatewayBtn && !gatewayBtn.contains(e.target)) return;
-                    isPointerDown = true;
-                    gatewayBtn.classList.remove('dragged-out');
-                    gatewayBtn.classList.add('pressed', 'flattened');
-                    addWindowTracking();
-
-                    // Immediately trigger mobile fullscreen synchronously on touch start of the button
-                    if (typeof window.triggerMobileFullscreen === 'function') {
-                        window.triggerMobileFullscreen();
+                const loginGwBtn = document.getElementById('btn-login-gateway');
+                const executeLoginGatewayTransition = (e) => {
+                    if (gatewayTransitioning || window._gatewayTransitioning) return;
+                    window._gatewayTransitioning = true;
+                    if (loginGwBtn) {
+                        loginGwBtn.classList.remove('dragged-out');
+                        loginGwBtn.classList.add('pressed', 'flattened');
                     }
 
-                    // Immediately trigger audio playback synchronously on user gesture press down
-                    if (window.lobbyMusicEngine) {
-                        window.lobbyMusicEngine.play();
-                    } else if (typeof window.triggerGatewayAudioImmediate === 'function') {
-                        window.triggerGatewayAudioImmediate();
-                    }
-                };
-
-                const handlePressMove = (e) => {
-                    if (!isPointerDown || gatewayTransitioning) return;
-                    if (isInsideGateway(e)) {
-                        gatewayBtn.classList.remove('dragged-out');
-                        gatewayBtn.classList.add('pressed', 'flattened');
-                    } else {
-                        // User dragged across and out of the button: bring back to 3D standing position
-                        gatewayBtn.classList.add('dragged-out');
-                        gatewayBtn.classList.remove('pressed', 'flattened');
-                    }
-                };
-
-                const handlePressEnd = (e) => {
-                    removeWindowTracking();
-                    if (!isPointerDown || gatewayTransitioning) return;
-                    isPointerDown = false;
-
-                    if (isInsideGateway(e)) {
-                        // Released inside button: keep flattened and trigger transition
-                        gatewayBtn.classList.remove('dragged-out');
-                        gatewayBtn.classList.add('pressed', 'flattened');
-                        executeGatewayTransition(e);
-                    } else {
-                        // Released OUTSIDE: bring back to 3D standing position and do not enter Lobby
-                        gatewayBtn.classList.add('dragged-out');
-                        gatewayBtn.classList.remove('pressed', 'flattened');
-                        setTimeout(() => {
-                            gatewayBtn.classList.remove('dragged-out');
-                        }, 100);
-                    }
-                };
-
-                const handlePressCancel = () => {
-                    removeWindowTracking();
-                    if (!isPointerDown || gatewayTransitioning) return;
-                    isPointerDown = false;
-                    gatewayBtn.classList.add('dragged-out');
-                    gatewayBtn.classList.remove('pressed', 'flattened');
                     setTimeout(() => {
-                        gatewayBtn.classList.remove('dragged-out');
-                    }, 100);
+                        showPage('page-login');
+                        if (typeof window.refreshCaptchas === 'function') {
+                            window.refreshCaptchas();
+                        }
+                        window._gatewayTransitioning = false;
+                        if (loginGwBtn) {
+                            loginGwBtn.classList.remove('pressed', 'flattened', 'dragged-out');
+                        }
+                    }, 120);
                 };
 
+                window.handleLoginGatewayClick = (btn, evt) => {
+                    if (evt && evt.target && evt.target !== loginGwBtn && loginGwBtn && !loginGwBtn.contains(evt.target)) return;
+                    executeLoginGatewayTransition(evt);
+                };
 
-                // Strictly attach interaction listeners ONLY to the button itself
-                gatewayBtn.addEventListener('pointerdown', handlePressStart);
-                gatewayBtn.addEventListener('mousedown', handlePressStart);
-                gatewayBtn.addEventListener('touchstart', handlePressStart, { passive: true });
-                gatewayBtn.addEventListener('click', (e) => {
-                    executeGatewayTransition(e);
-                });
+                function attach3DGatewayButtonInteractions(btn, onExecute) {
+                    if (!btn) return;
+                    let isPointerDown = false;
+
+                    function getCoords(e) {
+                        if (!e) return null;
+                        if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                        if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+                        if (typeof e.clientX === 'number' && !isNaN(e.clientX)) return { x: e.clientX, y: e.clientY };
+                        return null;
+                    }
+
+                    function isInside(e) {
+                        const coords = getCoords(e);
+                        if (!coords) return false;
+                        const rect = btn.getBoundingClientRect();
+                        return coords.x >= rect.left && coords.x <= rect.right && coords.y >= rect.top && coords.y <= rect.bottom;
+                    }
+
+                    const addWindowTracking = () => {
+                        window.addEventListener('pointermove', handlePressMove, { passive: true });
+                        window.addEventListener('touchmove', handlePressMove, { passive: true });
+                        window.addEventListener('mousemove', handlePressMove, { passive: true });
+                        window.addEventListener('pointerup', handlePressEnd);
+                        window.addEventListener('touchend', handlePressEnd);
+                        window.addEventListener('mouseup', handlePressEnd);
+                        window.addEventListener('pointercancel', handlePressCancel);
+                        window.addEventListener('touchcancel', handlePressCancel);
+                    };
+
+                    const removeWindowTracking = () => {
+                        window.removeEventListener('pointermove', handlePressMove);
+                        window.removeEventListener('touchmove', handlePressMove);
+                        window.removeEventListener('mousemove', handlePressMove);
+                        window.removeEventListener('pointerup', handlePressEnd);
+                        window.removeEventListener('touchend', handlePressEnd);
+                        window.removeEventListener('mouseup', handlePressEnd);
+                        window.removeEventListener('pointercancel', handlePressCancel);
+                        window.removeEventListener('touchcancel', handlePressCancel);
+                    };
+
+                    const handlePressStart = (e) => {
+                        if (gatewayTransitioning || window._gatewayTransitioning) return;
+                        if (e && e.target && e.target !== btn && !btn.contains(e.target)) return;
+                        isPointerDown = true;
+                        btn.classList.remove('dragged-out');
+                        btn.classList.add('pressed', 'flattened');
+                        addWindowTracking();
+
+                        if (btn.id === 'btn-enter-lobby-gateway') {
+                            if (typeof window.triggerMobileFullscreen === 'function') window.triggerMobileFullscreen();
+                            if (window.lobbyMusicEngine) window.lobbyMusicEngine.play();
+                            else if (typeof window.triggerGatewayAudioImmediate === 'function') window.triggerGatewayAudioImmediate();
+                        }
+                    };
+
+                    const handlePressMove = (e) => {
+                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+                        if (isInside(e)) {
+                            btn.classList.remove('dragged-out');
+                            btn.classList.add('pressed', 'flattened');
+                        } else {
+                            btn.classList.add('dragged-out');
+                            btn.classList.remove('pressed', 'flattened');
+                        }
+                    };
+
+                    const handlePressEnd = (e) => {
+                        removeWindowTracking();
+                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+                        isPointerDown = false;
+                        if (isInside(e)) {
+                            btn.classList.remove('dragged-out');
+                            btn.classList.add('pressed', 'flattened');
+                            onExecute(e);
+                        } else {
+                            btn.classList.add('dragged-out');
+                            btn.classList.remove('pressed', 'flattened');
+                            setTimeout(() => btn.classList.remove('dragged-out'), 100);
+                        }
+                    };
+
+                    const handlePressCancel = () => {
+                        removeWindowTracking();
+                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+                        isPointerDown = false;
+                        btn.classList.add('dragged-out');
+                        btn.classList.remove('pressed', 'flattened');
+                        setTimeout(() => btn.classList.remove('dragged-out'), 100);
+                    };
+
+                    btn.addEventListener('pointerdown', handlePressStart);
+                    btn.addEventListener('mousedown', handlePressStart);
+                    btn.addEventListener('touchstart', handlePressStart, { passive: true });
+                    btn.addEventListener('click', (e) => onExecute(e));
+                }
+
+                attach3DGatewayButtonInteractions(gatewayBtn, executeGatewayTransition);
+                if (loginGwBtn) {
+                    attach3DGatewayButtonInteractions(loginGwBtn, executeLoginGatewayTransition);
+                }
             } else {
                 // Fallback if elements not in DOM
                 showPage('page-lobby');

@@ -122,6 +122,7 @@
             text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(255, 255, 255, 0.4), 0 0 14px rgba(255, 255, 255, 0.7);
             transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease;
         }
+        .neon-gateway-btn:active:not(.dragged-out),
         .neon-gateway-btn.pressed,
         .neon-gateway-btn.flattened {
             transform: translateY(0px) scale(0.985) !important;
@@ -1654,7 +1655,7 @@
             <div id="loading-gateway-container" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
-                    <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onclick="if(typeof window.showPage==='function'){window.showPage('page-login');}else{var pl=document.getElementById('page-loading');var lg=document.getElementById('page-login');if(pl){pl.classList.remove('active');pl.style.display='none';}if(lg){lg.classList.add('active');lg.style.display='flex';}}if(typeof window.refreshCaptchas==='function'){window.refreshCaptchas();}">LOGIN</button>
+                    <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" ontouchstart="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onmousedown="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onclick="if(window.handleLoginGatewayClick) window.handleLoginGatewayClick(this, event);">LOGIN</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -1854,6 +1855,39 @@
                 setTimeout(function() {
                     window._lobbyEnterCooldown = false;
                 }, 350);
+            };
+
+            window.handleLoginGatewayClick = function(btn, evt) {
+                if (window._gatewayTransitioning) return;
+                var gb = btn || document.getElementById('btn-login-gateway');
+                if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
+
+                if (gb) {
+                    gb.classList.remove('dragged-out');
+                    gb.classList.add('pressed', 'flattened');
+                }
+                window._gatewayTransitioning = true;
+
+                // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
+                setTimeout(function() {
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('page-login');
+                    } else if (typeof showPage === 'function') {
+                        showPage('page-login');
+                    } else {
+                        var pl = document.getElementById('page-loading');
+                        var lg = document.getElementById('page-login');
+                        if (pl) { pl.classList.remove('active'); pl.style.display = 'none'; }
+                        if (lg) { lg.classList.add('active'); lg.style.display = 'flex'; }
+                    }
+                    if (typeof window.refreshCaptchas === 'function') {
+                        window.refreshCaptchas();
+                    }
+                    window._gatewayTransitioning = false;
+                    if (gb) {
+                        gb.classList.remove('pressed', 'flattened', 'dragged-out');
+                    }
+                }, 120);
             };
         </script>
 
@@ -7550,7 +7584,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789211500"></script>
     <script src="/js/forum.js?v=33783"></script>
-    <script src="/js/app.js?v=1789219000"></script>
+    <script src="/js/app.js?v=1789309000"></script>
     <script src="/js/lobby.js?v=1789219000"></script>
     <script src="/js/play.js?v=1789210100"></script>
     <script src="/js/tournaments.js?v=1789210600"></script>
