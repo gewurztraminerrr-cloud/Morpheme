@@ -7283,7 +7283,9 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
-    #page-tools .page-title-header {
+    #page-tools .page-title-header,
+    #page-settings .page-title-header,
+    #page-mods .page-title-header {
         transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
                     opacity 0.2s ease,
                     margin 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -7292,7 +7294,9 @@ input[type=range]::-moz-range-track {
         overflow: hidden;
     }
 
-    #page-tools .page-title-header.title-hidden {
+    #page-tools .page-title-header.title-hidden,
+    #page-settings .page-title-header.title-hidden,
+    #page-mods .page-title-header.title-hidden {
         max-height: 0 !important;
         opacity: 0 !important;
         margin-top: 0 !important;

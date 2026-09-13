@@ -890,6 +890,8 @@ function debounce(func, wait) {
         }
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
+        const titleHeader = document.querySelector('#page-settings .page-title-header');
+        if (titleHeader) titleHeader.classList.remove('title-hidden');
         if (!sidebar || !content) return;
 
         // Update active class on buttons
@@ -928,6 +930,8 @@ function debounce(func, wait) {
         const layoutEl = document.querySelector('#page-settings .tools-split-layout');
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
+        const titleHeader = document.querySelector('#page-settings .page-title-header');
+        if (titleHeader) titleHeader.classList.remove('title-hidden');
 
         if (immediate) {
             if (layoutEl) layoutEl.scrollLeft = 0;
@@ -1020,6 +1024,100 @@ function debounce(func, wait) {
                         if (layoutEl) layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
                     }
                 }
+            }, { passive: true });
+        }
+
+        // Mobile swipe up on "Settings" title to make it disappear
+        const titleHeader = document.querySelector('#page-settings .page-title-header');
+        if (titleHeader) {
+            let titleTouchStartY = 0;
+            let titleTouchStartX = 0;
+            let isTitleTracking = false;
+
+            titleHeader.addEventListener('touchstart', (e) => {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (!isMobile) return;
+
+                // Only enable swipe-up to disappear when a tab is selected
+                const activeBtn = document.querySelector('#page-settings .tools-sidebar .tool-nav-btn.active');
+                const activePane = document.querySelector('#page-settings .tools-content .tool-pane.active');
+                if (!activeBtn && !activePane) return;
+
+                if (e.touches && e.touches.length === 1) {
+                    titleTouchStartY = e.touches[0].clientY;
+                    titleTouchStartX = e.touches[0].clientX;
+                    isTitleTracking = true;
+                }
+            }, { passive: true });
+
+            titleHeader.addEventListener('touchmove', (e) => {
+                if (!isTitleTracking) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                const diffY = e.touches[0].clientY - titleTouchStartY;
+                const diffX = Math.abs(e.touches[0].clientX - titleTouchStartX);
+
+                // If swiped up (diffY < -15px) and vertical movement is dominant
+                if (diffY < -15 && Math.abs(diffY) > diffX) {
+                    isTitleTracking = false;
+                    titleHeader.classList.add('title-hidden');
+                }
+            }, { passive: true });
+
+            titleHeader.addEventListener('touchend', (e) => {
+                if (!isTitleTracking) return;
+                isTitleTracking = false;
+                if (e.changedTouches && e.changedTouches.length === 1) {
+                    const diffY = e.changedTouches[0].clientY - titleTouchStartY;
+                    const diffX = Math.abs(e.changedTouches[0].clientX - titleTouchStartX);
+                    if (diffY < -15 && Math.abs(diffY) > diffX) {
+                        titleHeader.classList.add('title-hidden');
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // Mobile swipe down from the top edge to restore "Settings" title if hidden
+        if (settingsPage) {
+            let pageTouchStartY = 0;
+            let pageTouchStartX = 0;
+            let isPageTopTracking = false;
+
+            settingsPage.addEventListener('touchstart', (e) => {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (!isMobile) return;
+
+                const th = document.querySelector('#page-settings .page-title-header');
+                if (!th || !th.classList.contains('title-hidden')) return;
+
+                if (e.touches && e.touches.length === 1) {
+                    const touchY = e.touches[0].clientY;
+                    const pageRect = settingsPage.getBoundingClientRect();
+                    if (touchY - pageRect.top <= 70) {
+                        pageTouchStartY = touchY;
+                        pageTouchStartX = e.touches[0].clientX;
+                        isPageTopTracking = true;
+                    }
+                }
+            }, { passive: true });
+
+            settingsPage.addEventListener('touchmove', (e) => {
+                if (!isPageTopTracking) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                const diffY = e.touches[0].clientY - pageTouchStartY;
+                const diffX = Math.abs(e.touches[0].clientX - pageTouchStartX);
+
+                // Swiping down (diffY > 15px) restores the title
+                if (diffY > 15 && diffY > diffX) {
+                    isPageTopTracking = false;
+                    const th = document.querySelector('#page-settings .page-title-header');
+                    if (th) th.classList.remove('title-hidden');
+                }
+            }, { passive: true });
+
+            settingsPage.addEventListener('touchend', () => {
+                isPageTopTracking = false;
             }, { passive: true });
         }
     }
