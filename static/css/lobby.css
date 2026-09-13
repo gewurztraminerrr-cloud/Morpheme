@@ -850,8 +850,10 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     background: var(--bg-panel);
     border-radius: 6px !important;
     padding: 5px 8px !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 0 !important;
     border: 1px solid var(--input-border);
+    width: 100%;
+    box-sizing: border-box !important;
 }
 
 .create-room-panel .create-room-header-label {
@@ -1621,7 +1623,7 @@ body.theme-light-brown .field-hint {
     /* Constrain the Create Room rating inputs to fit snuggly and avoid iOS auto-zoom */
     .create-room-panel {
         padding: 5px 8px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 0 !important;
     }
 
     .rating-inputs-row {

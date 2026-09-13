@@ -880,7 +880,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     }
 
     if (!roomsContainer && roomsList) {
-        let createPanel = roomsList.querySelector('.create-room-panel');
+        let createPanel = document.querySelector('.create-room-panel');
         const isGuest = window.currentUser && window.currentUser.startsWith('Guest_');
         if (!createPanel) {
             const createButtonHtml = `
@@ -897,7 +897,12 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     </button>
                 </div>
             `;
-            roomsList.insertAdjacentHTML('afterbegin', createButtonHtml);
+            const filterCont = document.querySelector('.rating-filter-container');
+            if (filterCont) {
+                filterCont.insertAdjacentHTML('beforebegin', createButtonHtml);
+            } else {
+                roomsList.insertAdjacentHTML('beforebegin', createButtonHtml);
+            }
         }
         roomsContainer = document.createElement('div');
         roomsContainer.id = 'dynamic-rooms-container';

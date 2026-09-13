@@ -156,9 +156,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1789310000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789223000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789312000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1789310000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789223000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789312000">
     <link rel="stylesheet" href="/css/play.css?v=1789211500">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
     <link rel="stylesheet" href="/css/forum.css?v=1789211400">
@@ -468,7 +468,7 @@
                     var guestBtnText = isGuest ? 'Registered Only' : '+ Create Room';
                     var guestBtnStyle = isGuest ? 'disabled style="cursor:not-allowed;"' : '';
 
-                    var existingCreatePanel = roomsList.querySelector('.create-room-panel');
+                    var existingCreatePanel = document.querySelector('.create-room-panel');
                     if (!existingCreatePanel) {
                         var panelHtml = '<div class="create-room-panel" ' + guestStyle + '>' +
                             '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
@@ -478,7 +478,12 @@
                             '</div>' +
                             '<button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
                         '</div>';
-                        roomsList.insertAdjacentHTML('afterbegin', panelHtml);
+                        var filterCont = document.querySelector('.rating-filter-container');
+                        if (filterCont) {
+                            filterCont.insertAdjacentHTML('beforebegin', panelHtml);
+                        } else {
+                            roomsList.insertAdjacentHTML('beforebegin', panelHtml);
+                        }
                     }
 
                     var noRoomsMsg = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">Loading active rooms...</p>';
@@ -2546,6 +2551,16 @@
                 <div class="active-rooms-panel" id="mobile-panel-rooms">
                     <h3 class="game-title">ACTIVE ROOMS</h3>
                     <div id="selected-game-info">Select a game type</div>
+                    <div class="create-room-panel" id="default-create-room-panel">
+                        <div class="create-room-header-label">
+                            Set Rating Limits (Optional)
+                        </div>
+                        <div class="rating-inputs-row">
+                            <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100">
+                            <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100">
+                        </div>
+                        <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
+                    </div>
                     <div class="rating-filter-container">
                         <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100" enterkeyhint="go">
                         <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)"><span class="my-rating-label">My Rating</span></button>
@@ -2554,16 +2569,6 @@
                         <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
                     <div id="rooms-list">
-                        <div class="create-room-panel" id="default-create-room-panel">
-                            <div class="create-room-header-label">
-                                Set Rating Limits (Optional)
-                            </div>
-                            <div class="rating-inputs-row">
-                                <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100">
-                                <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100">
-                            </div>
-                            <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
-                        </div>
                         <div id="rooms-placeholder-view">
                             <p class="placeholder">No "Show Rooms" selected</p>
                             <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
@@ -7593,8 +7598,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789211500"></script>
     <script src="/js/forum.js?v=33783"></script>
-    <script src="/js/app.js?v=1789311000"></script>
-    <script src="/js/lobby.js?v=1789219000"></script>
+    <script src="/js/app.js?v=1789312000"></script>
+    <script src="/js/lobby.js?v=1789312000"></script>
     <script src="/js/play.js?v=1789210100"></script>
     <script src="/js/tournaments.js?v=1789210600"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
