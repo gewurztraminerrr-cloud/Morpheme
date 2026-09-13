@@ -2790,6 +2790,17 @@ body {
     background: rgba(var(--text-primary-rgb), 0.18);
 }
 
+/* Spinner Set Odds modal: keep X button visible when scrolling */
+.spinner-modal-card .mini-profile-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    margin-left: auto;
+    margin-bottom: -30px;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
 .mini-profile-header {
     display: flex;
     align-items: center;
