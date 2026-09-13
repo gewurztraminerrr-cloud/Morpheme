@@ -1122,7 +1122,8 @@ def remove_added_word():
         else:
             msg = f"The sequences are not present in AW: {', '.join(missing_from_aw)}."
         return jsonify({
-            'success': True,
+            'success': False,
+            'error': msg,
             'not_found': True,
             'message': msg,
             'removed_words': [],

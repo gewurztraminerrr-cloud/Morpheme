@@ -70,7 +70,7 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
     statusArea.style.display = 'block';
     statusArea.style.transition = '';
     statusArea.textContent = message;
-    statusArea.style.color = isError ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing') || message.includes('Saving')) ? '#38bdf8' : '#4ade80';
+    statusArea.style.color = (isError || (message.includes('not present in AW') && !message.includes('successfully'))) ? '#f43f5e' : (message.includes('Adding') || message.includes('Removing') || message.includes('Saving')) ? '#38bdf8' : '#4ade80';
     statusArea.style.opacity = '1';
     
     // Clear after 8 seconds for errors/explanations or 5 seconds for normal messages
@@ -348,12 +348,13 @@ async function removeAddedWord() {
         clearTimeout(timeoutId);
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && (!data.not_found || (data.removed_words && data.removed_words.length > 0))) {
             const msg = data.message || `Word(s) removed from Added Words list.`;
             showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            showModStatus(`❌ ${data.error || "Failed to remove word."}`, true, 'added-word-status-area');
+            const errorMsg = data.error || data.message || "Failed to remove word.";
+            showModStatus(`❌ ${errorMsg}`, true, 'added-word-status-area');
         }
         if (wordInput) wordInput.focus();
     } catch (err) {
@@ -1148,11 +1149,11 @@ window.promptRemoveAddedWord = async function() {
         });
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && (!data.not_found || (data.removed_words && data.removed_words.length > 0))) {
             alert(data.message || `Word "${word}" removed.`);
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
-            alert("Error: " + (data.error || "Failed to remove word."));
+            alert(data.error || data.message || `The sequence '${word}' is not present in AW.`);
         }
     } catch (err) {
         console.error("Error removing word:", err);
