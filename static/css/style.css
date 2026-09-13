@@ -8992,4 +8992,17 @@ body.theme-light-brown .tool-def-isvalid-link {
     color: #6d28d9 !important;
 }
 
-
+/* ============================================================
+   Hide native scrollbars on all touch/mobile devices
+   pointer:coarse = touchscreens (phones, tablets)
+   ============================================================ */
+@media (pointer: coarse) {
+    * {
+        scrollbar-width: none !important;
+    }
+    *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+}
