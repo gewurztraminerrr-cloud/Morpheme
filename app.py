@@ -1075,8 +1075,8 @@ def add_added_word_api():
         import threading
         threading.Thread(target=save_added_words_async, args=(valid_to_add,), daemon=False).start()
         
-        # Trigger dynamic definition mapping and auto-saving rules
-        ensure_definitions_background(valid_to_add)
+        # Guarantee definition resolution and disk write immediately to wikdefs.txt & DB so the word has its definition ready at the top of the AW list in Tools
+        ensure_aw_definitions_for_words(valid_to_add)
 
         msg = f'New word "{valid_to_add[0]}" added to Added Words list successfully.' if len(valid_to_add) == 1 else f'{len(valid_to_add)} words added to Added Words list successfully.'
         skipped_info = []
@@ -1312,11 +1312,23 @@ def add_definition_api():
             DEFINITIONS_CACHE[word] = final_def
             resolved_defs[word] = final_def
         
-        # Fast append to Definitions.txt without reading or rewriting 47MB
-        with _DEFS_FILE_LOCK:
-            with open(DEFINITIONS_PATH, 'a', encoding='utf-8') as f:
-                for word, final_def in resolved_defs.items():
-                    f.write(f"{word} - {final_def}\n")
+        # Separate Added Words from Official Words
+        aw_pairs = []
+        csw_pairs = []
+        for word, final_def in resolved_defs.items():
+            if word_validator and word in word_validator.added_words:
+                aw_pairs.append((word, final_def))
+            else:
+                csw_pairs.append((word, final_def))
+
+        if aw_pairs:
+            save_aw_definitions_batch(aw_pairs)
+
+        if csw_pairs:
+            with _DEFS_FILE_LOCK:
+                with open(DEFINITIONS_PATH, 'a', encoding='utf-8') as f:
+                    for word, final_def in csw_pairs:
+                        f.write(f"{word} - {final_def}\n")
         
         # Fast in-memory update to undefined words cache (milliseconds vs 5+ seconds)
         with _UNDEFINED_WORDS_LOCK:
@@ -1448,6 +1460,15 @@ def remove_definition_api():
 
         if not removed_words:
             return jsonify({'error': 'None of the specified words had definitions.'}), 404
+
+        # Remove from wiktionary_definitions DB table if present
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=5)
+            with conn:
+                conn.executemany("DELETE FROM wiktionary_definitions WHERE word = ?;", [(w,) for w in removed_words])
+            conn.close()
+        except Exception as db_err:
+            print(f"[Definitions] Error deleting from wiktionary_definitions: {db_err}")
 
         # Fast in-memory update to undefined words cache
         with _UNDEFINED_WORDS_LOCK:
@@ -6003,22 +6024,30 @@ def lookup_raw_definition_online(word_upper):
             )
             with urllib.request.urlopen(req, timeout=1.5) as response:
                 api_data = json.loads(response.read().decode('utf-8'))
-                if isinstance(api_data, dict) and "en" in api_data:
-                    def_parts = []
-                    for item in api_data["en"]:
-                        part_of_speech = item.get("partOfSpeech", "")
-                        for d in item.get("definitions", []):
-                            text = d.get("definition", "")
-                            text = re.sub(r"<[^>]+>", "", text)
-                            text = re.sub(r"\s+", " ", text).strip()
-                            text = html.unescape(text)
-                            if text:
-                                if part_of_speech.lower() == 'noun':
-                                    def_parts.append(text)
-                                else:
-                                    def_parts.append(f"({part_of_speech}) {text}")
-                    if def_parts:
-                        return "; ".join(def_parts)
+                if isinstance(api_data, dict):
+                    entries = api_data.get("en")
+                    if not entries:
+                        # Fallback for loanwords indexed under source language with English glosses (e.g. hantu)
+                        for lang_code, lang_items in api_data.items():
+                            if isinstance(lang_items, list) and lang_items:
+                                entries = lang_items
+                                break
+                    if entries:
+                        def_parts = []
+                        for item in entries:
+                            part_of_speech = item.get("partOfSpeech", "")
+                            for d in item.get("definitions", []):
+                                text = d.get("definition", "")
+                                text = re.sub(r"<[^>]+>", "", text)
+                                text = re.sub(r"\s+", " ", text).strip()
+                                text = html.unescape(text)
+                                if text:
+                                    if part_of_speech.lower() == 'noun':
+                                        def_parts.append(text)
+                                    else:
+                                        def_parts.append(f"({part_of_speech}) {text}")
+                        if def_parts:
+                            return "; ".join(def_parts)
             return None
 
         result = _fetch_wiktionary_term(word_upper.lower())
@@ -6115,7 +6144,10 @@ def get_definition_cached_or_online_with_guess(w):
         global DEFINITIONS_CACHE
         if DEFINITIONS_CACHE and root in DEFINITIONS_CACHE:
             return DEFINITIONS_CACHE[root]
-        return lookup_wiki_definition_from_db(root)
+        res = lookup_wiki_definition_from_db(root)
+        if not res:
+            res = get_definition_cached_or_online(root)
+        return res
 
     # Guess root words (strip suffixes) - checked locally to guarantee instant sub-millisecond response
     if w.endswith('S') and not w.endswith('SS') and not w.endswith('US') and not w.endswith('IS') and not w.endswith('AS'):
@@ -6293,8 +6325,13 @@ def format_resolved_definition(word_upper, visited=None):
     }
     pos_full = pos_map.get(pos, pos)
     if pos_full == 'noun':
-        return deduplicate_repeated_text(meaning)
-    return deduplicate_repeated_text(f"({pos_full}) {meaning}")
+        res = deduplicate_repeated_text(meaning)
+    else:
+        res = deduplicate_repeated_text(f"({pos_full}) {meaning}")
+    if res:
+        DEFINITIONS_CACHE[word_upper] = res
+    return res
+
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
@@ -6317,18 +6354,21 @@ def ensure_definitions_for_words(words_list):
     if not DEFINITIONS_CACHE:
         load_definitions()
         
-    # 1. Fetch raw definitions for any word in words_list not in cache
-    needed_fetch = [w.upper().strip() for w in words_list if w.upper().strip() not in DEFINITIONS_CACHE]
-    
-    for w_upper in needed_fetch:
-        get_definition_cached_or_online_with_guess(w_upper)
-        
-    # 2. Append new resolved definitions to Definitions.txt
     try:
         new_entries = []
         for w in words_list:
             w_upper = w.upper().strip()
-            if w_upper not in DEFINITIONS_CACHE or not DEFINITIONS_CACHE[w_upper]:
+            if not w_upper:
+                continue
+
+            current_def = DEFINITIONS_CACHE.get(w_upper, '')
+            # Needs resolution if missing OR is an unresolved pointer (e.g. "plural of X" without root definition)
+            needs_resolution = (
+                not current_def 
+                or bool(re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive)\s+of\b', current_def, re.I) and '(' not in current_def)
+            )
+
+            if needs_resolution:
                 formatted_def = format_resolved_definition(w_upper)
                 if formatted_def:
                     DEFINITIONS_CACHE[w_upper] = formatted_def
@@ -6348,6 +6388,79 @@ def ensure_definitions_background(words_list):
     t = threading.Thread(target=ensure_definitions_for_words, args=(words_list,))
     t.daemon = True
     t.start()
+
+_AW_DEFS_LOCK = threading.Lock()
+
+def save_aw_definitions_batch(word_def_pairs):
+    """Save resolved AW definitions to DB (wiktionary_definitions) and wikdefs.txt files."""
+    if not word_def_pairs:
+        return
+    global DEFINITIONS_CACHE
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    wikdefs_path = os.path.join(base_dir, 'dictionaries', 'wikdefs.txt')
+    wikdefs_dup_path = os.path.join(base_dir, 'dictionaries', 'wikdefs_duplicate.txt')
+    
+    # 1. Update in-memory cache
+    for w, d in word_def_pairs:
+        DEFINITIONS_CACHE[w] = d
+        
+    # 2. Insert into morpheme.db (wiktionary_definitions table)
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        with conn:
+            conn.executemany("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", word_def_pairs)
+        conn.close()
+    except Exception as db_err:
+        print(f"[AWDefinitions] Error saving to DB: {db_err}")
+        
+    # 3. Append to wikdefs.txt and wikdefs_duplicate.txt
+    try:
+        with _AW_DEFS_LOCK:
+            for p in [wikdefs_path, wikdefs_dup_path]:
+                if os.path.exists(p):
+                    with open(p, 'a', encoding='utf-8') as f:
+                        for w, d in word_def_pairs:
+                            f.write(f"{w}\t{d}\n")
+        print(f"[AWDefinitions] Successfully saved {len(word_def_pairs)} definition(s) to DB and wikdefs.txt.")
+    except Exception as io_err:
+        print(f"[AWDefinitions] Error writing to wikdefs file: {io_err}")
+
+def ensure_aw_definitions_for_words(words_list):
+    """
+    Synchronously resolves definitions for newly added words in Added Words (AW)
+    and saves them to wiktionary_definitions DB and wikdefs.txt.
+    Does NOT modify Definitions.txt.
+    """
+    global DEFINITIONS_CACHE
+    if not DEFINITIONS_CACHE:
+        load_definitions()
+        
+    # Shorter/base words resolved first so inflections/plurals can reference them
+    sorted_words = sorted(words_list, key=len)
+    resolved_pairs = []
+    
+    for w in sorted_words:
+        w_upper = w.upper().strip()
+        if not w_upper:
+            continue
+            
+        current_def = DEFINITIONS_CACHE.get(w_upper)
+        if not current_def:
+            current_def = lookup_wiki_definition_from_db(w_upper)
+            
+        needs_resolution = (
+            not current_def 
+            or bool(re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive)\s+of\b', current_def, re.I) and '(' not in current_def)
+        )
+        
+        if needs_resolution:
+            formatted_def = format_resolved_definition(w_upper)
+            if formatted_def:
+                resolved_pairs.append((w_upper, formatted_def))
+                DEFINITIONS_CACHE[w_upper] = formatted_def
+                
+    if resolved_pairs:
+        save_aw_definitions_batch(resolved_pairs)
 
 def lookup_definition_image(word):
     image_url = None
