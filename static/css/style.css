@@ -6541,16 +6541,19 @@ body .tab-btn.active {
 }
 
 .t-matchup-item .participant {
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    overflow: hidden;
 }
 
 .t-matchup-item .participant .username {
     font-weight: 600;
-    max-width: 100px;
+    min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -6648,6 +6651,110 @@ body .tab-btn.active {
     color: var(--muted-text);
     text-transform: uppercase;
     opacity: 0.4;
+}
+
+/* ============================================================
+   All Tournament Pairings Modal styling & mobile fit
+   ============================================================ */
+#generic-info-modal.all-pairings-modal .achievement-card {
+    max-width: 520px !important;
+    width: 95% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+#generic-info-modal.all-pairings-modal #generic-modal-body {
+    padding: 12px 10px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+}
+
+#generic-info-modal.all-pairings-modal .all-pairings-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#generic-info-modal.all-pairings-modal .tournament-round-group {
+    padding: 10px 8px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchups-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 6px 8px !important;
+    overflow: hidden !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .participant {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    gap: 4px !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .participant .username {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: 0 1 auto !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .participant .pts {
+    flex-shrink: 0 !important;
+    font-size: 0.78rem !important;
+    padding: 2px 4px !important;
+    line-height: 1.2 !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .vs {
+    flex-shrink: 0 !important;
+    width: auto !important;
+    padding: 0 4px !important;
+    font-size: 0.7rem !important;
+}
+
+@media (max-width: 480px) {
+    #generic-info-modal.all-pairings-modal .achievement-card {
+        width: 96% !important;
+    }
+    #generic-info-modal.all-pairings-modal #generic-modal-body {
+        padding: 10px 6px !important;
+    }
+    #generic-info-modal.all-pairings-modal .tournament-round-group {
+        padding: 8px 6px !important;
+    }
+    #generic-info-modal.all-pairings-modal .t-matchup-item {
+        padding: 5px 6px !important;
+    }
+    #generic-info-modal.all-pairings-modal .t-matchup-item .participant .username {
+        font-size: 0.78rem !important;
+    }
+    #generic-info-modal.all-pairings-modal .t-matchup-item .participant .pts {
+        font-size: 0.74rem !important;
+        padding: 1px 3px !important;
+    }
+    #generic-info-modal.all-pairings-modal .t-matchup-item .vs {
+        padding: 0 2px !important;
+        font-size: 0.65rem !important;
+    }
 }
 
 .tournament-guest-block {
@@ -7054,11 +7161,22 @@ body .tab-btn.active {
     }
 
     .t-matchup-item {
-        padding: 12px !important;
+        padding: 8px 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    .t-matchup-item .participant {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
     }
 
     .t-matchup-item .participant .username {
-        max-width: 130px !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
     }
 
     .guest-msg-card {

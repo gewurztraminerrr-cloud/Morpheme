@@ -776,20 +776,20 @@ function renderMatchupItemHTML(m) {
     const u2_click = u2_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u2_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();"` : '';
 
     return `
-        <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <div class="participant" style="flex: 1; display: flex; align-items: center; gap: 6px; font-weight: ${u1_winner ? 'bold' : 'normal'};">
-                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
-                <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s1}</span>
-                ${u1_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-left: 2px;">🏆</span>' : ''}
+        <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; box-sizing: border-box; width: 100%; max-width: 100%; overflow: hidden;">
+            <div class="participant u1" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; gap: 4px; overflow: hidden; font-weight: ${u1_winner ? 'bold' : 'normal'};">
+                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
+                <span class="pts" style="flex-shrink: 0; opacity: 0.85; font-size: 0.8rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;">${s1}</span>
+                ${u1_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-left: 1px;">🏆</span>' : ''}
             </div>
-            <div class="vs" style="padding: 0 10px; opacity: 0.5; font-size: 0.75rem; font-weight: bold;">VS</div>
-            <div class="participant" style="flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-weight: ${u2_winner ? 'bold' : 'normal'};">
+            <div class="vs" style="flex-shrink: 0; padding: 0 5px; opacity: 0.5; font-size: 0.7rem; font-weight: bold; width: auto;">VS</div>
+            <div class="participant u2" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; overflow: hidden; font-weight: ${u2_winner ? 'bold' : 'normal'};">
                 ${m.user2_id === -1
-                    ? `<span style="opacity: 0.45; font-style: italic;">BYE</span>`
+                    ? `<span style="opacity: 0.45; font-style: italic; flex-shrink: 0;">BYE</span>`
                     : `
-                        ${u2_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-right: 2px;">🏆</span>' : ''}
-                        <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s2}</span>
-                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
+                        ${u2_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-right: 1px;">🏆</span>' : ''}
+                        <span class="pts" style="flex-shrink: 0; opacity: 0.85; font-size: 0.8rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;">${s2}</span>
+                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
                     `
                 }
             </div>
@@ -862,7 +862,7 @@ function showAllPairingsModal(matchups, currentRound) {
 
     const roundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
 
-    let html = '<div style="display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; padding: 4px 6px; text-align: left;">';
+    let html = '<div class="all-pairings-container" style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box; text-align: left;">';
 
     roundNumbers.forEach(rNum => {
         const roundMatchups = roundsMap[rNum];
@@ -879,12 +879,12 @@ function showAllPairingsModal(matchups, currentRound) {
         const roundLabel = (roundNumbers.length > 1) ? `Round ${rNum}${isCurrent ? ' (Current Round)' : ''}` : `Round ${rNum}`;
 
         html += `
-            <div class="tournament-round-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border, rgba(255, 255, 255, 0.1)); border-radius: 10px; padding: 12px;">
-                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: ${isCurrent ? 'var(--accent-color, #ff6b6b)' : 'var(--text-secondary, #94a3b8)'}; display: flex; justify-content: space-between; align-items: center;">
+            <div class="tournament-round-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border, rgba(255, 255, 255, 0.1)); border-radius: 10px; padding: 10px 8px; box-sizing: border-box; width: 100%; overflow: hidden;">
+                <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: ${isCurrent ? 'var(--accent-color, #ff6b6b)' : 'var(--text-secondary, #94a3b8)'}; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
                     <span>${roundLabel}</span>
                     <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.7;">${roundMatchups.length} matchup${roundMatchups.length > 1 ? 's' : ''}</span>
                 </div>
-                <div class="t-matchups-list" style="display: flex; flex-direction: column; gap: 4px;">
+                <div class="t-matchups-list" style="display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box;">
                     ${sorted.map(m => renderMatchupItemHTML(m)).join('')}
                 </div>
             </div>
@@ -897,17 +897,36 @@ function showAllPairingsModal(matchups, currentRound) {
     const card = modal.querySelector('.achievement-card');
     if (card) {
         card.style.maxWidth = '520px';
+        card.style.width = '95%';
+        card.style.boxSizing = 'border-box';
     }
+    if (bodyEl) {
+        bodyEl.style.padding = '12px 10px';
+        bodyEl.style.boxSizing = 'border-box';
+        bodyEl.style.overflowX = 'hidden';
+        bodyEl.style.width = '100%';
+    }
+
+    modal.classList.add('all-pairings-modal');
 
     const closeModal = (e) => {
         if (e) {
             try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
         }
         modal.classList.add('hidden');
+        modal.classList.remove('all-pairings-modal');
         modal.style.display = 'none';
         modal.style.setProperty('display', 'none', 'important');
         if (card) {
             card.style.maxWidth = '';
+            card.style.width = '';
+            card.style.boxSizing = '';
+        }
+        if (bodyEl) {
+            bodyEl.style.padding = '';
+            bodyEl.style.boxSizing = '';
+            bodyEl.style.overflowX = '';
+            bodyEl.style.width = '';
         }
     };
 

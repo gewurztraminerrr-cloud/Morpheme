@@ -155,9 +155,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789310000" as="style">
+    <link rel="preload" href="/css/style.css?v=1789315000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1789312000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789310000">
+    <link rel="stylesheet" href="/css/style.css?v=1789315000">
     <link rel="stylesheet" href="/css/lobby.css?v=1789312000">
     <link rel="stylesheet" href="/css/play.css?v=1789314000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
@@ -7157,7 +7157,7 @@
             <div class="modal-header"
                 style="padding: 16px 20px; border-bottom: 1px solid var(--input-border, #334155); display: flex; justify-content: space-between; align-items: center; background: var(--input-bg, rgba(15, 23, 42, 0.6));">
                 <h2 id="generic-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-primary, #ffffff);">Notice</h2>
-                <button class="close-overlay" id="close-generic-modal" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
+                <button class="close-overlay" id="close-generic-modal" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show', 'all-pairings-modal'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
                     style="position: static; transform: none; background: transparent; border: none; color: var(--text-secondary, #94a3b8); font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0;">&times;</button>
             </div>
             <div id="generic-modal-body"
@@ -7166,7 +7166,7 @@
             </div>
             <div class="modal-footer"
                 style="padding: 14px 20px; display: flex; justify-content: center; background: var(--input-bg, rgba(15, 23, 42, 0.4)); border-top: 1px solid var(--input-border, #334155);">
-                <button id="generic-modal-ok-btn" class="sf-action-btn" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
+                <button id="generic-modal-ok-btn" class="sf-action-btn" onclick="var m = document.getElementById('generic-info-modal'); if (m) { m.classList.remove('forced-show', 'all-pairings-modal'); m.classList.add('hidden'); m.style.display = 'none'; window._hasPriorityModal = false; }"
                     style="padding: 9px 36px; background: #3b82f6; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">OK</button>
             </div>
         </div>
@@ -7613,7 +7613,7 @@
     <script src="/js/app.js?v=1789314000"></script>
     <script src="/js/lobby.js?v=1789312000"></script>
     <script src="/js/play.js?v=1789210100"></script>
-    <script src="/js/tournaments.js?v=1789210600"></script>
+    <script src="/js/tournaments.js?v=1789315000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
     <script src="/js/tools.js?v=1789313000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
