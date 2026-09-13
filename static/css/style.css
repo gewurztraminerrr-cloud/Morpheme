@@ -1899,10 +1899,6 @@ body {
     gap: 12px;
 }
 
-.profile-meta-laptop-break {
-    display: none;
-}
-
 .meta-item {
     display: flex;
     align-items: center;
@@ -7637,9 +7633,6 @@ select option,
     .profile-meta-line {
         display: contents !important;
     }
-    .profile-meta-laptop-break {
-        display: none !important;
-    }
     .profile-metadata-row {
         display: flex !important;
         flex-direction: row !important;
@@ -8328,20 +8321,6 @@ main.pages,
     .nav-btn {
         padding: 4px 5px !important;
         font-size: 0.7rem !important;
-    }
-}
-
-/* Profile metadata layout for laptops: Country/Flag and Timezone on their own row */
-@media (min-width: 901px) and (max-width: 1400px) {
-    .profile-meta-laptop-break {
-        display: block !important;
-        flex-basis: 100% !important;
-        width: 100% !important;
-        height: 0 !important;
-        margin: -12px 0 0 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        pointer-events: none !important;
     }
 }
 
