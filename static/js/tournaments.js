@@ -476,6 +476,75 @@ function renderActiveState(container, data, userStatus) {
         return;
     }
 
+    // Previous Round Victory banner (for users advancing to Round 2+)
+    let prevMatchup = userStatus.prev_matchup;
+    if (!prevMatchup && data.all_tournament_matchups && data.current_round > 1) {
+        const curUser = window.currentUser || localStorage.getItem('morpheme_username');
+        const curUserId = userStatus.user_id || window.currentUserId || (matchup && matchup.user_id);
+        const prevRoundNum = data.current_round - 1;
+        const prevM = data.all_tournament_matchups.find(m => 
+            m.round_number === prevRoundNum && (
+                (curUserId && (m.user1_id === curUserId || m.user2_id === curUserId)) ||
+                (curUser && (m.u1_name === curUser || m.u2_name === curUser))
+            )
+        );
+        if (prevM) {
+            const isU1 = (curUserId && prevM.user1_id === curUserId) || (curUser && prevM.u1_name === curUser);
+            prevMatchup = {
+                id: prevM.id,
+                round_number: prevM.round_number,
+                user1_id: prevM.user1_id,
+                user2_id: prevM.user2_id,
+                winner_id: prevM.winner_id,
+                user_id: isU1 ? prevM.user1_id : prevM.user2_id,
+                opponent_id: isU1 ? prevM.user2_id : prevM.user1_id,
+                opponent_name: isU1 ? (prevM.user2_id === -1 ? 'BYE' : prevM.u2_name) : prevM.u1_name,
+                my_score: isU1 ? prevM.u1_score : prevM.u2_score,
+                opponent_score: isU1 ? (prevM.user2_id === -1 ? 0 : prevM.u2_score) : prevM.u1_score
+            };
+        }
+    }
+
+    let wonPrev = false;
+    if (prevMatchup && prevMatchup.winner_id) {
+        const myId = userStatus.user_id || window.currentUserId || (matchup && matchup.user_id) || prevMatchup.user_id;
+        if (myId && Number(prevMatchup.winner_id) === Number(myId)) {
+            wonPrev = true;
+        } else if (prevMatchup.user_id && Number(prevMatchup.winner_id) === Number(prevMatchup.user_id)) {
+            wonPrev = true;
+        } else if (prevMatchup.opponent_id && Number(prevMatchup.winner_id) !== Number(prevMatchup.opponent_id)) {
+            wonPrev = true;
+        }
+    } else if (prevMatchup && prevMatchup.opponent_id === -1) {
+        wonPrev = true;
+    }
+
+    let prevVictoryHtml = "";
+    if (wonPrev && prevMatchup && data.current_round > 1) {
+        const prevRoundNum = prevMatchup.round_number || (data.current_round - 1);
+        const isBye = prevMatchup.opponent_id === -1;
+        const oppName = prevMatchup.opponent_name || "Opponent";
+        const myPrevScore = (prevMatchup.my_score !== null && prevMatchup.my_score !== undefined) ? prevMatchup.my_score : 0;
+        const oppPrevScore = (prevMatchup.opponent_score !== null && prevMatchup.opponent_score !== undefined) ? prevMatchup.opponent_score : 0;
+
+        prevVictoryHtml = `
+            <div style="background: rgba(46, 204, 113, 0.12); border: 2px solid #2ecc71; border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; text-align: center; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.15);">
+                <div style="font-size: 1.6rem; color: #2ecc71; font-weight: 900; margin-bottom: 6px; text-shadow: 0 0 12px rgba(46, 204, 113, 0.4);">
+                    🏆 YOU WON ROUND ${prevRoundNum}!
+                </div>
+                <div style="font-size: 1.05rem; opacity: 0.95; font-weight: 600; margin-bottom: 8px;">
+                    ${isBye 
+                        ? `Automatic win (BYE). Advanced to Round ${data.current_round}!` 
+                        : `You defeated <span style="color: #ffffff; font-weight: 700;">${oppName}</span> (${myPrevScore} pts vs ${oppPrevScore} pts)`
+                    }
+                </div>
+                <div style="display: inline-block; background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 20px; padding: 4px 14px; font-size: 0.85rem; font-weight: 700;">
+                    ✓ ADVANCED TO ROUND ${data.current_round}
+                </div>
+            </div>
+        `;
+    }
+
     // Header with Round and Matchup
     let matchupHtml = "";
     if (matchup) {
@@ -487,7 +556,11 @@ function renderActiveState(container, data, userStatus) {
     }
 
     container.innerHTML = `
-        <h2 style="margin-bottom:5px; text-align:left;">Round ${data.current_round}</h2>
+        ${prevVictoryHtml}
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <h2 style="margin: 0; text-align: left;">Round ${data.current_round}</h2>
+            <span style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 3px 8px;">Current Round</span>
+        </div>
         ${matchupHtml}
     `;
 
@@ -562,7 +635,7 @@ function renderActiveState(container, data, userStatus) {
         btn.style.padding = '20px';
         btn.style.fontSize = '1.2rem';
         btn.style.background = '#2ecc71';
-        btn.textContent = 'PLAY YOUR TURN';
+        btn.textContent = `PLAY YOUR TURN (ROUND ${data.current_round})`;
         btn.onclick = () => {
             launchTournamentGame(data.id, data.current_round);
         };
@@ -572,7 +645,7 @@ function renderActiveState(container, data, userStatus) {
         note.style.marginTop = '15px';
         note.style.color = '#2ecc71';
         note.style.fontWeight = '700';
-        note.textContent = "CRITICAL: It is your turn! Do not miss the deadline.";
+        note.textContent = `Round ${data.current_round} has begun! It is your turn to play against ${matchup && matchup.opponent_name ? matchup.opponent_name : 'your opponent'}.`;
         container.appendChild(note);
     }
 }
