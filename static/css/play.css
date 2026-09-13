@@ -7283,6 +7283,27 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
+    #page-tools .page-title-header {
+        transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease,
+                    margin 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                    padding 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        max-height: 80px;
+        overflow: hidden;
+    }
+
+    #page-tools .page-title-header.title-hidden {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
     .settings-grid {
         grid-template-columns: 1fr !important;
         gap: 15px !important;
