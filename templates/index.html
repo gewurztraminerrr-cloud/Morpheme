@@ -503,6 +503,7 @@
             // 3. Smooth slide over to Active Rooms panel on mobile when FCFS/SP room is selected
             var roomsPanel = document.getElementById('mobile-panel-rooms') || document.querySelector('.active-rooms-panel');
             if (roomsPanel) {
+                window._currentLobbyPanel = 'rooms';
                 var isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile) {
                     var lobbyGrid = roomsPanel.closest('.lobby-grid') || roomsPanel.parentElement;
@@ -891,6 +892,7 @@
 
         window.currentRoomFilterTab = window.currentRoomFilterTab || 'open';
         window.setRoomFilterTab = function(tab) {
+            window._currentLobbyPanel = 'rooms';
             window.currentRoomFilterTab = (tab === 'closed') ? 'closed' : 'open';
             var openBtn = document.getElementById('open-rooms-filter-btn');
             var closedBtn = document.getElementById('closed-rooms-filter-btn');
@@ -905,9 +907,18 @@
             if (window.currentLobbyConfig && typeof window.fetchAndRenderRooms === 'function') {
                 window.fetchAndRenderRooms(window.currentLobbyConfig.gameType, window.currentLobbyConfig.timeLimit, window.currentLobbyConfig.boardDimensions, false);
             }
+            var isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                var roomsPanel = document.getElementById('mobile-panel-rooms');
+                var lobbyGrid = document.querySelector('.lobby-grid');
+                if (roomsPanel && lobbyGrid) {
+                    lobbyGrid.scrollLeft = roomsPanel.offsetLeft;
+                }
+            }
         };
 
         window.handleMyRatingButtonClick = function(rawBtn, evt) {
+            window._currentLobbyPanel = 'rooms';
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
             }
@@ -961,6 +972,7 @@
         window.handleLobbyButtonClickCore = window.handleLobbyButtonClick;
 
         window.handleLobbyRefresh = async function(btn) {
+            window._currentLobbyPanel = 'rooms';
             var refreshBtn = btn || document.getElementById('lobby-refresh-btn');
             if (refreshBtn) {
                 refreshBtn.classList.add('refreshing');
@@ -2562,11 +2574,11 @@
                         <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
                     </div>
                     <div class="rating-filter-container">
-                        <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100" enterkeyhint="go">
-                        <button id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)"><span class="my-rating-label">My Rating</span></button>
-                        <button id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')"><span>Open</span> <span>Rooms</span></button>
-                        <button id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')"><span>Closed</span> <span>Rooms</span></button>
-                        <button id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
+                        <input type="number" id="rating-filter" placeholder="Sort rooms by proximity to average rating" min="0" step="100" enterkeyhint="go" onfocus="window._currentLobbyPanel = 'rooms'">
+                        <button type="button" id="my-rating-btn" onclick="window.handleMyRatingButtonClick(this, event)"><span class="my-rating-label">My Rating</span></button>
+                        <button type="button" id="open-rooms-filter-btn" class="room-tab-btn active" onclick="window.setRoomFilterTab('open')"><span>Open</span> <span>Rooms</span></button>
+                        <button type="button" id="closed-rooms-filter-btn" class="room-tab-btn" onclick="window.setRoomFilterTab('closed')"><span>Closed</span> <span>Rooms</span></button>
+                        <button type="button" id="lobby-refresh-btn" class="profile-refresh-btn" title="Refresh room counts" onclick="window.handleLobbyRefresh(this)" style="margin-top:0; font-size:0.9rem;"><span class="refresh-icon">🔄</span></button>
                     </div>
                     <div id="rooms-list">
                         <div id="rooms-placeholder-view">

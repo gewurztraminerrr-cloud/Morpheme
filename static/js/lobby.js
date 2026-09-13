@@ -598,6 +598,7 @@ function setupLobbyEvents() {
     // Setup Open Rooms vs Closed Rooms tab selection
     window.currentRoomFilterTab = window.currentRoomFilterTab || 'open';
     window.setRoomFilterTab = function(tab) {
+        window._currentLobbyPanel = 'rooms';
         window.currentRoomFilterTab = (tab === 'closed') ? 'closed' : 'open';
         const openBtn = document.getElementById('open-rooms-filter-btn');
         const closedBtn = document.getElementById('closed-rooms-filter-btn');
@@ -618,21 +619,39 @@ function setupLobbyEvents() {
                 false
             );
         }
+        const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const roomsEl = document.getElementById('mobile-panel-rooms');
+            const lobbyGrid = document.querySelector('.lobby-grid');
+            if (roomsEl && lobbyGrid) {
+                lobbyGrid.scrollLeft = roomsEl.offsetLeft;
+            }
+        }
     };
 
     const openRoomsBtn = document.getElementById('open-rooms-filter-btn');
     if (openRoomsBtn) {
-        openRoomsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.setRoomFilterTab('open');
+        ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+            openRoomsBtn.addEventListener(evtType, (e) => {
+                window._currentLobbyPanel = 'rooms';
+                if (evtType === 'click') {
+                    e.preventDefault();
+                    window.setRoomFilterTab('open');
+                }
+            }, { passive: evtType !== 'click' });
         });
     }
 
     const closedRoomsBtn = document.getElementById('closed-rooms-filter-btn');
     if (closedRoomsBtn) {
-        closedRoomsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.setRoomFilterTab('closed');
+        ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+            closedRoomsBtn.addEventListener(evtType, (e) => {
+                window._currentLobbyPanel = 'rooms';
+                if (evtType === 'click') {
+                    e.preventDefault();
+                    window.setRoomFilterTab('closed');
+                }
+            }, { passive: evtType !== 'click' });
         });
     }
 
@@ -664,6 +683,11 @@ function setupLobbyEvents() {
 
     const ratingFilterInput = document.getElementById('rating-filter');
     if (ratingFilterInput) {
+        ['focus', 'focusin', 'pointerdown', 'touchstart'].forEach(evt => {
+            ratingFilterInput.addEventListener(evt, () => {
+                window._currentLobbyPanel = 'rooms';
+            }, { passive: true });
+        });
         let handledByEnter = false;
         ratingFilterInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.keyCode === 13) {
@@ -677,6 +701,15 @@ function setupLobbyEvents() {
             }
         });
         ratingFilterInput.addEventListener('blur', () => {
+            window._currentLobbyPanel = 'rooms';
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const roomsEl = document.getElementById('mobile-panel-rooms');
+                const lobbyGrid = document.querySelector('.lobby-grid');
+                if (roomsEl && lobbyGrid) {
+                    lobbyGrid.scrollLeft = roomsEl.offsetLeft;
+                }
+            }
             if (handledByEnter) return;
             handleRatingFilterSearch();
         });
@@ -684,30 +717,53 @@ function setupLobbyEvents() {
 
     const myRatingBtn = document.getElementById('my-rating-btn');
     if (myRatingBtn) {
-        myRatingBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const activeConfig = currentLobbyConfig || window.currentLobbyConfig;
-            if (!activeConfig) {
-                console.log('[Lobby] My Rating clicked, but no active config. Doing nothing.');
-                return;
-            }
-            const userRating = getUserConfigRating(
-                activeConfig.gameType,
-                activeConfig.boardDimensions,
-                activeConfig.timeLimit
-            );
-            const input = document.getElementById('rating-filter');
-            if (input) {
-                input.value = userRating;
-            }
-            window.activeRatingFilterValue = userRating;
-            console.log('[Lobby] My Rating clicked. Value:', userRating);
-            fetchAndRenderRooms(
-                activeConfig.gameType,
-                activeConfig.timeLimit,
-                activeConfig.boardDimensions,
-                false
-            );
+        ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+            myRatingBtn.addEventListener(evtType, (e) => {
+                window._currentLobbyPanel = 'rooms';
+                if (evtType === 'click') {
+                    e.preventDefault();
+                    const activeConfig = currentLobbyConfig || window.currentLobbyConfig;
+                    if (!activeConfig) {
+                        console.log('[Lobby] My Rating clicked, but no active config. Doing nothing.');
+                        return;
+                    }
+                    const userRating = getUserConfigRating(
+                        activeConfig.gameType,
+                        activeConfig.boardDimensions,
+                        activeConfig.timeLimit
+                    );
+                    const input = document.getElementById('rating-filter');
+                    if (input) {
+                        input.value = userRating;
+                    }
+                    window.activeRatingFilterValue = userRating;
+                    console.log('[Lobby] My Rating clicked. Value:', userRating);
+                    fetchAndRenderRooms(
+                        activeConfig.gameType,
+                        activeConfig.timeLimit,
+                        activeConfig.boardDimensions,
+                        false
+                    );
+                }
+            }, { passive: evtType !== 'click' });
+        });
+    }
+
+    const lobbyRefreshBtn = document.getElementById('lobby-refresh-btn');
+    if (lobbyRefreshBtn) {
+        ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+            lobbyRefreshBtn.addEventListener(evtType, () => {
+                window._currentLobbyPanel = 'rooms';
+            }, { passive: evtType !== 'click' });
+        });
+    }
+
+    const mobileRoomsPanel = document.getElementById('mobile-panel-rooms');
+    if (mobileRoomsPanel) {
+        ['pointerdown', 'touchstart', 'mousedown'].forEach(evtType => {
+            mobileRoomsPanel.addEventListener(evtType, () => {
+                window._currentLobbyPanel = 'rooms';
+            }, { passive: true });
         });
     }
 
@@ -788,6 +844,9 @@ window.switchLobbyPanel = function(panelId, smooth = false) {
     if (!el) return;
 
     const targetLeft = el.offsetLeft;
+    if (Math.abs(lobbyGrid.scrollLeft - targetLeft) <= 2) {
+        return;
+    }
     if (smooth && typeof lobbyGrid.scrollTo === 'function') {
         lobbyGrid.scrollTo({ left: targetLeft, behavior: 'smooth' });
     } else {
@@ -801,13 +860,6 @@ window.scrollLobbyToMainPanel = function(behavior = 'auto') {
 
 window._restoreLobbyPanel = function() {
     let target = window._currentLobbyPanel || 'main';
-    if (target === 'rooms') {
-        const ph = document.getElementById('rooms-placeholder-view');
-        if (ph && (ph.style.display !== 'none' && ph.offsetParent !== null)) {
-            target = 'main';
-            window._currentLobbyPanel = 'main';
-        }
-    }
     window.switchLobbyPanel(target, false);
 };
 
@@ -817,6 +869,12 @@ window._restoreLobbyPanel = function() {
     function updateActiveLobbyPanelTrack() {
         if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
         scrollDebounceTimer = setTimeout(() => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.id === 'rating-filter' || (typeof activeEl.closest === 'function' && activeEl.closest('#mobile-panel-rooms')))) {
+                window._currentLobbyPanel = 'rooms';
+                return;
+            }
+
             const lobbyGrid = document.querySelector('.lobby-grid');
             if (!lobbyGrid) return;
             const solo = document.getElementById('mobile-panel-solo');
@@ -824,16 +882,23 @@ window._restoreLobbyPanel = function() {
             const rooms = document.getElementById('mobile-panel-rooms');
             if (!main || !lobbyGrid) return;
 
-            const currentScroll = lobbyGrid.scrollLeft;
-            const threshold = (main.offsetLeft) / 2;
+            const panels = [
+                { id: 'solo', el: solo },
+                { id: 'main', el: main },
+                { id: 'rooms', el: rooms }
+            ].filter(p => p.el);
 
-            if (rooms && currentScroll >= main.offsetLeft + threshold) {
-                window._currentLobbyPanel = 'rooms';
-            } else if (solo && currentScroll <= threshold) {
-                window._currentLobbyPanel = 'solo';
-            } else {
-                window._currentLobbyPanel = 'main';
+            const currentScroll = lobbyGrid.scrollLeft;
+            let closestPanel = 'main';
+            let minDiff = Infinity;
+            for (const p of panels) {
+                const diff = Math.abs(currentScroll - p.el.offsetLeft);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestPanel = p.id;
+                }
             }
+            window._currentLobbyPanel = closestPanel;
         }, 50);
     }
 
