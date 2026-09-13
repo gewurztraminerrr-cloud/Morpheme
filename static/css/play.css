@@ -7215,6 +7215,18 @@ input[type=range]::-moz-range-track {
         height: calc(100vh - 120px) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    #page-profile::-webkit-scrollbar,
+    #page-donate::-webkit-scrollbar,
+    #page-leaderboards::-webkit-scrollbar,
+    #page-tournaments::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
     }
 
     #page-profile.active,
@@ -7234,26 +7246,28 @@ input[type=range]::-moz-range-track {
     }
 }
 
-/* Leaderboards Mobile Vertical Scroller Track & Thumb */
-.lb-mobile-scrollbar-track {
-    display: none;
+/* Leaderboards Mobile Vertical Scroller Track & Thumb (hidden on mobile) */
+.lb-mobile-scrollbar-track,
+.lb-mobile-scrollbar-thumb,
+#lb-mobile-scrollbar-track,
+#lb-mobile-scrollbar-thumb {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 @media (max-width: 992px) {
-    .lb-mobile-scrollbar-track {
-        position: fixed;
-        top: 130px;
-        bottom: 25px;
-        right: 3px;
-        width: 14px;
-        background: rgba(255, 255, 255, 0.06);
-        border-radius: 7px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        z-index: 999;
-        backdrop-filter: blur(4px);
-        touch-action: none;
-        display: none; /* Shown dynamically via JS when tables overflow */
+    .lb-mobile-scrollbar-track,
+    .lb-mobile-scrollbar-thumb,
+    #lb-mobile-scrollbar-track,
+    #lb-mobile-scrollbar-thumb {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
+}
 
     .lb-mobile-scrollbar-thumb {
         position: absolute;
@@ -12181,4 +12195,122 @@ body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,
 body.is-tournament-round #show-everyone-btn {
     display: none !important;
+}
+
+/* ==========================================================================
+   Mobile Devices: Remove Thin Grey Scrollbars Across All Pages & Containers
+   ========================================================================== */
+@media (max-width: 900px), (pointer: coarse) {
+    html,
+    body,
+    #app,
+    .page,
+    .pages,
+    [id^="page-"],
+    .donate-container,
+    .profile-container,
+    .tournament-container,
+    .leaderboard-container,
+    .tools-split-layout,
+    .tools-sidebar,
+    .tools-content,
+    .tool-pane,
+    .settings-sidebar,
+    .settings-content,
+    .settings-pane,
+    .mods-sidebar,
+    .mods-content,
+    .mod-pane,
+    .forum-container,
+    .forum-sidebar,
+    .forum-main,
+    .forum-thread-view,
+    .forum-scroll-container,
+    .modal-window,
+    .modal-card,
+    .modal-body,
+    .modal-content-wrapper,
+    #modal-howtoplay,
+    #generic-modal-body,
+    .lobby-scroll,
+    .lobby-left-panel,
+    .lobby-right-panel,
+    #players-list,
+    #found-words-list {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    #app::-webkit-scrollbar,
+    .page::-webkit-scrollbar,
+    .pages::-webkit-scrollbar,
+    [id^="page-"]::-webkit-scrollbar,
+    .donate-container::-webkit-scrollbar,
+    .profile-container::-webkit-scrollbar,
+    .tournament-container::-webkit-scrollbar,
+    .leaderboard-container::-webkit-scrollbar,
+    .tools-split-layout::-webkit-scrollbar,
+    .tools-sidebar::-webkit-scrollbar,
+    .tools-content::-webkit-scrollbar,
+    .tool-pane::-webkit-scrollbar,
+    .settings-sidebar::-webkit-scrollbar,
+    .settings-content::-webkit-scrollbar,
+    .settings-pane::-webkit-scrollbar,
+    .mods-sidebar::-webkit-scrollbar,
+    .mods-content::-webkit-scrollbar,
+    .mod-pane::-webkit-scrollbar,
+    .forum-container::-webkit-scrollbar,
+    .forum-sidebar::-webkit-scrollbar,
+    .forum-main::-webkit-scrollbar,
+    .forum-thread-view::-webkit-scrollbar,
+    .forum-scroll-container::-webkit-scrollbar,
+    .modal-window::-webkit-scrollbar,
+    .modal-card::-webkit-scrollbar,
+    .modal-body::-webkit-scrollbar,
+    .modal-content-wrapper::-webkit-scrollbar,
+    #modal-howtoplay::-webkit-scrollbar,
+    #generic-modal-body::-webkit-scrollbar,
+    .lobby-scroll::-webkit-scrollbar,
+    .lobby-left-panel::-webkit-scrollbar,
+    .lobby-right-panel::-webkit-scrollbar,
+    #players-list::-webkit-scrollbar,
+    #found-words-list::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+    }
+
+    .page * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    .page *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+    }
+}
+
+body.is-mobile,
+body.is-mobile .page,
+body.is-mobile [id^="page-"],
+body.is-mobile .page * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+body.is-mobile::-webkit-scrollbar,
+body.is-mobile .page::-webkit-scrollbar,
+body.is-mobile [id^="page-"]::-webkit-scrollbar,
+body.is-mobile .page *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }

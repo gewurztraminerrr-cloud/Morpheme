@@ -537,7 +537,20 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 900px) {
+@media (max-width: 900px), (pointer: coarse) {
+    #page-donate,
+    .donate-container {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    #page-donate::-webkit-scrollbar,
+    .donate-container::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+    }
+
     .donate-container {
         padding: 10px 5px;
         margin: 15px auto;

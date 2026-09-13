@@ -1491,3 +1491,21 @@ body.theme-light-brown .mode-card {
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     color: #111111 !important;
 }
+
+/* Hide native scrollbar on mobile devices for How to Play */
+@media (max-width: 900px), (pointer: coarse) {
+    .modal-window,
+    .modal-content-wrapper,
+    #modal-howtoplay {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .modal-window::-webkit-scrollbar,
+    .modal-content-wrapper::-webkit-scrollbar,
+    #modal-howtoplay::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+    }
+}
