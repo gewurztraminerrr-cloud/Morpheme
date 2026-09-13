@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33131';
+const CURRENT_APP_BUILD = '33132';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -2715,7 +2715,7 @@ function setupAuth() {
                 const data = await response.json();
 
                 if (data.success) {
-                    statusEl.textContent = 'Verification code sent to your email! Please check your Junk email in 1 or 2 minutes if you do not see it.';
+                    statusEl.textContent = 'Verification code sent to your email! Please check your Junk mail in 1 or 2 minutes if you do not see it.';
                     statusEl.style.color = '#00ff66';
                     
                     // Reveal the 6-digit box
