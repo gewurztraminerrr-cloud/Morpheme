@@ -904,7 +904,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         roomsContainer.style.display = 'flex';
         roomsContainer.style.flexDirection = 'column';
         roomsContainer.style.gap = '12px';
-        roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
+        roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">Loading active rooms...</p>';
         roomsList.appendChild(roomsContainer);
     }
 
@@ -1023,12 +1023,12 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         if (filteredRooms.length === 0) {
             if (roomsContainer) {
                 if (activeTab === 'open' && rooms.length > 0) {
-                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No open rooms currently match your rating.<br><span style="color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 700; display: inline-block; margin-top: 8px;" onclick="window.setRoomFilterTab('closed')">View ${rooms.length} Closed / Rated Room(s)</span></p>`;
+                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">No open rooms currently match your rating.<br><span style="color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 700; display: inline-block; margin-top: 8px;" onclick="window.setRoomFilterTab('closed')">View ${rooms.length} Closed / Rated Room(s)</span></p>`;
                 } else {
                     const emptyMsg = (activeTab === 'open')
                         ? 'No open rooms currently available for your rating. Click <strong>+ Create Room</strong> above to start one!'
                         : 'No closed or full rooms currently active in this configuration.';
-                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">${emptyMsg}</p>`;
+                    roomsContainer.innerHTML = `<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">${emptyMsg}</p>`;
                 }
             }
         } else {
@@ -1116,7 +1116,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
     } catch (error) {
         console.error('Error fetching rooms:', error);
         if (roomsContainer) {
-            roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+            roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
         }
     }
 }

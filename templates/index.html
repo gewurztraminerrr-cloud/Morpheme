@@ -154,9 +154,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789214500" as="style">
+    <link rel="preload" href="/css/style.css?v=1789218000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1789214000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789214500">
+    <link rel="stylesheet" href="/css/style.css?v=1789218000">
     <link rel="stylesheet" href="/css/lobby.css?v=1789214000">
     <link rel="stylesheet" href="/css/play.css?v=1789211500">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1788721121">
@@ -480,7 +480,7 @@
                         roomsList.insertAdjacentHTML('afterbegin', panelHtml);
                     }
 
-                    var noRoomsMsg = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
+                    var noRoomsMsg = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">Loading active rooms...</p>';
                     var containerDiv = document.createElement('div');
                     containerDiv.id = 'dynamic-rooms-container';
                     containerDiv.style.display = 'flex';
@@ -490,7 +490,7 @@
 
                     roomsList.appendChild(containerDiv);
                 } else {
-                    roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Loading active rooms...</p>';
+                    roomsContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">Loading active rooms...</p>';
                 }
             }
 
@@ -544,7 +544,7 @@
                         var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
                         if (targetContainer) {
                             if (rooms.length === 0) {
-                                targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+                                targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
                             } else {
                                 var currentUser = window.currentUser || '';
                                 var savedRoomId = localStorage.getItem('last_joined_room') || '';
@@ -597,7 +597,7 @@
                     } catch(e) {
                         var targetContainer = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
                         if (targetContainer) {
-                            targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
+                            targetContainer.innerHTML = '<p class="placeholder" style="padding: 16px; text-align: center; font-size: 0.95rem;">No active rooms currently open. Click <strong>+ Create Room</strong> above to start one!</p>';
                         }
                     }
                 }

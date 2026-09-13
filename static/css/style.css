@@ -838,6 +838,24 @@ body.theme-light-brown .profile-username-large {
     background-clip: text;
 }
 
+/* Profile page: Search/My Profile buttons — ensure readable text on light/white themes */
+[class*="theme-white"] #profile-search-btn,
+[class*="theme-white"] #profile-my-profile-btn,
+[class*="theme-light-"] #profile-search-btn,
+[class*="theme-light-"] #profile-my-profile-btn,
+body.theme-yellow #profile-search-btn,
+body.theme-yellow #profile-my-profile-btn,
+body.theme-pink #profile-search-btn,
+body.theme-pink #profile-my-profile-btn,
+body.theme-orange #profile-search-btn,
+body.theme-orange #profile-my-profile-btn,
+body.theme-gray #profile-search-btn,
+body.theme-gray #profile-my-profile-btn,
+body.theme-light-brown #profile-search-btn,
+body.theme-light-brown #profile-my-profile-btn {
+    color: #111 !important;
+}
+
 [class*="theme-white"] .meta-item,
 [class*="theme-light-"] .meta-item,
 body.theme-yellow .meta-item,
