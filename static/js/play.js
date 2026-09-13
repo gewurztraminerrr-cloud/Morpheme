@@ -7183,6 +7183,20 @@ document.addEventListener('keydown', (e) => {
     let typingHighlightTimeout = null;
 
     wordInputEl.addEventListener('input', () => {
+        const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isDesktop = !isMobileUA && (window.innerWidth > 768 || document.body.classList.contains('is-desktop') || (window.matchMedia && window.matchMedia('(pointer: fine)').matches));
+        if (isDesktop && wordInputEl.value) {
+            const start = wordInputEl.selectionStart;
+            const end = wordInputEl.selectionEnd;
+            const upper = wordInputEl.value.toUpperCase();
+            if (wordInputEl.value !== upper) {
+                wordInputEl.value = upper;
+                if (start !== null && end !== null) {
+                    try { wordInputEl.setSelectionRange(start, end); } catch (err) {}
+                }
+            }
+        }
+
         const word = wordInputEl.value.trim();
         
         // UX: If round ended and we just cleared the input manually, refocus chat

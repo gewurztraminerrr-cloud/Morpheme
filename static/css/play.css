@@ -10988,6 +10988,20 @@ body.is-desktop .word-input-section #word-input {
     flex: 1 1 auto !important;
     width: 100% !important;
     text-align: center !important;
+    text-transform: uppercase !important;
+}
+
+body.is-desktop .word-input-section #word-input::placeholder {
+    text-transform: none !important;
+}
+
+@media (pointer: fine) and (min-width: 769px) {
+    #word-input {
+        text-transform: uppercase !important;
+    }
+    #word-input::placeholder {
+        text-transform: none !important;
+    }
 }
 
 body.is-desktop .word-input-section .timer-controls-group {
