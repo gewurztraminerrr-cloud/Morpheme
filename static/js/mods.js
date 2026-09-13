@@ -350,7 +350,7 @@ async function removeAddedWord() {
 
         if (data.success) {
             const msg = data.message || `Word(s) removed from Added Words list.`;
-            showModStatus(`🗑️ ${msg}`, false, 'added-word-status-area');
+            showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
             showModStatus(`❌ ${data.error || "Failed to remove word."}`, true, 'added-word-status-area');

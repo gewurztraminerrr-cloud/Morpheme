@@ -1039,43 +1039,41 @@ def add_added_word_api():
         ADDED_WORDS_LIST_CACHE = list(word_validator.added_words_list)
         LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
 
-        # Spawn asynchronous thread to update files on disk (prevents blocking)
-        def save_added_words_async(word_list):
-            try:
-                with _added_words_file_lock:
-                    # 1. Update Added Words file
-                    lines = []
-                    if os.path.exists(ADDED_WORDS_FILE):
-                        with open(ADDED_WORDS_FILE, 'r') as f:
-                            lines = [line.strip().upper() for line in f if line.strip()]
-                    for w in word_list:
-                        while w in lines:
-                            lines.remove(w)
-                    for w in reversed(word_list):
-                        lines.insert(0, w)
-                    with open(ADDED_WORDS_FILE, 'w') as f:
-                        for l in lines:
-                            f.write(f"{l}\n")
-                    
-                    # 2. Sync with Global Tally stats file (heavy I/O)
-                    for w in word_list:
-                        _update_word_stats(w, "add")
-                    
-                    global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
-                    if os.path.exists(ADDED_WORDS_FILE):
-                        curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
-                        LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
-                        LAST_ADDED_WORDS_MTIME = curr_mtime
-                        if word_validator is not None:
-                            word_validator._added_words_mtime = curr_mtime
-                print(f"[AsyncMods] Finished saving {len(word_list)} new word(s) to disk and tally.")
-            except Exception as e:
-                print(f"[AsyncMods] Error saving words to disk: {e}")
+        # Synchronously update Added Words files on disk immediately
+        with _added_words_file_lock:
+            lines = []
+            if os.path.exists(ADDED_WORDS_FILE):
+                with open(ADDED_WORDS_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = [line.strip().upper() for line in f if line.strip()]
+            for w in valid_to_add:
+                while w in lines:
+                    lines.remove(w)
+            for w in reversed(valid_to_add):
+                lines.insert(0, w)
 
-        import threading
-        threading.Thread(target=save_added_words_async, args=(valid_to_add,), daemon=False).start()
-        
-        # Guarantee definition resolution and disk write immediately to wikdefs.txt & DB so the word has its definition ready at the top of the AW list in Tools
+            # 1. Write to added_words.txt
+            with open(ADDED_WORDS_FILE, 'w', encoding='utf-8') as f:
+                for l in lines:
+                    f.write(f"{l}\n")
+
+            # 2. Write to added_words_duplicate.txt
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            dup_file = os.path.join(base_dir, 'dictionaries', 'added_words_duplicate.txt')
+            with open(dup_file, 'w', encoding='utf-8') as f:
+                for l in lines:
+                    f.write(f"{l}\n")
+            
+            # 3. Sync with Global Tally stats file
+            for w in valid_to_add:
+                _update_word_stats(w, "add")
+            
+            curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+            LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+            LAST_ADDED_WORDS_MTIME = curr_mtime
+            if word_validator is not None:
+                word_validator._added_words_mtime = curr_mtime
+
+        # Guarantee definition resolution and disk write immediately to all AW definition files (wikdefs.txt, wikdefs_duplicate.txt, Definitions.txt & DB)
         ensure_aw_definitions_for_words(valid_to_add)
 
         msg = f'New word "{valid_to_add[0]}" added to Added Words list successfully.' if len(valid_to_add) == 1 else f'{len(valid_to_add)} words added to Added Words list successfully.'
@@ -1120,9 +1118,16 @@ def remove_added_word():
 
     if missing_from_aw and not present_in_aw:
         if len(words) == 1:
-            return jsonify({'error': f"The sequence '{words[0]}' is not present in AW."}), 400
+            msg = f"The sequence '{words[0]}' is not present in AW."
         else:
-            return jsonify({'error': f"The sequences are not present in AW: {', '.join(missing_from_aw)}."}), 400
+            msg = f"The sequences are not present in AW: {', '.join(missing_from_aw)}."
+        return jsonify({
+            'success': True,
+            'not_found': True,
+            'message': msg,
+            'removed_words': [],
+            'not_found_words': missing_from_aw
+        })
         
     try:
         # Update in-memory sets instantly for words present in AW
@@ -1134,47 +1139,42 @@ def remove_added_word():
         LISTS_CACHE.clear()
         
         # Update ADDED_WORDS_LIST_CACHE in-memory so the list API is instantly updated
-        global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME
+        global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
         ADDED_WORDS_LIST_CACHE = list(word_validator.added_words_list)
-        LAST_ADDED_WORDS_LIST_MTIME = time.time() + 3600.0 # Prevent reload until thread finishes
 
-        # Spawn asynchronous thread to update files on disk (prevents blocking)
-        def remove_added_words_async(word_list):
-            try:
-                with _added_words_file_lock:
-                    # 1. Update Added Words file
-                    lines = []
-                    if os.path.exists(ADDED_WORDS_FILE):
-                        with open(ADDED_WORDS_FILE, 'r') as f:
-                            lines = [line.strip().upper() for line in f if line.strip()]
+        # Synchronously update files on disk immediately
+        with _added_words_file_lock:
+            lines = []
+            if os.path.exists(ADDED_WORDS_FILE):
+                with open(ADDED_WORDS_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = [line.strip().upper() for line in f if line.strip()]
+            
+            remove_set = set(present_in_aw)
+            new_lines = [l for l in lines if l not in remove_set]
+            
+            # 1. Write to added_words.txt
+            with open(ADDED_WORDS_FILE, 'w', encoding='utf-8') as f:
+                for l in new_lines:
+                    f.write(l + '\n')
                     
-                    remove_set = set(word_list)
-                    new_lines = [l for l in lines if l not in remove_set]
-                    if len(new_lines) != len(lines):
-                        with open(ADDED_WORDS_FILE, 'w') as f:
-                            for l in new_lines:
-                                f.write(l + '\n')
-                    
-                    # 2. Sync with Global Tally
-                    for w in word_list:
-                        _update_word_stats(w, "remove")
-                    
-                    # Update the mtime to the actual new file mtime
-                    global LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
-                    if os.path.exists(ADDED_WORDS_FILE):
-                        curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
-                        LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
-                        LAST_ADDED_WORDS_MTIME = curr_mtime
-                        if word_validator is not None:
-                            word_validator._added_words_mtime = curr_mtime
-                print(f"[AsyncMods] Finished removing {len(word_list)} word(s) from disk and tally.")
-            except Exception as e:
-                print(f"[AsyncMods] Error removing words from disk: {e}")
+            # 2. Write to added_words_duplicate.txt
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            dup_file = os.path.join(base_dir, 'dictionaries', 'added_words_duplicate.txt')
+            with open(dup_file, 'w', encoding='utf-8') as f:
+                for l in new_lines:
+                    f.write(l + '\n')
+            
+            # 3. Sync with Global Tally
+            for w in present_in_aw:
+                _update_word_stats(w, "remove")
+            
+            curr_mtime = os.path.getmtime(ADDED_WORDS_FILE)
+            LAST_ADDED_WORDS_LIST_MTIME = curr_mtime
+            LAST_ADDED_WORDS_MTIME = curr_mtime
+            if word_validator is not None:
+                word_validator._added_words_mtime = curr_mtime
 
-        import threading
-        threading.Thread(target=remove_added_words_async, args=(present_in_aw,), daemon=True).start()
-
-        msg = f'Word "{present_in_aw[0]}" removed.' if len(present_in_aw) == 1 else f'{len(present_in_aw)} words removed successfully.'
+        msg = f'Word "{present_in_aw[0]}" removed from Added Words list successfully.' if len(present_in_aw) == 1 else f'{len(present_in_aw)} words removed from Added Words list successfully.'
         if missing_from_aw:
             if len(missing_from_aw) == 1:
                 msg += f" (Note: The sequence '{missing_from_aw[0]}' is not present in AW.)"
@@ -6524,13 +6524,14 @@ def ensure_definitions_background(words_list):
 _AW_DEFS_LOCK = threading.Lock()
 
 def save_aw_definitions_batch(word_def_pairs):
-    """Save resolved AW definitions to DB (wiktionary_definitions) and wikdefs.txt files."""
+    """Save resolved AW definitions to DB (wiktionary_definitions), wikdefs.txt, wikdefs_duplicate.txt, and Definitions.txt."""
     if not word_def_pairs:
         return
     global DEFINITIONS_CACHE
     base_dir = os.path.dirname(os.path.abspath(__file__))
     wikdefs_path = os.path.join(base_dir, 'dictionaries', 'wikdefs.txt')
     wikdefs_dup_path = os.path.join(base_dir, 'dictionaries', 'wikdefs_duplicate.txt')
+    defs_path = os.path.join(base_dir, 'dictionaries', 'Definitions.txt')
     
     # 1. Update in-memory cache
     for w, d in word_def_pairs:
@@ -6553,15 +6554,26 @@ def save_aw_definitions_batch(word_def_pairs):
                     with open(p, 'a', encoding='utf-8') as f:
                         for w, d in word_def_pairs:
                             f.write(f"{w}\t{d}\n")
-        print(f"[AWDefinitions] Successfully saved {len(word_def_pairs)} definition(s) to DB and wikdefs.txt.")
+        print(f"[AWDefinitions] Successfully saved {len(word_def_pairs)} definition(s) to DB and wikdefs files.")
     except Exception as io_err:
         print(f"[AWDefinitions] Error writing to wikdefs file: {io_err}")
+
+    # 4. Append to Definitions.txt
+    if os.path.exists(defs_path):
+        try:
+            with _DEFS_FILE_LOCK:
+                with open(defs_path, 'a', encoding='utf-8') as f:
+                    for w, d in word_def_pairs:
+                        f.write(f"{w} - {d}\n")
+            print(f"[AWDefinitions] Successfully appended {len(word_def_pairs)} definition(s) to Definitions.txt.")
+        except Exception as def_err:
+            print(f"[AWDefinitions] Error writing to Definitions.txt: {def_err}")
 
 def ensure_aw_definitions_for_words(words_list):
     """
     Synchronously resolves definitions for newly added words in Added Words (AW)
-    and saves them to wiktionary_definitions DB and wikdefs.txt.
-    Does NOT modify Definitions.txt.
+    and immediately writes them to wiktionary_definitions DB, wikdefs.txt,
+    wikdefs_duplicate.txt, and Definitions.txt.
     """
     global DEFINITIONS_CACHE
     if not DEFINITIONS_CACHE:
@@ -6585,12 +6597,73 @@ def ensure_aw_definitions_for_words(words_list):
             or bool(re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive)\s+of\b', current_def, re.I) and '(' not in current_def)
         )
         
+        formatted_def = None
         if needs_resolution:
             formatted_def = format_resolved_definition(w_upper)
-            if formatted_def:
-                resolved_pairs.append((w_upper, formatted_def))
-                DEFINITIONS_CACHE[w_upper] = formatted_def
+            
+            # Fallback 1: Morphological rules adhering strictly to AGENTS.md
+            if not formatted_def:
+                # Plurals
+                if w_upper.endswith('IES') and len(w_upper) > 4:
+                    root = w_upper[:-3] + 'Y'
+                    root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
+                    if root_def:
+                        clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
+                        formatted_def = f"plural of {root.lower()} ({clean_root})"
+                elif w_upper.endswith('ES') and len(w_upper) > 4:
+                    for cand in [w_upper[:-2], w_upper[:-1]]:
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
+                            formatted_def = f"plural of {cand.lower()} ({clean_root})"
+                            break
+                elif w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
+                    cand = w_upper[:-1]
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
+                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
                 
+                # Verb conjugations (-ING, -ED, -S)
+                if not formatted_def:
+                    if w_upper.endswith('ING') and len(w_upper) > 5:
+                        for cand in [w_upper[:-3], w_upper[:-3] + 'E']:
+                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                            if root_def:
+                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
+                                formatted_def = f"(verb) present participle and gerund of {cand.lower()} ({clean_root})"
+                                break
+                    elif w_upper.endswith('ED') and len(w_upper) > 4:
+                        for cand in [w_upper[:-2], w_upper[:-1]]:
+                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                            if root_def:
+                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
+                                formatted_def = f"(verb) simple past and past participle of {cand.lower()} ({clean_root})"
+                                break
+                
+                # -NESS and -LY derivations
+                if not formatted_def:
+                    if w_upper.endswith('NESS') and len(w_upper) > 5:
+                        cand = w_upper[:-4]
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            formatted_def = f"The quality, state, or condition of being {cand.lower()} ({root_def})"
+                    elif w_upper.endswith('LY') and len(w_upper) > 4:
+                        cand = w_upper[:-2]
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            formatted_def = f"(adverb) In a {cand.lower()} manner ({root_def})"
+            
+            # Fallback 2: General lexicographical standard if online was unavailable
+            if not formatted_def:
+                formatted_def = f"(noun) A custom word added to the dictionary."
+        else:
+            formatted_def = current_def
+
+        if formatted_def:
+            resolved_pairs.append((w_upper, formatted_def))
+            DEFINITIONS_CACHE[w_upper] = formatted_def
+            
     if resolved_pairs:
         save_aw_definitions_batch(resolved_pairs)
 
