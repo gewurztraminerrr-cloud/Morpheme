@@ -2201,6 +2201,16 @@ async function handleSignUp() {
     const errorEl = document.getElementById('signup-error');
 
     // Validation
+    if (!username) {
+        errorEl.textContent = 'Please enter a username';
+        return;
+    }
+
+    if (username.length > 16) {
+        errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+        return;
+    }
+
     if (password !== confirmPassword) {
         errorEl.textContent = 'Passwords do not match';
         return;
@@ -2695,6 +2705,10 @@ function setupAuth() {
 
             if (!username) {
                 errorEl.textContent = 'Please enter a username first';
+                return;
+            }
+            if (username.length > 16) {
+                errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
                 return;
             }
             if (!email) {

@@ -3346,7 +3346,7 @@ def send_signup_verification():
         
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
-        return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
+        return jsonify({'error': 'A maximum of 16 characters are allowed for a username (letters, numbers, underscores only)'}), 400
         
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -3396,7 +3396,7 @@ def register():
     # Username validation
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
-        return jsonify({'error': 'Username must be 1-16 characters (letters, numbers, underscores only)'}), 400
+        return jsonify({'error': 'A maximum of 16 characters are allowed for a username (letters, numbers, underscores only)'}), 400
 
     if not email:
         return jsonify({'error': 'Email is required'}), 400
