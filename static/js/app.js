@@ -89,6 +89,10 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = false, 
 }
 window.setCurrentUser = setCurrentUser;
 window.getCurrentUser = () => currentUser || window.currentUser;
+try {
+    const _savedUid = localStorage.getItem('morpheme_user_id');
+    if (_savedUid) window.currentUserId = parseInt(_savedUid) || _savedUid;
+} catch (e) {}
 
 function formatAppDate(val, includeTime = false, customTz = null) {
     if (!val && val !== 0) return '-';
@@ -1179,6 +1183,10 @@ async function checkSession() {
             window.currentUserIsGuest = data.is_guest; // Store guest status
             window.currentUserIsMod = data.is_mod; // Store mod status
             localStorage.setItem('morpheme_username', currentUser);
+            if (data.user_id) {
+                window.currentUserId = data.user_id;
+                try { localStorage.setItem('morpheme_user_id', String(data.user_id)); } catch (e) {}
+            }
 
             window.lastPlayerRating = data.rating;
             window.currentUserRating = data.rating;
@@ -2155,6 +2163,10 @@ async function handleSignIn() {
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest || false;
             window.currentUserIsMod = data.is_mod || false; // Set here too
+            if (data.user_id) {
+                window.currentUserId = data.user_id;
+                try { localStorage.setItem('morpheme_user_id', String(data.user_id)); } catch (e) {}
+            }
             
             // Critical: Re-check mod status immediately after successful login
             if (typeof checkModStatus === 'function') {

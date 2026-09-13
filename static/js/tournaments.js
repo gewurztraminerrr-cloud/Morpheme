@@ -120,6 +120,10 @@ async function fetchTournamentStatus() {
         const data = await response.json();
         currentTournamentState = data;
         window.currentTournamentState = data;
+        if (data && data.user_status && data.user_status.matchup && data.user_status.matchup.user_id) {
+            window.currentUserId = data.user_status.matchup.user_id;
+            try { localStorage.setItem('morpheme_user_id', String(data.user_status.matchup.user_id)); } catch (e) {}
+        }
         renderTournament(data);
         updateNavHighlight(data.user_status?.has_turn);
     } catch (e) {
@@ -508,10 +512,20 @@ function renderActiveState(container, data, userStatus) {
                 const oppScore = matchup.opponent_score || 0;
                 const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
                 
-                const curUserId = window.currentUserId;
-                const iWon = matchup.winner_id 
-                    ? (matchup.winner_id === matchup.user1_id && matchup.user1_id === curUserId) || (matchup.winner_id === matchup.user2_id && matchup.user2_id === curUserId)
-                    : (myScore >= oppScore);
+                let iWon = false;
+                if (matchup.winner_id) {
+                    if (matchup.user_id && Number(matchup.winner_id) === Number(matchup.user_id)) {
+                        iWon = true;
+                    } else if (matchup.opponent_id && Number(matchup.winner_id) === Number(matchup.opponent_id)) {
+                        iWon = false;
+                    } else if (window.currentUserId && Number(matchup.winner_id) === Number(window.currentUserId)) {
+                        iWon = true;
+                    } else {
+                        iWon = (myScore >= oppScore);
+                    }
+                } else {
+                    iWon = (myScore >= oppScore);
+                }
 
                 if (iWon) {
                     container.innerHTML += `

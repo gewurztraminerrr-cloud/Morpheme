@@ -3613,6 +3613,7 @@ def login():
         
         return jsonify({
             'success': True, 
+            'user_id': user[0],
             'username': canonical_username, 
             'email': user[2],
             'is_mod': is_mod(canonical_username),
@@ -3655,6 +3656,7 @@ def auto_login():
         
         return jsonify({
             'success': True,
+            'user_id': user[0],
             'username': user[1],
             'email': user[2],
             'rating': user[3],
@@ -3912,6 +3914,7 @@ def get_session():
 
         return jsonify({
             'authenticated': True,
+            'user_id': session['user_id'],
             'username': session['username'],
             'email': session.get('email', ''),
             'is_guest': session.get('is_guest', False),
