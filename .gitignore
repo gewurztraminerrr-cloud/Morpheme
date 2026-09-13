@@ -3,6 +3,8 @@ __pycache__/
 *.log
 .backups/
 .DS_Store
+.env
+.env*
 *.pyc
 *.pyo
 instance/

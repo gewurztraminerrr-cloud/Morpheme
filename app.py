@@ -23,7 +23,11 @@ import re
 from db import get_db, get_db_connection, DB_PATH, execute_with_retry
 
 # Load environment variables from .env file
-load_dotenv()
+_env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+if os.path.exists(_env_file):
+    load_dotenv(dotenv_path=_env_file, override=True)
+else:
+    load_dotenv(override=True)
 
 def parse_data_url(data_url):
     """
@@ -3247,7 +3251,6 @@ def send_verification_email(user_email, username, code):
     print(f" [CODE]: {code}")
     print("="*80 + "\n")
 
-    import subprocess
     import json
     import time
 
@@ -3258,28 +3261,40 @@ def send_verification_email(user_email, username, code):
         "html": html_content
     }
     
-    curl_command = [
-        "curl", "-s", "-X", "POST", "https://api.resend.com/emails",
-        "-H", "Authorization: Bearer re_JZxa2joE_5Gu6cYT9KiaDkK4YtJdnky2Q",
-        "-H", "Content-Type: application/json",
-        "-d", json.dumps(data)
-    ]
-    
+    resend_api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not resend_api_key:
+        _env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+        if os.path.exists(_env_file):
+            load_dotenv(dotenv_path=_env_file, override=True)
+            resend_api_key = os.environ.get("RESEND_API_KEY", "").strip()
+
+    if not resend_api_key:
+        print("[Email] ERROR: RESEND_API_KEY environment variable not set. Cannot send email.")
+        with open("email_error.log", "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] FAILED: RESEND_API_KEY not set\n")
+        return
+
     try:
-        print(f"[Email] Attempting to send via Curl subprocess...")
-        result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
-        print(f"[Email] Successfully sent email via Curl: {result.stdout}")
+        print(f"[Email] Sending verification email to {user_email} via Resend API...")
+        res = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json"
+            },
+            json=data,
+            timeout=10
+        )
+        resp_json = res.json() if res.text else {}
+        if res.status_code >= 400 or resp_json.get("statusCode") or resp_json.get("name") == "validation_error":
+            raise RuntimeError(f"Resend API error (HTTP {res.status_code}): {res.text}")
+        print(f"[Email] Successfully sent email via Resend: {res.text}")
         with open("email_error.log", "a") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success sending to {user_email}: {result.stdout}\n")
-    except subprocess.CalledProcessError as e:
-        print(f"[Email] Failed via Curl: {e.stderr}")
-        with open("email_error.log", "a") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email} via Curl: {e.stderr}\n")
-        print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success sending to {user_email}: {res.text}\n")
     except Exception as e:
-        print(f"[Email] Failed via Curl: {e}")
+        print(f"[Email] Failed to deliver verification email: {e}")
         with open("email_error.log", "a") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Failed to send to {user_email} via Curl: {e}\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] FAILED to send to {user_email}: {e}\n")
         print("[Email] Warning: Could not deliver verification email over Resend. Code printed to logs.")
 
 
