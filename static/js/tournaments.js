@@ -265,7 +265,7 @@ function renderTournament(data) {
                     <div class="t-leaderboard-item" style="${highlight}">
                         <div class="user-info">
                             <span class="rank">#${idx + 1}</span>
-                            <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();" style="cursor: pointer;" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
+                            <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
                         </div>
                         <div class="score-group">
                             <span class="score">${s.score} <small style="font-size:0.6rem; opacity:0.6;">PTS</small></span>
@@ -342,7 +342,7 @@ function renderTournament(data) {
                 return `
                     <div class="t-standing-item ${statusClass}" title="${isWinner ? 'Winner' : s.status}">
                         <span class="dot"></span>
-                        <span class="t-username-clickable" onclick="${clickAction}" style="cursor: pointer; ${nameStyle}" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
+                        <span class="t-username-clickable" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none; ${nameStyle}" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
                         ${rankInfo}
                     </div>
                 `;
@@ -364,7 +364,7 @@ function renderTournament(data) {
                 return `
                     <tr>
                         <td>${date}</td>
-                        <td style="font-weight:700; color:var(--accent-color); cursor:pointer;" onclick="${clickAction}" title="View Mini-Profile">${h.username}</td>
+                        <td style="font-weight:700; color:var(--accent-color); cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${h.username}</td>
                         <td>Championship Edition</td>
                         <td>
                             <div style="display:flex; align-items:center; gap:10px;">
@@ -478,7 +478,7 @@ function renderActiveState(container, data, userStatus) {
         if (matchup.opponent_id === -1) {
             matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: BYE (Auto-advancing)</div>`;
         } else {
-            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: <span style="color:#fff">${matchup.opponent_name}</span></div>`;
+            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: <span style="color:#fff; cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${matchup.opponent_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${matchup.opponent_name}</span></div>`;
         }
     }
 
@@ -758,13 +758,13 @@ function renderMatchupItemHTML(m) {
     const u1_canClick = m.u1_name && m.u1_name !== 'Player 1';
     const u2_canClick = m.user2_id !== -1 && m.u2_name && m.u2_name !== 'Player 2' && m.u2_name !== 'BYE';
 
-    const u1_click = u1_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u1_name}'); } event.stopPropagation();"` : '';
-    const u2_click = u2_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u2_name}'); } event.stopPropagation();"` : '';
+    const u1_click = u1_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u1_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();"` : '';
+    const u2_click = u2_canClick ? `onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${u2_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();"` : '';
 
     return `
         <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <div class="participant" style="flex: 1; display: flex; align-items: center; gap: 6px; font-weight: ${u1_winner ? 'bold' : 'normal'};">
-                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''}" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
+                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
                 <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s1}</span>
                 ${u1_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-left: 2px;">🏆</span>' : ''}
             </div>
@@ -775,7 +775,7 @@ function renderMatchupItemHTML(m) {
                     : `
                         ${u2_winner ? '<span title="Winner" style="color: #ffd700; font-size: 0.85rem; margin-right: 2px;">🏆</span>' : ''}
                         <span class="pts" style="opacity: 0.85; font-size: 0.85rem; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">${s2}</span>
-                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''}" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
+                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
                     `
                 }
             </div>

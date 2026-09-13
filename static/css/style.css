@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -6564,6 +6565,73 @@ body .tab-btn.active {
 #tournament-history-body td[onclick]:hover {
     text-decoration: underline;
     filter: brightness(1.25);
+}
+
+/* Prevent blue square tap highlight / outline on mobile when pressing usernames & buttons in Tournaments */
+#page-tournaments,
+#page-tournaments *,
+.tournament-layout,
+.tournament-layout *,
+.t-matchups-list,
+.t-matchups-list *,
+.t-standings-list,
+.t-standings-list *,
+.t-leaderboard-list,
+.t-leaderboard-list *,
+.t-standing-item,
+.t-standing-item *,
+.t-leaderboard-item,
+.t-leaderboard-item *,
+.t-matchup-item,
+.t-matchup-item *,
+.t-username-clickable,
+#generic-info-modal .t-matchup-item,
+#generic-info-modal .t-matchup-item * {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-touch-callout: none !important;
+}
+
+#page-tournaments .username,
+#page-tournaments .t-username-clickable,
+#page-tournaments [onclick*="showMiniProfile"],
+#page-tournaments td[onclick],
+#page-tournaments span[onclick],
+#page-tournaments div[onclick],
+#page-tournaments button,
+.t-username-clickable,
+.t-leaderboard-item .username,
+.t-matchup-item .username,
+#generic-info-modal .username,
+#generic-info-modal .t-username-clickable {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    outline: none !important;
+}
+
+#page-tournaments .username:focus,
+#page-tournaments .username:active,
+#page-tournaments .t-username-clickable:focus,
+#page-tournaments .t-username-clickable:active,
+#page-tournaments [onclick*="showMiniProfile"]:focus,
+#page-tournaments [onclick*="showMiniProfile"]:active,
+#page-tournaments td[onclick]:focus,
+#page-tournaments td[onclick]:active,
+#page-tournaments button:focus,
+#page-tournaments button:active,
+.t-username-clickable:focus,
+.t-username-clickable:active,
+.t-leaderboard-item .username:focus,
+.t-leaderboard-item .username:active,
+.t-matchup-item .username:focus,
+.t-matchup-item .username:active {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
 }
 
 .t-matchup-item .participant .pts {
