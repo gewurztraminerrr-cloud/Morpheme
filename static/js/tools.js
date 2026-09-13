@@ -4264,13 +4264,23 @@ function initFullListVirtualScrollbar() {
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
         const progress = newThumbTop / maxThumbTop;
-        const targetIndex = Math.floor(progress * total);
+        // At the very bottom, anchor to the last word so ZZZ is always visible
+        const targetIndex = progress >= 1 ? total - 1 : Math.floor(progress * total);
 
         if (_dragRafId) cancelAnimationFrame(_dragRafId);
         _dragRafId = requestAnimationFrame(() => {
             _dragRafId = null;
-            const start = Math.max(0, targetIndex - Math.floor(FULL_LIST_INITIAL_BATCH / 2));
+            // At bottom: render the last batch ending at the final word, then scroll to bottom
+            const start = progress >= 1
+                ? Math.max(0, total - FULL_LIST_INITIAL_BATCH)
+                : Math.max(0, targetIndex - Math.floor(FULL_LIST_INITIAL_BATCH / 2));
             renderFullListInitial(start);
+            if (progress >= 1) {
+                requestAnimationFrame(() => {
+                    const r = document.getElementById('full-list-modal-results');
+                    if (r) r.scrollTop = r.scrollHeight;
+                });
+            }
         });
     }
 
