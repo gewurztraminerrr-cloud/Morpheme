@@ -6099,6 +6099,48 @@ def lookup_raw_definition_online(word_upper):
     except Exception as e:
         pass
 
+    # 3. Datamuse API Fallback
+    try:
+        import urllib.request, json
+        url = f"https://api.datamuse.com/words?sp={word_upper.lower()}&md=d"
+        req = urllib.request.Request(url, headers={'User-Agent': 'MorphemeApp/1.0'})
+        with urllib.request.urlopen(req, timeout=1.2) as response:
+            api_data = json.loads(response.read().decode('utf-8'))
+            if isinstance(api_data, list):
+                for item in api_data:
+                    if item.get('word', '').lower() == word_upper.lower() and 'defs' in item:
+                        def_parts = []
+                        for d_str in item['defs']:
+                            parts = d_str.split('\t', 1)
+                            if len(parts) == 2:
+                                pos_code, def_text = parts
+                                def_text = def_text.strip().rstrip('.')
+                                if pos_code == 'n': def_parts.append(def_text)
+                                elif pos_code == 'v': def_parts.append(f"(verb) {def_text}")
+                                elif pos_code == 'adj': def_parts.append(f"(adjective) {def_text}")
+                                elif pos_code == 'adv': def_parts.append(f"(adverb) {def_text}")
+                                else: def_parts.append(def_text)
+                        if def_parts:
+                            return "; ".join(def_parts)
+    except Exception:
+        pass
+
+    # 4. Wikipedia Summary Fallback
+    try:
+        import urllib.request, json
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{word_upper.lower()}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games)'})
+        with urllib.request.urlopen(req, timeout=1.2) as response:
+            api_data = json.loads(response.read().decode('utf-8'))
+            if isinstance(api_data, dict):
+                page_type = api_data.get('type', '')
+                extract = api_data.get('extract', '')
+                if page_type != 'disambiguation' and extract and len(extract) > 10:
+                    first_sentence = extract.split('. ')[0] + '.'
+                    return first_sentence
+    except Exception:
+        pass
+
     return None
 
 def lookup_wiki_definition_from_db(word):
@@ -6149,47 +6191,120 @@ def get_definition_cached_or_online_with_guess(w):
             res = get_definition_cached_or_online(root)
         return res
 
-    # Guess root words (strip suffixes) - checked locally to guarantee instant sub-millisecond response
+    # 1. Plurals ending in -NESSES -> plural of {root}ness
+    if w.endswith('NESSES'):
+        r = w[:-2]
+        if _local_lookup(r):
+            DEFINITIONS_CACHE[w] = f"plural of {r.lower()}"
+            return DEFINITIONS_CACHE[w]
+
+    # 2. Plurals ending in -IES -> plural of {root}y
+    if w.endswith('IES') and len(w) > 4:
+        r = w[:-3] + 'Y'
+        if _local_lookup(r):
+            DEFINITIONS_CACHE[w] = f"plural of {r.lower()}"
+            return DEFINITIONS_CACHE[w]
+
+    # 3. Standard Plurals
     if w.endswith('S') and not w.endswith('SS') and not w.endswith('US') and not w.endswith('IS') and not w.endswith('AS'):
         # Try stripping 'S'
         r = w[:-1]
         if _local_lookup(r):
-            DEFINITIONS_CACHE[w] = f"plural of {r}"
+            DEFINITIONS_CACHE[w] = f"plural of {r.lower()}"
             return DEFINITIONS_CACHE[w]
             
         # Try stripping 'ES'
         if w.endswith('ES'):
             r2 = w[:-2]
             if _local_lookup(r2):
-                DEFINITIONS_CACHE[w] = f"plural of {r2}"
+                DEFINITIONS_CACHE[w] = f"plural of {r2.lower()}"
                 return DEFINITIONS_CACHE[w]
-                
-    if w.endswith('ED'):
-        # Try stripping 'ED'
-        r = w[:-2]
-        if _local_lookup(r):
-            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
+
+    # 4. -NESS (The quality or state of being ...)
+    if w.endswith('NESS') and len(w) > 5:
+        candidates = [w[:-4]]
+        if candidates[0].endswith('I'):
+            candidates.append(candidates[0][:-1] + 'Y')
+        candidates.append(w[:-4] + 'E')
+        for cand in candidates:
+            r_def = _local_lookup(cand)
+            if r_def:
+                clean, _ = clean_def_text(r_def)
+                DEFINITIONS_CACHE[w] = f"The quality, state, or condition of being {cand.lower()} ({clean})."
+                return DEFINITIONS_CACHE[w]
+
+    # 5. -LY / -ILY (In a ... manner / Pertaining to ...)
+    if w.endswith('LY') and len(w) > 3:
+        candidates = []
+        if w.endswith('ILY') and len(w) > 4:
+            candidates.append(w[:-3] + 'Y')
+        # Check -LE words first (e.g. dingle -> dingly, subtle -> subtly, gentle -> gently)
+        if len(w) > 4 and w.endswith(('GLY', 'BLY', 'PLY', 'TLY', 'KLY', 'DLY')):
+            candidates.append(w[:-2] + 'E')
+        candidates.append(w[:-2])
+        if w[:-2] + 'E' not in candidates:
+            candidates.append(w[:-2] + 'E')
+        for cand in candidates:
+            r_def = _local_lookup(cand)
+            if r_def:
+                clean, pos = clean_def_text(r_def)
+                if pos == 'n' and not cand.endswith(('UTE', 'IVE', 'ABLE', 'IBLE', 'FUL', 'LESS', 'OUS', 'IC', 'ENT', 'ANT', 'ARY', 'ORY')):
+                    DEFINITIONS_CACHE[w] = f"(adjective) Pertaining to, resembling, or abounding in {cand.lower()}s ({clean})."
+                else:
+                    DEFINITIONS_CACHE[w] = f"(adverb) In a {cand.lower()} manner ({clean})."
+                return DEFINITIONS_CACHE[w]
+
+    # 6. -LIKE (Resembling or characteristic of ...)
+    if w.endswith('LIKE') and len(w) > 5:
+        cand = w[:-4]
+        r_def = _local_lookup(cand)
+        if r_def:
+            clean, _ = clean_def_text(r_def)
+            DEFINITIONS_CACHE[w] = f"Resembling, characteristic of, or typical of a {cand.lower()} ({clean})."
             return DEFINITIONS_CACHE[w]
-            
-        # Try stripping 'D' (e.g. baked -> bake)
-        r2 = w[:-1]
-        if _local_lookup(r2):
-            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
+
+    # 7. -LESS (Lacking or destitute of ...)
+    if w.endswith('LESS') and len(w) > 5:
+        cand = w[:-4]
+        r_def = _local_lookup(cand)
+        if r_def:
+            clean, _ = clean_def_text(r_def)
+            DEFINITIONS_CACHE[w] = f"Lacking, destitute of, or free from {cand.lower()} ({clean})."
             return DEFINITIONS_CACHE[w]
-            
-    if w.endswith('ING'):
-        # Try stripping 'ING'
-        r = w[:-3]
-        if _local_lookup(r):
-            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r}"
+
+    # 8. -FUL (Characterized by or full of ...)
+    if w.endswith('FUL') and len(w) > 4:
+        cand = w[:-3]
+        r_def = _local_lookup(cand)
+        if r_def:
+            clean, _ = clean_def_text(r_def)
+            DEFINITIONS_CACHE[w] = f"Characterized by, full of, or tending toward {cand.lower()} ({clean})."
             return DEFINITIONS_CACHE[w]
-            
-        # Try stripping 'ING' and adding 'E' (e.g. baking -> bake)
-        r2 = w[:-3] + 'E'
-        if _local_lookup(r2):
-            DEFINITIONS_CACHE[w] = f"(verb) conjugation of {r2}"
-            return DEFINITIONS_CACHE[w]
-            
+
+    # 9. -ED (simple past and past participle of ...)
+    if w.endswith('ED') and len(w) > 3:
+        candidates = [w[:-2], w[:-1]]
+        if len(w) > 4 and w[-3] == w[-4]: # doubled consonant e.g. BAGGED -> BAG
+            candidates.append(w[:-3])
+        if w.endswith('IED') and len(w) > 4: # e.g. CARRIED -> CARRY
+            candidates.append(w[:-3] + 'Y')
+        for cand in candidates:
+            if _local_lookup(cand):
+                DEFINITIONS_CACHE[w] = f"(verb) simple past and past participle of {cand.lower()}"
+                return DEFINITIONS_CACHE[w]
+
+    # 10. -ING (present participle and gerund of ...)
+    if w.endswith('ING') and len(w) > 4:
+        candidates = [w[:-3], w[:-3] + 'E']
+        if len(w) > 5 and w[-4] == w[-5]: # doubled consonant e.g. BAGGING -> BAG
+            candidates.append(w[:-4])
+        if w.endswith('YING') and len(w) > 5: # e.g. TYING -> TIE
+            candidates.append(w[:-4] + 'IE')
+        for cand in candidates:
+            if _local_lookup(cand):
+                DEFINITIONS_CACHE[w] = f"(verb) present participle and gerund of {cand.lower()}"
+                return DEFINITIONS_CACHE[w]
+
     return None
 
 def remove_duplicate_parentheticals(text):
