@@ -5957,8 +5957,8 @@ input[type=range]::-moz-range-track {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 8px 12px !important;
-        margin-top: 6px !important;
+        padding: 5px 12px 2px 12px !important;
+        margin-top: 2px !important;
         margin-bottom: 0 !important;
         border-radius: 0 !important;
         height: auto !important;
@@ -5970,7 +5970,7 @@ input[type=range]::-moz-range-track {
         /* Use Flex Column to strictly enforce stacking order */
         display: flex !important;
         flex-direction: column !important;
-        gap: 6px !important;
+        gap: 3px !important;
         align-items: center !important;
         position: relative !important; /* For absolute positioning of return button */
 
@@ -6026,7 +6026,7 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         width: 100% !important;
         max-width: 100% !important;
-        margin: 0 auto 3px auto !important;
+        margin: 0 auto 1px auto !important;
         padding: 5px 12px !important;
         box-sizing: border-box !important;
     }
@@ -7646,7 +7646,7 @@ input[type=range]::-moz-range-track {
         padding: 6px 12px !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
-        margin: 0 auto 3px auto !important;
+        margin: 0 auto 1px auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -7716,6 +7716,14 @@ input[type=range]::-moz-range-track {
     .board-panel.full-bleed-mobile .game-board .board-cell .dual-letter-container span {
         font-size: 0.52em !important;
         line-height: 1 !important;
+    }
+
+    .board-panel .validation-status,
+    .board-panel.full-bleed-mobile .validation-status {
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        min-height: 18px !important;
+        line-height: 1.2 !important;
     }
 }
 
@@ -9311,7 +9319,7 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 0 auto 3px auto !important;
+        margin: 0 auto 1px auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
