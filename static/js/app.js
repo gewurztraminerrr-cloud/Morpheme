@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33147';
+const CURRENT_APP_BUILD = '33148';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -1258,10 +1258,18 @@ async function checkTournamentTurn() {
         const data = await res.json();
         const btn = document.getElementById('nav-tournaments-btn');
 
-        if (btn && data.user_status && data.user_status.has_turn) {
-            btn.classList.add('has-turn');
-        } else if (btn) {
-            btn.classList.remove('has-turn');
+        if (btn) {
+            if (data.user_status && data.user_status.has_turn) {
+                btn.classList.add('has-turn');
+                btn.classList.remove('has-signup');
+            } else {
+                btn.classList.remove('has-turn');
+                if (data.status === 'signup' && (!data.user_status || data.user_status.status === 'not_joined')) {
+                    btn.classList.add('has-signup');
+                } else {
+                    btn.classList.remove('has-signup');
+                }
+            }
         }
     } catch (e) { }
 }

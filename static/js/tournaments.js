@@ -137,7 +137,7 @@ async function fetchTournamentStatus() {
             try { localStorage.setItem('morpheme_user_id', String(data.user_status.matchup.user_id)); } catch (e) {}
         }
         renderTournament(data);
-        updateNavHighlight(data.user_status?.has_turn);
+        updateNavHighlight(data.user_status?.has_turn, data.status, data.user_status);
     } catch (e) {
         console.error("Error loading tournament:", e);
         const actionArea = document.getElementById('tournament-action-area');
@@ -147,13 +147,19 @@ async function fetchTournamentStatus() {
     }
 }
 
-function updateNavHighlight(hasTurn) {
+function updateNavHighlight(hasTurn, status, userStatus) {
     const btn = document.getElementById('nav-tournaments-btn');
     if (btn) {
         if (hasTurn) {
             btn.classList.add('has-turn');
+            btn.classList.remove('has-signup');
         } else {
             btn.classList.remove('has-turn');
+            if (status === 'signup' && (!userStatus || userStatus.status === 'not_joined')) {
+                btn.classList.add('has-signup');
+            } else {
+                btn.classList.remove('has-signup');
+            }
         }
     }
 }

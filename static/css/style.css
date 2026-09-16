@@ -6850,6 +6850,31 @@ body .tab-btn.active {
     animation: pulse-green 1.2s infinite ease-in-out !important;
 }
 
+.nav-btn.has-signup,
+#nav-tournaments-btn.has-signup {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    border-color: #3498db !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.8) !important;
+    animation: pulse-blue 1.2s infinite ease-in-out !important;
+}
+
+@keyframes pulse-blue {
+    0% {
+        box-shadow: 0 0 6px rgba(52, 152, 219, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 24px rgba(52, 152, 219, 1), 0 0 35px rgba(52, 152, 219, 0.6);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 6px rgba(52, 152, 219, 0.4);
+        transform: scale(1);
+    }
+}
+
 .nav-btn.has-new {
     background: #ffd700 !important;
     border-color: #daa520 !important;
