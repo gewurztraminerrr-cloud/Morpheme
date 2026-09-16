@@ -1527,8 +1527,13 @@ body.theme-light-brown .field-hint {
         letter-spacing: 0.5px;
         -webkit-tap-highlight-color: transparent;
     }
+    .mobile-back-btn:hover,
+    .mobile-back-btn:focus,
     .mobile-back-btn:active {
         background: rgba(var(--text-primary-rgb), 0.15);
+        border-color: #38bdf8 !important;
+        color: #38bdf8 !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.35) !important;
     }
 
     #rooms-list .placeholder-icon {

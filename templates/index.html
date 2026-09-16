@@ -156,12 +156,12 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1789333000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789312000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789336000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1789333000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789312000">
-    <link rel="stylesheet" href="/css/play.css?v=1789335000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789336000">
+    <link rel="stylesheet" href="/css/play.css?v=1789336000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
-    <link rel="stylesheet" href="/css/forum.css?v=1789211400">
+    <link rel="stylesheet" href="/css/forum.css?v=1789336000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: lighter grey for white & light layouts */
@@ -215,6 +215,40 @@
             background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
             border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
             box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+        }
+
+        /* Mobile Back Button: High-visibility blue highlight when pressed / active / hovered */
+        .bottom-back-btn:active,
+        .bottom-back-btn:hover,
+        .bottom-back-btn:focus,
+        .bottom-back-btn:focus-visible,
+        .forum-back-btn:active,
+        .forum-back-btn:hover,
+        .forum-back-btn:focus,
+        .forum-back-btn:focus-visible {
+            border-color: #38bdf8 !important;
+            color: #38bdf8 !important;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.45) !important;
+        }
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:active,
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:hover,
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:focus,
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:focus-visible,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:active,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:hover,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus-visible,
+        [class*="theme-white"] .bottom-back-btn:active,
+        [class*="theme-white"] .bottom-back-btn:hover,
+        [class*="theme-white"] .bottom-back-btn:focus,
+        [class*="theme-white"] .bottom-back-btn:focus-visible,
+        [class*="theme-light-"] .bottom-back-btn:active,
+        [class*="theme-light-"] .bottom-back-btn:hover,
+        [class*="theme-light-"] .bottom-back-btn:focus,
+        [class*="theme-light-"] .bottom-back-btn:focus-visible {
+            border-color: #0284c7 !important;
+            color: #0284c7 !important;
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.35) !important;
         }
     </style>
     <script>
@@ -2954,21 +2988,28 @@
                     font-weight: 700 !important;
                 }
                 #page-forums #forum-back-to-list:hover,
+                #page-forums #forum-back-to-list:focus,
                 #page-forums #forum-category-back-btn:hover,
+                #page-forums #forum-category-back-btn:focus,
                 #page-forums .forum-back-btn:hover,
-                #page-forums .bottom-back-btn:hover {
+                #page-forums .forum-back-btn:focus,
+                #page-forums .bottom-back-btn:hover,
+                #page-forums .bottom-back-btn:focus {
                     background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
-                    border-color: var(--accent-color, #ff007f) !important;
-                    color: var(--accent-color, #ff007f) !important;
-                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(255, 0, 127, 0.25) !important;
+                    border-color: #38bdf8 !important;
+                    color: #38bdf8 !important;
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
                     transform: translateY(-1px);
                 }
                 #page-forums #forum-back-to-list:active,
                 #page-forums #forum-category-back-btn:active,
                 #page-forums .forum-back-btn:active,
                 #page-forums .bottom-back-btn:active {
+                    background: linear-gradient(180deg, #303d57 0%, #202a3c 100%) !important;
+                    border-color: #38bdf8 !important;
+                    color: #38bdf8 !important;
                     transform: translateX(-4px) scale(0.98) !important;
-                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 14px rgba(56, 189, 248, 0.45) !important;
                 }
                 #page-forums .forum-bottom-bar {
                     background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
@@ -7610,7 +7651,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1789314000"></script>
     <script src="/js/forum.js?v=33783"></script>
-    <script src="/js/app.js?v=1789335000"></script>
+    <script src="/js/app.js?v=1789336000"></script>
     <script src="/js/lobby.js?v=1789312000"></script>
     <script src="/js/play.js?v=1789328000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>

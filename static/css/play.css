@@ -2347,16 +2347,21 @@ body.theme-light-brown .word-item.missed {
     transition: all 0.2s ease, transform 0.1s ease;
     min-height: 42px;
 }
-.bottom-back-btn:hover {
+.bottom-back-btn:hover,
+.bottom-back-btn:focus,
+.bottom-back-btn:focus-visible {
     background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
-    border-color: var(--accent-color, #ff007f) !important;
-    color: var(--accent-color, #ff007f) !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px rgba(255, 0, 127, 0.25) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
     transform: translateY(-1px);
 }
 .bottom-back-btn:active {
+    background: linear-gradient(180deg, #303d57 0%, #202a3c 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
     transform: translateX(-4px) scale(0.98) !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 14px rgba(56, 189, 248, 0.45) !important;
 }
 
 [class*="theme-white"] .mobile-bottom-nav,
@@ -2418,16 +2423,37 @@ body.theme-light-brown .bottom-back-btn {
     font-weight: 700 !important;
 }
 [class*="theme-white"] .bottom-back-btn:hover,
+[class*="theme-white"] .bottom-back-btn:active,
+[class*="theme-white"] .bottom-back-btn:focus,
+[class*="theme-white"] .bottom-back-btn:focus-visible,
 [class*="theme-light-"] .bottom-back-btn:hover,
+[class*="theme-light-"] .bottom-back-btn:active,
+[class*="theme-light-"] .bottom-back-btn:focus,
+[class*="theme-light-"] .bottom-back-btn:focus-visible,
 body.theme-yellow .bottom-back-btn:hover,
+body.theme-yellow .bottom-back-btn:active,
+body.theme-yellow .bottom-back-btn:focus,
+body.theme-yellow .bottom-back-btn:focus-visible,
 body.theme-pink .bottom-back-btn:hover,
+body.theme-pink .bottom-back-btn:active,
+body.theme-pink .bottom-back-btn:focus,
+body.theme-pink .bottom-back-btn:focus-visible,
 body.theme-orange .bottom-back-btn:hover,
+body.theme-orange .bottom-back-btn:active,
+body.theme-orange .bottom-back-btn:focus,
+body.theme-orange .bottom-back-btn:focus-visible,
 body.theme-gray .bottom-back-btn:hover,
-body.theme-light-brown .bottom-back-btn:hover {
+body.theme-gray .bottom-back-btn:active,
+body.theme-gray .bottom-back-btn:focus,
+body.theme-gray .bottom-back-btn:focus-visible,
+body.theme-light-brown .bottom-back-btn:hover,
+body.theme-light-brown .bottom-back-btn:active,
+body.theme-light-brown .bottom-back-btn:focus,
+body.theme-light-brown .bottom-back-btn:focus-visible {
     background: #ffffff !important;
-    border-color: var(--accent-color, #0284c7) !important;
-    color: var(--accent-color, #0284c7) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+    border-color: #0284c7 !important;
+    color: #0284c7 !important;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25) !important;
 }
 
 @media (min-width: 901px) {
