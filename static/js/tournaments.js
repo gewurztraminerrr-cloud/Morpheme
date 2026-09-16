@@ -627,8 +627,15 @@ function renderActiveState(container, data, userStatus) {
         ${matchupHtml}
     `;
 
-    // Status / result messaging
-    if (!userStatus.has_turn) {
+    // If user has a BYE this round, display the BYE banner immediately
+    if (matchup && matchup.opponent_id === -1) {
+        container.innerHTML += `
+            <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; animation: pulse 2s infinite; max-width: 500px; margin: 0 auto;">
+                <div style="font-size:1.8rem; color:#2ecc71; font-weight:800; margin-bottom:5px;">ROUND ${data.current_round} BYE</div>
+                <div style="font-size:1.1rem; opacity:0.8;">Automatic win this round. Round ${data.current_round + 1} will begin when Round ${data.current_round} ends.</div>
+            </div>
+        `;
+    } else if (!userStatus.has_turn) {
         // I have played.
         if (matchup && matchup.opponent_id !== -1) {
             const myScore = matchup.my_score || 0;

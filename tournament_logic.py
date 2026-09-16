@@ -326,11 +326,28 @@ class TournamentManager:
         ''', (tid,)).fetchall()
         
         user_ids = [p['user_id'] for p in participants]
-        random.shuffle(user_ids)
-        
         now = time.time()
-        
         matchups = []
+
+        # If round > 1 and odd number of active players, award BYE to best score from previous round
+        if round_number > 1 and len(user_ids) % 2 != 0 and len(user_ids) > 1:
+            placeholders = ','.join('?' for _ in user_ids)
+            prev_scores = conn.execute(f'''
+                SELECT user_id, score FROM tournament_scores
+                WHERE tournament_id = ? AND round_number = ? AND user_id IN ({placeholders})
+                ORDER BY score DESC, submitted_at ASC
+            ''', [tid, round_number - 1] + user_ids).fetchall()
+
+            bye_user_id = None
+            if prev_scores:
+                bye_user_id = prev_scores[0]['user_id']
+            else:
+                bye_user_id = random.choice(user_ids)
+
+            user_ids.remove(bye_user_id)
+            matchups.append((tid, round_number, bye_user_id, -1, now))
+
+        random.shuffle(user_ids)
         for i in range(0, len(user_ids), 2):
             u1 = user_ids[i]
             u2 = user_ids[i+1] if i+1 < len(user_ids) else -1 # -1 denotes a bye
@@ -637,6 +654,15 @@ class TournamentManager:
             conn.close()
             return False
             
+        # Check if user has a BYE this round (user2_id = -1)
+        bye_match = conn.execute('''
+            SELECT 1 FROM tournament_matchups
+            WHERE tournament_id = ? AND round_number = ? AND user1_id = ? AND user2_id = -1
+        ''', (tid, round_num, user_id)).fetchone()
+        if bye_match:
+            conn.close()
+            return False
+
         # Check if user has already submitted score for this round
         score = conn.execute('''
             SELECT 1 FROM tournament_scores 

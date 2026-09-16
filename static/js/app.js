@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33146';
+const CURRENT_APP_BUILD = '33147';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
