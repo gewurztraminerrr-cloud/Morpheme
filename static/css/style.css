@@ -9493,28 +9493,28 @@ body.theme-white #sub-results-container div[style*="font-weight: 800"],
     color: #475569 !important;
 }
 
-/* 17. Toggle Switches Red "ON" State on White Layouts */
-body.theme-white .toggle-switch input:checked + .slider,
-[class*="theme-white"] .toggle-switch input:checked + .slider,
-[class*="theme-light-"] .toggle-switch input:checked + .slider,
-body.theme-yellow .toggle-switch input:checked + .slider,
-body.theme-pink .toggle-switch input:checked + .slider,
-body.theme-orange .toggle-switch input:checked + .slider,
-body.theme-gray .toggle-switch input:checked + .slider,
-body.theme-light-brown .toggle-switch input:checked + .slider {
+/* 17. Toggle Switches: Green "ON" State and Red "OFF" State */
+.toggle-switch .slider {
     background-color: #ef4444 !important;
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 8px rgba(239, 68, 68, 0.3) !important;
 }
 
-body.theme-white .toggle-switch input:checked:focus + .slider,
-[class*="theme-white"] .toggle-switch input:checked:focus + .slider,
-[class*="theme-light-"] .toggle-switch input:checked:focus + .slider,
-body.theme-yellow .toggle-switch input:checked:focus + .slider,
-body.theme-pink .toggle-switch input:checked:focus + .slider,
-body.theme-orange .toggle-switch input:checked:focus + .slider,
-body.theme-gray .toggle-switch input:checked:focus + .slider,
-body.theme-light-brown .toggle-switch input:checked:focus + .slider {
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+.toggle-switch input:focus + .slider,
+.toggle-switch input:focus-visible + .slider {
+    outline: none !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 10px rgba(239, 68, 68, 0.5) !important;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: #2ecc71 !important;
+    border-color: rgba(46, 204, 113, 0.4) !important;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5) !important;
+}
+
+.toggle-switch input:checked:focus + .slider,
+.toggle-switch input:checked:focus-visible + .slider {
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
 }
 
 /* 18. Tournaments: VERSUS Opponent Username on White/Light Themes */

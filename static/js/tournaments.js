@@ -270,6 +270,7 @@ function renderTournament(data) {
             lbList.innerHTML = finishedScores.map((s, idx) => {
                 const isMe = s.username === window.currentUser;
                 const highlight = isMe ? 'border: 1px solid rgba(46, 204, 113, 0.3); background: rgba(46, 204, 113, 0.05);' : '';
+                const flagHtml = formatUserFlagHtml(s.country_flag);
 
                 // Show replay button ONLY if board data and submitted words are returned by the backend
                 const canReplay = s.board_data && s.submitted_words && s.submitted_words.length > 0;
@@ -281,7 +282,7 @@ function renderTournament(data) {
                     <div class="t-leaderboard-item" style="${highlight}">
                         <div class="user-info">
                             <span class="rank">#${idx + 1}</span>
-                            <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
+                            <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none; display: inline-flex; align-items: center;" title="View Mini-Profile">${flagHtml}<span>${s.username} ${isMe ? '(You)' : ''}</span></span>
                         </div>
                         <div class="score-group">
                             <span class="score">${s.score} <small style="font-size:0.6rem; opacity:0.6;">PTS</small></span>
@@ -343,10 +344,10 @@ function renderTournament(data) {
                     }
                 }
                 mList.innerHTML = renderMatchupItemHTML(myMatchup);
-            } else if (data.status === 'completed') {
-                mList.innerHTML = `<p class="placeholder" style="padding: 6px 0;">Tournament completed. Click "View All Pairings" to see results.</p>`;
+            } else if (curRoundMatchups.length > 0) {
+                mList.innerHTML = renderMatchupItemHTML(curRoundMatchups[0]);
             } else {
-                mList.innerHTML = `<p class="placeholder" style="padding: 6px 0;">You have been eliminated or are not in this round.</p>`;
+                mList.innerHTML = '<p class="placeholder">No active pairings yet</p>';
             }
 
             if (viewAllBtn) {
@@ -372,12 +373,13 @@ function renderTournament(data) {
                     ? `<small style="margin-left:5px; font-weight:700; color:#ffd700;">🏆 Champion</small>`
                     : (s.final_rank ? `<small style="margin-left:5px; opacity:0.7">Rank #${s.final_rank}</small>` : '');
                 const nameStyle = isEliminated ? 'text-decoration: line-through; opacity: 0.45;' : '';
+                const flagHtml = formatUserFlagHtml(s.country_flag);
 
                 const clickAction = `if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${s.username}'); } event.stopPropagation();`;
                 return `
                     <div class="t-standing-item ${statusClass}" title="${isWinner ? 'Winner' : s.status}">
                         <span class="dot"></span>
-                        <span class="t-username-clickable" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none; ${nameStyle}" title="View Mini-Profile">${s.username} ${isMe ? '(You)' : ''}</span>
+                        <span class="t-username-clickable" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none; display: inline-flex; align-items: center; ${nameStyle}" title="View Mini-Profile">${flagHtml}<span>${s.username} ${isMe ? '(You)' : ''}</span></span>
                         ${rankInfo}
                     </div>
                 `;
@@ -453,24 +455,30 @@ function renderSignupState(container, data, userStatus) {
     }
 }
 
-function renderScoresListHTML(myScore, oppScore, oppName) {
+function renderScoresListHTML(myScore, oppScore, oppName, myFlag, oppFlag) {
     const myName = window.currentUser || "You";
-    const p1 = myScore >= oppScore ? { name: myName, score: myScore } : { name: oppName, score: oppScore };
-    const p2 = myScore >= oppScore ? { name: oppName, score: oppScore } : { name: myName, score: myScore };
+    const p1 = myScore >= oppScore 
+        ? { name: myName, score: myScore, flag: myFlag } 
+        : { name: oppName, score: oppScore, flag: oppFlag };
+    const p2 = myScore >= oppScore 
+        ? { name: oppName, score: oppScore, flag: oppFlag } 
+        : { name: myName, score: myScore, flag: myFlag };
     
     const color1 = myScore === oppScore ? '#ffd700' : '#2ecc71';
     const color2 = myScore === oppScore ? '#ffd700' : '#e74c3c';
+    const f1Html = formatUserFlagHtml(p1.flag);
+    const f2Html = formatUserFlagHtml(p2.flag);
     
     return `
-        <div style="margin-top: 15px; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; text-align: left; display: inline-block; min-width: 220px;">
-            <div style="font-weight:700; opacity:0.9; margin-bottom: 8px; text-align: center; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Scores:</div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 6px; color: ${color1}; font-weight: 700;">
-                <span>${p1.name}</span>
-                <span>${p1.score} pts</span>
+        <div style="margin-top: 15px; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; text-align: left; display: inline-block; min-width: 250px; max-width: 100%; box-sizing: border-box;">
+            <div style="font-weight:700; opacity:0.9; margin-bottom: 10px; text-align: center; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Scores:</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap: 20px; margin-bottom: 8px; color: ${color1}; font-weight: 700;">
+                <span style="display:inline-flex; align-items:center; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right: 12px;">${f1Html}<span>${p1.name}</span></span>
+                <span style="white-space:nowrap; flex-shrink:0;">${p1.score} pts</span>
             </div>
-            <div style="display:flex; justify-content:space-between; color: ${color2}; opacity: ${myScore === oppScore ? '1' : '0.9'}; font-weight: ${myScore === oppScore ? '700' : 'normal'};">
-                <span>${p2.name}</span>
-                <span>${p2.score} pts</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap: 20px; color: ${color2}; opacity: ${myScore === oppScore ? '1' : '0.9'}; font-weight: ${myScore === oppScore ? '700' : 'normal'};">
+                <span style="display:inline-flex; align-items:center; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right: 12px;">${f2Html}<span>${p2.name}</span></span>
+                <span style="white-space:nowrap; flex-shrink:0;">${p2.score} pts</span>
             </div>
         </div>
     `;
@@ -486,7 +494,9 @@ function renderActiveState(container, data, userStatus) {
         if (matchup) {
             const myScore = matchup.my_score || 0;
             const oppScore = matchup.opponent_score || 0;
-            scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
+            const myFlag = matchup.my_flag || (data.standings && data.standings.find(s => s.username === window.currentUser)?.country_flag) || '';
+            const oppFlag = matchup.opponent_flag || (data.standings && data.standings.find(s => s.username === matchup.opponent_name)?.country_flag) || '';
+            scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name, myFlag, oppFlag);
         }
         
         container.innerHTML = `
@@ -561,7 +571,9 @@ function renderActiveState(container, data, userStatus) {
         const hasProceeded = sessionStorage.getItem(proceedKey) === 'true';
 
         if (!hasProceeded && userStatus.has_turn) {
-            const prevScoresHtml = isBye ? "" : renderScoresListHTML(myPrevScore, oppPrevScore, oppName);
+            const myPrevFlag = prevMatchup.my_flag || (data.standings && data.standings.find(s => s.username === window.currentUser)?.country_flag) || '';
+            const oppPrevFlag = prevMatchup.opponent_flag || (data.standings && data.standings.find(s => s.username === oppName)?.country_flag) || '';
+            const prevScoresHtml = isBye ? "" : renderScoresListHTML(myPrevScore, oppPrevScore, oppName, myPrevFlag, oppPrevFlag);
             container.innerHTML = `
                 <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid #2ecc71; border-radius: 15px; padding: 25px; text-align: center; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(46, 204, 113, 0.15);">
                     <div style="font-size: 2.2rem; color: #2ecc71; font-weight: 900; margin-bottom: 8px; text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">
@@ -634,7 +646,9 @@ function renderActiveState(container, data, userStatus) {
                 // Both played — declare winner and loser immediately!
                 const myScore = matchup.my_score || 0;
                 const oppScore = matchup.opponent_score || 0;
-                const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name);
+                const myFlag = matchup.my_flag || (data.standings && data.standings.find(s => s.username === window.currentUser)?.country_flag) || '';
+                const oppFlag = matchup.opponent_flag || (data.standings && data.standings.find(s => s.username === matchup.opponent_name)?.country_flag) || '';
+                const scoresHtml = renderScoresListHTML(myScore, oppScore, matchup.opponent_name, myFlag, oppFlag);
                 
                 let iWon = false;
                 if (matchup.winner_id) {
