@@ -17,6 +17,18 @@ window.initTournamentsPage = function () {
 let currentTournamentState = null;
 window.currentTournamentState = null;
 
+function formatUserFlagHtml(flag) {
+    if (!flag) return '';
+    if (typeof window.getFlagHtml === 'function') {
+        const rendered = window.getFlagHtml(flag, 'margin-right: 4px; margin-left: 0;');
+        if (rendered && !rendered.startsWith('<img')) {
+            return `<span class="user-flag" style="margin-right: 4px; font-size: 0.95rem; line-height: 1; vertical-align: middle; display: inline-block; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;">${rendered}</span>`;
+        }
+        return rendered;
+    }
+    return `<span class="user-flag" style="margin-right: 4px; font-size: 0.95rem; line-height: 1; vertical-align: middle; display: inline-block; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;">${flag}</span>`;
+}
+
 function formatTournamentStartDate(epochSeconds) {
     if (!epochSeconds) return '';
     const d = new Date(typeof epochSeconds === 'number' ? (epochSeconds < 1e11 ? epochSeconds * 1000 : epochSeconds) : epochSeconds);
@@ -365,10 +377,11 @@ function renderTournament(data) {
             hBody.innerHTML = history.map(h => {
                 const date = typeof window.formatAppDate === 'function' ? window.formatAppDate(h.completed_at) : new Date(h.completed_at * 1000).toLocaleDateString();
                 const clickAction = `if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${h.username}'); } event.stopPropagation();`;
+                const flagHtml = formatUserFlagHtml(h.country_flag);
                 return `
                     <tr>
                         <td>${date}</td>
-                        <td style="font-weight:700; color:var(--accent-color); cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${h.username}</td>
+                        <td style="font-weight:700; color:var(--accent-color); cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none; white-space: nowrap;" onclick="${clickAction}" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${flagHtml}<span class="username">${h.username}</span></td>
                         <td>Championship Edition</td>
                         <td>
                             <div style="display:flex; align-items:center; gap:10px;">
@@ -856,10 +869,13 @@ function renderMatchupItemHTML(m) {
     const highlight = (u1_isMe || u2_isMe) ? 'border: 1px solid var(--accent-color, #e11d48); background: rgba(225, 29, 72, 0.12);' : 'background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);';
 
     const s1 = (m.u1_score === null || m.u1_score === undefined) ? '...' : m.u1_score;
-    const s2 = (m.u2_score === null || m.u2_score === undefined) ? ((m.user2_id === -1) ? '-' : '...') : m.u2_score;
+    const s2 = (m.user2_id === -1) ? '-' : ((m.u2_score === null || m.u2_score === undefined) ? '...' : m.u2_score);
 
     const u1_winner = m.winner_id && m.winner_id === m.user1_id;
     const u2_winner = m.winner_id && m.winner_id === m.user2_id;
+
+    const u1_flagHtml = formatUserFlagHtml(m.u1_flag);
+    const u2_flagHtml = (m.user2_id !== -1) ? formatUserFlagHtml(m.u2_flag) : '';
 
     const u1_canClick = m.u1_name && m.u1_name !== 'Player 1';
     const u2_canClick = m.user2_id !== -1 && m.u2_name && m.u2_name !== 'Player 2' && m.u2_name !== 'BYE';
@@ -869,19 +885,28 @@ function renderMatchupItemHTML(m) {
 
     return `
         <div class="t-matchup-item" style="${highlight} border-radius: 8px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; box-sizing: border-box; width: 100%; max-width: 100%; overflow: hidden;">
-            <div class="participant u1" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; gap: 4px; overflow: hidden; font-weight: ${u1_winner ? 'bold' : 'normal'};">
-                <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
+            <div class="participant u1" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; overflow: hidden; font-weight: ${u1_winner ? 'bold' : 'normal'};">
+                <div class="user-info" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; flex: 1 1 auto;">
+                    ${u1_flagHtml ? `<span class="user-flag" style="-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; flex-shrink: 0; display: inline-flex; align-items: center;">${u1_flagHtml}</span>` : ''}
+                    <span class="username ${u1_isMe ? 'me' : ''}" ${u1_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u1_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u1_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u1_canClick ? 'title="View Mini-Profile"' : ''}>${u1_name}</span>
+                    ${u1_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-left: 1px;">🏆</span>' : ''}
+                </div>
                 <span class="pts" style="flex-shrink: 0; opacity: 0.85; font-size: 0.8rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;">${s1}</span>
-                ${u1_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-left: 1px;">🏆</span>' : ''}
             </div>
             <div class="vs" style="flex-shrink: 0; padding: 0 5px; opacity: 0.5; font-size: 0.7rem; font-weight: bold; width: auto;">VS</div>
-            <div class="participant u2" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; overflow: hidden; font-weight: ${u2_winner ? 'bold' : 'normal'};">
+            <div class="participant u2" style="flex: 1 1 0%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; overflow: hidden; font-weight: ${u2_winner ? 'bold' : 'normal'};">
                 ${m.user2_id === -1
-                    ? `<span style="opacity: 0.45; font-style: italic; flex-shrink: 0;">BYE</span>`
+                    ? `<span class="pts" style="flex-shrink: 0; opacity: 0.85; font-size: 0.8rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;">-</span>
+                       <div class="user-info" style="display: flex; align-items: center; justify-content: flex-end; min-width: 0; overflow: hidden; flex: 1 1 auto;">
+                           <span style="opacity: 0.45; font-style: italic; flex-shrink: 0;">BYE</span>
+                       </div>`
                     : `
-                        ${u2_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-right: 1px;">🏆</span>' : ''}
                         <span class="pts" style="flex-shrink: 0; opacity: 0.85; font-size: 0.8rem; background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 4px;">${s2}</span>
-                        <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
+                        <div class="user-info" style="display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; overflow: hidden; flex: 1 1 auto;">
+                            ${u2_winner ? '<span title="Winner" style="flex-shrink: 0; color: #ffd700; font-size: 0.8rem; margin-right: 1px;">🏆</span>' : ''}
+                            ${u2_flagHtml ? `<span class="user-flag" style="-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; flex-shrink: 0; display: inline-flex; align-items: center;">${u2_flagHtml}</span>` : ''}
+                            <span class="username ${u2_isMe ? 'me' : ''}" ${u2_click} style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${u2_isMe ? 'color: var(--accent-color, #ff6b6b); font-weight: 700;' : ''} ${u2_canClick ? 'cursor: pointer;' : ''} -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" ${u2_canClick ? 'title="View Mini-Profile"' : ''}>${u2_name}</span>
+                        </div>
                     `
                 }
             </div>

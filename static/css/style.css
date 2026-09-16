@@ -6703,7 +6703,23 @@ body .tab-btn.active {
     flex: 1 1 0% !important;
     min-width: 0 !important;
     overflow: hidden !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     gap: 4px !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .participant .user-info {
+    display: flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+    gap: 4px !important;
+}
+
+#generic-info-modal.all-pairings-modal .t-matchup-item .participant.u2 .user-info {
+    justify-content: flex-end !important;
 }
 
 #generic-info-modal.all-pairings-modal .t-matchup-item .participant .username {

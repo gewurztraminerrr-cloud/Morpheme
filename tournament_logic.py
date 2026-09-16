@@ -459,6 +459,7 @@ class TournamentManager:
         row = conn.execute('''
             SELECT m.*, 
                    u1.username as u1_name, u2.username as u2_name,
+                   u1.country_flag as u1_flag, u2.country_flag as u2_flag,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
             FROM tournament_matchups m
@@ -476,11 +477,15 @@ class TournamentManager:
         if res['user1_id'] == user_id:
             res['opponent_id'] = res['user2_id']
             res['opponent_name'] = res['u2_name'] if res['user2_id'] != -1 else "BYE"
+            res['opponent_flag'] = res['u2_flag'] if res['user2_id'] != -1 else ""
+            res['my_flag'] = res['u1_flag']
             res['opponent_score'] = res['u2_score'] if res['user2_id'] != -1 else 0
             res['my_score'] = res['u1_score']
         else:
             res['opponent_id'] = res['user1_id']
             res['opponent_name'] = res['u1_name']
+            res['opponent_flag'] = res['u1_flag']
+            res['my_flag'] = res['u2_flag']
             res['opponent_score'] = res['u1_score']
             res['my_score'] = res['u2_score']
             
@@ -533,6 +538,7 @@ class TournamentManager:
         rows = conn.execute('''
             SELECT m.*, 
                    u1.username as u1_name, u2.username as u2_name,
+                   u1.country_flag as u1_flag, u2.country_flag as u2_flag,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
             FROM tournament_matchups m
@@ -549,6 +555,7 @@ class TournamentManager:
         rows = conn.execute('''
             SELECT m.*, 
                    u1.username as u1_name, u2.username as u2_name,
+                   u1.country_flag as u1_flag, u2.country_flag as u2_flag,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user1_id AND submitted_at IS NOT NULL) as u1_score,
                    (SELECT score FROM tournament_scores WHERE tournament_id = m.tournament_id AND round_number = m.round_number AND user_id = m.user2_id AND submitted_at IS NOT NULL) as u2_score
             FROM tournament_matchups m
@@ -565,7 +572,7 @@ class TournamentManager:
         # Get winners of past tournaments (Final rank 1)
         # We also need their total score or final round score to display
         rows = conn.execute('''
-            SELECT t.id, t.completed_at, t.current_round, u.username, tp.final_rank,
+            SELECT t.id, t.completed_at, t.current_round, u.username, u.country_flag, tp.final_rank,
                    (SELECT score FROM tournament_scores ts 
                     WHERE ts.tournament_id = t.id AND ts.user_id = u.id AND ts.round_number = t.current_round) as winning_score
             FROM tournaments t
@@ -644,7 +651,7 @@ class TournamentManager:
         conn = self.get_db()
         conn.row_factory = sqlite3.Row
         rows = conn.execute('''
-            SELECT ts.user_id, u.username, ts.score, ts.submitted_words, ts.submitted_at, ts.round_start_time,
+            SELECT ts.user_id, u.username, u.country_flag, ts.score, ts.submitted_words, ts.submitted_at, ts.round_start_time,
                    (SELECT board_data FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?) as board_data
             FROM tournament_scores ts
             JOIN users u ON ts.user_id = u.id
@@ -660,7 +667,7 @@ class TournamentManager:
         conn.row_factory = sqlite3.Row
         
         rows = conn.execute('''
-            SELECT tp.user_id, u.username, tp.status, tp.final_rank
+            SELECT tp.user_id, u.username, u.country_flag, tp.status, tp.final_rank
             FROM tournament_participants tp
             JOIN users u ON tp.user_id = u.id
             WHERE tp.tournament_id = ?
