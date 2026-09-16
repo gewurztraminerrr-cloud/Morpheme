@@ -6895,8 +6895,41 @@ body .tab-btn.active {
 }
 
 /* Leaderboard Styles In Tournaments */
+/* Leaderboard and Hall of Fame Panels */
 .leaderboard-panel {
     grid-column: span 2;
+}
+
+@media (min-width: 900px) {
+    /* Default Hall of Fame spanning full width when alone */
+    .tournament-card.history-panel {
+        grid-column: span 2;
+    }
+
+    /* When Round Standings is present, place Round Standings (left) and Hall of Fame (right) side by side */
+    #tournament-leaderboard-card:not(.hidden) {
+        grid-column: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #tournament-leaderboard-card:not(.hidden) ~ .tournament-card.history-panel {
+        grid-column: 2 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #tournament-leaderboard-card:not(.hidden) .t-leaderboard-list {
+        flex: 1 1 auto !important;
+        max-height: 300px !important;
+        height: 300px !important;
+    }
+
+    .tournament-card.history-panel .history-table-wrapper {
+        flex: 1 1 auto !important;
+        max-height: 300px !important;
+        height: 300px !important;
+    }
 }
 
 .t-standings-list {
