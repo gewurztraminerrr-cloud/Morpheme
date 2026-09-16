@@ -9280,6 +9280,256 @@ body.theme-light-brown .tool-def-isvalid-link {
     color: #6d28d9 !important;
 }
 
+/* 14. Country Flag Selector Dropdown for White/Light Themes */
+body.theme-white .dropdown-menu,
+[class*="theme-white"] .dropdown-menu,
+[class*="theme-light-"] .dropdown-menu,
+body.theme-yellow .dropdown-menu,
+body.theme-pink .dropdown-menu,
+body.theme-orange .dropdown-menu,
+body.theme-gray .dropdown-menu,
+body.theme-light-brown .dropdown-menu {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.theme-white .dropdown-header,
+[class*="theme-white"] .dropdown-header,
+[class*="theme-light-"] .dropdown-header,
+body.theme-yellow .dropdown-header,
+body.theme-pink .dropdown-header,
+body.theme-orange .dropdown-header,
+body.theme-gray .dropdown-header,
+body.theme-light-brown .dropdown-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white .dropdown-search,
+[class*="theme-white"] .dropdown-search,
+[class*="theme-light-"] .dropdown-search,
+body.theme-yellow .dropdown-search,
+body.theme-pink .dropdown-search,
+body.theme-orange .dropdown-search,
+body.theme-gray .dropdown-search,
+body.theme-light-brown .dropdown-search {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .dropdown-search::placeholder,
+[class*="theme-white"] .dropdown-search::placeholder,
+[class*="theme-light-"] .dropdown-search::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.theme-white .dropdown-item,
+[class*="theme-white"] .dropdown-item,
+[class*="theme-light-"] .dropdown-item,
+body.theme-yellow .dropdown-item,
+body.theme-pink .dropdown-item,
+body.theme-orange .dropdown-item,
+body.theme-gray .dropdown-item,
+body.theme-light-brown .dropdown-item {
+    color: #1e293b !important;
+}
+
+body.theme-white .dropdown-item:hover,
+[class*="theme-white"] .dropdown-item:hover,
+[class*="theme-light-"] .dropdown-item:hover,
+body.theme-yellow .dropdown-item:hover,
+body.theme-pink .dropdown-item:hover,
+body.theme-orange .dropdown-item:hover,
+body.theme-gray .dropdown-item:hover,
+body.theme-light-brown .dropdown-item:hover {
+    background: #f1f5f9 !important;
+}
+
+body.theme-white .dropdown-item-text,
+[class*="theme-white"] .dropdown-item-text,
+[class*="theme-light-"] .dropdown-item-text {
+    color: #1e293b !important;
+}
+
+/* 15. Tools: Change Password & Change Email Cards on White/Light Themes */
+body.theme-white .account-card,
+[class*="theme-white"] .account-card,
+[class*="theme-light-"] .account-card,
+body.theme-yellow .account-card,
+body.theme-pink .account-card,
+body.theme-orange .account-card,
+body.theme-gray .account-card,
+body.theme-light-brown .account-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-white .account-card h3,
+[class*="theme-white"] .account-card h3,
+[class*="theme-light-"] .account-card h3 {
+    color: #0f172a !important;
+}
+
+body.theme-white .account-card div,
+[class*="theme-white"] .account-card div,
+[class*="theme-light-"] .account-card div {
+    color: #475569;
+}
+
+body.theme-white .account-card label,
+[class*="theme-white"] .account-card label,
+[class*="theme-light-"] .account-card label {
+    color: #1e293b !important;
+}
+
+body.theme-white .account-card input[type="password"],
+[class*="theme-white"] .account-card input[type="password"],
+[class*="theme-light-"] .account-card input[type="password"],
+body.theme-white .account-card input[type="email"],
+[class*="theme-white"] .account-card input[type="email"],
+[class*="theme-light-"] .account-card input[type="email"] {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .account-card input::placeholder,
+[class*="theme-white"] .account-card input::placeholder,
+[class*="theme-light-"] .account-card input::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.theme-white #email-current-display,
+[class*="theme-white"] #email-current-display,
+[class*="theme-light-"] #email-current-display {
+    background: #f8fafc !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+/* 16. Tools: Subanagrams on White/Light Themes */
+body.theme-white #tool-subanagrams .combo-control-panel,
+[class*="theme-white"] #tool-subanagrams .combo-control-panel,
+[class*="theme-light-"] #tool-subanagrams .combo-control-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-white #tool-subanagrams .sub-len-label,
+[class*="theme-white"] #tool-subanagrams .sub-len-label {
+    color: #475569 !important;
+}
+
+body.theme-white #tool-subanagrams .subanagrams-game-area,
+[class*="theme-white"] #tool-subanagrams .subanagrams-game-area,
+[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-white #sub-letters-display,
+[class*="theme-white"] #sub-letters-display,
+[class*="theme-light-"] #sub-letters-display {
+    color: #6d28d9 !important;
+    text-shadow: 0 0 20px rgba(109, 40, 217, 0.25) !important;
+}
+
+body.theme-white #sub-count-info,
+[class*="theme-white"] #sub-count-info,
+[class*="theme-light-"] #sub-count-info {
+    color: #475569 !important;
+}
+
+body.theme-white #sub-word-input,
+[class*="theme-white"] #sub-word-input,
+[class*="theme-light-"] #sub-word-input {
+    background: #ffffff !important;
+    border: 2px solid #a78bfa !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #sub-word-input::placeholder,
+[class*="theme-white"] #sub-word-input::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.theme-white #sub-reset-btn,
+[class*="theme-white"] #sub-reset-btn,
+[class*="theme-light-"] #sub-reset-btn {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+body.theme-white #sub-results-container,
+[class*="theme-white"] #sub-results-container,
+[class*="theme-light-"] #sub-results-container {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-white #sub-results-container .seq-results-placeholder,
+[class*="theme-white"] #sub-results-container .seq-results-placeholder {
+    color: #64748b !important;
+}
+
+body.theme-white #sub-results-container .group-table td,
+[class*="theme-white"] #sub-results-container .group-table td {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white #sub-results-container .clickable-word-link,
+[class*="theme-white"] #sub-results-container .clickable-word-link {
+    color: #0f172a !important;
+}
+
+body.theme-white #sub-results-container div[style*="font-weight: 800"],
+[class*="theme-white"] #sub-results-container div[style*="font-weight: 800"] {
+    color: #475569 !important;
+}
+
+/* 17. Toggle Switches Red "ON" State on White Layouts */
+body.theme-white .toggle-switch input:checked + .slider,
+[class*="theme-white"] .toggle-switch input:checked + .slider,
+[class*="theme-light-"] .toggle-switch input:checked + .slider,
+body.theme-yellow .toggle-switch input:checked + .slider,
+body.theme-pink .toggle-switch input:checked + .slider,
+body.theme-orange .toggle-switch input:checked + .slider,
+body.theme-gray .toggle-switch input:checked + .slider,
+body.theme-light-brown .toggle-switch input:checked + .slider {
+    background-color: #ef4444 !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+}
+
+body.theme-white .toggle-switch input:checked:focus + .slider,
+[class*="theme-white"] .toggle-switch input:checked:focus + .slider,
+[class*="theme-light-"] .toggle-switch input:checked:focus + .slider,
+body.theme-yellow .toggle-switch input:checked:focus + .slider,
+body.theme-pink .toggle-switch input:checked:focus + .slider,
+body.theme-orange .toggle-switch input:checked:focus + .slider,
+body.theme-gray .toggle-switch input:checked:focus + .slider,
+body.theme-light-brown .toggle-switch input:checked:focus + .slider {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* 18. Tournaments: VERSUS Opponent Username on White/Light Themes */
+body.theme-white .t-versus-opponent-name,
+[class*="theme-white"] .t-versus-opponent-name,
+[class*="theme-light-"] .t-versus-opponent-name,
+body.theme-yellow .t-versus-opponent-name,
+body.theme-pink .t-versus-opponent-name,
+body.theme-orange .t-versus-opponent-name,
+body.theme-gray .t-versus-opponent-name,
+body.theme-light-brown .t-versus-opponent-name {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
 /* ============================================================
    Hide native scrollbars on all touch/mobile devices.
    Two conditions to catch all mobile browsers:

@@ -603,7 +603,7 @@ function renderActiveState(container, data, userStatus) {
         if (matchup.opponent_id === -1) {
             matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: BYE (Auto-advancing)</div>`;
         } else {
-            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: <span style="color:#fff; cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${matchup.opponent_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${matchup.opponent_name}</span></div>`;
+            matchupHtml = `<div style="font-size:1.2rem; color:var(--accent-color); font-weight:600; margin-bottom:20px;">VERSUS: <span class="t-versus-opponent-name" style="color:var(--text-primary, #fff); cursor:pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; outline: none;" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${matchup.opponent_name}'); } event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View Mini-Profile">${matchup.opponent_name}</span></div>`;
         }
     }
 

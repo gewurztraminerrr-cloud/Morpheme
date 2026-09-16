@@ -5167,6 +5167,28 @@ function updateSpecialMatchTimer(seconds) {
         const secs = Math.floor(seconds % 60);
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
         setTimerWaitingState(false);
+
+        // Low time visual for text (red at <= 10s)
+        if (seconds <= 10 && seconds > 0) {
+            timerEl.style.color = '#ef4444';
+        } else {
+            timerEl.style.color = '';
+        }
+    }
+
+    // Low time warning flash for board panel and header
+    const headerEl = document.querySelector('.play-header');
+    const boardPanelEl = document.getElementById('play-panel-board') || document.querySelector('.board-panel');
+    if (boardPanelEl) {
+        if (seconds <= 10 && seconds > 0) {
+            boardPanelEl.classList.add('low-time-warning');
+            if (headerEl && (window.innerWidth <= 992 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+                headerEl.classList.add('low-time-warning');
+            }
+        } else {
+            boardPanelEl.classList.remove('low-time-warning');
+            if (headerEl) headerEl.classList.remove('low-time-warning');
+        }
     }
 }
 
@@ -9585,6 +9607,7 @@ function exitTournamentPlay(targetPage = 'tournaments') {
     isTournamentPlay = false;
     window.isTournamentPlay = false;
     document.body.classList.remove('is-tournament-round');
+    document.querySelectorAll('.low-time-warning').forEach(el => el.classList.remove('low-time-warning'));
     const playerActionsRow = document.querySelector('.player-actions-row');
     if (playerActionsRow) playerActionsRow.style.display = '';
     isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
