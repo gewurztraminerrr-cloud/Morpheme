@@ -6637,14 +6637,55 @@ body .tab-btn.active {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
 }
 
+.t-matchup-item .participant {
+    flex: 1 1 0%;
+    min-width: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.t-matchup-item .participant .user-info {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
+    gap: 4px;
+}
+
+.t-matchup-item .participant.u2 .user-info {
+    justify-content: flex-end;
+}
+
+.t-matchup-item .participant .username {
+    font-weight: 600;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    line-height: 1.2;
+}
+
 .t-matchup-item .participant .pts {
     font-family: monospace;
     font-weight: 700;
     color: var(--muted-text);
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    padding: 2px 4px;
+    line-height: 1.2;
 }
 
 .t-matchup-item .vs {
-    width: 40px;
+    width: auto;
+    flex-shrink: 0;
+    padding: 0 4px;
     text-align: center;
     font-size: 0.7rem;
     font-weight: 800;

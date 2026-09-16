@@ -315,14 +315,33 @@ function renderTournament(data) {
                 ? data.all_matchups 
                 : (data.all_tournament_matchups || []).filter(m => (m.round_number || 1) === targetRound);
 
-            // USER REQUEST: Display the pairing for yourself only by default (from current/latest round)
-            const myMatchup = curRoundMatchups.find(m => 
+            let myMatchup = curRoundMatchups.find(m => 
                 m.u1_name === window.currentUser || m.u2_name === window.currentUser
             ) || (data.all_tournament_matchups || []).slice().reverse().find(m => 
                 m.u1_name === window.currentUser || m.u2_name === window.currentUser
             );
             
             if (myMatchup) {
+                // Guarantee user flags are populated even if from historical or raw matchup records
+                if (!myMatchup.u1_flag || !myMatchup.u2_flag) {
+                    const uStat = data.user_status?.matchup;
+                    if (uStat) {
+                        if (myMatchup.user1_id === uStat.user_id && !myMatchup.u1_flag) myMatchup.u1_flag = uStat.my_flag;
+                        if (myMatchup.user2_id === uStat.user_id && !myMatchup.u2_flag) myMatchup.u2_flag = uStat.my_flag;
+                        if (myMatchup.user1_id === uStat.opponent_id && !myMatchup.u1_flag) myMatchup.u1_flag = uStat.opponent_flag;
+                        if (myMatchup.user2_id === uStat.opponent_id && !myMatchup.u2_flag) myMatchup.u2_flag = uStat.opponent_flag;
+                    }
+                    if (Array.isArray(data.standings)) {
+                        if (!myMatchup.u1_flag) {
+                            const u1Stand = data.standings.find(s => s.username === myMatchup.u1_name);
+                            if (u1Stand && u1Stand.country_flag) myMatchup.u1_flag = u1Stand.country_flag;
+                        }
+                        if (!myMatchup.u2_flag && myMatchup.user2_id !== -1) {
+                            const u2Stand = data.standings.find(s => s.username === myMatchup.u2_name);
+                            if (u2Stand && u2Stand.country_flag) myMatchup.u2_flag = u2Stand.country_flag;
+                        }
+                    }
+                }
                 mList.innerHTML = renderMatchupItemHTML(myMatchup);
             } else if (data.status === 'completed') {
                 mList.innerHTML = `<p class="placeholder" style="padding: 6px 0;">Tournament completed. Click "View All Pairings" to see results.</p>`;
@@ -589,9 +608,9 @@ function renderActiveState(container, data, userStatus) {
     }
 
     container.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <h2 style="margin: 0; text-align: left;">Round ${data.current_round}</h2>
-            <span style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 3px 8px;">Current Round</span>
+        <div class="tournament-round-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+            <h2 style="margin: 0; text-align: left; white-space: nowrap;">Round ${data.current_round}</h2>
+            <span class="t-current-round-badge" style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 3px 8px; white-space: nowrap; margin-left: auto;">Current Round</span>
         </div>
         ${matchupHtml}
     `;
