@@ -83,7 +83,9 @@ function showModStatus(message, isError = false, targetId = 'mod-status-area') {
                 setTimeout(() => {
                     if (statusArea.textContent === message) {
                         statusArea.textContent = '';
-                        statusArea.style.display = 'none';
+                        if (targetId !== 'added-word-status-area') {
+                            statusArea.style.display = 'none';
+                        }
                     }
                     statusArea.style.opacity = '1';
                     statusArea.style.transition = '';
