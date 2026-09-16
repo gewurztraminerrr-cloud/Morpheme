@@ -4629,10 +4629,10 @@ body.theme-light-brown .bottom-back-btn:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(var(--text-primary-rgb), 0.15);
+    background-color: #ef4444 !important;
     transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.15);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 0 8px rgba(239, 68, 68, 0.3) !important;
     outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
 }
@@ -4650,20 +4650,21 @@ body.theme-light-brown .bottom-back-btn:hover {
 }
 
 .toggle-switch input:checked + .slider {
-    background-color: var(--accent-color, #ff007f) !important;
-    box-shadow: 0 0 15px rgba(255, 0, 127, 0.5) !important; /* Neon glowing effect */
+    background-color: #2ecc71 !important;
+    border-color: rgba(46, 204, 113, 0.4) !important;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5) !important; /* Neon green glowing effect */
 }
 
 .toggle-switch input:focus + .slider,
 .toggle-switch input:focus-visible + .slider {
     outline: none !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 0 10px rgba(239, 68, 68, 0.5) !important;
 }
 
 .toggle-switch input:checked:focus + .slider,
 .toggle-switch input:checked:focus-visible + .slider {
     outline: none !important;
-    box-shadow: 0 0 15px rgba(255, 0, 127, 0.5) !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.6) !important;
 }
 
 .toggle-switch input:checked + .slider::before {
