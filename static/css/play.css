@@ -7501,6 +7501,14 @@ input[type=range]::-moz-range-track {
         min-width: 0 !important;
     }
 
+    #chat-input {
+        height: 32px !important;
+    }
+
+    #chat-send-btn {
+        height: 32px !important;
+    }
+
     /* Full bleed styling for 2D board panel and grid cells */
     .board-panel,
     .board-panel.full-bleed-mobile {
@@ -7852,6 +7860,9 @@ body.flash-blue::after,
         right: 0 !important;
         z-index: 100 !important;
         box-sizing: border-box !important;
+        min-height: 44px !important;
+        height: 44px !important;
+        max-height: 44px !important;
         
         /* Force spanning the full screen width by canceling parent 15px padding */
         margin-left: -15px !important;
@@ -8343,6 +8354,18 @@ body.is-desktop .word-input-section {
         margin-top: 10px !important;
         padding: 6px 10px 10px 10px !important;
         border-radius: 12px !important;
+    }
+
+    /* Elevate expanded chatbox on mobile to allow clear room for textbox above bottom Board nav button */
+    .chat-panel.expanded,
+    .chat-panel.collapsing {
+        bottom: 52px !important;
+        height: calc(100% - 62px) !important;
+        max-height: calc(100% - 62px) !important;
+    }
+
+    .left-panel-container.chat-expanded {
+        overflow: hidden !important;
     }
 }
 
