@@ -518,8 +518,6 @@ function renderActiveState(container, data, userStatus) {
     } else if (prevMatchup && prevMatchup.opponent_id === -1) {
         wonPrev = true;
     }
-
-    let prevVictoryHtml = "";
     if (wonPrev && prevMatchup && data.current_round > 1) {
         const prevRoundNum = prevMatchup.round_number || (data.current_round - 1);
         const isBye = prevMatchup.opponent_id === -1;
@@ -564,16 +562,7 @@ function renderActiveState(container, data, userStatus) {
             return;
         }
 
-        prevVictoryHtml = `
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(46, 204, 113, 0.12); border: 1.5px solid #2ecc71; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px;">
-                <div style="font-weight: 700; color: #2ecc71; font-size: 0.95rem;">
-                    🏆 Won Round ${prevRoundNum} (${myPrevScore} vs ${oppPrevScore} pts)
-                </div>
-                <button id="view-prev-round-btn" style="background: rgba(46, 204, 113, 0.2); border: 1px solid rgba(46, 204, 113, 0.4); color: #2ecc71; border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
-                    View Results
-                </button>
-            </div>
-        `;
+        // No lingering Won Round banner after proceeding
     }
 
     // Header with Round and Matchup
@@ -587,23 +576,12 @@ function renderActiveState(container, data, userStatus) {
     }
 
     container.innerHTML = `
-        ${prevVictoryHtml}
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <h2 style="margin: 0; text-align: left;">Round ${data.current_round}</h2>
             <span style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 3px 8px;">Current Round</span>
         </div>
         ${matchupHtml}
     `;
-
-    const viewPrevBtn = container.querySelector('#view-prev-round-btn');
-    if (viewPrevBtn) {
-        viewPrevBtn.onclick = () => {
-            const myUserId = userStatus.user_id || window.currentUserId || (matchup && matchup.user_id) || 'user';
-            const proceedKey = `morpheme_t_${data.id}_u_${myUserId}_proceeded_round_${data.current_round}`;
-            sessionStorage.removeItem(proceedKey);
-            renderTournament(data);
-        };
-    }
 
     // Status / result messaging
     if (!userStatus.has_turn) {
