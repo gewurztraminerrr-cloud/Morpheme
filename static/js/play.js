@@ -3636,9 +3636,9 @@ function renderChat(messages) {
         };
     });
 
-    // Scroll to bottom only if user was already near bottom (within 80px) or list was newly rendered
+    // Scroll to bottom only if user was already near bottom (within 80px) and not actively dragging/reading
     const isAtBottom = (listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight) < 80;
-    if (isAtBottom) {
+    if (isAtBottom && !window._isChatTouchDragging) {
         listEl.scrollTop = listEl.scrollHeight;
     }
 }
@@ -3710,6 +3710,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function collapseChat() {
         if (!chatPanel || (!chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
+        if (typeof window._cancelChatMomentum === 'function') {
+            window._cancelChatMomentum();
+        }
         
         if (chatInput) {
             chatInput.blur();
@@ -3741,6 +3744,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function expandChat() {
         if (!chatPanel || chatPanel.classList.contains('expanded')) return;
+        if (typeof window._cancelChatMomentum === 'function') {
+            window._cancelChatMomentum();
+        }
         chatPanel.classList.remove('collapsing');
         chatPanel.classList.add('expanded');
         if (leftPanelContainer) {
@@ -3842,7 +3848,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Direct Touch Scroll System for Chat History (guarantees smooth dragging on mobile when messages permit)
     const chatHistoryEl = document.getElementById('chat-history');
-    if (chatHistoryEl) {
+    if (chatPanel && chatHistoryEl) {
         let isTouchDragging = false;
         let startTouchY = 0;
         let startScrollTop = 0;
@@ -3858,26 +3864,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 momentumRafId = null;
             }
         }
+        window._cancelChatMomentum = cancelMomentum;
 
-        chatHistoryEl.addEventListener('touchstart', (e) => {
+        function handleChatTouchStart(e) {
+            // Only active when chat is expanded
+            if (!chatPanel.classList.contains('expanded')) return;
+
+            // Never intercept typing or button clicking
+            if (e.target.closest('#chat-input, #chat-send-btn, #chat-collapse-btn')) {
+                return;
+            }
+
             cancelMomentum();
-            if (e.touches.length === 1) {
+            if (e.touches && e.touches.length === 1) {
                 startTouchY = e.touches[0].clientY;
                 lastTouchY = startTouchY;
                 startScrollTop = chatHistoryEl.scrollTop;
                 lastTouchTime = performance.now();
                 touchVelocity = 0;
                 isTouchDragging = true;
+                window._isChatTouchDragging = true;
                 hasMovedFar = false;
+                e.stopPropagation();
             }
-        }, { passive: true });
+        }
 
-        chatHistoryEl.addEventListener('touchmove', (e) => {
-            if (!isTouchDragging || e.touches.length !== 1) return;
+        function handleChatTouchMove(e) {
+            if (!isTouchDragging || !chatPanel.classList.contains('expanded')) return;
+            if (!e.touches || e.touches.length !== 1) return;
+
             const currentY = e.touches[0].clientY;
             const deltaY = currentY - startTouchY;
 
-            if (Math.abs(deltaY) > 5) {
+            if (Math.abs(deltaY) > 6) {
                 hasMovedFar = true;
             }
 
@@ -3891,49 +3910,74 @@ document.addEventListener('DOMContentLoaded', () => {
             lastTouchTime = now;
 
             // When enough messages permit scrolling, perform direct smooth scrolling
-            if (chatHistoryEl.scrollHeight > chatHistoryEl.clientHeight) {
+            const maxScroll = Math.max(0, chatHistoryEl.scrollHeight - chatHistoryEl.clientHeight);
+            if (maxScroll > 0) {
                 if (e.cancelable !== false) {
                     e.preventDefault();
                 }
                 e.stopPropagation();
-                chatHistoryEl.scrollTop = startScrollTop - deltaY;
+                chatHistoryEl.scrollTop = Math.max(0, Math.min(maxScroll, startScrollTop - deltaY));
             }
-        }, { passive: false });
+        }
 
-        chatHistoryEl.addEventListener('touchend', () => {
+        function handleChatTouchEnd() {
             if (!isTouchDragging) return;
             isTouchDragging = false;
+            window._isChatTouchDragging = false;
 
             // If there's flick velocity and content overflows, apply momentum glide
-            if (hasMovedFar && chatHistoryEl.scrollHeight > chatHistoryEl.clientHeight && Math.abs(touchVelocity) > 0.1) {
+            const maxScroll = Math.max(0, chatHistoryEl.scrollHeight - chatHistoryEl.clientHeight);
+            if (hasMovedFar && maxScroll > 0 && Math.abs(touchVelocity) > 0.12) {
                 let frameVelocity = touchVelocity * 16;
                 frameVelocity = Math.max(-28, Math.min(28, frameVelocity));
 
                 function stepMomentum() {
-                    if (Math.abs(frameVelocity) < 0.5) {
+                    if (Math.abs(frameVelocity) < 0.4) {
                         cancelMomentum();
                         return;
                     }
-                    chatHistoryEl.scrollTop -= frameVelocity;
-                    frameVelocity *= 0.94;
+                    const nextScroll = chatHistoryEl.scrollTop - frameVelocity;
+                    const clampedScroll = Math.max(0, Math.min(maxScroll, nextScroll));
+                    chatHistoryEl.scrollTop = clampedScroll;
+
+                    if (clampedScroll <= 0 || clampedScroll >= maxScroll) {
+                        cancelMomentum();
+                        return;
+                    }
+
+                    frameVelocity *= 0.92;
                     momentumRafId = requestAnimationFrame(stepMomentum);
                 }
                 cancelMomentum();
                 momentumRafId = requestAnimationFrame(stepMomentum);
             }
-        }, { passive: true });
 
-        chatHistoryEl.addEventListener('touchcancel', () => {
+            if (hasMovedFar) {
+                setTimeout(() => {
+                    hasMovedFar = false;
+                }, 300);
+            }
+        }
+
+        function handleChatTouchCancel() {
             isTouchDragging = false;
+            window._isChatTouchDragging = false;
             cancelMomentum();
-        }, { passive: true });
+            setTimeout(() => {
+                hasMovedFar = false;
+            }, 300);
+        }
+
+        chatPanel.addEventListener('touchstart', handleChatTouchStart, { passive: false });
+        chatPanel.addEventListener('touchmove', handleChatTouchMove, { passive: false });
+        chatPanel.addEventListener('touchend', handleChatTouchEnd, { passive: false });
+        chatPanel.addEventListener('touchcancel', handleChatTouchCancel, { passive: true });
 
         // Prevent accidental username profile clicks when the touch was a scroll drag
-        chatHistoryEl.addEventListener('click', (e) => {
+        chatPanel.addEventListener('click', (e) => {
             if (hasMovedFar) {
                 e.stopPropagation();
                 e.preventDefault();
-                hasMovedFar = false;
             }
         }, true);
     }

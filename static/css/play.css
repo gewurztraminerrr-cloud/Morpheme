@@ -8349,7 +8349,7 @@ body.theme-light-brown .chat-collapse-btn:hover {
     border-radius: 12px !important;
     background: var(--bg-panel, #181920) !important;
     margin: 0 !important;
-    touch-action: pan-y !important;
+    touch-action: none !important;
     animation: chatSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -8425,9 +8425,9 @@ body.theme-light-brown .chat-collapse-btn:hover {
         min-height: 0 !important;
     }
 
-    .chat-panel.expanded #chat-history,
-    .chat-panel #chat-history {
-        touch-action: pan-y !important;
+    .chat-panel.expanded,
+    .chat-panel.expanded #chat-history {
+        touch-action: none !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
@@ -8436,11 +8436,20 @@ body.theme-light-brown .chat-collapse-btn:hover {
         -webkit-user-select: none !important;
     }
 
-    .chat-panel .chat-message,
-    .chat-panel .chat-text,
-    .chat-panel .chat-user {
+    .chat-panel.expanded .chat-message,
+    .chat-panel.expanded .chat-text,
+    .chat-panel.expanded .chat-user,
+    .chat-panel.expanded .chat-sys {
         user-select: none !important;
         -webkit-user-select: none !important;
+        touch-action: none !important;
+        pointer-events: auto !important;
+    }
+
+    .chat-panel #chat-input,
+    .chat-panel #chat-send-btn,
+    .chat-panel #chat-collapse-btn {
+        touch-action: manipulation !important;
     }
 
     .left-panel-container.chat-expanded {
