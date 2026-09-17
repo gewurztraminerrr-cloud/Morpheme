@@ -19,6 +19,8 @@
         box-sizing: border-box !important;
     }
 
+    body:has(#page-lobby.active) .top-menu-bar,
+    body.lobby-active .top-menu-bar,
     body:has(#page-lobby.active) .header,
     body.lobby-active .header {
         flex: 0 0 auto !important;
@@ -2655,6 +2657,8 @@ body.theme-light-brown .lobby-chat-input:focus {
         width: 100% !important;
     }
 
+    body:has(#page-lobby.active) .top-menu-bar,
+    body.lobby-active .top-menu-bar,
     body:has(#page-lobby.active) .header,
     body.lobby-active .header {
         flex-shrink: 0 !important;

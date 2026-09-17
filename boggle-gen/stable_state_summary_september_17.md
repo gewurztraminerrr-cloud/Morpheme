@@ -8,14 +8,14 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 | Environment | Host / Branch | Latest Commit ID | Status |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | `/Users/jeffbabiak` (`main`) | `ccdf31e116e0e5718e550b61ff85341bd560e4d2` | ✅ Clean & Synchronized |
-| **GitHub** | `origin/main` | `ccdf31e116e0e5718e550b61ff85341bd560e4d2` | ✅ Clean & Synchronized |
-| **Production Server** | `132.148.72.249` (`/home/morpheme/morpheme`) | `ccdf31e116e0e5718e550b61ff85341bd560e4d2` | ✅ Deployed & Online (`HTTP/2 200 OK`) |
-| **PM2 Process** | `morpheme` (PID 0) | `ccdf31e116e0e5718e550b61ff85341bd560e4d2` | ✅ Healthy (`online`, uptime active) |
-| **Flutter Mobile App** | `morpheme_word_game` | `ccdf31e116e0e5718e550b61ff85341bd560e4d2` | ✅ Synchronized (`https://morpheme.games/` audio bridge) |
+| **Localhost** | `/Users/jeffbabiak` (`main`) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Clean & Synchronized |
+| **GitHub** | `origin/main` | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Clean & Synchronized |
+| **Production Server** | `132.148.72.249` (`/home/morpheme/morpheme`) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Deployed & Online (`HTTP/2 200 OK`) |
+| **PM2 Process** | `morpheme` (PID 0) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Healthy (`online`, uptime active) |
+| **Flutter Mobile App** | `morpheme_word_game` | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Synchronized (`https://morpheme.games/` audio bridge) |
 
 - **Stable Save Point Date**: September 17, 2026
-- **Latest Commit ID**: `ccdf31e116e0e5718e550b61ff85341bd560e4d2`
+- **Latest Commit ID**: `30abed8a83416973e659b8764eb803362a98cb9c`
 - **Active Git Tags**:
   - `START_OVER_POINT_SEPTEMBER_17`
   - `stable-2026-09-17`
@@ -24,9 +24,9 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - `start-over`
   - *(Historic reference preserved: `START_OVER_POINT_SEPTEMBER_16`, `START_OVER_POINT_SEPTEMBER_13`, `START_OVER_POINT_SEPTEMBER_10`)*
 - **Active Cache-Buster Versions**:
-  - `style.css?v=1789334000`
-  - `lobby.css?v=1789338000`
-  - `play.css?v=1789347000`
+  - `style.css?v=1789335000`
+  - `lobby.css?v=1789339000`
+  - `play.css?v=1789348000`
   - `howtoplay.css?v=1789330000`
   - `forum.css?v=1789336000`
   - `donate.css?v=1789324000`
@@ -35,7 +35,15 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ## 2. Key Features, Improvements & Fixes in This Stable State
 
-### A. Gameplay & Room Logic
+### A. Navigation & Top Menu Positioning
+1. **Desktop & Laptop Top Menu Position Pinning (`templates/index.html`, `static/css/style.css`, `static/css/lobby.css`, `static/css/play.css`)**:
+   - On desktops and laptops (`@media (min-width: 901px)`), pinned the top menu bar (containing MORPHEME, MORE-FEEM pronunciation, and all navigation tab buttons) as `position: sticky; top: 0; z-index: 1000; background: var(--bg-primary);` when the user scrolls down after selecting any tab in the top menu (How to Play, Lobby, Tournaments, Leaderboards, Forum, Tools, Settings, Profile, Donate, Login).
+   - In game rooms (`#page-play` / `body.play-active`), the top menu bar is strictly `position: static`, allowing players to see the top menu by scrolling while keeping the full 100vh gameplay arena unobstructed during active rounds.
+   - Wrapped `<header class="header">` and `<div class="separator"></div>` inside `.top-menu-bar` to preserve fluid document flow, dynamic themed backgrounds (`var(--bg-primary)`), glowing separator line alignment, and zero interference with mobile fullscreen gestures.
+
+---
+
+### B. Gameplay & Room Logic
 1. **Safe Parsing for Randomized Minimum Word Length (`game_room.py`)**:
    - Safely parses `min_word_length` in `initial_solo_params` when randomized or dynamically configured, preventing type mismatch or unexpected null handling during solo game creation.
 2. **User Round Results & Rating Protection (`app.py`, `game_room.py`)**:
@@ -43,7 +51,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ---
 
-### B. Mobile Chat Experience
+### C. Mobile Chat Experience
 1. **Fluid Drag & Touch Scrolling (`static/css/play.css`, `static/js/play.js`)**:
    - Enabled smooth direct touch drag scrolling in the expanded mobile chatbox when message history overflows.
    - Set `flex-shrink: 0` for all chat message elements to prevent vertical text squishing during momentum scrolling.
@@ -54,7 +62,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 ---
 
-### C. Layout, Spacing & Visual Aesthetics
+### D. Layout, Spacing & Visual Aesthetics
 1. **Mobile Board Spacing & Symmetry (`static/css/play.css`, `templates/index.html`)**:
    - Added balanced vertical spacing above and below the board matching the exact distance from the Spinner Set to the countdown timer panel.
 2. **Deep Red Slow Pulse on White Layouts (`static/css/play.css`, `templates/index.html`)**:
@@ -84,5 +92,5 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - **Live Endpoint Verification**: `curl -sI https://morpheme.games` returns `HTTP/1.1 200 OK` (HTTP/2 enabled).
 - **Latest Commit ID**:
   ```
-  ccdf31e116e0e5718e550b61ff85341bd560e4d2
+  30abed8a83416973e659b8764eb803362a98cb9c
   ```

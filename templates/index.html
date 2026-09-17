@@ -155,11 +155,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789334000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1789338000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789334000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1789338000">
-    <link rel="stylesheet" href="/css/play.css?v=1789347000">
+    <link rel="preload" href="/css/style.css?v=1789335000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1789339000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1789335000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1789339000">
+    <link rel="stylesheet" href="/css/play.css?v=1789348000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
     <link rel="stylesheet" href="/css/forum.css?v=1789336000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
@@ -1159,38 +1159,40 @@
 </head>
 
 <body>
-    <!-- Header - Always visible -->
-    <header class="header">
-        <div class="logo">
-            <img src="/static/images/morpheme_transparent.png" alt="Morpheme Icon" class="logo-icon">
-            <span class="logo-text">MORPHEME</span>
-            <span class="pronunciation">MORE-FEEM</span>
-        </div>
-        <nav class="nav">
-            <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
-            <button class="nav-btn" data-page="howtoplay" id="nav-howtoplay-btn">How to Play & FAQ</button>
-            <button class="nav-btn" data-page="lobby" id="nav-lobby-btn">Lobby <span id="lobby-badge"
-                    class="nav-badge hidden"></span></button>
-            <button class="nav-btn" data-page="mods" id="nav-mods-btn" style="display: none;">Mods</button>
-            <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
-            <button class="nav-btn" data-page="tournaments" id="nav-tournaments-btn">Tournaments</button>
-            <button class="nav-btn" data-page="leaderboards" id="nav-leaderboards-btn">Leaderboards</button>
-            <button class="nav-btn" data-page="forums" id="btn-forums">Forum</button>
-            <button class="nav-btn" data-page="tools" id="nav-tools-btn">Tools</button>
-            <button class="nav-btn" data-page="settings" id="nav-settings-btn">Settings</button>
-            <button class="nav-btn" data-page="profile" id="nav-profile-btn">Profile <span id="pm-nav-badge" class="nav-badge hidden"></span></button>
-            <button class="nav-btn" data-page="donate" id="nav-donate-btn">Donate</button>
-
-
-
-            <div id="user-display" class="user-display hidden" style="display: none;">
-                <span id="username-display"></span>
-                <button id="logout-btn" class="logout-btn">Logout</button>
+    <!-- Header - Always visible (Fixed on Desktops/Laptops for Tabs, Scrolls in Game Rooms) -->
+    <div class="top-menu-bar" id="top-menu-bar">
+        <header class="header">
+            <div class="logo">
+                <img src="/static/images/morpheme_transparent.png" alt="Morpheme Icon" class="logo-icon">
+                <span class="logo-text">MORPHEME</span>
+                <span class="pronunciation">MORE-FEEM</span>
             </div>
-        </nav>
-    </header>
+            <nav class="nav">
+                <button class="nav-btn" data-page="login" id="nav-login-btn">Login</button>
+                <button class="nav-btn" data-page="howtoplay" id="nav-howtoplay-btn">How to Play & FAQ</button>
+                <button class="nav-btn" data-page="lobby" id="nav-lobby-btn">Lobby <span id="lobby-badge"
+                        class="nav-badge hidden"></span></button>
+                <button class="nav-btn" data-page="mods" id="nav-mods-btn" style="display: none;">Mods</button>
+                <button class="nav-btn" id="play-btn" data-page="play" disabled>Play</button>
+                <button class="nav-btn" data-page="tournaments" id="nav-tournaments-btn">Tournaments</button>
+                <button class="nav-btn" data-page="leaderboards" id="nav-leaderboards-btn">Leaderboards</button>
+                <button class="nav-btn" data-page="forums" id="btn-forums">Forum</button>
+                <button class="nav-btn" data-page="tools" id="nav-tools-btn">Tools</button>
+                <button class="nav-btn" data-page="settings" id="nav-settings-btn">Settings</button>
+                <button class="nav-btn" data-page="profile" id="nav-profile-btn">Profile <span id="pm-nav-badge" class="nav-badge hidden"></span></button>
+                <button class="nav-btn" data-page="donate" id="nav-donate-btn">Donate</button>
 
-    <div class="separator"></div>
+
+
+                <div id="user-display" class="user-display hidden" style="display: none;">
+                    <span id="username-display"></span>
+                    <button id="logout-btn" class="logout-btn">Logout</button>
+                </div>
+            </nav>
+        </header>
+
+        <div class="separator"></div>
+    </div>
 
     <!-- Pages Container -->
     <main class="pages">

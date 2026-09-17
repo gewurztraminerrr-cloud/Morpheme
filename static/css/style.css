@@ -1162,6 +1162,29 @@ body {
     transform: translateX(50%);
 }
 
+/* Top Menu Bar Layout (Sticky on Desktops/Laptops for Tabs, Seen by Scrolling in Game Rooms) */
+.top-menu-bar {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 901px) {
+    /* Keep the top menu (and MORPHEME MORE-FEEM) fixed in position when scrolling down after selecting a tab */
+    body:not(.play-active):not(:has(#page-play.active)) .top-menu-bar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: var(--bg-primary);
+    }
+
+    /* In game rooms, the top menu is seen by scrolling (not fixed in position) */
+    body.play-active .top-menu-bar,
+    body:has(#page-play.active) .top-menu-bar {
+        position: static !important;
+        background: transparent !important;
+    }
+}
+
 .header {
     display: flex;
     justify-content: space-between;

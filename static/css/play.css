@@ -11069,6 +11069,15 @@ body.is-mobile #page-settings .theme-selector-grid {
 /* ==========================================================================
    DESKTOP & LAPTOP PLAY PAGE LAYOUT (STRICT: NOT MOBILE)
    ========================================================================== */
+/* Ensure the top menu bar is NOT fixed in game rooms; in game rooms, top menu is seen by scrolling */
+body.is-desktop.play-active .top-menu-bar,
+body.is-desktop:has(#page-play.active) .top-menu-bar,
+body.play-active .top-menu-bar,
+body:has(#page-play.active) .top-menu-bar {
+    position: static !important;
+    background: transparent !important;
+}
+
 body.is-desktop #page-play.active {
     display: flex !important;
     flex-direction: column !important;
