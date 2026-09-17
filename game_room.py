@@ -4979,7 +4979,18 @@ class RoomManager:
                     if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                         initial_solo_params = room.initial_solo_params
                         dict_choice = initial_solo_params.get('dictionary', 'random')
-                        min_word_len = int(initial_solo_params.get('min_word_length', 3))
+                        min_len_raw = initial_solo_params.get('min_word_length', 3)
+                        if min_len_raw == 'random' or not min_len_raw:
+                            dims_str = str(room.board_dimensions).lower()
+                            if '4x4' in dims_str: min_word_len = random.choices([3, 4, 5], weights=[25, 50, 25])[0]
+                            elif '4x6' in dims_str: min_word_len = random.choices([4, 5, 6], weights=[25, 50, 25])[0]
+                            elif '5x7' in dims_str: min_word_len = random.choices([5, 6, 7], weights=[25, 50, 25])[0]
+                            else: min_word_len = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
+                        else:
+                            try:
+                                min_word_len = int(min_len_raw)
+                            except Exception:
+                                min_word_len = 3
                         
                         # Safe-parse bonus word length: spin if random (equal weights for 6-10)
                         bonus_len_choice = initial_solo_params.get('bonus_word_length', 'random')
