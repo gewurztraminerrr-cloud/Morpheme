@@ -6035,7 +6035,7 @@ input[type=range]::-moz-range-track {
         align-items: center !important;
         width: 100% !important;
         max-width: 100% !important;
-        margin: 0 auto 1px auto !important;
+        margin: 0 auto 0 auto !important;
         padding: 5px 12px !important;
         box-sizing: border-box !important;
     }
@@ -7634,7 +7634,7 @@ input[type=range]::-moz-range-track {
         padding: 6px 12px !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
-        margin: 0 auto 1px auto !important;
+        margin: 0 auto 0 auto !important;
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -7662,7 +7662,9 @@ input[type=range]::-moz-range-track {
 
     .board-panel .game-board:not(.game-board-loading),
     .board-panel.full-bleed-mobile .game-board:not(.game-board-loading),
-    #game-board:not(.split-notepads-container):not(.game-board-loading) {
+    #game-board:not(.split-notepads-container):not(.game-board-loading),
+    .board-panel #game-board,
+    .board-panel .game-board {
         width: max-content !important;
         max-width: 100vw !important;
         padding: 0 !important;
@@ -7680,7 +7682,7 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
         background: transparent !important;
         border: none !important;
-        margin: 0 auto !important;
+        margin: 8px auto !important;
         float: none !important;
     }
 
@@ -7708,7 +7710,7 @@ input[type=range]::-moz-range-track {
 
     .board-panel .validation-status,
     .board-panel.full-bleed-mobile .validation-status {
-        margin-top: -3px !important;
+        margin-top: 0 !important;
         margin-bottom: 2px !important;
         min-height: 16px !important;
         line-height: 1.1 !important;
@@ -9385,7 +9387,7 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
         height: 38px !important;
         box-sizing: border-box !important;
-        margin: 0 auto 1px auto !important;
+        margin: 0 auto 0 auto !important;
         flex-shrink: 0 !important;
     }
     .timer-left-group {
