@@ -83,6 +83,7 @@ class TournamentManager:
             if status == 'signup' and now >= current['start_date']:
                 self.start_tournament(current['id'])
             elif status == 'active':
+                self.check_and_heal_current_round(current['id'])
                 self.update_matchup_winners(current['id'], current['current_round'])
                 self.check_round_advancement(current['id'])
             elif status == 'completed':
@@ -92,10 +93,48 @@ class TournamentManager:
                 if completed_at and (now - completed_at) >= GRACE_PERIOD:
                     print(f"[Tournament] Grace period over for tournament {current['id']}. Creating next tournament.")
                     self.create_new_tournament()
+            elif status == 'cancelled':
+                # Cancelled tournaments should immediately spawn a new tournament signup cycle
+                print(f"[Tournament] Tournament {current['id']} was cancelled. Creating next tournament.")
+                self.create_new_tournament()
         except Exception as e:
             print(f"[Tournament] Error in update_tournament_status: {e}")
         finally:
             self._lock.release()
+
+    def check_and_heal_current_round(self, tid):
+        """Self-healing mechanism: ensures an active tournament always has a valid tournament_rounds row and matchups."""
+        conn = self.get_db()
+        try:
+            t = conn.execute('SELECT status, current_round FROM tournaments WHERE id = ?', (tid,)).fetchone()
+            if not t or t['status'] != 'active':
+                return
+
+            round_num = t['current_round'] or 1
+            round_row = conn.execute(
+                'SELECT end_time FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?',
+                (tid, round_num)
+            ).fetchone()
+
+            # If round record is missing or has an invalid end_time, regenerate immediately
+            if not round_row or not round_row['end_time'] or round_row['end_time'] <= 0:
+                print(f"[Tournament] HEALING: Round {round_num} for tournament {tid} is missing or incomplete. Generating now...")
+                self.start_new_round(tid, round_num, conn=conn)
+                conn.commit()
+            else:
+                # Also verify matchups exist for this round
+                m_count = conn.execute(
+                    'SELECT COUNT(*) FROM tournament_matchups WHERE tournament_id = ? AND round_number = ?',
+                    (tid, round_num)
+                ).fetchone()[0]
+                if m_count == 0:
+                    print(f"[Tournament] HEALING: Matchups missing for tournament {tid} round {round_num}. Generating...")
+                    self.create_matchups(tid, round_num, conn)
+                    conn.commit()
+        except Exception as e:
+            print(f"[Tournament] Error in check_and_heal_current_round: {e}")
+        finally:
+            conn.close()
 
     def update_matchup_winners(self, tid, round_number):
         conn = self.get_db()
@@ -267,15 +306,34 @@ class TournamentManager:
         if not target_range or target_range == 'None':
              target_range = SpinnerSet._spin_word_count(dict_name, params.get('min_word_length', 3), params.get('difficulty', 'Medium'), dims, use_added_words=params.get('use_added_words', False))
         
-        res = bg.generate_board(
-            dimensions=dims,
-            bonus_word=bonus_word,
-            word_count_range=target_range,
-            dictionary=dict_name,
-            board_format=target_format,
-            min_word_length=params.get('min_word_length', 3),
-            difficulty=params.get('difficulty', 'Medium')
-        )
+        try:
+            res = bg.generate_board(
+                dimensions=dims,
+                bonus_word=bonus_word,
+                word_count_range=target_range,
+                dictionary=dict_name,
+                board_format=target_format,
+                min_word_length=params.get('min_word_length', 3),
+                difficulty=params.get('difficulty', 'Medium')
+            )
+        except Exception as bg_err:
+            print(f"[Tournament] Primary board generation failed: {bg_err}. Using emergency fallback...")
+            try:
+                res = bg.generate_board(
+                    dimensions=dims,
+                    bonus_word=None,
+                    word_count_range=(100, 200),
+                    dictionary='NWL',
+                    board_format='Normal',
+                    min_word_length=3,
+                    difficulty='Medium',
+                    is_emergency=True
+                )
+            except Exception as em_err:
+                print(f"[Tournament] Emergency board generation failed: {em_err}. Using hardcoded fallback grid...")
+                # Extreme fallback: 4x4 grid guaranteed
+                default_board = [['T', 'E', 'S', 'T'], ['W', 'O', 'R', 'D'], ['G', 'A', 'M', 'E'], ['P', 'L', 'A', 'Y']]
+                res = (default_board, ["TEST", "WORD", "GAME", "PLAY"], None, "Normal", {}, 0.2, "TEST")
         
         if len(res) == 7:
             board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio, final_bonus_word = res
@@ -401,11 +459,12 @@ class TournamentManager:
             
             # 2. Get scores for this round
             scores = conn.execute('''
-                SELECT user_id, score FROM tournament_scores
+                SELECT user_id, score, submitted_at FROM tournament_scores
                 WHERE tournament_id = ? AND round_number = ?
             ''', (tid, round_num)).fetchall()
             
             score_dict = {row['user_id']: row['score'] for row in scores}
+            submit_time_dict = {row['user_id']: (row['submitted_at'] or 0) for row in scores}
             
             # 3. Process Matchups
             winners = []
@@ -428,20 +487,24 @@ class TournamentManager:
                 
                 # Determine winner
                 if s1 > s2:
-                    winners.append(u1)
-                    eliminated.append(u2)
-                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u1, m['id']))
+                    w = u1
                 elif s2 > s1:
-                    winners.append(u2)
-                    eliminated.append(u1)
-                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u2, m['id']))
+                    w = u2
                 else:
-                    # TIE (or both 0)! Random winner
-                    # Check if they both left (forfeited)
-                    w = random.choice([u1, u2])
-                    winners.append(w)
-                    eliminated.append(u2 if w == u1 else u1)
-                    conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (w, m['id']))
+                    # TIE (or both 0): Earlier submission time wins tiebreaker
+                    t1 = submit_time_dict.get(u1, 0)
+                    t2 = submit_time_dict.get(u2, 0)
+                    if t1 > 0 and (t2 == 0 or t1 < t2):
+                        w = u1
+                    elif t2 > 0 and (t1 == 0 or t2 < t1):
+                        w = u2
+                    else:
+                        # Identical times or neither played
+                        w = m['winner_id'] if m['winner_id'] in (u1, u2) else random.choice([u1, u2])
+
+                winners.append(w)
+                eliminated.append(u2 if w == u1 else u1)
+                conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (w, m['id']))
 
             # Perform eliminations
             # final_rank = number of players still advancing + 1

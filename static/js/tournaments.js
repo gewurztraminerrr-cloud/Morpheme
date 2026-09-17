@@ -802,7 +802,22 @@ function updateCountdown(data) {
     const labelEl = document.getElementById('tournament-countdown-label');
     if (labelEl) labelEl.textContent = label;
 
-    if (!targetTime) return;
+    if (!targetTime || targetTime <= 0) {
+        const el = document.getElementById('tournament-countdown');
+        if (el) {
+            if (data.status === 'active') {
+                el.textContent = 'Updating round...';
+                // Trigger backend healing and re-fetch status in 2 seconds
+                setTimeout(() => fetchTournamentStatus(), 2000);
+            } else if (data.status === 'signup') {
+                el.textContent = 'Starting soon...';
+                setTimeout(() => fetchTournamentStatus(), 2000);
+            } else {
+                el.textContent = '0m 0s';
+            }
+        }
+        return;
+    }
 
     const tick = () => {
         const current = Date.now() / 1000;
@@ -813,7 +828,9 @@ function updateCountdown(data) {
             clearInterval(countdownInterval);
             countdownInterval = null;
             const el = document.getElementById('tournament-countdown');
-            if (el) el.textContent = '0m 0s';
+            if (el) {
+                el.textContent = data.status === 'active' ? 'Updating round...' : '0m 0s';
+            }
             // Always re-fetch on timer expiry — this triggers the backend to advance the cycle
             console.log('[Tournament] Countdown expired, re-fetching status...');
             setTimeout(() => fetchTournamentStatus(), 1500);
