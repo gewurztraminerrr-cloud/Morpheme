@@ -5882,6 +5882,8 @@ input[type=range]::-moz-range-track {
         height: 100% !important;
         padding: 10px 0 0 0 !important;
         margin: 0 !important;
+        gap: 2px !important;
+        row-gap: 2px !important;
         position: relative !important;
         box-shadow: none !important;
         border: none !important;
@@ -7538,7 +7540,7 @@ input[type=range]::-moz-range-track {
     /* Full bleed styling for 2D board panel and grid cells */
     .board-panel,
     .board-panel.full-bleed-mobile {
-        padding: 10px 0 0 0 !important;
+        padding: 6px 0 0 0 !important;
         scroll-snap-align: start !important;
         scroll-snap-stop: always !important;
         border-radius: 0 !important;
@@ -7552,6 +7554,8 @@ input[type=range]::-moz-range-track {
         border-left: none !important;
         border-right: none !important;
         margin: 0 auto !important;
+        gap: 2px !important;
+        row-gap: 2px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
@@ -7720,10 +7724,10 @@ input[type=range]::-moz-range-track {
 
     .board-panel .validation-status,
     .board-panel.full-bleed-mobile .validation-status {
-        margin-top: 2px !important;
+        margin-top: 0 !important;
         margin-bottom: 2px !important;
-        min-height: 18px !important;
-        line-height: 1.2 !important;
+        min-height: 16px !important;
+        line-height: 1.1 !important;
     }
 }
 
