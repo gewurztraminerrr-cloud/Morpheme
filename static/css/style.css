@@ -1162,19 +1162,34 @@ body {
     transform: translateX(50%);
 }
 
-/* Top Menu Bar Layout (Sticky on Desktops/Laptops for Tabs, Seen by Scrolling in Game Rooms) */
+/* Top Menu Bar Layout (Fixed on Desktops/Laptops for Tabs, Seen by Scrolling in Game Rooms) */
 .top-menu-bar {
     width: 100%;
     box-sizing: border-box;
 }
 
+.top-menu-spacer {
+    display: none;
+}
+
 @media (min-width: 901px) {
     /* Keep the top menu (and MORPHEME MORE-FEEM) fixed in position when scrolling down after selecting a tab */
-    body:not(.play-active):not(:has(#page-play.active)) .top-menu-bar {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: var(--bg-primary);
+    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-bar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 1000 !important;
+        background: var(--bg-primary) !important;
+    }
+
+    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        display: block !important;
+        height: var(--top-menu-height, 58px) !important;
+        width: 100% !important;
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
     }
 
     /* In game rooms, the top menu is seen by scrolling (not fixed in position) */
@@ -1182,6 +1197,11 @@ body {
     body:has(#page-play.active) .top-menu-bar {
         position: static !important;
         background: transparent !important;
+    }
+
+    body.play-active .top-menu-spacer,
+    body:has(#page-play.active) .top-menu-spacer {
+        display: none !important;
     }
 }
 
@@ -8578,7 +8598,6 @@ html, body {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
-    overflow-x: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
@@ -8591,7 +8610,6 @@ main.pages,
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: clip !important;
-    overflow-x: hidden !important;
 }
 
 /* Ensure desktop navbar never overflows horizontally on laptops & small desktop viewports (901px - 1380px) */

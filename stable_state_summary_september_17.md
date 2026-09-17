@@ -8,14 +8,14 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 
 | Environment | Host / Branch | Latest Commit ID | Status |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | `/Users/jeffbabiak` (`main`) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Clean & Synchronized |
-| **GitHub** | `origin/main` | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Clean & Synchronized |
-| **Production Server** | `132.148.72.249` (`/home/morpheme/morpheme`) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Deployed & Online (`HTTP/2 200 OK`) |
-| **PM2 Process** | `morpheme` (PID 0) | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Healthy (`online`, uptime active) |
-| **Flutter Mobile App** | `morpheme_word_game` | `30abed8a83416973e659b8764eb803362a98cb9c` | ✅ Synchronized (`https://morpheme.games/` audio bridge) |
+| **Localhost** | `/Users/jeffbabiak` (`main`) | `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15` | ✅ Clean & Synchronized |
+| **GitHub** | `origin/main` | `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15` | ✅ Clean & Synchronized |
+| **Production Server** | `132.148.72.249` (`/home/morpheme/morpheme`) | `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15` | ✅ Deployed & Online (`HTTP/2 200 OK`) |
+| **PM2 Process** | `morpheme` (PID 0) | `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15` | ✅ Healthy (`online`, uptime active) |
+| **Flutter Mobile App** | `morpheme_word_game` | `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15` | ✅ Synchronized (`https://morpheme.games/` audio bridge) |
 
 - **Stable Save Point Date**: September 17, 2026
-- **Latest Commit ID**: `30abed8a83416973e659b8764eb803362a98cb9c`
+- **Latest Commit ID**: `9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15`
 - **Active Git Tags**:
   - `START_OVER_POINT_SEPTEMBER_17`
   - `stable-2026-09-17`
@@ -30,6 +30,7 @@ This document records the official **'Start Over'** stable point for **Morpheme*
   - `howtoplay.css?v=1789330000`
   - `forum.css?v=1789336000`
   - `donate.css?v=1789324000`
+  - `app.js?v=1789340000`
 
 ---
 
@@ -92,5 +93,5 @@ This document records the official **'Start Over'** stable point for **Morpheme*
 - **Live Endpoint Verification**: `curl -sI https://morpheme.games` returns `HTTP/1.1 200 OK` (HTTP/2 enabled).
 - **Latest Commit ID**:
   ```
-  30abed8a83416973e659b8764eb803362a98cb9c
+  9de8c5b8df4735fbfae9a4f21cfd034ee8e30b15
   ```

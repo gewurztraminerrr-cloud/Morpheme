@@ -31,6 +31,24 @@ function fetchWithTimeout(url, options, timeoutMs) {
     return fetch(url, opts).finally(() => clearTimeout(timer));
 }
 
+// Top Menu Bar Height Measurement & Synchronization
+function updateTopMenuHeight() {
+    const bar = document.getElementById('top-menu-bar') || document.querySelector('.header');
+    if (bar) {
+        const h = bar.offsetHeight;
+        if (h > 0) {
+            document.documentElement.style.setProperty('--top-menu-height', h + 'px');
+            const spacer = document.getElementById('top-menu-spacer');
+            if (spacer) {
+                spacer.style.height = h + 'px';
+            }
+        }
+    }
+}
+window.updateTopMenuHeight = updateTopMenuHeight;
+window.addEventListener('resize', updateTopMenuHeight);
+window.addEventListener('DOMContentLoaded', updateTopMenuHeight);
+
 // Navigation system
 const pages = {
     'nav-login-btn': 'page-login',
@@ -1829,6 +1847,9 @@ function showPage(pageId) {
             page.style.visibility = 'visible';
             page.scrollTop = 0;
             window.scrollTo(0, 0);
+            if (typeof updateTopMenuHeight === 'function') {
+                updateTopMenuHeight();
+            }
             const layout = page.querySelector('.tools-split-layout');
             if (layout) {
                 layout.scrollLeft = 0;

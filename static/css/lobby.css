@@ -33,6 +33,11 @@
         flex-shrink: 0 !important;
     }
 
+    body:has(#page-lobby.active) .top-menu-spacer,
+    body.lobby-active .top-menu-spacer {
+        display: none !important;
+    }
+
     .pages:has(#page-lobby.active),
     body:has(#page-lobby.active) .pages,
     body.lobby-active .pages {
