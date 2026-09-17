@@ -1797,7 +1797,7 @@ body.theme-white .lobby-journey-sticky-header {
     z-index: 1;
 }
 
-/* Polished Diamond Shimmer Light Sweep (Flashing every ~5s) */
+/* Polished Diamond Shimmer Light Sweep (Flashing every ~3s) */
 .lobby-journey-message::before {
     content: '';
     position: absolute;
@@ -1818,7 +1818,7 @@ body.theme-white .lobby-journey-sticky-header {
     transform: skewX(-24deg);
     pointer-events: none;
     z-index: 2;
-    animation: journey-diamond-shimmer 4.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    animation: journey-diamond-shimmer 3s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
 
 /* Pure luminous pearl-white typography (No glowing halo) */
