@@ -2123,7 +2123,8 @@ class GameRoom:
                             'submitted_words': [dict(w) for w in p.submitted_words],
                             'invalid_words': list(p.invalid_words),
                             'rating': getattr(p, 'rating', 1200),
-                            'performance_efficiency': getattr(p, 'performance_efficiency', 0)
+                            'performance_efficiency': getattr(p, 'performance_efficiency', 0),
+                            'joined_mid_round': getattr(p, 'joined_mid_round', False)
                         })
                 
                 # Asynchronous Post-Round Processing
@@ -3549,7 +3550,8 @@ class RoomManager:
                                                     'submitted_words': d.get('submitted_words', []),
                                                     'invalid_words': d.get('invalid_words', []),
                                                     'rating': d.get('rating', 1200),
-                                                    'performance_efficiency': d.get('performance_efficiency', 0.0)
+                                                    'performance_efficiency': d.get('performance_efficiency', 0.0),
+                                                    'joined_mid_round': d.get('joined_mid_round', False)
                                                 })
                                         except Exception as pe:
                                             print(f"[RoomManager] Error parsing old active players: {pe}")
@@ -6396,7 +6398,8 @@ class RoomManager:
                         'submitted_words': [dict(w) for w in p.submitted_words],
                         'invalid_words': list(p.invalid_words),
                         'rating': getattr(p, 'rating', 1200),
-                        'performance_efficiency': getattr(p, 'performance_efficiency', 0)
+                        'performance_efficiency': getattr(p, 'performance_efficiency', 0),
+                        'joined_mid_round': getattr(p, 'joined_mid_round', False)
                     })
             
             # USER REQUEST: Word Tally. Capture unique words found by each player in this round.
@@ -7229,10 +7232,11 @@ class RoomManager:
                     u_score = p.score if hasattr(p, 'score') else p['score']
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p.get('submitted_words', [])
 
-                    # If a user gets a score of 0 and submitted no words, do not save
+                    # If a user gets a score of 0 or joined mid-round, do not save
                     # (Unless it is the System placeholder for 24-hour rooms)
-                    if u_score <= 0 and not u_submitted and u_id != -1 and u_name != 'System':
-                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score} and no words submitted")
+                    u_mid = getattr(p, 'joined_mid_round', False) if hasattr(p, 'joined_mid_round') else p.get('joined_mid_round', False)
+                    if u_id != -1 and u_name != 'System' and (u_score <= 0 or u_mid):
+                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score} or joined mid-round ({u_mid})")
                         continue
 
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']

@@ -4068,7 +4068,7 @@ def get_public_profile(username):
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
                wpm, total_words_avail, board_dimensions, board_format
         FROM round_history
-        WHERE user_id = ? AND round_duration < 7200 {time_filter}
+        WHERE user_id = ? AND round_duration < 7200 AND total_score > 0 {time_filter}
         ORDER BY timestamp DESC, id DESC
     ''', (user_id,))
     all_rows = cursor_all.fetchall()
@@ -4277,7 +4277,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query_all = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
         FROM round_history
-        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ?
+        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? AND total_score > 0
         ORDER BY timestamp DESC, id DESC
     '''
     cursor_all = conn.execute(query_all, (user_id, *canonical_game_types, board_dimensions, time_limit))
@@ -4331,7 +4331,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     query = f'''
         SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
         FROM round_history
-        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? {time_filter}
+        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? AND total_score > 0 {time_filter}
         ORDER BY timestamp DESC, id DESC
     '''
     cursor = conn.execute(query, (user_id, *canonical_game_types, board_dimensions, time_limit))
