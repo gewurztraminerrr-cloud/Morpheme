@@ -3683,8 +3683,8 @@ body {
 .replay-subheader {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: flex-start;
+    gap: 16px;
     flex-wrap: wrap;
 }
 
@@ -3692,6 +3692,7 @@ body {
     font-size: 0.8rem;
     color: rgba(var(--text-primary-rgb), 0.5);
     font-style: italic;
+    text-align: left;
 }
 
 .replay-controls {

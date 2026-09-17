@@ -12188,6 +12188,16 @@ body.theme-white .integrated-review-board {
         border: 2px solid rgba(220, 38, 38, 0.85) !important;
         will-change: background-color, box-shadow, border-color !important;
     }
+
+    .history-walkthrough-section .replay-subheader {
+        justify-content: flex-start !important;
+        gap: 16px !important;
+    }
+
+    .history-walkthrough-section .section-hint {
+        text-align: left !important;
+        max-width: none !important;
+    }
 }
 
 
