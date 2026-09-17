@@ -5959,9 +5959,9 @@ input[type=range]::-moz-range-track {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 5px 12px 2px 12px !important;
+        padding: 5px 12px 6px 12px !important;
         margin-top: 2px !important;
-        margin-bottom: 0 !important;
+        margin-bottom: 2px !important;
         border-radius: 0 !important;
         height: auto !important;
         width: 100% !important;
@@ -7724,7 +7724,7 @@ input[type=range]::-moz-range-track {
 
     .board-panel .validation-status,
     .board-panel.full-bleed-mobile .validation-status {
-        margin-top: 0 !important;
+        margin-top: -3px !important;
         margin-bottom: 2px !important;
         min-height: 16px !important;
         line-height: 1.1 !important;
