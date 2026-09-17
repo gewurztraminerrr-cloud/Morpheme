@@ -1562,10 +1562,13 @@ function renderFlagDropdown(filter = '') {
     if (!list) return;
     list.innerHTML = '';
 
+    const flagsSource = window.ALL_FLAGS || ALL_FLAGS || [];
     const term = filter.toLowerCase().trim();
 
-    const filtered = ALL_FLAGS.filter(f =>
-        f.name.toLowerCase().includes(term) || f.code.toLowerCase().includes(term)
+    const filtered = flagsSource.filter(f =>
+        f.code !== 'ZZ' &&
+        !f.name.toLowerCase().includes('none') &&
+        (f.name.toLowerCase().includes(term) || f.code.toLowerCase().includes(term))
     );
 
     filtered.forEach(item => {

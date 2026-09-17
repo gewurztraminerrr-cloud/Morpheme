@@ -2641,6 +2641,7 @@ function populateSignupFlagDropdown() {
     }
 
     list.forEach(item => {
+        if (item.code === 'ZZ' || item.name.toLowerCase().includes('none')) return;
         const option = document.createElement('option');
         option.value = item.flag;
         option.textContent = `${item.name} ${item.flag}`;
