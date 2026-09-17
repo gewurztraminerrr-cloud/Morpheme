@@ -492,6 +492,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: left !important;
 }
 
 .player-rating-val {
@@ -5945,6 +5946,7 @@ input[type=range]::-moz-range-track {
         max-width: 100% !important;
         margin: 0 auto !important;
         box-sizing: border-box !important;
+        text-align: left !important;
     }
     .left-panel-container .chat-panel {
         border-radius: 12px !important;
@@ -7298,30 +7300,6 @@ input[type=range]::-moz-range-track {
     }
 }
 
-    .lb-mobile-scrollbar-thumb {
-        position: absolute;
-        top: 0;
-        left: 1px;
-        width: 10px;
-        min-height: 35px;
-        background: linear-gradient(180deg, #409cff, #2980b9);
-        border-radius: 5px;
-        cursor: pointer;
-        border: 1px solid rgba(64, 156, 255, 0.6);
-        box-shadow: 0 0 8px rgba(64, 156, 255, 0.4);
-        touch-action: none;
-        transition: width 0.15s, background 0.15s;
-    }
-
-    .lb-mobile-scrollbar-thumb:active,
-    .lb-mobile-scrollbar-thumb.dragging {
-        background: linear-gradient(180deg, #60adff, #3498db);
-        border: 1px solid rgba(64, 156, 255, 0.9);
-        box-shadow: 0 0 12px rgba(64, 156, 255, 0.7);
-        width: 12px;
-    }
-}
-
 /* Mobile full-bleed board styling */
 @media (max-width: 992px) {
     body, html {
@@ -7474,6 +7452,7 @@ input[type=range]::-moz-range-track {
         width: 100% !important;
         box-sizing: border-box !important;
         gap: 8px !important;
+        text-align: left !important;
     }
 
     .player-row-top {
@@ -9189,6 +9168,7 @@ body .board-cell.tile-flash-purple * {
     .player-username {
         min-width: 50px !important;
         font-size: 0.85rem !important;
+        text-align: left !important;
     }
     .chat-input-section button {
         padding: 8px 8px !important;

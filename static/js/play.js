@@ -3443,7 +3443,7 @@ function renderPlayers(players, currentUser = null, state = null) {
             <div class="player-row-top">
                 <span class="player-rank">#${rank}</span>
                 <span class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
-                <span class="player-username">${p.username}</span>
+                <span class="player-username" style="text-align: left !important;">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
