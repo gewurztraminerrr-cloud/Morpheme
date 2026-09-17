@@ -3636,8 +3636,11 @@ function renderChat(messages) {
         };
     });
 
-    // Scroll to bottom
-    listEl.scrollTop = listEl.scrollHeight;
+    // Scroll to bottom only if user was already near bottom (within 80px) or list was newly rendered
+    const isAtBottom = (listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight) < 80;
+    if (isAtBottom) {
+        listEl.scrollTop = listEl.scrollHeight;
+    }
 }
 
 let isSendingChat = false;
@@ -3742,6 +3745,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatPanel.classList.add('expanded');
         if (leftPanelContainer) {
             leftPanelContainer.classList.add('chat-expanded');
+            leftPanelContainer.scrollTop = 0;
         }
         if (collapseBtn) {
             collapseBtn.style.display = 'flex';
@@ -3835,6 +3839,104 @@ document.addEventListener('DOMContentLoaded', () => {
             collapseChat();
         }
     });
+
+    // Direct Touch Scroll System for Chat History (guarantees smooth dragging on mobile when messages permit)
+    const chatHistoryEl = document.getElementById('chat-history');
+    if (chatHistoryEl) {
+        let isTouchDragging = false;
+        let startTouchY = 0;
+        let startScrollTop = 0;
+        let lastTouchY = 0;
+        let lastTouchTime = 0;
+        let touchVelocity = 0;
+        let hasMovedFar = false;
+        let momentumRafId = null;
+
+        function cancelMomentum() {
+            if (momentumRafId) {
+                cancelAnimationFrame(momentumRafId);
+                momentumRafId = null;
+            }
+        }
+
+        chatHistoryEl.addEventListener('touchstart', (e) => {
+            cancelMomentum();
+            if (e.touches.length === 1) {
+                startTouchY = e.touches[0].clientY;
+                lastTouchY = startTouchY;
+                startScrollTop = chatHistoryEl.scrollTop;
+                lastTouchTime = performance.now();
+                touchVelocity = 0;
+                isTouchDragging = true;
+                hasMovedFar = false;
+            }
+        }, { passive: true });
+
+        chatHistoryEl.addEventListener('touchmove', (e) => {
+            if (!isTouchDragging || e.touches.length !== 1) return;
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - startTouchY;
+
+            if (Math.abs(deltaY) > 5) {
+                hasMovedFar = true;
+            }
+
+            const now = performance.now();
+            const dt = now - lastTouchTime;
+            if (dt > 0) {
+                const instantVel = (currentY - lastTouchY) / dt;
+                touchVelocity = 0.7 * instantVel + 0.3 * touchVelocity;
+            }
+            lastTouchY = currentY;
+            lastTouchTime = now;
+
+            // When enough messages permit scrolling, perform direct smooth scrolling
+            if (chatHistoryEl.scrollHeight > chatHistoryEl.clientHeight) {
+                if (e.cancelable !== false) {
+                    e.preventDefault();
+                }
+                e.stopPropagation();
+                chatHistoryEl.scrollTop = startScrollTop - deltaY;
+            }
+        }, { passive: false });
+
+        chatHistoryEl.addEventListener('touchend', () => {
+            if (!isTouchDragging) return;
+            isTouchDragging = false;
+
+            // If there's flick velocity and content overflows, apply momentum glide
+            if (hasMovedFar && chatHistoryEl.scrollHeight > chatHistoryEl.clientHeight && Math.abs(touchVelocity) > 0.1) {
+                let frameVelocity = touchVelocity * 16;
+                frameVelocity = Math.max(-28, Math.min(28, frameVelocity));
+
+                function stepMomentum() {
+                    if (Math.abs(frameVelocity) < 0.5) {
+                        cancelMomentum();
+                        return;
+                    }
+                    chatHistoryEl.scrollTop -= frameVelocity;
+                    frameVelocity *= 0.94;
+                    momentumRafId = requestAnimationFrame(stepMomentum);
+                }
+                cancelMomentum();
+                momentumRafId = requestAnimationFrame(stepMomentum);
+            }
+        }, { passive: true });
+
+        chatHistoryEl.addEventListener('touchcancel', () => {
+            isTouchDragging = false;
+            cancelMomentum();
+        }, { passive: true });
+
+        // Prevent accidental username profile clicks when the touch was a scroll drag
+        chatHistoryEl.addEventListener('click', (e) => {
+            if (hasMovedFar) {
+                e.stopPropagation();
+                e.preventDefault();
+                hasMovedFar = false;
+            }
+        }, true);
+    }
 
     // Find Me button logic
     const findMeBtn = document.getElementById('find-me-btn');
