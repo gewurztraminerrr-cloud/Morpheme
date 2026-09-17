@@ -277,8 +277,7 @@ window.ALL_FLAGS = [
     { code: 'EH', flag: '🇪🇭', name: 'Western Sahara' },
     { code: 'YE', flag: '🇾🇪', name: 'Yemen' },
     { code: 'ZM', flag: '🇿🇲', name: 'Zambia' },
-    { code: 'ZW', flag: '🇿🇼', name: 'Zimbabwe' },
-    { code: 'ZZ', flag: '🏳️', name: 'None / International' }
+    { code: 'ZW', flag: '🇿🇼', name: 'Zimbabwe' }
 ];
 
 const parseUTCTimestamp = (isoStr) => {
