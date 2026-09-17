@@ -201,8 +201,8 @@ window.showGameRoomTopMenu = function(immediate = false) {
         const playPage = document.getElementById('page-play');
         if (!playPage || !playPage.classList.contains('active')) return;
         
-        // Strict Exclusion: Never track touches that start on the game board, cells, controls, or inputs
-        if (e.target.closest('#game-board, .board-cell, .game-board, input, textarea, button, select, .timer-controls-group')) {
+        // Strict Exclusion: Never track touches that start on the game board, cells, controls, inputs, or chat
+        if (e.target.closest('#game-board, .board-cell, .game-board, input, textarea, button, select, .timer-controls-group, .chat-panel, #chat-history')) {
             isTracking = false;
             // If the top header was temporarily visible and user taps the board to play, hide it
             const headerH = getTopHeaderHeight();
@@ -3716,6 +3716,11 @@ document.addEventListener('DOMContentLoaded', () => {
             collapseBtn.style.display = 'none';
         }
 
+        if (chatPanel) {
+            chatPanel.style.transform = '';
+            chatPanel.style.willChange = '';
+        }
+
         chatPanel.classList.add('collapsing');
         chatPanel.classList.remove('expanded');
 
@@ -3747,6 +3752,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatHistory.scrollTop = chatHistory.scrollHeight;
             }, 50);
         }
+        setTimeout(() => {
+            if (chatPanel && chatPanel.classList.contains('expanded')) {
+                chatPanel.style.transform = 'none';
+                chatPanel.style.willChange = 'auto';
+            }
+            if (chatHistory) {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        }, 290);
     }
 
     window.collapseChat = collapseChat;
@@ -3758,6 +3772,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isTouchScroll = false;
 
         chatPanel.addEventListener('touchstart', (e) => {
+            if (chatPanel.classList.contains('expanded')) return;
             if (e.touches.length === 1) {
                 touchStartPos = {
                     x: e.touches[0].clientX,
@@ -3769,6 +3784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
 
         chatPanel.addEventListener('touchmove', (e) => {
+            if (chatPanel.classList.contains('expanded')) return;
             if (e.touches.length === 1) {
                 const moveDist = Math.hypot(e.touches[0].clientX - touchStartPos.x, e.touches[0].clientY - touchStartPos.y);
                 if (moveDist > 10) {

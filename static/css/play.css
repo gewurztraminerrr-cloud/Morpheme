@@ -8215,7 +8215,6 @@ body.is-desktop .word-input-section {
     border-radius: 12px;
     cursor: pointer;
     overflow: hidden !important;
-    contain: paint layout !important;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -8240,16 +8239,17 @@ body.is-desktop .word-input-section {
     max-height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
+    overscroll-behavior-y: contain !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
-    contain: paint layout !important;
     box-sizing: border-box !important;
     user-select: text;
     -webkit-user-select: text;
     text-align: left !important;
     align-items: stretch !important;
+    pointer-events: auto !important;
 }
 
 #chat-input {
@@ -8344,8 +8344,8 @@ body.theme-light-brown .chat-collapse-btn:hover {
     border-radius: 12px !important;
     background: var(--bg-panel, #181920) !important;
     margin: 0 !important;
-    will-change: transform;
-    animation: chatSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    touch-action: pan-y !important;
+    animation: chatSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .chat-panel.collapsing {
@@ -8391,9 +8391,10 @@ body.theme-light-brown .chat-collapse-btn:hover {
     max-height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    overscroll-behavior: contain !important;
+    overscroll-behavior-y: contain !important;
     -webkit-overflow-scrolling: touch !important;
-    contain: paint layout !important;
+    touch-action: pan-y !important;
+    pointer-events: auto !important;
 }
 
 @media (max-width: 992px) {
@@ -8416,6 +8417,15 @@ body.theme-light-brown .chat-collapse-btn:hover {
         bottom: 52px !important;
         height: calc(100% - 62px) !important;
         max-height: calc(100% - 62px) !important;
+        min-height: 0 !important;
+    }
+
+    .chat-panel.expanded #chat-history {
+        touch-action: pan-y !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        pointer-events: auto !important;
     }
 
     .left-panel-container.chat-expanded {
