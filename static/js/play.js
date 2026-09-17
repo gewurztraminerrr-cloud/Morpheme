@@ -3739,7 +3739,7 @@ document.addEventListener('DOMContentLoaded', () => {
             leftPanelContainer.classList.add('chat-expanded');
         }
         if (collapseBtn) {
-            collapseBtn.style.display = 'block';
+            collapseBtn.style.display = 'flex';
         }
         const chatHistory = document.getElementById('chat-history');
         if (chatHistory) {
@@ -3753,10 +3753,39 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expandChat = expandChat;
 
     if (chatPanel) {
-        // Click to expand when collapsed; close button or header/top click collapses
+        // Tap to expand when collapsed; close button collapses
+        let touchStartPos = { x: 0, y: 0, time: 0 };
+        let isTouchScroll = false;
+
+        chatPanel.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartPos = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY,
+                    time: Date.now()
+                };
+                isTouchScroll = false;
+            }
+        }, { passive: true });
+
+        chatPanel.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                const moveDist = Math.hypot(e.touches[0].clientX - touchStartPos.x, e.touches[0].clientY - touchStartPos.y);
+                if (moveDist > 10) {
+                    isTouchScroll = true; // User is scrolling/dragging; do NOT expand or collapse
+                }
+            }
+        }, { passive: true });
+
         chatPanel.addEventListener('click', (e) => {
-            // Do not toggle if clicking input, send button, interactive links, or users
+            // Do not toggle if clicking input, send button, interactive links, users, or close button
             if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user') || e.target.closest('#chat-collapse-btn')) {
+                return;
+            }
+
+            // If user was scrolling on touch device, do not open
+            if (isTouchScroll) {
+                isTouchScroll = false;
                 return;
             }
 
@@ -3764,41 +3793,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 expandChat();
             }
         });
-
-        // Touch Slide Up / Slide Down Gestures
-        let touchStartY = 0;
-        let touchStartX = 0;
-        let isTouchTracking = false;
-
-        chatPanel.addEventListener('touchstart', (e) => {
-            if (e.touches.length !== 1) return;
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-            isTouchTracking = true;
-        }, { passive: true });
-
-        chatPanel.addEventListener('touchend', (e) => {
-            if (!isTouchTracking || e.changedTouches.length !== 1) return;
-            isTouchTracking = false;
-            const endY = e.changedTouches[0].clientY;
-            const endX = e.changedTouches[0].clientX;
-            const diffY = endY - touchStartY;
-            const diffX = Math.abs(endX - touchStartX);
-
-            // Verify predominantly vertical swipe
-            if (Math.abs(diffY) > 30 && Math.abs(diffY) > diffX) {
-                if (diffY < -30 && !chatPanel.classList.contains('expanded')) {
-                    // Swiped up on collapsed chat -> expand
-                    expandChat();
-                } else if (diffY > 30 && chatPanel.classList.contains('expanded')) {
-                    // Swiped down on expanded chat -> collapse
-                    const chatHistory = document.getElementById('chat-history');
-                    if (!chatHistory || chatHistory.scrollTop <= 8) {
-                        collapseChat();
-                    }
-                }
-            }
-        }, { passive: true });
     }
 
     if (collapseBtn) {
@@ -3808,10 +3802,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Collapse when clicking outside the chatbox
+    // Collapse when clicking outside the chatbox (on desktop only, or when user clicks outside the panel)
     document.addEventListener('click', (e) => {
         if (chatPanel && chatPanel.classList.contains('expanded')) {
-            if (!chatPanel.contains(e.target)) {
+            // On mobile devices, require pressing the X close button to close the chatbox
+            const isMobileViewport = window.innerWidth <= 992 || (document.body && document.body.classList.contains('is-mobile'));
+            if (!isMobileViewport && !chatPanel.contains(e.target)) {
                 collapseChat();
             }
         }

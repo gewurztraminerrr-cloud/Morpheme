@@ -8262,34 +8262,71 @@ body.is-desktop .word-input-section {
 /* Close/Collapse Button positioning */
 .chat-collapse-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    top: 10px;
+    right: 10px;
+    background: rgba(30, 35, 48, 0.9);
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
     border-radius: 50%;
-    color: var(--text-primary);
-    width: 28px;
-    height: 28px;
-    font-size: 18px;
-    line-height: 24px;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     cursor: pointer;
     z-index: 10005;
-    transition: background 0.2s, transform 0.2s;
-    display: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+    transition: background 0.2s, transform 0.2s, border-color 0.2s, color 0.2s;
     user-select: none !important;
     -webkit-user-select: none !important;
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
+    padding: 0;
+}
+
+.chat-panel.expanded .chat-collapse-btn {
+    display: flex;
 }
 
 .chat-collapse-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(45, 52, 70, 0.95);
+    border-color: rgba(255, 255, 255, 0.85);
+    color: #ffffff;
     transform: scale(1.08);
 }
 
 .chat-collapse-btn:active {
     transform: scale(0.95);
+    background: rgba(20, 24, 35, 0.95);
+}
+
+body[class*="theme-white"] .chat-collapse-btn,
+body[class*="theme-light-"] .chat-collapse-btn,
+body.theme-yellow .chat-collapse-btn,
+body.theme-pink .chat-collapse-btn,
+body.theme-orange .chat-collapse-btn,
+body.theme-gray .chat-collapse-btn,
+body.theme-light-brown .chat-collapse-btn {
+    background: rgba(240, 243, 246, 0.95);
+    border: 1.5px solid rgba(15, 23, 42, 0.35);
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body[class*="theme-white"] .chat-collapse-btn:hover,
+body[class*="theme-light-"] .chat-collapse-btn:hover,
+body.theme-yellow .chat-collapse-btn:hover,
+body.theme-pink .chat-collapse-btn:hover,
+body.theme-orange .chat-collapse-btn:hover,
+body.theme-gray .chat-collapse-btn:hover,
+body.theme-light-brown .chat-collapse-btn:hover {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.7);
+    color: #000000;
 }
 
 /* Unified Smooth Bottom-Anchored Upward Sliding Expansion (Desktop & Mobile) */
@@ -8383,6 +8420,17 @@ body.is-desktop .word-input-section {
 
     .left-panel-container.chat-expanded {
         overflow: hidden !important;
+    }
+
+    .chat-collapse-btn {
+        top: 10px !important;
+        right: 10px !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        font-size: 26px !important;
+        line-height: 1 !important;
     }
 }
 
