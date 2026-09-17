@@ -638,6 +638,14 @@ body.theme-light-brown .player-score-val {
     font-size: 0.95em;
 }
 
+.definition-header[style*="display: none"],
+.definition-header.hidden {
+    display: none !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+
 #definition-content {
     flex: 1;
     overflow-y: auto;
@@ -6120,8 +6128,33 @@ input[type=range]::-moz-range-track {
         padding: 8px 12px !important;
         box-sizing: border-box !important;
     }
+    .definitions-panel {
+        border-top: none !important;
+    }
     .definitions-panel .definition-header,
-    .definitions-panel #definition-header,
+    .definitions-panel #definition-header {
+        text-align: center !important;
+        width: 100% !important;
+    }
+    /* When a word is defined (header active/shown), show header and separating divider */
+    .definitions-panel .definition-header:not([style*="display: none"]):not(.hidden),
+    .definitions-panel #definition-header:not([style*="display: none"]):not(.hidden) {
+        display: block !important;
+        border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05) !important;
+        padding-bottom: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    /* When a word is not being defined (default message or hidden), remove divider line and hide header */
+    .definitions-panel .definition-header[style*="display: none"],
+    .definitions-panel #definition-header[style*="display: none"],
+    .definitions-panel .definition-header.hidden,
+    .definitions-panel #definition-header.hidden {
+        display: none !important;
+        border: none !important;
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
     .definitions-panel .definition-word,
     .definitions-panel #definition-word {
         text-align: center !important;

@@ -1789,7 +1789,12 @@ async function updateGameState(incomingState = null) {
                     defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
                 }
                 const defHeader = document.getElementById('definition-header');
-                if (defHeader) defHeader.style.display = 'none';
+                if (defHeader) {
+                    defHeader.classList.add('hidden');
+                    defHeader.style.display = 'none';
+                }
+                const defWord = document.getElementById('definition-word');
+                if (defWord) defWord.textContent = '';
             }
 
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
@@ -2325,7 +2330,12 @@ async function updateGameState(incomingState = null) {
                 // Only reset definition content if Personal Timer is NOT in expired state
                 if (!timerStillExpired) {
                     if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                    if (defHeader) defHeader.style.display = 'none';
+                    if (defHeader) {
+                        defHeader.classList.add('hidden');
+                        defHeader.style.display = 'none';
+                    }
+                    const defWord = document.getElementById('definition-word');
+                    if (defWord) defWord.textContent = '';
                 }
                 if (defPanel) {
                     // Keep timer-flash alive across rounds — Personal Timer expiry persists until user stops it
@@ -7459,7 +7469,12 @@ function clearSubmissionVisuals() {
     const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
     if (!isIntermission) {
         const defHeader = document.getElementById('definition-header');
-        if (defHeader) defHeader.style.display = 'none';
+        if (defHeader) {
+            defHeader.classList.add('hidden');
+            defHeader.style.display = 'none';
+        }
+        const defWord = document.getElementById('definition-word');
+        if (defWord) defWord.textContent = '';
         const defContent = document.getElementById('definition-content');
         if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
     }
@@ -8580,6 +8595,7 @@ async function fetchDefinition(word) {
     // Show word immediately in dedicated header
     if (defWord && defHeader) {
         defWord.textContent = word.toUpperCase();
+        defHeader.classList.remove('hidden');
         defHeader.style.display = 'block';
     }
 
