@@ -11195,6 +11195,26 @@ body.is-desktop #players-list .player-item {
     gap: 4px !important;
 }
 
+body.is-desktop .history-walkthrough-section .replay-subheader {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 16px !important;
+    flex-wrap: nowrap !important;
+}
+
+body.is-desktop .history-walkthrough-section .replay-controls {
+    flex-shrink: 0 !important;
+}
+
+body.is-desktop .history-walkthrough-section .section-hint {
+    margin: 0 !important;
+    text-align: left !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+}
+
 body.is-desktop .left-panel-container .chat-panel {
     flex-shrink: 0 !important;
 }
