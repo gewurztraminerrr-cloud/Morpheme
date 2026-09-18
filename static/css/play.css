@@ -1817,6 +1817,8 @@ body.theme-light-brown .word-item.bonus-word .word-text {
 }
 
 /* Added Word (Royal Purple) — Higher Priority than CSW-Only */
+.word-item.added-word,
+.notepad-item.added-word,
 .added-word {
     background: rgba(147, 51, 234, 0.4) !important;
     border: 2px solid #9333ea !important;
@@ -11530,24 +11532,38 @@ body.theme-orange .word-item.player-word .word-text,
 body.theme-gray .word-item.player-word .word-text {
     color: #0f172a !important;
     font-weight: 800 !important;
-}
-
 /* Added Word (Vivid Royal Purple - Mimicking Dark Mode) */
+[class*="theme-white"] .word-item.added-word,
 [class*="theme-white"] .added-word,
+[class*="theme-light-"] .word-item.added-word,
 [class*="theme-light-"] .added-word,
+body.theme-white .word-item.added-word,
 body.theme-white .added-word,
+body.theme-light-gray .word-item.added-word,
 body.theme-light-gray .added-word,
+body.theme-light-red .word-item.added-word,
 body.theme-light-red .added-word,
+body.theme-light-orange .word-item.added-word,
 body.theme-light-orange .added-word,
+body.theme-light-yellow .word-item.added-word,
 body.theme-light-yellow .added-word,
+body.theme-light-green .word-item.added-word,
 body.theme-light-green .added-word,
+body.theme-light-blue .word-item.added-word,
 body.theme-light-blue .added-word,
+body.theme-light-purple .word-item.added-word,
 body.theme-light-purple .added-word,
+body.theme-light-pink .word-item.added-word,
 body.theme-light-pink .added-word,
+body.theme-light-brown .word-item.added-word,
 body.theme-light-brown .added-word,
+body.theme-yellow .word-item.added-word,
 body.theme-yellow .added-word,
+body.theme-pink .word-item.added-word,
 body.theme-pink .added-word,
+body.theme-orange .word-item.added-word,
 body.theme-orange .added-word,
+body.theme-gray .word-item.added-word,
 body.theme-gray .added-word {
     background: rgba(168, 85, 247, 0.45) !important;
     border: 2px solid #9333ea !important;
@@ -11556,21 +11572,37 @@ body.theme-gray .added-word {
     font-weight: 800 !important;
 }
 
+[class*="theme-white"] .word-item.added-word .word-text,
 [class*="theme-white"] .added-word .word-text,
+[class*="theme-light-"] .word-item.added-word .word-text,
 [class*="theme-light-"] .added-word .word-text,
+body.theme-white .word-item.added-word .word-text,
 body.theme-white .added-word .word-text,
+body.theme-light-gray .word-item.added-word .word-text,
 body.theme-light-gray .added-word .word-text,
+body.theme-light-red .word-item.added-word .word-text,
 body.theme-light-red .added-word .word-text,
+body.theme-light-orange .word-item.added-word .word-text,
 body.theme-light-orange .added-word .word-text,
+body.theme-light-yellow .word-item.added-word .word-text,
 body.theme-light-yellow .added-word .word-text,
+body.theme-light-green .word-item.added-word .word-text,
 body.theme-light-green .added-word .word-text,
+body.theme-light-blue .word-item.added-word .word-text,
 body.theme-light-blue .added-word .word-text,
+body.theme-light-purple .word-item.added-word .word-text,
 body.theme-light-purple .added-word .word-text,
+body.theme-light-pink .word-item.added-word .word-text,
 body.theme-light-pink .added-word .word-text,
+body.theme-light-brown .word-item.added-word .word-text,
 body.theme-light-brown .added-word .word-text,
+body.theme-yellow .word-item.added-word .word-text,
 body.theme-yellow .added-word .word-text,
+body.theme-pink .word-item.added-word .word-text,
 body.theme-pink .added-word .word-text,
+body.theme-orange .word-item.added-word .word-text,
 body.theme-orange .added-word .word-text,
+body.theme-gray .word-item.added-word .word-text,
 body.theme-gray .added-word .word-text {
     color: #3b0764 !important;
     font-weight: 800 !important;
