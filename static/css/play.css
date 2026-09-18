@@ -11403,6 +11403,40 @@ body.is-desktop .word-input-section .timer-controls-group .rotate-btn {
     box-sizing: border-box !important;
 }
 
+/* Darker background mat in and around the board on desktop/laptop for white layouts */
+@media (min-width: 901px) {
+    [class*="theme-white"] .board-panel .game-board:not(.game-board-loading),
+    [class*="theme-light-"] .board-panel .game-board:not(.game-board-loading),
+    body.theme-white .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-gray .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-red .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-orange .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-yellow .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-green .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-blue .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-purple .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-pink .board-panel .game-board:not(.game-board-loading),
+    body.theme-light-brown .board-panel .game-board:not(.game-board-loading),
+    body.theme-yellow .board-panel .game-board:not(.game-board-loading),
+    body.theme-pink .board-panel .game-board:not(.game-board-loading),
+    body.theme-orange .board-panel .game-board:not(.game-board-loading),
+    body.theme-gray .board-panel .game-board:not(.game-board-loading),
+    [class*="theme-white"] #game-board:not(.split-notepads-container):not(.game-board-loading),
+    [class*="theme-light-"] #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-white #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-light-gray #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-yellow #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-pink #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-orange #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-gray #game-board:not(.split-notepads-container):not(.game-board-loading),
+    body.theme-light-brown #game-board:not(.split-notepads-container):not(.game-board-loading) {
+        background: rgba(0, 0, 0, 0.2) !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+        gap: 4px !important;
+    }
+}
+
 /* ==========================================================================
    WHITE & LIGHT THEME COMPREHENSIVE READABILITY & CONTRAST OVERHAUL
    ========================================================================== */
