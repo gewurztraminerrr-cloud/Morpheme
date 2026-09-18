@@ -1745,11 +1745,31 @@ body.theme-light-brown .board-panel.low-time-warning {
     z-index: 5;
 }
 
-/* Remove blurriness for bonus word in light themes */
+/* Bonus word in light themes - vivid lime green */
 [class*="theme-white"] .word-item.bonus-word,
 [class*="theme-white"] .notepad-item.bonus-word,
 [class*="theme-light-"] .word-item.bonus-word,
 [class*="theme-light-"] .notepad-item.bonus-word,
+body.theme-white .word-item.bonus-word,
+body.theme-white .notepad-item.bonus-word,
+body.theme-light-gray .word-item.bonus-word,
+body.theme-light-gray .notepad-item.bonus-word,
+body.theme-light-red .word-item.bonus-word,
+body.theme-light-red .notepad-item.bonus-word,
+body.theme-light-orange .word-item.bonus-word,
+body.theme-light-orange .notepad-item.bonus-word,
+body.theme-light-yellow .word-item.bonus-word,
+body.theme-light-yellow .notepad-item.bonus-word,
+body.theme-light-green .word-item.bonus-word,
+body.theme-light-green .notepad-item.bonus-word,
+body.theme-light-blue .word-item.bonus-word,
+body.theme-light-blue .notepad-item.bonus-word,
+body.theme-light-purple .word-item.bonus-word,
+body.theme-light-purple .notepad-item.bonus-word,
+body.theme-light-pink .word-item.bonus-word,
+body.theme-light-pink .notepad-item.bonus-word,
+body.theme-light-brown .word-item.bonus-word,
+body.theme-light-brown .notepad-item.bonus-word,
 body.theme-yellow .word-item.bonus-word,
 body.theme-yellow .notepad-item.bonus-word,
 body.theme-pink .word-item.bonus-word,
@@ -1757,12 +1777,30 @@ body.theme-pink .notepad-item.bonus-word,
 body.theme-orange .word-item.bonus-word,
 body.theme-orange .notepad-item.bonus-word,
 body.theme-gray .word-item.bonus-word,
-body.theme-gray .notepad-item.bonus-word,
-body.theme-light-brown .word-item.bonus-word,
-body.theme-light-brown .notepad-item.bonus-word {
+body.theme-gray .notepad-item.bonus-word {
+    background: rgba(50, 255, 50, 0.45) !important;
+    border: 3px solid #16a34a !important;
+    box-shadow: 0 0 16px rgba(50, 255, 50, 0.5) !important;
+    color: #052e16 !important;
+    font-weight: 800 !important;
     text-shadow: none !important;
-    box-shadow: 0 2px 8px rgba(0, 128, 0, 0.3) !important;
-    color: #000 !important;
+}
+
+[class*="theme-white"] .word-item.bonus-word .word-text,
+[class*="theme-white"] .notepad-item.bonus-word .word-text,
+[class*="theme-light-"] .word-item.bonus-word .word-text,
+[class*="theme-light-"] .notepad-item.bonus-word .word-text,
+body.theme-white .word-item.bonus-word .word-text,
+body.theme-white .notepad-item.bonus-word .word-text,
+body.theme-light-gray .word-item.bonus-word .word-text,
+body.theme-light-gray .notepad-item.bonus-word .word-text,
+body.theme-yellow .word-item.bonus-word .word-text,
+body.theme-pink .word-item.bonus-word .word-text,
+body.theme-orange .word-item.bonus-word .word-text,
+body.theme-gray .word-item.bonus-word .word-text,
+body.theme-light-brown .word-item.bonus-word .word-text {
+    color: #052e16 !important;
+    font-weight: 800 !important;
 }
 
 .word-item.unfound {
@@ -1867,14 +1905,28 @@ body.theme-light-brown .notepad-item.bonus-word {
 
 [class*="theme-white"] .word-item.missed,
 [class*="theme-light-"] .word-item.missed,
+body.theme-white .word-item.missed,
+body.theme-light-gray .word-item.missed,
 body.theme-yellow .word-item.missed,
 body.theme-pink .word-item.missed,
 body.theme-orange .word-item.missed,
 body.theme-gray .word-item.missed,
 body.theme-light-brown .word-item.missed {
-    color: #9f1239 !important; /* Deep crimson for light themes */
-    background: rgba(159, 18, 57, 0.05) !important;
-    border-color: rgba(159, 18, 57, 0.1) !important;
+    color: #9f1239 !important;
+    background: rgba(244, 63, 94, 0.12) !important;
+    border: 1.5px solid rgba(244, 63, 94, 0.35) !important;
+}
+
+[class*="theme-white"] .word-item.missed .word-text,
+[class*="theme-light-"] .word-item.missed .word-text,
+body.theme-white .word-item.missed .word-text,
+body.theme-light-gray .word-item.missed .word-text,
+body.theme-yellow .word-item.missed .word-text,
+body.theme-pink .word-item.missed .word-text,
+body.theme-orange .word-item.missed .word-text,
+body.theme-gray .word-item.missed .word-text,
+body.theme-light-brown .word-item.missed .word-text {
+    color: #9f1239 !important;
 }
 
 /* Equal Height for MP and LIC Charts */
@@ -11436,6 +11488,7 @@ body.theme-gray .nwl-word {
     color: #111111 !important;
 }
 
+/* Found Word by Player (Vivid Blue - Mimicking Dark Mode) */
 [class*="theme-white"] .word-item.player-word,
 [class*="theme-light-"] .word-item.player-word,
 body.theme-white .word-item.player-word,
@@ -11452,23 +11505,34 @@ body.theme-yellow .word-item.player-word,
 body.theme-pink .word-item.player-word,
 body.theme-orange .word-item.player-word,
 body.theme-gray .word-item.player-word {
-    background: rgba(37, 99, 235, 0.18) !important;
+    background: rgba(59, 130, 246, 0.5) !important;
     border: 2px solid #2563eb !important;
-    color: #1e40af !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.35) !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
 }
 
 [class*="theme-white"] .word-item.player-word .word-text,
 [class*="theme-light-"] .word-item.player-word .word-text,
 body.theme-white .word-item.player-word .word-text,
 body.theme-light-gray .word-item.player-word .word-text,
+body.theme-light-red .word-item.player-word .word-text,
+body.theme-light-orange .word-item.player-word .word-text,
+body.theme-light-yellow .word-item.player-word .word-text,
+body.theme-light-green .word-item.player-word .word-text,
+body.theme-light-blue .word-item.player-word .word-text,
+body.theme-light-purple .word-item.player-word .word-text,
+body.theme-light-pink .word-item.player-word .word-text,
+body.theme-light-brown .word-item.player-word .word-text,
 body.theme-yellow .word-item.player-word .word-text,
 body.theme-pink .word-item.player-word .word-text,
 body.theme-orange .word-item.player-word .word-text,
-body.theme-gray .word-item.player-word .word-text,
-body.theme-light-brown .word-item.player-word .word-text {
-    color: #1e40af !important;
+body.theme-gray .word-item.player-word .word-text {
+    color: #0f172a !important;
+    font-weight: 800 !important;
 }
 
+/* Added Word (Vivid Royal Purple - Mimicking Dark Mode) */
 [class*="theme-white"] .added-word,
 [class*="theme-light-"] .added-word,
 body.theme-white .added-word,
@@ -11485,23 +11549,34 @@ body.theme-yellow .added-word,
 body.theme-pink .added-word,
 body.theme-orange .added-word,
 body.theme-gray .added-word {
-    background: rgba(147, 51, 234, 0.18) !important;
+    background: rgba(168, 85, 247, 0.45) !important;
     border: 2px solid #9333ea !important;
-    color: #6b21a8 !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.35) !important;
+    color: #3b0764 !important;
+    font-weight: 800 !important;
 }
 
 [class*="theme-white"] .added-word .word-text,
 [class*="theme-light-"] .added-word .word-text,
 body.theme-white .added-word .word-text,
 body.theme-light-gray .added-word .word-text,
+body.theme-light-red .added-word .word-text,
+body.theme-light-orange .added-word .word-text,
+body.theme-light-yellow .added-word .word-text,
+body.theme-light-green .added-word .word-text,
+body.theme-light-blue .added-word .word-text,
+body.theme-light-purple .added-word .word-text,
+body.theme-light-pink .added-word .word-text,
+body.theme-light-brown .added-word .word-text,
 body.theme-yellow .added-word .word-text,
 body.theme-pink .added-word .word-text,
 body.theme-orange .added-word .word-text,
-body.theme-gray .added-word .word-text,
-body.theme-light-brown .added-word .word-text {
-    color: #6b21a8 !important;
+body.theme-gray .added-word .word-text {
+    color: #3b0764 !important;
+    font-weight: 800 !important;
 }
 
+/* CSW-Only Word (Vivid Solid Gold - Mimicking Dark Mode) */
 [class*="theme-white"] .word-item.csw-only,
 [class*="theme-light-"] .word-item.csw-only,
 body.theme-white .word-item.csw-only,
@@ -11518,23 +11593,34 @@ body.theme-yellow .word-item.csw-only,
 body.theme-pink .word-item.csw-only,
 body.theme-orange .word-item.csw-only,
 body.theme-gray .word-item.csw-only {
-    background: rgba(234, 179, 8, 0.22) !important;
-    border: 2px solid #ca8a04 !important;
-    color: #713f12 !important;
+    background: rgba(255, 215, 0, 0.75) !important;
+    border: 2px solid #eab308 !important;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.45) !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
 }
 
 [class*="theme-white"] .word-item.csw-only .word-text,
 [class*="theme-light-"] .word-item.csw-only .word-text,
 body.theme-white .word-item.csw-only .word-text,
 body.theme-light-gray .word-item.csw-only .word-text,
+body.theme-light-red .word-item.csw-only .word-text,
+body.theme-light-orange .word-item.csw-only .word-text,
+body.theme-light-yellow .word-item.csw-only .word-text,
+body.theme-light-green .word-item.csw-only .word-text,
+body.theme-light-blue .word-item.csw-only .word-text,
+body.theme-light-purple .word-item.csw-only .word-text,
+body.theme-light-pink .word-item.csw-only .word-text,
+body.theme-light-brown .word-item.csw-only .word-text,
 body.theme-yellow .word-item.csw-only .word-text,
 body.theme-pink .word-item.csw-only .word-text,
 body.theme-orange .word-item.csw-only .word-text,
-body.theme-gray .word-item.csw-only .word-text,
-body.theme-light-brown .word-item.csw-only .word-text {
-    color: #713f12 !important;
+body.theme-gray .word-item.csw-only .word-text {
+    color: #000000 !important;
+    font-weight: 800 !important;
 }
 
+/* Opponent Word (Vivid Coral/Tomato Red - Mimicking Dark Mode) */
 [class*="theme-white"] .word-item.opponent-word,
 [class*="theme-light-"] .word-item.opponent-word,
 body.theme-white .word-item.opponent-word,
@@ -11544,16 +11630,19 @@ body.theme-pink .word-item.opponent-word,
 body.theme-orange .word-item.opponent-word,
 body.theme-gray .word-item.opponent-word,
 body.theme-light-brown .word-item.opponent-word {
-    background: rgba(239, 68, 68, 0.15) !important;
-    border: 1px solid rgba(239, 68, 68, 0.35) !important;
-    color: #991b1b !important;
+    background: rgba(255, 99, 71, 0.35) !important;
+    border: 1.5px solid rgba(255, 99, 71, 0.6) !important;
+    box-shadow: 0 0 8px rgba(255, 99, 71, 0.3) !important;
+    color: #450a0a !important;
+    font-weight: 800 !important;
 }
 
 [class*="theme-white"] .word-item.opponent-word .word-text,
 [class*="theme-light-"] .word-item.opponent-word .word-text,
 body.theme-white .word-item.opponent-word .word-text,
 body.theme-light-gray .word-item.opponent-word .word-text {
-    color: #991b1b !important;
+    color: #450a0a !important;
+    font-weight: 800 !important;
 }
 
 [class*="theme-white"] .word-item.found-by-other,
@@ -11579,7 +11668,10 @@ body.theme-pink .word-item .points-math,
 body.theme-orange .word-item .points-math,
 body.theme-gray .word-item .points-math,
 body.theme-light-brown .word-item .points-math {
-    color: rgba(0, 0, 0, 0.7) !important;
+    background: rgba(0, 0, 0, 0.65) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    font-weight: 800 !important;
 }
 
 /* 2. Mods Tab Content High-Contrast & Clean Organization for Light Themes */
