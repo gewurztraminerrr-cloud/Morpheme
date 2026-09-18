@@ -784,7 +784,10 @@ async function timeoutUser() {
             const infoEl = document.getElementById('timeout-info-display');
             if (infoEl) {
                 const rDisplay = reason ? ` | Reason: <em>${reason}</em>` : '';
-                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count})${rDisplay}. Until: ${data.timeout_until} UTC`;
+                const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+                    ? window.formatTimeoutTimestamp(data.timeout_until)
+                    : `${data.timeout_until} UTC`;
+                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count})${rDisplay}. Until: ${formattedUntil}`;
             }
             alert(`User "${username}" has been timed out for ${data.duration}.`);
         } else {
@@ -817,7 +820,10 @@ async function checkTimeoutStatus() {
 
         let statusHtml = `<strong>Status for ${data.username}:</strong><br>`;
         if (data.is_timed_out) {
-            statusHtml += `<span style="color: #f59e0b;">⏱️ CURRENTLY TIMED OUT</span> — Remaining: <strong>${data.remaining}</strong> (Until: ${data.timeout_until} UTC)<br>`;
+            const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+                ? window.formatTimeoutTimestamp(data.timeout_until)
+                : `${data.timeout_until} UTC`;
+            statusHtml += `<span style="color: #f59e0b;">⏱️ CURRENTLY TIMED OUT</span> — Remaining: <strong>${data.remaining}</strong> (Until: ${formattedUntil})<br>`;
             if (data.reason) {
                 statusHtml += `Reason: <strong>${data.reason}</strong><br>`;
             }

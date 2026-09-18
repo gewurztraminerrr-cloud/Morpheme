@@ -1260,10 +1260,13 @@ window.openModTimeoutModal = function(username) {
                 const data = await response.json();
                 if (data.success) {
                     window.closeModTimeoutModal();
+                    const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+                        ? window.formatTimeoutTimestamp(data.timeout_until)
+                        : `${data.timeout_until} UTC`;
                     if (window.showAlertModal) {
-                        window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${data.timeout_until} UTC`);
+                        window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${formattedUntil}`);
                     } else {
-                        alert(`User "${username}" has been timed out for ${data.duration}.`);
+                        alert(`User "${username}" has been timed out for ${data.duration}.\nUntil: ${formattedUntil}`);
                     }
                 } else {
                     alert("Error: " + (data.error || "Failed to timeout user."));

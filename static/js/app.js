@@ -176,6 +176,111 @@ function formatAppDate(val, includeTime = false, customTz = null) {
 }
 window.formatAppDate = formatAppDate;
 
+function formatTimeoutTimestamp(val) {
+    if (!val) return '';
+    let iso = String(val).trim();
+    if (iso.endsWith(' UTC')) {
+        iso = iso.replace(/ UTC$/, 'Z').replace(' ', 'T');
+    } else if (!iso.includes('Z') && !iso.includes('+')) {
+        iso = iso.replace(' ', 'T') + 'Z';
+    }
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(val);
+
+    if (typeof window.formatTournamentStartDate === 'function') {
+        return window.formatTournamentStartDate(d.getTime());
+    }
+
+    const profileTz = (window.currentUserTimezone && window.currentUserTimezone !== 'auto')
+        ? window.currentUserTimezone
+        : (localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
+            ? localStorage.getItem('morpheme_timezone')
+            : null);
+
+    try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+            timeZoneName: 'short',
+            timeZone: profileTz || undefined
+        });
+
+        const parts = dtf.formatToParts(d);
+        const p = {};
+        for (const part of parts) {
+            p[part.type] = part.value;
+        }
+
+        const year = p.year;
+        const month = p.month;
+        const day = p.day;
+        const hour = p.hour;
+        const minute = p.minute;
+        const second = p.second;
+        let ampm = (p.dayPeriod || (d.getHours() >= 12 ? 'PM' : 'AM')).toUpperCase().replace(/\./g, '').trim();
+
+        const tzAbbr = p.timeZoneName || '';
+        let tzDisplay = tzAbbr;
+        const tzLabels = window.TIMEZONE_LABELS || {
+            'UTC': 'UTC (Universal Time)',
+            'America/New_York': 'US Eastern (ET)',
+            'America/Chicago': 'US Central (CT)',
+            'America/Denver': 'US Mountain (MT)',
+            'America/Phoenix': 'US Arizona (MST)',
+            'America/Los_Angeles': 'US Pacific (PT)',
+            'America/Anchorage': 'US Alaska (AKT)',
+            'Pacific/Honolulu': 'US Hawaii (HST)',
+            'America/Toronto': 'Canada Eastern',
+            'America/Vancouver': 'Canada Pacific',
+            'America/Sao_Paulo': 'Brazil (BRT)',
+            'Europe/London': 'London (GMT/BST)',
+            'Europe/Paris': 'Central Europe (CET)',
+            'Europe/Athens': 'Eastern Europe (EET)',
+            'Europe/Moscow': 'Moscow (MSK)',
+            'Asia/Dubai': 'Dubai (GST)',
+            'Asia/Kolkata': 'India (IST)',
+            'Asia/Bangkok': 'Indochina (ICT)',
+            'Asia/Singapore': 'Singapore (SGT)',
+            'Asia/Hong_Kong': 'Hong Kong (HKT)',
+            'Asia/Shanghai': 'China (CST)',
+            'Asia/Tokyo': 'Japan (JST)',
+            'Asia/Seoul': 'Korea (KST)',
+            'Australia/Perth': 'Australia West (AWST)',
+            'Australia/Adelaide': 'Australia Central (ACST)',
+            'Australia/Sydney': 'Australia East (AEST)',
+            'Pacific/Auckland': 'New Zealand (NZST)'
+        };
+
+        if (profileTz && tzLabels[profileTz]) {
+            const rawLabel = tzLabels[profileTz].replace(/\s*\([^)]*\)$/, '').trim();
+            if (rawLabel && !tzDisplay.toLowerCase().includes(rawLabel.toLowerCase())) {
+                tzDisplay = tzDisplay ? `${tzDisplay} (${rawLabel})` : rawLabel;
+            }
+        } else if (tzDisplay) {
+            tzDisplay = `${tzDisplay} (Device)`;
+        }
+
+        const tzDecl = tzDisplay ? ` ${tzDisplay}` : '';
+        return `${year}-${month}-${day}, ${hour}:${minute}:${second} ${ampm}${tzDecl}`;
+    } catch (e) {
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}, ${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+}
+window.formatTimeoutTimestamp = formatTimeoutTimestamp;
+
 async function loadCurrentUserConfigRatings() {
     if (!window.currentUser || window.currentUserIsGuest) {
         window.currentUserConfigRatings = {};
