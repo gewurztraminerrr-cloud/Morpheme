@@ -3339,11 +3339,15 @@ def send_signup_verification():
     data = request.get_json()
     username = data.get('username', '').strip()
     email = data.get('email', '').strip()
+    flag = data.get('flag', '').strip()
     
     print(f"[Route] /api/send-signup-verification hit for '{username}' <{email}>")
     
     if not username or not email:
         return jsonify({'error': 'Username and email are required'}), 400
+
+    if not flag or flag.lower() in ('none', 'null', 'undefined') or len(flag) > 32:
+        return jsonify({'error': 'Flag selection is required'}), 400
         
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
@@ -3405,7 +3409,7 @@ def register():
     if len(password) < 6:
         return jsonify({'error': 'Password must be 6+ characters'}), 400
         
-    if not flag:
+    if not flag or flag.lower() in ('none', 'null', 'undefined') or len(flag) > 32:
         return jsonify({'error': 'Flag selection is required'}), 400
         
     # Verify the code from session

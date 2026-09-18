@@ -2870,6 +2870,11 @@ function setupAuth() {
                 errorEl.textContent = 'Please enter an email first';
                 return;
             }
+            const flag = document.getElementById('signup-flag').value;
+            if (!flag) {
+                errorEl.textContent = 'Please select a flag representing where you live first';
+                return;
+            }
 
             sendEmailBtn.disabled = true;
             sendEmailBtn.textContent = 'Sending...';
@@ -2878,7 +2883,7 @@ function setupAuth() {
                 const response = await fetch('/api/send-signup-verification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email })
+                    body: JSON.stringify({ username, email, flag })
                 });
 
                 const data = await response.json();
