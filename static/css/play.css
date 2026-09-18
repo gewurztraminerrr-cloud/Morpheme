@@ -11448,22 +11448,22 @@ body.theme-gray .word-item .word-text {
     color: #111111 !important;
 }
 
-[class*="theme-white"] .word-item.unfound,
-[class*="theme-light-"] .word-item.unfound,
-body.theme-white .word-item.unfound,
-body.theme-light-gray .word-item.unfound,
-body.theme-light-red .word-item.unfound,
-body.theme-light-orange .word-item.unfound,
-body.theme-light-yellow .word-item.unfound,
-body.theme-light-green .word-item.unfound,
-body.theme-light-blue .word-item.unfound,
-body.theme-light-purple .word-item.unfound,
-body.theme-light-pink .word-item.unfound,
-body.theme-light-brown .word-item.unfound,
-body.theme-yellow .word-item.unfound,
-body.theme-pink .word-item.unfound,
-body.theme-orange .word-item.unfound,
-body.theme-gray .word-item.unfound {
+[class*="theme-white"] .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+[class*="theme-light-"] .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-white .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-gray .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-red .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-orange .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-yellow .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-green .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-blue .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-purple .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-pink .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-brown .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-yellow .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-pink .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-orange .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-gray .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word) {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     color: #111111 !important;
@@ -11532,6 +11532,8 @@ body.theme-orange .word-item.player-word .word-text,
 body.theme-gray .word-item.player-word .word-text {
     color: #0f172a !important;
     font-weight: 800 !important;
+}
+
 /* Added Word (Vivid Royal Purple - Mimicking Dark Mode) */
 [class*="theme-white"] .word-item.added-word,
 [class*="theme-white"] .added-word,
@@ -11677,15 +11679,15 @@ body.theme-light-gray .word-item.opponent-word .word-text {
     font-weight: 800 !important;
 }
 
-[class*="theme-white"] .word-item.found-by-other,
-[class*="theme-light-"] .word-item.found-by-other,
-body.theme-white .word-item.found-by-other,
-body.theme-light-gray .word-item.found-by-other,
-body.theme-yellow .word-item.found-by-other,
-body.theme-pink .word-item.found-by-other,
-body.theme-orange .word-item.found-by-other,
-body.theme-gray .word-item.found-by-other,
-body.theme-light-brown .word-item.found-by-other {
+[class*="theme-white"] .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+[class*="theme-light-"] .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-white .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-gray .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-yellow .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-pink .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-orange .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-gray .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
+body.theme-light-brown .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word) {
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
     color: #111111 !important;
