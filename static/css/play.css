@@ -11434,6 +11434,12 @@ body.is-desktop .word-input-section .timer-controls-group .rotate-btn {
         padding: 12px !important;
         border-radius: 12px !important;
         gap: 4px !important;
+        width: fit-content !important;
+        width: -moz-fit-content !important;
+        max-width: fit-content !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box !important;
     }
 }
 
