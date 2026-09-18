@@ -11199,7 +11199,7 @@ body.is-desktop .history-walkthrough-section .replay-subheader {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     gap: 16px !important;
     flex-wrap: nowrap !important;
 }
@@ -11210,9 +11210,11 @@ body.is-desktop .history-walkthrough-section .replay-controls {
 
 body.is-desktop .history-walkthrough-section .section-hint {
     margin: 0 !important;
-    text-align: left !important;
-    max-width: none !important;
-    white-space: nowrap !important;
+    margin-left: auto !important;
+    text-align: right !important;
+    max-width: 140px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
 }
 
 body.is-desktop .left-panel-container .chat-panel {
@@ -12349,13 +12351,16 @@ body.theme-white .integrated-review-board {
     }
 
     .history-walkthrough-section .replay-subheader {
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         gap: 16px !important;
     }
 
     .history-walkthrough-section .section-hint {
-        text-align: left !important;
-        max-width: none !important;
+        margin-left: auto !important;
+        text-align: right !important;
+        max-width: 140px !important;
+        white-space: normal !important;
+        line-height: 1.3 !important;
     }
 }
 
