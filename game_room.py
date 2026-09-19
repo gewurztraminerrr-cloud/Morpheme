@@ -7651,7 +7651,7 @@ class LobbyManager:
                         return True
         return False
 
-    def update_presence(self, user_id, username, rating=1200, avatar_url=None):
+    def update_presence(self, user_id, username, rating=1200, avatar_url=None, country_flag=None):
         if not user_id or not username:
             return
         uid_str = str(user_id)
@@ -7666,6 +7666,7 @@ class LobbyManager:
                 'username': username,
                 'rating': rating if rating is not None else 1200,
                 'avatar_url': avatar_url,
+                'country_flag': country_flag or '🏳️',
                 'last_seen': time.time()
             }
 
@@ -7691,7 +7692,8 @@ class LobbyManager:
                         'user_id': data['user_id'],
                         'username': data['username'],
                         'rating': data['rating'],
-                        'avatar_url': data.get('avatar_url')
+                        'avatar_url': data.get('avatar_url'),
+                        'country_flag': data.get('country_flag', '🏳️')
                     })
             for k in stale_keys:
                 self.lobby_users.pop(k, None)
@@ -7705,7 +7707,7 @@ class LobbyManager:
                 'messages': messages_list
             }
 
-    def add_message(self, user_id, username, rating, message):
+    def add_message(self, user_id, username, rating, message, country_flag=None):
         if not message or not username:
             return None
         with self.lock:
@@ -7718,6 +7720,7 @@ class LobbyManager:
                 'user_id': user_id,
                 'username': username,
                 'rating': rating if rating is not None else 1200,
+                'country_flag': country_flag or '🏳️',
                 'message': message.strip()[:300],
                 'time': now,
                 'timestamp': iso_ts

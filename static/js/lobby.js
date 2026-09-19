@@ -1644,9 +1644,11 @@ function renderLobbyState(data) {
             let html = '';
             players.forEach(p => {
                 const uname = p.username || 'Player';
+                const flagHtml = (window.getFlagHtml && p.country_flag) ? window.getFlagHtml(p.country_flag) : (p.country_flag || '');
                 
                 html += `
                     <div class="lobby-player-row" onclick="if (window.showMiniProfile) window.showMiniProfile('${uname}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();" title="View ${uname}'s Profile">
+                        ${flagHtml ? `<span class="lobby-player-flag">${flagHtml}</span>` : ''}
                         <span class="lobby-player-name">${uname}</span>
                     </div>
                 `;
@@ -1666,11 +1668,12 @@ function renderLobbyState(data) {
             const author = m.username || 'Guest';
             const timeStr = formatLobbyMessageTime(m.timestamp || m.time);
             const text = (m.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const flagHtml = (window.getFlagHtml && m.country_flag) ? window.getFlagHtml(m.country_flag) : (m.country_flag || '');
             
             msgHtml += `
                 <div class="lobby-chat-msg">
                     <div class="lobby-chat-msg-header">
-                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${author}</span>
+                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${flagHtml}${author}</span>
                         <span class="lobby-chat-time">${timeStr}</span>
                     </div>
                     <div class="lobby-chat-text">${text}</div>

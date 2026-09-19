@@ -5116,20 +5116,22 @@ def get_lobby_chat():
         is_guest = session.get('is_guest', False)
         rating = 1200
         avatar_url = None
+        country_flag = None
         
         if not is_guest:
             try:
                 conn = sqlite3.connect(DB_PATH, timeout=30)
-                cur = conn.execute('SELECT rating, avatar_url FROM users WHERE id = ?', (user_id,))
+                cur = conn.execute('SELECT rating, avatar_url, country_flag FROM users WHERE id = ?', (user_id,))
                 row = cur.fetchone()
                 if row:
                     rating = row[0] if row[0] is not None else 1200
                     avatar_url = row[1]
+                    country_flag = row[2]
                 conn.close()
             except Exception as e:
                 print(f"[get_lobby_chat] DB error: {e}")
         
-        lobby_manager.update_presence(user_id, username, rating, avatar_url)
+        lobby_manager.update_presence(user_id, username, rating, avatar_url, country_flag=country_flag)
     
     state = lobby_manager.get_lobby_state()
     return jsonify(state)
@@ -5164,20 +5166,22 @@ def send_lobby_chat():
     
     rating = 1200
     avatar_url = None
+    country_flag = None
     if not is_guest:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=30)
-            cur = conn.execute('SELECT rating, avatar_url FROM users WHERE id = ?', (user_id,))
+            cur = conn.execute('SELECT rating, avatar_url, country_flag FROM users WHERE id = ?', (user_id,))
             row = cur.fetchone()
             if row:
                 rating = row[0] if row[0] is not None else 1200
                 avatar_url = row[1]
+                country_flag = row[2]
             conn.close()
         except Exception as e:
             print(f"[send_lobby_chat] DB error: {e}")
     
-    lobby_manager.update_presence(user_id, username, rating, avatar_url)
-    lobby_manager.add_message(user_id, username, rating, message)
+    lobby_manager.update_presence(user_id, username, rating, avatar_url, country_flag=country_flag)
+    lobby_manager.add_message(user_id, username, rating, message, country_flag=country_flag)
     
     state = lobby_manager.get_lobby_state()
     return jsonify({
