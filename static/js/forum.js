@@ -24,7 +24,7 @@ window.getFlagHtml = function(flag, extraStyles = '') {
     }
     const code = window.emojiToCountryCode(flag);
     if (code && code.length === 2) {
-        return `<img src="https://flagcdn.com/w40/${code.toLowerCase()}.png" class="flag-icon-img" alt="${code}" title="${code}" style="width: 1.25em; height: auto; display: inline-block; vertical-align: middle; margin-left: 4px; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); ${extraStyles}">`;
+        return `<img src="https://flagcdn.com/w40/${code.toLowerCase()}.png" class="flag-icon-img" alt="${code}" title="${code}" style="width: 1.25em; height: auto; display: inline-block; vertical-align: middle; margin-right: 4px; margin-left: 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); ${extraStyles}">`;
     }
     return flag;
 };
@@ -799,7 +799,7 @@ const Forum = {
                     <div class="post-card-header">
                         <span class="post-card-title">${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
-                            <span>${isComment ? 'Replied' : 'Posted'} by <strong>${post.username}${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}</strong></span>
+                            <span>${isComment ? 'Replied' : 'Posted'} by <strong>${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</strong></span>
                             <span>${dateStr}</span>
                         </span>
                     </div>
@@ -905,7 +905,7 @@ const Forum = {
                 <div class="post-author-box">
                     <div class="author-avatar">${post.username[0].toUpperCase()}</div>
                     <div class="author-info">
-                        <span class="author-name">${post.username}${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}</span>
+                        <span class="author-name">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</span>
                         <span class="post-date">${dateStr}</span>
                     </div>
                 </div>
@@ -959,7 +959,7 @@ const Forum = {
                         <div class="comment-avatar">${c.username[0].toUpperCase()}</div>
                         <div class="comment-body">
                             <div class="comment-header">
-                                <span class="comment-author">${c.username}${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}</span>
+                                <span class="comment-author">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${c.username}</span>
                                 <span class="comment-date">${cDate}</span>
                                 ${window.currentUserIsMod ? `
                                     <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: auto; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
