@@ -1673,7 +1673,7 @@ function renderLobbyState(data) {
             msgHtml += `
                 <div class="lobby-chat-msg">
                     <div class="lobby-chat-msg-header">
-                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${flagHtml}${author}</span>
+                        <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${flagHtml}${flagHtml ? ' ' : ''}${author}</span>
                         <span class="lobby-chat-time">${timeStr}</span>
                     </div>
                     <div class="lobby-chat-text">${text}</div>

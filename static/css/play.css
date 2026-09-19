@@ -11403,6 +11403,45 @@ body.is-desktop .word-input-section .timer-controls-group .rotate-btn {
     box-sizing: border-box !important;
 }
 
+/* Black border on Rotate & Transpose buttons for white/light themes on desktop */
+body.is-desktop[class*="theme-white"] .timer-controls-group .rotate-btn,
+body.is-desktop[class*="theme-light-"] .timer-controls-group .rotate-btn,
+body.is-desktop.theme-white .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-gray .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-red .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-orange .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-yellow .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-green .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-blue .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-purple .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-pink .timer-controls-group .rotate-btn,
+body.is-desktop.theme-light-brown .timer-controls-group .rotate-btn,
+body.is-desktop.theme-yellow .timer-controls-group .rotate-btn,
+body.is-desktop.theme-pink .timer-controls-group .rotate-btn,
+body.is-desktop.theme-orange .timer-controls-group .rotate-btn,
+body.is-desktop.theme-gray .timer-controls-group .rotate-btn {
+    border-color: rgba(0, 0, 0, 0.55) !important;
+}
+
+body.is-desktop[class*="theme-white"] .timer-controls-group #transpose-board-btn,
+body.is-desktop[class*="theme-light-"] .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-white .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-gray .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-red .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-orange .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-yellow .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-green .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-blue .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-purple .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-light-brown .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-yellow .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-pink .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-orange .timer-controls-group #transpose-board-btn,
+body.is-desktop.theme-gray .timer-controls-group #transpose-board-btn {
+    border-left-color: rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Background mat in and around the board on desktop/laptop */
 @media (min-width: 901px) {
     /* Default bluish dark layout and base dark layouts */
