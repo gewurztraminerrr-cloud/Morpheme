@@ -5626,7 +5626,7 @@ body .tab-btn.active {
 
 .room-item {
     background: hsla(260, 30%, 15%, 0.5);
-    border: 1px solid var(--border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
     border-radius: 10px;
     padding: 1rem;
     transition: all 0.3s;
