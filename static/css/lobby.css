@@ -387,7 +387,7 @@
     width: 100%;
     align-items: stretch;
     background: var(--input-bg);
-    border: 1px solid var(--input-border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
     border-radius: 6px;
     padding: 5px 6px;
     box-sizing: border-box;
@@ -576,7 +576,7 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
         width: 100%;
         align-items: stretch;
         background: var(--input-bg);
-        border: 1px solid var(--input-border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
         border-radius: 6px !important;
         padding: 5px 6px !important;
         box-sizing: border-box;
@@ -638,7 +638,7 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
 
 #selected-game-info {
     background: var(--input-bg);
-    border: 1px solid var(--input-border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
     padding: 5px 8px !important;
     border-radius: 6px !important;
     text-align: center !important;
@@ -679,7 +679,7 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     flex: 1 1 auto;
     min-height: 0;
     background: rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--input-border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
     border-radius: 8px;
     padding: 12px;
     overflow-y: auto !important;
@@ -858,7 +858,7 @@ body.theme-light-brown .room-tab-btn:not(.active):hover {
     border-radius: 6px !important;
     padding: 6px 8px !important;
     margin-bottom: 0 !important;
-    border: 1px solid var(--input-border);
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
     width: 100%;
     box-sizing: border-box !important;
 }
