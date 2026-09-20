@@ -2156,28 +2156,48 @@
                     z-index: 1;
                 }
 
-                /* Polished Diamond Shimmer Light Sweep (Flashing every ~3s) */
+                /* Polished Diamond Shimmer Light Sweep (Flashing every ~3.5s) */
                 .lobby-journey-message::before {
                     content: '';
                     position: absolute;
                     top: -60%;
-                    left: -160%;
-                    width: 80%;
+                    left: 0;
+                    width: 60%;
                     height: 220%;
                     background: linear-gradient(
                         115deg,
                         transparent 0%,
-                        rgba(255, 255, 255, 0) 25%,
-                        rgba(255, 255, 255, 0.3) 42%,
-                        rgba(255, 255, 255, 0.75) 50%,
-                        rgba(255, 255, 255, 0.4) 58%,
-                        rgba(255, 255, 255, 0) 75%,
+                        rgba(255, 255, 255, 0) 20%,
+                        rgba(255, 255, 255, 0.35) 40%,
+                        rgba(255, 255, 255, 0.78) 50%,
+                        rgba(255, 255, 255, 0.45) 60%,
+                        rgba(255, 255, 255, 0) 80%,
                         transparent 100%
                     );
                     transform: skewX(-24deg);
                     pointer-events: none;
                     z-index: 2;
-                    animation: journey-diamond-shimmer 3s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+                    will-change: transform;
+                    animation: journey-diamond-shimmer 3.5s linear infinite;
+                }
+
+                @keyframes journey-diamond-shimmer {
+                    /* Beam starts fully off-screen left */
+                    0% {
+                        transform: skewX(-24deg) translateX(-250%);
+                    }
+                    /* Sweep cleanly across to fully off-screen right */
+                    35% {
+                        transform: skewX(-24deg) translateX(350%);
+                    }
+                    /* Instantly snap back off-screen left — invisible because parent has overflow:hidden */
+                    35.01% {
+                        transform: skewX(-24deg) translateX(-250%);
+                    }
+                    /* Hold off-screen for rest of the cycle */
+                    100% {
+                        transform: skewX(-24deg) translateX(-250%);
+                    }
                 }
 
                 /* Pure luminous pearl-white typography (No glowing halo) */
@@ -2193,24 +2213,6 @@
                     letter-spacing: 1.8px;
                     text-transform: uppercase;
                     white-space: nowrap;
-                }
-
-                @keyframes journey-diamond-shimmer {
-                    0% {
-                        left: -140%;
-                        opacity: 0;
-                    }
-                    8% {
-                        opacity: 1;
-                    }
-                    38% {
-                        left: 175%;
-                        opacity: 1;
-                    }
-                    39%, 100% {
-                        left: 175%;
-                        opacity: 0;
-                    }
                 }
 
                 @media (max-width: 900px) {
