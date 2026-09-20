@@ -5038,7 +5038,8 @@ async function fetchListsData(typeOverride) {
         'uniques': 'NWL Uniques',
         'added': 'Added Words',
         'new_nwl': 'New NWL Words',
-        'new_csw': 'New CSW Words'
+        'new_csw': 'New CSW Words',
+        'all_words': 'ALL Words'
     };
 
     if (titleEl) {

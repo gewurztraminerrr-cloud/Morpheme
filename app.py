@@ -7420,7 +7420,7 @@ def tools_get_lists():
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
         # Make sure CSW is loaded if we need it
-        if list_type in ['all', 'csw', 'csw_only', 'new_csw']:
+        if list_type in ['all', 'csw', 'csw_only', 'new_csw', 'all_words']:
             word_validator.ensure_csw_loaded()
         
         # --- Logic: In-Memory Set Fetching and Filtering ---
@@ -7473,7 +7473,7 @@ def tools_get_lists():
         # Conditional fetching based on list_type
         response = {
             'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': [],
-            'new_nwl': [], 'new_csw': [], 'is_truncated': False
+            'new_nwl': [], 'new_csw': [], 'all_words': [], 'is_truncated': False
         }
 
         def cap_list(lst):
@@ -7557,6 +7557,13 @@ def tools_get_lists():
                 # Default main tab (first 10,000): newest words first
                 response['added'] = cap_list(unique_added)
 
+
+        if list_type == 'all_words':
+            # ALL: NWL union CSW, deduplicated and sorted alphabetically
+            if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
+            if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
+            all_set = nwl_set | csw_set
+            response['all_words'] = cap_list(sorted(list(all_set)))
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:
             LISTS_CACHE[cache_key] = response
