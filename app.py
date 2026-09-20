@@ -7559,10 +7559,16 @@ def tools_get_lists():
 
 
         if list_type == 'all_words':
-            # ALL: NWL union CSW, deduplicated and sorted alphabetically
+            # ALL: NWL union CSW union Added Words, deduplicated and sorted alphabetically
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
             if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
             all_set = nwl_set | csw_set
+            # Include Added Words (filtered by length/start if applicable)
+            raw_added = getattr(word_validator, 'added_words_list', [])
+            for w in raw_added:
+                if target_len is not None and len(w) != target_len: continue
+                if start_char is not None and not w.startswith(start_char): continue
+                all_set.add(w)
             response['all_words'] = cap_list(sorted(list(all_set)))
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:
