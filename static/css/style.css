@@ -418,6 +418,17 @@ body.theme-light-brown .tool-nav-btn.active {
     background: rgba(37, 99, 235, 0.12) !important;
     border-color: rgba(37, 99, 235, 0.5) !important;
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.15) !important;
+    color: #2563eb !important;
+}
+
+[class*="theme-white"] .tool-nav-btn.active .tool-btn-title,
+[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title,
+body.theme-yellow .tool-nav-btn.active .tool-btn-title,
+body.theme-pink .tool-nav-btn.active .tool-btn-title,
+body.theme-orange .tool-nav-btn.active .tool-btn-title,
+body.theme-gray .tool-nav-btn.active .tool-btn-title,
+body.theme-light-brown .tool-nav-btn.active .tool-btn-title {
+    color: #2563eb !important;
 }
 
 [class*="theme-white"] .tool-btn-title,

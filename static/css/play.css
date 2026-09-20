@@ -2615,7 +2615,10 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
     }
     .tool-nav-btn.active {
         background: rgba(79, 172, 254, 0.15) !important;
-        border: 1px solid rgba(79, 172, 254, 0.3) !important;
+        border: 1px solid rgba(79, 172, 254, 0.45) !important;
+        color: #4facfe !important;
+    }
+    .tool-nav-btn.active .tool-btn-title {
         color: #4facfe !important;
     }
     .tool-btn-title {
@@ -2841,7 +2844,11 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
     background: rgba(79, 172, 254, 0.15);
     /* Light blue tint */
     color: #4facfe;
-    border: 1px solid rgba(79, 172, 254, 0.3);
+    border: 1px solid rgba(79, 172, 254, 0.45);
+}
+
+.tool-nav-btn.active .tool-btn-title {
+    color: #4facfe !important;
 }
 
 .tool-nav-btn.active .tool-btn-desc {
@@ -6465,6 +6472,14 @@ input[type=range]::-moz-range-track {
         background: rgba(79, 172, 254, 0.18) !important;
         border: 1px solid rgba(79, 172, 254, 0.5) !important;
         box-shadow: 0 0 10px rgba(79, 172, 254, 0.15) !important;
+        color: #4facfe !important;
+    }
+
+    .tool-nav-btn.active .tool-btn-title,
+    #page-tools .tool-nav-btn.active .tool-btn-title,
+    #page-mods .tool-nav-btn.active .tool-btn-title,
+    #page-settings .tool-nav-btn.active .tool-btn-title {
+        color: #4facfe !important;
     }
 
     .tool-btn-title,
