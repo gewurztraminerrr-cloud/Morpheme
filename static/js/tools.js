@@ -266,11 +266,13 @@ window.showTool = function(toolId) {
         if (!_subCurrentLetters && !_isSubLoading) {
             const lengthSelect = document.getElementById('sub-length');
             const modeSelect = document.getElementById('sub-gen-mode');
-            const dictSelect = document.getElementById('sub-dict');
+            const dictSelect = document.getElementById('sub-dict-random');
+            const minLenSelect = document.getElementById('sub-min-len-random');
             const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
             const dict = dictSelect ? dictSelect.value : 'CSW';
             const mode = modeSelect ? modeSelect.value : 'word';
-            generateRandomSubanagrams(len, dict, mode, false);
+            const minLen = minLenSelect ? parseInt(minLenSelect.value) || 2 : 2;
+            generateRandomSubanagrams(len, dict, mode, false, minLen);
         } else {
             const lettersDisplay = document.getElementById('sub-letters-display');
             if (lettersDisplay && _subCurrentLetters) {
@@ -5623,6 +5625,7 @@ let _subFoundWords = new Set();
 let _subIsRevealed = false;
 let _subFeedbackTimeout = null;
 let _subCurrentMode = 'word';
+let _subCurrentMinLength = 2;
 let _subAbortController = null;
 let _isSubLoading = false;
 
@@ -5631,26 +5634,103 @@ function setupSubanagramsTool() {
     const practiceBtn = document.getElementById('sub-practice-btn');
     const randomBtn = document.getElementById('sub-random-btn');
     const customInput = document.getElementById('sub-input');
-    const lengthSelect = document.getElementById('sub-length');
-    const modeSelect = document.getElementById('sub-gen-mode');
+    // Manual tab controls
     const dictSelect = document.getElementById('sub-dict');
+    const minLenSelect = document.getElementById('sub-min-len');
+    // Random tab controls
+    const lengthSelect = document.getElementById('sub-length');
+    const dictSelectRandom = document.getElementById('sub-dict-random');
+    const minLenSelectRandom = document.getElementById('sub-min-len-random');
+    const modeSelect = document.getElementById('sub-gen-mode');
+    // Practice section controls
     const wordInput = document.getElementById('sub-word-input');
     const submitBtn = document.getElementById('sub-submit-word-btn');
     const revealBtn = document.getElementById('sub-reveal-btn');
     const resetBtn = document.getElementById('sub-reset-btn');
+    // Tabs
+    const tabManual = document.getElementById('sub-tab-manual');
+    const tabRandom = document.getElementById('sub-tab-random');
+    const panelManual = document.getElementById('sub-panel-manual');
+    const panelRandom = document.getElementById('sub-panel-random');
+
+    // Helper: get active dict
+    function getDict() {
+        const manualActive = panelManual && panelManual.style.display !== 'none';
+        return manualActive
+            ? (dictSelect ? dictSelect.value : 'CSW')
+            : (dictSelectRandom ? dictSelectRandom.value : 'CSW');
+    }
+    // Helper: get active min length
+    function getMinLen() {
+        const manualActive = panelManual && panelManual.style.display !== 'none';
+        return manualActive
+            ? parseInt(minLenSelect ? minLenSelect.value : '2') || 2
+            : parseInt(minLenSelectRandom ? minLenSelectRandom.value : '2') || 2;
+    }
+
+    // Tab switching
+    function switchTab(tab) {
+        const isManual = tab === 'manual';
+        if (tabManual) {
+            tabManual.style.background = isManual ? 'rgba(59,130,246,0.15)' : 'transparent';
+            tabManual.style.borderBottom = isManual ? '2px solid #3b82f6' : '2px solid transparent';
+            tabManual.style.color = isManual ? '#93c5fd' : 'rgba(255,255,255,0.45)';
+        }
+        if (tabRandom) {
+            tabRandom.style.background = !isManual ? 'rgba(139,92,246,0.15)' : 'transparent';
+            tabRandom.style.borderBottom = !isManual ? '2px solid #8b5cf6' : '2px solid transparent';
+            tabRandom.style.color = !isManual ? '#c4b5fd' : 'rgba(255,255,255,0.45)';
+        }
+        if (panelManual) panelManual.style.display = isManual ? 'flex' : 'none';
+        if (panelRandom) {
+            panelRandom.style.display = isManual ? 'none' : 'flex';
+            if (!isManual) clampMinLen();
+        }
+    }
+
+    if (tabManual) tabManual.addEventListener('click', () => switchTab('manual'));
+    if (tabRandom) tabRandom.addEventListener('click', () => switchTab('random'));
+
+    // Enforce min ≤ seq length in Random tab
+    function clampMinLen() {
+        if (!lengthSelect || !minLenSelectRandom) return;
+        const seqLen = parseInt(lengthSelect.value) || 8;
+        Array.from(minLenSelectRandom.options).forEach(opt => {
+            const val = parseInt(opt.value);
+            opt.disabled = val > seqLen;
+            opt.hidden = val > seqLen;
+        });
+        if (parseInt(minLenSelectRandom.value) > seqLen) {
+            minLenSelectRandom.value = String(seqLen);
+        }
+    }
+    if (lengthSelect) {
+        lengthSelect.addEventListener('change', () => {
+            clampMinLen();
+            const len = parseInt(lengthSelect.value) || 8;
+            const dict = getDict();
+            const mode = modeSelect ? modeSelect.value : 'word';
+            const minLen = getMinLen();
+            const lettersDisplay = document.getElementById('sub-letters-display');
+            if (lettersDisplay) window.applyDynamicSequenceStyle(lettersDisplay, len);
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
+        });
+    }
+    clampMinLen();
 
     if (findAllBtn) {
         findAllBtn.addEventListener('click', () => {
             const raw = customInput ? customInput.value.trim() : '';
-            const dict = dictSelect ? dictSelect.value : 'CSW';
-            const mode = modeSelect ? modeSelect.value : 'word';
+            const dict = getDict();
+            const minLen = getMinLen();
             if (raw) {
-                findAndRevealAllSubanagrams(raw, dict);
+                findAndRevealAllSubanagrams(raw, dict, minLen);
             } else if (_subCurrentLetters) {
-                findAndRevealAllSubanagrams(_subCurrentLetters, dict);
+                findAndRevealAllSubanagrams(_subCurrentLetters, dict, minLen);
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dict, mode, true);
+                const mode = modeSelect ? modeSelect.value : 'word';
+                generateRandomSubanagrams(len, dict, mode, true, minLen);
             }
         });
     }
@@ -5658,10 +5738,10 @@ function setupSubanagramsTool() {
     if (practiceBtn) {
         practiceBtn.addEventListener('click', () => {
             const raw = customInput ? customInput.value.trim() : '';
-            const dict = dictSelect ? dictSelect.value : 'CSW';
-            const mode = modeSelect ? modeSelect.value : 'word';
+            const dict = getDict();
+            const minLen = getMinLen();
             if (raw) {
-                loadCustomSubanagrams(raw, dict);
+                loadCustomSubanagrams(raw, dict, minLen);
             } else if (_subCurrentLetters) {
                 _subIsRevealed = false;
                 updateSubanagramsHeader();
@@ -5670,7 +5750,8 @@ function setupSubanagramsTool() {
                 if (wi) wi.focus();
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dict, mode, false);
+                const mode = modeSelect ? modeSelect.value : 'word';
+                generateRandomSubanagrams(len, dict, mode, false, minLen);
             }
         });
     }
@@ -5678,24 +5759,22 @@ function setupSubanagramsTool() {
     if (randomBtn) {
         randomBtn.addEventListener('click', () => {
             const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-            const dict = dictSelect ? dictSelect.value : 'CSW';
+            const dict = getDict();
             const mode = modeSelect ? modeSelect.value : 'word';
-            generateRandomSubanagrams(len, dict, mode, false);
+            const minLen = getMinLen();
+            generateRandomSubanagrams(len, dict, mode, false, minLen);
         });
     }
 
     if (customInput) {
-        customInput.addEventListener('focus', function() {
-            this.value = '';
-        });
-        customInput.addEventListener('click', function() {
-            this.value = '';
-        });
+        customInput.addEventListener('focus', function() { this.value = ''; });
+        customInput.addEventListener('click', function() { this.value = ''; });
         customInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const raw = customInput.value.trim();
-                const dict = dictSelect ? dictSelect.value : 'CSW';
-                if (raw) findAndRevealAllSubanagrams(raw, dict);
+                const dict = getDict();
+                const minLen = getMinLen();
+                if (raw) findAndRevealAllSubanagrams(raw, dict, minLen);
             }
         });
     }
@@ -5703,65 +5782,49 @@ function setupSubanagramsTool() {
     if (modeSelect) {
         modeSelect.addEventListener('change', () => {
             const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-            const dict = dictSelect ? dictSelect.value : 'CSW';
+            const dict = getDict();
             const mode = modeSelect.value;
-            generateRandomSubanagrams(len, dict, mode, _subIsRevealed);
+            const minLen = getMinLen();
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
         });
     }
 
-    if (lengthSelect) {
-        lengthSelect.addEventListener('change', () => {
-            const len = parseInt(lengthSelect.value) || 8;
-            const dict = dictSelect ? dictSelect.value : 'CSW';
-            const mode = modeSelect ? modeSelect.value : 'word';
-            const lettersDisplay = document.getElementById('sub-letters-display');
-            if (lettersDisplay) window.applyDynamicSequenceStyle(lettersDisplay, len);
-            generateRandomSubanagrams(len, dict, mode, _subIsRevealed);
-        });
-    }
-
-    if (dictSelect) {
-        dictSelect.addEventListener('change', () => {
-            const mode = modeSelect ? modeSelect.value : 'word';
-            if (_subCurrentLetters) {
-                if (_subIsRevealed) {
-                    findAndRevealAllSubanagrams(_subCurrentLetters, dictSelect.value);
-                } else {
-                    loadCustomSubanagrams(_subCurrentLetters, dictSelect.value);
-                }
+    // Dict change listeners for both tabs
+    function onDictChange() {
+        const dict = getDict();
+        const mode = modeSelect ? modeSelect.value : 'word';
+        const minLen = getMinLen();
+        if (_subCurrentLetters) {
+            if (_subIsRevealed) {
+                findAndRevealAllSubanagrams(_subCurrentLetters, dict, minLen);
             } else {
-                const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-                generateRandomSubanagrams(len, dictSelect.value, mode, _subIsRevealed);
+                loadCustomSubanagrams(_subCurrentLetters, dict, minLen);
             }
-        });
+        } else {
+            const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
+        }
     }
+    if (dictSelect) dictSelect.addEventListener('change', onDictChange);
+    if (dictSelectRandom) dictSelectRandom.addEventListener('change', onDictChange);
+    if (minLenSelect) minLenSelect.addEventListener('change', onDictChange);
+    if (minLenSelectRandom) minLenSelectRandom.addEventListener('change', onDictChange);
 
-    if (submitBtn) {
-        submitBtn.addEventListener('click', submitSubanagramWord);
-    }
+    if (submitBtn) submitBtn.addEventListener('click', submitSubanagramWord);
 
     if (wordInput) {
-        wordInput.addEventListener('focus', function() {
-            this.value = '';
-        });
-        wordInput.addEventListener('click', function() {
-            this.value = '';
-        });
+        wordInput.addEventListener('focus', function() { this.value = ''; });
+        wordInput.addEventListener('click', function() { this.value = ''; });
         wordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitSubanagramWord();
         });
     }
 
-    if (revealBtn) {
-        revealBtn.addEventListener('click', revealAllSubanagrams);
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', resetFoundSubanagrams);
-    }
+    if (revealBtn) revealBtn.addEventListener('click', revealAllSubanagrams);
+    if (resetBtn) resetBtn.addEventListener('click', resetFoundSubanagrams);
 }
 
-async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
+async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2) {
     if (_subAbortController) {
         try { _subAbortController.abort(); } catch (e) {}
     }
@@ -5796,7 +5859,8 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 input: clean,
-                dictionary: dictionary
+                dictionary: dictionary,
+                min_length: minLength
             }),
             signal: signal
         });
@@ -5813,6 +5877,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
         _subAllWords = data.results || [];
         _subFoundWords.clear();
         _subIsRevealed = true;
+        _subCurrentMinLength = minLength;
 
         if (customInput) customInput.value = _subCurrentLetters;
         if (lettersDisplay) {
@@ -5835,7 +5900,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary) {
     }
 }
 
-async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false) {
+async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false, minLength = 2) {
     if (_subAbortController) {
         try { _subAbortController.abort(); } catch (e) {}
     }
@@ -5859,7 +5924,7 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     }
 
     try {
-        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}`, {
+        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}&min_length=${minLength}`, {
             signal: signal
         });
 
@@ -5877,6 +5942,7 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
         _subFoundWords.clear();
         _subIsRevealed = !!instantReveal;
         _subCurrentMode = data.mode || mode;
+        _subCurrentMinLength = minLength;
 
         if (customInput) customInput.value = _subCurrentLetters;
         if (lettersDisplay) {
@@ -5905,7 +5971,7 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     }
 }
 
-async function loadCustomSubanagrams(rawLetters, dictionary) {
+async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
     if (_subAbortController) {
         try { _subAbortController.abort(); } catch (e) {}
     }
@@ -5941,7 +6007,8 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 input: clean,
-                dictionary: dictionary
+                dictionary: dictionary,
+                min_length: minLength
             }),
             signal: signal
         });
@@ -5958,6 +6025,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary) {
         _subAllWords = data.results || [];
         _subFoundWords.clear();
         _subIsRevealed = false;
+        _subCurrentMinLength = minLength;
 
         if (customInput) customInput.value = _subCurrentLetters;
         if (lettersDisplay) {
@@ -6026,8 +6094,8 @@ function submitSubanagramWord() {
 
         if (!canForm) {
             showSubFeedback(`"${word}" cannot be formed from ${_subCurrentLetters}`, 'error');
-        } else if (word.length < 3) {
-            showSubFeedback(`"${word}" is too short (min 3 letters).`, 'warning');
+        } else if (word.length < _subCurrentMinLength) {
+            showSubFeedback(`"${word}" is too short (min ${_subCurrentMinLength} letters).`, 'warning');
         } else {
             showSubFeedback(`"${word}" is not a valid word in this dictionary.`, 'error');
         }
@@ -6145,13 +6213,6 @@ function renderSubanagramsResults() {
         });
 
     } else {
-        html += `
-            <div style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; background: rgba(167, 139, 250, 0.15); border-left: 3px solid #a78bfa; font-weight: 700; color: #c4b5fd; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                <span>Your Found Words (${foundList.length} / ${total})</span>
-                <span style="font-size: 0.8rem; opacity: 0.7;">Click word for definition</span>
-            </div>
-        `;
-
         if (foundList.length === 0) {
             html += `
                 <div style="padding: 30px 10px; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.95rem;">

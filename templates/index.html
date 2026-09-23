@@ -3955,37 +3955,87 @@
                         </div>
 
                         <div class="combo-control-panel"
-                            style="padding: 14px 20px; justify-content: center; display: flex; width: 100%; margin: 0 0 12px 0; background: rgba(255, 255, 255, 0.05); box-sizing: border-box;">
-                            <div class="input-row"
-                                style="justify-content: center !important; display: flex !important; gap: 6px; flex-wrap: wrap; align-items: center; width: 100%;">
-                                <input type="text" id="sub-input" placeholder="Letters..."
-                                    autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="width: 125px; max-width: 130px; flex: 0 0 125px; min-width: 105px; text-transform: uppercase;">
-                                <button id="sub-find-all-btn" class="primary-action" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; padding: 0 14px; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
-                                <button id="sub-practice-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; padding: 0 12px; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
-                                <div class="sub-len-wrapper" style="display: inline-flex; align-items: center; gap: 4px;">
-                                    <span class="sub-len-label" style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase;">Len:</span>
-                                    <select id="sub-length" style="width: 60px; height: 42px; padding: 0 6px;">
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                        <option value="7">7</option>
-                                        <option value="8" selected>8</option>
-                                        <option value="9">9</option>
-                                        <option value="10">10</option>
-                                        <option value="11">11</option>
-                                        <option value="12">12</option>
+                            style="padding: 0; margin: 0 0 12px 0; background: rgba(255,255,255,0.05); box-sizing: border-box; width: 100%; border-radius: 12px; overflow: hidden;">
+
+                            <!-- Horizontal Tab bar -->
+                            <div style="display: flex; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <button id="sub-tab-manual" class="sub-mode-tab active"
+                                    style="flex: 1; padding: 12px 0; font-size: 0.95rem; font-weight: 700; background: rgba(59,130,246,0.15); border: none; border-bottom: 2px solid #3b82f6; color: #93c5fd; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s ease;">
+                                    Manual
+                                </button>
+                                <button id="sub-tab-random" class="sub-mode-tab"
+                                    style="flex: 1; padding: 12px 0; font-size: 0.95rem; font-weight: 700; background: transparent; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.45); cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s ease;">
+                                    Random
+                                </button>
+                            </div>
+
+                            <!-- Manual panel (Vertical layout: one element for each row) -->
+                            <div id="sub-panel-manual" style="padding: 16px 20px; display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
+                                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; align-items: stretch;">
+                                    <input type="text" id="sub-input" placeholder="Letters..."
+                                        autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="width: 100%; height: 42px; text-transform: uppercase; text-align: center; font-size: 1.05rem; letter-spacing: 1px; box-sizing: border-box;">
+                                    <select id="sub-dict" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="ALL">Dictionary: ALL (Full)</option>
+                                        <option value="NWL">Dictionary: NWL (US)</option>
+                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
                                     </select>
+                                    <select id="sub-min-len" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="2" selected>Min Word Length: 2</option>
+                                        <option value="3">Min Word Length: 3</option>
+                                        <option value="4">Min Word Length: 4</option>
+                                        <option value="5">Min Word Length: 5</option>
+                                        <option value="6">Min Word Length: 6</option>
+                                        <option value="7">Min Word Length: 7</option>
+                                        <option value="8">Min Word Length: 8</option>
+                                        <option value="9">Min Word Length: 9</option>
+                                        <option value="10">Min Word Length: 10</option>
+                                        <option value="11">Min Word Length: 11</option>
+                                        <option value="12">Min Word Length: 12</option>
+                                    </select>
+                                    <button id="sub-find-all-btn" class="primary-action" style="width: 100%; height: 42px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
+                                    <button id="sub-practice-btn" style="width: 100%; height: 42px; background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
                                 </div>
-                                <select id="sub-gen-mode" style="width: 225px; max-width: 100%; height: 42px; padding: 0 8px;">
-                                    <option value="word" selected>Word of Max Length Guaranteed</option>
-                                    <option value="random">Totally Random</option>
-                                </select>
-                                <select id="sub-dict" style="width: 110px; height: 42px; padding: 0 8px;">
-                                    <option value="ALL">ALL (Full)</option>
-                                    <option value="NWL">NWL (US)</option>
-                                    <option value="CSW" selected>CSW (Intl)</option>
-                                    <option value="added_words">AW</option>
-                                </select>
-                                <button id="sub-random-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; padding: 0 14px; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
+                            </div>
+
+                            <!-- Random panel (Vertical layout: one element for each row) -->
+                            <div id="sub-panel-random" style="padding: 16px 20px; display: none; justify-content: center; width: 100%; box-sizing: border-box;">
+                                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; align-items: stretch;">
+                                    <select id="sub-length" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="5">Sequence Length: 5</option>
+                                        <option value="6">Sequence Length: 6</option>
+                                        <option value="7">Sequence Length: 7</option>
+                                        <option value="8" selected>Sequence Length: 8</option>
+                                        <option value="9">Sequence Length: 9</option>
+                                        <option value="10">Sequence Length: 10</option>
+                                        <option value="11">Sequence Length: 11</option>
+                                        <option value="12">Sequence Length: 12</option>
+                                    </select>
+                                    <select id="sub-dict-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="ALL">Dictionary: ALL (Full)</option>
+                                        <option value="NWL">Dictionary: NWL (US)</option>
+                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
+                                    </select>
+                                    <select id="sub-min-len-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="2" selected>Min Word Length: 2</option>
+                                        <option value="3">Min Word Length: 3</option>
+                                        <option value="4">Min Word Length: 4</option>
+                                        <option value="5">Min Word Length: 5</option>
+                                        <option value="6">Min Word Length: 6</option>
+                                        <option value="7">Min Word Length: 7</option>
+                                        <option value="8">Min Word Length: 8</option>
+                                        <option value="9">Min Word Length: 9</option>
+                                        <option value="10">Min Word Length: 10</option>
+                                        <option value="11">Min Word Length: 11</option>
+                                        <option value="12">Min Word Length: 12</option>
+                                    </select>
+                                    <select id="sub-gen-mode" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="word" selected>Word of Max Length Guaranteed</option>
+                                        <option value="random">Totally Random</option>
+                                    </select>
+                                    <button id="sub-random-btn" style="width: 100%; height: 42px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
+                                </div>
                             </div>
                         </div>
 
@@ -7662,7 +7712,7 @@
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1789900000"></script>
+    <script src="/js/tools.js?v=1790000000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1789685000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
