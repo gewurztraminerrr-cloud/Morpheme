@@ -891,7 +891,20 @@ function debounce(func, wait) {
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
         const titleHeader = document.querySelector('#page-settings .page-title-header');
-        if (titleHeader) titleHeader.classList.remove('title-hidden');
+        let tabTitle = '';
+        const activeBtn = sidebar ? sidebar.querySelector(`.tool-nav-btn[data-setting-tab="${tabId}"]`) : null;
+        if (activeBtn) {
+            const titleEl = activeBtn.querySelector('.tool-btn-title');
+            if (titleEl) tabTitle = titleEl.textContent.trim();
+        }
+        if (!tabTitle && content) {
+            const paneTitle = content.querySelector(`#setting-tab-${tabId} .tool-header h2`);
+            if (paneTitle) tabTitle = paneTitle.textContent.trim();
+        }
+        if (titleHeader) {
+            titleHeader.textContent = tabTitle ? `Settings - ${tabTitle}` : 'Settings';
+            titleHeader.classList.remove('title-hidden');
+        }
         if (!sidebar || !content) return;
 
         // Update active class on buttons
@@ -931,7 +944,10 @@ function debounce(func, wait) {
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
         const titleHeader = document.querySelector('#page-settings .page-title-header');
-        if (titleHeader) titleHeader.classList.remove('title-hidden');
+        if (titleHeader) {
+            titleHeader.textContent = 'Settings';
+            titleHeader.classList.remove('title-hidden');
+        }
 
         if (immediate) {
             if (layoutEl) layoutEl.scrollLeft = 0;

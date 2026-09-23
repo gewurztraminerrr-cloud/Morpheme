@@ -1658,10 +1658,7 @@ function setupNavigation() {
             } else if (pageTarget === 'mods' && typeof window.resetModsTab === 'function') {
                 window.resetModsTab(true);
             } else if (pageTarget === 'settings' && typeof window.resetSettingsTab === 'function') {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    window.resetSettingsTab(true);
-                }
+                window.resetSettingsTab(true);
             }
             showPage(pageId);
             updateActiveNav(btn);
@@ -1941,10 +1938,7 @@ function showPage(pageId) {
             } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
                 window.resetModsTab(true);
             } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    window.resetSettingsTab(true);
-                }
+                window.resetSettingsTab(true);
             }
             page.classList.add('active');
             page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile') ? 'flex' : 'block';
@@ -1962,11 +1956,13 @@ function showPage(pageId) {
         } else {
             page.classList.remove('active');
             page.style.display = 'none';
-            // When leaving Tools or Mods, immediately reset tab state so previous tab never flashes upon return
+            // When leaving Tools, Mods, or Settings, immediately reset tab state so previous tab never flashes upon return
             if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
                 window.resetToolsTab(true);
             } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
                 window.resetModsTab(true);
+            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
+                window.resetSettingsTab(true);
             }
         }
     });

@@ -657,8 +657,30 @@ body.theme-light-brown .wotd-intro,
 body.theme-light-brown .sub-len-label,
 body.theme-light-brown .unscramble-must-have-label,
 body.theme-light-brown .seq-results-placeholder,
-body.theme-light-brown #sub-count-info {
     color: rgba(0, 0, 0, 0.75) !important;
+}
+
+[class*="theme-white"] .tool-header p,
+[class*="theme-light-"] .tool-header p,
+body.theme-yellow .tool-header p,
+body.theme-pink .tool-header p,
+body.theme-orange .tool-header p,
+body.theme-gray .tool-header p,
+body.theme-light-brown .tool-header p {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[class*="theme-white"] .tool-header p::-webkit-scrollbar-thumb,
+[class*="theme-light-"] .tool-header p::-webkit-scrollbar-thumb,
+body.theme-yellow .tool-header p::-webkit-scrollbar-thumb,
+body.theme-pink .tool-header p::-webkit-scrollbar-thumb,
+body.theme-orange .tool-header p::-webkit-scrollbar-thumb,
+body.theme-gray .tool-header p::-webkit-scrollbar-thumb,
+body.theme-light-brown .tool-header p::-webkit-scrollbar-thumb {
+    background: #94a3b8 !important;
 }
 
 [class*="theme-white"] .nav-btn,

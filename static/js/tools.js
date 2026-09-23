@@ -167,7 +167,18 @@ window.showTool = function(toolId) {
     const sidebar = document.querySelector('#page-tools .tools-sidebar');
     const content = document.querySelector('#page-tools .tools-content');
     const titleHeader = document.querySelector('#page-tools .page-title-header');
+    let tabTitle = '';
+    const activeBtn = sidebar ? sidebar.querySelector(`.tool-nav-btn[data-tool="${toolId}"]`) : null;
+    if (activeBtn) {
+        const titleEl = activeBtn.querySelector('.tool-btn-title');
+        if (titleEl) tabTitle = titleEl.textContent.trim();
+    }
+    if (!tabTitle && content) {
+        const paneTitle = content.querySelector(`#tool-${toolId} .tool-header h2`);
+        if (paneTitle) tabTitle = paneTitle.textContent.trim();
+    }
     if (titleHeader) {
+        titleHeader.textContent = tabTitle ? `Tools - ${tabTitle}` : 'Tools';
         titleHeader.classList.remove('title-hidden');
     }
     
@@ -314,6 +325,7 @@ window.resetToolsTab = function(immediate = false) {
     const content = document.querySelector('#page-tools .tools-content');
     const titleHeader = document.querySelector('#page-tools .page-title-header');
     if (titleHeader) {
+        titleHeader.textContent = 'Tools';
         titleHeader.classList.remove('title-hidden');
     }
 

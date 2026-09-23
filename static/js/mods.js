@@ -1310,7 +1310,20 @@ window.showModTab = function(tabId) {
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
     const content = document.querySelector('#page-mods .tools-content');
     const titleHeader = document.querySelector('#page-mods .page-title-header');
-    if (titleHeader) titleHeader.classList.remove('title-hidden');
+    let tabTitle = '';
+    const activeBtn = sidebar ? sidebar.querySelector(`.tool-nav-btn[data-mod-tab="${tabId}"]`) : null;
+    if (activeBtn) {
+        const titleEl = activeBtn.querySelector('.tool-btn-title');
+        if (titleEl) tabTitle = titleEl.textContent.trim();
+    }
+    if (!tabTitle && content) {
+        const paneTitle = content.querySelector(`#mod-tab-${tabId} .tool-header h2`);
+        if (paneTitle) tabTitle = paneTitle.textContent.trim();
+    }
+    if (titleHeader) {
+        titleHeader.textContent = tabTitle ? `Mods - ${tabTitle}` : 'Mods';
+        titleHeader.classList.remove('title-hidden');
+    }
     if (!sidebar || !content) return;
 
     // Update active class on buttons
@@ -1364,7 +1377,10 @@ window.resetModsTab = function(immediate = false) {
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
     const content = document.querySelector('#page-mods .tools-content');
     const titleHeader = document.querySelector('#page-mods .page-title-header');
-    if (titleHeader) titleHeader.classList.remove('title-hidden');
+    if (titleHeader) {
+        titleHeader.textContent = 'Mods';
+        titleHeader.classList.remove('title-hidden');
+    }
 
     if (immediate) {
         if (layoutEl) layoutEl.scrollLeft = 0;
