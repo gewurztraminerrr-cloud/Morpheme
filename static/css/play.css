@@ -12727,6 +12727,54 @@ body.theme-white .integrated-review-board {
     border: 1px solid #e2e8f0 !important;
 }
 
+/* Cube Round Replay Face Label & Grid for Light Themes */
+.cube-replay-grid {
+    background: rgba(0, 0, 0, 0.2);
+}
+.cube-replay-face-label {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+[class*="theme-white"] .cube-replay-grid,
+[class*="theme-light-"] .cube-replay-grid,
+body.theme-white .cube-replay-grid,
+body.theme-light-gray .cube-replay-grid,
+body.theme-light-red .cube-replay-grid,
+body.theme-light-orange .cube-replay-grid,
+body.theme-light-yellow .cube-replay-grid,
+body.theme-light-green .cube-replay-grid,
+body.theme-light-blue .cube-replay-grid,
+body.theme-light-purple .cube-replay-grid,
+body.theme-light-pink .cube-replay-grid,
+body.theme-light-brown .cube-replay-grid,
+body.theme-yellow .cube-replay-grid,
+body.theme-pink .cube-replay-grid,
+body.theme-orange .cube-replay-grid,
+body.theme-gray .cube-replay-grid {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-white"] .cube-replay-face-label,
+[class*="theme-light-"] .cube-replay-face-label,
+body.theme-white .cube-replay-face-label,
+body.theme-light-gray .cube-replay-face-label,
+body.theme-light-red .cube-replay-face-label,
+body.theme-light-orange .cube-replay-face-label,
+body.theme-light-yellow .cube-replay-face-label,
+body.theme-light-green .cube-replay-face-label,
+body.theme-light-blue .cube-replay-face-label,
+body.theme-light-purple .cube-replay-face-label,
+body.theme-light-pink .cube-replay-face-label,
+body.theme-light-brown .cube-replay-face-label,
+body.theme-yellow .cube-replay-face-label,
+body.theme-pink .cube-replay-face-label,
+body.theme-orange .cube-replay-face-label,
+body.theme-gray .cube-replay-face-label {
+    color: #0f172a !important;
+    font-weight: 900 !important;
+}
+
 /* Desktop & Laptop Game Room Panel Harmonization */
 @media (min-width: 901px) {
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play {

@@ -2805,11 +2805,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
 
                 // Inner wrapper: inline-grid so it sizes to content → background hugs faces
                 const innerGrid = document.createElement('div');
+                innerGrid.className = 'cube-replay-grid';
                 innerGrid.style.display = 'inline-grid';
                 innerGrid.style.gridTemplateColumns = `repeat(${faceCols}, max-content)`;
                 innerGrid.style.gap = `${faceGap}px`;
                 innerGrid.style.padding = `${pad}px`;
-                innerGrid.style.background = 'rgba(0,0,0,0.2)';
                 innerGrid.style.borderRadius = '15px';
                 innerGrid.style.verticalAlign = 'top';
 
@@ -2824,7 +2824,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                     }
                     return `
                         <div style="display:flex;flex-direction:column;align-items:center;gap:${isMobile3D ? 4 : 8}px;flex-shrink:0;">
-                            <div style="font-size:0.6rem;color:rgba(255,255,255,0.3);font-weight:900;text-transform:uppercase;white-space:nowrap;">Face ${fIdx}</div>
+                            <div class="cube-replay-face-label" style="font-size:0.6rem;font-weight:900;text-transform:uppercase;white-space:nowrap;">Face ${fIdx}</div>
                             <div style="display:grid;grid-template-columns:repeat(3,${cellSize3D}px);gap:${cellGap}px;flex-shrink:0;">
                                 ${faceHTML}
                             </div>
@@ -5864,7 +5864,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
     }
     if (countInfo) countInfo.textContent = 'Finding all subanagrams...';
     if (resultsContainer) {
-        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding all subanagrams...</div>';
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder" style="padding:20px; text-align:center;">Finding all subanagrams...</div>';
     }
 
     try {
@@ -5934,7 +5934,7 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     }
     if (countInfo) countInfo.textContent = 'Loading sequence...';
     if (resultsContainer) {
-        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Generating letters...</div>';
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder" style="padding:20px; text-align:center;">Generating letters...</div>';
     }
 
     try {
@@ -6012,7 +6012,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
     }
     if (countInfo) countInfo.textContent = 'Analyzing sequence...';
     if (resultsContainer) {
-        resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Finding subanagrams...</div>';
+        resultsContainer.innerHTML = '<div class="seq-results-placeholder" style="padding:20px; text-align:center;">Finding subanagrams...</div>';
     }
 
     try {
@@ -6197,7 +6197,7 @@ function renderSubanagramsResults() {
         const lengths = Object.keys(grouped).map(Number).sort((a, b) => b - a);
 
         html += `
-            <div style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; background: rgba(59, 130, 246, 0.15); border-left: 3px solid #3b82f6; font-weight: 700; color: #93c5fd; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div class="sub-revealed-banner" style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; font-weight: 700; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                 <span>All Subanagrams (${total})</span>
                 <span style="font-size: 0.8rem; color: #34d399;">You Found: ${_subFoundWords.size} / ${total}</span>
             </div>
@@ -6206,7 +6206,7 @@ function renderSubanagramsResults() {
         lengths.forEach(len => {
             const wordsInLen = grouped[len];
             html += `
-                <div style="font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 10px 0 4px 4px;">
+                <div class="sub-group-header" style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin: 10px 0 4px 4px;">
                     ${len}-Letter Words (${wordsInLen.length})
                 </div>
                 <table class="group-table" style="width: 100%; margin-bottom: 8px;">
@@ -6229,8 +6229,8 @@ function renderSubanagramsResults() {
     } else {
         if (foundList.length === 0) {
             html += `
-                <div style="padding: 30px 10px; text-align: center; color: var(--text-secondary, rgba(var(--text-primary-rgb), 0.65)); font-size: 0.95rem;">
-                    Type subanagrams formed from <strong style="color: var(--accent-color, #a78bfa);">${_subCurrentLetters}</strong> into the box above and press Enter!
+                <div class="sub-empty-prompt" style="padding: 30px 10px; text-align: center; font-size: 0.95rem;">
+                    Type subanagrams formed from <strong class="sub-highlight-letters">${_subCurrentLetters}</strong> into the box above and press Enter!
                 </div>
             `;
         } else {
