@@ -2763,25 +2763,26 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
 
     /* Uniform Title & Description Sizes across all Content Panels in Tools */
     #page-tools .tool-pane .tool-header,
-    #page-tools .tool-header {
-        margin-bottom: 20px !important;
+    #page-tools .tool-header,
+    #page-settings .tool-pane .tool-header,
+    #page-settings .tool-header,
+    #page-mods .tool-pane .tool-header,
+    #page-mods .tool-header {
+        margin-bottom: 4px !important;
         text-align: left !important;
         padding-left: 0 !important;
-        padding-right: 15px !important;
+        padding-right: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
     #page-tools .tool-pane .tool-header h2,
-    #page-tools .tool-header h2 {
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
-        line-height: 1.2 !important;
-        margin: 0 0 5px 0 !important;
-        color: var(--text-primary) !important;
-        background: none !important;
-        -webkit-text-fill-color: initial !important;
-        letter-spacing: -0.02em !important;
+    #page-tools .tool-header h2,
+    #page-settings .tool-pane .tool-header h2,
+    #page-settings .tool-header h2,
+    #page-mods .tool-pane .tool-header h2,
+    #page-mods .tool-header h2 {
+        display: none !important;
     }
 
     #page-tools .tool-pane .tool-header p,
@@ -2792,7 +2793,7 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
     #page-mods .tool-header p {
         font-size: 0.82rem !important;
         color: var(--muted-text) !important;
-        margin: 4px 0 14px 0 !important;
+        margin: 0 0 14px 0 !important;
         line-height: 1.35 !important;
         opacity: 0.95 !important;
         max-height: 52px !important;
@@ -7484,16 +7485,13 @@ input[type=range]::-moz-range-track {
         line-height: 1.25 !important;
     }
 
-    .tool-header h2,
     #page-tools .tool-pane .tool-header h2,
     #page-tools .tool-header h2,
     #page-settings .tool-pane .tool-header h2,
     #page-settings .tool-header h2,
     #page-mods .tool-pane .tool-header h2,
     #page-mods .tool-header h2 {
-        font-size: 1.15rem !important;
-        margin: 0 0 3px 0 !important;
-        line-height: 1.2 !important;
+        display: none !important;
     }
 
     .tool-header p,
@@ -7508,7 +7506,7 @@ input[type=range]::-moz-range-track {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         padding: 5px 10px !important;
-        margin: 3px 0 8px 0 !important;
+        margin: 0 0 8px 0 !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
         border-radius: 8px !important;
         background: rgba(var(--text-primary-rgb), 0.04) !important;
