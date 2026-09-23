@@ -3171,8 +3171,15 @@ body.is-desktop .active-rooms-panel #rooms-list {
     margin: 0 !important;
 }
 
+body.is-mobile .active-rooms-panel .game-title,
+body.is-mobile #mobile-panel-rooms .game-title {
+    margin: 0 0 6px 0 !important;
+    padding: 0 !important;
+}
+
 body.is-mobile #mobile-panel-rooms,
 body.is-mobile .active-rooms-panel {
+    gap: 0 !important;
     padding-bottom: 6px !important;
 }
 
