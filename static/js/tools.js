@@ -3535,20 +3535,33 @@ function renderRatingsGrid(configRatings, user = null) {
 function setupImageLightbox() {
     const modal = document.getElementById('image-lightbox-modal');
     const closeBtn = document.getElementById('image-lightbox-close');
+    const img = document.getElementById('image-lightbox-img');
+    const captionEl = document.getElementById('image-lightbox-caption');
 
-    if (modal && closeBtn) {
+    if (modal) {
         const closeModal = () => {
             modal.classList.add('hidden');
             modal.classList.remove('forced-show');
+            if (img) img.src = '';
         };
-        closeBtn.onclick = closeModal;
+        if (closeBtn) {
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                closeModal();
+            };
+        }
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
+            // Dismiss if clicking backdrop or content container outside the actual image
+            if (e.target !== img && e.target !== captionEl) {
+                closeModal();
+            }
         };
 
         // ESC key to close
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
         });
     }
 

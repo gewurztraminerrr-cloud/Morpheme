@@ -441,10 +441,12 @@ const Forum = {
         const postImageInput = document.getElementById('forum-post-image');
         const postImageWrapper = document.getElementById('forum-post-image-wrapper');
         if (postImageInput) {
+            postImageInput.addEventListener('click', () => {
+                try { postImageInput.value = ''; } catch (e) { }
+            });
             postImageInput.addEventListener('change', (e) => {
                 if (e.target.files && e.target.files.length > 0) {
-                    this.addFiles('post', e.target.files);
-                    e.target.value = '';
+                    this.addFiles('post', Array.from(e.target.files));
                 }
             });
         }
@@ -468,7 +470,7 @@ const Forum = {
                 const box = postImageWrapper.querySelector('.file-upload-box') || postImageWrapper.querySelector('label') || postImageWrapper.firstElementChild;
                 if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    this.addFiles('post', e.dataTransfer.files);
+                    this.addFiles('post', Array.from(e.dataTransfer.files));
                 }
             });
         }
@@ -476,10 +478,12 @@ const Forum = {
         const commentImageInput = document.getElementById('forum-comment-image');
         const commentImageWrapper = document.getElementById('forum-comment-image-wrapper');
         if (commentImageInput) {
+            commentImageInput.addEventListener('click', () => {
+                try { commentImageInput.value = ''; } catch (e) { }
+            });
             commentImageInput.addEventListener('change', (e) => {
                 if (e.target.files && e.target.files.length > 0) {
-                    this.addFiles('comment', e.target.files);
-                    e.target.value = '';
+                    this.addFiles('comment', Array.from(e.target.files));
                 }
             });
         }
@@ -503,7 +507,7 @@ const Forum = {
                 const box = commentImageWrapper.querySelector('.file-upload-box') || commentImageWrapper.querySelector('label') || commentImageWrapper.firstElementChild;
                 if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    this.addFiles('comment', e.dataTransfer.files);
+                    this.addFiles('comment', Array.from(e.dataTransfer.files));
                 }
             });
         }
@@ -522,9 +526,12 @@ const Forum = {
     addFiles: function (type, files) {
         const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
         let addedAny = false;
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (!file.type.startsWith('image/')) continue;
+        const fileList = Array.from(files || []);
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+            const isImage = (file.type && file.type.startsWith('image/')) ||
+                /\.(jpe?g|png|gif|webp|bmp|svg|heic|heif|avif|ico|tiff?)$/i.test(file.name || '');
+            if (!isImage) continue;
             if (targetArray.length >= 4) {
                 alert("You can attach a maximum of 4 images per post.");
                 break;
@@ -572,10 +579,12 @@ const Forum = {
         if (targetArray.length === 0) {
             previewEl.innerHTML = '';
             previewEl.classList.add('hidden');
+            previewEl.style.display = 'none';
             return;
         }
 
         previewEl.classList.remove('hidden');
+        previewEl.style.display = 'block';
         previewEl.innerHTML = `
             <div class="forum-image-preview-grid">
                 ${targetArray.map((file, idx) => `
@@ -588,20 +597,53 @@ const Forum = {
         `;
 
         targetArray.forEach((file, idx) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imgEl = document.getElementById(`preview-img-${type}-${idx}`);
-                if (imgEl) {
-                    imgEl.src = e.target.result;
-                    imgEl.addEventListener('click', (ev) => {
-                        ev.stopPropagation();
-                        if (typeof window.showImageLightbox === 'function') {
-                            window.showImageLightbox(e.target.result, `Attachment Preview (${idx+1}/${targetArray.length}): ${file.name}`);
-                        }
-                    });
+            const imgEl = document.getElementById(`preview-img-${type}-${idx}`);
+            if (!imgEl) return;
+
+            let objectUrl = null;
+            try {
+                if (typeof URL !== 'undefined' && URL.createObjectURL) {
+                    objectUrl = URL.createObjectURL(file);
+                    imgEl.src = objectUrl;
+                }
+            } catch (err) {
+                console.warn("[Forum] URL.createObjectURL failed:", err);
+            }
+
+            const openLightbox = (srcUrl) => {
+                if (typeof window.showImageLightbox === 'function') {
+                    window.showImageLightbox(srcUrl, `Attachment Preview (${idx+1}/${targetArray.length}): ${file.name}`);
                 }
             };
-            reader.readAsDataURL(file);
+
+            if (objectUrl) {
+                imgEl.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    openLightbox(objectUrl);
+                });
+            }
+
+            // Fallback or secondary verification via FileReader
+            if (!imgEl.src || imgEl.src === window.location.href) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (imgEl && e.target.result) {
+                        imgEl.src = e.target.result;
+                        imgEl.onclick = (ev) => {
+                            ev.stopPropagation();
+                            openLightbox(e.target.result);
+                        };
+                    }
+                };
+                reader.onerror = (e) => {
+                    console.error("[Forum] FileReader error on preview:", e);
+                };
+                try {
+                    reader.readAsDataURL(file);
+                } catch (e) {
+                    console.error("[Forum] readAsDataURL failed:", e);
+                }
+            }
         });
 
         previewEl.querySelectorAll('.remove-preview-btn').forEach(btn => {
@@ -1131,12 +1173,12 @@ const Forum = {
 
     compressImage: function (file, maxDimension, quality = 0.8) {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
+            const processImage = (imgSrc, shouldRevoke) => {
                 const img = new Image();
-                img.src = event.target.result;
                 img.onload = () => {
+                    if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
+                        try { URL.revokeObjectURL(imgSrc); } catch (e) { }
+                    }
                     let width = img.width;
                     let height = img.height;
 
@@ -1158,17 +1200,43 @@ const Forum = {
 
                     canvas.toBlob((blob) => {
                         if (blob) {
-                            const name = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
-                            const compressedFile = new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+                            const baseName = (file.name && file.name.lastIndexOf('.') > 0)
+                                ? file.name.substring(0, file.name.lastIndexOf('.'))
+                                : (file.name || 'image');
+                            const compressedFile = new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
                             resolve(compressedFile);
                         } else {
                             reject(new Error("Canvas to Blob failed"));
                         }
                     }, 'image/jpeg', quality);
                 };
-                img.onerror = (err) => reject(err);
+                img.onerror = (err) => {
+                    if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
+                        try { URL.revokeObjectURL(imgSrc); } catch (e) { }
+                    }
+                    reject(err);
+                };
+                img.src = imgSrc;
             };
+
+            if (typeof URL !== 'undefined' && URL.createObjectURL) {
+                try {
+                    const blobUrl = URL.createObjectURL(file);
+                    processImage(blobUrl, true);
+                    return;
+                } catch (e) {
+                    console.warn("[Forum] compressImage createObjectURL failed, falling back to FileReader:", e);
+                }
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => processImage(event.target.result, false);
             reader.onerror = (err) => reject(err);
+            try {
+                reader.readAsDataURL(file);
+            } catch (err) {
+                reject(err);
+            }
         });
     },
 

@@ -155,13 +155,13 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790011000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790012000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790006000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790011000">
+    <link rel="stylesheet" href="/css/style.css?v=1790012000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790006000">
     <link rel="stylesheet" href="/css/play.css?v=1790008000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
-    <link rel="stylesheet" href="/css/forum.css?v=1789338000">
+    <link rel="stylesheet" href="/css/forum.css?v=1789339000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: dark grey matching dark layout for white & light layouts */
@@ -7347,9 +7347,9 @@
     </div>
     <!-- Image Lightbox Modal -->
     <div id="image-lightbox-modal" class="image-lightbox-overlay hidden">
+        <button id="image-lightbox-close" class="image-lightbox-close" type="button" title="Close (Esc)" aria-label="Close image">&times;</button>
         <div class="image-lightbox-content">
-            <button id="image-lightbox-close" class="image-lightbox-close">&times;</button>
-            <img id="image-lightbox-img" src="" alt="User Avatar Large">
+            <img id="image-lightbox-img" src="" alt="Enlarged Image">
             <div id="image-lightbox-caption" class="image-lightbox-caption"></div>
         </div>
     </div>
@@ -7758,13 +7758,13 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
-    <script src="/js/forum.js?v=1789821100"></script>
+    <script src="/js/forum.js?v=1789822000"></script>
     <script src="/js/app.js?v=1790002000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1790007000"></script>
+    <script src="/js/tools.js?v=1790008000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790002000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
@@ -7820,11 +7820,11 @@
                             console.log("[MorphemeBridge] Posting message to MorphemeFilePicker:", inputId);
                             MorphemeFilePicker.postMessage(inputId);
                         } else {
-                            if (e.target !== input) {
+                            if (e.target !== input && !e.target.closest(`label[for="${inputId}"]`)) {
                                 console.log("[MorphemeBridge] Programmatically triggering input click for standard browser:", inputId);
                                 input.click();
                             } else {
-                                console.log("[MorphemeBridge] Click event originated from the input itself, letting it proceed.");
+                                console.log("[MorphemeBridge] Click event originated from the input itself or its label, letting it proceed.");
                             }
                         }
                     }
