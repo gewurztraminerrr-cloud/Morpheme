@@ -1103,9 +1103,11 @@ body.theme-gray .forum-bottom-bar,
 body.theme-gray #page-forums .forum-bottom-bar,
 body.theme-light-brown .forum-bottom-bar,
 body.theme-light-brown #page-forums .forum-bottom-bar {
-    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
-    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    margin-bottom: 0 !important;
 }
 
 [class*="theme-white"] #forum-back-to-list,
@@ -1129,10 +1131,10 @@ body.theme-gray .forum-back-btn,
 body.theme-light-brown #forum-back-to-list,
 body.theme-light-brown #forum-category-back-btn,
 body.theme-light-brown .forum-back-btn {
-    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
-    background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
-    color: #111111 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
+    background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     font-weight: 700 !important;
 }
 
@@ -1199,10 +1201,10 @@ body.theme-light-brown #forum-category-back-btn:focus,
 body.theme-light-brown .forum-back-btn:hover,
 body.theme-light-brown .forum-back-btn:active,
 body.theme-light-brown .forum-back-btn:focus {
-    background: #ffffff !important;
-    border-color: #0284c7 !important;
-    color: #0284c7 !important;
-    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25) !important;
+    background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
 }
 
 /* Tablet & Smaller Mac Device Scaling for Forums Page */
