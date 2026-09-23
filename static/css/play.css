@@ -2472,7 +2472,7 @@ body.theme-light-brown .tools-content-column > .mobile-bottom-nav,
 body.theme-light-brown #page-tools .mobile-bottom-nav,
 body.theme-light-brown #page-mods .mobile-bottom-nav,
 body.theme-light-brown #page-settings .mobile-bottom-nav {
-    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+    background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
     border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
     box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
@@ -3087,6 +3087,81 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
     padding: 0 18px !important;
     font-size: 0.92rem !important;
     font-weight: 700 !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(165, 180, 252, 0.3);
+    background: rgba(165, 180, 252, 0.08);
+    color: #a5b4fc;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
+}
+
+#more-random-words-btn:hover {
+    background: rgba(165, 180, 252, 0.16) !important;
+    border-color: rgba(165, 180, 252, 0.55) !important;
+    color: #c7d2fe !important;
+}
+
+#more-random-words-btn:active {
+    transform: translateY(1px) !important;
+}
+
+/* More Random Words Button on White & Light Themes */
+body[class*="theme-white"] #more-random-words-btn,
+body.theme-white #more-random-words-btn,
+[class*="theme-white"] #more-random-words-btn,
+body.is-mobile[class*="theme-white"] #more-random-words-btn,
+body.is-mobile.theme-white #more-random-words-btn,
+body[class*="theme-light-"] #more-random-words-btn,
+[class*="theme-light-"] #more-random-words-btn,
+body.theme-yellow #more-random-words-btn,
+body.theme-pink #more-random-words-btn,
+body.theme-orange #more-random-words-btn,
+body.theme-gray #more-random-words-btn,
+body.theme-light-brown #more-random-words-btn {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    border: 1px solid #3730a3 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+}
+
+body[class*="theme-white"] #more-random-words-btn:hover,
+body.theme-white #more-random-words-btn:hover,
+[class*="theme-white"] #more-random-words-btn:hover,
+body.is-mobile[class*="theme-white"] #more-random-words-btn:hover,
+body.is-mobile.theme-white #more-random-words-btn:hover,
+body[class*="theme-light-"] #more-random-words-btn:hover,
+[class*="theme-light-"] #more-random-words-btn:hover,
+body.theme-yellow #more-random-words-btn:hover,
+body.theme-pink #more-random-words-btn:hover,
+body.theme-orange #more-random-words-btn:hover,
+body.theme-gray #more-random-words-btn:hover,
+body.theme-light-brown #more-random-words-btn:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+    border-color: #312e81 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+}
+
+body[class*="theme-white"] #more-random-words-btn:active,
+body.theme-white #more-random-words-btn:active,
+[class*="theme-white"] #more-random-words-btn:active,
+body.is-mobile[class*="theme-white"] #more-random-words-btn:active,
+body.is-mobile.theme-white #more-random-words-btn:active,
+body[class*="theme-light-"] #more-random-words-btn:active,
+[class*="theme-light-"] #more-random-words-btn:active,
+body.theme-yellow #more-random-words-btn:active,
+body.theme-pink #more-random-words-btn:active,
+body.theme-orange #more-random-words-btn:active,
+body.theme-gray #more-random-words-btn:active,
+body.theme-light-brown #more-random-words-btn:active {
+    transform: translateY(1px) !important;
+    background: #3730a3 !important;
 }
 
 /* Unified Dropdowns Across All Tools (Vertically Equal at 42px) */
@@ -6647,7 +6722,7 @@ input[type=range]::-moz-range-track {
     body.theme-light-brown #page-tools .mobile-bottom-nav,
     body.theme-light-brown #page-mods .mobile-bottom-nav,
     body.theme-light-brown #page-settings .mobile-bottom-nav {
-        background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+        background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
         border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
         box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
         padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
@@ -11193,7 +11268,7 @@ body.theme-white .mobile-bottom-nav,
 body.theme-white #page-tools .mobile-bottom-nav,
 body.theme-white #page-mods .mobile-bottom-nav,
 body.theme-white #page-settings .mobile-bottom-nav {
-    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+    background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
     border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
     box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;

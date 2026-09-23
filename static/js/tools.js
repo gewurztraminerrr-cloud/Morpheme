@@ -7343,14 +7343,6 @@ function setupFindCountTool() {
                 loadRandomSuggestedWords(true);
             }
         });
-        moreBtn.addEventListener('mouseenter', () => {
-            moreBtn.style.background = 'rgba(165, 180, 252, 0.15)';
-            moreBtn.style.borderColor = 'rgba(165, 180, 252, 0.5)';
-        });
-        moreBtn.addEventListener('mouseleave', () => {
-            moreBtn.style.background = 'rgba(165, 180, 252, 0.08)';
-            moreBtn.style.borderColor = 'rgba(165, 180, 252, 0.3)';
-        });
     }
 
     const dictSelect = document.getElementById('random-words-dict-select');
