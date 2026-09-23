@@ -9521,22 +9521,266 @@ body.theme-white #email-current-display,
     color: #0f172a !important;
 }
 
+/* Base Subanagrams Tabs & Buttons (Dark Theme Default) */
+.sub-tab-bar {
+    display: flex;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sub-mode-tab {
+    flex: 1;
+    padding: 12px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.sub-mode-tab:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.sub-mode-tab.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-bottom: 2px solid #3b82f6;
+    color: #93c5fd;
+}
+
+#sub-tab-random.sub-mode-tab.active {
+    background: rgba(139, 92, 246, 0.15);
+    border-bottom: 2px solid #8b5cf6;
+    color: #c4b5fd;
+}
+
+#sub-practice-btn {
+    background: rgba(167, 139, 250, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    color: #c4b5fd;
+    font-weight: 700;
+}
+
+#sub-practice-btn:hover {
+    background: rgba(167, 139, 250, 0.3);
+    border-color: #c4b5fd;
+}
+
+#sub-find-all-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: #fff;
+    font-weight: 700;
+}
+
+#sub-find-all-btn:hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+#sub-random-btn {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border: none;
+    color: #fff;
+    font-weight: 700;
+}
+
+#sub-random-btn:hover {
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+.sub-pts-badge {
+    color: #a78bfa;
+}
+
 /* 16. Tools: Subanagrams on White/Light Themes */
 body.theme-white #tool-subanagrams .combo-control-panel,
 [class*="theme-white"] #tool-subanagrams .combo-control-panel,
-[class*="theme-light-"] #tool-subanagrams .combo-control-panel {
+[class*="theme-light-"] #tool-subanagrams .combo-control-panel,
+body.theme-yellow #tool-subanagrams .combo-control-panel,
+body.theme-pink #tool-subanagrams .combo-control-panel,
+body.theme-orange #tool-subanagrams .combo-control-panel,
+body.theme-gray #tool-subanagrams .combo-control-panel,
+body.theme-light-brown #tool-subanagrams .combo-control-panel {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
 }
 
-body.theme-white #tool-subanagrams .sub-len-label,
-[class*="theme-white"] #tool-subanagrams .sub-len-label {
+/* Subanagrams Tab Bar & Buttons on Light Themes */
+body.theme-white .sub-tab-bar,
+[class*="theme-white"] .sub-tab-bar,
+[class*="theme-light-"] .sub-tab-bar,
+body.theme-yellow .sub-tab-bar,
+body.theme-pink .sub-tab-bar,
+body.theme-orange .sub-tab-bar,
+body.theme-gray .sub-tab-bar,
+body.theme-light-brown .sub-tab-bar {
+    border-bottom: 1.5px solid #cbd5e1 !important;
+}
+
+body.theme-white .sub-mode-tab,
+[class*="theme-white"] .sub-mode-tab,
+[class*="theme-light-"] .sub-mode-tab,
+body.theme-yellow .sub-mode-tab,
+body.theme-pink .sub-mode-tab,
+body.theme-orange .sub-mode-tab,
+body.theme-gray .sub-mode-tab,
+body.theme-light-brown .sub-mode-tab {
     color: #475569 !important;
+    background: transparent !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+body.theme-white .sub-mode-tab:hover,
+[class*="theme-white"] .sub-mode-tab:hover,
+[class*="theme-light-"] .sub-mode-tab:hover,
+body.theme-yellow .sub-mode-tab:hover,
+body.theme-pink .sub-mode-tab:hover,
+body.theme-orange .sub-mode-tab:hover,
+body.theme-gray .sub-mode-tab:hover,
+body.theme-light-brown .sub-mode-tab:hover {
+    color: #0f172a !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-white .sub-mode-tab.active,
+[class*="theme-white"] .sub-mode-tab.active,
+[class*="theme-light-"] .sub-mode-tab.active,
+body.theme-yellow .sub-mode-tab.active,
+body.theme-pink .sub-mode-tab.active,
+body.theme-orange .sub-mode-tab.active,
+body.theme-gray .sub-mode-tab.active,
+body.theme-light-brown .sub-mode-tab.active {
+    color: #1d4ed8 !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-bottom: 2.5px solid #2563eb !important;
+}
+
+body.theme-white #sub-tab-random.sub-mode-tab.active,
+[class*="theme-white"] #sub-tab-random.sub-mode-tab.active,
+[class*="theme-light-"] #sub-tab-random.sub-mode-tab.active,
+body.theme-yellow #sub-tab-random.sub-mode-tab.active,
+body.theme-pink #sub-tab-random.sub-mode-tab.active,
+body.theme-orange #sub-tab-random.sub-mode-tab.active,
+body.theme-gray #sub-tab-random.sub-mode-tab.active,
+body.theme-light-brown #sub-tab-random.sub-mode-tab.active {
+    color: #6d28d9 !important;
+    background: rgba(109, 40, 217, 0.12) !important;
+    border-bottom: 2.5px solid #7c3aed !important;
+}
+
+/* Practice button in Light Themes */
+body.theme-white #sub-practice-btn,
+[class*="theme-white"] #sub-practice-btn,
+[class*="theme-light-"] #sub-practice-btn,
+body.theme-yellow #sub-practice-btn,
+body.theme-pink #sub-practice-btn,
+body.theme-orange #sub-practice-btn,
+body.theme-gray #sub-practice-btn,
+body.theme-light-brown #sub-practice-btn {
+    background: rgba(109, 40, 217, 0.1) !important;
+    border: 1.5px solid rgba(109, 40, 217, 0.45) !important;
+    color: #6d28d9 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #sub-practice-btn:hover,
+[class*="theme-white"] #sub-practice-btn:hover,
+[class*="theme-light-"] #sub-practice-btn:hover,
+body.theme-yellow #sub-practice-btn:hover,
+body.theme-pink #sub-practice-btn:hover,
+body.theme-orange #sub-practice-btn:hover,
+body.theme-gray #sub-practice-btn:hover,
+body.theme-light-brown #sub-practice-btn:hover {
+    background: rgba(109, 40, 217, 0.18) !important;
+    border-color: #6d28d9 !important;
+}
+
+/* Find All Words button in Light Themes */
+body.theme-white #sub-find-all-btn,
+[class*="theme-white"] #sub-find-all-btn,
+[class*="theme-light-"] #sub-find-all-btn,
+body.theme-yellow #sub-find-all-btn,
+body.theme-pink #sub-find-all-btn,
+body.theme-orange #sub-find-all-btn,
+body.theme-gray #sub-find-all-btn,
+body.theme-light-brown #sub-find-all-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Random button in Light Themes */
+body.theme-white #sub-random-btn,
+[class*="theme-white"] #sub-random-btn,
+[class*="theme-light-"] #sub-random-btn,
+body.theme-yellow #sub-random-btn,
+body.theme-pink #sub-random-btn,
+body.theme-orange #sub-random-btn,
+body.theme-gray #sub-random-btn,
+body.theme-light-brown #sub-random-btn {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25) !important;
+}
+
+/* Inputs and Selects on Light Themes */
+body.theme-white #sub-input,
+[class*="theme-white"] #sub-input,
+[class*="theme-light-"] #sub-input,
+body.theme-yellow #sub-input,
+body.theme-pink #sub-input,
+body.theme-orange #sub-input,
+body.theme-gray #sub-input,
+body.theme-light-brown #sub-input,
+body.theme-white #sub-panel-manual select,
+[class*="theme-white"] #sub-panel-manual select,
+[class*="theme-light-"] #sub-panel-manual select,
+body.theme-yellow #sub-panel-manual select,
+body.theme-pink #sub-panel-manual select,
+body.theme-orange #sub-panel-manual select,
+body.theme-gray #sub-panel-manual select,
+body.theme-light-brown #sub-panel-manual select,
+body.theme-white #sub-panel-random select,
+[class*="theme-white"] #sub-panel-random select,
+[class*="theme-light-"] #sub-panel-random select,
+body.theme-yellow #sub-panel-random select,
+body.theme-pink #sub-panel-random select,
+body.theme-orange #sub-panel-random select,
+body.theme-gray #sub-panel-random select,
+body.theme-light-brown #sub-panel-random select {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #sub-input::placeholder,
+[class*="theme-white"] #sub-input::placeholder,
+[class*="theme-light-"] #sub-input::placeholder,
+body.theme-yellow #sub-input::placeholder,
+body.theme-pink #sub-input::placeholder,
+body.theme-orange #sub-input::placeholder,
+body.theme-gray #sub-input::placeholder,
+body.theme-light-brown #sub-input::placeholder {
+    color: #94a3b8 !important;
 }
 
 body.theme-white #tool-subanagrams .subanagrams-game-area,
 [class*="theme-white"] #tool-subanagrams .subanagrams-game-area,
-[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area {
+[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area,
+body.theme-yellow #tool-subanagrams .subanagrams-game-area,
+body.theme-pink #tool-subanagrams .subanagrams-game-area,
+body.theme-orange #tool-subanagrams .subanagrams-game-area,
+body.theme-gray #tool-subanagrams .subanagrams-game-area,
+body.theme-light-brown #tool-subanagrams .subanagrams-game-area {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
@@ -9544,63 +9788,146 @@ body.theme-white #tool-subanagrams .subanagrams-game-area,
 
 body.theme-white #sub-letters-display,
 [class*="theme-white"] #sub-letters-display,
-[class*="theme-light-"] #sub-letters-display {
-    color: #6d28d9 !important;
-    text-shadow: 0 0 20px rgba(109, 40, 217, 0.25) !important;
+[class*="theme-light-"] #sub-letters-display,
+body.theme-yellow #sub-letters-display,
+body.theme-pink #sub-letters-display,
+body.theme-orange #sub-letters-display,
+body.theme-gray #sub-letters-display,
+body.theme-light-brown #sub-letters-display {
+    color: #5b21b6 !important;
+    text-shadow: none !important;
 }
 
 body.theme-white #sub-count-info,
 [class*="theme-white"] #sub-count-info,
-[class*="theme-light-"] #sub-count-info {
+[class*="theme-light-"] #sub-count-info,
+body.theme-yellow #sub-count-info,
+body.theme-pink #sub-count-info,
+body.theme-orange #sub-count-info,
+body.theme-gray #sub-count-info,
+body.theme-light-brown #sub-count-info {
     color: #475569 !important;
+    font-weight: 700 !important;
 }
 
 body.theme-white #sub-word-input,
 [class*="theme-white"] #sub-word-input,
-[class*="theme-light-"] #sub-word-input {
+[class*="theme-light-"] #sub-word-input,
+body.theme-yellow #sub-word-input,
+body.theme-pink #sub-word-input,
+body.theme-orange #sub-word-input,
+body.theme-gray #sub-word-input,
+body.theme-light-brown #sub-word-input {
     background: #ffffff !important;
     border: 2px solid #a78bfa !important;
     color: #0f172a !important;
 }
 
 body.theme-white #sub-word-input::placeholder,
-[class*="theme-white"] #sub-word-input::placeholder {
+[class*="theme-white"] #sub-word-input::placeholder,
+[class*="theme-light-"] #sub-word-input::placeholder,
+body.theme-yellow #sub-word-input::placeholder,
+body.theme-pink #sub-word-input::placeholder,
+body.theme-orange #sub-word-input::placeholder,
+body.theme-gray #sub-word-input::placeholder,
+body.theme-light-brown #sub-word-input::placeholder {
     color: #94a3b8 !important;
+}
+
+body.theme-white #sub-reveal-btn,
+[class*="theme-white"] #sub-reveal-btn,
+[class*="theme-light-"] #sub-reveal-btn,
+body.theme-yellow #sub-reveal-btn,
+body.theme-pink #sub-reveal-btn,
+body.theme-orange #sub-reveal-btn,
+body.theme-gray #sub-reveal-btn,
+body.theme-light-brown #sub-reveal-btn {
+    background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
 }
 
 body.theme-white #sub-reset-btn,
 [class*="theme-white"] #sub-reset-btn,
-[class*="theme-light-"] #sub-reset-btn {
+[class*="theme-light-"] #sub-reset-btn,
+body.theme-yellow #sub-reset-btn,
+body.theme-pink #sub-reset-btn,
+body.theme-orange #sub-reset-btn,
+body.theme-gray #sub-reset-btn,
+body.theme-light-brown #sub-reset-btn {
     background: #f1f5f9 !important;
-    border: 1px solid #cbd5e1 !important;
-    color: #334155 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #sub-submit-word-btn,
+[class*="theme-white"] #sub-submit-word-btn,
+[class*="theme-light-"] #sub-submit-word-btn,
+body.theme-yellow #sub-submit-word-btn,
+body.theme-pink #sub-submit-word-btn,
+body.theme-orange #sub-submit-word-btn,
+body.theme-gray #sub-submit-word-btn,
+body.theme-light-brown #sub-submit-word-btn {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
 }
 
 body.theme-white #sub-results-container,
 [class*="theme-white"] #sub-results-container,
-[class*="theme-light-"] #sub-results-container {
+[class*="theme-light-"] #sub-results-container,
+body.theme-yellow #sub-results-container,
+body.theme-pink #sub-results-container,
+body.theme-orange #sub-results-container,
+body.theme-gray #sub-results-container,
+body.theme-light-brown #sub-results-container {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 body.theme-white #sub-results-container .seq-results-placeholder,
-[class*="theme-white"] #sub-results-container .seq-results-placeholder {
+[class*="theme-white"] #sub-results-container .seq-results-placeholder,
+[class*="theme-light-"] #sub-results-container .seq-results-placeholder {
     color: #64748b !important;
 }
 
 body.theme-white #sub-results-container .group-table td,
-[class*="theme-white"] #sub-results-container .group-table td {
+[class*="theme-white"] #sub-results-container .group-table td,
+[class*="theme-light-"] #sub-results-container .group-table td {
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
 body.theme-white #sub-results-container .clickable-word-link,
-[class*="theme-white"] #sub-results-container .clickable-word-link {
+[class*="theme-white"] #sub-results-container .clickable-word-link,
+[class*="theme-light-"] #sub-results-container .clickable-word-link,
+body.theme-yellow #sub-results-container .clickable-word-link,
+body.theme-pink #sub-results-container .clickable-word-link,
+body.theme-orange #sub-results-container .clickable-word-link,
+body.theme-gray #sub-results-container .clickable-word-link,
+body.theme-light-brown #sub-results-container .clickable-word-link {
     color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #sub-results-container .sub-pts-badge,
+[class*="theme-white"] #sub-results-container .sub-pts-badge,
+[class*="theme-light-"] #sub-results-container .sub-pts-badge,
+body.theme-yellow #sub-results-container .sub-pts-badge,
+body.theme-pink #sub-results-container .sub-pts-badge,
+body.theme-orange #sub-results-container .sub-pts-badge,
+body.theme-gray #sub-results-container .sub-pts-badge,
+body.theme-light-brown #sub-results-container .sub-pts-badge {
+    color: #6d28d9 !important;
+    font-weight: 700 !important;
 }
 
 body.theme-white #sub-results-container div[style*="font-weight: 800"],
-[class*="theme-white"] #sub-results-container div[style*="font-weight: 800"] {
+[class*="theme-white"] #sub-results-container div[style*="font-weight: 800"],
+[class*="theme-light-"] #sub-results-container div[style*="font-weight: 800"] {
     color: #475569 !important;
 }
 

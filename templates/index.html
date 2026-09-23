@@ -155,9 +155,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1789901000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790001000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1789821800" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1789901000">
+    <link rel="stylesheet" href="/css/style.css?v=1790001000">
     <link rel="stylesheet" href="/css/lobby.css?v=1789821800">
     <link rel="stylesheet" href="/css/play.css?v=1789901000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
@@ -3958,13 +3958,11 @@
                             style="padding: 0; margin: 0 0 12px 0; background: rgba(255,255,255,0.05); box-sizing: border-box; width: 100%; border-radius: 12px; overflow: hidden;">
 
                             <!-- Horizontal Tab bar -->
-                            <div style="display: flex; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <button id="sub-tab-manual" class="sub-mode-tab active"
-                                    style="flex: 1; padding: 12px 0; font-size: 0.95rem; font-weight: 700; background: rgba(59,130,246,0.15); border: none; border-bottom: 2px solid #3b82f6; color: #93c5fd; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s ease;">
+                            <div class="sub-tab-bar" style="display: flex; width: 100%;">
+                                <button id="sub-tab-manual" class="sub-mode-tab active" type="button">
                                     Manual
                                 </button>
-                                <button id="sub-tab-random" class="sub-mode-tab"
-                                    style="flex: 1; padding: 12px 0; font-size: 0.95rem; font-weight: 700; background: transparent; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.45); cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s ease;">
+                                <button id="sub-tab-random" class="sub-mode-tab" type="button">
                                     Random
                                 </button>
                             </div>
@@ -3993,8 +3991,8 @@
                                         <option value="11">Min Word Length: 11</option>
                                         <option value="12">Min Word Length: 12</option>
                                     </select>
-                                    <button id="sub-find-all-btn" class="primary-action" style="width: 100%; height: 42px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: #fff; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
-                                    <button id="sub-practice-btn" style="width: 100%; height: 42px; background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
+                                    <button id="sub-find-all-btn" class="primary-action" type="button" style="width: 100%; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
+                                    <button id="sub-practice-btn" class="sub-practice-btn" type="button" style="width: 100%; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
                                 </div>
                             </div>
 
@@ -4034,7 +4032,7 @@
                                         <option value="word" selected>Word of Max Length Guaranteed</option>
                                         <option value="random">Totally Random</option>
                                     </select>
-                                    <button id="sub-random-btn" style="width: 100%; height: 42px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: #fff; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
+                                    <button id="sub-random-btn" class="sub-random-btn" type="button" style="width: 100%; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎲 Random</button>
                                 </div>
                             </div>
                         </div>
@@ -7712,7 +7710,7 @@
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1790000000"></script>
+    <script src="/js/tools.js?v=1790001000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1789685000"></script>
     <script src="/js/private_matches.js?v=33806"></script>

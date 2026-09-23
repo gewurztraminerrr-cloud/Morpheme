@@ -5672,14 +5672,16 @@ function setupSubanagramsTool() {
     function switchTab(tab) {
         const isManual = tab === 'manual';
         if (tabManual) {
-            tabManual.style.background = isManual ? 'rgba(59,130,246,0.15)' : 'transparent';
-            tabManual.style.borderBottom = isManual ? '2px solid #3b82f6' : '2px solid transparent';
-            tabManual.style.color = isManual ? '#93c5fd' : 'rgba(255,255,255,0.45)';
+            tabManual.classList.toggle('active', isManual);
+            tabManual.style.background = '';
+            tabManual.style.borderBottom = '';
+            tabManual.style.color = '';
         }
         if (tabRandom) {
-            tabRandom.style.background = !isManual ? 'rgba(139,92,246,0.15)' : 'transparent';
-            tabRandom.style.borderBottom = !isManual ? '2px solid #8b5cf6' : '2px solid transparent';
-            tabRandom.style.color = !isManual ? '#c4b5fd' : 'rgba(255,255,255,0.45)';
+            tabRandom.classList.toggle('active', !isManual);
+            tabRandom.style.background = '';
+            tabRandom.style.borderBottom = '';
+            tabRandom.style.color = '';
         }
         if (panelManual) panelManual.style.display = isManual ? 'flex' : 'none';
         if (panelRandom) {
@@ -6215,8 +6217,8 @@ function renderSubanagramsResults() {
     } else {
         if (foundList.length === 0) {
             html += `
-                <div style="padding: 30px 10px; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.95rem;">
-                    Type subanagrams formed from <strong style="color: #a78bfa;">${_subCurrentLetters}</strong> into the box above and press Enter!
+                <div style="padding: 30px 10px; text-align: center; color: var(--text-secondary, rgba(var(--text-primary-rgb), 0.65)); font-size: 0.95rem;">
+                    Type subanagrams formed from <strong style="color: var(--accent-color, #a78bfa);">${_subCurrentLetters}</strong> into the box above and press Enter!
                 </div>
             `;
         } else {
@@ -6226,9 +6228,9 @@ function renderSubanagramsResults() {
                     <tr><td style="padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <span style="color: #34d399; font-weight: 700; font-size: 0.85rem; margin-right: 6px;">✓</span>
-                            <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; color: #fff; font-weight: 700; font-size: 1.08rem; letter-spacing: 0.5px;">${w}</span>
+                            <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace; font-weight: 700; font-size: 1.08rem; letter-spacing: 0.5px;">${w}</span>
                         </div>
-                        <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600;">+${w.length} pts</span>
+                        <span class="sub-pts-badge" style="font-size: 0.8rem; font-weight: 600;">+${w.length} pts</span>
                     </td></tr>
                 `;
             });
