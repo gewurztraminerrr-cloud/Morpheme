@@ -1,10 +1,10 @@
 # Stable State Summary — September 23, 2026
 
 > **Start Over Point**: All environments (localhost, GitHub, production `morpheme.games`, and mobile web app) are fully synchronized.  
-> **Commit**: `a871e8a4a7447623305724bb0a12eb50263b112d` (short: `a871e8a4`)  
+> **Commit**: `89eb17359560f78bdf1b2d076ff7a5bc8aa224a1` (short: `89eb1735`)  
 > **Branch**: `main` — `origin/main`  
 > **Server**: `132.148.72.249` (`morpheme.games`) — PM2 process `morpheme` (ID: 0), online ✅  
-> **Date/Time**: 2026-09-23 ~11:58 CDT  
+> **Date/Time**: 2026-09-23 ~12:05 CDT  
 
 ---
 
@@ -12,10 +12,10 @@
 
 | Environment | Status | Commit |
 |---|---|---|
-| **localhost** (`/Users/jeffbabiak/`) | ✅ Clean working tree | `a871e8a4` |
-| **GitHub (`origin/main`)** | ✅ Fully up to date | `a871e8a4` |
-| **morpheme.games (Production)** | ✅ Deployed & verified | `a871e8a4` |
-| **Mobile Web / App** | ✅ Fully aligned & verified | `a871e8a4` |
+| **localhost** (`/Users/jeffbabiak/`) | ✅ Clean working tree | `89eb1735` |
+| **GitHub (`origin/main`)** | ✅ Fully up to date | `89eb1735` |
+| **morpheme.games (Production)** | ✅ Deployed & verified | `89eb1735` |
+| **Mobile Web / App** | ✅ Fully aligned & verified | `89eb1735` |
 
 ---
 
@@ -52,6 +52,15 @@
 - Scaled mobile section header titles down to `1.25rem` to comfortably fit hyphenated tab names on all phone viewports.
 - Maintained exact original desktop title font sizing (`2.2rem` for `.page-title-header`).
 
+### 7. Lobby Active Rooms Vertical Panel Spacing ✅
+- Added extra vertical spacing below the three panels between `ACTIVE ROOMS` and the room list (`No "Show Rooms" selected`):
+  1. Below **"Select a game type"** (`#selected-game-info`)
+  2. Below **"+ Create room"** panel (`.create-room-panel`)
+  3. Below **"Open Rooms"** panel (`.rating-filter-container`)
+- **Responsive Sizing**:
+  - **Desktops and Laptops**: Configured with `8px` bottom margins (`15px` total vertical spacing between panels) for generous visual breathing room.
+  - **Mobile Devices**: Configured with `3px` bottom margins (`11px` total vertical spacing) to add a few pixels extra space while preserving vertical list height.
+
 ---
 
 ## 3. Current Cache Busters
@@ -60,7 +69,7 @@
 |---|---|
 | `static/css/style.css` | `?v=1790002000` |
 | `static/css/play.css` | `?v=1790003000` |
-| `static/css/lobby.css` | `?v=1789821800` |
+| `static/css/lobby.css` | `?v=1790004000` |
 | `static/js/tools.js` | `?v=1790002000` |
 | `static/js/settings.js` | `?v=1790002000` |
 | `static/js/mods.js` | `?v=1790002000` |
