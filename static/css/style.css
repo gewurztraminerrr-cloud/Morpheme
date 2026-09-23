@@ -10196,3 +10196,62 @@ body.is-tournament-round #find-friends-btn,
 body.is-tournament-round #show-everyone-btn {
     display: none !important;
 }
+
+/* Firefox on Desktop ONLY: slightly more padding, slightly larger top menu & panel */
+@supports (-moz-appearance: none) {
+    button::-moz-focus-inner,
+    input[type="button"]::-moz-focus-inner,
+    input[type="submit"]::-moz-focus-inner,
+    input[type="reset"]::-moz-focus-inner {
+        border: 0 !important;
+        padding: 0 !important;
+    }
+
+    @media (min-width: 1481px) {
+        .header {
+            padding: 12px 22px !important;
+            min-height: 56px !important;
+            box-sizing: border-box !important;
+        }
+        .logo {
+            gap: 12px !important;
+            flex-shrink: 0 !important;
+        }
+        .logo-icon {
+            width: 37px !important;
+            height: 37px !important;
+        }
+        .logo-text {
+            font-size: 1.88rem !important;
+            letter-spacing: 2px !important;
+            font-weight: 800 !important;
+        }
+        .logo .pronunciation,
+        .pronunciation {
+            font-size: 0.86rem !important;
+            margin-right: 18px !important;
+            margin-bottom: 0 !important;
+        }
+        .nav {
+            gap: 6px !important;
+            align-items: center !important;
+        }
+        .nav-btn {
+            padding: 7px 12px !important;
+            font-size: 0.87rem !important;
+            font-weight: 600 !important;
+            line-height: 1.35 !important;
+            box-sizing: border-box !important;
+        }
+        .user-display:not(.hidden) {
+            gap: 10px !important;
+            margin-left: 8px !important;
+            padding-left: 12px !important;
+        }
+        .logout-btn {
+            padding: 5px 10px !important;
+            font-size: 0.78rem !important;
+        }
+    }
+}
+
