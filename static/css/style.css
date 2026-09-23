@@ -10209,8 +10209,8 @@ body.is-tournament-round #show-everyone-btn {
 
     @media (min-width: 1481px) {
         .header {
-            padding: 12px 22px !important;
-            min-height: 56px !important;
+            padding: 13px 24px !important;
+            min-height: 60px !important;
             box-sizing: border-box !important;
         }
         .logo {
@@ -10218,27 +10218,27 @@ body.is-tournament-round #show-everyone-btn {
             flex-shrink: 0 !important;
         }
         .logo-icon {
-            width: 37px !important;
-            height: 37px !important;
+            width: 38px !important;
+            height: 38px !important;
         }
         .logo-text {
-            font-size: 1.88rem !important;
+            font-size: 1.95rem !important;
             letter-spacing: 2px !important;
             font-weight: 800 !important;
         }
         .logo .pronunciation,
         .pronunciation {
-            font-size: 0.86rem !important;
+            font-size: 0.90rem !important;
             margin-right: 18px !important;
             margin-bottom: 0 !important;
         }
         .nav {
-            gap: 6px !important;
+            gap: 7px !important;
             align-items: center !important;
         }
         .nav-btn {
-            padding: 7px 12px !important;
-            font-size: 0.87rem !important;
+            padding: 8px 14px !important;
+            font-size: 0.90rem !important;
             font-weight: 600 !important;
             line-height: 1.35 !important;
             box-sizing: border-box !important;
@@ -10250,7 +10250,7 @@ body.is-tournament-round #show-everyone-btn {
         }
         .logout-btn {
             padding: 5px 10px !important;
-            font-size: 0.78rem !important;
+            font-size: 0.80rem !important;
         }
     }
 }
