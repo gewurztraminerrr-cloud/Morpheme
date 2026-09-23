@@ -159,7 +159,7 @@
     <link rel="preload" href="/css/lobby.css?v=1790005000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1790010000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790005000">
-    <link rel="stylesheet" href="/css/play.css?v=1790005000">
+    <link rel="stylesheet" href="/css/play.css?v=1790006000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
     <link rel="stylesheet" href="/css/forum.css?v=1789336000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
@@ -3381,32 +3381,37 @@
                         </div>
 
                         <!-- Stats Cards -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        <div class="new-users-stats-grid" id="new-users-stats-grid">
                             <div class="stat-box">
-                                <span class="stat-num" id="new-users-week-count" style="color: #60a5fa; font-size: 1.8rem;">-</span>
+                                <span class="stat-num" id="new-users-week-count" style="color: #60a5fa;">-</span>
                                 <span class="stat-desc">REGISTRATIONS THIS WEEK</span>
                             </div>
                             <div class="stat-box">
-                                <span class="stat-num" id="new-users-total-count" style="color: #34d399; font-size: 1.8rem;">-</span>
+                                <span class="stat-num" id="new-users-total-count" style="color: #34d399;">-</span>
                                 <span class="stat-desc">TOTAL USERS</span>
                             </div>
                         </div>
 
                         <!-- New Users Table -->
-                        <div class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.1); -webkit-overflow-scrolling: touch; max-height: 550px; overflow-y: auto;">
-                            <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 280px;">
-                                <thead>
-                                    <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.05); position: sticky; top: 0; z-index: 2;">
-                                        <th style="padding: 12px 16px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Member</th>
-                                        <th style="padding: 12px 16px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap;">Date of Registration</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="new-users-table-body">
-                                    <tr>
-                                        <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">Loading new users...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="new-users-table-container list-scroll-area-wrapper" id="new-users-table-container">
+                            <div class="history-table-wrapper" id="new-users-table-scroll">
+                                <table class="history-table" id="new-users-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Member</th>
+                                            <th>Date of Registration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="new-users-table-body">
+                                        <tr>
+                                            <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">Loading new users...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="custom-scrollbar-track" id="new-users-scrollbar-track">
+                                <div class="custom-scrollbar-thumb" id="new-users-scrollbar-thumb"></div>
+                            </div>
                         </div>
                     </div>
                     <!-- Change Password / Email Interface -->
@@ -7710,7 +7715,7 @@
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
-    <script src="/js/tools.js?v=1790005000"></script>
+    <script src="/js/tools.js?v=1790006000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790002000"></script>
     <script src="/js/private_matches.js?v=33806"></script>

@@ -9363,6 +9363,278 @@ body .board-cell.tile-flash-purple * {
     overflow: visible !important;
 }
 
+/* New Users Tool: Custom Scrollbar Track and Thumb */
+#new-users-table-container {
+    position: relative !important;
+    width: 100% !important;
+}
+
+#new-users-scrollbar-track {
+    position: absolute !important;
+    top: 4px !important;
+    bottom: 4px !important;
+    right: 3px !important;
+    width: 16px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-radius: 8px !important;
+    z-index: 20 !important;
+    backdrop-filter: blur(2px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: none;
+    touch-action: none !important;
+    user-select: none !important;
+    cursor: pointer !important;
+}
+
+#new-users-scrollbar-thumb {
+    position: absolute !important;
+    top: 0 !important;
+    left: 2px !important;
+    width: 10px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.8), rgba(58, 123, 213, 0.8)) !important;
+    border-radius: 5px !important;
+    cursor: grab !important;
+    border: 1px solid rgba(0, 210, 255, 0.6) !important;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4) !important;
+    touch-action: none !important;
+    user-select: none !important;
+    min-height: 28px !important;
+    pointer-events: auto !important;
+}
+
+#new-users-scrollbar-thumb::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -8px !important;
+    bottom: -8px !important;
+    left: -12px !important;
+    right: -12px !important;
+    touch-action: none !important;
+}
+
+#new-users-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.95), rgba(58, 123, 213, 0.95)) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.6) !important;
+}
+
+#new-users-scrollbar-thumb:active,
+#new-users-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, rgba(0, 210, 255, 1), rgba(58, 123, 213, 1)) !important;
+    border: 1px solid rgba(0, 210, 255, 0.9) !important;
+    box-shadow: 0 0 16px rgba(0, 210, 255, 0.8) !important;
+    cursor: grabbing !important;
+}
+
+/* Fallback native scrollbar thumb for New Users table across all browsers */
+#new-users-table-scroll {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.15) !important;
+    -ms-overflow-style: auto !important;
+}
+
+#new-users-table-scroll::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+#new-users-table-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.15) !important;
+    border-radius: 6px !important;
+    display: block !important;
+}
+
+#new-users-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.45) !important;
+    border-radius: 6px !important;
+    display: block !important;
+}
+
+#new-users-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-primary-rgb), 0.75) !important;
+}
+
+/* Base Desktop styling for New Users in Tools */
+.new-users-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.new-users-stats-grid .stat-num {
+    font-size: 1.8rem;
+}
+
+#new-users-table-scroll {
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    -webkit-overflow-scrolling: touch;
+    max-height: 550px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+#new-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 280px;
+}
+
+#new-users-table th {
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    background: rgba(var(--text-primary-rgb), 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* Mobile Devices: Fit table onto screen, apply scroller thumb, reduce padding above/below stats */
+@media (max-width: 900px) {
+    #page-tools .tools-content:has(#tool-new-users.active),
+    #page-tools .tools-content.has-new-users-active {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 6px 8px 2px 8px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+    }
+
+    #page-tools #tool-new-users.tool-pane.active,
+    body.is-mobile #page-tools #tool-new-users.tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Reduce padding above REGISTRATIONS THIS WEEK */
+    #page-tools #tool-new-users .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-new-users .tool-header p {
+        margin: 0 0 4px 0 !important;
+        padding: 4px 8px !important;
+        font-size: 0.74rem !important;
+        line-height: 1.2 !important;
+        max-height: 36px !important;
+    }
+
+    /* Stats Grid: side-by-side, reduce padding above REGISTRATIONS THIS WEEK and below TOTAL USERS */
+    #page-tools #tool-new-users .new-users-stats-grid {
+        flex: 0 0 auto !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+        margin-top: 0 !important;
+        margin-bottom: 6px !important;
+    }
+
+    #page-tools #tool-new-users .new-users-stats-grid .stat-box {
+        padding: 5px 6px !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-new-users .new-users-stats-grid .stat-num {
+        font-size: 1.25rem !important;
+        line-height: 1.1 !important;
+    }
+
+    #page-tools #tool-new-users .new-users-stats-grid .stat-desc {
+        font-size: 0.58rem !important;
+        letter-spacing: 0.4px !important;
+        margin-top: 1px !important;
+        line-height: 1.15 !important;
+        white-space: nowrap !important;
+    }
+
+    /* Table Container: Make vertical length fit onto the screen */
+    #page-tools #tool-new-users .new-users-table-container,
+    body.is-mobile #page-tools #tool-new-users .new-users-table-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        position: relative !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-new-users .history-table-wrapper,
+    body.is-mobile #page-tools #tool-new-users .history-table-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+        padding-right: 16px !important;
+    }
+
+    #page-tools #tool-new-users .history-table th {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 2 !important;
+        background: var(--bg-panel, #181920) !important;
+        padding: 8px 10px !important;
+        font-size: 0.78rem !important;
+    }
+
+    #page-tools #tool-new-users .history-table td {
+        padding: 8px 10px !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+body.is-mobile #page-tools .tools-content:has(#tool-new-users.active),
+body.is-mobile #page-tools .tools-content.has-new-users-active {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+}
+
+body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar {
+    display: block !important;
+    width: 6px !important;
+}
+
+body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
+    display: block !important;
+    background: rgba(var(--text-primary-rgb), 0.45) !important;
+    border-radius: 6px !important;
+}
+
 /* Find Count Tool Styles */
 #find-count-input {
     flex: 1;

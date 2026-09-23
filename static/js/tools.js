@@ -201,6 +201,14 @@ window.showTool = function(toolId) {
         } else {
             content.classList.remove('no-outer-scroll');
         }
+        if (toolId === 'new-users') {
+            content.classList.add('has-new-users-active');
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('new-users-table-scroll', 'new-users-scrollbar-track', 'new-users-scrollbar-thumb');
+            }
+        } else {
+            content.classList.remove('has-new-users-active');
+        }
     }
 
     // Trigger lazy loads & dynamic style refreshes
@@ -8125,6 +8133,9 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
     if (!tableBody) return;
 
     try {
+        if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('new-users-table-scroll', 'new-users-scrollbar-track', 'new-users-scrollbar-thumb');
+        }
         const response = await fetch('/api/tools/new-users');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
@@ -8184,5 +8195,12 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
                 <td colspan="2" style="padding: 20px; text-align: center; color: #f87171;">Failed to load new users. Please try again.</td>
             </tr>
         `;
+    } finally {
+        const scrollArea = document.getElementById('new-users-table-scroll');
+        if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+            scrollArea._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('new-users-table-scroll', 'new-users-scrollbar-track', 'new-users-scrollbar-thumb');
+        }
     }
 };
