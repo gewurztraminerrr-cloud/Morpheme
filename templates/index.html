@@ -1762,7 +1762,7 @@
             <div id="loading-gateway-container" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
-                    <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" ontouchstart="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onmousedown="this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onclick="if(window.handleLoginGatewayClick) window.handleLoginGatewayClick(this, event);">LOGIN</button>
+                    <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onclick="if(window.handleLoginGatewayClick) window.handleLoginGatewayClick(this, event);">LOGIN</button>
                 </div>
             </div>
             <div id="loading-spinner-container" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
@@ -2084,31 +2084,39 @@
         <script>
             (function() {
                 try {
+                    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    const isDesktop = !isMobileUA && window.innerWidth > 992;
                     const loggedOut = localStorage.getItem('morpheme_logged_out') === 'true' || sessionStorage.getItem('morpheme_logged_out') === 'true';
-                    
-                    if (loggedOut) {
-                        const ud = document.getElementById('user-display');
+                    const storedUser = localStorage.getItem('morpheme_username');
+                    const isLoggedIn = storedUser && !loggedOut;
+
+                    const ud = document.getElementById('user-display');
+                    const un = document.getElementById('username-display');
+                    const loginBtn = document.getElementById('nav-login-btn');
+                    const enterBtn = document.getElementById('btn-enter-lobby-gateway');
+                    const loginGwBtn = document.getElementById('btn-login-gateway');
+
+                    if (!isLoggedIn) {
                         if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
-                        const un = document.getElementById('username-display');
                         if (un) un.textContent = '';
-                        const loginBtn = document.getElementById('nav-login-btn');
                         if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.style.display = ''; }
-                        // Swap gateway button: hide ENTER LOBBY, show LOGIN
-                        const enterBtn = document.getElementById('btn-enter-lobby-gateway');
-                        if (enterBtn) enterBtn.style.display = 'none';
-                        const loginGwBtn = document.getElementById('btn-login-gateway');
-                        if (loginGwBtn) loginGwBtn.style.display = '';
-                    } else {
-                        const storedUser = localStorage.getItem('morpheme_username');
-                        if (storedUser) {
-                            window.currentUser = storedUser;
-                            const ud = document.getElementById('user-display');
-                            if (ud) { ud.classList.remove('hidden'); ud.style.display = 'flex'; }
-                            const un = document.getElementById('username-display');
-                            if (un) { un.textContent = storedUser; un.style.color = 'var(--accent-color)'; }
-                            const loginBtn = document.getElementById('nav-login-btn');
-                            if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.style.display = 'none'; }
+                        
+                        // When not logged in on desktop (or if logged out):
+                        // Show LOGIN button on gateway screen, hide ENTER LOBBY
+                        if (isDesktop || loggedOut) {
+                            if (enterBtn) enterBtn.style.display = 'none';
+                            if (loginGwBtn) {
+                                loginGwBtn.style.display = '';
+                                loginGwBtn.textContent = 'LOGIN';
+                            }
                         }
+                    } else {
+                        window.currentUser = storedUser;
+                        if (ud) { ud.classList.remove('hidden'); ud.style.display = 'flex'; }
+                        if (un) { un.textContent = storedUser; un.style.color = 'var(--accent-color)'; }
+                        if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.style.display = 'none'; }
+                        if (enterBtn) { enterBtn.style.display = ''; enterBtn.textContent = 'ENTER LOBBY'; }
+                        if (loginGwBtn) loginGwBtn.style.display = 'none';
                     }
 
                     // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
@@ -7759,7 +7767,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790002000"></script>
+    <script src="/js/app.js?v=1790003000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>

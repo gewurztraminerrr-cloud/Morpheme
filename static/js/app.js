@@ -529,6 +529,268 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Gateway Button Handling & 3D Interactions (Available to authenticated and unauthenticated paths)
+    let gatewayTransitioning = false;
+    const executeGatewayTransition = async (e) => {
+        if (gatewayTransitioning || window._gatewayTransitioning) return;
+
+        // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
+        if (typeof window.triggerMobileFullscreen === 'function') {
+            window.triggerMobileFullscreen();
+        }
+
+        // Check if session check completed, only await if user not yet resolved
+        let activeUser = currentUser || window.currentUser;
+        if (!activeUser && window._sessionCheckPromise) {
+            try { await window._sessionCheckPromise; } catch (err) {}
+            activeUser = currentUser || window.currentUser;
+        }
+        if (!activeUser) {
+            const storedUser = localStorage.getItem('morpheme_username');
+            const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+            if (storedUser && !isLoggedOutExplicitly) {
+                activeUser = storedUser;
+                currentUser = storedUser;
+                window.currentUser = storedUser;
+            }
+        }
+        if (!activeUser) {
+            showPage('page-login');
+            if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
+            return;
+        }
+
+        currentUser = activeUser;
+        window.currentUser = activeUser;
+        if (typeof updateAuthUI === 'function') {
+            updateAuthUI();
+        }
+
+        gatewayTransitioning = true;
+        window._gatewayTransitioning = true;
+        window._gatewayPassed = true;
+        window.currentPageId = 'page-lobby';
+        window._lobbyEnterCooldown = true;
+
+        const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+        if (gatewayBtn) {
+            gatewayBtn.classList.remove('dragged-out');
+            gatewayBtn.classList.add('pressed', 'flattened');
+        }
+
+        console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
+
+        // 1. Trigger audio playback synchronously on direct user gesture so Chrome, Safari & Firefox start music instantly
+        try {
+            if (window.lobbyMusicEngine) {
+                window.lobbyMusicEngine.play();
+                if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
+            } else if (typeof window.triggerGatewayAudioImmediate === 'function') {
+                window.triggerGatewayAudioImmediate();
+                if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
+            }
+        } catch (audioErr) {
+            console.error('[LobbyMusic] Exception during synchronous gateway play initialization:', audioErr);
+        }
+
+        // 2. Non-blocking background room cleanup
+        try {
+            localStorage.removeItem('private_match_active');
+            localStorage.removeItem('tournament_play_active');
+            if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
+                window.leaveCurrentRoom().catch(() => {});
+            }
+        } catch (_) {}
+
+        // 3. Immediately fetch lobby stats in background
+        try {
+            fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.stats && typeof window.applyLobbyStatsToButtons === 'function') {
+                        window.applyLobbyStatsToButtons(data.stats);
+                    }
+                }).catch(() => {});
+        } catch (e) {}
+
+        // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
+        setTimeout(() => {
+            const pLoad = document.getElementById('page-loading');
+            const pLobby = document.getElementById('page-lobby');
+            if (pLoad) {
+                pLoad.classList.remove('active');
+                pLoad.style.display = 'none';
+            }
+            if (pLobby) {
+                pLobby.classList.add('active');
+                pLobby.style.display = 'flex';
+            }
+
+            try {
+                window._currentLobbyPanel = 'main';
+                showPage('page-lobby');
+                const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
+                if (navBtn) updateActiveNav(navBtn);
+                handleLobbyMusicState();
+                if (typeof window.scrollLobbyToMainPanel === 'function') {
+                    window.scrollLobbyToMainPanel();
+                    requestAnimationFrame(window.scrollLobbyToMainPanel);
+                    setTimeout(window.scrollLobbyToMainPanel, 50);
+                    setTimeout(window.scrollLobbyToMainPanel, 150);
+                    setTimeout(window.scrollLobbyToMainPanel, 300);
+                }
+                try {
+                    history.replaceState(null, null, '#page-lobby');
+                } catch (e) {}
+                if (typeof window.fetchLobbyStats === 'function') {
+                    window.fetchLobbyStats('all');
+                }
+                if (typeof window.startStatsPolling === 'function') {
+                    window.startStatsPolling();
+                }
+            } catch (transitionErr) {
+                console.error('[Gateway] Exception performing page transition:', transitionErr);
+            }
+        }, 120);
+
+        // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
+        // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
+        setTimeout(() => {
+            window._lobbyEnterCooldown = false;
+        }, 350);
+    };
+
+    window.handleEnterLobbyClick = (btn, evt) => {
+        const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+        if (evt && evt.target && evt.target !== gatewayBtn && gatewayBtn && !gatewayBtn.contains(evt.target)) return;
+        executeGatewayTransition(evt);
+    };
+
+    const executeLoginGatewayTransition = (e) => {
+        if (gatewayTransitioning || window._gatewayTransitioning) return;
+        window._gatewayTransitioning = true;
+        const loginGwBtn = document.getElementById('btn-login-gateway');
+        if (loginGwBtn) {
+            loginGwBtn.classList.remove('dragged-out');
+            loginGwBtn.classList.add('pressed', 'flattened');
+        }
+
+        setTimeout(() => {
+            showPage('page-login');
+            if (typeof window.refreshCaptchas === 'function') {
+                window.refreshCaptchas();
+            }
+            window._gatewayTransitioning = false;
+            if (loginGwBtn) {
+                loginGwBtn.classList.remove('pressed', 'flattened', 'dragged-out');
+            }
+        }, 120);
+    };
+
+    window.handleLoginGatewayClick = (btn, evt) => {
+        const loginGwBtn = document.getElementById('btn-login-gateway');
+        if (evt && evt.target && evt.target !== loginGwBtn && loginGwBtn && !loginGwBtn.contains(evt.target)) return;
+        executeLoginGatewayTransition(evt);
+    };
+
+    function attach3DGatewayButtonInteractions(btn, onExecute) {
+        if (!btn || btn._3dAttached) return;
+        btn._3dAttached = true;
+        let isPointerDown = false;
+
+        function getCoords(e) {
+            if (!e) return null;
+            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            if (typeof e.clientX === 'number' && !isNaN(e.clientX)) return { x: e.clientX, y: e.clientY };
+            return null;
+        }
+
+        function isInside(e) {
+            const coords = getCoords(e);
+            if (!coords) return false;
+            const rect = btn.getBoundingClientRect();
+            return coords.x >= rect.left && coords.x <= rect.right && coords.y >= rect.top && coords.y <= rect.bottom;
+        }
+
+        const handlePressMove = (e) => {
+            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+            if (isInside(e)) {
+                btn.classList.remove('dragged-out');
+                btn.classList.add('pressed', 'flattened');
+            } else {
+                btn.classList.add('dragged-out');
+                btn.classList.remove('pressed', 'flattened');
+            }
+        };
+
+        const handlePressEnd = (e) => {
+            removeWindowTracking();
+            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+            isPointerDown = false;
+            if (isInside(e)) {
+                btn.classList.remove('dragged-out');
+                btn.classList.add('pressed', 'flattened');
+                onExecute(e);
+            } else {
+                btn.classList.add('dragged-out');
+                btn.classList.remove('pressed', 'flattened');
+                setTimeout(() => btn.classList.remove('dragged-out'), 100);
+            }
+        };
+
+        const handlePressCancel = () => {
+            removeWindowTracking();
+            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+            isPointerDown = false;
+            btn.classList.add('dragged-out');
+            btn.classList.remove('pressed', 'flattened');
+            setTimeout(() => btn.classList.remove('dragged-out'), 100);
+        };
+
+        const addWindowTracking = () => {
+            window.addEventListener('pointermove', handlePressMove, { passive: true });
+            window.addEventListener('touchmove', handlePressMove, { passive: true });
+            window.addEventListener('mousemove', handlePressMove, { passive: true });
+            window.addEventListener('pointerup', handlePressEnd);
+            window.addEventListener('touchend', handlePressEnd);
+            window.addEventListener('mouseup', handlePressEnd);
+            window.addEventListener('pointercancel', handlePressCancel);
+            window.addEventListener('touchcancel', handlePressCancel);
+        };
+
+        const removeWindowTracking = () => {
+            window.removeEventListener('pointermove', handlePressMove);
+            window.removeEventListener('touchmove', handlePressMove);
+            window.removeEventListener('mousemove', handlePressMove);
+            window.removeEventListener('pointerup', handlePressEnd);
+            window.removeEventListener('touchend', handlePressEnd);
+            window.removeEventListener('mouseup', handlePressEnd);
+            window.removeEventListener('pointercancel', handlePressCancel);
+            window.removeEventListener('touchcancel', handlePressCancel);
+        };
+
+        const handlePressStart = (e) => {
+            if (gatewayTransitioning || window._gatewayTransitioning) return;
+            if (e && e.target && e.target !== btn && !btn.contains(e.target)) return;
+            isPointerDown = true;
+            btn.classList.remove('dragged-out');
+            btn.classList.add('pressed', 'flattened');
+            addWindowTracking();
+
+            if (btn.id === 'btn-enter-lobby-gateway') {
+                if (typeof window.triggerMobileFullscreen === 'function') window.triggerMobileFullscreen();
+                if (window.lobbyMusicEngine) window.lobbyMusicEngine.play();
+                else if (typeof window.triggerGatewayAudioImmediate === 'function') window.triggerGatewayAudioImmediate();
+            }
+        };
+
+        btn.addEventListener('pointerdown', handlePressStart);
+        btn.addEventListener('mousedown', handlePressStart);
+        btn.addEventListener('touchstart', handlePressStart, { passive: true });
+        btn.addEventListener('click', (e) => onExecute(e));
+    }
+
     if (currentUser) {
         // If user already clicked ENTER LOBBY during startup, keep them in the Lobby
         if (window._gatewayPassed) {
@@ -557,6 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch(e) {}
             }
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+            const loginGwBtn = document.getElementById('btn-login-gateway');
             const spinnerCont = document.getElementById('loading-spinner-container');
             const gatewayCont = document.getElementById('loading-gateway-container');
 
@@ -568,265 +831,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.classList.remove('loading-active');
                 handleLobbyMusicState();
 
-
-
-                // Gateway button always displays ENTER LOBBY
+                // Authenticated: Gateway button always displays ENTER LOBBY
+                gatewayBtn.style.display = '';
                 gatewayBtn.textContent = 'ENTER LOBBY';
-
-                let gatewayTransitioning = false;
-                const executeGatewayTransition = async (e) => {
-                    if (gatewayTransitioning || window._gatewayTransitioning) return;
-
-                    // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
-                    if (typeof window.triggerMobileFullscreen === 'function') {
-                        window.triggerMobileFullscreen();
-                    }
-
-                    // Check if session check completed, only await if user not yet resolved
-                    let activeUser = currentUser || window.currentUser;
-                    if (!activeUser && window._sessionCheckPromise) {
-                        try { await window._sessionCheckPromise; } catch (err) {}
-                        activeUser = currentUser || window.currentUser;
-                    }
-                    if (!activeUser) {
-                        const storedUser = localStorage.getItem('morpheme_username');
-                        const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
-                        if (storedUser && !isLoggedOutExplicitly) {
-                            activeUser = storedUser;
-                            currentUser = storedUser;
-                            window.currentUser = storedUser;
-                        }
-                    }
-                    if (!activeUser) {
-                        showPage('page-login');
-                        if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
-                        return;
-                    }
-
-                    currentUser = activeUser;
-                    window.currentUser = activeUser;
-                    if (typeof updateAuthUI === 'function') {
-                        updateAuthUI();
-                    }
-
-                    gatewayTransitioning = true;
-                    window._gatewayTransitioning = true;
-                    window._gatewayPassed = true;
-                    window.currentPageId = 'page-lobby';
-                    window._lobbyEnterCooldown = true;
-
-                    gatewayBtn.classList.remove('dragged-out');
-                    gatewayBtn.classList.add('pressed', 'flattened');
-
-                    console.log(`[Gateway] Executing transition via event: ${e ? e.type : 'manual'}`);
-
-                    // 1. Trigger audio playback synchronously on direct user gesture so Chrome, Safari & Firefox start music instantly
-                    try {
-                        if (window.lobbyMusicEngine) {
-                            window.lobbyMusicEngine.play();
-                            if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
-                        } else if (typeof window.triggerGatewayAudioImmediate === 'function') {
-                            window.triggerGatewayAudioImmediate();
-                            if (typeof removeInteractionListeners === 'function') removeInteractionListeners();
-                        }
-                    } catch (audioErr) {
-                        console.error('[LobbyMusic] Exception during synchronous gateway play initialization:', audioErr);
-                    }
-
-                    // 2. Non-blocking background room cleanup
-                    try {
-                        localStorage.removeItem('private_match_active');
-                        localStorage.removeItem('tournament_play_active');
-                        if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                            window.leaveCurrentRoom().catch(() => {});
-                        }
-                    } catch (_) {}
-
-                    // 3. Immediately fetch lobby stats in background
-                    try {
-                        fetch('/api/lobby-stats?_t=' + Date.now(), { cache: 'no-store' })
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data && data.stats && typeof window.applyLobbyStatsToButtons === 'function') {
-                                    window.applyLobbyStatsToButtons(data.stats);
-                                }
-                            }).catch(() => {});
-                    } catch (e) {}
-
-                    // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
-                    setTimeout(() => {
-                        const pLoad = document.getElementById('page-loading');
-                        const pLobby = document.getElementById('page-lobby');
-                        if (pLoad) {
-                            pLoad.classList.remove('active');
-                            pLoad.style.display = 'none';
-                        }
-                        if (pLobby) {
-                            pLobby.classList.add('active');
-                            pLobby.style.display = 'flex';
-                        }
-
-                        try {
-                            window._currentLobbyPanel = 'main';
-                            showPage('page-lobby');
-                            const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
-                            if (navBtn) updateActiveNav(navBtn);
-                            handleLobbyMusicState();
-                            if (typeof window.scrollLobbyToMainPanel === 'function') {
-                                window.scrollLobbyToMainPanel();
-                                requestAnimationFrame(window.scrollLobbyToMainPanel);
-                                setTimeout(window.scrollLobbyToMainPanel, 50);
-                                setTimeout(window.scrollLobbyToMainPanel, 150);
-                                setTimeout(window.scrollLobbyToMainPanel, 300);
-                            }
-                            try {
-                                history.replaceState(null, null, '#page-lobby');
-                            } catch (e) {}
-                            if (typeof window.fetchLobbyStats === 'function') {
-                                window.fetchLobbyStats('all');
-                            }
-                            if (typeof window.startStatsPolling === 'function') {
-                                window.startStatsPolling();
-                            }
-                        } catch (transitionErr) {
-                            console.error('[Gateway] Exception performing page transition:', transitionErr);
-                        }
-                    }, 120);
-
-                    // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
-                    // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
-                    setTimeout(() => {
-                        window._lobbyEnterCooldown = false;
-                    }, 350);
-                };
-
-                window.handleEnterLobbyClick = (btn, evt) => {
-                    if (evt && evt.target && evt.target !== gatewayBtn && !gatewayBtn.contains(evt.target)) return;
-                    executeGatewayTransition(evt);
-                };
-
-                const loginGwBtn = document.getElementById('btn-login-gateway');
-                const executeLoginGatewayTransition = (e) => {
-                    if (gatewayTransitioning || window._gatewayTransitioning) return;
-                    window._gatewayTransitioning = true;
-                    if (loginGwBtn) {
-                        loginGwBtn.classList.remove('dragged-out');
-                        loginGwBtn.classList.add('pressed', 'flattened');
-                    }
-
-                    setTimeout(() => {
-                        showPage('page-login');
-                        if (typeof window.refreshCaptchas === 'function') {
-                            window.refreshCaptchas();
-                        }
-                        window._gatewayTransitioning = false;
-                        if (loginGwBtn) {
-                            loginGwBtn.classList.remove('pressed', 'flattened', 'dragged-out');
-                        }
-                    }, 120);
-                };
-
-                window.handleLoginGatewayClick = (btn, evt) => {
-                    if (evt && evt.target && evt.target !== loginGwBtn && loginGwBtn && !loginGwBtn.contains(evt.target)) return;
-                    executeLoginGatewayTransition(evt);
-                };
-
-                function attach3DGatewayButtonInteractions(btn, onExecute) {
-                    if (!btn) return;
-                    let isPointerDown = false;
-
-                    function getCoords(e) {
-                        if (!e) return null;
-                        if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                        if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-                        if (typeof e.clientX === 'number' && !isNaN(e.clientX)) return { x: e.clientX, y: e.clientY };
-                        return null;
-                    }
-
-                    function isInside(e) {
-                        const coords = getCoords(e);
-                        if (!coords) return false;
-                        const rect = btn.getBoundingClientRect();
-                        return coords.x >= rect.left && coords.x <= rect.right && coords.y >= rect.top && coords.y <= rect.bottom;
-                    }
-
-                    const addWindowTracking = () => {
-                        window.addEventListener('pointermove', handlePressMove, { passive: true });
-                        window.addEventListener('touchmove', handlePressMove, { passive: true });
-                        window.addEventListener('mousemove', handlePressMove, { passive: true });
-                        window.addEventListener('pointerup', handlePressEnd);
-                        window.addEventListener('touchend', handlePressEnd);
-                        window.addEventListener('mouseup', handlePressEnd);
-                        window.addEventListener('pointercancel', handlePressCancel);
-                        window.addEventListener('touchcancel', handlePressCancel);
-                    };
-
-                    const removeWindowTracking = () => {
-                        window.removeEventListener('pointermove', handlePressMove);
-                        window.removeEventListener('touchmove', handlePressMove);
-                        window.removeEventListener('mousemove', handlePressMove);
-                        window.removeEventListener('pointerup', handlePressEnd);
-                        window.removeEventListener('touchend', handlePressEnd);
-                        window.removeEventListener('mouseup', handlePressEnd);
-                        window.removeEventListener('pointercancel', handlePressCancel);
-                        window.removeEventListener('touchcancel', handlePressCancel);
-                    };
-
-                    const handlePressStart = (e) => {
-                        if (gatewayTransitioning || window._gatewayTransitioning) return;
-                        if (e && e.target && e.target !== btn && !btn.contains(e.target)) return;
-                        isPointerDown = true;
-                        btn.classList.remove('dragged-out');
-                        btn.classList.add('pressed', 'flattened');
-                        addWindowTracking();
-
-                        if (btn.id === 'btn-enter-lobby-gateway') {
-                            if (typeof window.triggerMobileFullscreen === 'function') window.triggerMobileFullscreen();
-                            if (window.lobbyMusicEngine) window.lobbyMusicEngine.play();
-                            else if (typeof window.triggerGatewayAudioImmediate === 'function') window.triggerGatewayAudioImmediate();
-                        }
-                    };
-
-                    const handlePressMove = (e) => {
-                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
-                        if (isInside(e)) {
-                            btn.classList.remove('dragged-out');
-                            btn.classList.add('pressed', 'flattened');
-                        } else {
-                            btn.classList.add('dragged-out');
-                            btn.classList.remove('pressed', 'flattened');
-                        }
-                    };
-
-                    const handlePressEnd = (e) => {
-                        removeWindowTracking();
-                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
-                        isPointerDown = false;
-                        if (isInside(e)) {
-                            btn.classList.remove('dragged-out');
-                            btn.classList.add('pressed', 'flattened');
-                            onExecute(e);
-                        } else {
-                            btn.classList.add('dragged-out');
-                            btn.classList.remove('pressed', 'flattened');
-                            setTimeout(() => btn.classList.remove('dragged-out'), 100);
-                        }
-                    };
-
-                    const handlePressCancel = () => {
-                        removeWindowTracking();
-                        if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
-                        isPointerDown = false;
-                        btn.classList.add('dragged-out');
-                        btn.classList.remove('pressed', 'flattened');
-                        setTimeout(() => btn.classList.remove('dragged-out'), 100);
-                    };
-
-                    btn.addEventListener('pointerdown', handlePressStart);
-                    btn.addEventListener('mousedown', handlePressStart);
-                    btn.addEventListener('touchstart', handlePressStart, { passive: true });
-                    btn.addEventListener('click', (e) => onExecute(e));
-                }
+                if (loginGwBtn) loginGwBtn.style.display = 'none';
 
                 attach3DGatewayButtonInteractions(gatewayBtn, executeGatewayTransition);
                 if (loginGwBtn) {
@@ -850,17 +858,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             const lbBtn = document.querySelector('.nav-btn[data-page="leaderboards"]');
             if (lbBtn) updateActiveNav(lbBtn);
         } else {
-            // Unauthenticated on root / entry: keep them on page-loading (ENTER LOBBY)
+            // Unauthenticated on root / entry: keep them on page-loading
             const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
+            const loginGwBtn = document.getElementById('btn-login-gateway');
             const gatewayCont = document.getElementById('loading-gateway-container');
             const spinnerCont = document.getElementById('loading-spinner-container');
-            if (gatewayBtn && gatewayCont) {
+            if (gatewayCont) {
                 showPage('page-loading');
                 if (spinnerCont) spinnerCont.style.display = 'none';
                 gatewayCont.style.display = 'flex';
                 document.body.classList.remove('loading-active');
                 handleLobbyMusicState();
-                gatewayBtn.textContent = 'ENTER LOBBY';
+
+                const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isDesktop = !isMobileUA && window.innerWidth > 992;
+                const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+
+                if (isDesktop || isLoggedOutExplicitly) {
+                    if (gatewayBtn) gatewayBtn.style.display = 'none';
+                    if (loginGwBtn) {
+                        loginGwBtn.style.display = '';
+                        loginGwBtn.textContent = 'LOGIN';
+                        attach3DGatewayButtonInteractions(loginGwBtn, executeLoginGatewayTransition);
+                    }
+                } else {
+                    if (gatewayBtn) {
+                        gatewayBtn.style.display = '';
+                        gatewayBtn.textContent = 'ENTER LOBBY';
+                        attach3DGatewayButtonInteractions(gatewayBtn, executeGatewayTransition);
+                    }
+                    if (loginGwBtn) loginGwBtn.style.display = 'none';
+                }
             } else {
                 showPage('page-login');
             }
@@ -2669,6 +2697,24 @@ async function handleLogout() {
 
             // Update auth UI and switch directly to the Login page
             updateAuthUI();
+            const gwBtn = document.getElementById('btn-enter-lobby-gateway');
+            const loginGwBtn = document.getElementById('btn-login-gateway');
+            const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isDesktop = !isMobileUA && window.innerWidth > 992;
+            if (isDesktop) {
+                if (gwBtn) gwBtn.style.display = 'none';
+                if (loginGwBtn) {
+                    loginGwBtn.style.display = '';
+                    loginGwBtn.textContent = 'LOGIN';
+                }
+            } else {
+                if (gwBtn) {
+                    gwBtn.style.display = '';
+                    gwBtn.textContent = 'ENTER LOBBY';
+                }
+                if (loginGwBtn) loginGwBtn.style.display = 'none';
+            }
+
             showPage('page-login');
             const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
             if (loginBtn) updateActiveNav(loginBtn);
