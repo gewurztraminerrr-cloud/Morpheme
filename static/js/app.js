@@ -1278,12 +1278,12 @@ async function checkSession() {
 
         const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
 
-        // If server says authenticated, always trust it and clear any stale logged-out flag
-        if (data.authenticated) {
-            sessionStorage.removeItem('morpheme_logged_out');
-            localStorage.removeItem('morpheme_logged_out');
-        } else if (isLoggedOutExplicitly) {
-            // Server says not authenticated AND user explicitly logged out — respect logout intent.
+        if (isLoggedOutExplicitly) {
+            // User explicitly logged out — respect logout intent unconditionally.
+            if (data.authenticated) {
+                // Server session was still active; kill it now
+                fetch('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {});
+            }
             currentUser = null;
             window.currentUser = null;
             window.currentUserIsGuest = false;
@@ -1293,6 +1293,9 @@ async function checkSession() {
             localStorage.removeItem('morpheme_auth_token');
             updateAuthUI();
             return;
+        } else if (data.authenticated) {
+            sessionStorage.removeItem('morpheme_logged_out');
+            localStorage.removeItem('morpheme_logged_out');
         } else if (!data.authenticated) {
             // Not logged out intentionally, but no server session — try auto-login
             const token = localStorage.getItem('morpheme_auth_token');
@@ -2635,11 +2638,11 @@ async function handleLogout() {
         
         // Ensure session is cleared on server with a strict 2.5s timeout
         if (typeof fetchWithTimeout === 'function') {
-            await fetchWithTimeout('/api/logout', { method: 'POST', keepalive: true }, 2500).catch(e => {
+            await fetchWithTimeout('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }, 2500).catch(e => {
                 console.warn('[Auth] Server logout request timed out or failed, proceeding with local logout:', e);
             });
         } else {
-            await fetch('/api/logout', { method: 'POST', keepalive: true }).catch(e => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(e => {
                 console.warn('[Auth] Server logout request failed, proceeding with local logout:', e);
             });
         }

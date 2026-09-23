@@ -1817,6 +1817,30 @@
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', fetchInitialStats);
                 }
+
+                // Immediate 0ms Gateway Button Sync (ensures desktop unauthenticated / logged out state displays LOGIN)
+                try {
+                    var isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    var isDesktop = !isMobileUA && window.innerWidth > 992;
+                    var isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+                    var activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
+                    if (!activeUser && !isLoggedOutExplicitly) {
+                        activeUser = localStorage.getItem('morpheme_username');
+                    }
+                    var gb = document.getElementById('btn-enter-lobby-gateway');
+                    var lb = document.getElementById('btn-login-gateway');
+                    if (gb && lb) {
+                        if ((!activeUser && isDesktop) || isLoggedOutExplicitly) {
+                            gb.style.display = 'none';
+                            lb.style.display = '';
+                            lb.textContent = 'LOGIN';
+                        } else {
+                            gb.style.display = '';
+                            gb.textContent = 'ENTER LOBBY';
+                            lb.style.display = 'none';
+                        }
+                    }
+                } catch(e) {}
             })();
 
             window.handleEnterLobbyClick = async function(btn, evt) {
@@ -7767,7 +7791,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790003000"></script>
+    <script src="/js/app.js?v=1790004000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
