@@ -7451,7 +7451,7 @@ def tools_get_lists():
         dict_dir = os.path.join(base_dir, 'dictionaries')
         
         # Make sure CSW is loaded if we need it
-        if list_type in ['all', 'csw', 'csw_only', 'new_csw', 'all_words']:
+        if list_type in ['all', 'csw', 'csw_only', 'csw_likelihood', 'csw_only_likelihood', 'all_likelihood', 'new_csw', 'all_words']:
             word_validator.ensure_csw_loaded()
         
         # --- Logic: In-Memory Set Fetching and Filtering ---
@@ -7503,7 +7503,10 @@ def tools_get_lists():
 
         # Conditional fetching based on list_type
         response = {
-            'nwl': [], 'csw': [], 'csw_only': [], 'likelihood': [], 'uniques': [], 'added': [],
+            'nwl': [], 'csw': [], 'csw_only': [],
+            'nwl_likelihood': [], 'csw_likelihood': [], 'csw_only_likelihood': [],
+            'added_likelihood': [], 'all_likelihood': [], 'likelihood': [],
+            'uniques': [], 'added': [],
             'new_nwl': [], 'new_csw': [], 'all_words': [], 'is_truncated': False
         }
 
@@ -7515,42 +7518,100 @@ def tools_get_lists():
                 return lst[:10000]
             return lst
 
-        if list_type in ['all', 'nwl', 'csw_only', 'likelihood']:
+        scrabble_freq = {
+            'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
+            'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
+            'S': 4, 'T': 6, 'U': 4, 'V': 2, 'W': 2, 'X': 1, 'Y': 2, 'Z': 1
+        }
+        def calculate_scrabble_likelihood(word):
+            letter_counts = {}
+            total = 0
+            for ch in word:
+                base = scrabble_freq.get(ch, 0)
+                seen = letter_counts.get(ch, 0)
+                total += max(0, base - seen)
+                letter_counts[ch] = seen + 1
+            return total
+
+        def build_likelihood_list(word_iterable):
+            res = []
+            for w in word_iterable:
+                score = calculate_scrabble_likelihood(w)
+                res.append({'score': score, 'word': w})
+            res.sort(key=lambda x: (-x['score'], x['word']))
+            return cap_list(res)
+
+        if list_type in ['all', 'nwl', 'csw_only', 'nwl_likelihood', 'csw_only_likelihood', 'all_likelihood', 'likelihood']:
             nwl_set = get_source_set('NWL')
             if list_type in ['all', 'nwl']: response['nwl'] = cap_list(sorted(list(nwl_set)))
 
-        if list_type in ['all', 'csw', 'csw_only']:
+        if list_type in ['all', 'csw', 'csw_only', 'csw_likelihood', 'csw_only_likelihood', 'all_likelihood']:
             csw_set = get_source_set('CSW')
             if list_type in ['all', 'csw']: response['csw'] = cap_list(sorted(list(csw_set)))
 
-        if list_type in ['all', 'csw_only']:
+        if list_type in ['all', 'csw_only', 'csw_only_likelihood']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
             if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
-            response['csw_only'] = cap_list(sorted(list(csw_set - nwl_set)))
+            csw_only_set = csw_set - nwl_set
+            if list_type in ['all', 'csw_only']: response['csw_only'] = cap_list(sorted(list(csw_only_set)))
 
-        if list_type in ['all', 'likelihood']:
+        if list_type in ['all', 'nwl_likelihood', 'likelihood']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
-            scrabble_freq = {
-                'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
-                'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
-                'S': 4, 'T': 6, 'U': 4, 'V': 2, 'W': 2, 'X': 1, 'Y': 2, 'Z': 1
-            }
-            def calculate_scrabble_likelihood(word):
-                letter_counts = {}
-                total = 0
-                for ch in word:
-                    base = scrabble_freq.get(ch, 0)
-                    seen = letter_counts.get(ch, 0)
-                    total += max(0, base - seen)
-                    letter_counts[ch] = seen + 1
-                return total
-            
-            likelihood_list = []
-            for w in nwl_set:
-                score = calculate_scrabble_likelihood(w)
-                likelihood_list.append({'score': score, 'word': w})
-            likelihood_list.sort(key=lambda x: (-x['score'], x['word']))
-            response['likelihood'] = cap_list(likelihood_list)
+            nwl_like = build_likelihood_list(nwl_set)
+            response['nwl_likelihood'] = nwl_like
+            response['likelihood'] = nwl_like  # backward compat
+
+        if list_type in ['all', 'csw_likelihood']:
+            if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
+            response['csw_likelihood'] = build_likelihood_list(csw_set)
+
+        if list_type in ['all', 'csw_only_likelihood']:
+            if 'csw_only_set' not in locals():
+                if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
+                if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
+                csw_only_set = csw_set - nwl_set
+            response['csw_only_likelihood'] = build_likelihood_list(csw_only_set)
+
+        if list_type in ['all', 'added', 'added_likelihood', 'all_likelihood', 'all_words']:
+            # Added Words: Use preloaded in-memory list
+            raw_lines = getattr(word_validator, 'added_words_list', [])
+            unique_added = []
+            for w in raw_lines:
+                # Filter by length and start char if provided
+                if target_len is not None and len(w) != target_len: continue
+                if start_char is not None and not w.startswith(start_char): continue
+                unique_added.append(w)
+
+            if list_type in ['all', 'added']:
+                if no_limit:
+                    # View Full Lists: always alphabetically sorted (A-to-Z)
+                    response['added'] = sorted(unique_added)
+                else:
+                    # Default main tab (first 10,000): newest words first
+                    response['added'] = cap_list(unique_added)
+
+            if list_type in ['all', 'added_likelihood']:
+                # Deduplicate before scoring
+                response['added_likelihood'] = build_likelihood_list(set(unique_added))
+
+        if list_type in ['all', 'all_likelihood', 'all_words']:
+            # ALL: NWL union CSW union Added Words, deduplicated and sorted alphabetically
+            if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
+            if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
+            all_set = nwl_set | csw_set
+            # Include Added Words (filtered by length/start if applicable)
+            if 'unique_added' not in locals():
+                raw_lines = getattr(word_validator, 'added_words_list', [])
+                unique_added = [
+                    w for w in raw_lines
+                    if (target_len is None or len(w) == target_len) and
+                       (start_char is None or w.startswith(start_char))
+                ]
+            all_set.update(unique_added)
+            if list_type in ['all', 'all_words']:
+                response['all_words'] = cap_list(sorted(list(all_set)))
+            if list_type in ['all', 'all_likelihood']:
+                response['all_likelihood'] = build_likelihood_list(all_set)
 
         if list_type in ['all', 'uniques']:
             response['uniques'] = cap_list(sorted(list(get_source_set('uniqueNWL'))))
@@ -7570,37 +7631,6 @@ def tools_get_lists():
             else:
                 response['new_csw'] = list(reversed(raw_new_csw)) # Show most recent first
                 response['new_csw'] = cap_list(response['new_csw'])
-            
-        if list_type in ['all', 'added']:
-            # Added Words: Use preloaded in-memory list
-            raw_lines = getattr(word_validator, 'added_words_list', [])
-            unique_added = []
-            for w in raw_lines:
-                # Filter by length and start char if provided
-                if target_len is not None and len(w) != target_len: continue
-                if start_char is not None and not w.startswith(start_char): continue
-                unique_added.append(w)
-
-            if no_limit:
-                # View Full Lists: always alphabetically sorted (A-to-Z)
-                response['added'] = sorted(unique_added)
-            else:
-                # Default main tab (first 10,000): newest words first
-                response['added'] = cap_list(unique_added)
-
-
-        if list_type == 'all_words':
-            # ALL: NWL union CSW union Added Words, deduplicated and sorted alphabetically
-            if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
-            if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
-            all_set = nwl_set | csw_set
-            # Include Added Words (filtered by length/start if applicable)
-            raw_added = getattr(word_validator, 'added_words_list', [])
-            for w in raw_added:
-                if target_len is not None and len(w) != target_len: continue
-                if start_char is not None and not w.startswith(start_char): continue
-                all_set.add(w)
-            response['all_words'] = cap_list(sorted(list(all_set)))
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:
             LISTS_CACHE[cache_key] = response

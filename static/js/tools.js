@@ -4097,7 +4097,7 @@ function renderNextWordsPage() {
     );
 
     let html = '';
-    if (currentWordsType === 'likelihood') {
+    if (currentWordsType && currentWordsType.includes('likelihood')) {
         html = nextPageWords.map(item => `
             <div class="list-item">
                 <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span>
@@ -4198,7 +4198,7 @@ window.showFullListToast = showFullListToast;
 function generateFullListItemsHtml(slice) {
     if (!slice || slice.length === 0) return '';
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
-    if (wordType === 'likelihood') {
+    if (wordType && wordType.includes('likelihood')) {
         return slice.map(item => {
             const isMatch = (_currentFullListJumpedWord && item.word.toUpperCase() === _currentFullListJumpedWord);
             const extraClass = isMatch ? ' jump-target-highlight' : '';
@@ -4580,7 +4580,7 @@ function handleFullListWordJump() {
     const total = _fullListAllWords.length;
     let targetIdx = -1;
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
-    if (wordType === 'likelihood') {
+    if (wordType && wordType.includes('likelihood')) {
         targetIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' ? item.word : item).toUpperCase() === query);
     } else {
         // High-speed binary search for 300,000+ words
@@ -5069,7 +5069,12 @@ async function fetchListsData(typeOverride) {
         'nwl': 'NWL (North American)',
         'csw': 'CSW (International)',
         'csw_only': 'CSW Only',
-        'likelihood': 'Likelihood (Scrabble)',
+        'nwl_likelihood': 'NWL Likelihood',
+        'csw_likelihood': 'CSW Likelihood',
+        'csw_only_likelihood': 'CSW Only Likelihood',
+        'added_likelihood': 'AW Likelihood',
+        'all_likelihood': 'ALL Likelihood',
+        'likelihood': 'NWL Likelihood',
         'uniques': 'NWL Uniques',
         'added': 'Added Words',
         'new_nwl': 'New NWL Words',
