@@ -6242,6 +6242,7 @@ input[type=range]::-moz-range-track {
     }
     .spinner-set-label {
         display: block !important;
+        font-size: 0.68rem !important;
     }
     .play-header .timer-display,
     .board-panel .timer-display {
@@ -6265,7 +6266,7 @@ input[type=range]::-moz-range-track {
 
 
     .game-params {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         text-align: center !important;
         display: flex !important;
         flex-wrap: wrap !important;
