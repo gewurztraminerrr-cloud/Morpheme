@@ -5271,7 +5271,8 @@ input[type=range]::-moz-range-track {
     text-align: right;
     font-size: 0.8rem;
     color: rgba(var(--text-primary-rgb), 0.5);
-    width: 80px;
+    width: 105px;
+    white-space: nowrap;
 }
 
 .col-date {
@@ -5298,8 +5299,8 @@ input[type=range]::-moz-range-track {
     }
 
     .card-best-words .lb-table td.col-meta {
-        width: 110px !important;
-        min-width: 105px !important;
+        width: 135px !important;
+        min-width: 130px !important;
         white-space: nowrap !important;
         text-align: right !important;
     }
@@ -5307,8 +5308,8 @@ input[type=range]::-moz-range-track {
     .card-efficiency .lb-table td.col-meta,
     .card-pct-found .lb-table td.col-meta,
     .card-hard-words .lb-table td.col-meta {
-        width: 145px !important;
-        min-width: 135px !important;
+        width: 175px !important;
+        min-width: 165px !important;
         white-space: nowrap !important;
         text-align: right !important;
     }
@@ -5540,8 +5541,12 @@ input[type=range]::-moz-range-track {
     }
 
     .lb-table td.col-meta {
-        width: 50px !important;
-        font-size: 0.75rem !important;
+        width: auto !important;
+        max-width: 90px !important;
+        font-size: 0.72rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        line-height: 1.25 !important;
     }
 
     .lb-table td.col-date {

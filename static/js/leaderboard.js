@@ -404,14 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return s < 60 ? `${s}s` : (s % 60 === 0 ? `${s / 60}m` : `${(s / 60).toFixed(1)}m`);
         };
 
-        const formatConfigMeta = (dims, sec) => {
-            const dur = formatDuration(sec);
-            if (dims && dur) return `${dims} · ${dur}`;
-            if (dims) return dims;
-            if (dur) return dur;
-            return '';
-        };
-
         const renderTypeBadge = (type) => {
             if (!showType || !type) return '';
             const label = type === '3d' ? 'Cube' :
@@ -426,7 +418,20 @@ document.addEventListener('DOMContentLoaded', () => {
                           type === 'accumulative' ? '#3880ff' :
                           type === 'fcfs' ? '#2dd36f' :
                           '#9874f8';
-            return `<span style="background:${bg}; color:${color}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 8px; vertical-align: middle;">${label}</span>`;
+            return `<span style="background:${bg}; color:${color}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 5px; vertical-align: middle; display: inline-block;">${label}</span>`;
+        };
+
+        const formatConfigMeta = (dims, sec, gameType = null) => {
+            const parts = [];
+            if (dims) parts.push(dims);
+            const dur = formatDuration(sec);
+            if (dur) parts.push(dur);
+            const baseStr = parts.join(' · ');
+            const badge = renderTypeBadge(gameType);
+            if (baseStr && badge) return `${baseStr} ${badge}`;
+            if (baseStr) return baseStr;
+            if (badge) return badge;
+            return '';
         };
 
         createTableCard(contentArea, "Highest Single Round Scores", data.best_scores, (row, i) => {
@@ -434,10 +439,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="col-rank">#${i + 1}</td>
                 <td class="col-user">
                     ${renderUserLink(row)}
-                    ${renderTypeBadge(row.game_type)}
                 </td>
                 <td class="col-val highlight">${row.total_score} pts</td>
-                <td class="col-meta">${formatConfigMeta(row.board_dimensions, row.round_duration) || '-'}</td>
+                <td class="col-meta">${formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type) || '-'}</td>
                 <td class="col-date">${formatDate(row.timestamp)}</td>
                 <td class="col-action">
                     ${renderReplayBtn(row)}
@@ -459,12 +463,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         createTableCard(contentArea, "Best Words Played", data.best_words, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                 <td class="col-rank">#${i + 1}</td>
                 <td class="col-user">
                      ${renderUserLink(row)}
-                     ${renderTypeBadge(row.game_type)}
                 </td>
                 <td class="col-val highlight">${row.best_word}</td>
                 <td class="col-meta" style="color: #ffd700;">${row.best_word_score} pts${metaStr ? `<br><span style="font-size:0.75rem; color:rgba(var(--text-primary-rgb),0.6);">${metaStr}</span>` : ''}</td>
@@ -476,12 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 'card-best-words');
 
         createTableCard(contentArea, "Highest Efficiency (PE)", data.best_pes, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${parseFloat(row.performance_ratio).toFixed(2)}x</td>
                  <td class="col-meta">Pts: ${row.total_score}${metaStr ? ` · ${metaStr}` : ''}<br>Words Found: <span style="${row.pct_found > 50 ? 'color: #ff4a4a; font-weight: 800;' : ''}">${row.pct_found || 0}%</span></td>
@@ -493,12 +495,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 'card-efficiency');
 
         createTableCard(contentArea, "Highest Percentage of Words Found", data.best_pcts, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight" style="${row.pct_found > 50 ? 'color: #ff4a4a;' : ''}">${row.pct_found || 0}%</td>
                  <td class="col-meta">Pts: ${row.total_score}${metaStr ? ` · ${metaStr}` : ''}<br>User Avg: ${row.avg_pct}%</td>
@@ -523,12 +524,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         createTableCard(contentArea, "Highest number of Hard words found", data.best_obscure, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${row.obscure_count}</td>
                  <td class="col-meta">Pts: ${row.total_score}${metaStr ? ` · ${metaStr}` : ''}</td>
@@ -540,12 +540,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 'card-hard-words');
 
         createTableCard(contentArea, "Peak Ratings Achieved", data.best_ratings, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight" style="color: #409cff;">${row.max_rating}</td> 
                  <td class="col-meta">${metaStr || 'Peak'}</td>
@@ -555,26 +554,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }, false);
 
         createTableCard(contentArea, "Most Games Played", data.most_games, (row, i) => {
+            const typeBadge = renderTypeBadge(row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${row.game_count}</td> 
-                 <td class="col-meta">Games</td>
+                 <td class="col-meta">Games${typeBadge ? ` ${typeBadge}` : ''}</td>
                  <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
         });
 
         createTableCard(contentArea, "Current Top Rated Active Players", data.current_ratings, (row, i) => {
-            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration);
+            const metaStr = formatConfigMeta(row.board_dimensions, row.round_duration, row.game_type);
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
-                      ${renderTypeBadge(row.game_type)}
                  </td>
                  <td class="col-val highlight">${row.rating}</td>
                  <td class="col-meta">${metaStr || 'Current'}</td>
