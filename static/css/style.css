@@ -9257,6 +9257,22 @@ body.theme-light-brown .full-list-item:hover .clickable-word-link {
     color: #4c1d95 !important;
 }
 
+body.theme-white .likelihood-score,
+[class*="theme-white"] .likelihood-score,
+[class*="theme-light-"] .likelihood-score,
+body.theme-yellow .likelihood-score,
+body.theme-pink .likelihood-score,
+body.theme-orange .likelihood-score,
+body.theme-gray .likelihood-score,
+body.theme-light-brown .likelihood-score,
+body.theme-white .list-item .likelihood-score,
+[class*="theme-white"] .list-item .likelihood-score,
+[class*="theme-light-"] .list-item .likelihood-score,
+body.theme-yellow .list-item .likelihood-score,
+body.theme-pink .list-item .likelihood-score,
+body.theme-orange .list-item .likelihood-score,
+body.theme-gray .list-item .likelihood-score,
+body.theme-light-brown .list-item .likelihood-score,
 body.theme-white .full-list-item .likelihood-score,
 [class*="theme-white"] .full-list-item .likelihood-score,
 [class*="theme-light-"] .full-list-item .likelihood-score,
@@ -9265,9 +9281,29 @@ body.theme-pink .full-list-item .likelihood-score,
 body.theme-orange .full-list-item .likelihood-score,
 body.theme-gray .full-list-item .likelihood-score,
 body.theme-light-brown .full-list-item .likelihood-score {
-    color: #64748b !important;
+    color: #6d28d9 !important;
     opacity: 1 !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white .full-list-item:hover .likelihood-score,
+[class*="theme-white"] .full-list-item:hover .likelihood-score,
+[class*="theme-light-"] .full-list-item:hover .likelihood-score,
+body.theme-yellow .full-list-item:hover .likelihood-score,
+body.theme-pink .full-list-item:hover .likelihood-score,
+body.theme-orange .full-list-item:hover .likelihood-score,
+body.theme-gray .full-list-item:hover .likelihood-score,
+body.theme-light-brown .full-list-item:hover .likelihood-score,
+body.theme-white .list-item:hover .likelihood-score,
+[class*="theme-white"] .list-item:hover .likelihood-score,
+[class*="theme-light-"] .list-item:hover .likelihood-score,
+body.theme-yellow .list-item:hover .likelihood-score,
+body.theme-pink .list-item:hover .likelihood-score,
+body.theme-orange .list-item:hover .likelihood-score,
+body.theme-gray .list-item:hover .likelihood-score,
+body.theme-light-brown .list-item:hover .likelihood-score {
+    color: #5b21b6 !important;
+    opacity: 1 !important;
 }
 
 /* 10. Search Jump Target Highlight on Light Themes */
