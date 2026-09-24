@@ -2237,9 +2237,9 @@ window.showPage = showPage;
         if (typeof window.initDonatePage === 'function') {
             window.initDonatePage();
         }
-    } else if (pageId === 'page-lobby') {
-        // Handled in top branch
-    } else {
+    }
+
+    if (pageId !== 'page-play') {
         if (window.stopGamePolling) {
             window.stopGamePolling();
         }

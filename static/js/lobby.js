@@ -62,9 +62,16 @@ async function enterLobbyRoom(rawBtn) {
         console.log('[Lobby] enterLobbyRoom blocked during gateway transition cooldown');
         return;
     }
+    if (window._isEnteringRoom) {
+        console.warn('[Lobby] enterLobbyRoom already in progress, ignoring duplicate call');
+        return;
+    }
     if (!rawBtn) return;
+    window._isEnteringRoom = true;
+    window._userLeftRoom = false;
     if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+        window._isEnteringRoom = false;
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         if (typeof window.showTimeoutBanModal === 'function') window.showTimeoutBanModal(window._userTimeoutInfo);
         return;
@@ -117,6 +124,11 @@ async function enterLobbyRoom(rawBtn) {
         }
 
         if (createResp.ok && data && data.success && data.room_id) {
+            if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play')) {
+                console.log('[Lobby] User left or navigated away while room was creating. Aborting auto-navigation to page-play.');
+                window._isEnteringRoom = false;
+                return;
+            }
             window.currentRoomId = data.room_id;
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false;
@@ -180,6 +192,7 @@ async function enterLobbyRoom(rawBtn) {
         if (typeof window.showPage === 'function') window.showPage('page-lobby');
         showLobbyToast('Network error: ' + error.message, 'error');
     } finally {
+        window._isEnteringRoom = false;
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }
 }
@@ -200,9 +213,12 @@ async function handleShowRoomsClick(listBtn) {
 window.handleShowRoomsClick = handleShowRoomsClick;
 
 async function handleLobbyButtonClickCore(btn, evt) {
+    if (evt && typeof evt.stopPropagation === 'function') {
+        try { evt.stopPropagation(); } catch (e) {}
+    }
     if (window._lobbyEnterCooldown) {
         if (evt && typeof evt.preventDefault === 'function') {
-            try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
+            try { evt.preventDefault(); } catch (e) {}
         }
         console.log('[Lobby] handleLobbyButtonClickCore blocked during gateway transition cooldown');
         return;
@@ -309,6 +325,11 @@ async function createRoom(config, minRating, maxRating) {
         }
 
         if (data.success) {
+            if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play')) {
+                console.log('[Lobby] User left or navigated away while room was creating. Aborting auto-navigation to page-play.');
+                window._isCreatingRoom = false;
+                return;
+            }
             console.log('Room Created, Joining:', data.room_id);
             // Join and go to play page
             window.currentRoomId = data.room_id;
@@ -379,13 +400,13 @@ function setupLobbyEvents() {
         if (!target || typeof target.closest !== 'function') return;
 
         const accBtn = target.closest('.acc-btn');
-        if (accBtn) {
+        if (accBtn && !accBtn.hasAttribute('onclick')) {
             handleAccumulativeClick(accBtn);
             return;
         }
 
         const listBtn = target.closest('.fcfs-btn, .split-btn');
-        if (listBtn) {
+        if (listBtn && !listBtn.hasAttribute('onclick')) {
             handleShowRoomsClick(listBtn);
             return;
         }
@@ -404,6 +425,12 @@ function setupLobbyEvents() {
             if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
                 return;
             }
+            if (window._isEnteringRoom) {
+                console.warn('[Lobby] Join already in progress, ignoring duplicate call');
+                return;
+            }
+            window._isEnteringRoom = true;
+            window._userLeftRoom = false;
             if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
             joinBtn.style.opacity = '0.5';
             joinBtn.style.pointerEvents = 'none';
@@ -508,6 +535,12 @@ function setupLobbyEvents() {
                             alert(errMsg);
                         }
                     }
+                    return;
+                }
+
+                if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play')) {
+                    console.log('[Lobby] User left or navigated away while join was in-flight, canceling room activation');
+                    window._isEnteringRoom = false;
                     return;
                 }
 
@@ -1054,14 +1087,16 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const myUname = (currentUser || '').trim().toLowerCase();
                 const uid = (p && p.user_id) ? String(p.user_id) : '';
                 return (uname && myUname && uname === myUname) || (uid && currentUserId && uid === currentUserId);
-            })) || (window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId));
+            })) || (window.currentPageId === 'page-play' && ((window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId))));
 
             room._isUserInRoom = isUserInRoom;
 
             if (isUserInRoom) {
-                // Instantly synchronize current room state in memory and storage
-                window.currentRoomId = rId;
-                localStorage.setItem('last_joined_room', rId);
+                // Instantly synchronize current room state in memory and storage ONLY if actively playing
+                if (window.currentPageId === 'page-play') {
+                    window.currentRoomId = rId;
+                    localStorage.setItem('last_joined_room', rId);
+                }
                 room._isOpen = true; // User's active room is ALWAYS accessible and open to them
             } else {
                 // Open Room: within rating limits AND less than 8 players

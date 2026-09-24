@@ -1276,6 +1276,9 @@ function setTimerWaitingState(isWaiting) {
 // Global Visibility Listener to handle battery management
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
+        if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+            return;
+        }
         // Tab became visible: Update immediately and restore fast polling
         console.log('[play.js] Tab visible: Restoring fast polling.');
 
@@ -1343,7 +1346,7 @@ document.addEventListener('visibilitychange', () => {
 
         // Add a small 80ms delay before fetching to let the mobile OS restore cellular/Wi-Fi connectivity
         setTimeout(() => {
-            if (!document.hidden) {
+            if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
                 updateGameState();
                 refreshPollInterval();
             }
@@ -1370,6 +1373,9 @@ document.addEventListener('visibilitychange', () => {
 // Window Focus Listener: Provides robust mobile wake-up when focus is gained
 window.addEventListener('focus', () => {
     if (!document.hidden) {
+        if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+            return;
+        }
         console.log('[play.js] Window focus gained: Checking wake-up update.');
 
         // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
@@ -1434,7 +1440,7 @@ window.addEventListener('focus', () => {
 
         // Add a small 80ms delay to let the network stack settle
         setTimeout(() => {
-            if (!document.hidden) {
+            if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
                 updateGameState();
                 refreshPollInterval();
             }
@@ -1455,6 +1461,18 @@ function stopPolling() {
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
+    }
+    if (window._transitionPollTimer) {
+        clearInterval(window._transitionPollTimer);
+        window._transitionPollTimer = null;
+    }
+    if (window.boardLoadingInterval) {
+        clearInterval(window.boardLoadingInterval);
+        window.boardLoadingInterval = null;
+    }
+    if (window.rotatingLettersInterval) {
+        clearInterval(window.rotatingLettersInterval);
+        window.rotatingLettersInterval = null;
     }
 }
 
@@ -1493,6 +1511,11 @@ let isFetchingState = false;
 window._activeStateFetchController = null;
 
 async function updateGameState(incomingState = null) {
+    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+        stopPolling();
+        return;
+    }
+
     if (isTournamentPlay || localStorage.getItem('tournament_play_active') || isPrivateMatchPlay || localStorage.getItem('private_match_active')) {
         console.log('[play.js] updateGameState: Discarding poll update because a match session is active');
         return;
@@ -5009,6 +5032,14 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
 }
 
 function updateLocalTimer() {
+    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        return;
+    }
+
     // Thread Freeze Detection: If the JavaScript thread locks/freezes (e.g. mobile lock screen/app minimized)
     // and thaws later without clean visibility events, instantly trigger a state update.
     const tickTime = Date.now();
@@ -8479,6 +8510,10 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
 }
 
 async function leaveCurrentRoom() {
+    window._isEnteringRoom = false;
+    window._userLeftRoom = true;
+    window._lastLeftRoomTime = Date.now();
+
     if (isTournamentPlay) {
         // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
         // but for the "Leave" button it is handled in the listener.
@@ -8487,7 +8522,6 @@ async function leaveCurrentRoom() {
         return;
     }
     const roomId = getCurrentRoomId();
-    if (!roomId) return;
 
     // 1. Clear local state and stop polling immediately (synchronous)
     stopPolling();
@@ -8495,6 +8529,8 @@ async function leaveCurrentRoom() {
     localStorage.removeItem('last_joined_room');
     window._localSubmittedWords = new Set();
     window._localSubmittedWordsList = [];
+    window.lastGameState = null;
+    window.lastRawGameState = null;
     
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {
@@ -8503,6 +8539,14 @@ async function leaveCurrentRoom() {
         playBtn.title = "Join a room to play.";
     }
     if (window.updateManualToolState) window.updateManualToolState();
+
+    try {
+        if (window.location.hash === '#page-play') {
+            history.replaceState(null, null, '#page-lobby');
+        }
+    } catch (e) {}
+
+    if (!roomId) return;
 
     // 2. Non-blocking beacon/fetch to notify server of leave
     const url = `/api/room/${roomId}/leave`;
@@ -8536,8 +8580,8 @@ if (returnBtnEl) {
             await finishPrivateMatchTurn();
             return;
         }
+        await leaveCurrentRoom();
         showPage('page-lobby');
-        leaveCurrentRoom();
     });
 }
 

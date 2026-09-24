@@ -393,6 +393,10 @@
         };
 
         async function enterLobbyRoomInline(rawBtn) {
+            if (window._isEnteringRoom) {
+                console.log('[Lobby] enterLobbyRoomInline blocked: already entering room');
+                return;
+            }
             if (window._lobbyEnterCooldown) {
                 console.log('[Lobby] enterLobbyRoomInline blocked during gateway cooldown');
                 return;
@@ -406,6 +410,9 @@
                 window.showTimeoutBanModal(window._userTimeoutInfo);
                 return;
             }
+
+            window._isEnteringRoom = true;
+            window._userLeftRoom = false;
 
             try {
                 if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
@@ -455,6 +462,12 @@
                     return;
                 }
 
+                if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
+                    console.log('[Lobby] enterLobbyRoomInline aborted: user left or navigated away');
+                    window._isEnteringRoom = false;
+                    return;
+                }
+
                 if (createResp.ok && data && data.success && data.room_id) {
                     window.currentRoomId = data.room_id;
                     localStorage.setItem('last_joined_room', data.room_id);
@@ -500,6 +513,8 @@
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                 console.error('Error entering room:', error);
                 showLobbyToast('Network error: ' + error.message, 'error');
+            } finally {
+                window._isEnteringRoom = false;
             }
         }
 
@@ -644,11 +659,13 @@
                                         var uname = (p && p.username) ? String(p.username).trim().toLowerCase() : '';
                                         var myUname = (currentUser || '').trim().toLowerCase();
                                         return uname && myUname && uname === myUname;
-                                    })) || (window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId));
+                                    })) || (window.currentPageId === 'page-play' && ((window.currentRoomId && rId === String(window.currentRoomId)) || (savedRoomId && rId === String(savedRoomId))));
                                     r._isUserInRoom = isUserInRoom;
                                     if (isUserInRoom) {
-                                        window.currentRoomId = rId;
-                                        localStorage.setItem('last_joined_room', rId);
+                                        if (window.currentPageId === 'page-play') {
+                                            window.currentRoomId = rId;
+                                            localStorage.setItem('last_joined_room', rId);
+                                        }
                                     }
                                 });
 
@@ -693,6 +710,10 @@
             doFetch();
 
             window.handleJoinRoomInline = async function(btn) {
+                if (window._isEnteringRoom) {
+                    console.log('[Lobby] handleJoinRoomInline blocked: already entering room');
+                    return;
+                }
                 if (!btn) return;
                 if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
                 if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
@@ -706,6 +727,8 @@
                     return;
                 }
 
+                window._isEnteringRoom = true;
+                window._userLeftRoom = false;
                 btn.style.opacity = '0.5';
                 btn.style.pointerEvents = 'none';
 
@@ -717,6 +740,12 @@
                         body: JSON.stringify({ as_spectator: isSpectator })
                     });
                     var data = await response.json();
+
+                    if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play')) {
+                        console.log('[Lobby] handleJoinRoomInline aborted: user left or navigated away');
+                        window._isEnteringRoom = false;
+                        return;
+                    }
 
                     if (data && data.success) {
                         if (!isSpectator && data.role === 'spectator') {
@@ -810,6 +839,7 @@
                     btn.style.opacity = '1';
                     btn.style.pointerEvents = 'auto';
                 } finally {
+                    window._isEnteringRoom = false;
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                 }
             };
@@ -7814,9 +7844,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790017000"></script>
-    <script src="/js/lobby.js?v=1790021000"></script>
-    <script src="/js/play.js?v=1789684000"></script>
+    <script src="/js/app.js?v=1790250000"></script>
+    <script src="/js/lobby.js?v=1790250000"></script>
+    <script src="/js/play.js?v=1790250000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
     <script src="/js/tools.js?v=1790021000"></script>
