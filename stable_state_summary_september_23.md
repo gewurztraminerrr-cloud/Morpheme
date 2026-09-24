@@ -60,9 +60,10 @@
 1. **Dynamic Section-Tab Header Titles (`static/js/tools.js`, `static/js/settings.js`, `static/js/mods.js`)**:
    - Automatically updates page title headers dynamically to `"[Section] - [Tab Name]"` (e.g., `Tools - New Users`, `Settings - Appearance`, `Mods - Ban / Timeout User`).
    - Cleanly reverts back to base section names (`Tools`, `Settings`, `Mods`) when returning to menus.
-2. **Scrollable Description Boxes & Title Deduplication (`static/css/style.css`)**:
+2. **Scrollable Description Boxes & Title Deduplication (`static/css/style.css`, `static/css/play.css`)**:
    - Replaced duplicate inner `<h2>` headers with a sleek, compact, touch-scrollable description box across all panels in Tools, Settings, and Mods.
    - Scaled mobile section header titles to `1.25rem` to prevent line wrapping on small phone displays.
+   - **Horizontal Alignment on Mobile**: Configured `.tool-header` and `.tool-header p` across `#page-tools`, `#page-settings`, and `#page-mods` to zero out asymmetric side padding (`padding-left: 0 !important; padding-right: 0 !important; margin: 0 0 8px 0 !important;`) and span 100% width with `box-sizing: border-box !important;`, guaranteeing description boxes line up flush horizontally with all tool panels, input cards, and controls underneath them.
 3. **Mobile New Users Tool Screen Fit & Custom Scroller Thumb (`static/js/tools.js`, `static/css/style.css`)**:
    - Wrapped the New Users table in a touch-friendly flex container fitting entirely above the mobile navigation bar.
    - Added custom high-contrast scrollbar thumb and track (`#new-users-scrollbar-track` / `#new-users-scrollbar-thumb`).
@@ -84,8 +85,8 @@
 
 | Asset | Version String |
 | :--- | :--- |
-| `static/css/style.css` | `?v=1790018000` |
-| `static/css/play.css` | `?v=1790018000` |
+| `static/css/style.css` | `?v=1790019000` |
+| `static/css/play.css` | `?v=1790019000` |
 | `static/css/lobby.css` | `?v=1790007000` |
 | `static/js/app.js` | `?v=1790017000` (Build `33155`) |
 | `static/js/mods.js` | `?v=1790017000` |
