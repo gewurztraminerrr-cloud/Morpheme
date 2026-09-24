@@ -6035,8 +6035,13 @@ def clean_def_text(def_text):
         else: pos = pos_str[:3]
         def_text = m.group(2)
     
-    # Clean up trailing tags like [n], [v], [adj]
-    def_text = re.sub(r'\s*\[[a-z]+\]\s*$', '', def_text.strip())
+    # Clean up trailing bracket tags and extract POS if not already set by leading tag
+    m_bracket = re.search(r'\s*\[([a-z]+)(?:\s+[^\]]*)?\]\s*$', def_text, re.IGNORECASE)
+    if m_bracket:
+        bracket_pos = m_bracket.group(1).lower()
+        if pos == 'n' and bracket_pos in ('adj', 'v', 'adv', 'interj', 'n', 'prep', 'conj'):
+            pos = bracket_pos
+        def_text = def_text[:m_bracket.start()].strip()
     # Clean up trailing periods
     def_text = def_text.rstrip('.')
     return def_text.strip(), pos
@@ -6357,28 +6362,42 @@ def remove_duplicate_parentheticals(text):
         return text
 
     to_remove = []
-    for idx in range(len(spans) - 1):
-        s1, e1 = spans[idx]
-        s2, e2 = spans[idx + 1]
-        between = text[e1:s2]
-        if between.strip() == '':
-            content1 = text[s1+1:e1-1].strip().rstrip('.').strip()
-            content2 = text[s2+1:e2-1].strip().rstrip('.').strip()
-            if content1.lower() == content2.lower():
-                to_remove.append((e1, e2))
+    for i in range(len(spans)):
+        s1, e1 = spans[i]
+        c1 = text[s1+1:e1-1].strip().rstrip('.').strip().lower()
+        c1_core = re.sub(r'\[[a-z]+[^\]]*\]', '', c1).strip()
+        c1_core = re.sub(r'^\([^)]*\)\s*', '', c1_core).strip()
+        for j in range(i + 1, len(spans)):
+            s2, e2 = spans[j]
+            c2 = text[s2+1:e2-1].strip().rstrip('.').strip().lower()
+            c2_core = re.sub(r'\[[a-z]+[^\]]*\]', '', c2).strip()
+            c2_core = re.sub(r'^\([^)]*\)\s*', '', c2_core).strip()
+            if c1 == c2 or (len(c2_core) >= 8 and (c2_core in c1 or c1_core in c2)):
+                to_remove.append((s2, e2))
 
     if not to_remove:
         return text
 
     res = text
-    for start, end in reversed(to_remove):
+    for start, end in sorted(to_remove, key=lambda x: x[0], reverse=True):
         res = res[:start] + res[end:]
-    return res.strip()
+    return re.sub(r'\s+', ' ', res).strip()
 
 def deduplicate_repeated_text(text):
     if not text:
         return text
     text = remove_duplicate_parentheticals(text)
+    
+    # Check if trailing parenthetical repeats text earlier in the definition
+    m = re.search(r'\s*\(([^()]+)\)\s*$', text)
+    if m:
+        p_text = m.group(1).strip()
+        before = text[:m.start()].strip()
+        p_cmp = re.sub(r'\[[a-z]+[^\]]*\]', '', p_text, flags=re.I).strip().rstrip('.').strip()
+        before_cmp = re.sub(r'\[[a-z]+[^\]]*\]', '', before, flags=re.I).strip().rstrip('.').strip()
+        if len(p_cmp) >= 5 and p_cmp.lower() in before_cmp.lower():
+            text = before
+
     s = text.strip()
     half = len(s) // 2
     if len(s) >= 20:
@@ -6386,7 +6405,7 @@ def deduplicate_repeated_text(text):
         second_half = s[half:].strip().rstrip('.')
         if first_half.lower() == second_half.lower():
             return s[:half].strip()
-    return text
+    return text.strip()
 
 def format_resolved_definition(word_upper, visited=None):
     if visited is None:
@@ -6423,7 +6442,9 @@ def format_resolved_definition(word_upper, visited=None):
         target = target_raw.upper()
         # If the pointer is already followed by a parenthetical definition, it is already resolved!
         after_target = raw[m.end(2):].lstrip()
-        if not after_target.startswith('('):
+        m_trailing_paren = re.match(r'^(?:\[[a-z]+[^\]]*\]\s*)?\((.+)\)$', after_target, re.IGNORECASE)
+        already_has_paren = after_target.startswith('(') or bool(m_trailing_paren)
+        if not already_has_paren:
             is_case_pointer = 'alternative letter-case form' in m.group(1).lower()
             target_resolved = None
             if target != word_upper:
@@ -6439,7 +6460,14 @@ def format_resolved_definition(word_upper, visited=None):
                     raw = target_clean
                 else:
                     target_clean_cmp = target_clean.rstrip(".").strip()
-                    if target_clean_cmp and target_clean_cmp.lower() not in raw.lower() and f"({target_clean_cmp})" not in raw and f"({target_clean})" not in raw:
+                    target_core = re.sub(r'^\s*\([^)]*\)\s*', '', target_clean).strip()
+                    target_core = re.sub(r'\s*\[[a-z]+[^\]]*\]\s*$', '', target_core).strip().rstrip('.').strip()
+                    already_in_raw = (
+                        (target_core and len(target_core) >= 5 and target_core.lower() in raw.lower()) or
+                        (target_clean_cmp and target_clean_cmp.lower() in raw.lower()) or
+                        f"({target_clean_cmp})" in raw or f"({target_clean})" in raw
+                    )
+                    if not already_in_raw:
                         end_idx = m.end(2)
                         raw = raw[:end_idx] + f" ({target_clean})" + raw[end_idx:]
 
