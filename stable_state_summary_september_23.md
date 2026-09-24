@@ -53,6 +53,8 @@
    - Enhanced contrast for Account Settings card descriptions (`.account-card-desc`) and Cube Round Replay face labels.
    - Covered all space below divider surrounding mobile Back buttons with dark grey (`#18181b` / `#1f2937`) to eliminate white leakage.
    - Enhanced "More random words" button readability on white layouts with bold text and contrast shadows.
+3. **Random Word Tool Black Text on White Layouts (`static/css/style.css`, `static/css/play.css`)**:
+   - Styled `#random-word-display` and `#tool-random .random-word-large` to render in pure black (`#000000 !important`) with text shadows removed (`text-shadow: none !important`) across all white and light themes (`theme-white`, `theme-light-*`, yellow, pink, orange, gray, light-brown) for crisp readability.
 
 ### D. Tools, Settings & Mods Navigation Polish
 1. **Dynamic Section-Tab Header Titles (`static/js/tools.js`, `static/js/settings.js`, `static/js/mods.js`)**:
@@ -82,8 +84,8 @@
 
 | Asset | Version String |
 | :--- | :--- |
-| `static/css/style.css` | `?v=1790017000` |
-| `static/css/play.css` | `?v=1790008000` |
+| `static/css/style.css` | `?v=1790018000` |
+| `static/css/play.css` | `?v=1790018000` |
 | `static/css/lobby.css` | `?v=1790007000` |
 | `static/js/app.js` | `?v=1790017000` (Build `33155`) |
 | `static/js/mods.js` | `?v=1790017000` |
