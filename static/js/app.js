@@ -555,6 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         if (!activeUser) {
+            window.currentPageId = 'page-login';
             showPage('page-login');
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
             return;
@@ -669,6 +670,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const executeLoginGatewayTransition = (e) => {
         if (gatewayTransitioning || window._gatewayTransitioning) return;
         window._gatewayTransitioning = true;
+        window.currentPageId = 'page-login';
         const loginGwBtn = document.getElementById('btn-login-gateway');
         if (loginGwBtn) {
             loginGwBtn.classList.remove('dragged-out');
@@ -791,6 +793,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', (e) => onExecute(e));
     }
 
+    const activePageEl = document.querySelector('.page.active');
+    const activePageId = activePageEl ? activePageEl.id : '';
+
+    // If user already clicked LOGIN or navigated to page-login, retain login view unconditionally
+    if (window.currentPageId === 'page-login' || window.location.hash === '#page-login' || activePageId === 'page-login') {
+        console.log('[app.js] User on or transitioning to page-login; retaining active login view.');
+        showPage('page-login');
+        const loginNavBtn = document.querySelector('.nav-btn[data-page="login"]');
+        if (loginNavBtn) updateActiveNav(loginNavBtn);
+        return;
+    }
+
     if (currentUser) {
         // If user already clicked ENTER LOBBY during startup, keep them in the Lobby
         if (window._gatewayPassed) {
@@ -852,6 +866,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } else {
+        const curActiveEl = document.querySelector('.page.active');
+        const curActiveId = curActiveEl ? curActiveEl.id : '';
+        // If user already clicked LOGIN or navigated to page-login, retain login view
+        if (window.currentPageId === 'page-login' || window.location.hash === '#page-login' || curActiveId === 'page-login') {
+            console.log('[app.js] User on or transitioning to page-login; retaining active login view.');
+            showPage('page-login');
+            const loginNavBtn = document.querySelector('.nav-btn[data-page="login"]');
+            if (loginNavBtn) updateActiveNav(loginNavBtn);
+            return;
+        }
+
         // UNAUTHENTICATED: Show explicit public page if requested by hash, otherwise preserve Gateway Screen
         if (hash === '#page-leaderboards') {
             showPage('page-leaderboards');
@@ -871,7 +896,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 handleLobbyMusicState();
 
                 const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const isDesktop = !isMobileUA && window.innerWidth > 992;
+                const isDesktop = !isMobileUA;
                 const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
 
                 if (isDesktop || isLoggedOutExplicitly) {
@@ -1862,6 +1887,7 @@ function setupModalListeners() {
 }
 
 function showPage(pageId) {
+window.showPage = showPage;
     if (pageId === 'page-mods' && !window.currentUserIsMod) {
         console.warn('[Navigation] Unauthorized access to mods page. Redirecting to lobby.');
         pageId = 'page-lobby';
@@ -2633,111 +2659,112 @@ async function handleLogout() {
         logoutBtn.disabled = true;
     }
 
+    // 1. ALWAYS and UNCONDITIONALLY complete local logout synchronously first
     try {
-        console.info('[Auth] Logout initiated...');
+        console.info('[Auth] Logout initiated (instant local purge)...');
+
+        // Preserve global "read" states (Notices, Forum markers) across login sessions
+        const noticeId = localStorage.getItem('morpheme_read_notice_id');
+        const forumViewed = localStorage.getItem('forum_last_viewed');
+
+        // Clear session and auth data immediately
+        localStorage.clear();
+        sessionStorage.clear();
+        sessionStorage.setItem('morpheme_logged_out', 'true');
+        localStorage.setItem('morpheme_logged_out', 'true');
         
-        // Ensure session is cleared on server with a strict 2.5s timeout
+        // Restore non-sensitive global markers
+        if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
+        if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
+        
+        // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
+        if (typeof window.resetSettingsToDefault === 'function') {
+            window.resetSettingsToDefault();
+        }
+        
+        window.currentUserConfigRatings = {};
+        window.currentUserIsMod = false;
+        window.currentUserIsRootMod = false;
+        window.currentUser = null;
+        window.currentUserIsGuest = false;
+        currentUser = null;
+
+        const modsBtn = document.getElementById('nav-mods-btn');
+        if (modsBtn) modsBtn.style.display = 'none';
+        document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
+
+        // Reset header user display immediately
+        const usernameEl = document.getElementById('username-display');
+        if (usernameEl) {
+            usernameEl.textContent = '';
+            usernameEl.onclick = null;
+        }
+        const userDisplay = document.getElementById('user-display');
+        if (userDisplay) {
+            userDisplay.classList.add('hidden');
+            userDisplay.style.display = 'none';
+        }
+        const loginNavBtn = document.getElementById('nav-login-btn');
+        if (loginNavBtn) {
+            loginNavBtn.classList.remove('hidden');
+            loginNavBtn.style.display = '';
+        }
+
+        // Update auth UI and switch directly to the Login page
+        updateAuthUI();
+        const gwBtn = document.getElementById('btn-enter-lobby-gateway');
+        const loginGwBtn = document.getElementById('btn-login-gateway');
+        const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isDesktop = !isMobileUA;
+        if (isDesktop) {
+            if (gwBtn) gwBtn.style.display = 'none';
+            if (loginGwBtn) {
+                loginGwBtn.style.display = '';
+                loginGwBtn.textContent = 'LOGIN';
+            }
+        } else {
+            if (gwBtn) {
+                gwBtn.style.display = '';
+                gwBtn.textContent = 'ENTER LOBBY';
+            }
+            if (loginGwBtn) loginGwBtn.style.display = 'none';
+        }
+
+        window.currentPageId = 'page-login';
+        showPage('page-login');
+        const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
+        if (loginBtn) updateActiveNav(loginBtn);
+        try {
+            history.replaceState(null, null, window.location.pathname + window.location.search);
+        } catch(e) {}
+
+        // Refresh user count and captcha on login screen
+        if (typeof fetchUserCount === 'function') fetchUserCount();
+        if (typeof window.refreshCaptchas === 'function') {
+            window.refreshCaptchas();
+        }
+    } catch (cleanupErr) {
+        console.error('[Auth] Error during local logout cleanup:', cleanupErr);
+    }
+
+    // 2. Notify server of logout in background
+    try {
         if (typeof fetchWithTimeout === 'function') {
             await fetchWithTimeout('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }, 2500).catch(e => {
-                console.warn('[Auth] Server logout request timed out or failed, proceeding with local logout:', e);
+                console.warn('[Auth] Server logout request timed out or failed:', e);
             });
         } else {
             await fetch('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(e => {
-                console.warn('[Auth] Server logout request failed, proceeding with local logout:', e);
+                console.warn('[Auth] Server logout request failed:', e);
             });
         }
     } catch (error) {
         console.warn('[Auth] Error notifying server of logout:', error);
     } finally {
-        // ALWAYS and UNCONDITIONALLY complete complete local logout
-        try {
-            // Preserve global "read" states (Notices, Forum markers) across login sessions
-            const noticeId = localStorage.getItem('morpheme_read_notice_id');
-            const forumViewed = localStorage.getItem('forum_last_viewed');
-
-            // Clear session and auth data
-            localStorage.clear();
-            sessionStorage.clear();
-            sessionStorage.setItem('morpheme_logged_out', 'true');
-            localStorage.setItem('morpheme_logged_out', 'true');
-            
-            // Restore non-sensitive global markers
-            if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
-            if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
-            
-            // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
-            if (typeof window.resetSettingsToDefault === 'function') {
-                window.resetSettingsToDefault();
-            }
-            
-            window.currentUserConfigRatings = {};
-            window.currentUserIsMod = false;
-            window.currentUserIsRootMod = false;
-            window.currentUser = null;
-            window.currentUserIsGuest = false;
-            currentUser = null;
-
-            const modsBtn = document.getElementById('nav-mods-btn');
-            if (modsBtn) modsBtn.style.display = 'none';
-            document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
-
-            // Reset header user display immediately
-            const usernameEl = document.getElementById('username-display');
-            if (usernameEl) {
-                usernameEl.textContent = '';
-                usernameEl.onclick = null;
-            }
-            const userDisplay = document.getElementById('user-display');
-            if (userDisplay) {
-                userDisplay.classList.add('hidden');
-                userDisplay.style.display = 'none';
-            }
-            const loginNavBtn = document.getElementById('nav-login-btn');
-            if (loginNavBtn) {
-                loginNavBtn.classList.remove('hidden');
-                loginNavBtn.style.display = '';
-            }
-
-            // Update auth UI and switch directly to the Login page
-            updateAuthUI();
-            const gwBtn = document.getElementById('btn-enter-lobby-gateway');
-            const loginGwBtn = document.getElementById('btn-login-gateway');
-            const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const isDesktop = !isMobileUA && window.innerWidth > 992;
-            if (isDesktop) {
-                if (gwBtn) gwBtn.style.display = 'none';
-                if (loginGwBtn) {
-                    loginGwBtn.style.display = '';
-                    loginGwBtn.textContent = 'LOGIN';
-                }
-            } else {
-                if (gwBtn) {
-                    gwBtn.style.display = '';
-                    gwBtn.textContent = 'ENTER LOBBY';
-                }
-                if (loginGwBtn) loginGwBtn.style.display = 'none';
-            }
-
-            showPage('page-login');
-            const loginBtn = document.querySelector('.nav-btn[data-page="login"]');
-            if (loginBtn) updateActiveNav(loginBtn);
-            try {
-                history.replaceState(null, null, window.location.pathname + window.location.search);
-            } catch(e) {}
-
-            // Refresh user count and captcha on login screen
-            if (typeof fetchUserCount === 'function') fetchUserCount();
-            if (typeof window.refreshCaptchas === 'function') {
-                window.refreshCaptchas();
-            }
-        } catch (cleanupErr) {
-            console.error('[Auth] Error during local logout cleanup:', cleanupErr);
-        } finally {
-            if (logoutBtn) {
-                logoutBtn.textContent = 'Logout';
-                logoutBtn.style.opacity = '1';
-                logoutBtn.disabled = false;
-            }
+        if (logoutBtn) {
+            logoutBtn.textContent = 'Logout';
+            logoutBtn.style.opacity = '1';
+            logoutBtn.disabled = false;
         }
     }
 }
