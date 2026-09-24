@@ -546,15 +546,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             activeUser = currentUser || window.currentUser;
         }
         if (!activeUser) {
-            const storedUser = localStorage.getItem('morpheme_username');
-            const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
-            if (storedUser && !isLoggedOutExplicitly) {
-                activeUser = storedUser;
-                currentUser = storedUser;
-                window.currentUser = storedUser;
-            }
-        }
-        if (!activeUser) {
             window.currentPageId = 'page-login';
             showPage('page-login');
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
@@ -1408,21 +1399,14 @@ async function checkSession() {
             } catch (e) { console.warn('Error checking current room', e); }
 
         } else {
-            const storedUser = localStorage.getItem('morpheme_username');
-            if (storedUser && !isLoggedOutExplicitly) {
-                console.warn('[Auth] Server returned not authenticated, but preserving stored user:', storedUser);
-                currentUser = storedUser;
-                window.currentUser = storedUser;
-                updateAuthUI();
-            } else {
-                currentUser = null;
-                window.currentUser = null;
-                window.currentUserIsGuest = false;
-                window.currentUserIsMod = false;
-                localStorage.removeItem('morpheme_logged_in');
-                localStorage.removeItem('morpheme_username');
-                updateAuthUI();
-            }
+            currentUser = null;
+            window.currentUser = null;
+            window.currentUserIsGuest = false;
+            window.currentUserIsMod = false;
+            localStorage.removeItem('morpheme_logged_in');
+            localStorage.removeItem('morpheme_username');
+            localStorage.removeItem('morpheme_auth_token');
+            updateAuthUI();
         }
     } catch (error) {
         console.warn('[Auth] Session check failed (server may be restarting):', error.message || error);

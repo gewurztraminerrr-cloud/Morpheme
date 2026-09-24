@@ -1761,7 +1761,7 @@
         <div id="page-loading" class="page active" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="color: #fff; font-family: 'Inter', sans-serif;">
             <div id="loading-gateway-container" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
-                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
+                    <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                     <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onclick="if(window.handleLoginGatewayClick) window.handleLoginGatewayClick(this, event);">LOGIN</button>
                 </div>
             </div>
@@ -1830,10 +1830,14 @@
                     var gb = document.getElementById('btn-enter-lobby-gateway');
                     var lb = document.getElementById('btn-login-gateway');
                     if (gb && lb) {
-                        if ((!activeUser && isDesktop) || isLoggedOutExplicitly) {
+                        if (isDesktop && (!activeUser || isLoggedOutExplicitly)) {
                             gb.style.display = 'none';
                             lb.style.display = '';
                             lb.textContent = 'LOGIN';
+                        } else if (activeUser && !isLoggedOutExplicitly) {
+                            gb.style.display = '';
+                            gb.textContent = 'ENTER LOBBY';
+                            lb.style.display = 'none';
                         } else {
                             gb.style.display = '';
                             gb.textContent = 'ENTER LOBBY';
@@ -1862,18 +1866,6 @@
                 if (!activeUser && window._sessionCheckPromise) {
                     try { await window._sessionCheckPromise; } catch(e) {}
                     activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
-                }
-                if (!activeUser) {
-                    var storedUser = localStorage.getItem('morpheme_username');
-                    var isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
-                    if (storedUser && !isLoggedOutExplicitly) {
-                        activeUser = storedUser;
-                        if (typeof window.setCurrentUser === 'function') {
-                            window.setCurrentUser(storedUser);
-                        } else {
-                            window.currentUser = storedUser;
-                        }
-                    }
                 }
                 if (!activeUser) {
                     if (gb) gb.classList.remove('pressed');
@@ -2135,6 +2127,9 @@
                                 loginGwBtn.style.display = '';
                                 loginGwBtn.textContent = 'LOGIN';
                             }
+                        } else {
+                            if (enterBtn) { enterBtn.style.display = ''; enterBtn.textContent = 'ENTER LOBBY'; }
+                            if (loginGwBtn) loginGwBtn.style.display = 'none';
                         }
                     } else {
                         window.currentUser = storedUser;
@@ -7793,7 +7788,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790004000"></script>
+    <script src="/js/app.js?v=1790010000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
