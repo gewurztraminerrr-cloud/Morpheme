@@ -5860,18 +5860,16 @@ body .tab-btn.active {
         box-sizing: border-box !important;
     }
     .user-display:not(.hidden) {
-        position: absolute !important;
-        top: 14px !important;
-        right: 12px !important;
-        border-left: none !important;
-        margin-left: 0 !important;
-        padding-left: 0 !important;
+        position: static !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
         gap: 8px !important;
         flex-shrink: 0 !important;
-        z-index: 10 !important;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        margin-left: 6px !important;
+        padding-left: 12px !important;
+        padding-right: 8px !important;
     }
     #username-display {
         max-width: 90px !important;

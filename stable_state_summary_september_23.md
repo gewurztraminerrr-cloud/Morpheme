@@ -36,11 +36,11 @@
    - Added an inline, zero-latency click handler (`window.handleLoginGatewayClick`) in `templates/index.html` ensuring instantaneous response even before core scripts hydrate.
    - Preserved seamless transition into `page-login` without visual glitches or falling through to the lobby.
 
-### B. Header Navigation & Desktop Layout
-1. **Header Layout Restoration (`static/css/style.css`, `templates/index.html`)**:
-   - Relocated `<div id="user-display">` outside `<nav class="nav">` directly into `<header class="header">` for clear DOM separation.
-   - Added `margin-left: auto;` to `.nav`, keeping navigation buttons cleanly positioned on the right side of the screen with comfortable breathing room from the `MORPHEME MORE-FEEM` logo.
-   - Styled `.user-display` with `margin-left: 10px;` and an elegant border separator (`1px solid rgba(var(--text-primary-rgb), 0.2)`), displaying the active username and the `Logout` button cleanly beside the navigation tabs on desktop.
+### B. Header Navigation & Layout
+1. **Header Navigation & User Display Positioning (`static/css/style.css`, `templates/index.html`)**:
+   - Nested `<div id="user-display">` inside `<nav class="nav">` directly to the right of the navigation buttons.
+   - **On Mobile Devices**: Returned the vertical divider (`border-left: 1px solid rgba(var(--text-primary-rgb), 0.25)`) and `[username] Logout` segment directly to the right of the horizontally slidable top menu buttons with `position: static !important;`, completely eliminating the top-right corner overlap with `MORE-FEEM`.
+   - **On Desktop**: Kept `margin-left: auto;` on `.nav`, maintaining the entire navigation bar and user display cleanly on the right with comfortable breathing room from the logo.
 
 ### C. Subanagrams Redesign & Light Theme Contrast
 1. **Subanagrams Dual-Tab Layout (`Manual` and `Random`) (`static/js/tools.js`, `templates/index.html`)**:
