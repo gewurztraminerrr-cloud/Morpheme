@@ -3042,12 +3042,26 @@ body.theme-light-brown .lobby-chat-input:focus {
 
     .lobby-chat-form {
         flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .lobby-chat-input,
     .lobby-chat-input:focus,
     .lobby-chat-input:active {
         font-size: 16px !important; /* Prevents auto-zoom on mobile devices */
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        padding: 0 10px !important;
+    }
+
+    .lobby-chat-send-btn {
+        flex-shrink: 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -3062,6 +3076,8 @@ body.theme-light-brown .lobby-chat-input:focus {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
+        padding: 8px 10px !important;
+        box-sizing: border-box !important;
     }
 
     .lobby-chat-drawer.open .lobby-chat-history {
