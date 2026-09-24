@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           type === 'accumulative' ? '#3880ff' :
                           type === 'fcfs' ? '#2dd36f' :
                           '#9874f8';
-            return `<span style="background:${bg}; color:${color}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 5px; vertical-align: middle; display: inline-block;">${label}</span>`;
+            return `<span style="background:${bg}; color:${color}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; vertical-align: middle; display: inline-block;">${label}</span>`;
         };
 
         const formatConfigMeta = (dims, sec, gameType = null) => {
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dur) parts.push(dur);
             const baseStr = parts.join(' · ');
             const badge = renderTypeBadge(gameType);
-            if (baseStr && badge) return `${baseStr} ${badge}`;
+            if (baseStr && badge) return `${baseStr} · ${badge}`;
             if (baseStr) return baseStr;
             if (badge) return badge;
             return '';
@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       ${renderUserLink(row)}
                  </td>
                  <td class="col-val highlight">${row.game_count}</td> 
-                 <td class="col-meta">Games${typeBadge ? ` ${typeBadge}` : ''}</td>
+                 <td class="col-meta">Games${typeBadge ? ` · ${typeBadge}` : ''}</td>
                  <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;
