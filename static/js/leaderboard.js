@@ -445,14 +445,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
-        createTableCard(contentArea, "Highest Average Score (Min 3 Games)", data.avg_scores, (row, i) => {
+        createTableCard(contentArea, "Highest Average Score (Min 7 Rounds)", data.avg_scores, (row, i) => {
             return `
                  <td class="col-rank">#${i + 1}</td>
                  <td class="col-user">
                       ${renderUserLink(row)}
                  </td>
                  <td class="col-val highlight">${Math.round(row.avg_score)}</td>
-                 <td class="col-meta">${row.games} games</td>
+                 <td class="col-meta">${row.games} rounds</td>
                  <td class="col-date">${formatDate(row.last_active)}</td>
                  <td class="col-action"></td>
              `;

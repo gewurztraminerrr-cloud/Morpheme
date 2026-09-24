@@ -8942,7 +8942,7 @@ def get_leaderboard_data():
             ORDER BY max_rating DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
 
-        # 6. Avg Score
+        # 6. Avg Score (Requires minimum 7 rounds)
         avgs = conn.execute(f"""
             SELECT AVG(rh.total_score) as avg_score, COUNT(*) as games, MAX(rh.timestamp) as last_active,
                    COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url
@@ -8950,7 +8950,7 @@ def get_leaderboard_data():
             JOIN users u ON rh.user_id = u.id
             WHERE {base_where}
             GROUP BY u.id
-            HAVING games >= 1
+            HAVING games >= 7
             ORDER BY avg_score DESC LIMIT 50
         """, params).fetchall()
 
