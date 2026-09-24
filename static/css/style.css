@@ -9055,6 +9055,22 @@ body.theme-light-brown #full-list-modal-title {
     color: #4c1d95 !important;
 }
 
+body.theme-white #main-list-count,
+[class*="theme-white"] #main-list-count,
+[class*="theme-light-"] #main-list-count,
+body.theme-yellow #main-list-count,
+body.theme-pink #main-list-count,
+body.theme-orange #main-list-count,
+body.theme-gray #main-list-count,
+body.theme-light-brown #main-list-count,
+body.theme-white .list-count,
+[class*="theme-white"] .list-count,
+[class*="theme-light-"] .list-count,
+body.theme-yellow .list-count,
+body.theme-pink .list-count,
+body.theme-orange .list-count,
+body.theme-gray .list-count,
+body.theme-light-brown .list-count,
 body.theme-white #full-list-modal-count,
 [class*="theme-white"] #full-list-modal-count,
 [class*="theme-light-"] #full-list-modal-count,
@@ -9065,6 +9081,7 @@ body.theme-gray #full-list-modal-count,
 body.theme-light-brown #full-list-modal-count {
     color: #475569 !important;
     opacity: 1 !important;
+    font-weight: 600 !important;
 }
 
 /* 6. Modal Close Button */
