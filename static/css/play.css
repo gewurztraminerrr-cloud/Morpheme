@@ -11570,10 +11570,12 @@ body.is-mobile #page-settings .theme-selector-grid {
 
 .tool-def-pronunciation {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.82rem;
+    color: #a78bfa;
     margin-bottom: 6px;
     font-style: italic;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     word-break: break-word;
     overflow-wrap: anywhere;
     flex-shrink: 0;

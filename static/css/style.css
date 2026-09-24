@@ -9434,6 +9434,17 @@ body.theme-light-brown .tool-def-content {
     color: #1e293b !important;
 }
 
+body.theme-white .tool-def-pronunciation,
+[class*="theme-white"] .tool-def-pronunciation,
+[class*="theme-light-"] .tool-def-pronunciation,
+body.theme-yellow .tool-def-pronunciation,
+body.theme-pink .tool-def-pronunciation,
+body.theme-orange .tool-def-pronunciation,
+body.theme-gray .tool-def-pronunciation,
+body.theme-light-brown .tool-def-pronunciation {
+    color: #6d28d9 !important;
+}
+
 body.theme-white .tool-def-isvalid-link,
 [class*="theme-white"] .tool-def-isvalid-link,
 [class*="theme-light-"] .tool-def-isvalid-link,
