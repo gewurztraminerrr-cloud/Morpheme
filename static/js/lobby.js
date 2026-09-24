@@ -1087,7 +1087,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const diffB = Math.abs(b.display_average_rating - targetRating);
                 return diffA - diffB;
             }
-            return 0;
+            // Default when proximity filter is empty: highest average rating first
+            return (b.display_average_rating || 0) - (a.display_average_rating || 0);
         });
 
         if (filteredRooms.length === 0) {

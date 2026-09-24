@@ -6217,13 +6217,6 @@ function renderSubanagramsResults() {
 
         const lengths = Object.keys(grouped).map(Number).sort((a, b) => b - a);
 
-        html += `
-            <div class="sub-revealed-banner" style="padding: 8px 12px; margin-bottom: 10px; border-radius: 6px; font-weight: 700; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                <span>All Subanagrams (${total})</span>
-                <span style="font-size: 0.8rem; color: #34d399;">You Found: ${_subFoundWords.size} / ${total}</span>
-            </div>
-        `;
-
         lengths.forEach(len => {
             const wordsInLen = grouped[len];
             html += `

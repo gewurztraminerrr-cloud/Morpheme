@@ -10119,19 +10119,6 @@ body.theme-light-brown .sub-highlight-letters {
     font-weight: 800 !important;
 }
 
-body.theme-white .sub-revealed-banner,
-[class*="theme-white"] .sub-revealed-banner,
-[class*="theme-light-"] .sub-revealed-banner,
-body.theme-yellow .sub-revealed-banner,
-body.theme-pink .sub-revealed-banner,
-body.theme-orange .sub-revealed-banner,
-body.theme-gray .sub-revealed-banner,
-body.theme-light-brown .sub-revealed-banner {
-    background: rgba(37, 99, 235, 0.1) !important;
-    border-left: 3px solid #2563eb !important;
-    color: #1e40af !important;
-}
-
 body.theme-white .sub-group-header,
 [class*="theme-white"] .sub-group-header,
 [class*="theme-light-"] .sub-group-header,
