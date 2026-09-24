@@ -9958,6 +9958,34 @@ body.theme-light-brown #sub-letters-display {
     text-shadow: none !important;
 }
 
+body.theme-white #random-word-display,
+[class*="theme-white"] #random-word-display,
+body[class*="theme-white"] #random-word-display,
+body.is-mobile[class*="theme-white"] #random-word-display,
+body.is-mobile.theme-white #random-word-display,
+body[class*="theme-light-"] #random-word-display,
+[class*="theme-light-"] #random-word-display,
+body.theme-yellow #random-word-display,
+body.theme-pink #random-word-display,
+body.theme-orange #random-word-display,
+body.theme-gray #random-word-display,
+body.theme-light-brown #random-word-display,
+body.theme-white #tool-random .random-word-large,
+[class*="theme-white"] #tool-random .random-word-large,
+body[class*="theme-white"] #tool-random .random-word-large,
+body.is-mobile[class*="theme-white"] #tool-random .random-word-large,
+body.is-mobile.theme-white #tool-random .random-word-large,
+body[class*="theme-light-"] #tool-random .random-word-large,
+[class*="theme-light-"] #tool-random .random-word-large,
+body.theme-yellow #tool-random .random-word-large,
+body.theme-pink #tool-random .random-word-large,
+body.theme-orange #tool-random .random-word-large,
+body.theme-gray #tool-random .random-word-large,
+body.theme-light-brown #tool-random .random-word-large {
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
 body.theme-white #sub-count-info,
 [class*="theme-white"] #sub-count-info,
 [class*="theme-light-"] #sub-count-info,
