@@ -13,12 +13,22 @@ window.escapeHTML = escapeHtml;
 
 async function checkModStatus() {
     try {
+        const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+        if (isLoggedOut) {
+            window.currentUserIsMod = false;
+            window.currentUserIsRootMod = false;
+            const modsBtn = document.getElementById('nav-mods-btn');
+            if (modsBtn) modsBtn.style.display = 'none';
+            document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
+            return;
+        }
+
         const response = await fetch('/api/mods/status');
         const data = await response.json();
         
         window.currentUserIsMod = Boolean(data.is_mod);
         window.currentUserIsRootMod = Boolean(data.is_root);
-        if (data.username) {
+        if (data.username && !isLoggedOut && sessionStorage.getItem('morpheme_logged_out') !== 'true' && localStorage.getItem('morpheme_logged_out') !== 'true') {
             if (typeof window.setCurrentUser === 'function') {
                 window.setCurrentUser(data.username, null, false, Boolean(data.is_mod));
             } else {

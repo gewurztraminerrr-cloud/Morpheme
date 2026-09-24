@@ -1321,7 +1321,7 @@ body {
     gap: 12px;
     padding-left: 15px;
     border-left: 1px solid rgba(var(--text-primary-rgb), 0.2);
-    margin-left: auto;
+    margin-left: 10px;
     flex-shrink: 0;
 }
 
@@ -1354,6 +1354,7 @@ body {
     /* Reduced gap */
     flex-wrap: nowrap;
     /* Prevent wrapping */
+    margin-left: auto;
 }
 
 .nav-btn {

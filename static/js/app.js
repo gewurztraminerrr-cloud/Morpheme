@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33154';
+const CURRENT_APP_BUILD = '33155';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -80,6 +80,23 @@ window.currentUserConfigRatings = {};
 window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
 
 function setCurrentUser(username, email = null, isGuest = false, isMod = false, rating = null) {
+    if (!username) {
+        currentUser = null;
+        window.currentUser = null;
+        window.currentUserEmail = null;
+        window.currentUserIsGuest = false;
+        window.currentUserIsMod = false;
+        window.currentUserIsRootMod = false;
+        if (typeof updateAuthUI === 'function') {
+            updateAuthUI();
+        }
+        return;
+    }
+    const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+    if (isLoggedOut) {
+        console.warn('[Auth] Attempted setCurrentUser while logged out explicitly; ignoring:', username);
+        return;
+    }
     currentUser = username;
     window.currentUser = username;
     if (email !== null) {
@@ -96,11 +113,9 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = false, 
         window.currentUserRating = rating;
         window.lastPlayerRating = rating;
     }
-    if (username) {
-        localStorage.setItem('morpheme_username', username);
-        sessionStorage.removeItem('morpheme_logged_out');
-        localStorage.removeItem('morpheme_logged_out');
-    }
+    localStorage.setItem('morpheme_username', username);
+    sessionStorage.removeItem('morpheme_logged_out');
+    localStorage.removeItem('morpheme_logged_out');
     if (typeof updateAuthUI === 'function') {
         updateAuthUI(rating || window.currentUserRating || window.lastPlayerRating);
     }
@@ -796,6 +811,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+    if (isLoggedOutExplicitly) {
+        currentUser = null;
+        window.currentUser = null;
+    }
+
     if (currentUser) {
         // If user already clicked ENTER LOBBY during startup, keep them in the Lobby
         if (window._gatewayPassed) {
@@ -1298,7 +1319,9 @@ async function checkSession() {
             // User explicitly logged out — respect logout intent unconditionally.
             if (data.authenticated) {
                 // Server session was still active; kill it now
-                fetch('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {});
+                try {
+                    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+                } catch (e) {}
             }
             currentUser = null;
             window.currentUser = null;
@@ -2725,17 +2748,9 @@ async function handleLogout() {
         console.error('[Auth] Error during local logout cleanup:', cleanupErr);
     }
 
-    // 2. Notify server of logout in background
+    // 2. Notify server of logout
     try {
-        if (typeof fetchWithTimeout === 'function') {
-            await fetchWithTimeout('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }, 2500).catch(e => {
-                console.warn('[Auth] Server logout request timed out or failed:', e);
-            });
-        } else {
-            await fetch('/api/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(e => {
-                console.warn('[Auth] Server logout request failed:', e);
-            });
-        }
+        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
     } catch (error) {
         console.warn('[Auth] Error notifying server of logout:', error);
     } finally {

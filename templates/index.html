@@ -155,9 +155,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790014000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790017000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790007000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790014000">
+    <link rel="stylesheet" href="/css/style.css?v=1790017000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790007000">
     <link rel="stylesheet" href="/css/play.css?v=1790008000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
@@ -1841,6 +1841,37 @@
                 } catch(e) {}
             })();
 
+            window.handleLoginGatewayClick = function(btn, evt) {
+                if (window._gatewayTransitioning) return;
+                var lb = document.getElementById('btn-login-gateway');
+                if (evt && evt.target && evt.target !== lb && lb && !lb.contains(evt.target)) return;
+                window._gatewayTransitioning = true;
+                window.currentPageId = 'page-login';
+                if (lb) {
+                    lb.classList.remove('dragged-out');
+                    lb.classList.add('pressed', 'flattened');
+                }
+                setTimeout(function() {
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('page-login');
+                    } else if (typeof showPage === 'function') {
+                        showPage('page-login');
+                    } else {
+                        var pLoad = document.getElementById('page-loading');
+                        var pLogin = document.getElementById('page-login');
+                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
+                        if (pLogin) { pLogin.classList.add('active'); pLogin.style.display = 'flex'; }
+                    }
+                    if (typeof window.refreshCaptchas === 'function') {
+                        window.refreshCaptchas();
+                    }
+                    window._gatewayTransitioning = false;
+                    if (lb) {
+                        lb.classList.remove('pressed', 'flattened', 'dragged-out');
+                    }
+                }, 120);
+            };
+
             window.handleEnterLobbyClick = async function(btn, evt) {
                 if (window._gatewayTransitioning) return;
                 var gb = document.getElementById('btn-enter-lobby-gateway');
@@ -2109,6 +2140,7 @@
                     const loginGwBtn = document.getElementById('btn-login-gateway');
 
                     if (!isLoggedIn) {
+                        window.currentUser = null;
                         if (ud) { ud.classList.add('hidden'); ud.style.display = 'none'; }
                         if (un) un.textContent = '';
                         if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.style.display = ''; }
@@ -7782,14 +7814,14 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790014000"></script>
+    <script src="/js/app.js?v=1790017000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1788724200"></script>
     <script src="/js/tools.js?v=1790008000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1790002000"></script>
+    <script src="/js/mods.js?v=1790017000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
     <script src="/js/donate.js?v=33806"></script>
     
