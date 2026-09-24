@@ -155,9 +155,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790012000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790014000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790007000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790012000">
+    <link rel="stylesheet" href="/css/style.css?v=1790014000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790007000">
     <link rel="stylesheet" href="/css/play.css?v=1790008000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
@@ -1228,14 +1228,12 @@
                 <button class="nav-btn" data-page="settings" id="nav-settings-btn">Settings</button>
                 <button class="nav-btn" data-page="profile" id="nav-profile-btn">Profile <span id="pm-nav-badge" class="nav-badge hidden"></span></button>
                 <button class="nav-btn" data-page="donate" id="nav-donate-btn">Donate</button>
-
-
-
-                <div id="user-display" class="user-display hidden" style="display: none;">
-                    <span id="username-display"></span>
-                    <button id="logout-btn" class="logout-btn">Logout</button>
-                </div>
             </nav>
+
+            <div id="user-display" class="user-display hidden" style="display: none;">
+                <span id="username-display"></span>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
         </header>
 
         <div class="separator"></div>
@@ -1830,14 +1828,10 @@
                     var gb = document.getElementById('btn-enter-lobby-gateway');
                     var lb = document.getElementById('btn-login-gateway');
                     if (gb && lb) {
-                        if (isDesktop && (!activeUser || isLoggedOutExplicitly)) {
+                        if (isLoggedOutExplicitly || (isDesktop && !activeUser)) {
                             gb.style.display = 'none';
                             lb.style.display = '';
                             lb.textContent = 'LOGIN';
-                        } else if (activeUser && !isLoggedOutExplicitly) {
-                            gb.style.display = '';
-                            gb.textContent = 'ENTER LOBBY';
-                            lb.style.display = 'none';
                         } else {
                             gb.style.display = '';
                             gb.textContent = 'ENTER LOBBY';
@@ -7788,7 +7782,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790010000"></script>
+    <script src="/js/app.js?v=1790014000"></script>
     <script src="/js/lobby.js?v=1789821200"></script>
     <script src="/js/play.js?v=1789684000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>

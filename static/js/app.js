@@ -1912,6 +1912,8 @@ window.showPage = showPage;
         if (activeUser) {
             currentUser = activeUser;
             window.currentUser = activeUser;
+            sessionStorage.removeItem('morpheme_logged_out');
+            localStorage.removeItem('morpheme_logged_out');
             if (typeof updateAuthUI === 'function') {
                 updateAuthUI();
             }
@@ -2336,6 +2338,7 @@ async function handleSignIn() {
             if (data.auth_token) {
                 localStorage.setItem('morpheme_auth_token', data.auth_token);
             }
+            localStorage.setItem('morpheme_username', data.username);
             currentUser = data.username;
             window.currentUser = currentUser;
             currentUserEmail = data.email;
@@ -2346,6 +2349,7 @@ async function handleSignIn() {
                 window.currentUserId = data.user_id;
                 try { localStorage.setItem('morpheme_user_id', String(data.user_id)); } catch (e) {}
             }
+            setCurrentUser(data.username, data.email, false, data.is_mod || false, data.rating);
             
             // Critical: Re-check mod status immediately after successful login
             if (typeof checkModStatus === 'function') {
@@ -2698,20 +2702,10 @@ async function handleLogout() {
         updateAuthUI();
         const gwBtn = document.getElementById('btn-enter-lobby-gateway');
         const loginGwBtn = document.getElementById('btn-login-gateway');
-        const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isDesktop = !isMobileUA;
-        if (isDesktop) {
-            if (gwBtn) gwBtn.style.display = 'none';
-            if (loginGwBtn) {
-                loginGwBtn.style.display = '';
-                loginGwBtn.textContent = 'LOGIN';
-            }
-        } else {
-            if (gwBtn) {
-                gwBtn.style.display = '';
-                gwBtn.textContent = 'ENTER LOBBY';
-            }
-            if (loginGwBtn) loginGwBtn.style.display = 'none';
+        if (gwBtn) gwBtn.style.display = 'none';
+        if (loginGwBtn) {
+            loginGwBtn.style.display = '';
+            loginGwBtn.textContent = 'LOGIN';
         }
 
         window.currentPageId = 'page-login';
@@ -3569,11 +3563,6 @@ window.updateManualToolState = function () {
             manualBtn.style.display = '';
         }
     }
-};
-
-window.setCurrentUser = function (user) {
-    currentUser = user;
-    window.currentUser = user;
 };
 
 // Global Idle Logout (24 Hours)

@@ -3743,7 +3743,10 @@ def logout():
     finally:
         session.clear()
         
-    return jsonify({'success': True})
+    resp = jsonify({'success': True})
+    cookie_name = app.config.get('SESSION_COOKIE_NAME', 'session')
+    resp.delete_cookie(cookie_name, path='/')
+    return resp
 
 @app.route('/api/user/account-info', methods=['GET'])
 def get_account_info():
