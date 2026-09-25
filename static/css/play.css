@@ -949,6 +949,11 @@ body.theme-light-brown .board-panel.low-time-warning {
     user-select: none !important;
 }
 
+body.is-subanagrams #words-tabs-container,
+body.is-subanagrams .words-tabs {
+    display: none !important;
+}
+
 /* Loading state: fill the board area and center the loading card */
 .game-board-loading,
 #game-board.game-board-loading,

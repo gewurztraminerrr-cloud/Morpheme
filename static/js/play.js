@@ -1144,7 +1144,11 @@ function clearGameUIAndCache() {
     // 2. Reset DOM elements to clean placeholders
     const tabsContainer = document.getElementById('words-tabs-container');
     if (tabsContainer) {
-        tabsContainer.style.display = 'flex';
+        if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
+            tabsContainer.style.display = 'none';
+        } else {
+            tabsContainer.style.display = 'flex';
+        }
     }
 
     const wordsList = document.getElementById('submitted-words-list');
@@ -1706,6 +1710,7 @@ async function updateGameState(incomingState = null) {
         }
 
         window.lastGameState = state;  // Store for optimistic updates
+        document.body.classList.toggle('is-subanagrams', state.game_type === 'subanagrams');
 
         
         // LOADING STATE: Room was just created and board is being generated async
@@ -2463,9 +2468,9 @@ async function updateGameState(incomingState = null) {
         const wordsStats = document.getElementById('words-stats');
         const tabsContainer = document.getElementById('words-tabs-container');
 
-        // Show tabs in standard rooms, but hide in tournament play
+        // Show tabs in standard rooms, but hide in tournament play and subanagrams
         if (tabsContainer) {
-            if (window.isTournamentPlay || isTournamentPlay) {
+            if (window.isTournamentPlay || isTournamentPlay || state.game_type === 'subanagrams') {
                 tabsContainer.style.display = 'none';
             } else {
                 tabsContainer.style.display = 'flex';
@@ -2507,12 +2512,7 @@ async function updateGameState(incomingState = null) {
         tabBtns.forEach(btn => {
             const tab = btn.dataset.tab;
             if (state.game_type === 'subanagrams') {
-                if (tab === 'found') {
-                    btn.textContent = (state.state === 'intermission') ? 'All Words' : 'Words';
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                }
+                btn.style.display = 'none';
             } else if (is24H) {
                 // 24H: Found, Clues, Previous, Score Sum
                 if (tab === 'found') {
@@ -8602,6 +8602,7 @@ async function leaveCurrentRoom() {
     window._localSubmittedWordsList = [];
     window.lastGameState = null;
     window.lastRawGameState = null;
+    document.body.classList.remove('is-subanagrams');
     
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {
