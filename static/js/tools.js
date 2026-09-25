@@ -6380,6 +6380,8 @@ async function runValidationCheck() {
         const statusText = data.is_valid ? 'IS VALID' : 'IS NOT VALID';
 
         displayEl.style.color = color;
+        displayEl.classList.toggle('valid-word-ok', !!data.is_valid);
+        displayEl.classList.toggle('valid-word-bad', !data.is_valid);
         displayEl.innerHTML = `<div class="valid-word-val" style="white-space: nowrap !important; word-break: keep-all !important; overflow-wrap: normal !important; text-align: center; width: 100%; font-weight: 900; line-height: 1.25; flex-shrink: 0;">${data.word}</div><div class="valid-status-val" style="white-space: nowrap !important; text-align: center; width: 100%; font-size: clamp(1.1rem, 3.2vw, 1.8rem); font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; opacity: 0.95; line-height: 1.35; margin-top: 6px; padding-bottom: 2px; flex-shrink: 0;">${statusText}</div>`;
         // Defer font-size fitting until after the DOM has fully laid out
         requestAnimationFrame(() => {

@@ -452,7 +452,6 @@ body.theme-light-brown .tool-btn-desc {
 }
 
 /* Control Panels & Dashboard Cards for Light Themes */
-[class*="theme-white"] .combo-control-panel,
 [class*="theme-light-"] .combo-control-panel,
 body.theme-yellow .combo-control-panel,
 body.theme-pink .combo-control-panel,
@@ -463,16 +462,247 @@ body.theme-light-brown .combo-control-panel {
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
-[class*="theme-white"] .subanagrams-game-area,
-[class*="theme-white"] .seq-results-container,
-[class*="theme-white"] #sub-results-container,
-[class*="theme-white"] #seq-results-container,
-[class*="theme-white"] .random-word-container,
-[class*="theme-white"] .wotd-container,
-[class*="theme-white"] .combo-results-container,
-[class*="theme-white"] .lists-container,
-[class*="theme-white"] .list-column,
-[class*="theme-white"] .list-scroll-area,
+/* ==========================================================================
+   Tools: All Content Panels & Control Panels for White Layouts on Desktop/Laptop Only
+   ========================================================================== */
+@media (min-width: 901px) {
+    body:not(.is-mobile).theme-white #page-tools .combo-control-panel,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-control-panel,
+    body.is-desktop.theme-white #page-tools .combo-control-panel,
+    body.is-desktop[class*="theme-white"] #page-tools .combo-control-panel,
+
+    body:not(.is-mobile).theme-white #page-tools .random-word-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .random-word-container,
+    body.is-desktop.theme-white #page-tools .random-word-container,
+    body.is-desktop[class*="theme-white"] #page-tools .random-word-container,
+
+    body:not(.is-mobile).theme-white #page-tools #valid-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #valid-results-container,
+    body.is-desktop.theme-white #page-tools #valid-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #valid-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools .validation-scroll-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .validation-scroll-container,
+    body.is-desktop.theme-white #page-tools .validation-scroll-container,
+    body.is-desktop[class*="theme-white"] #page-tools .validation-scroll-container,
+
+    body:not(.is-mobile).theme-white #page-tools .wotd-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .wotd-container,
+    body.is-desktop.theme-white #page-tools .wotd-container,
+    body.is-desktop[class*="theme-white"] #page-tools .wotd-container,
+
+    body:not(.is-mobile).theme-white #page-tools .combo-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-results-container,
+    body.is-desktop.theme-white #page-tools .combo-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools .combo-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #combo-results,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #combo-results,
+    body.is-desktop.theme-white #page-tools #combo-results,
+    body.is-desktop[class*="theme-white"] #page-tools #combo-results,
+
+    body:not(.is-mobile).theme-white #page-tools #tool-combo .result-section,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #tool-combo .result-section,
+    body.is-desktop.theme-white #page-tools #tool-combo .result-section,
+    body.is-desktop[class*="theme-white"] #page-tools #tool-combo .result-section,
+
+    body:not(.is-mobile).theme-white #page-tools #tool-combo .group-column,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #tool-combo .group-column,
+    body.is-desktop.theme-white #page-tools #tool-combo .group-column,
+    body.is-desktop[class*="theme-white"] #page-tools #tool-combo .group-column,
+
+    body:not(.is-mobile).theme-white #page-tools .seq-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .seq-results-container,
+    body.is-desktop.theme-white #page-tools .seq-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools .seq-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #seq-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #seq-results-container,
+    body.is-desktop.theme-white #page-tools #seq-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #seq-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools .subanagrams-game-area,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .subanagrams-game-area,
+    body.is-desktop.theme-white #page-tools .subanagrams-game-area,
+    body.is-desktop[class*="theme-white"] #page-tools .subanagrams-game-area,
+
+    body:not(.is-mobile).theme-white #page-tools #sub-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #sub-results-container,
+    body.is-desktop.theme-white #page-tools #sub-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #sub-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools .sub-practice-interactive-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .sub-practice-interactive-container,
+    body.is-desktop.theme-white #page-tools .sub-practice-interactive-container,
+    body.is-desktop[class*="theme-white"] #page-tools .sub-practice-interactive-container,
+
+    body:not(.is-mobile).theme-white #page-tools .lists-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .lists-container,
+    body.is-desktop.theme-white #page-tools .lists-container,
+    body.is-desktop[class*="theme-white"] #page-tools .lists-container,
+
+    body:not(.is-mobile).theme-white #page-tools .list-column,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .list-column,
+    body.is-desktop.theme-white #page-tools .list-column,
+    body.is-desktop[class*="theme-white"] #page-tools .list-column,
+
+    body:not(.is-mobile).theme-white #page-tools .list-scroll-area,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .list-scroll-area,
+    body.is-desktop.theme-white #page-tools .list-scroll-area,
+    body.is-desktop[class*="theme-white"] #page-tools .list-scroll-area,
+
+    body:not(.is-mobile).theme-white #page-tools .unscramble-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .unscramble-container,
+    body.is-desktop.theme-white #page-tools .unscramble-container,
+    body.is-desktop[class*="theme-white"] #page-tools .unscramble-container,
+
+    body:not(.is-mobile).theme-white #page-tools .unscramble-game-area,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .unscramble-game-area,
+    body.is-desktop.theme-white #page-tools .unscramble-game-area,
+    body.is-desktop[class*="theme-white"] #page-tools .unscramble-game-area,
+
+    body:not(.is-mobile).theme-white #page-tools #unscramble-found-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #unscramble-found-container,
+    body.is-desktop.theme-white #page-tools #unscramble-found-container,
+    body.is-desktop[class*="theme-white"] #page-tools #unscramble-found-container,
+
+    body:not(.is-mobile).theme-white #page-tools .random-words-table-wrapper,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .random-words-table-wrapper,
+    body.is-desktop.theme-white #page-tools .random-words-table-wrapper,
+    body.is-desktop[class*="theme-white"] #page-tools .random-words-table-wrapper,
+
+    body:not(.is-mobile).theme-white #page-tools .history-table-wrapper,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .history-table-wrapper,
+    body.is-desktop.theme-white #page-tools .history-table-wrapper,
+    body.is-desktop[class*="theme-white"] #page-tools .history-table-wrapper,
+
+    body:not(.is-mobile).theme-white #page-tools #find-count-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #find-count-results-container,
+    body.is-desktop.theme-white #page-tools #find-count-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #find-count-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #timer-display-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #timer-display-container,
+    body.is-desktop.theme-white #page-tools #timer-display-container,
+    body.is-desktop[class*="theme-white"] #page-tools #timer-display-container,
+
+    body:not(.is-mobile).theme-white #page-tools .new-users-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .new-users-container,
+    body.is-desktop.theme-white #page-tools .new-users-container,
+    body.is-desktop[class*="theme-white"] #page-tools .new-users-container,
+
+    body:not(.is-mobile).theme-white #page-tools .new-users-table-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .new-users-table-container,
+    body.is-desktop.theme-white #page-tools .new-users-table-container,
+    body.is-desktop[class*="theme-white"] #page-tools .new-users-table-container,
+
+    body:not(.is-mobile).theme-white #page-tools .stat-box,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .stat-box,
+    body.is-desktop.theme-white #page-tools .stat-box,
+    body.is-desktop[class*="theme-white"] #page-tools .stat-box,
+
+    body:not(.is-mobile).theme-white #page-tools .account-card,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .account-card,
+    body.is-desktop.theme-white #page-tools .account-card,
+    body.is-desktop[class*="theme-white"] #page-tools .account-card,
+
+    body:not(.is-mobile).theme-white #page-tools .store-item,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .store-item,
+    body.is-desktop.theme-white #page-tools .store-item,
+    body.is-desktop[class*="theme-white"] #page-tools .store-item {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        color: var(--text-primary) !important;
+    }
+
+    /* Polished High-Contrast Details on White Layouts for Tools on Desktop/Laptop */
+    body:not(.is-mobile).theme-white #valid-result-display.valid-word-ok,
+    body:not(.is-mobile)[class*="theme-white"] #valid-result-display.valid-word-ok,
+    body.is-desktop.theme-white #valid-result-display.valid-word-ok,
+    body.is-desktop[class*="theme-white"] #valid-result-display.valid-word-ok {
+        color: #15803d !important;
+    }
+
+    body:not(.is-mobile).theme-white #valid-result-display.valid-word-bad,
+    body:not(.is-mobile)[class*="theme-white"] #valid-result-display.valid-word-bad,
+    body.is-desktop.theme-white #valid-result-display.valid-word-bad,
+    body.is-desktop[class*="theme-white"] #valid-result-display.valid-word-bad {
+        color: #dc2626 !important;
+    }
+
+    body:not(.is-mobile).theme-white #unscramble-jumbled,
+    body:not(.is-mobile)[class*="theme-white"] #unscramble-jumbled,
+    body.is-desktop.theme-white #unscramble-jumbled,
+    body.is-desktop[class*="theme-white"] #unscramble-jumbled {
+        color: #b45309 !important;
+        text-shadow: none !important;
+    }
+
+    body:not(.is-mobile).theme-white #unscramble-count-info,
+    body:not(.is-mobile)[class*="theme-white"] #unscramble-count-info,
+    body.is-desktop.theme-white #unscramble-count-info,
+    body.is-desktop[class*="theme-white"] #unscramble-count-info {
+        color: #64748b !important;
+    }
+
+    body:not(.is-mobile).theme-white #unscramble-input,
+    body:not(.is-mobile)[class*="theme-white"] #unscramble-input,
+    body.is-desktop.theme-white #unscramble-input,
+    body.is-desktop[class*="theme-white"] #unscramble-input {
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        color: #0f172a !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-find-count .history-table th,
+    body:not(.is-mobile)[class*="theme-white"] #tool-find-count .history-table th,
+    body.is-desktop.theme-white #tool-find-count .history-table th,
+    body.is-desktop[class*="theme-white"] #tool-find-count .history-table th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-find-count .history-table td,
+    body:not(.is-mobile)[class*="theme-white"] #tool-find-count .history-table td,
+    body.is-desktop.theme-white #tool-find-count .history-table td,
+    body.is-desktop[class*="theme-white"] #tool-find-count .history-table td {
+        color: #0f172a !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-timer input[type="number"],
+    body:not(.is-mobile)[class*="theme-white"] #tool-timer input[type="number"],
+    body.is-desktop.theme-white #tool-timer input[type="number"],
+    body.is-desktop[class*="theme-white"] #tool-timer input[type="number"] {
+        background: #f8fafc !important;
+        border: 2px solid #0284c7 !important;
+        color: #0284c7 !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-timer label,
+    body:not(.is-mobile)[class*="theme-white"] #tool-timer label,
+    body.is-desktop.theme-white #tool-timer label,
+    body.is-desktop[class*="theme-white"] #tool-timer label {
+        color: #475569 !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-combo .group-header,
+    body:not(.is-mobile)[class*="theme-white"] #tool-combo .group-header,
+    body.is-desktop.theme-white #tool-combo .group-header,
+    body.is-desktop[class*="theme-white"] #tool-combo .group-header {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+
+    body:not(.is-mobile).theme-white #tool-combo .chart-desc,
+    body:not(.is-mobile)[class*="theme-white"] #tool-combo .chart-desc,
+    body.is-desktop.theme-white #tool-combo .chart-desc,
+    body.is-desktop[class*="theme-white"] #tool-combo .chart-desc {
+        color: #475569 !important;
+    }
+}
 [class*="theme-light-"] .subanagrams-game-area,
 [class*="theme-light-"] .seq-results-container,
 [class*="theme-light-"] #sub-results-container,
