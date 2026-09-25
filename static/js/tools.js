@@ -1942,7 +1942,7 @@ async function renderProfile(user) {
 
     // Stats
     const gamesEl = document.getElementById('profile-games');
-    if (gamesEl) gamesEl.innerText = user.games_played || 0;
+    if (gamesEl) gamesEl.innerText = (user.games_played || 0).toLocaleString();
 
     const winRateEl = document.getElementById('profile-win-rate');
     if (winRateEl) {
@@ -1955,15 +1955,22 @@ async function renderProfile(user) {
         }
     }
 
+    const top10RateEl = document.getElementById('profile-top-10-rate');
+    if (top10RateEl) {
+        if (user.top_10_games && user.top_10_games > 0) {
+            const rate = (typeof user.top_10_rate === 'number') ? user.top_10_rate.toFixed(1) : (user.top_10_rate || '0.0');
+            top10RateEl.innerText = `${rate}%`;
+            top10RateEl.title = `Finished within the top 10 placements in ${user.top_10_count || 0} of ${user.top_10_games} games with 20+ players (Accumulative)`;
+        } else {
+            top10RateEl.innerText = '-';
+            top10RateEl.title = 'Requires Accumulative rooms with 20+ players';
+        }
+    }
+
     const wpmEl = document.getElementById('profile-avg-wpm');
     if (wpmEl) {
         wpmEl.innerText = user.avg_wpm_300 || 0;
         wpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
-    }
-
-    const bestScoreEl = document.getElementById('profile-best-score');
-    if (bestScoreEl) {
-        bestScoreEl.innerText = user.best_score || '-';
     }
 
     // Profile Details

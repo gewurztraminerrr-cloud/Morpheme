@@ -4172,18 +4172,6 @@ def get_public_profile(username):
     elif period == 'year':
         time_filter = f"AND timestamp >= '{chicago_year_ago_str}'"
 
-    # Calculate Period Stats (If 'all', we still calculate from round_history for consistency, 
-    # but could use user table for performance if data volume is high)
-    # Only count rounds with a score > 0 as a played game, and exclude 24h rooms (duration >= 7200)
-    cursor_stats = conn.execute(f'''
-        SELECT COUNT(CASE WHEN total_score > 0 THEN 1 END), SUM(total_score)
-        FROM round_history
-        WHERE user_id = ? AND round_duration < 7200 {time_filter}
-    ''', (user_id,))
-    games_played_period, pt_sum_period = cursor_stats.fetchone()
-    games_played_period = games_played_period or 0
-    pt_sum_period = pt_sum_period or 0
-
     # Get config-specific ratings (Current ratings are ALWAYS current/lifetime)
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
@@ -4225,9 +4213,9 @@ def get_public_profile(username):
                 chunk = room_ids[i:i+500]
                 placeholders = ','.join(['?'] * len(chunk))
                 cursor_part = conn.execute(f'''
-                    SELECT rh.room_id, rh.round_number, rh.timestamp, rh.total_score, rh.user_rating, u.username
+                    SELECT rh.room_id, rh.round_number, rh.timestamp, rh.total_score, rh.user_rating, COALESCE(u.username, 'Guest')
                     FROM round_history rh
-                    JOIN users u ON rh.user_id = u.id
+                    LEFT JOIN users u ON rh.user_id = u.id
                     WHERE rh.room_id IN ({placeholders})
                 ''', chunk)
                 all_participants.extend(cursor_part.fetchall())
@@ -4284,7 +4272,31 @@ def get_public_profile(username):
         }
 
     processed_all = [process_round_row(r) for r in clean_rows]
-    wins_period = sum(1 for p in processed_all if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score'])
+
+    # Multiplayer qualifying rounds rule:
+    # If the number of people playing in a room, including themselves, is greater than or equal to 2,
+    # record the rounds in WIN RATE, PT SUM, and GAMES.
+    multiplayer_rounds = [p for p in processed_all if len(p.get('all_players', [])) >= 2 and p.get('total_score', 0) > 0]
+    games_played_period = len(multiplayer_rounds)
+    pt_sum_period = sum(p['total_score'] for p in multiplayer_rounds)
+    wins_period = sum(1 for p in multiplayer_rounds if p['all_players'] and p['total_score'] >= p['all_players'][0]['score'])
+
+    # TOP 10 RATE rule:
+    # If the number of players is greater than or equal to 20, and if the room is ACCUMULATIVE, include TOP 10 RATE.
+    # TOP 10 RATE simply means the user scored within the top 10 placements (placement <= 10).
+    top_10_rounds = [
+        p for p in processed_all
+        if str(p.get('game_type', '')).lower() == 'accumulative' and len(p.get('all_players', [])) >= 20 and p.get('total_score', 0) > 0
+    ]
+    top_10_games = len(top_10_rounds)
+    top_10_finishes = 0
+    for p in top_10_rounds:
+        # Placement is 1 + number of players who scored strictly higher
+        placement = 1 + sum(1 for pl in p['all_players'] if pl.get('score', 0) > p['total_score'])
+        if placement <= 10:
+            top_10_finishes += 1
+
+    top_10_rate = round((top_10_finishes / top_10_games) * 100, 1) if top_10_games > 0 else None
     
     # Config Stats (Averages for the period)
     config_stats = {}
@@ -4294,15 +4306,17 @@ def get_public_profile(username):
             if int(dur) >= 7200:
                 continue
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
-            matching_standard = [p for p in matching if 'valued' not in str(p.get('board_format', '')).lower()]
+            # Multiplayer only for games_played, wins, point_sum
+            matching_multi = [p for p in matching if len(p.get('all_players', [])) >= 2]
+            matching_standard = [p for p in matching_multi if 'valued' not in str(p.get('board_format', '')).lower()]
             matching_valid = [p for p in matching if p.get('total_words_avail', 0) > 0]
             avg_pct_found = round(sum(p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid) / len(matching_valid), 1) if matching_valid else 0
             max_pct_found = round(max([p['num_words'] / p['total_words_avail'] * 100 for p in matching_valid]) if matching_valid else 0, 1)
 
             config_stats[cfg_key] = {
                 'rating': rating,
-                'games_played': len(matching),
-                'wins': sum(1 for p in matching if p['all_players'] and p['total_score'] > 0 and p['total_score'] >= p['all_players'][0]['score']),
+                'games_played': len(matching_multi),
+                'wins': sum(1 for p in matching_multi if p['all_players'] and p['total_score'] >= p['all_players'][0]['score']),
                 'point_sum': sum(p['total_score'] for p in matching_standard),
                 'avg_pct_found': avg_pct_found,
                 'max_pct_found': max_pct_found,
@@ -4344,10 +4358,13 @@ def get_public_profile(username):
     return jsonify({
         'username': user[1],
         'rating': user[2],
-        'games_played': games_played_period, # PER-PERIOD
-        'wins': wins_period,                 # PER-PERIOD
-        'pt_sum': pt_sum_period,             # PER-PERIOD
+        'games_played': games_played_period, # PER-PERIOD (multiplayer >= 2)
+        'wins': wins_period,                 # PER-PERIOD (multiplayer >= 2)
+        'pt_sum': pt_sum_period,             # PER-PERIOD (multiplayer >= 2)
         'best_score': best_score_period,     # PER-PERIOD
+        'top_10_rate': top_10_rate,          # PER-PERIOD (accumulative >= 20)
+        'top_10_count': top_10_finishes,
+        'top_10_games': top_10_games,
         'avg_wpm_300': avg_wpm,              # PER-PERIOD (already was)
         'avatar_url': user[4],
         'country_flag': user[5] or '🏳️',
