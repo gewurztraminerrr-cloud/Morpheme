@@ -3350,7 +3350,6 @@ class RoomManager:
                                 if existing_room.state in ['waiting', 'intermission']:
                                     if existing_room.game_type == 'subanagrams':
                                         from subanagrams_generator import generate_subanagrams_board_and_words
-                                        from spinner_set import SpinnerSet
                                         sp = SpinnerSet.generate_subanagrams_params()
                                         res = generate_subanagrams_board_and_words(sp)
                                         if res:
@@ -3691,7 +3690,6 @@ class RoomManager:
                         if room.game_type == 'subanagrams':
                             print(f"[RoomManager] {room_id}: Kickstarting Subanagrams room immediately...")
                             from subanagrams_generator import generate_subanagrams_board_and_words
-                            from spinner_set import SpinnerSet
                             sp = SpinnerSet.generate_subanagrams_params()
                             res = generate_subanagrams_board_and_words(sp)
                             if res:
@@ -5710,7 +5708,6 @@ class RoomManager:
                         from subanagrams_generator import generate_subanagrams_board_and_words
                         p = getattr(room, 'next_spinner_params', None)
                         if not p:
-                            from spinner_set import SpinnerSet
                             p = SpinnerSet.generate_subanagrams_params(previous_params=getattr(room, 'spinner_params', None))
                         res = generate_subanagrams_board_and_words(p)
                         if res:
@@ -6475,7 +6472,6 @@ class RoomManager:
             if not getattr(room, 'next_round_board', None):
                 if room.game_type == 'subanagrams':
                     from subanagrams_generator import generate_subanagrams_board_and_words
-                    from spinner_set import SpinnerSet
                     p = getattr(room, 'next_spinner_params', None) or SpinnerSet.generate_subanagrams_params()
                     res = generate_subanagrams_board_and_words(p)
                     if res:
