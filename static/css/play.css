@@ -2533,9 +2533,9 @@ body.theme-light-brown .tools-content-column > .mobile-bottom-nav,
 body.theme-light-brown #page-tools .mobile-bottom-nav,
 body.theme-light-brown #page-mods .mobile-bottom-nav,
 body.theme-light-brown #page-settings .mobile-bottom-nav {
-    background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
-    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
     padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
     margin-bottom: 0 !important;
 }
@@ -6789,9 +6789,9 @@ input[type=range]::-moz-range-track {
     body.theme-light-brown #page-tools .mobile-bottom-nav,
     body.theme-light-brown #page-mods .mobile-bottom-nav,
     body.theme-light-brown #page-settings .mobile-bottom-nav {
-        background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
-        border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
-        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
+        border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
         padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
         margin-bottom: 0 !important;
     }
@@ -11352,9 +11352,9 @@ body.theme-white .mobile-bottom-nav,
 body.theme-white #page-tools .mobile-bottom-nav,
 body.theme-white #page-mods .mobile-bottom-nav,
 body.theme-white #page-settings .mobile-bottom-nav {
-    background: linear-gradient(180deg, #3d424d 0%, #2d313a 100%) !important;
-    border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
+    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
     padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
     margin-bottom: 0 !important;
 }
