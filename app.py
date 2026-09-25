@@ -225,6 +225,23 @@ _added_words_file_lock = threading.Lock()
 _added_words_dates_cache = {}
 _added_words_dates_mtime = 0
 
+def to_app_date_format(date_str):
+    """Normalizes any date string (ISO, YYYY-MM-DD, or DD/MM/YYYY) to DD/MM/YYYY."""
+    if not date_str:
+        return ""
+    date_str = str(date_str).strip()
+    if re.match(r'^\d{2}/\d{2}/\d{4}$', date_str):
+        return date_str
+    m = re.match(r'^(\d{4})-(\d{2})-(\d{2})', date_str)
+    if m:
+        year, month, day = m.groups()
+        return f"{day}/{month}/{year}"
+    m = re.match(r'^(\d{2})-(\d{2})-(\d{4})', date_str)
+    if m:
+        day, month, year = m.groups()
+        return f"{day}/{month}/{year}"
+    return date_str
+
 def get_added_words_dates():
     global _added_words_dates_cache, _added_words_dates_mtime
     if not os.path.exists(ADDED_WORDS_DATES_FILE):
@@ -240,7 +257,7 @@ def get_added_words_dates():
                         continue
                     parts = line.split('\t') if '\t' in line else line.split()
                     if len(parts) >= 2 and parts[1].strip():
-                        new_cache[parts[0].upper().strip()] = parts[1].strip()
+                        new_cache[parts[0].upper().strip()] = to_app_date_format(parts[1].strip())
             _added_words_dates_cache = new_cache
             _added_words_dates_mtime = mtime
     except Exception as e:
@@ -250,21 +267,22 @@ def get_added_words_dates():
 def get_default_added_word_date():
     try:
         if os.path.exists(ADDED_WORDS_FILE):
-            return datetime.datetime.fromtimestamp(os.path.getmtime(ADDED_WORDS_FILE)).strftime('%Y-%m-%d')
+            return datetime.datetime.fromtimestamp(os.path.getmtime(ADDED_WORDS_FILE), tz=ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
     except Exception:
         pass
-    return "2026-09-17"
+    return "17/09/2026"
 
 def load_word_date_pairs(file_path, default_fallback_date=None):
-    """Loads a list of {'word': w, 'date': d} from a file where lines may be 'WORD\\tYYYY-MM-DD' or 'WORD'."""
+    """Loads a list of {'word': w, 'date': d} from a file where lines may be 'WORD\\tDD/MM/YYYY' or 'WORD'."""
     results = []
     if not os.path.exists(file_path):
         return results
     if default_fallback_date is None:
         try:
-            default_fallback_date = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d')
+            default_fallback_date = datetime.datetime.fromtimestamp(os.path.getmtime(file_path), tz=ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
         except Exception:
-            default_fallback_date = "2026-05-22"
+            default_fallback_date = "22/05/2026"
+    default_fallback_date = to_app_date_format(default_fallback_date)
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         for line in f:
             line = line.strip()
@@ -272,7 +290,8 @@ def load_word_date_pairs(file_path, default_fallback_date=None):
                 continue
             parts = line.split('\t') if '\t' in line else line.split()
             word = parts[0].strip().upper()
-            date = parts[1].strip() if len(parts) >= 2 and parts[1].strip() else default_fallback_date
+            raw_date = parts[1].strip() if len(parts) >= 2 and parts[1].strip() else default_fallback_date
+            date = to_app_date_format(raw_date)
             if word:
                 results.append({'word': word, 'date': date})
     return results
@@ -1121,7 +1140,7 @@ def add_added_word_api():
             
             # 2.5 Record addition dates in added_words_dates.txt
             try:
-                today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+                today_str = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
                 existing_dates = []
                 if os.path.exists(ADDED_WORDS_DATES_FILE):
                     with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
@@ -1331,7 +1350,7 @@ def submit_dictionary_words():
         tracked_set = set(tracked_words)
         added_to_track = [w for w in sorted(list(new_words)) if w not in tracked_set]
         
-        today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+        today_str = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
         with open(tracking_path, 'a', encoding='utf-8') as f:
             for w in added_to_track:
                 f.write(f"{w}\t{today_str}\n")
@@ -7726,7 +7745,7 @@ def tools_get_lists():
             
         if list_type in ['all', 'new_nwl']:
             path = os.path.join(dict_dir, 'new_NWL.txt')
-            items = load_word_date_pairs(path, default_fallback_date='2026-05-22')
+            items = load_word_date_pairs(path, default_fallback_date='22/05/2026')
             filtered = [
                 it for it in items
                 if (target_len is None or len(it['word']) == target_len) and
@@ -7737,7 +7756,7 @@ def tools_get_lists():
             
         if list_type in ['all', 'new_csw']:
             path = os.path.join(dict_dir, 'new_CSW.txt')
-            items = load_word_date_pairs(path, default_fallback_date='2026-05-21')
+            items = load_word_date_pairs(path, default_fallback_date='21/05/2026')
             filtered = [
                 it for it in items
                 if (target_len is None or len(it['word']) == target_len) and

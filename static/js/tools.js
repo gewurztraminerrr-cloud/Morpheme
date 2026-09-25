@@ -4007,6 +4007,21 @@ function isNewWordList(type) {
 }
 window.isNewWordList = isNewWordList;
 
+function formatWordListDate(date) {
+    if (!date) return '';
+    if (typeof date === 'string') {
+        const trimmed = date.trim();
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
+        const m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    }
+    if (typeof window.formatAppDate === 'function') {
+        return window.formatAppDate(date);
+    }
+    return String(date);
+}
+window.formatWordListDate = formatWordListDate;
+
 function startProgressiveRendering() {
     const loadId = ++currentProgressiveLoadId;
     
@@ -4112,7 +4127,7 @@ function renderNextWordsPage() {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(item => {
             const word = typeof item === 'object' && item !== null ? item.word : item;
-            const date = typeof item === 'object' && item !== null ? item.date : '';
+            const date = typeof item === 'object' && item !== null ? formatWordListDate(item.date) : '';
             return `
                 <div class="list-item${currentWordsType === 'new_added' ? ' added-word' : ''}" style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="clickable-word-link" onclick="window.lookupWord('${word}', event)">${word}</span>
@@ -4227,7 +4242,7 @@ function generateFullListItemsHtml(slice) {
     } else if (isNewWordList(wordType)) {
         return slice.map(item => {
             const word = typeof item === 'object' && item !== null ? item.word : item;
-            const date = typeof item === 'object' && item !== null ? item.date : '';
+            const date = typeof item === 'object' && item !== null ? formatWordListDate(item.date) : '';
             const isMatch = (_currentFullListJumpedWord && word.toUpperCase() === _currentFullListJumpedWord);
             const extraClass = isMatch ? ' jump-target-highlight' : '';
             return `<span class="full-list-item${extraClass}" data-word="${word}"><span class="clickable-word-link" onclick="window.lookupWord('${word}', event)">${word}</span>${date ? ` <span class="new-word-date">${date}</span>` : ''}</span>`;
