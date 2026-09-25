@@ -5471,6 +5471,8 @@ def get_room_state(room_id):
                                         room.next_round_word_paths = {w: [] for w in nw}
                                         room.next_round_uniqueness = 0.0
                                         room.next_round_spinner_params = nparams
+                                        room.next_spinner_params = nparams
+                                        room.spinner_params_generated = True
                                         room.solving_complete = True
                                     else:
                                         room.next_round_board = None
@@ -5833,7 +5835,7 @@ def get_room_state(room_id):
                 'sequence_length': (
                     getattr(room, 'previous_sequence_length', None) or (len(room.previous_board[0]) if (getattr(room, 'previous_board', None) and len(room.previous_board) > 0 and isinstance(room.previous_board[0], list)) else None)
                 ) if is_intermission else (
-                    getattr(room, 'sequence_length', None) or (len(room.board[0]) if (getattr(room, 'board', None) and len(room.board) > 0 and isinstance(room.board[0], list)) else None)
+                    (len(room.board[0]) if (getattr(room, 'board', None) and len(room.board) > 0 and isinstance(room.board[0], list)) else getattr(room, 'sequence_length', None))
                 ),
                 'spinner_params_revealed': is_revealed,
                 'players': [

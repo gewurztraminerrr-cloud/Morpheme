@@ -265,6 +265,7 @@ def generate_subanagrams_board_and_words(params):
 
     final_params = dict(params)
     final_params['min_word_length'] = min_len
+    final_params['sequence_length'] = len(best_candidate)
     final_params['bonus_word'] = bonus_word
     final_params['bonus_word_length'] = len(bonus_word)
     # Update word count range to reflect actual candidate

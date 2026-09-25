@@ -3461,7 +3461,7 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Highlight if found selected word (Golden Highlight)
         let finderClass = '';
-        if (highlightedFoundWord) {
+        if (highlightedFoundWord && !isSubanagrams) {
             const hasChosenWord = p.submitted_words && p.submitted_words.some(sw => {
                 const w = (typeof sw === 'object' ? sw.word : sw) || '';
                 return w.toUpperCase() === highlightedFoundWord;
@@ -4354,7 +4354,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const findersBtn = document.getElementById('view-finders-btn-top');
     
     if (findersContainer && findersBtn) {
-        if (highlightedFoundWord) {
+        const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || (state && state.game_type === 'subanagrams');
+        if (highlightedFoundWord && !isSubanagrams) {
             findersContainer.style.display = 'block';
             
             const s = window.lastGameState;
@@ -4799,12 +4800,14 @@ function updateParameters(state) {
 
     const isSubanagrams = state.game_type === 'subanagrams';
     let factSeqLen = 7;
-    if (useSp && sp.sequence_length) {
+    if (!isIntermission && state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 0) {
+        factSeqLen = state.board[0].length;
+    } else if (isIntermission && !isRevealed && state.previous_board && state.previous_board[0] && Array.isArray(state.previous_board[0])) {
+        factSeqLen = state.previous_board[0].length;
+    } else if (useSp && sp.sequence_length) {
         factSeqLen = sp.sequence_length;
     } else if (state.sequence_length) {
         factSeqLen = state.sequence_length;
-    } else if (state.state === 'intermission' && state.previous_board && state.previous_board[0]) {
-        factSeqLen = state.previous_board[0].length;
     } else if (state.board && state.board[0]) {
         factSeqLen = state.board[0].length;
     } else if (sp && sp.sequence_length) {
@@ -10827,8 +10830,7 @@ window.showFinderModal = function (word) {
         title.textContent = `Who found "${wordUpper}"?`;
 
         // Use current game state to find players
-        if (!window.lastGameState || !window.lastGameState.players) {
-            console.warn('[showFinderModal] No lastGameState available');
+        if (!window.lastGameState || !window.lastGameState.players || window.lastGameState.game_type === 'subanagrams') {
             return;
         }
 

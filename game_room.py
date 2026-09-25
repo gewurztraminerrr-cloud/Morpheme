@@ -2334,7 +2334,7 @@ class GameRoom:
                                 rm = getattr(app, 'room_manager', None)
                             except Exception:
                                 pass
-                        if rm:
+                        if rm and self.game_type != 'subanagrams' and not self.is_solo:
                             try:
                                 rm.save_round_history(
                                     self,
@@ -5101,8 +5101,8 @@ class RoomManager:
             with room._state_lock:
                 # USER REQUEST: Prevent re-rolling! Check lock state INSIDE the atomic block.
                 # In Solo mode, we always prefer the user's initial settings over background pre-gen!
-                if getattr(room, 'spinner_params_generated', False) and room.next_spinner_params:
-                    new_params = dict(room.next_spinner_params)
+                if (getattr(room, 'spinner_params_generated', False) or getattr(room, 'next_round_board', None)) and (getattr(room, 'next_spinner_params', None) or getattr(room, 'next_round_spinner_params', None)):
+                    new_params = dict(room.next_spinner_params or room.next_round_spinner_params)
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
                     # Generate new parameters
@@ -5727,6 +5727,7 @@ class RoomManager:
                                 room.next_round_uniqueness = 0.0
                                 room.next_round_spinner_params = fparams
                                 room.next_spinner_params = fparams
+                                room.spinner_params_generated = True
                                 room.next_round_min_length = fparams.get('min_word_length', 3)
                                 from scoring import calculate_word_score
                                 room.next_round_word_scores = {
@@ -6893,7 +6894,10 @@ class RoomManager:
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 if getattr(room, 'game_type', None) == 'subanagrams' and room.board and isinstance(room.board[0], list):
-                    room.sequence_length = len(room.board[0])
+                    actual_seq_len = len(room.board[0])
+                    room.sequence_length = actual_seq_len
+                    if isinstance(room.spinner_params, dict):
+                        room.spinner_params['sequence_length'] = actual_seq_len
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
@@ -7140,21 +7144,22 @@ class RoomManager:
             def finalize_results():
                 # This is offloaded to avoid blocking the main server thread
                 try:
-                    # Save history to DB
-                    self.save_round_history(
-                        room, 
-                        board=ghost_prev_board, 
-                        all_words=ghost_source_words, 
-                        bonus_word=ghost_bonus, 
-                        player_snapshots=ghost_player_snapshots,
-                        round_num=ghost_round_num,
-                        all_words_paths=ghost_all_words_paths,
-                        round_start_time=ghost_round_start_time,
-                        board_format=ghost_board_format
-                    )
-                    
-                    # USER REQUEST: Word Tally logging (CSW words only)
-                    self.log_word_tally(room, ghost_player_words)
+                    if getattr(room, 'game_type', None) != 'subanagrams' and not getattr(room, 'is_solo', False):
+                        # Save history to DB
+                        self.save_round_history(
+                            room, 
+                            board=ghost_prev_board, 
+                            all_words=ghost_source_words, 
+                            bonus_word=ghost_bonus, 
+                            player_snapshots=ghost_player_snapshots,
+                            round_num=ghost_round_num,
+                            all_words_paths=ghost_all_words_paths,
+                            round_start_time=ghost_round_start_time,
+                            board_format=ghost_board_format
+                        )
+                        
+                        # USER REQUEST: Word Tally logging (CSW words only)
+                        self.log_word_tally(room, ghost_player_words)
                     
                     # Update moderator-only boards or tournament stats if needed
                     # (Standard rooms just move on)
@@ -7563,9 +7568,9 @@ class RoomManager:
         Also maintains a global cumulative tally in word_stats.json.
         """
         try:
-            # USER REQUEST: Do not include words found in 24h rooms in the word tally file
-            if room.time_limit >= 7200:
-                print(f"[WordTally] Skipping tally for 24h room: {room.room_id}")
+            # USER REQUEST: Do not include words found in 24h rooms or Subanagrams in the word tally file
+            if room.time_limit >= 7200 or getattr(room, 'game_type', None) == 'subanagrams' or room.is_solo:
+                print(f"[WordTally] Skipping tally for {room.game_type} room: {room.room_id}")
                 return
 
             import collections
