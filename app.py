@@ -4476,14 +4476,17 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     elif period == 'year':
         time_filter = f"AND timestamp >= '{chicago_year_ago_str}'"
         
-    query = f'''
-        SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
-        FROM round_history
-        WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? AND total_score > 0 {time_filter}
-        ORDER BY timestamp DESC, id DESC
-    '''
-    cursor = conn.execute(query, (user_id, *canonical_game_types, board_dimensions, time_limit))
-    period_rows = cursor.fetchall()
+    if period == 'all':
+        period_rows = global_matching
+    else:
+        query = f'''
+            SELECT words_json, total_score, timestamp, room_id, round_number, board_json, id, user_rating, board_dimensions, total_words_avail, board_format
+            FROM round_history
+            WHERE user_id = ? AND game_type IN ({placeholders}) AND board_dimensions = ? AND round_duration = ? AND total_score > 0 {time_filter}
+            ORDER BY timestamp DESC, id DESC
+        '''
+        cursor = conn.execute(query, (user_id, *canonical_game_types, board_dimensions, time_limit))
+        period_rows = cursor.fetchall()
     
     # Only count rounds where the player actually scored points (> 0)
     period_matching = [r for r in period_rows if r[1] > 0]
@@ -4491,6 +4494,10 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     if not period_matching and period != 'all':
         conn.close()
         return jsonify({'username': username, 'rating': 1200, 'global_stats': global_stats, 'stats': None})
+
+    # Ensure CSW validator is loaded once outside the loop
+    word_validator.ensure_csw_loaded()
+    unique_csw = getattr(word_validator, 'unique_csw_words', set())
 
     # Calculations for Period
     performance_list = []
@@ -4539,8 +4546,6 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         max_s = max(e[0] for e in room_entries) if room_entries else 0
         is_win = (my_score == max_s and max_s > 0)
         if is_win: period_wins += 1
-
-        word_validator.ensure_csw_loaded()
         # Calculate Performance Efficiency (PE) using Rating-Based Expected Share
         # FAQ: "Expected Score... based on your current rating relative to your opponents"
         
@@ -4579,7 +4584,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             avg_l = round(total_l / num_words, 1)
         twa = row[9] if len(row) > 9 else 0
         pct_found = round(num_words / twa * 100, 1) if twa > 0 else 0
-        obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in word_validator.unique_csw_words) if words else 0
+        obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in unique_csw) if words else 0
         processed = {
             'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': format_chicago_to_utc(ts),
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,

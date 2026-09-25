@@ -3575,11 +3575,13 @@ function setupImageLightbox() {
         }
         if (achClose) {
             const close = () => {
+                _currentAchRequestSeq++;
                 achModal.classList.add('hidden');
                 achModal.classList.remove('forced-show');
                 achModal.style.display = 'none';
                 achModal.style.opacity = '0';
                 achModal.style.pointerEvents = 'none';
+                resetAchievementsModal();
             };
             achClose.onclick = close;
             achModal.onclick = (e) => {
@@ -3589,14 +3591,53 @@ function setupImageLightbox() {
     }
 }
 
-// Achievement state tracking for period switching
+// Achievement state tracking for period switching and race condition prevention
 let currentAchConfig = null;
+let _currentAchRequestSeq = 0;
+
+function resetAchievementsModal(username = '', mode = '', board = '', time = '') {
+    const titleEl = document.getElementById('achievement-title');
+    const subtitleEl = document.getElementById('achievement-subtitle');
+    if (titleEl) titleEl.textContent = username ? `${username}'s Achievements` : 'Achievements';
+    if (subtitleEl) {
+        if (mode && board && time) {
+            subtitleEl.textContent = `${mode.charAt(0).toUpperCase() + mode.slice(1)} ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
+        } else {
+            subtitleEl.textContent = '-';
+        }
+    }
+
+    const ratingEl = document.getElementById('achievement-rating-val');
+    if (ratingEl) ratingEl.textContent = '-';
+
+    const resetIds = [
+        'ach-high-score', 'ach-max-words', 'ach-longest-word', 'ach-best-word',
+        'ach-games-played', 'ach-wins', 'ach-win-rate', 'ach-total-words',
+        'ach-avg-perf', 'ach-greatest-pe', 'ach-avg-pct', 'ach-avg-winrate',
+        'ach-total-games', 'ach-avg-score', 'ach-avg-words', 'ach-avg-word-pts',
+        'ach-avg-pct-header'
+    ];
+    resetIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '-';
+    });
+
+    const loadingHtml = '<tr><td colspan="6" style="text-align: center; padding: 25px; color: var(--text-40, rgba(var(--text-primary-rgb), 0.4)); font-style: italic;">Loading stats...</td></tr>';
+    const tableIds = [
+        'ach-table-perf', 'ach-table-wins', 'ach-table-recent', 'ach-table-words',
+        'ach-table-scores', 'ach-table-wordcounts', 'ach-table-pcts', 'ach-table-obscure'
+    ];
+    tableIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = loadingHtml;
+    });
+}
 
 async function showRoomAchievements(username, mode, board, time, period = 'all') {
     const modal = document.getElementById('room-achievements-modal');
     if (!modal) { console.error('[Achievements] Modal element not found'); return; }
 
-    // Track state for period switching
+    const reqSeq = ++_currentAchRequestSeq;
     currentAchConfig = { username, mode, board, time };
 
     // Capture Scroll Position to prevent jumping to top on filter change
@@ -3624,6 +3665,47 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         else tab.classList.remove('active');
     });
 
+    // Check fast client memory cache for 0ms transition
+    if (!window._achievementsMemoryCache) {
+        window._achievementsMemoryCache = new Map();
+    }
+    const cacheKey = `${username.toLowerCase()}|${mode}|${board}|${time}|${period}`;
+    const cachedEntry = window._achievementsMemoryCache.get(cacheKey);
+    const now = Date.now();
+
+    if (cachedEntry && (now - cachedEntry.time < 30000)) {
+        renderRoomAchievementsData(cachedEntry.data, reqSeq, card, previousScroll, username, mode, board, time);
+        return;
+    }
+
+    // Immediately reset UI to prevent displaying the previous player's stats while loading
+    resetAchievementsModal(username, mode, board, time);
+
+    try {
+        const response = await fetch(`/api/profile/${encodeURIComponent(username)}/achievements/${mode}/${board}/${time}?period=${period}&t=${Date.now()}`);
+        const data = await response.json();
+
+        // Discard if another request was initiated while in-flight
+        if (reqSeq !== _currentAchRequestSeq) return;
+        if (data.error) throw new Error(data.error);
+
+        // Store in cache
+        window._achievementsMemoryCache.set(cacheKey, { data, time: Date.now() });
+
+        renderRoomAchievementsData(data, reqSeq, card, previousScroll, username, mode, board, time);
+    } catch (err) {
+        if (reqSeq !== _currentAchRequestSeq) return;
+        console.error("Failed to fetch achievements:", err);
+    } finally {
+        if (card && typeof card._updateCustomScrollbar === 'function') {
+            card._updateCustomScrollbar();
+        }
+    }
+}
+
+function renderRoomAchievementsData(data, reqSeq, card, previousScroll, username, mode, board, time) {
+    if (reqSeq && reqSeq !== _currentAchRequestSeq) return;
+
     // Set titles (null-guarded)
     const titleEl = document.getElementById('achievement-title');
     const subtitleEl = document.getElementById('achievement-subtitle');
@@ -3631,28 +3713,22 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     if (subtitleEl) subtitleEl.textContent =
         `${mode.charAt(0).toUpperCase() + mode.slice(1)} ${board} | ${time < 300 ? time + 's' : (time / 60) + 'm'}`;
 
-    try {
-        const response = await fetch(`/api/profile/${username}/achievements/${mode}/${board}/${time}?period=${period}`);
-        const data = await response.json();
+    // Update Rating
+    document.getElementById('achievement-rating-val').textContent = data.rating || 1200;
 
-        if (data.error) throw new Error(data.error);
-
-        // Update Rating
-        document.getElementById('achievement-rating-val').textContent = data.rating || 1200;
-
-        // Reset fields helpers
-        const setFields = (obj, mapping) => {
-            for (const [key, id] of Object.entries(mapping)) {
-                const el = document.getElementById(id);
-                if (el) {
-                    if (key.includes('word') && typeof obj[key] === 'object') {
-                        el.textContent = obj[key].word ? `${obj[key].word} (${obj[key].points} pts)` : 'None';
-                    } else {
-                        el.textContent = obj[key] || (typeof obj[key] === 'number' ? '0' : '-');
-                    }
+    // Reset fields helpers
+    const setFields = (obj, mapping) => {
+        for (const [key, id] of Object.entries(mapping)) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (key.includes('word') && typeof obj[key] === 'object') {
+                    el.textContent = obj[key].word ? `${obj[key].word} (${obj[key].points} pts)` : 'None';
+                } else {
+                    el.textContent = obj[key] || (typeof obj[key] === 'number' ? '0' : '-');
                 }
             }
-        };
+        }
+    };
 
         // 1. Populate Global Stats (Top Sections) - Always All-Time
         if (data.global_stats) {
@@ -3905,15 +3981,6 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
                 card._updateCustomScrollbar();
             }, 50);
         }
-
-    } catch (err) {
-        console.error("Failed to fetch achievements:", err);
-        // showToast?
-    } finally {
-        if (card && typeof card._updateCustomScrollbar === 'function') {
-            card._updateCustomScrollbar();
-        }
-    }
 }
 window.showRoomAchievements = showRoomAchievements;
 
