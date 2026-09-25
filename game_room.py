@@ -4521,7 +4521,6 @@ class RoomManager:
                 is_split = (room.game_type == 'split')
                 room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                 room.spinner_params_generated = True
-            from spinner_set import SpinnerSet
             # Issue 5: Only sanitize if params have NOT been revealed yet.
             # Once params are locked (revealed during intermission), do NOT mutate them.
             if not getattr(room, 'spinner_params_revealed', False):
@@ -5107,7 +5106,6 @@ class RoomManager:
                 else:
                     # Generate new parameters
                     if room.game_type == 'subanagrams':
-                        from spinner_set import SpinnerSet
                         new_params = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
                     elif getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                         initial_solo_params = room.initial_solo_params
@@ -5744,7 +5742,6 @@ class RoomManager:
                         room.board_search_loading = False
                         room.board_search_started_actual = False
 
-                import threading
                 threading.Thread(target=subanagrams_search_worker, daemon=True).start()
                 return True
 
@@ -5752,10 +5749,8 @@ class RoomManager:
             if not params:
                 is_24h = room.time_limit >= 7200
                 is_split = (room.game_type == 'split')
-                from spinner_set import SpinnerSet
                 room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split, previous_params=getattr(room, 'spinner_params', None))
                 params = room.next_spinner_params
-            from spinner_set import SpinnerSet
             params = SpinnerSet.sanitize_params(params, room.board_dimensions, room.time_limit >= 7200)
             room.next_spinner_params = params
             launched_generated_at = params.get('generated_at') if params else None
