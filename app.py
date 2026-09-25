@@ -238,7 +238,7 @@ def get_added_words_dates():
                     line = line.strip()
                     if not line or line.startswith('#'):
                         continue
-                    parts = line.split('\t')
+                    parts = line.split('\t') if '\t' in line else line.split()
                     if len(parts) >= 2 and parts[1].strip():
                         new_cache[parts[0].upper().strip()] = parts[1].strip()
             _added_words_dates_cache = new_cache
@@ -270,7 +270,7 @@ def load_word_date_pairs(file_path, default_fallback_date=None):
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
-            parts = line.split('\t')
+            parts = line.split('\t') if '\t' in line else line.split()
             word = parts[0].strip().upper()
             date = parts[1].strip() if len(parts) >= 2 and parts[1].strip() else default_fallback_date
             if word:
