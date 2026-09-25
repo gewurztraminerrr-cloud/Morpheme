@@ -219,7 +219,63 @@ import fcntl
 # MODERATOR SYSTEM
 MODS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'mods.txt')
 ADDED_WORDS_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
+ADDED_WORDS_DATES_FILE = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words_dates.txt')
 _added_words_file_lock = threading.Lock()
+
+_added_words_dates_cache = {}
+_added_words_dates_mtime = 0
+
+def get_added_words_dates():
+    global _added_words_dates_cache, _added_words_dates_mtime
+    if not os.path.exists(ADDED_WORDS_DATES_FILE):
+        return _added_words_dates_cache
+    try:
+        mtime = os.path.getmtime(ADDED_WORDS_DATES_FILE)
+        if mtime != _added_words_dates_mtime:
+            new_cache = {}
+            with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    parts = line.split('\t')
+                    if len(parts) >= 2 and parts[1].strip():
+                        new_cache[parts[0].upper().strip()] = parts[1].strip()
+            _added_words_dates_cache = new_cache
+            _added_words_dates_mtime = mtime
+    except Exception as e:
+        print(f"[Tools] Error loading added_words_dates.txt: {e}")
+    return _added_words_dates_cache
+
+def get_default_added_word_date():
+    try:
+        if os.path.exists(ADDED_WORDS_FILE):
+            return datetime.datetime.fromtimestamp(os.path.getmtime(ADDED_WORDS_FILE)).strftime('%Y-%m-%d')
+    except Exception:
+        pass
+    return "2026-09-17"
+
+def load_word_date_pairs(file_path, default_fallback_date=None):
+    """Loads a list of {'word': w, 'date': d} from a file where lines may be 'WORD\\tYYYY-MM-DD' or 'WORD'."""
+    results = []
+    if not os.path.exists(file_path):
+        return results
+    if default_fallback_date is None:
+        try:
+            default_fallback_date = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d')
+        except Exception:
+            default_fallback_date = "2026-05-22"
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split('\t')
+            word = parts[0].strip().upper()
+            date = parts[1].strip() if len(parts) >= 2 and parts[1].strip() else default_fallback_date
+            if word:
+                results.append({'word': word, 'date': date})
+    return results
 
 
 # GLOBAL WORD TALLY CONTROLLER
@@ -1063,6 +1119,24 @@ def add_added_word_api():
                 for l in lines:
                     f.write(f"{l}\n")
             
+            # 2.5 Record addition dates in added_words_dates.txt
+            try:
+                today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+                existing_dates = []
+                if os.path.exists(ADDED_WORDS_DATES_FILE):
+                    with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                        existing_dates = [l.strip() for l in f if l.strip() and not l.startswith('#')]
+                valid_set = set(valid_to_add)
+                filtered_dates = [l for l in existing_dates if l.split('\t')[0].upper() not in valid_set]
+                new_date_entries = [f"{w}\t{today_str}" for w in valid_to_add]
+                combined_dates = new_date_entries + filtered_dates
+                with open(ADDED_WORDS_DATES_FILE, 'w', encoding='utf-8') as f:
+                    f.write("# WORD\tDATE\n")
+                    for entry in combined_dates:
+                        f.write(f"{entry}\n")
+            except Exception as e:
+                print(f"[Tools] Error updating added_words_dates.txt on add: {e}")
+            
             # 3. Sync with Global Tally stats file
             for w in valid_to_add:
                 _update_word_stats(w, "add")
@@ -1165,6 +1239,18 @@ def remove_added_word():
                 for l in new_lines:
                     f.write(l + '\n')
             
+            # 2.5 Remove from added_words_dates.txt
+            if os.path.exists(ADDED_WORDS_DATES_FILE):
+                try:
+                    with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                        date_lines = [l.strip() for l in f if l.strip()]
+                    kept_dates = [l for l in date_lines if l.startswith('#') or l.split('\t')[0].upper() not in remove_set]
+                    with open(ADDED_WORDS_DATES_FILE, 'w', encoding='utf-8') as f:
+                        for entry in kept_dates:
+                            f.write(f"{entry}\n")
+                except Exception as e:
+                    print(f"[Tools] Error removing from added_words_dates.txt: {e}")
+            
             # 3. Sync with Global Tally
             for w in present_in_aw:
                 _update_word_stats(w, "remove")
@@ -1239,15 +1325,16 @@ def submit_dictionary_words():
         # Read existing tracked words to avoid duplicates in the "New" list
         tracked_words = []
         if os.path.exists(tracking_path):
-            with open(tracking_path, 'r') as f:
-                tracked_words = [line.strip().upper() for line in f if line.strip()]
+            with open(tracking_path, 'r', encoding='utf-8', errors='ignore') as f:
+                tracked_words = [line.strip().split()[0].upper() for line in f if line.strip()]
         
         tracked_set = set(tracked_words)
         added_to_track = [w for w in sorted(list(new_words)) if w not in tracked_set]
         
-        with open(tracking_path, 'a') as f:
+        today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+        with open(tracking_path, 'a', encoding='utf-8') as f:
             for w in added_to_track:
-                f.write(w + '\n')
+                f.write(f"{w}\t{today_str}\n")
 
         # 4. Remove from Added Words (Staging Area)
         if os.path.exists(ADDED_WORDS_FILE):
@@ -1259,6 +1346,18 @@ def submit_dictionary_words():
             with open(ADDED_WORDS_FILE, 'w') as f:
                 for w in filtered_added:
                     f.write(w + '\n')
+
+        # 4.5 Also remove from added_words_dates.txt
+        if os.path.exists(ADDED_WORDS_DATES_FILE):
+            try:
+                with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                    date_lines = [l.strip() for l in f if l.strip()]
+                kept_dates = [l for l in date_lines if l.startswith('#') or l.split('\t')[0].upper() not in new_words]
+                with open(ADDED_WORDS_DATES_FILE, 'w', encoding='utf-8') as f:
+                    for entry in kept_dates:
+                        f.write(f"{entry}\n")
+            except Exception as e:
+                print(f"[Tools] Error removing from added_words_dates.txt on promotion: {e}")
         
         # 5. Initialize counts in word_stats.json for the new words
         for w in new_words:
@@ -1399,9 +1498,9 @@ def compute_undefined_words(force=False):
                 if os.path.exists(path):
                     with open(path, 'r', encoding='utf-8', errors='ignore') as fh:
                         for ln in fh:
-                            w = ln.strip().upper()
-                            if w:
-                                words.add(w)
+                            ln = ln.strip()
+                            if ln and not ln.startswith('#'):
+                                words.add(ln.split()[0].upper())
                 return words
 
             nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
@@ -7016,7 +7115,7 @@ def load_tools_dictionary(dict_name):
             p = os.path.join(os.path.dirname(__file__), 'dictionaries', ext_f)
             if os.path.exists(p):
                 with open(p, 'r') as f:
-                    words.update(line.strip().upper() for line in f if line.strip())
+                    words.update(line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#'))
 
     # Merge supplementary 16+ word list
     long_path = os.path.join(os.path.dirname(__file__), 'dictionaries', '16plus.txt')
@@ -7469,8 +7568,8 @@ def tools_get_lists():
                     if 'new_NWL' not in LISTS_CACHE:
                         path = os.path.join(dict_dir, 'new_NWL.txt')
                         if os.path.exists(path):
-                            with open(path, 'r') as f:
-                                LISTS_CACHE['new_NWL'] = {line.strip().upper() for line in f if line.strip()}
+                            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                                LISTS_CACHE['new_NWL'] = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
                         else:
                             LISTS_CACHE['new_NWL'] = set()
                     base_set = LISTS_CACHE['new_NWL']
@@ -7478,8 +7577,8 @@ def tools_get_lists():
                     if 'new_CSW' not in LISTS_CACHE:
                         path = os.path.join(dict_dir, 'new_CSW.txt')
                         if os.path.exists(path):
-                            with open(path, 'r') as f:
-                                LISTS_CACHE['new_CSW'] = {line.strip().upper() for line in f if line.strip()}
+                            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                                LISTS_CACHE['new_CSW'] = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
                         else:
                             LISTS_CACHE['new_CSW'] = set()
                     base_set = LISTS_CACHE['new_CSW']
@@ -7506,7 +7605,7 @@ def tools_get_lists():
             'nwl': [], 'csw': [], 'csw_only': [],
             'nwl_likelihood': [], 'csw_likelihood': [], 'csw_only_likelihood': [],
             'added_likelihood': [], 'all_likelihood': [], 'likelihood': [],
-            'uniques': [], 'added': [],
+            'uniques': [], 'added': [], 'new_added': [],
             'new_nwl': [], 'new_csw': [], 'all_words': [], 'is_truncated': False
         }
 
@@ -7572,27 +7671,36 @@ def tools_get_lists():
                 csw_only_set = csw_set - nwl_set
             response['csw_only_likelihood'] = build_likelihood_list(csw_only_set)
 
-        if list_type in ['all', 'added', 'added_likelihood', 'all_likelihood', 'all_words']:
-            # Added Words: Use preloaded in-memory list
+        if list_type in ['all', 'added', 'new_added', 'added_likelihood', 'all_likelihood', 'all_words']:
+            # Added Words: Use preloaded in-memory list (file order has newest words first)
             raw_lines = getattr(word_validator, 'added_words_list', [])
             unique_added = []
+            seen_added = set()
             for w in raw_lines:
                 # Filter by length and start char if provided
                 if target_len is not None and len(w) != target_len: continue
                 if start_char is not None and not w.startswith(start_char): continue
-                unique_added.append(w)
+                if w not in seen_added:
+                    seen_added.add(w)
+                    unique_added.append(w)
 
             if list_type in ['all', 'added']:
-                if no_limit:
-                    # View Full Lists: always alphabetically sorted (A-to-Z)
-                    response['added'] = sorted(unique_added)
-                else:
-                    # Default main tab (first 10,000): newest words first
-                    response['added'] = cap_list(unique_added)
+                # Both first 10,000 and full list are now alphabetically sorted (A-to-Z)
+                response['added'] = cap_list(sorted(unique_added))
+
+            if list_type in ['all', 'new_added']:
+                # New AW Words: newest words first along with date added
+                dates_map = get_added_words_dates()
+                fallback_d = get_default_added_word_date()
+                new_added_items = [
+                    {'word': w, 'date': dates_map.get(w, fallback_d)}
+                    for w in unique_added
+                ]
+                response['new_added'] = cap_list(new_added_items)
 
             if list_type in ['all', 'added_likelihood']:
                 # Deduplicate before scoring
-                response['added_likelihood'] = build_likelihood_list(set(unique_added))
+                response['added_likelihood'] = build_likelihood_list(seen_added)
 
         if list_type in ['all', 'all_likelihood', 'all_words']:
             # ALL: NWL union CSW union Added Words, deduplicated and sorted alphabetically
@@ -7617,20 +7725,26 @@ def tools_get_lists():
             response['uniques'] = cap_list(sorted(list(get_source_set('uniqueNWL'))))
             
         if list_type in ['all', 'new_nwl']:
-            raw_new_nwl = list(get_source_set('new_NWL'))
-            if no_limit:
-                response['new_nwl'] = sorted(raw_new_nwl)
-            else:
-                response['new_nwl'] = list(reversed(raw_new_nwl)) # Show most recent first
-                response['new_nwl'] = cap_list(response['new_nwl'])
+            path = os.path.join(dict_dir, 'new_NWL.txt')
+            items = load_word_date_pairs(path, default_fallback_date='2026-05-22')
+            filtered = [
+                it for it in items
+                if (target_len is None or len(it['word']) == target_len) and
+                   (start_char is None or it['word'].startswith(start_char))
+            ]
+            filtered.reverse()  # Newest first
+            response['new_nwl'] = cap_list(filtered)
             
         if list_type in ['all', 'new_csw']:
-            raw_new_csw = list(get_source_set('new_CSW'))
-            if no_limit:
-                response['new_csw'] = sorted(raw_new_csw)
-            else:
-                response['new_csw'] = list(reversed(raw_new_csw)) # Show most recent first
-                response['new_csw'] = cap_list(response['new_csw'])
+            path = os.path.join(dict_dir, 'new_CSW.txt')
+            items = load_word_date_pairs(path, default_fallback_date='2026-05-21')
+            filtered = [
+                it for it in items
+                if (target_len is None or len(it['word']) == target_len) and
+                   (start_char is None or it['word'].startswith(start_char))
+            ]
+            filtered.reverse()  # Newest first
+            response['new_csw'] = cap_list(filtered)
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:
             LISTS_CACHE[cache_key] = response

@@ -10365,4 +10365,51 @@ body.is-tournament-round #show-everyone-btn {
     }
 }
 
+/* New Word Lists Date Display */
+.new-word-date {
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', 'Roboto Mono', 'SF Mono', monospace;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 8px;
+    letter-spacing: 0.02em;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+
+.list-item:hover .new-word-date,
+.full-list-item:hover .new-word-date {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.theme-white .new-word-date,
+[class*="theme-white"] .new-word-date,
+[class*="theme-light-"] .new-word-date,
+body.theme-yellow .new-word-date,
+body.theme-pink .new-word-date,
+body.theme-orange .new-word-date,
+body.theme-gray .new-word-date,
+body.theme-light-brown .new-word-date {
+    color: #475569 !important;
+    font-weight: 600 !important;
+}
+
+body.theme-white .list-item:hover .new-word-date,
+[class*="theme-white"] .list-item:hover .new-word-date,
+[class*="theme-light-"] .list-item:hover .new-word-date,
+body.theme-yellow .list-item:hover .new-word-date,
+body.theme-pink .list-item:hover .new-word-date,
+body.theme-orange .list-item:hover .new-word-date,
+body.theme-gray .list-item:hover .new-word-date,
+body.theme-light-brown .list-item:hover .new-word-date,
+body.theme-white .full-list-item:hover .new-word-date,
+[class*="theme-white"] .full-list-item:hover .new-word-date,
+[class*="theme-light-"] .full-list-item:hover .new-word-date,
+body.theme-yellow .full-list-item:hover .new-word-date,
+body.theme-pink .full-list-item:hover .new-word-date,
+body.theme-orange .full-list-item:hover .new-word-date,
+body.theme-gray .full-list-item:hover .new-word-date,
+body.theme-light-brown .full-list-item:hover .new-word-date {
+    color: #1e293b !important;
+}
+
 

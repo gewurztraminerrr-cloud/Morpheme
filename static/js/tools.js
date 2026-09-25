@@ -4002,6 +4002,11 @@ let listsFetchAbortController = null;
 let listsFetchTimeoutId = null; // Module-level so it can be cancelled on re-fetch
 let listsShowAll = false;
 
+function isNewWordList(type) {
+    return type === 'new_added' || type === 'new_nwl' || type === 'new_csw';
+}
+window.isNewWordList = isNewWordList;
+
 function startProgressiveRendering() {
     const loadId = ++currentProgressiveLoadId;
     
@@ -4103,6 +4108,21 @@ function renderNextWordsPage() {
                 <span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span>
             </div>
         `).join('');
+    } else if (isNewWordList(currentWordsType)) {
+        const isMod = window.currentUserIsMod;
+        html = nextPageWords.map(item => {
+            const word = typeof item === 'object' && item !== null ? item.word : item;
+            const date = typeof item === 'object' && item !== null ? item.date : '';
+            return `
+                <div class="list-item${currentWordsType === 'new_added' ? ' added-word' : ''}" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="clickable-word-link" onclick="window.lookupWord('${word}', event)">${word}</span>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        ${date ? `<span class="new-word-date">${date}</span>` : ''}
+                        ${(isMod && currentWordsType === 'new_added') ? `<button onclick="removeAddedWordFromTools('${word}')" style="background:none; border:none; color:#f43f5e; cursor:pointer; font-weight:bold; padding:0 5px;" title="Remove">&times;</button>` : ''}
+                    </span>
+                </div>
+            `;
+        }).join('');
     } else if (currentWordsType === 'added') {
         const isMod = window.currentUserIsMod;
         html = nextPageWords.map(w => `
@@ -4203,6 +4223,14 @@ function generateFullListItemsHtml(slice) {
             const isMatch = (_currentFullListJumpedWord && item.word.toUpperCase() === _currentFullListJumpedWord);
             const extraClass = isMatch ? ' jump-target-highlight' : '';
             return `<span class="full-list-item${extraClass}" data-word="${item.word}"><span class="likelihood-score">${item.score}</span> <span class="clickable-word-link" onclick="window.lookupWord('${item.word}', event)">${item.word}</span></span>`;
+        }).join('');
+    } else if (isNewWordList(wordType)) {
+        return slice.map(item => {
+            const word = typeof item === 'object' && item !== null ? item.word : item;
+            const date = typeof item === 'object' && item !== null ? item.date : '';
+            const isMatch = (_currentFullListJumpedWord && word.toUpperCase() === _currentFullListJumpedWord);
+            const extraClass = isMatch ? ' jump-target-highlight' : '';
+            return `<span class="full-list-item${extraClass}" data-word="${word}"><span class="clickable-word-link" onclick="window.lookupWord('${word}', event)">${word}</span>${date ? ` <span class="new-word-date">${date}</span>` : ''}</span>`;
         }).join('');
     } else {
         return slice.map(w => {
@@ -4580,8 +4608,8 @@ function handleFullListWordJump() {
     const total = _fullListAllWords.length;
     let targetIdx = -1;
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
-    if (wordType && wordType.includes('likelihood')) {
-        targetIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' ? item.word : item).toUpperCase() === query);
+    if (wordType && (wordType.includes('likelihood') || isNewWordList(wordType))) {
+        targetIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' && item !== null ? item.word : item).toUpperCase() === query);
     } else {
         // High-speed binary search for 300,000+ words
         let low = 0;
@@ -4710,7 +4738,7 @@ window.openFullListModal = function() {
         })
         .then(data => {
             if (window._lastFullListFilterKey !== currentFilterKey) return;
-            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || [];
+            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || [];
             _fullListAllWords = rawWords;
             window._cachedFullWordLists[currentFilterKey] = rawWords;
             window.isFullListLoading = false;
@@ -5077,6 +5105,7 @@ async function fetchListsData(typeOverride) {
         'likelihood': 'NWL Likelihood',
         'uniques': 'NWL Uniques',
         'added': 'Added Words',
+        'new_added': 'New AW Words',
         'new_nwl': 'New NWL Words',
         'new_csw': 'New CSW Words',
         'all_words': 'ALL Words'
