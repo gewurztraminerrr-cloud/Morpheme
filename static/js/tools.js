@@ -3581,12 +3581,24 @@ function setupImageLightbox() {
                 achModal.style.display = 'none';
                 achModal.style.opacity = '0';
                 achModal.style.pointerEvents = 'none';
+                if (achCard) {
+                    achCard.scrollTop = 0;
+                    if (typeof achCard._updateCustomScrollbar === 'function') {
+                        achCard._updateCustomScrollbar();
+                    }
+                }
+                achModal.scrollTop = 0;
                 resetAchievementsModal();
             };
             achClose.onclick = close;
             achModal.onclick = (e) => {
                 if (e.target === achModal) close();
             };
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && achModal && !achModal.classList.contains('hidden')) {
+                    close();
+                }
+            });
         }
     }
 }
@@ -3596,6 +3608,18 @@ let currentAchConfig = null;
 let _currentAchRequestSeq = 0;
 
 function resetAchievementsModal(username = '', mode = '', board = '', time = '') {
+    const achModal = document.getElementById('room-achievements-modal');
+    if (achModal) {
+        achModal.scrollTop = 0;
+        const card = achModal.querySelector('.achievement-card');
+        if (card) {
+            card.scrollTop = 0;
+            if (typeof card._updateCustomScrollbar === 'function') {
+                card._updateCustomScrollbar();
+            }
+        }
+    }
+
     const titleEl = document.getElementById('achievement-title');
     const subtitleEl = document.getElementById('achievement-subtitle');
     if (titleEl) titleEl.textContent = username ? `${username}'s Achievements` : 'Achievements';
@@ -3637,14 +3661,20 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     const modal = document.getElementById('room-achievements-modal');
     if (!modal) { console.error('[Achievements] Modal element not found'); return; }
 
+    const isOpening = modal.classList.contains('hidden') || modal.style.display === 'none' || !modal.style.display;
     const reqSeq = ++_currentAchRequestSeq;
     currentAchConfig = { username, mode, board, time };
 
-    // Capture Scroll Position to prevent jumping to top on filter change
+    // Capture Scroll Position if filter changed on already-open modal; otherwise ensure top position
     const card = modal.querySelector('.achievement-card');
     let previousScroll = 0;
-    if (!modal.classList.contains('hidden') && card) {
+    if (!isOpening && card) {
         previousScroll = card.scrollTop;
+    } else {
+        if (card) {
+            card.scrollTop = 0;
+        }
+        modal.scrollTop = 0;
     }
 
     // Show modal first so any crash in tab/title setup is visible
@@ -3654,8 +3684,14 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     modal.style.opacity = '1';
     modal.style.pointerEvents = 'auto';
 
-    if (card && typeof initCustomScrollbarForElement === 'function') {
-        initCustomScrollbarForElement(card, 'achievements-modal-scrollbar-track', 'achievements-modal-scrollbar-thumb');
+    if (card) {
+        if (isOpening) card.scrollTop = 0;
+        if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement(card, 'achievements-modal-scrollbar-track', 'achievements-modal-scrollbar-thumb');
+        }
+        if (isOpening && typeof card._updateCustomScrollbar === 'function') {
+            card._updateCustomScrollbar();
+        }
     }
 
     // Update tab UI
@@ -3674,12 +3710,13 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     const now = Date.now();
 
     if (cachedEntry && (now - cachedEntry.time < 30000)) {
-        renderRoomAchievementsData(cachedEntry.data, reqSeq, card, previousScroll, username, mode, board, time);
+        renderRoomAchievementsData(cachedEntry.data, reqSeq, card, previousScroll, isOpening, username, mode, board, time);
         return;
     }
 
     // Immediately reset UI to prevent displaying the previous player's stats while loading
     resetAchievementsModal(username, mode, board, time);
+    if (isOpening && card) card.scrollTop = 0;
 
     try {
         const response = await fetch(`/api/profile/${encodeURIComponent(username)}/achievements/${mode}/${board}/${time}?period=${period}&t=${Date.now()}`);
@@ -3692,7 +3729,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
         // Store in cache
         window._achievementsMemoryCache.set(cacheKey, { data, time: Date.now() });
 
-        renderRoomAchievementsData(data, reqSeq, card, previousScroll, username, mode, board, time);
+        renderRoomAchievementsData(data, reqSeq, card, previousScroll, isOpening, username, mode, board, time);
     } catch (err) {
         if (reqSeq !== _currentAchRequestSeq) return;
         console.error("Failed to fetch achievements:", err);
@@ -3703,7 +3740,7 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
     }
 }
 
-function renderRoomAchievementsData(data, reqSeq, card, previousScroll, username, mode, board, time) {
+function renderRoomAchievementsData(data, reqSeq, card, previousScroll, isOpening, username, mode, board, time) {
     if (reqSeq && reqSeq !== _currentAchRequestSeq) return;
 
     // Set titles (null-guarded)
@@ -3968,8 +4005,22 @@ function renderRoomAchievementsData(data, reqSeq, card, previousScroll, username
             return typeof window.formatAppDate === 'function' ? window.formatAppDate(d) : d.toLocaleDateString();
         }
 
-        // Restore Scroll Position
-        if (card && previousScroll > 0) {
+        // Restore or Reset Scroll Position
+        if (isOpening || previousScroll === 0) {
+            if (card) card.scrollTop = 0;
+            const achModal = document.getElementById('room-achievements-modal');
+            if (achModal) achModal.scrollTop = 0;
+            if (card && typeof card._updateCustomScrollbar === 'function') {
+                card._updateCustomScrollbar();
+            }
+            setTimeout(() => {
+                if (card) card.scrollTop = 0;
+                if (achModal) achModal.scrollTop = 0;
+                if (card && typeof card._updateCustomScrollbar === 'function') {
+                    card._updateCustomScrollbar();
+                }
+            }, 0);
+        } else if (card && previousScroll > 0) {
             setTimeout(() => {
                 card.scrollTop = previousScroll;
                 if (typeof card._updateCustomScrollbar === 'function') {
