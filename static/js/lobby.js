@@ -1370,7 +1370,7 @@ function updateLobbyButtons(stats, mode = 'all') {
         if (!game || !board || !time) return;
 
         // Skip filtering based on mode
-        if (mode === 'accumulative_only' && game !== 'accumulative') return;
+        if (mode === 'accumulative_only' && game !== 'accumulative' && game !== 'subanagrams') return;
         if (mode === 'fcfs_sp_only' && game === 'accumulative') return;
 
         const key = `${game}|${board}|${time}`;
@@ -1379,7 +1379,7 @@ function updateLobbyButtons(stats, mode = 'all') {
         const rawText = btn.textContent || '';
         let baseText = rawText.replace(/\s*\[\d+\]\s*$/, '').trim();
         if (!baseText) {
-            baseText = (game === 'accumulative') ? 'Start' : 'Show Rooms';
+            baseText = (game === 'accumulative' || game === 'subanagrams') ? 'Start' : 'Show Rooms';
         }
         const targetText = `${baseText}\n[${count}]`;
 

@@ -2268,10 +2268,18 @@ async function updateGameState(incomingState = null) {
             if (inputEl) inputEl.style.display = '';
             if (submitBtnEl) submitBtnEl.style.display = '';
             if (rotateBtn) {
-                if (isSplitIntermission || isFCFSIntermission) {
+                if (isSplitIntermission || isFCFSIntermission || state.game_type === 'subanagrams') {
                     rotateBtn.style.display = 'none';
                 } else {
                     rotateBtn.style.display = '';
+                }
+            }
+            const transposeBtnEl = document.getElementById('transpose-board-btn');
+            if (transposeBtnEl) {
+                if (state.game_type === 'subanagrams') {
+                    transposeBtnEl.style.display = 'none';
+                } else {
+                    transposeBtnEl.style.display = '';
                 }
             }
 
@@ -2498,7 +2506,14 @@ async function updateGameState(incomingState = null) {
 
         tabBtns.forEach(btn => {
             const tab = btn.dataset.tab;
-            if (is24H) {
+            if (state.game_type === 'subanagrams') {
+                if (tab === 'found') {
+                    btn.textContent = (state.state === 'intermission') ? 'All Words' : 'Words';
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none';
+                }
+            } else if (is24H) {
                 // 24H: Found, Clues, Previous, Score Sum
                 if (tab === 'found') {
                     btn.textContent = 'Found';
@@ -2522,10 +2537,11 @@ async function updateGameState(incomingState = null) {
         });
 
         // Ensure activeWordsTab is valid for current room type
-        if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
+        if (state.game_type === 'subanagrams') {
             activeWordsTab = 'found';
-        }
-        if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous' || activeWordsTab === 'score-sum')) {
+        } else if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
+            activeWordsTab = 'found';
+        } else if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous' || activeWordsTab === 'score-sum')) {
             activeWordsTab = 'found';
         }
 
@@ -3433,8 +3449,9 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         
         // Final display string (User request: in brackets next to rating)
+        const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
         const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;
-        const ratingDisplay = (isGuest && displayRating === 0 && p.rating_change === 0) ? 'Guest' : ratingDisplayStr;
+        const ratingDisplay = isSubanagrams ? 'Unrated' : ((isGuest && displayRating === 0 && p.rating_change === 0) ? 'Guest' : ratingDisplayStr);
 
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
@@ -3456,7 +3473,9 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Calculate rating color
         let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
-        if (!isGuest && p.games_played === 0) {
+        if (isSubanagrams) {
+            ratingColor = '#777';
+        } else if (!isGuest && p.games_played === 0) {
             ratingColor = '#0044ff';
         }
 
@@ -4709,7 +4728,8 @@ function updateParameters(state) {
         '3d': 'Cube',
         'private': 'With Friends',
         'tournament': 'Tournament',
-        'solo_accumulative': 'Solo'
+        'solo_accumulative': 'Solo',
+        'subanagrams': 'SUBANAGRAMS (PRACTICE)'
     };
 
     const timerVal = document.getElementById('timer-value');
@@ -4811,7 +4831,10 @@ function updateParameters(state) {
             window._lastParamString = stringified;
             
             window._displayedParams.dims = factBoardDims;
-            window._displayedParams.time = factTimeLimit + 's';
+            window._displayedParams.time = (state.game_type === 'subanagrams' || factTimeLimit === 120) ? '2m' : (factTimeLimit + 's');
+            if (state.game_type === 'subanagrams' && state.board && state.board[0] && Array.isArray(state.board[0])) {
+                window._displayedParams.dims = state.board[0].length + ' Letters';
+            }
             window._displayedParams.min = factMinLen + 'L';
             window._displayedParams.dict = factDict;
             window._displayedParams.range = factWordRange;
@@ -5451,14 +5474,17 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         else rotateHint.classList.add('hidden');
     }
 
+    const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
+    boardEl.classList.toggle('is-subanagrams-board', !!isSubanagrams);
+
     const rotateBtn = document.getElementById('rotate-board-btn');
     const transposeBtn = document.getElementById('transpose-board-btn');
     if (rotateBtn) {
-        if (is3D) rotateBtn.classList.add('hidden');
+        if (is3D || isSubanagrams) rotateBtn.classList.add('hidden');
         else rotateBtn.classList.remove('hidden');
     }
     if (transposeBtn) {
-        if (is3D) transposeBtn.classList.add('hidden');
+        if (is3D || isSubanagrams) transposeBtn.classList.add('hidden');
         else transposeBtn.classList.remove('hidden');
     }
 
@@ -5746,6 +5772,11 @@ function checkBoardOverflow() {
     const boardPanel = document.querySelector('.board-panel');
     const boardEl = document.getElementById('game-board');
     if (!boardPanel || !boardEl) return;
+
+    if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
+        boardEl.classList.add('is-subanagrams-board');
+        return;
+    }
 
     // 1. Get Board Dimensions (Rows & Cols)
     let cols = 0;
@@ -6459,6 +6490,46 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
     if (rows === 0) return null;
     const cols = board[0].length;
     const upperWord = word.toUpperCase();
+
+    if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
+        const seq = (board && board[0]) ? board[0] : [];
+        const used = new Set();
+        const path = [];
+        let i = 0;
+        let possible = true;
+        while (i < upperWord.length) {
+            let foundIdx = -1;
+            let matchLen = 1;
+            if (upperWord.substring(i, i + 2) === 'QU') {
+                for (let c = 0; c < seq.length; c++) {
+                    if (!used.has(c) && String(seq[c]).toUpperCase() === 'Q') {
+                        foundIdx = c;
+                        matchLen = 2;
+                        break;
+                    }
+                }
+            }
+            if (foundIdx === -1) {
+                const ch = upperWord[i];
+                for (let c = 0; c < seq.length; c++) {
+                    if (!used.has(c) && String(seq[c]).toUpperCase() === ch) {
+                        foundIdx = c;
+                        matchLen = 1;
+                        break;
+                    }
+                }
+            }
+            if (foundIdx !== -1) {
+                used.add(foundIdx);
+                path.push({ r: 0, c: foundIdx });
+                i += matchLen;
+            } else {
+                possible = false;
+                break;
+            }
+        }
+        return possible ? path : null;
+    }
 
     // Identify all potential bonus coordinates
     const specialCoords = new Set();
@@ -8778,7 +8849,8 @@ function selectCell(row, col, letter, cellEl, face = null) {
     if (mouseState.visitedCells.has(key)) return;
 
     // Enforce strict grid adjacency during drag/mouse selection
-    if (pathLen > 0) {
+    const isSubanagrams = window.lastGameState && window.lastGameState.game_type === 'subanagrams';
+    if (pathLen > 0 && !isSubanagrams) {
         const lastCell = mouseState.selectedPath[pathLen - 1];
         const isAdjacent = (face !== null && lastCell.face !== null) ?
             (Math.abs(lastCell.row - row) <= 1 && Math.abs(lastCell.col - col) <= 1) :
@@ -8955,10 +9027,11 @@ function handleCellMouseDown(e) {
             return;
         }
 
+        const isSubanagrams = window.lastGameState && window.lastGameState.game_type === 'subanagrams';
         // Check if adjacent to lastCell
-        const isAdjacent = (f !== null && lastCell.face !== null) ?
+        const isAdjacent = isSubanagrams || ((f !== null && lastCell.face !== null) ?
             (Math.abs(lastCell.row - r) <= 1 && Math.abs(lastCell.col - c) <= 1) :
-            (Math.abs(lastCell.row - r) <= 1 && Math.abs(lastCell.col - c) <= 1);
+            (Math.abs(lastCell.row - r) <= 1 && Math.abs(lastCell.col - c) <= 1));
 
         if (isAdjacent && !mouseState.visitedCells.has(key)) {
             // Flawless continuation!

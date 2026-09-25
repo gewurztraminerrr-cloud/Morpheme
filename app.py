@@ -4859,6 +4859,12 @@ def create_room():
         except (TypeError, ValueError):
             max_rating = 9999
         
+        # Reject mobile devices from Subanagrams mode
+        if str(game_type).lower() == 'subanagrams':
+            ua = request.headers.get('User-Agent', '')
+            if re.search(r'Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini', ua, re.I):
+                return jsonify({'error': 'Subanagrams is not supported on mobile devices.'}), 403
+
         # Guest Restriction: Guests cannot create custom/limited rooms
         if session.get('is_guest', False):
             if min_rating > 0 or max_rating < 9999:
@@ -4908,8 +4914,8 @@ def create_room():
                 range_str = f"{min_rating} - {max_str}"
                 return jsonify({'error': f'Your rating ({rating}) does not fall within your specified range ({range_str}).<br><br>Your rating has to be in your specified range for the room creation to continue.'}), 400
 
-        # Accumulative and 24h rooms are permanent singletons per dimension; custom FCFS/Split rooms get unique IDs
-        if str(game_type).lower() == 'accumulative' or int(time_limit) >= 7200:
+        # Accumulative, Subanagrams, and 24h rooms are permanent singletons per dimension; custom FCFS/Split rooms get unique IDs
+        if str(game_type).lower() in ['accumulative', 'subanagrams'] or int(time_limit) >= 7200:
             generated_id = f"pub_v2_{game_type}_{board_dimensions}_{time_limit}".replace(' ', '_').lower()
         else:
             generated_id = f"room_{game_type}_{board_dimensions}_{time_limit}_{uuid.uuid4().hex[:8]}".replace(' ', '_').lower()
@@ -4996,10 +5002,16 @@ def join_room(room_id):
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
 
+    # Reject mobile devices from Subanagrams mode
+    if getattr(room, 'game_type', '') == 'subanagrams':
+        ua = request.headers.get('User-Agent', '')
+        if re.search(r'Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini', ua, re.I):
+            return jsonify({'error': 'Subanagrams is not supported on mobile devices.'}), 403
+
     # Check for spectator request
     data = request.get_json() or {}
-    # Unlimited players for Accumulative/Solo, and force player mode
-    if room.game_type in ['accumulative', 'solo_accumulative'] or getattr(room, 'is_solo', False):
+    # Unlimited players for Accumulative/Solo/Subanagrams, and force player mode
+    if room.game_type in ['accumulative', 'solo_accumulative', 'subanagrams'] or getattr(room, 'is_solo', False):
         room.max_players = 9999
         as_spectator = False
     else:
@@ -5047,9 +5059,9 @@ def join_room(room_id):
         room.update_player_activity(user_id)
         return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
     else:
-        # If room is full, automatically join as spectator instead of failing (except Accumulative)
-        if room.game_type in ['accumulative', 'solo_accumulative']:
-             return jsonify({'error': "Could not join Accumulative room. Please try again."}), 409
+        # If room is full, automatically join as spectator instead of failing (except Accumulative and Subanagrams)
+        if room.game_type in ['accumulative', 'solo_accumulative', 'subanagrams']:
+             return jsonify({'error': "Could not join room. Please try again."}), 409
         
         print(f"[app.py] Room {room_id} is full. Automatically joining {session['username']} as spectator.")
         room.add_spectator(user_id, session['username'], rating)
@@ -5443,28 +5455,51 @@ def get_room_state(room_id):
                                 if hasattr(room, 'board_search_loading'): delattr(room, 'board_search_loading')
                                 if hasattr(room, 'starting_round'): delattr(room, 'starting_round')
                                 
-                                # Instant Pre-Population: Ensure next_round_board is ready immediately (<1ms) from cache
-                                from board_generator import pop_any_cached_board
-                                from game_room import get_emergency_fallback_board
-                                pre_next = pop_any_cached_board(room.board_dimensions)
-                                if not pre_next:
-                                    pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
-                                if pre_next:
-                                    if len(pre_next) >= 9:
-                                        nb, nw, nc, nf, np, nr, nbw, _, nparams = pre_next
+                                # Instant Pre-Population: Ensure next_round_board is ready immediately (<1ms)
+                                if room.game_type == 'subanagrams':
+                                    from subanagrams_generator import generate_subanagrams_board_and_words
+                                    from spinner_set import SpinnerSet
+                                    sp = SpinnerSet.generate_subanagrams_params()
+                                    res = generate_subanagrams_board_and_words(sp)
+                                    if res:
+                                        nb, nw, nbw, nparams = res
+                                        room.next_round_board = nb
+                                        room.next_round_words = nw
+                                        room.next_round_bonus_cell = None
+                                        room.next_round_bonus = nbw
+                                        room.next_round_format = nparams.get('board_format', 'Word Guaranteed')
+                                        room.next_round_word_paths = {w: [] for w in nw}
+                                        room.next_round_uniqueness = 0.0
+                                        room.next_round_spinner_params = nparams
+                                        room.solving_complete = True
                                     else:
-                                        nb, nw, nc, nf, np, nr, nbw, nparams = pre_next
-                                    room.next_round_board = nb
-                                    room.next_round_words = nw
-                                    room.next_round_bonus_cell = nc
-                                    room.next_round_bonus = nbw
-                                    room.next_round_format = nf
-                                    room.next_round_word_paths = np or {}
-                                    room.next_round_uniqueness = nr
-                                    room.next_round_spinner_params = nparams or {}
-                                    room.solving_complete = True
+                                        room.next_round_board = None
+                                        room.next_round_words = None
+                                        room.next_round_word_paths = None
+                                        room.next_round_bonus = None
+                                        room.next_round_format = None
                                 else:
-                                    room.next_round_board = None
+                                    from board_generator import pop_any_cached_board
+                                    from game_room import get_emergency_fallback_board
+                                    pre_next = pop_any_cached_board(room.board_dimensions)
+                                    if not pre_next:
+                                        pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
+                                    if pre_next:
+                                        if len(pre_next) >= 9:
+                                            nb, nw, nc, nf, np, nr, nbw, _, nparams = pre_next
+                                        else:
+                                            nb, nw, nc, nf, np, nr, nbw, nparams = pre_next
+                                        room.next_round_board = nb
+                                        room.next_round_words = nw
+                                        room.next_round_bonus_cell = nc
+                                        room.next_round_bonus = nbw
+                                        room.next_round_format = nf
+                                        room.next_round_word_paths = np or {}
+                                        room.next_round_uniqueness = nr
+                                        room.next_round_spinner_params = nparams or {}
+                                        room.solving_complete = True
+                                    else:
+                                        room.next_round_board = None
                                     room.next_round_words = None
                                     room.next_round_word_paths = None
                                     room.next_round_bonus = None

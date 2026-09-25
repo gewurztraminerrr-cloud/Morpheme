@@ -1527,6 +1527,12 @@ function filterCubeOnMobile() {
         matrix3D.style.display = 'none';
     }
 
+    // 1b. Hide Subanagrams matrix on mobile devices
+    const matrixSubanagrams = document.querySelector('.matrix-subanagrams');
+    if (matrixSubanagrams) {
+        matrixSubanagrams.style.display = 'none';
+    }
+
     // 2. Remove the 3x3x3 option from Solo & Friends dropdown in Lobby
     const sfConfigDims = document.getElementById('sf-config-dims');
     if (sfConfigDims) {

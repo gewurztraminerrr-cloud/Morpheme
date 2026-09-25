@@ -334,4 +334,37 @@ class SpinnerSet:
             return f'{mania_letter} Mania'
         return result
 
+    @staticmethod
+    def generate_subanagrams_params(previous_params=None):
+        """Generate randomized parameters for Subanagrams (Practice) mode."""
+        sequence_length = random.choice([6, 7, 8, 9, 10])
+        # Calibrate min_word_length based on sequence length so >= 50 words is physically achievable
+        if sequence_length == 6:
+            min_word_length = 3
+        elif sequence_length == 7:
+            min_word_length = random.choice([3, 4])
+        else:
+            min_word_length = random.choice([3, 4, 5])
 
+        dict_choice = random.choice(['CSW', 'NWL', 'CSW + AW', 'NWL + AW'])
+        use_added_words = ('+ AW' in dict_choice or '+AW' in dict_choice)
+        base_dict = dict_choice.replace('+ AW', '').replace('+AW', '').strip()
+        mode = random.choice(['word', 'random'])
+        word_count_range = random.choice(['50-100', '100-200', '200-300', '300-400', '500+'])
+
+        return {
+            'board_dimensions': 'subanagrams',
+            'time_limit': 120,
+            'min_word_length': min_word_length,
+            'sequence_length': sequence_length,
+            'dictionary': dict_choice,
+            'base_dictionary': base_dict,
+            'use_added_words': use_added_words,
+            'mode': mode,
+            'board_format': 'Word Guaranteed' if mode == 'word' else 'Totally Random',
+            'word_count_range': word_count_range,
+            'difficulty': 'Practice',
+            'bonus_word': '',
+            'bonus_word_length': 0,
+            'generated_at': time.time()
+        }

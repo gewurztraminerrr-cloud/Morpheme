@@ -258,9 +258,17 @@
 }
 
 .matrix-3d .matrix-header,
-.matrix-3d .matrix-row {
+.matrix-3d .matrix-row,
+.matrix-subanagrams .matrix-header,
+.matrix-subanagrams .matrix-row {
     grid-template-columns: 60px 1fr;
     align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .matrix-subanagrams {
+        display: none !important;
+    }
 }
 
 .corner-cell {
