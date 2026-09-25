@@ -2584,16 +2584,19 @@ async function updateGameState(incomingState = null) {
 
         // --- Shared Found Words strings (for counting and highlighting) ---
         let allPlayerFoundStrs = [];
-        state.players.forEach(p => {
-            if (p.submitted_words) {
-                p.submitted_words.forEach(w => {
-                    const str = typeof w === 'string' ? w : w.word;
-                    allPlayerFoundStrs.push(str.toUpperCase());
-                });
-            }
-        });
+        if (state.players && Array.isArray(state.players)) {
+            state.players.forEach(p => {
+                if (p && p.submitted_words && Array.isArray(p.submitted_words)) {
+                    p.submitted_words.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
+                    });
+                }
+            });
+        }
 
-        const allWords = state.state === 'intermission' ? ((state.previous_all_words && state.previous_all_words.length > 0) ? state.previous_all_words : (state.all_words || [])) : (state.all_words || []);
+        const rawAllWords = state.state === 'intermission' ? ((state.previous_all_words && (Array.isArray(state.previous_all_words) ? state.previous_all_words.length > 0 : Object.keys(state.previous_all_words).length > 0)) ? state.previous_all_words : (state.all_words || [])) : (state.all_words || []);
+        const allWords = Array.isArray(rawAllWords) ? rawAllWords : Object.keys(rawAllWords || {});
         const cswForList = state.state === 'intermission' ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words) : state.csw_only_words;
         const addedForList = state.state === 'intermission' ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words) : state.added_words;
 
@@ -2609,9 +2612,9 @@ async function updateGameState(incomingState = null) {
                 const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
 
                 // 2. Calculate Personal Stats (Current User)
-                const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
+                const myPlayer = (state.players && Array.isArray(state.players)) ? state.players.find(p => p && p.username && p.username.toLowerCase() === (currentUser || "").toLowerCase()) : null;
                 const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
-                const personalUnique = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase())).size;
+                const personalUnique = new Set(myWords.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase()).filter(Boolean)).size;
                 const personalPercentage = totalWords > 0 ? Math.round((personalUnique / totalWords) * 100) : 0;
 
                 // Display Both
@@ -2630,36 +2633,39 @@ async function updateGameState(incomingState = null) {
                 }
                 if (totalPointsValue > 0) window.lastValidTotalPoints = totalPointsValue;
 
-                wordsStats.innerHTML = `
-                    <div style="line-height: 1.2;" class="stats-text-primary">
-                        ${personalUnique}/${totalWords} - ${personalPercentage}% (${totalPointsValue} total pts)
-                        <div class="stats-text-secondary" style="font-size: 0.75em; margin-top: 2px;">
-                            Collective Percentage: ${globalPercentage}%
-                        </div>
-                        ${finderButtonHtml}
-                    </div>`;
+                if (wordsStats) {
+                    wordsStats.innerHTML = `
+                        <div style="line-height: 1.2;" class="stats-text-primary">
+                            ${personalUnique}/${totalWords} - ${personalPercentage}% (${totalPointsValue} total pts)
+                            <div class="stats-text-secondary" style="font-size: 0.75em; margin-top: 2px;">
+                                Collective Percentage: ${globalPercentage}%
+                            </div>
+                            ${finderButtonHtml}
+                        </div>`;
+                }
 
                 const targetUsernameStr = (selectedPlayerUsername || currentUser || '').toLowerCase().trim();
                 const currentUserIdStr = String(window.currentUserId || '');
                 let targetPlayer = state.players ? state.players.find(p => 
-                    (p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
-                    (p.user_id && String(p.user_id) === currentUserIdStr)
+                    (p && p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
+                    (p && p.user_id && String(p.user_id) === currentUserIdStr)
                 ) : null;
                 if (!targetPlayer && state.previous_players) {
                     targetPlayer = state.previous_players.find(p => 
-                        (p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
-                        (p.user_id && String(p.user_id) === currentUserIdStr)
+                        (p && p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
+                        (p && p.user_id && String(p.user_id) === currentUserIdStr)
                     );
                 }
-                let targetWords = targetPlayer && targetPlayer.submitted_words ? targetPlayer.submitted_words.map(w => typeof w === 'string' ? w : w.word) : [];
+                let targetWords = targetPlayer && targetPlayer.submitted_words ? targetPlayer.submitted_words.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase()).filter(Boolean) : [];
                 
                 // Merge locally submitted words so all found words (including CSW & 5x7 words) are highlighted in blue
                 if (!selectedPlayerUsername && window._localSubmittedWords) {
-                    const existingSet = new Set(targetWords.map(w => w.toUpperCase()));
+                    const existingSet = new Set(targetWords);
                     for (const lw of window._localSubmittedWords) {
+                        if (!lw) continue;
                         const lwUpper = lw.toUpperCase();
                         if (!existingSet.has(lwUpper)) {
-                            targetWords.push(lw);
+                            targetWords.push(lwUpper);
                             existingSet.add(lwUpper);
                         }
                     }
@@ -2675,8 +2681,12 @@ async function updateGameState(incomingState = null) {
                 const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
-                    displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
-                    window.lastRenderedIntermissionKey = currentRenderKey;
+                    try {
+                        displayAllWords(allWords, bonusForList, targetWords, uniqueGlobalFound, state.all_word_scores, cswForList, addedForList);
+                        window.lastRenderedIntermissionKey = currentRenderKey;
+                    } catch (renderErr) {
+                        console.error('[Intermission Words Render Error]', renderErr);
+                    }
                 }
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
 
@@ -4344,18 +4354,18 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     window.lastDisplayAllWordsArgs = [allWords, bonusWord, targetUserWords, allFoundWords, allWordScores, cswOnlyWords, addedWords];
 
     // Normalize input words to avoid type and case transformations inside loops
-    const bonusUpper = bonusWord ? bonusWord.toUpperCase().trim() : null;
-    const cleanWords = allWords.map(entry => {
-        const w = typeof entry === 'object' ? (entry.word || '') : entry;
-        const wordUpper = w.toUpperCase();
+    const bonusUpper = bonusWord ? String(bonusWord).toUpperCase().trim() : null;
+    const cleanWords = (allWords || []).map(entry => {
+        const w = (typeof entry === 'object' && entry !== null) ? (entry.word || '') : (entry || '');
+        const wordUpper = String(w).toUpperCase();
         return {
             original: entry,
             word: w,
             wordUpper: wordUpper,
             len: w.length,
-            isBonus: bonusUpper && (wordUpper.trim() === bonusUpper)
+            isBonus: !!(bonusUpper && (wordUpper.trim() === bonusUpper))
         };
-    });
+    }).filter(e => e.word.length > 0);
 
     // Calculate available lengths
     const lengthsSet = new Set();
@@ -4368,7 +4378,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const findersBtn = document.getElementById('view-finders-btn-top');
     
     if (findersContainer && findersBtn) {
-        const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || (state && state.game_type === 'subanagrams');
+        const isSubanagrams = Boolean(window.lastGameState && window.lastGameState.game_type === 'subanagrams');
         if (highlightedFoundWord && !isSubanagrams) {
             findersContainer.style.display = 'block';
             
@@ -4377,11 +4387,11 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             if (s && s.players) {
                 const sortedAll = [...s.players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
                 const rankMap = new Map();
-                sortedAll.forEach((p, idx) => rankMap.set(p.username, idx + 1));
+                sortedAll.forEach((p, idx) => { if (p && p.username) rankMap.set(p.username, idx + 1); });
 
                 finders = s.players.filter(p =>
-                    p.submitted_words && p.submitted_words.some(sw =>
-                        (typeof sw === 'object' ? sw.word : sw).toUpperCase() === highlightedFoundWord
+                    p && p.username && p.submitted_words && p.submitted_words.some(sw =>
+                        ((typeof sw === 'object' && sw !== null ? sw.word : sw) || '').toUpperCase() === highlightedFoundWord
                     )
                 ).sort((a, b) => {
                     const rA = rankMap.get(a.username) || 999;
@@ -4445,10 +4455,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
     }
 
-    const targetWordsUpper = targetUserWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
-    const allFoundUpper = allFoundWords.map(w => (typeof w === 'object' ? (w.word || '') : w).toUpperCase());
-    const cswOnlyUpper = (cswOnlyWords || []).map(w => w.toUpperCase());
-    const addedUpper = (addedWords || []).map(w => w.toUpperCase());
+    const targetWordsUpper = (targetUserWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
+    const allFoundUpper = (allFoundWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
+    const cswOnlyUpper = (cswOnlyWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
+    const addedUpper = (addedWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
 
     const targetWordsSet = new Set(targetWordsUpper);
     const allFoundSet = new Set(allFoundUpper);
