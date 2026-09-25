@@ -3669,8 +3669,12 @@ async function showRoomAchievements(username, mode, board, time, period = 'all')
             document.getElementById('ach-label-stats').textContent = 'Lifetime Stats';
 
             // Win rate for global
-            const gwr = (data.global_stats.wins / data.global_stats.games_played * 100).toFixed(1);
-            document.getElementById('ach-win-rate').textContent = (isNaN(gwr) ? '0' : gwr) + '%';
+            const games = data.global_stats.games_played || 0;
+            const wins = data.global_stats.wins || 0;
+            const gwr = data.global_stats.win_rate !== undefined
+                ? Number(data.global_stats.win_rate).toFixed(1)
+                : (games > 0 ? (wins / games * 100).toFixed(1) : '0.0');
+            document.getElementById('ach-win-rate').textContent = gwr + '%';
             document.getElementById('ach-total-words').textContent = data.global_stats.total_words;
 
         }

@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 import base64
 import requests
 import re
-from db import get_db, get_db_connection, DB_PATH, execute_with_retry
+from db import get_db, get_db_connection, DB_PATH, execute_with_retry, init_db_indexes
 
 # Load environment variables from .env file
 _env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
@@ -2881,6 +2881,7 @@ def init_db():
     conn.close()
 
 init_db()
+init_db_indexes()
 reload_banned_ips()
 
 # Configuration for Uploads
@@ -4408,11 +4409,33 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     cursor_all = conn.execute(query_all, (user_id, *canonical_game_types, board_dimensions, time_limit))
     global_matching = cursor_all.fetchall()
     
+    # Calculate lifetime wins (where user's total_score equals the maximum total_score among participants in that round)
+    query_wins = f'''
+        SELECT COUNT(*)
+        FROM round_history my_rh
+        WHERE my_rh.user_id = ?
+          AND my_rh.game_type IN ({placeholders})
+          AND my_rh.board_dimensions = ?
+          AND my_rh.round_duration = ?
+          AND my_rh.total_score > 0
+          AND my_rh.total_score = (
+              SELECT MAX(rh.total_score)
+              FROM round_history rh
+              WHERE rh.room_id = my_rh.room_id
+                AND rh.round_number = my_rh.round_number
+                AND rh.timestamp = my_rh.timestamp
+          )
+    '''
+    cursor_wins = conn.execute(query_wins, (user_id, *canonical_game_types, board_dimensions, time_limit))
+    wins_row = cursor_wins.fetchone()
+    lifetime_wins = wins_row[0] if wins_row else 0
+
     # Calculate Global Best (All-Time) - Strictly exclude Valued Letters from high score and best word records
     global_stats = {
         "high_score": 0, "max_words": 0, "longest_word": "", 
         "best_word": {"word": "", "points": 0},
-        "games_played": len(global_matching), "total_score": 0, "total_words": 0, "wins": 0
+        "games_played": len(global_matching), "total_score": 0, "total_words": 0, "wins": lifetime_wins,
+        "win_rate": round((lifetime_wins / len(global_matching)) * 100, 1) if global_matching else 0.0
     }
     
     for row in global_matching:
