@@ -5830,6 +5830,11 @@ def get_room_state(room_id):
                 'current_word_count_range': getattr(room, 'current_word_count_range', 'Random'),
                 'current_difficulty': getattr(room, 'current_difficulty', None) or 'Medium',
                 'current_uniqueness': getattr(room, 'current_uniqueness', None) or 0.0,
+                'sequence_length': (
+                    getattr(room, 'previous_sequence_length', None) or (len(room.previous_board[0]) if (getattr(room, 'previous_board', None) and len(room.previous_board) > 0 and isinstance(room.previous_board[0], list)) else None)
+                ) if is_intermission else (
+                    getattr(room, 'sequence_length', None) or (len(room.board[0]) if (getattr(room, 'board', None) and len(room.board) > 0 and isinstance(room.board[0], list)) else None)
+                ),
                 'spinner_params_revealed': is_revealed,
                 'players': [
                     {

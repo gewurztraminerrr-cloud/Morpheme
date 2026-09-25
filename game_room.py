@@ -2138,6 +2138,8 @@ class GameRoom:
                 self.previous_all_words = list(self.all_words) if self.all_words else []
                 self.previous_all_word_scores = dict(getattr(self, 'solved_words_with_scores', {})) if getattr(self, 'solved_words_with_scores', None) else {}
                 self.previous_min_length = getattr(self, 'current_min_length', 3)
+                if self.game_type == 'subanagrams':
+                    self.previous_sequence_length = getattr(self, 'sequence_length', None) or (len(self.board[0]) if (self.board and len(self.board) > 0 and isinstance(self.board[0], list)) else None)
                 # BUGFIX: Snapshot paths, bonus_cell, and board_format so word-highlight clicks
                 # during intermission use the COMPLETED round's board, not the next board.
                 self.previous_all_words_paths = dict(self.all_words_paths) if isinstance(self.all_words_paths, dict) else {}
@@ -3354,6 +3356,7 @@ class RoomManager:
                                         if res:
                                             b_board, b_words, b_bonus, fparams = res
                                             existing_room.board = b_board
+                                            existing_room.sequence_length = fparams.get('sequence_length', len(b_board[0]))
                                             existing_room.all_words = set(b_words)
                                             existing_room.all_words_paths = {w: [] for w in b_words}
                                             existing_room.bonus_word = b_bonus
@@ -3694,6 +3697,7 @@ class RoomManager:
                             if res:
                                 b_board, b_words, b_bonus, fparams = res
                                 room.board = b_board
+                                room.sequence_length = fparams.get('sequence_length', len(b_board[0]))
                                 room.all_words = set(b_words)
                                 room.all_words_paths = {w: [] for w in b_words}
                                 room.bonus_word = b_bonus
@@ -6888,6 +6892,8 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
+                if getattr(room, 'game_type', None) == 'subanagrams' and room.board and isinstance(room.board[0], list):
+                    room.sequence_length = len(room.board[0])
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.

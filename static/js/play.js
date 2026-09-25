@@ -4797,6 +4797,20 @@ function updateParameters(state) {
         factUniq = state.current_uniqueness;
     }
 
+    const isSubanagrams = state.game_type === 'subanagrams';
+    let factSeqLen = 7;
+    if (useSp && sp.sequence_length) {
+        factSeqLen = sp.sequence_length;
+    } else if (state.sequence_length) {
+        factSeqLen = state.sequence_length;
+    } else if (state.state === 'intermission' && state.previous_board && state.previous_board[0]) {
+        factSeqLen = state.previous_board[0].length;
+    } else if (state.board && state.board[0]) {
+        factSeqLen = state.board[0].length;
+    } else if (sp && sp.sequence_length) {
+        factSeqLen = sp.sequence_length;
+    }
+
     // UPDATE POLICY:
     // 1. If Active Round: Update immediately to match facts.
     // 2. If Intermission & NOT Revealed: Stay sticky to previous round facts.
@@ -4825,15 +4839,17 @@ function updateParameters(state) {
     if (shouldUpdateLabels) {
         const newUniq = factUniq;
         const newDiff = factDiff;
-        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq, factBonus]);
+        const stringified = JSON.stringify([factBoardDims, factTimeLimit, factMinLen, factDict, factWordRange, factFmt, newDiff, newUniq, factBonus, isSubanagrams ? factSeqLen : '']);
         
         if (triggerAnimation || window._lastParamString !== stringified) {
             window._lastParamString = stringified;
             
-            window._displayedParams.dims = factBoardDims;
-            window._displayedParams.time = (state.game_type === 'subanagrams' || factTimeLimit === 120) ? '2m' : (factTimeLimit + 's');
-            if (state.game_type === 'subanagrams' && state.board && state.board[0] && Array.isArray(state.board[0])) {
-                window._displayedParams.dims = state.board[0].length + ' Letters';
+            if (isSubanagrams) {
+                window._displayedParams.dims = '';
+                window._displayedParams.time = '2m';
+            } else {
+                window._displayedParams.dims = factBoardDims;
+                window._displayedParams.time = (factTimeLimit === 120) ? '2m' : (factTimeLimit + 's');
             }
             window._displayedParams.min = factMinLen + 'L';
             window._displayedParams.dict = factDict;
@@ -4843,65 +4859,89 @@ function updateParameters(state) {
             if (isNaN(bonusVal) || bonusVal <= 0) {
                 if (state.bonus_word && typeof state.bonus_word === 'string' && state.bonus_word.length >= 3 && String(state.bonus_word).toUpperCase() !== 'NONE') {
                     bonusVal = state.bonus_word.length;
-                } else {
+                } else if (!isSubanagrams) {
                     const dStr = String(factBoardDims || '');
                     bonusVal = dStr.includes('6x8') ? 9 : (dStr.includes('5x7') ? 8 : (dStr.includes('4x6') ? 7 : 8));
+                } else {
+                    bonusVal = 0;
                 }
             }
-            window._displayedParams.bonus = bonusVal + 'L';
+            window._displayedParams.bonus = (bonusVal > 0) ? (bonusVal + 'L') : '-';
             
             let diffLabel = factDiff;
-            if (newUniq > 0) {
-                const uVal = newUniq > 1 ? newUniq / 100.0 : newUniq;
-                const dStr = String(factBoardDims || '').toLowerCase();
-                let easyMax = 0.15;
-                let medMax = 0.29;
-                if (dStr.includes('4x6')) { easyMax = 0.25; medMax = 0.39; }
-                else if (dStr.includes('5x7')) { easyMax = 0.29; medMax = 0.44; }
-                else if (dStr.includes('6x8') || dStr.includes('cube') || dStr.includes('3x3x3')) { easyMax = 0.34; medMax = 0.49; }
-                else { easyMax = 0.15; medMax = 0.29; }
-
-                if (uVal <= easyMax) diffLabel = 'Easy';
-                else if (uVal <= medMax) diffLabel = 'Medium';
-                else diffLabel = 'Hard';
+            if (isSubanagrams) {
+                window._displayedParams.diff = String(factSeqLen);
             } else {
-                if (diffLabel === 'Varying...') diffLabel = 'Random';
-                else if (diffLabel === 'Normal') diffLabel = 'Medium';
-                else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
-                else if (diffLabel === 'Beginner') diffLabel = 'Easy';
+                if (newUniq > 0) {
+                    const uVal = newUniq > 1 ? newUniq / 100.0 : newUniq;
+                    const dStr = String(factBoardDims || '').toLowerCase();
+                    let easyMax = 0.15;
+                    let medMax = 0.29;
+                    if (dStr.includes('4x6')) { easyMax = 0.25; medMax = 0.39; }
+                    else if (dStr.includes('5x7')) { easyMax = 0.29; medMax = 0.44; }
+                    else if (dStr.includes('6x8') || dStr.includes('cube') || dStr.includes('3x3x3')) { easyMax = 0.34; medMax = 0.49; }
+                    else { easyMax = 0.15; medMax = 0.29; }
+
+                    if (uVal <= easyMax) diffLabel = 'Easy';
+                    else if (uVal <= medMax) diffLabel = 'Medium';
+                    else diffLabel = 'Hard';
+                } else {
+                    if (diffLabel === 'Varying...') diffLabel = 'Random';
+                    else if (diffLabel === 'Normal') diffLabel = 'Medium';
+                    else if (diffLabel === 'Expert' || diffLabel === 'Difficult') diffLabel = 'Hard';
+                    else if (diffLabel === 'Beginner') diffLabel = 'Easy';
+                }
+                
+                const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
+                window._displayedParams.diff = diffLabel + uniquePct;
             }
             
-            const uniquePct = (newUniq > 0 && !diffLabel.includes('(')) ? ` (${Math.round(newUniq * 100)}%)` : "";
-            window._displayedParams.diff = diffLabel + uniquePct;
-            
-            if (typeof updateColorBarHighlight === 'function') {
+            if (!isSubanagrams && typeof updateColorBarHighlight === 'function') {
                 updateColorBarHighlight(diffLabel, newUniq);
             }
 
             // Apply to DOM
+            const headerMetaBoard = document.getElementById('header-meta-board');
+            if (headerMetaBoard) {
+                headerMetaBoard.style.display = isSubanagrams ? 'none' : '';
+            }
             if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
             if (document.getElementById('param-time')) document.getElementById('param-time').textContent = window._displayedParams.time;
             
             // Populate the new label above Spinner Set
             if (document.getElementById('label-game-type')) document.getElementById('label-game-type').textContent = document.getElementById('game-title').textContent;
+            const labelBoardMeta = document.getElementById('label-board-meta');
+            if (labelBoardMeta) {
+                labelBoardMeta.style.display = isSubanagrams ? 'none' : '';
+            }
             if (document.getElementById('label-board')) document.getElementById('label-board').textContent = window._displayedParams.dims;
             if (document.getElementById('label-time')) document.getElementById('label-time').textContent = window._displayedParams.time;
+
+            const diffLabelEl = document.getElementById('param-diff-label');
+            if (diffLabelEl) {
+                diffLabelEl.textContent = isSubanagrams ? 'Letters' : 'Diff';
+            }
 
             const diffEl = document.getElementById('param-diff');
             if (diffEl) {
                 diffEl.textContent = window._displayedParams.diff;
-                // Dynamically apply color based on difficulty (Easy -> emerald, Medium -> blue, Hard -> red)
-                const lowerDiff = diffLabel.toLowerCase();
-                let targetColor = '';
-                if (lowerDiff.includes('easy') || lowerDiff.includes('beginner')) {
-                    targetColor = '#2ecc71'; // Dark green / emerald
-                } else if (lowerDiff.includes('medium') || lowerDiff.includes('normal')) {
-                    targetColor = '#60a5fa'; // Blue (same as FAQ)
-                } else if (lowerDiff.includes('hard') || lowerDiff.includes('expert') || lowerDiff.includes('difficult')) {
-                    targetColor = '#ff4d4d'; // Red
+                if (isSubanagrams) {
+                    diffEl.style.removeProperty('color');
+                    diffEl.style.removeProperty('--diff-color');
+                } else {
+                    // Dynamically apply color based on difficulty (Easy -> emerald, Medium -> blue, Hard -> red)
+                    const lowerDiff = diffLabel.toLowerCase();
+                    let targetColor = '';
+                    if (lowerDiff.includes('easy') || lowerDiff.includes('beginner')) {
+                        targetColor = '#2ecc71'; // Dark green / emerald
+                    } else if (lowerDiff.includes('medium') || lowerDiff.includes('normal')) {
+                        targetColor = '#60a5fa'; // Blue (same as FAQ)
+                    } else if (lowerDiff.includes('hard') || lowerDiff.includes('expert') || lowerDiff.includes('difficult')) {
+                        targetColor = '#ff4d4d'; // Red
+                    }
+                    diffEl.style.removeProperty('color');
+                    diffEl.style.setProperty('--diff-color', targetColor);
                 }
-                diffEl.style.removeProperty('color');
-                diffEl.style.setProperty('--diff-color', targetColor);
             }
             if (document.getElementById('param-min')) document.getElementById('param-min').textContent = window._displayedParams.min;
             if (document.getElementById('param-dict')) document.getElementById('param-dict').textContent = window._displayedParams.dict;
@@ -8602,6 +8642,8 @@ async function leaveCurrentRoom() {
     window._localSubmittedWordsList = [];
     window.lastGameState = null;
     window.lastRawGameState = null;
+    window._lastParamString = null;
+    window._displayedParams = null;
     document.body.classList.remove('is-subanagrams');
     
     const playBtn = document.getElementById('play-btn');
