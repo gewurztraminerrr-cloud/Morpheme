@@ -962,6 +962,25 @@ body.is-subanagrams.is-mobile .left-panel-container #game-color-bar {
     display: none !important;
 }
 
+body.is-subanagrams .game-params,
+body.is-subanagrams .header-title-group,
+body.is-subanagrams .spinner-set-label {
+    cursor: default !important;
+}
+
+body.is-subanagrams .game-params:hover,
+body.is-subanagrams .header-title-group:hover,
+body.is-subanagrams .spinner-set-label:hover {
+    transform: none !important;
+    text-shadow: none !important;
+}
+
+body.is-subanagrams .game-params:active,
+body.is-subanagrams .header-title-group:active,
+body.is-subanagrams .spinner-set-label:active {
+    transform: none !important;
+}
+
 /* Loading state: fill the board area and center the loading card */
 .game-board-loading,
 #game-board.game-board-loading,

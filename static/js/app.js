@@ -1877,6 +1877,8 @@ function setupModalListeners() {
 
     if (spinnerModal) {
         const openSpinnerModal = () => {
+            const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+            if (isSubanagrams) return;
             spinnerModal.classList.remove('hidden');
         };
 
