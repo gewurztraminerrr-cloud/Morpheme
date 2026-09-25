@@ -7865,9 +7865,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790002000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790275000"></script>
+    <script src="/js/app.js?v=1790280000"></script>
     <script src="/js/lobby.js?v=1790276000"></script>
-    <script src="/js/play.js?v=1790279000"></script>
+    <script src="/js/play.js?v=1790280000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
     <script src="/js/tools.js?v=1790273000"></script>
@@ -8017,6 +8017,11 @@
                 if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
                     playersPanel.prepend(colorBar);
                 }
+            }
+
+            const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+            if (colorBar && isSubanagrams) {
+                colorBar.style.display = 'none';
             }
         }
 

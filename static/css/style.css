@@ -10345,8 +10345,11 @@ body.theme-light-brown .t-versus-opponent-name {
     }
 }
 
-/* Hide player filter buttons and color chart during Tournament rounds */
+/* Hide player filter buttons and color chart during Tournament rounds & Subanagrams */
 body.is-tournament-round #game-color-bar,
+body.is-subanagrams #game-color-bar,
+body.is-subanagrams .global-rating-bar,
+body.is-subanagrams .left-panel-container #game-color-bar,
 body.is-tournament-round .player-actions-row,
 body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,

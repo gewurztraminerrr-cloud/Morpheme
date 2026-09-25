@@ -2073,11 +2073,12 @@ window.showPage = showPage;
         handleLobbyMusicState();
     }
 
-    // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds)
+    // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds and subanagrams)
     const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const colorBar = document.getElementById('game-color-bar');
     if (colorBar) {
-        if (pageId === 'page-play' && !isTournament) {
+        if (pageId === 'page-play' && !isTournament && !isSubanagrams) {
             colorBar.style.display = 'flex';
             setTimeout(() => {
                 if (typeof adjustPlayHeaderForDevice === 'function') {
@@ -3261,9 +3262,10 @@ window.showConfirmModal = function (title, message, onConfirm) {
 
 function renderGameColorBar() {
     const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
-    if (isTournament) {
+    if (isTournament || isSubanagrams) {
         bar.style.display = 'none';
         return;
     }
@@ -3295,6 +3297,8 @@ function renderGameColorBar() {
  * Highlights the segment in the color bar that matches current board difficulty
  */
 function updateColorBarHighlight(difficulty, uniqueness) {
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) return;
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
 
@@ -3324,6 +3328,8 @@ function updateColorBarHighlight(difficulty, uniqueness) {
  * Specifically highlights the segment for the USER'S CURRENT RATING with the pulsing effect.
  */
 window.updateUserRatingHighlight = function(rating) {
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) return;
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
 

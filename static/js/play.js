@@ -85,6 +85,11 @@ function adjustPlayHeaderForDevice() {
             playersPanel.prepend(colorBar);
         }
     }
+
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (colorBar && isSubanagrams) {
+        colorBar.style.display = 'none';
+    }
 }
 window.checkIsDesktop = checkIsDesktop;
 window.adjustPlayHeaderForDevice = adjustPlayHeaderForDevice;
@@ -1710,7 +1715,16 @@ async function updateGameState(incomingState = null) {
         }
 
         window.lastGameState = state;  // Store for optimistic updates
-        document.body.classList.toggle('is-subanagrams', state.game_type === 'subanagrams');
+        const isSub = state.game_type === 'subanagrams';
+        document.body.classList.toggle('is-subanagrams', isSub);
+        const colorBar = document.getElementById('game-color-bar');
+        if (colorBar) {
+            if (isSub) {
+                colorBar.style.display = 'none';
+            } else if (!window.isTournamentPlay) {
+                colorBar.style.display = 'flex';
+            }
+        }
 
         
         // LOADING STATE: Room was just created and board is being generated async
@@ -8648,6 +8662,10 @@ async function leaveCurrentRoom() {
     window._lastParamString = null;
     window._displayedParams = null;
     document.body.classList.remove('is-subanagrams');
+    const colorBar = document.getElementById('game-color-bar');
+    if (colorBar && !window.isTournamentPlay) {
+        colorBar.style.display = '';
+    }
     
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {

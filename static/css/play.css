@@ -954,6 +954,14 @@ body.is-subanagrams .words-tabs {
     display: none !important;
 }
 
+body.is-subanagrams #game-color-bar,
+body.is-subanagrams .global-rating-bar,
+body.is-subanagrams .left-panel-container #game-color-bar,
+body.is-subanagrams.is-desktop .left-panel-container #game-color-bar,
+body.is-subanagrams.is-mobile .left-panel-container #game-color-bar {
+    display: none !important;
+}
+
 /* Loading state: fill the board area and center the loading card */
 .game-board-loading,
 #game-board.game-board-loading,
