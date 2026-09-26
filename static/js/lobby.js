@@ -290,7 +290,11 @@ async function createRoom(config, minRating, maxRating) {
     localStorage.removeItem('tournament_play_active');
     localStorage.removeItem('private_match_active');
 
+    // Reset left-room flag — user is intentionally creating a new room from the lobby
+    window._userLeftRoom = false;
+
     if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+
 
     try {
         const createResp = await fetch('/api/room/create', {
