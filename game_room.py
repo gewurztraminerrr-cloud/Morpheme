@@ -861,7 +861,9 @@ class GameRoom:
                 matched_word = word
             else:
                 from collections import Counter
-                seq_letters = "".join(self.board[0]) if (self.board and len(self.board) > 0 and isinstance(self.board[0], list)) else ""
+                raw_seq = "".join(self.board[0]) if (self.board and len(self.board) > 0 and isinstance(self.board[0], list)) else ""
+                # QU tile is stored as 'Q' but contributes both Q and U — expand before counting
+                seq_letters = raw_seq.replace('Q', 'QU')
                 seq_cnt = Counter(seq_letters)
                 w_cnt = Counter(word)
                 if all(seq_cnt[c] >= cnt for c, cnt in w_cnt.items()):

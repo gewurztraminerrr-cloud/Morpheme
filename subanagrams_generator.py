@@ -92,13 +92,18 @@ def get_subanagrams_dict(base_dict='CSW', use_added_words=False):
     return entry
 
 def solve_subanagrams(sequence, dict_data, min_length=3):
-    """Fast bitmask + Counter solver for finding all subanagrams of a letter sequence."""
+    """Fast bitmask + Counter solver for finding all subanagrams of a letter sequence.
+    The QU tile is stored as 'Q' in the board but counts as both Q and U for word-finding.
+    We expand Q→QU before counting so words like EQUATED are correctly discovered.
+    """
     sequence = sequence.upper()
-    seq_len = len(sequence)
-    seq_counter = Counter(sequence)
+    # Expand Q → QU: the QU tile contributes both a Q and a U to the letter pool
+    expanded_sequence = sequence.replace('Q', 'QU')
+    seq_len = len(expanded_sequence)
+    seq_counter = Counter(expanded_sequence)
 
     seq_mask = 0
-    for ch in sequence:
+    for ch in expanded_sequence:
         seq_mask |= (1 << (ord(ch) - 65))
     seq_inv_mask = (~seq_mask) & 0xFFFFFFFF
 
