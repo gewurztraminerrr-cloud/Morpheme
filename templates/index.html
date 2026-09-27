@@ -3169,33 +3169,10 @@
                     border-top: 1.5px solid rgba(255, 255, 255, 0.22) !important;
                     box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
                 }
-                /* Light theme overrides */
-                [class*="theme-white"] #page-forums #forum-back-to-list,
-                [class*="theme-white"] #page-forums #forum-category-back-btn,
-                [class*="theme-white"] #page-forums .forum-back-btn,
-                [class*="theme-light-"] #page-forums #forum-back-to-list,
-                [class*="theme-light-"] #page-forums #forum-category-back-btn,
-                [class*="theme-light-"] #page-forums .forum-back-btn,
-                body.theme-yellow #page-forums #forum-back-to-list,
-                body.theme-yellow #page-forums #forum-category-back-btn,
-                body.theme-yellow #page-forums .forum-back-btn,
-                body.theme-pink #page-forums #forum-back-to-list,
-                body.theme-pink #page-forums #forum-category-back-btn,
-                body.theme-pink #page-forums .forum-back-btn,
-                body.theme-orange #page-forums #forum-back-to-list,
-                body.theme-orange #page-forums #forum-category-back-btn,
-                body.theme-orange #page-forums .forum-back-btn,
-                body.theme-gray #page-forums #forum-back-to-list,
-                body.theme-gray #page-forums #forum-category-back-btn,
-                body.theme-gray #page-forums .forum-back-btn,
-                body.theme-light-brown #page-forums #forum-back-to-list,
-                body.theme-light-brown #page-forums #forum-category-back-btn,
-                body.theme-light-brown #page-forums .forum-back-btn {
-                    background: linear-gradient(180deg, #ffffff 0%, #edf0f4 100%) !important;
-                    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
-                    color: #111111 !important;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
-                }
+                /* Light theme overrides — forum-bottom-bar background only.
+                   Back buttons (#forum-back-to-list, #forum-category-back-btn, .bottom-back-btn)
+                   intentionally inherit the dark-navy style from play.css so they match
+                   the Tools ← Back button on white/light layouts. */
                 [class*="theme-white"] #page-forums .forum-bottom-bar,
                 [class*="theme-white"] .forum-bottom-bar,
                 body.theme-white #page-forums .forum-bottom-bar,
