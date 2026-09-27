@@ -919,9 +919,11 @@ async function ejectToLobby(reason = "inactivity") {
     }
 
     // 4. SHOW MODAL FIRST — over whatever page the user is currently on
+    console.warn('[eject] Step 4: showing modal. showAlertModal defined?', typeof window.showAlertModal);
     if (window.showAlertModal) {
         window.showAlertModal(title, message, true);
-        console.log('[play.js] Displayed eviction modal before redirect.');
+        const modal = document.getElementById('generic-info-modal');
+        console.warn('[eject] After showAlertModal: modal.style.display=', modal ? modal.style.display : 'NO MODAL', '_hasPriorityModal=', window._hasPriorityModal);
     } else {
         const modal = document.getElementById('generic-info-modal');
         const titleEl = document.getElementById('generic-modal-title');
@@ -932,21 +934,29 @@ async function ejectToLobby(reason = "inactivity") {
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
             modal.style.zIndex = '100001';
+            console.warn('[eject] Fallback modal shown. display=', modal.style.display);
+        } else {
+            console.error('[eject] CRITICAL: Neither showAlertModal nor generic-info-modal found!');
         }
     }
 
-    // 5. Navigate to lobby immediately on next tick — the modal is fixed at z-index 100001
-    //    so it overlays the lobby page. No delay needed; a 400ms gap created race conditions
-    //    where lobby init code could interfere with modal visibility.
+    // 5. Navigate to lobby — use 100ms delay to give the browser time to paint the modal
+    //    before the page transition. The modal is position:fixed z-index:100001 so it
+    //    overlays the lobby page, but we need at least one paint frame first.
     setTimeout(() => {
+        console.warn('[eject] Step 5: navigating to lobby');
+        const modalCheck = document.getElementById('generic-info-modal');
+        console.warn('[eject] Pre-navigation modal state: display=', modalCheck ? modalCheck.style.display : 'NO MODAL', 'hidden?', modalCheck ? modalCheck.classList.contains('hidden') : 'N/A');
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
         else window.location.href = '#page-lobby';
+        const modalAfter = document.getElementById('generic-info-modal');
+        console.warn('[eject] Post-navigation modal state: display=', modalAfter ? modalAfter.style.display : 'NO MODAL', 'hidden?', modalAfter ? modalAfter.classList.contains('hidden') : 'N/A');
         if (typeof window.fetchLobbyStats === 'function') {
             window.fetchLobbyStats('all').catch(() => {});
         }
         window._isEjectingToLobby = false;
-    }, 0);
+    }, 100);
 }
 
 // Reset idle timer only on interactions that happen WHILE on the Play page.
