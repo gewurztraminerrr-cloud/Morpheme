@@ -3434,7 +3434,8 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
         if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
     } else {
-        if (headingEl) headingEl.textContent = `Players`;
+        const playerCount = players ? players.length : 0;
+        if (headingEl) headingEl.textContent = playerCount > 0 ? `Players [${playerCount}]` : `Players`;
         if (playerActionsRow) playerActionsRow.style.display = 'none';
         if (findMeBtn) findMeBtn.style.display = 'none';
         if (findFriendsBtn) findFriendsBtn.style.display = 'none';
