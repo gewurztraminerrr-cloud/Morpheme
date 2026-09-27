@@ -746,6 +746,13 @@ function resetIdleTimer() {
         localStorage.setItem('morpheme_last_active_time', now);
         localStorage.setItem('morpheme_last_active_timestamp', now);
     } catch(e) {}
+    // Clear any stale suppress-notice flag — if the user is actively playing,
+    // they deserve to see the Session Expired popup if they later go idle.
+    // DOMContentLoaded may have set this if they launched the app after a >1h gap.
+    if (window._suppressInactivityNotice) {
+        window._suppressInactivityNotice = false;
+        try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
+    }
 }
 
 function isOnPlayPage() {
