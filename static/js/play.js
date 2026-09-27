@@ -804,16 +804,23 @@ async function ejectToLobby(reason = "inactivity") {
     }
 
     // Check if inactivity notice should be suppressed (e.g. absent >= 1 hour)
+    // Only suppress if the user was GENUINELY absent for over 1 hour.
+    // Trust the in-memory lastGameInteractionTime first (it's updated on every click/tap
+    // while on the play page). Only fall back to localStorage when memory is unavailable.
+    // Bug fix: using OR between storage and memory allowed a stale localStorage value from
+    // a prior session (hours ago) to falsely suppress the notice after only 10m idle.
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
         try {
             const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
                                      (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
-            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
             const now = Date.now();
-            const exceededOneHourStorage = (lastActive > 0) && ((now - lastActive) >= 60 * 60 * 1000);
-            const exceededOneHourMemory = (typeof lastGameInteractionTime === 'number') && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
-            shouldSuppressNotice = isSuppressedFlag || exceededOneHourStorage || exceededOneHourMemory;
+            const memoryAvailable = typeof lastGameInteractionTime === 'number' && lastGameInteractionTime > 0;
+            const exceededOneHourMemory = memoryAvailable && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
+            // Only consult localStorage when in-memory timer was never set (e.g. page reload mid-session)
+            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+            const exceededOneHourStorage = !memoryAvailable && (lastActive > 0) && ((now - lastActive) >= 60 * 60 * 1000);
+            shouldSuppressNotice = isSuppressedFlag || exceededOneHourMemory || exceededOneHourStorage;
         } catch(e) {}
     }
 
