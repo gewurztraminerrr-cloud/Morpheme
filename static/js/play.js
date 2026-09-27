@@ -935,7 +935,9 @@ async function ejectToLobby(reason = "inactivity") {
         }
     }
 
-    // 5. THEN navigate to lobby after a short delay so the modal is visible first
+    // 5. Navigate to lobby immediately on next tick — the modal is fixed at z-index 100001
+    //    so it overlays the lobby page. No delay needed; a 400ms gap created race conditions
+    //    where lobby init code could interfere with modal visibility.
     setTimeout(() => {
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
@@ -944,7 +946,7 @@ async function ejectToLobby(reason = "inactivity") {
             window.fetchLobbyStats('all').catch(() => {});
         }
         window._isEjectingToLobby = false;
-    }, 400);
+    }, 0);
 }
 
 // Reset idle timer only on interactions that happen WHILE on the Play page.
