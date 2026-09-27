@@ -746,13 +746,11 @@ function resetIdleTimer() {
         localStorage.setItem('morpheme_last_active_time', now);
         localStorage.setItem('morpheme_last_active_timestamp', now);
     } catch(e) {}
-    // Clear any stale suppress-notice flag — if the user is actively playing,
-    // they deserve to see the Session Expired popup if they later go idle.
-    // DOMContentLoaded may have set this if they launched the app after a >1h gap.
-    if (window._suppressInactivityNotice) {
-        window._suppressInactivityNotice = false;
-        try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
-    }
+    // Always clear any stale suppress-notice flags so Session Expired popup is
+    // never silenced for an actively playing user. DOMContentLoaded may have set
+    // these when the user launched the app after a >1h absence.
+    window._suppressInactivityNotice = false;
+    try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
 }
 
 function isOnPlayPage() {
@@ -816,18 +814,25 @@ async function ejectToLobby(reason = "inactivity") {
     // while on the play page). Only fall back to localStorage when memory is unavailable.
     // Bug fix: using OR between storage and memory allowed a stale localStorage value from
     // a prior session (hours ago) to falsely suppress the notice after only 10m idle.
+    // Only suppress the inactivity notice when the user has been GENUINELY absent for >1 hour.
+    // isSuppressedFlag can be set by DOMContentLoaded when launching after a long gap — but if
+    // in-memory evidence shows activity within the last hour, always show the notice regardless.
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
         try {
-            const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
-                                     (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
             const now = Date.now();
             const memoryAvailable = typeof lastGameInteractionTime === 'number' && lastGameInteractionTime > 0;
             const exceededOneHourMemory = memoryAvailable && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
             // Only consult localStorage when in-memory timer was never set (e.g. page reload mid-session)
             const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
             const exceededOneHourStorage = !memoryAvailable && (lastActive > 0) && ((now - lastActive) >= 60 * 60 * 1000);
-            shouldSuppressNotice = isSuppressedFlag || exceededOneHourMemory || exceededOneHourStorage;
+            // isSuppressedFlag (sessionStorage/window) ONLY suppresses when memory also confirms >1h absence.
+            // If the user was active within the last hour (in-memory), never let a stale flag silence the popup.
+            const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
+                                     (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
+            const recentlyActive = memoryAvailable && !exceededOneHourMemory;
+            shouldSuppressNotice = (recentlyActive ? false : isSuppressedFlag) || exceededOneHourMemory || exceededOneHourStorage;
+            console.warn('[eject] Suppress check: isSuppressedFlag=', isSuppressedFlag, 'recentlyActive=', recentlyActive, 'exceededOneHourMemory=', exceededOneHourMemory, 'exceededOneHourStorage=', exceededOneHourStorage, '→ shouldSuppressNotice=', shouldSuppressNotice);
         } catch(e) {}
     }
 
