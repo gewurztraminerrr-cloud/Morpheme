@@ -2926,6 +2926,75 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
     }
 }
 
+/* ── Desktop: Change Password/Email — fit both cards without vertical scroll ── */
+@media (min-width: 901px) {
+    #tool-change-account {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    #tool-change-account .tool-header {
+        flex-shrink: 0;
+        margin-bottom: 2px !important;
+    }
+    #tool-change-account #account-guest-banner {
+        flex-shrink: 0;
+        margin-bottom: 10px !important;
+        padding: 10px 16px !important;
+    }
+    #tool-change-account .account-settings-grid {
+        flex: 1 1 0;
+        min-height: 0;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+        margin-top: 6px !important;
+        align-items: stretch;
+    }
+    #tool-change-account .account-card {
+        padding: 14px 18px !important;
+        gap: 10px !important;
+        overflow: hidden;
+    }
+    #tool-change-account .account-card > div:first-child {
+        padding-bottom: 8px !important;
+    }
+    #tool-change-account .account-card form {
+        gap: 8px !important;
+    }
+    #tool-change-account .account-card .form-group {
+        gap: 3px !important;
+    }
+    #tool-change-account .account-card input {
+        padding: 7px 10px !important;
+        font-size: 0.88rem !important;
+    }
+    #tool-change-account .account-card label {
+        font-size: 0.78rem !important;
+    }
+    #tool-change-account .account-card h3 {
+        font-size: 1.05rem !important;
+    }
+    #tool-change-account .account-card-desc {
+        font-size: 0.78rem !important;
+    }
+    #tool-change-account .account-card button[type="submit"] {
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+        margin-top: 2px !important;
+    }
+    #tool-change-account #password-alert,
+    #tool-change-account #email-alert {
+        padding: 6px 10px !important;
+        font-size: 0.82rem !important;
+    }
+    #tool-change-account #email-current-display {
+        padding: 7px 10px !important;
+        font-size: 0.88rem !important;
+    }
+}
+
 .tool-btn-title {
     font-weight: 600;
     font-size: 0.95rem;
