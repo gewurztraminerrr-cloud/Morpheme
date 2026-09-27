@@ -9415,6 +9415,12 @@ document.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
     if (e.target.id === 'clues-toggle-remaining-btn') {
         window._cluesShowRemaining = !window._cluesShowRemaining;
+        // When switching TO Remaining, reset scroll to top so word counts
+        // per letter length are visible from the start (user request).
+        if (window._cluesShowRemaining) {
+            const cluesListEl = document.getElementById('clues-list');
+            if (cluesListEl) cluesListEl.scrollTop = 0;
+        }
         if (window.lastGameState) {
             updateGameState(window.lastGameState);
         }
