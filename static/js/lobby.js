@@ -1987,38 +1987,20 @@ function initLobbyGuideScrollbar() {
     const thumb = document.getElementById('lobby-guide-scrollbar-thumb');
     if (!scrollArea || !track || !thumb) return;
 
-    if (typeof window.initCustomScrollbarForElement === 'function') {
-        window.initCustomScrollbarForElement(scrollArea, track, thumb);
-        return;
-    }
-
-    if (scrollArea._guideScrollbarInit) {
-        if (typeof scrollArea._updateGuideScrollbar === 'function') {
-            scrollArea._updateGuideScrollbar();
-        }
-        return;
-    }
-    scrollArea._guideScrollbarInit = true;
-
-    let isDragging = false;
-    let startY = 0;
-    let startThumbTop = 0;
-
     function updateThumb() {
         if (isDragging) return;
+        track.style.display = 'block';
+        thumb.style.display = 'block';
+
         const scrollHeight = scrollArea.scrollHeight;
-        const clientHeight = scrollArea.clientHeight;
+        const clientHeight = scrollArea.clientHeight || scrollArea.offsetHeight;
         const scrollTop = scrollArea.scrollTop;
 
-        if (scrollHeight <= clientHeight + 5 || clientHeight <= 0) {
-            track.style.display = 'none';
-            return;
-        }
-        track.style.display = 'block';
+        const trackHeight = track.clientHeight || (clientHeight - 20);
+        if (trackHeight <= 0) return;
 
-        const trackHeight = track.clientHeight || clientHeight;
-        const ratio = Math.min(1, clientHeight / scrollHeight);
-        const thumbHeight = Math.max(36, Math.min(trackHeight, trackHeight * ratio));
+        const ratio = scrollHeight > 0 ? clientHeight / scrollHeight : 1;
+        const thumbHeight = Math.max(48, Math.min(trackHeight, trackHeight * ratio));
         thumb.style.height = `${thumbHeight}px`;
 
         const maxScrollTop = scrollHeight - clientHeight;
@@ -2027,18 +2009,37 @@ function initLobbyGuideScrollbar() {
         thumb.style.top = `${thumbTop}px`;
     }
 
-    scrollArea._updateGuideScrollbar = updateThumb;
+    window._updateLobbyGuideThumb = updateThumb;
+
+    if (scrollArea._guideScrollbarInit) {
+        updateThumb();
+        return;
+    }
+    scrollArea._guideScrollbarInit = true;
+
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+
     scrollArea.addEventListener('scroll', updateThumb, { passive: true });
+    window.addEventListener('resize', updateThumb, { passive: true });
+
+    if (window.ResizeObserver) {
+        try {
+            const ro = new ResizeObserver(() => updateThumb());
+            ro.observe(scrollArea);
+        } catch (_) {}
+    }
 
     function onPointerDown(e) {
         isDragging = true;
         thumb.classList.add('dragging');
         startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         startThumbTop = parseFloat(thumb.style.top) || 0;
-        document.addEventListener('pointermove', onPointerMove);
-        document.addEventListener('pointerup', onPointerUp);
-        document.addEventListener('touchmove', onPointerMove, { passive: false });
-        document.addEventListener('touchend', onPointerUp);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
         e.preventDefault();
     }
 
@@ -2046,8 +2047,8 @@ function initLobbyGuideScrollbar() {
         if (!isDragging) return;
         const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         const deltaY = clientY - startY;
-        const trackHeight = track.clientHeight;
-        const thumbHeight = thumb.offsetHeight;
+        const trackHeight = track.clientHeight || (scrollArea.clientHeight - 20);
+        const thumbHeight = thumb.offsetHeight || 48;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const newThumbTop = Math.max(0, Math.min(maxThumbTop, startThumbTop + deltaY));
         thumb.style.top = `${newThumbTop}px`;
@@ -2063,10 +2064,10 @@ function initLobbyGuideScrollbar() {
         if (!isDragging) return;
         isDragging = false;
         thumb.classList.remove('dragging');
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-        document.removeEventListener('touchmove', onPointerMove);
-        document.removeEventListener('touchend', onPointerUp);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('touchmove', onPointerMove);
+        window.removeEventListener('touchend', onPointerUp);
     }
 
     thumb.addEventListener('pointerdown', onPointerDown);
@@ -2076,8 +2077,8 @@ function initLobbyGuideScrollbar() {
         if (e.target === thumb) return;
         const rect = track.getBoundingClientRect();
         const clickY = e.clientY - rect.top;
-        const trackHeight = track.clientHeight;
-        const thumbHeight = thumb.offsetHeight;
+        const trackHeight = track.clientHeight || (scrollArea.clientHeight - 20);
+        const thumbHeight = thumb.offsetHeight || 48;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const targetThumbTop = Math.max(0, Math.min(maxThumbTop, clickY - thumbHeight / 2));
         const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
@@ -2098,12 +2099,19 @@ function openLobbyGuideModal() {
     if (content) {
         content.scrollTop = 0;
     }
+    initLobbyGuideScrollbar();
     requestAnimationFrame(() => {
-        initLobbyGuideScrollbar();
+        if (window._updateLobbyGuideThumb) window._updateLobbyGuideThumb();
     });
     setTimeout(() => {
-        initLobbyGuideScrollbar();
-    }, 100);
+        if (window._updateLobbyGuideThumb) window._updateLobbyGuideThumb();
+    }, 50);
+    setTimeout(() => {
+        if (window._updateLobbyGuideThumb) window._updateLobbyGuideThumb();
+    }, 150);
+    setTimeout(() => {
+        if (window._updateLobbyGuideThumb) window._updateLobbyGuideThumb();
+    }, 300);
 }
 window.openLobbyGuideModal = openLobbyGuideModal;
 
