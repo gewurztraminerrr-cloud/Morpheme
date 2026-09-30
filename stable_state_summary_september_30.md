@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-b835f6add4c3fd5ed7d4971bff3a1c4646098de2
+8dc2db3fe49258286a1172a39a2fefdfae3aa1eb
 ```
 
 ## Tags
@@ -13,15 +13,20 @@ b835f6add4c3fd5ed7d4971bff3a1c4646098de2
 
 | Environment    | Commit                                     | Status |
 |----------------|--------------------------------------------|--------|
-| localhost      | `b835f6add4c3fd5ed7d4971bff3a1c4646098de2` | ✅ Synchronized |
-| GitHub (main)  | `b835f6add4c3fd5ed7d4971bff3a1c4646098de2` | ✅ Synchronized |
-| morpheme.games | `b835f6add4c3fd5ed7d4971bff3a1c4646098de2` | ✅ Synchronized (HTTP 200 OK) |
+| localhost      | `8dc2db3fe49258286a1172a39a2fefdfae3aa1eb` | ✅ Synchronized |
+| GitHub (main)  | `8dc2db3fe49258286a1172a39a2fefdfae3aa1eb` | ✅ Synchronized |
+| morpheme.games | `8dc2db3fe49258286a1172a39a2fefdfae3aa1eb` | ✅ Synchronized (HTTP 200 OK) |
 
 ---
 
 ## Session Features & Fixes (September 30, 2026)
 
-### 1. Word Lists Added to Tools Dropdowns & "All" Standardization
+### 1. AW Dictionary FAQ Guidance on Checking Is Valid with "All"
+- In the FAQ entry for Added Words (AW), updated the ending guidance to:
+  > *"If you find a word that is not present in AW, CSW, and NWL, but should be (search any word in Is Valid in Tools using “All” word list first: If it’s not a valid word, it is not a word used in Morpheme), mention that in the designated thread in the Suggestions category in the Forum."*
+- **Files**: `templates/index.html`.
+
+### 2. Word Lists Added to Tools Dropdowns & "All" Standardization
 - **6 Word Lists Added**: Added `CSW Only` (85,587 words), `NWL Uniques` (90,300 words), `New NWL Words` (2 words), `New CSW Words` (0 words), `New AW Words` (40 words with recorded dates), and `All New Words` (42 words) across dictionary dropdown menus in:
   - Combo Checker (`#combo-dict`)
   - Sequence (`#seq-dict`)
