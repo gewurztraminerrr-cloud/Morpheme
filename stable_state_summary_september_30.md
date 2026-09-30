@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-f583530bba3b5168d601a91e56b4aece72fb7ba6
+60f3dfcef4ef28497176b78f0e7e069ab61de398
 ```
 
 ## Tags
@@ -13,9 +13,9 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
 
 | Environment    | Commit                                     | Status |
 |----------------|--------------------------------------------|--------|
-| localhost      | `f583530bba3b5168d601a91e56b4aece72fb7ba6` | ✅ Synchronized |
-| GitHub (main)  | `f583530bba3b5168d601a91e56b4aece72fb7ba6` | ✅ Synchronized |
-| morpheme.games | `f583530bba3b5168d601a91e56b4aece72fb7ba6` | ✅ Synchronized (HTTP 200 OK) |
+| localhost      | `60f3dfcef4ef28497176b78f0e7e069ab61de398` | ✅ Synchronized |
+| GitHub (main)  | `60f3dfcef4ef28497176b78f0e7e069ab61de398` | ✅ Synchronized |
+| morpheme.games | `60f3dfcef4ef28497176b78f0e7e069ab61de398` | ✅ Synchronized (HTTP 200 OK) |
 
 ---
 
@@ -43,7 +43,7 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
   - Updated `/api/tools/random-words` (Find Count) to dynamically support all dictionaries.
 - **Files**: `app.py`, `templates/index.html`, `static/js/tools.js`.
 
-### 2. Left-Align Personal Quote on Mobile Devices in Profile
+### 3. Left-Align Personal Quote on Mobile Devices in Profile
 - **Requirement**: On mobile devices on Profile, align "PERSONAL QUOTE" to the left side in the same way as "ABOUT ME".
 - **Implementation**:
   - In `static/css/style.css`: updated mobile breakpoint styles for `.profile-quote-box .profile-quote-minimal p`, `.profile-quote-box .meta-label`, and `.profile-quote-minimal` from `text-align: center !important;` to `text-align: left !important;`.
@@ -51,7 +51,7 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
   - In `templates/index.html`: bumped cache busters for `style.css` and `play.css` to `v=1790628200`.
 - **Files**: `templates/index.html`, `static/css/style.css`, `static/css/play.css`.
 
-### 2. Equal Left and Right Padding for Panels under "Status & Results" in Unscramble
+### 4. Equal Left and Right Padding for Panels under "Status & Results" in Unscramble
 - **Issue**: Under "Status & Results" in Tools -> Unscramble, the panel containing words had noticeably more empty space on the right side than on the left side due to asymmetric list padding (`padding-right: 22px !important;` with `0` left padding in the history scroller to leave space for the scrollbar track, and `padding: 5px 10px 5px 5px;` on the outer `#unscramble-found-list`).
 - **Fix**:
   - In `templates/index.html`: changed `#unscramble-found-list` inline padding from `5px 10px 5px 5px` to equal `5px 0`.
@@ -62,13 +62,13 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
   - Bumped cache busters for `play.css` and `tools.js` to `v=1790628100`.
 - **Files**: `templates/index.html`, `static/css/play.css`, `static/js/tools.js`.
 
-### 3. Store Magnetic Letters Copy Rewrite
+### 5. Store Magnetic Letters Copy Rewrite
 - In Tools -> Store, updated the copy under **JoyCat Silicone Uppercase Magnetic Letters**:
   - Changed: *"Then, every time you open the fridge, you are reminded of it!"*
   - To: *"Then, when you open the fridge, you are reminded of them!"*
 - **Files**: `templates/index.html`.
 
-### 4. Pronunciation Immediately Under Word Declaration/Title & Definition Immediately Under Pronunciation
+### 6. Pronunciation Immediately Under Word Declaration/Title & Definition Immediately Under Pronunciation
 - **Core Requirement**: Across word declarations, dictionary popovers, and definition cards, position the pronunciation of a word immediately under the word declaration/title, and place the definition text immediately under the pronunciation.
 - **Gameplay Definition Panel (`.definitions-panel`)**:
   - Integrated `#definition-pronunciation` directly into `#definition-header`, placed immediately below the word title (`#definition-word`).
@@ -85,7 +85,7 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
   - Updated `/api/mods/definitions/add` in `app.py` and `mods.js` to save pronunciations to `PRONUNCIATIONS_CACHE` and append to `pronunciations.txt`.
 - **Files**: `templates/index.html`, `static/css/play.css`, `static/js/play.js`, `static/js/tools.js`, `static/js/mods.js`, `app.py`.
 
-### 5. "Set to Default Sizes" Button in Board Size Settings
+### 7. "Set to Default Sizes" Button in Board Size Settings
 - **Feature**: Added an actionable button labeled **"Set to Default Sizes"** positioned directly below the configurable dimension sliders and above the 2D example preview board in Settings -> Appearance -> Board Size.
 - **Functionality**:
   - Immediately resets all 4 dimension-specific sliders to their canonical defaults:
@@ -99,8 +99,40 @@ f583530bba3b5168d601a91e56b4aece72fb7ba6
   - Provides instant tactile button feedback ("Reset to Defaults!").
 - **Files**: `templates/index.html`, `static/js/settings.js`.
 
-### 6. Settings -> Appearance -> Board Size Layout Hierarchy
+### 8. Settings -> Appearance -> Board Size Layout Hierarchy
 - Reordered the Board Size tab inside Settings -> Appearance so that the interactive dimension sliders appear above the 2D example preview board, rather than below it.
+- **Files**: `templates/index.html`.
+
+### 9. Scrolling Box (2 Rows) on Combo Checker MP Description Across All Platforms
+- **Feature**: Applied a 2-row scrolling box container (`height: calc(2.7em + 8px) !important; max-height: calc(2.7em + 8px) !important; overflow-y: auto !important;`) to `.chart-desc` in Combo Checker across all platforms (desktops, laptops, tablets, and mobile devices) with dedicated custom scrollbar styling, matching the compact view across all screens.
+- **Files**: `static/css/play.css`, `templates/index.html`.
+
+### 10. Scrolling Box (2 Rows) on Suggestions/Ideas Category Description in Forum
+- **Feature**: Styled `#forum-category-desc.forum-desc-scrolling-box` to constrain lengthy category descriptions (specifically Suggestions/Ideas) to exactly 2 rows of text with a scrollable container matching the aesthetic of Combo Checker.
+- **Files**: `static/css/play.css`, `static/js/forum.js`, `templates/index.html`.
+
+### 11. Find Count "More random words" Persistence Across Tools Tab Switching
+- **Fix**: Resolved an issue where generating "More random words" in Find Count, navigating to another tab (such as Is Valid), and returning restored the initial page-load words rather than the freshly generated words.
+- **Implementation**: Synchronized `_cachedRandomWords` and `_initialDesktopRandomWords` in `static/js/tools.js` whenever "More random words" is triggered and ensured `renderRandomWordsDesktop()` seamlessly renders the cached words upon tab return.
+- **Files**: `static/js/tools.js`, `templates/index.html`.
+
+### 12. Priority Ordering of NWL, CSW, AW, and All in All Tools Word List Dropdowns
+- **Feature**: Standardized all 9 dictionary/word-list `<select>` dropdowns across the Tools tabs so that the first four options are strictly:
+  1. `NWL`
+  2. `CSW`
+  3. `AW`
+  4. `All`
+  followed by `CSW Only`, `NWL Uniques`, and the remaining new/likelihood lists.
+- **Affects**:
+  - Find Count (`#random-words-dict-select`)
+  - Random Word (`#random-dict`)
+  - Combo Checker (`#combo-dict`)
+  - Is Valid (`#valid-dict`)
+  - Subanagrams Manual (`#sub-dict`)
+  - Subanagrams Random (`#sub-dict-random`)
+  - Sequence (`#seq-dict`)
+  - Lists (`#list-type-filter`)
+  - Unscramble (`#unscramble-dict`)
 - **Files**: `templates/index.html`.
 
 ---
