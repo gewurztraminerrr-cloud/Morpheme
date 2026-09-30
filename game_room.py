@@ -7216,7 +7216,8 @@ class RoomManager:
 
                 raw_dict = r_params.get('dictionary', 'NWL')
                 raw_aw = r_params.get('use_added_words', False)
-                room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                _val = getattr(word_validator, 'word_validator', word_validator)
+                room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and _val.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
                 room.all_words = set(room.all_words_paths.keys())
                 room.complete_words = list(room.all_words)
                 
