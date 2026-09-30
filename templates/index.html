@@ -8567,17 +8567,17 @@
                         </div>
 
                         <!-- Visual Example Box -->
-                        <div class="lobby-guide-visual-box">
+                        <div class="lobby-guide-visual-box" onclick="event.stopPropagation(); return false;">
                             <div class="lobby-guide-visual-title">Example: Main Lobby Action Buttons</div>
                             <div class="lobby-guide-visual-row">
                                 <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
                                     <div style="font-size: 0.75rem; color: #a78bfa; font-weight: 700;">ACCUMULATIVE / SUBANAGRAMS</div>
-                                    <div class="game-btn acc-btn" style="width: 120px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; pointer-events: none; border-radius: 6px;">Start<br><span style="font-size: 0.72rem; opacity: 0.8;">[3]</span></div>
+                                    <div style="width: 120px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; pointer-events: none !important; user-select: none; cursor: default; border-radius: 8px; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff;">Start<br><span style="font-size: 0.72rem; opacity: 0.8; font-weight: normal;">[3]</span></div>
                                     <span style="font-size: 0.72rem; color: #94a3b8; text-align: center;">Direct entry into active match</span>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
                                     <div style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">FCFS / SPLIT / CUBE</div>
-                                    <div class="game-btn fcfs-btn" style="width: 130px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; pointer-events: none; border-radius: 6px;">Show Rooms<br><span style="font-size: 0.72rem; opacity: 0.8;">[1]</span></div>
+                                    <div style="width: 130px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; pointer-events: none !important; user-select: none; cursor: default; border-radius: 8px; background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); box-shadow: 0 4px 15px rgba(255, 8, 68, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff;">Show Rooms<br><span style="font-size: 0.72rem; opacity: 0.8; font-weight: normal;">[1]</span></div>
                                     <span style="font-size: 0.72rem; color: #94a3b8; text-align: center;">Reveals rooms in ACTIVE ROOMS panel</span>
                                 </div>
                             </div>
@@ -8617,10 +8617,10 @@
                             </div>
 
                             <div class="lobby-guide-card">
-                                <h4 class="lobby-guide-card-title"><span style="color: #a78bfa;">🚪</span> Open vs. Closed Rooms (Spectator Mode)</h4>
+                                <h4 class="lobby-guide-card-title"><span style="color: #a78bfa;">🚪</span> Open vs. Closed Rooms</h4>
                                 <p class="lobby-guide-card-desc">
-                                    <strong>Open Rooms:</strong> Accepting new competitors. Tap to enter, get ready, and play when the countdown finishes.<br>
-                                    <strong>Closed Rooms:</strong> Match is currently mid-round. You can still join as a <strong>Spectator</strong> to watch live gameplay, word submissions, and scores unfold in real time!
+                                    <strong>Open Rooms:</strong> Available for you to join and play.<br>
+                                    <strong>Closed Rooms:</strong> A room is closed if there are <strong>8 people playing in a room</strong> or if the <strong>rating range of the user is outside the rating range given to the room</strong>.
                                 </p>
                             </div>
 
@@ -8633,7 +8633,7 @@
                         </div>
 
                         <!-- Visual Example Box -->
-                        <div class="lobby-guide-visual-box">
+                        <div class="lobby-guide-visual-box" onclick="event.stopPropagation(); return false;">
                             <div class="lobby-guide-visual-title">Example: Active Room Entry</div>
                             <div class="lobby-guide-visual-row">
                                 <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; box-sizing: border-box; flex-wrap: wrap; gap: 8px;">
@@ -8646,8 +8646,8 @@
                                         <span style="font-size: 0.78rem; color: #94a3b8;">Host: LexiMaster • Players: 3/8 • Rating: 1420</span>
                                     </div>
                                     <div style="display: flex; gap: 6px;">
-                                        <button type="button" style="background: #22c55e; color: #000; border: none; font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; pointer-events: none;">Join</button>
-                                        <button type="button" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; pointer-events: none;">Watch</button>
+                                        <span style="background: #22c55e; color: #000; font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">Join</span>
+                                        <span style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">Watch</span>
                                     </div>
                                 </div>
                             </div>
@@ -8702,7 +8702,7 @@
                         </div>
 
                         <!-- Visual Example Box -->
-                        <div class="lobby-guide-visual-box">
+                        <div class="lobby-guide-visual-box" onclick="event.stopPropagation(); return false;">
                             <div class="lobby-guide-visual-title">Example: Solo & Friends Control Hub</div>
                             <div class="lobby-guide-visual-row">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
@@ -8715,8 +8715,8 @@
                                     <div style="background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.4); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; color: #c4b5fd;">
                                         Format: <strong>Normal</strong>
                                     </div>
-                                    <button type="button" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.8rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; pointer-events: none;">+ Add Bot</button>
-                                    <button type="button" style="background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: #fff; border: none; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; pointer-events: none;">Start Solo Match</button>
+                                    <span style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.8rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">+ Add Bot</span>
+                                    <span style="background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: #fff; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">Start Solo Match</span>
                                 </div>
                             </div>
                         </div>
@@ -8745,7 +8745,7 @@
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790635000"></script>
-    <script src="/js/lobby.js?v=1790636000"></script>
+    <script src="/js/lobby.js?v=1790637000"></script>
     <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>

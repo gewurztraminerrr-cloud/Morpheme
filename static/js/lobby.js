@@ -403,6 +403,9 @@ function setupLobbyEvents() {
         const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
         if (!target || typeof target.closest !== 'function') return;
 
+        // Never trigger lobby matchmaking / room navigation from inside the Lobby Guide modal
+        if (target.closest('#lobby-guide-modal')) return;
+
         const accBtn = target.closest('.acc-btn');
         if (accBtn && !accBtn.hasAttribute('onclick')) {
             handleAccumulativeClick(accBtn);
