@@ -3586,13 +3586,28 @@ body.theme-light-brown #more-random-words-btn:active {
 
     #tool-combo .chart-desc,
     .combo-results-container .chart-desc {
-        max-height: none !important;
-        height: auto !important;
-        overflow: visible !important;
-        font-size: 0.85rem !important;
-        line-height: 1.45 !important;
-        padding: 10px 16px 12px 16px !important;
+        font-size: 0.82rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        padding: 4px 14px !important;
+        margin-bottom: 4px !important;
         color: rgba(var(--text-primary-rgb), 0.75) !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-combo .chart-desc::-webkit-scrollbar,
+    .combo-results-container .chart-desc::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    #tool-combo .chart-desc::-webkit-scrollbar-thumb,
+    .combo-results-container .chart-desc::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.25);
+        border-radius: 4px;
     }
 
     #tool-combo .horizontal-scroll-container,
@@ -3710,12 +3725,27 @@ body.theme-light-brown #more-random-words-btn:active {
 
     #tool-combo .chart-desc,
     .combo-results-container .chart-desc {
-        max-height: 50px !important;
-        overflow-y: auto !important;
         font-size: 0.75rem !important;
         line-height: 1.25 !important;
+        height: calc(2.5em + 8px) !important;
+        max-height: calc(2.5em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
         padding: 4px 10px !important;
         margin-bottom: 4px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-combo .chart-desc::-webkit-scrollbar,
+    .combo-results-container .chart-desc::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    #tool-combo .chart-desc::-webkit-scrollbar-thumb,
+    .combo-results-container .chart-desc::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.25);
+        border-radius: 4px;
     }
 
     #tool-combo .horizontal-scroll-container,

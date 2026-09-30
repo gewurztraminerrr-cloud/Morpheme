@@ -720,15 +720,20 @@ const Forum = {
         }
 
         document.getElementById('forum-category-title').textContent = category.name;
-        const isSuggestions = category.name && (
+        const isSuggestions = Boolean(category.name && (
             category.name.toLowerCase().includes('suggestion') ||
             category.id === 6
-        );
-        document.getElementById('forum-category-desc').textContent = category.header_description || (
+        ));
+        const descEl = document.getElementById('forum-category-desc');
+        descEl.textContent = category.header_description || (
             isSuggestions
                 ? "Share your ideas for improving Morpheme. A user’s agreement in a user’s thread counts as a vote, and likewise for a disagreement. A decision of the mods will be made based on the level of its popularity, and the feature may be added in the future."
                 : category.description
         );
+        descEl.classList.toggle('forum-desc-scrolling-box', isSuggestions);
+        if (isSuggestions) {
+            descEl.scrollTop = 0;
+        }
 
         // Show/hide New Post button based on guest status
         // restriction: guests cannot post
@@ -780,7 +785,9 @@ const Forum = {
 
         // Update UI Header
         document.getElementById('forum-category-title').textContent = `Posts by ${username}`;
-        document.getElementById('forum-category-desc').textContent = `Viewing all forum contributions from ${username}.`;
+        const descEl = document.getElementById('forum-category-desc');
+        descEl.textContent = `Viewing all forum contributions from ${username}.`;
+        descEl.classList.remove('forum-desc-scrolling-box');
         document.getElementById('forum-new-post-btn').classList.add('hidden');
 
         const postsList = document.getElementById('forum-posts-list');

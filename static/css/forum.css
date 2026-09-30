@@ -202,6 +202,12 @@
     border-bottom: 1px solid var(--input-border);
 }
 
+.header-titles {
+    flex: 1;
+    min-width: 0;
+    margin-right: 20px;
+}
+
 .header-titles h2 {
     font-size: 1.8rem;
     margin-bottom: 5px;
@@ -212,6 +218,40 @@
     opacity: 0.7;
     font-size: 0.95rem;
     color: var(--text-primary);
+}
+
+#forum-category-desc.forum-desc-scrolling-box {
+    display: block !important;
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    height: calc(2.7em + 8px) !important;
+    max-height: calc(2.7em + 8px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    padding: 4px 12px !important;
+    margin: 8px 0 0 0 !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
+    border-radius: 8px !important;
+    background: rgba(var(--text-primary-rgb), 0.04) !important;
+    color: var(--muted-text, var(--text-primary)) !important;
+    opacity: 0.95 !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar {
+    width: 4px;
+}
+
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.25);
+    border-radius: 4px;
 }
 
 .forum-action-btn {
@@ -1367,6 +1407,16 @@ body.theme-light-brown .forum-back-btn:focus {
     }
     #forum-category-desc {
         font-size: 0.85rem !important;
+    }
+    #forum-category-desc.forum-desc-scrolling-box {
+        font-size: 0.76rem !important;
+        line-height: 1.28 !important;
+        height: calc(2.56em + 8px) !important;
+        max-height: calc(2.56em + 8px) !important;
+        padding: 4px 10px !important;
+        margin: 6px 0 0 0 !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
+        border-radius: 8px !important;
     }
     #forum-user-search-input {
         max-width: none !important;

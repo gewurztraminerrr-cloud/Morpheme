@@ -899,12 +899,19 @@ body.theme-light-brown #sub-count-info {
 }
 
 [class*="theme-white"] .tool-header p,
+[class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box,
 [class*="theme-light-"] .tool-header p,
+[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box,
 body.theme-yellow .tool-header p,
+body.theme-yellow #forum-category-desc.forum-desc-scrolling-box,
 body.theme-pink .tool-header p,
+body.theme-pink #forum-category-desc.forum-desc-scrolling-box,
 body.theme-orange .tool-header p,
+body.theme-orange #forum-category-desc.forum-desc-scrolling-box,
 body.theme-gray .tool-header p,
-body.theme-light-brown .tool-header p {
+body.theme-gray #forum-category-desc.forum-desc-scrolling-box,
+body.theme-light-brown .tool-header p,
+body.theme-light-brown #forum-category-desc.forum-desc-scrolling-box {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #475569 !important;
@@ -912,12 +919,26 @@ body.theme-light-brown .tool-header p {
 }
 
 [class*="theme-white"] .tool-header p::-webkit-scrollbar-thumb,
+[class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+[class*="theme-white"] .chart-desc::-webkit-scrollbar-thumb,
 [class*="theme-light-"] .tool-header p::-webkit-scrollbar-thumb,
+[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+[class*="theme-light-"] .chart-desc::-webkit-scrollbar-thumb,
 body.theme-yellow .tool-header p::-webkit-scrollbar-thumb,
+body.theme-yellow #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+body.theme-yellow .chart-desc::-webkit-scrollbar-thumb,
 body.theme-pink .tool-header p::-webkit-scrollbar-thumb,
+body.theme-pink #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+body.theme-pink .chart-desc::-webkit-scrollbar-thumb,
 body.theme-orange .tool-header p::-webkit-scrollbar-thumb,
+body.theme-orange #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+body.theme-orange .chart-desc::-webkit-scrollbar-thumb,
 body.theme-gray .tool-header p::-webkit-scrollbar-thumb,
-body.theme-light-brown .tool-header p::-webkit-scrollbar-thumb {
+body.theme-gray #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+body.theme-gray .chart-desc::-webkit-scrollbar-thumb,
+body.theme-light-brown .tool-header p::-webkit-scrollbar-thumb,
+body.theme-light-brown #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
+body.theme-light-brown .chart-desc::-webkit-scrollbar-thumb {
     background: #94a3b8 !important;
 }
 
