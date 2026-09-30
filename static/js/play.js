@@ -1869,6 +1869,11 @@ async function updateGameState(incomingState = null) {
                 }
                 const defWord = document.getElementById('definition-word');
                 if (defWord) defWord.textContent = '';
+                const defPron = document.getElementById('definition-pronunciation');
+                if (defPron) {
+                    defPron.textContent = '';
+                    defPron.style.display = 'none';
+                }
             }
 
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
@@ -2418,6 +2423,11 @@ async function updateGameState(incomingState = null) {
                     }
                     const defWord = document.getElementById('definition-word');
                     if (defWord) defWord.textContent = '';
+                    const defPron = document.getElementById('definition-pronunciation');
+                    if (defPron) {
+                        defPron.textContent = '';
+                        defPron.style.display = 'none';
+                    }
                 }
                 if (defPanel) {
                     // Keep timer-flash alive across rounds — Personal Timer expiry persists until user stops it
@@ -7730,6 +7740,11 @@ function clearSubmissionVisuals() {
         }
         const defWord = document.getElementById('definition-word');
         if (defWord) defWord.textContent = '';
+        const defPron = document.getElementById('definition-pronunciation');
+        if (defPron) {
+            defPron.textContent = '';
+            defPron.style.display = 'none';
+        }
         const defContent = document.getElementById('definition-content');
         if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
     }
@@ -8865,6 +8880,7 @@ async function fetchDefinition(word) {
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
     const defHeader = document.getElementById('definition-header');
+    const defPron = document.getElementById('definition-pronunciation');
     if (!defContent) return;
 
     // Show word immediately in dedicated header
@@ -8872,6 +8888,10 @@ async function fetchDefinition(word) {
         defWord.textContent = word.toUpperCase();
         defHeader.classList.remove('hidden');
         defHeader.style.display = 'block';
+    }
+    if (defPron) {
+        defPron.textContent = '';
+        defPron.style.display = 'none';
     }
 
     defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
@@ -8881,8 +8901,16 @@ async function fetchDefinition(word) {
         const data = await resp.json();
 
         if (data.definition || data.pronunciation || data.image_url) {
+            if (data.pronunciation && defPron) {
+                defPron.textContent = data.pronunciation;
+                defPron.style.display = 'block';
+            } else if (defPron) {
+                defPron.textContent = '';
+                defPron.style.display = 'none';
+            }
+
             let html = '';
-            if (data.pronunciation) {
+            if (data.pronunciation && !defPron) {
                 html += `<div class="pronunciation">${data.pronunciation}</div>`;
             }
             if (data.definition) {
@@ -8893,10 +8921,18 @@ async function fetchDefinition(word) {
             }
             defContent.innerHTML = html;
         } else {
+            if (defPron) {
+                defPron.textContent = '';
+                defPron.style.display = 'none';
+            }
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
         }
     } catch (e) {
         console.error('Definition error:', e);
+        if (defPron) {
+            defPron.textContent = '';
+            defPron.style.display = 'none';
+        }
         defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
     }
 }

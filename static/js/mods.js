@@ -625,9 +625,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const defWordInput = document.getElementById('def-word-input');
+    const defPronInput = document.getElementById('def-pron-input');
     const defTextInput = document.getElementById('def-text-input');
     if (defWordInput) {
         defWordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (defPronInput && !defPronInput.value.trim() && (!defTextInput || !defTextInput.value.trim())) {
+                    defPronInput.focus();
+                } else if (defTextInput && defTextInput.value.trim()) {
+                    addDefinition();
+                } else if (defTextInput) {
+                    defTextInput.focus();
+                }
+            }
+        });
+    }
+    if (defPronInput) {
+        defPronInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 if (defTextInput && defTextInput.value.trim()) {
@@ -998,8 +1013,10 @@ window.liftIpBan = liftIpBan;
 
 async function addDefinition() {
     const wordInput = document.getElementById('def-word-input');
+    const pronInput = document.getElementById('def-pron-input');
     const textInput = document.getElementById('def-text-input');
     const word = wordInput ? wordInput.value.trim().toUpperCase() : '';
+    const pron = pronInput ? pronInput.value.trim().toUpperCase() : '';
     const def = textInput ? textInput.value.trim() : '';
 
     if (!word || !def) {
@@ -1019,7 +1036,7 @@ async function addDefinition() {
         const response = await fetch('/api/mods/definitions/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word, definition: def })
+            body: JSON.stringify({ word, pronunciation: pron, definition: def })
         });
         
         if (response.status === 401) {
@@ -1035,6 +1052,7 @@ async function addDefinition() {
                 wordInput.value = '';
                 wordInput.focus();
             }
+            if (pronInput) pronInput.value = '';
             if (textInput) textInput.value = '';
             const wordsStr = data.words ? data.words.join(', ') : word;
             const successMsg = `✅ Definition for "${wordsStr}" updated successfully.`;

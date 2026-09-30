@@ -159,7 +159,7 @@
     <link rel="preload" href="/css/lobby.css?v=1790622000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1790621000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790622000">
-    <link rel="stylesheet" href="/css/play.css?v=1790626000">
+    <link rel="stylesheet" href="/css/play.css?v=1790628000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
     <link rel="stylesheet" href="/css/forum.css?v=1789342000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
@@ -3002,6 +3002,7 @@
                     <div class="definitions-panel">
                         <div id="definition-header" class="definition-header hidden" style="display: none;">
                             <span id="definition-word" class="definition-word"></span>
+                            <div id="definition-pronunciation" class="definition-pronunciation pronunciation" style="display: none;"></div>
                         </div>
                         <div id="definition-content">
                             <p class="placeholder">Select a word to see its definition</p>
@@ -4863,6 +4864,10 @@
                             <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
                                 <label for="def-word-input" style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Word(s)</label>
                                 <input type="text" id="def-word-input" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box;" placeholder="Enter word(s), comma-separated e.g. MORPHEME, MORPHEMES">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+                                <label for="def-pron-input" style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Pronunciation (Optional)</label>
+                                <input type="text" id="def-pron-input" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box;" placeholder="Enter pronunciation e.g. MORE-FEEM">
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
                                 <label for="def-text-input" style="font-size: 0.8rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Definition</label>
@@ -8078,12 +8083,12 @@
     <script src="/js/forum.js?v=1789822000"></script>
     <script src="/js/app.js?v=1790625000"></script>
     <script src="/js/lobby.js?v=1790360000"></script>
-    <script src="/js/play.js?v=1790626000"></script>
+    <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
-    <script src="/js/tools.js?v=1790282000"></script>
+    <script src="/js/tools.js?v=1790628000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1790625000"></script>
+    <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
     <script src="/js/donate.js?v=33806"></script>
     

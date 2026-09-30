@@ -1409,6 +1409,7 @@ def add_definition_api():
     
     data = request.json
     word_input = data.get('word', '').strip()
+    pronunciation = data.get('pronunciation', '').strip().upper()
     definition = data.get('definition', '').strip()
     
     if not word_input or not definition:
@@ -1469,6 +1470,19 @@ def add_definition_api():
                     _UNDEFINED_WORDS_CACHE['_debug']['defined_count'] = len(DEFINITIONS_CACHE)
                     _UNDEFINED_WORDS_CACHE['_debug']['undefined_count'] = len(_UNDEFINED_WORDS_CACHE['words'])
         
+        if pronunciation:
+            pron_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'pronunciations.txt')
+            global PRONUNCIATIONS_CACHE
+            if PRONUNCIATIONS_CACHE is None:
+                load_pronunciations()
+            try:
+                with open(pron_path, 'a', encoding='utf-8') as f_pron:
+                    for w in words:
+                        PRONUNCIATIONS_CACHE[w] = pronunciation
+                        f_pron.write(f"{w} - {pronunciation}\n")
+            except Exception as e_pron:
+                print(f"Error saving pronunciation: {e_pron}")
+
         if len(words) > 1:
             msg = f"Definitions for {', '.join(words)} set."
         else:

@@ -7925,13 +7925,15 @@ window.showWordDefinitionPopup = async function (word, event) {
         popover.className = 'tool-def-popover';
         popover.innerHTML = `
             <div class="tool-def-popover-header">
-                <div class="tool-def-word-title">
-                    <span id="tool-def-word-text"></span>
-                    <span id="tool-def-len-badge" class="tool-def-len-badge"></span>
+                <div class="tool-def-header-left" style="display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; gap: 2px;">
+                    <div class="tool-def-word-title">
+                        <span id="tool-def-word-text"></span>
+                        <span id="tool-def-len-badge" class="tool-def-len-badge"></span>
+                    </div>
+                    <div id="tool-def-pronunciation" class="tool-def-pronunciation" style="display: none; margin-bottom: 0;"></div>
                 </div>
                 <button type="button" class="tool-def-close-btn" onclick="window.hideWordDefinitionPopup()" title="Close">✕</button>
             </div>
-            <div id="tool-def-pronunciation" class="tool-def-pronunciation" style="display: none;"></div>
             <div id="tool-def-content" class="tool-def-content">Loading definition...</div>
             <div class="tool-def-actions">
                 <a href="javascript:void(0)" id="tool-def-isvalid-btn" class="tool-def-isvalid-link">Open in Is Valid ↗</a>
