@@ -159,7 +159,7 @@
     <link rel="preload" href="/css/lobby.css?v=1790276000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1790281000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790276000">
-    <link rel="stylesheet" href="/css/play.css?v=1790600000">
+    <link rel="stylesheet" href="/css/play.css?v=1790620000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
     <link rel="stylesheet" href="/css/forum.css?v=1789342000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
@@ -5135,6 +5135,35 @@
                                 </div>
                             </div>
 
+                            <!-- Subanagrams Tile Size (Desktops & Laptops Only) -->
+                            <div class="setting-panel desktop-only-setting" id="setting-panel-subanagrams-tile-size">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Subanagrams Tile Size</div>
+                                        <div class="setting-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds (desktops and laptops only).</div>
+                                    </div>
+                                    <div id="val-subanagrams-tile-size" class="preview-value">64px</div>
+                                </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Small (44px)</span>
+                                        <span>Large (96px)</span>
+                                    </div>
+                                    <input type="range" id="setting-subanagrams-tile-size" min="44" max="96" value="64" style="width: 100%;">
+                                </div>
+                                <div class="settings-preview-box" style="margin-top: 15px; padding: 20px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px; overflow-x: auto;">
+                                    <div class="subanagrams-preview-board" id="subanagrams-preview-board" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                        <div class="board-cell subanagrams-preview-cell">S</div>
+                                        <div class="board-cell subanagrams-preview-cell">U</div>
+                                        <div class="board-cell subanagrams-preview-cell">B</div>
+                                        <div class="board-cell subanagrams-preview-cell">W</div>
+                                        <div class="board-cell subanagrams-preview-cell">O</div>
+                                        <div class="board-cell subanagrams-preview-cell">R</div>
+                                        <div class="board-cell subanagrams-preview-cell">D</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- 3D Cube Scale (Desktops & Laptops Only) -->
                             <div class="setting-panel desktop-only-setting" id="setting-panel-cube-scale">
                                 <div class="setting-header">
@@ -8039,7 +8068,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1790002000"></script>
+    <script src="/js/settings.js?v=1790620000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
     <script src="/js/app.js?v=1790610000"></script>
     <script src="/js/lobby.js?v=1790360000"></script>

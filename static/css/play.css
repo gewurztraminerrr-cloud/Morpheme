@@ -929,24 +929,32 @@ body.theme-light-brown .board-panel.low-time-warning {
     flex-wrap: wrap !important;
     gap: 12px !important;
     padding: 24px 20px !important;
-    max-width: 820px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
 }
 
-.game-board.is-subanagrams-board .board-cell {
-    width: 64px !important;
-    height: 64px !important;
-    min-width: 48px !important;
-    min-height: 48px !important;
-    font-size: 2.1rem !important;
+.game-board.is-subanagrams-board .board-cell,
+.subanagrams-preview-cell {
+    width: var(--subanagrams-cell-size, 64px) !important;
+    height: var(--subanagrams-cell-size, 64px) !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    font-size: calc(var(--subanagrams-cell-size, 64px) * 0.52) !important;
     font-weight: 800 !important;
-    border-radius: 10px !important;
+    border-radius: calc(var(--subanagrams-cell-size, 64px) * 0.15) !important;
     flex: 0 0 auto !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     cursor: pointer !important;
     user-select: none !important;
+}
+
+body.is-mobile .game-board.is-subanagrams-board .board-cell {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 2.1rem !important;
+    border-radius: 10px !important;
 }
 
 body.is-subanagrams #words-tabs-container,

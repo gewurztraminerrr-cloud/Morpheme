@@ -23,6 +23,7 @@ function debounce(func, wait) {
             corner_cutoff: 39,
             board_sizes: { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 },
             cube_size: 220,
+            subanagrams_tile_size: 64,
             highlight_typing: true,
             highlight_typing_color: '#ffcc00',
             highlight_mouse: true,
@@ -74,6 +75,9 @@ function debounce(func, wait) {
 
     // Global Settings State - Isolated per user
     window.userSettings = loadCachedSettings();
+    if (window.userSettings && window.userSettings.subanagrams_tile_size) {
+        document.documentElement.style.setProperty('--subanagrams-cell-size', `${window.userSettings.subanagrams_tile_size}px`);
+    }
 
     // 1. Load Settings on Startup / User Login
     async function loadSettings() {
@@ -133,6 +137,21 @@ function debounce(func, wait) {
                 if (label) label.textContent = `${size}px`;
             }
         }
+
+        // Subanagrams Tile Size (Desktops & Laptops Only)
+        const subTileSizeVal = (settings && settings.subanagrams_tile_size !== undefined)
+            ? parseInt(settings.subanagrams_tile_size)
+            : ((window.userSettings && window.userSettings.subanagrams_tile_size !== undefined)
+                ? parseInt(window.userSettings.subanagrams_tile_size)
+                : 64);
+        const finalSubTileSize = (!isNaN(subTileSizeVal) && subTileSizeVal >= 44 && subTileSizeVal <= 96) ? subTileSizeVal : 64;
+        document.documentElement.style.setProperty('--subanagrams-cell-size', `${finalSubTileSize}px`);
+        const subTileSlider = document.getElementById('setting-subanagrams-tile-size');
+        if (subTileSlider) subTileSlider.value = finalSubTileSize;
+        const subTileLabel = document.getElementById('val-subanagrams-tile-size');
+        if (subTileLabel) subTileLabel.textContent = `${finalSubTileSize}px`;
+        if (!window.userSettings) window.userSettings = getDefaultSettings();
+        window.userSettings.subanagrams_tile_size = finalSubTileSize;
 
         // Corner Cutoff (Octagon vs Diamond Selectable Space)
         const cutoffVal = (settings && settings.corner_cutoff !== undefined)
@@ -579,6 +598,20 @@ function debounce(func, wait) {
                 else preview.style.fontSize = `${val}px`;
             }
             saveSettingDebounced('def_font_size', val);
+        });
+    }
+
+    const subTileSlider = document.getElementById('setting-subanagrams-tile-size');
+    if (subTileSlider) {
+        subTileSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.documentElement.style.setProperty('--subanagrams-cell-size', `${val}px`);
+            const label = document.getElementById('val-subanagrams-tile-size');
+            if (label) label.textContent = `${val}px`;
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.subanagrams_tile_size = val;
+            saveSettingsToStorage();
+            saveSettingDebounced('subanagrams_tile_size', val);
         });
     }
 
