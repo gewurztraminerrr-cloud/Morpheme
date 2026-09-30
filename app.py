@@ -7177,20 +7177,27 @@ def _init_c_morpheme_metric():
 
 def load_tools_dictionary(dict_name):
     """Load dictionary for tools into memory cache.
-    Always merges the 16+ supplementary word list (16plus.txt) into the result
-    so every tool/API route automatically includes long words."""
+    Merges the 16+ supplementary word list (16plus.txt) into full standard dictionaries
+    (ALL, NWL, CSW) while preserving exact list integrity for subset/new word lists."""
     global LAST_ADDED_WORDS_MTIME
 
-    # Check for cache invalidation based on added_words.txt modification time
+    # Check for cache invalidation based on added_words.txt / added_words_dates.txt modification time
     added_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words.txt')
+    added_dates_path = os.path.join(os.path.dirname(__file__), 'dictionaries', 'added_words_dates.txt')
     curr_mtime = 0
     if os.path.exists(added_path):
-        curr_mtime = os.path.getmtime(added_path)
+        curr_mtime = max(curr_mtime, os.path.getmtime(added_path))
+    if os.path.exists(added_dates_path):
+        curr_mtime = max(curr_mtime, os.path.getmtime(added_dates_path))
 
     if LAST_ADDED_WORDS_MTIME is not None and curr_mtime != LAST_ADDED_WORDS_MTIME:
-        print("[Tools] added_words.txt changed. Invalidating added_words tools dictionary cache.")
+        print("[Tools] added_words files changed. Invalidating added_words tools dictionary cache.")
         TOOLS_DICT_CACHE.pop('added_words', None)
+        TOOLS_DICT_CACHE.pop('AW', None)
+        TOOLS_DICT_CACHE.pop('new_added', None)
+        TOOLS_DICT_CACHE.pop('all_new', None)
         TOOLS_DICT_CACHE.pop('ALL', None)
+        TOOLS_DICT_CACHE.pop('All', None)
         global LISTS_CACHE
         LISTS_CACHE.clear()
         if word_validator:
@@ -7198,14 +7205,21 @@ def load_tools_dictionary(dict_name):
 
     LAST_ADDED_WORDS_MTIME = curr_mtime
 
-    cache_key = dict_name
+    # Normalize aliases
+    norm_dict = dict_name
+    if norm_dict == 'All': norm_dict = 'ALL'
+    elif norm_dict == 'AW': norm_dict = 'added_words'
+
+    cache_key = norm_dict
     if cache_key in TOOLS_DICT_CACHE:
         return TOOLS_DICT_CACHE[cache_key]
 
-    if dict_name == 'ALL':
+    dict_dir = os.path.join(os.path.dirname(__file__), 'dictionaries')
+
+    if norm_dict == 'ALL':
         words = set()
         for d in ['NWL', 'CSW', 'new_NWL', 'new_CSW', 'custom_nwl', 'custom_csw']:
-            p = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{d}.txt')
+            p = os.path.join(dict_dir, f'{d}.txt')
             if os.path.exists(p):
                 with open(p, 'r') as f:
                     words.update(line.strip().upper() for line in f if line.strip())
@@ -7213,42 +7227,87 @@ def load_tools_dictionary(dict_name):
         if word_validator and getattr(word_validator, 'added_words', None):
             words.update(word_validator.added_words)
         print(f"[Tools] Loaded ALL dictionary: {len(words)} unique words")
-    elif dict_name == 'added_words':
+    elif norm_dict == 'added_words':
         words = word_validator.added_words.copy() if (word_validator and getattr(word_validator, 'added_words', None)) else set()
         print(f"[Tools] Loaded Added Words dictionary: {len(words)} unique words")
+    elif norm_dict == 'csw_only':
+        word_validator.ensure_csw_loaded()
+        csw_words = getattr(word_validator, 'csw_words', set())
+        nwl_words = getattr(word_validator, 'nwl_words', set())
+        words = csw_words - nwl_words
+        print(f"[Tools] Loaded CSW Only dictionary: {len(words)} unique words")
+    elif norm_dict == 'uniqueNWL':
+        p = os.path.join(dict_dir, 'uniqueNWL.txt')
+        words = set()
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                words = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
+        elif word_validator and getattr(word_validator, 'unique_nwl_words', None):
+            words = word_validator.unique_nwl_words.copy()
+        print(f"[Tools] Loaded NWL Uniques dictionary: {len(words)} unique words")
+    elif norm_dict == 'new_nwl':
+        p = os.path.join(dict_dir, 'new_NWL.txt')
+        words = set()
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                words = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
+        print(f"[Tools] Loaded New NWL Words dictionary: {len(words)} unique words")
+    elif norm_dict == 'new_csw':
+        p = os.path.join(dict_dir, 'new_CSW.txt')
+        words = set()
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                words = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
+        print(f"[Tools] Loaded New CSW Words dictionary: {len(words)} unique words")
+    elif norm_dict == 'new_added':
+        p = os.path.join(dict_dir, 'added_words_dates.txt')
+        words = set()
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                words = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
+        print(f"[Tools] Loaded New AW Words dictionary: {len(words)} unique words")
+    elif norm_dict == 'all_new':
+        words = set()
+        for new_f in ['new_NWL.txt', 'new_CSW.txt', 'added_words_dates.txt']:
+            p = os.path.join(dict_dir, new_f)
+            if os.path.exists(p):
+                with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                    words.update(line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#'))
+        print(f"[Tools] Loaded All New Words dictionary: {len(words)} unique words")
     else:
-        dict_path = os.path.join(os.path.dirname(__file__), 'dictionaries', f'{dict_name}.txt')
+        dict_path = os.path.join(dict_dir, f'{norm_dict}.txt')
         words = set()
         try:
             print(f"[Tools] Loading dictionary: {dict_path}")
             with open(dict_path, 'r') as f:
                 words = set(word.strip().upper() for word in f if word.strip())
-            print(f"[Tools] Loaded {len(words)} words from {dict_name}")
+            print(f"[Tools] Loaded {len(words)} words from {norm_dict}")
         except FileNotFoundError:
             print(f"[Tools] Dictionary file not found: {dict_path}")
 
         # Also load new / custom additions for specific dictionary
         extra_files = []
-        if dict_name == 'NWL':
+        if norm_dict == 'NWL':
             extra_files = ['new_NWL.txt', 'custom_nwl.txt']
-        elif dict_name == 'CSW':
+        elif norm_dict == 'CSW':
             extra_files = ['new_CSW.txt', 'custom_csw.txt']
 
         for ext_f in extra_files:
-            p = os.path.join(os.path.dirname(__file__), 'dictionaries', ext_f)
+            p = os.path.join(dict_dir, ext_f)
             if os.path.exists(p):
                 with open(p, 'r') as f:
                     words.update(line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#'))
 
-    # Merge supplementary 16+ word list
-    long_path = os.path.join(os.path.dirname(__file__), 'dictionaries', '16plus.txt')
-    try:
-        with open(long_path, 'r') as f:
-            long_words = {line.strip().upper() for line in f if line.strip()}
-        words = words | long_words
-        print(f"[Tools] Merged {len(long_words)} supplementary 16+ words into {dict_name}")
-    except FileNotFoundError:
-        print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
+    # Merge supplementary 16+ word list (only for full standard dictionaries)
+    if norm_dict in ['ALL', 'NWL', 'CSW']:
+        long_path = os.path.join(dict_dir, '16plus.txt')
+        try:
+            with open(long_path, 'r') as f:
+                long_words = {line.strip().upper() for line in f if line.strip()}
+            words = words | long_words
+            print(f"[Tools] Merged {len(long_words)} supplementary 16+ words into {norm_dict}")
+        except FileNotFoundError:
+            print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
 
     # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX & BITMASKS (C-ACCELERATED) ---
     import numpy as np
@@ -7313,8 +7372,8 @@ def warm_up_server_resources():
         load_pronunciations()
         
         # 3. Pre-load and pre-compute NumPy matrices & bitmasks for all dictionaries used in Tools
-        print("[Warmup] Pre-building Tools dictionary caches (NWL, CSW, ALL, added_words)...")
-        for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
+        print("[Warmup] Pre-building Tools dictionary caches (NWL, CSW, ALL, added_words, subsets, new lists)...")
+        for dict_name in ['NWL', 'CSW', 'ALL', 'added_words', 'csw_only', 'uniqueNWL', 'new_nwl', 'new_csw', 'new_added', 'all_new']:
             try:
                 load_tools_dictionary(dict_name)
             except Exception as e:
@@ -7729,7 +7788,7 @@ def tools_get_lists():
             'nwl_likelihood': [], 'csw_likelihood': [], 'csw_only_likelihood': [],
             'added_likelihood': [], 'all_likelihood': [], 'likelihood': [],
             'uniques': [], 'added': [], 'new_added': [],
-            'new_nwl': [], 'new_csw': [], 'all_words': [], 'is_truncated': False
+            'new_nwl': [], 'new_csw': [], 'all_new': [], 'all_words': [], 'is_truncated': False
         }
 
         def cap_list(lst):
@@ -7868,6 +7927,44 @@ def tools_get_lists():
             ]
             filtered.reverse()  # Newest first
             response['new_csw'] = cap_list(filtered)
+
+        if list_type in ['all', 'all_new']:
+            new_all_items = []
+            seen_all_new = set()
+            # 1. new_nwl
+            path_nwl = os.path.join(dict_dir, 'new_NWL.txt')
+            for it in load_word_date_pairs(path_nwl, default_fallback_date='22/05/2026'):
+                w = it['word']
+                if (target_len is None or len(w) == target_len) and (start_char is None or w.startswith(start_char)):
+                    if w not in seen_all_new:
+                        seen_all_new.add(w)
+                        new_all_items.append(it)
+            # 2. new_csw
+            path_csw = os.path.join(dict_dir, 'new_CSW.txt')
+            for it in load_word_date_pairs(path_csw, default_fallback_date='21/05/2026'):
+                w = it['word']
+                if (target_len is None or len(w) == target_len) and (start_char is None or w.startswith(start_char)):
+                    if w not in seen_all_new:
+                        seen_all_new.add(w)
+                        new_all_items.append(it)
+            # 3. new_added
+            path_aw_dates = os.path.join(dict_dir, 'added_words_dates.txt')
+            for it in load_word_date_pairs(path_aw_dates, default_fallback_date=get_default_added_word_date()):
+                w = it['word']
+                if (target_len is None or len(w) == target_len) and (start_char is None or w.startswith(start_char)):
+                    if w not in seen_all_new:
+                        seen_all_new.add(w)
+                        new_all_items.append(it)
+            def parse_date_key(it):
+                try:
+                    d_parts = it.get('date', '').split('/')
+                    if len(d_parts) == 3:
+                        return (int(d_parts[2]), int(d_parts[1]), int(d_parts[0]))
+                except Exception:
+                    pass
+                return (0, 0, 0)
+            new_all_items.sort(key=parse_date_key, reverse=True)
+            response['all_new'] = cap_list(new_all_items)
         # Cache response (only for capped/normal requests to avoid polluting cache)
         if not no_limit:
             LISTS_CACHE[cache_key] = response
@@ -8359,7 +8456,7 @@ def tools_random_word():
         filtered_words = [w for w in filtered_words if len(w) == target_len]
         print(f"[RandomWord] filtered words count: {len(filtered_words)}")
     else:
-        if dict_name == 'added_words':
+        if dict_name in ['added_words', 'AW', 'csw_only', 'uniqueNWL', 'new_nwl', 'new_csw', 'new_added', 'all_new']:
             filtered_words = list(filtered_words)
         else:
             filtered_words = [w for w in filtered_words if w in DEFINITIONS_CACHE]
@@ -8516,23 +8613,23 @@ def tools_new_users():
 def tools_random_words():
     try:
         word_validator.ensure_csw_loaded()
-        dict_type = request.args.get('dictionary', 'ALL').upper()
+        dict_type = request.args.get('dictionary', 'ALL')
+        dict_data = load_tools_dictionary(dict_type)
+        dict_words = dict_data['words'] if dict_data else []
+        words_by_len = {}
+        for w in dict_words:
+            l = len(w)
+            if l not in words_by_len:
+                words_by_len[l] = []
+            words_by_len[l].append(w)
+
         sampled = []
         for length in [5, 6, 7, 8, 9, 10]:
-            if dict_type == 'NWL':
-                source_set = word_validator.nwl_by_len.get(length, [])
-            elif dict_type == 'CSW':
-                source_set = word_validator.csw_by_len.get(length, [])
-            elif dict_type == 'AW':
-                source_set = [w for w in word_validator.added_words if len(w) == length]
-            else:  # ALL
-                nwl_set = word_validator.nwl_by_len.get(length, [])
-                csw_set = word_validator.csw_by_len.get(length, [])
-                aw_set = [w for w in word_validator.added_words if len(w) == length]
-                source_set = list(set(nwl_set) | set(csw_set) | set(aw_set))
-            
+            source_set = words_by_len.get(length, [])
             if source_set:
                 sampled.append(random.choice(source_set))
+            elif dict_words:
+                sampled.append(random.choice(dict_words))
             else:
                 fallbacks = {5: 'KUDZU', 6: 'BURANS', 7: 'PLEROMA', 8: 'PRONOTUM', 9: 'MANGETOUT', 10: 'OVERSTATES'}
                 sampled.append(fallbacks.get(length, 'MORPHEME'))

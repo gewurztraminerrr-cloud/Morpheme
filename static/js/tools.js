@@ -4132,7 +4132,7 @@ let listsFetchTimeoutId = null; // Module-level so it can be cancelled on re-fet
 let listsShowAll = false;
 
 function isNewWordList(type) {
-    return type === 'new_added' || type === 'new_nwl' || type === 'new_csw';
+    return type === 'new_added' || type === 'new_nwl' || type === 'new_csw' || type === 'all_new';
 }
 window.isNewWordList = isNewWordList;
 
@@ -4882,7 +4882,7 @@ window.openFullListModal = function() {
         })
         .then(data => {
             if (window._lastFullListFilterKey !== currentFilterKey) return;
-            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || [];
+            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || data['all_new'] || [];
             _fullListAllWords = rawWords;
             window._cachedFullWordLists[currentFilterKey] = rawWords;
             window.isFullListLoading = false;
@@ -5245,14 +5245,15 @@ async function fetchListsData(typeOverride) {
         'csw_likelihood': 'CSW Likelihood',
         'csw_only_likelihood': 'CSW Only Likelihood',
         'added_likelihood': 'AW Likelihood',
-        'all_likelihood': 'ALL Likelihood',
+        'all_likelihood': 'All Likelihood',
         'likelihood': 'NWL Likelihood',
         'uniques': 'NWL Uniques',
         'added': 'Added Words',
         'new_added': 'New AW Words',
         'new_nwl': 'New NWL Words',
         'new_csw': 'New CSW Words',
-        'all_words': 'ALL Words'
+        'all_new': 'All New Words',
+        'all_words': 'All Words'
     };
 
     if (titleEl) {
