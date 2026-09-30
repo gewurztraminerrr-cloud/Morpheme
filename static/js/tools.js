@@ -7452,7 +7452,7 @@ function renderUnscrambleFound(revealMissed = false) {
     } else {
         html += `
             <div class="unscramble-history-scroll-wrapper" style="position: relative; width: 100%;">
-                <div id="unscramble-history-scroll" class="unscramble-history-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-height: 380px; overflow-y: auto; box-sizing: border-box; padding-right: 22px;">`;
+                <div id="unscramble-history-scroll" class="unscramble-history-list" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-height: 380px; overflow-y: auto; box-sizing: border-box; padding: 0 20px 6px 20px;">`;
         unscrambleState.history.forEach((h) => {
             const foundCount = h.found.length;
             const totalCount = h.solutions.length;

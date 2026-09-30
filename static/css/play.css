@@ -7161,7 +7161,8 @@ input[type=range]::-moz-range-track {
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
         box-sizing: border-box !important;
-        padding-right: 22px !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
         padding-bottom: 6px !important;
     }
     #unscramble-history-scrollbar-track {
@@ -9574,6 +9575,14 @@ body .board-cell.tile-flash-purple * {
     box-sizing: border-box !important;
 }
 
+#unscramble-found-list {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
 .unscramble-history-list {
     max-height: 380px !important;
     overflow-y: auto !important;
@@ -9583,6 +9592,8 @@ body .board-cell.tile-flash-purple * {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     box-sizing: border-box !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
     padding-bottom: 6px !important;
 }
 
