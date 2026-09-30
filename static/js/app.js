@@ -2115,6 +2115,9 @@ window.showPage = showPage;
 
     // NEW: Load Private Matches & snap to main Lobby window on mobile when entering Lobby
     if (pageId === 'page-lobby') {
+        if (typeof window.initLobbyGuideState === 'function') {
+            window.initLobbyGuideState();
+        }
         window._currentLobbyPanel = 'main';
         // Reset navigation guards so the user can freely create/join rooms after returning to lobby
         window._userLeftRoom = false;

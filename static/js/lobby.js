@@ -1957,4 +1957,180 @@ setInterval(() => {
     }
 }, 3000);
 
+// ==========================================
+// --- New User Lobby Guide Modal Logic ---
+// ==========================================
+
+function initLobbyGuideState() {
+    try {
+        const isDismissed = localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true';
+        const guideBtn = document.getElementById('lobby-new-user-guide-btn');
+        const journeyBanner = document.getElementById('lobby-journey-banner');
+        if (guideBtn && journeyBanner) {
+            if (isDismissed) {
+                guideBtn.style.display = 'none';
+                journeyBanner.style.display = 'flex';
+            } else {
+                guideBtn.style.display = 'flex';
+                journeyBanner.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Error reading lobby guide state:', e);
+    }
+}
+window.initLobbyGuideState = initLobbyGuideState;
+
+function initLobbyGuideScrollbar() {
+    const scrollArea = document.getElementById('lobby-guide-modal-content');
+    const track = document.getElementById('lobby-guide-scrollbar-track');
+    const thumb = document.getElementById('lobby-guide-scrollbar-thumb');
+    if (!scrollArea || !track || !thumb) return;
+
+    if (typeof window.initCustomScrollbarForElement === 'function') {
+        window.initCustomScrollbarForElement(scrollArea, track, thumb);
+        return;
+    }
+
+    if (scrollArea._guideScrollbarInit) {
+        if (typeof scrollArea._updateGuideScrollbar === 'function') {
+            scrollArea._updateGuideScrollbar();
+        }
+        return;
+    }
+    scrollArea._guideScrollbarInit = true;
+
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+
+    function updateThumb() {
+        if (isDragging) return;
+        const scrollHeight = scrollArea.scrollHeight;
+        const clientHeight = scrollArea.clientHeight;
+        const scrollTop = scrollArea.scrollTop;
+
+        if (scrollHeight <= clientHeight + 5 || clientHeight <= 0) {
+            track.style.display = 'none';
+            return;
+        }
+        track.style.display = 'block';
+
+        const trackHeight = track.clientHeight || clientHeight;
+        const ratio = Math.min(1, clientHeight / scrollHeight);
+        const thumbHeight = Math.max(36, Math.min(trackHeight, trackHeight * ratio));
+        thumb.style.height = `${thumbHeight}px`;
+
+        const maxScrollTop = scrollHeight - clientHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+        thumb.style.top = `${thumbTop}px`;
+    }
+
+    scrollArea._updateGuideScrollbar = updateThumb;
+    scrollArea.addEventListener('scroll', updateThumb, { passive: true });
+
+    function onPointerDown(e) {
+        isDragging = true;
+        thumb.classList.add('dragging');
+        startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        startThumbTop = parseFloat(thumb.style.top) || 0;
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+        document.addEventListener('touchmove', onPointerMove, { passive: false });
+        document.addEventListener('touchend', onPointerUp);
+        e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+        if (!isDragging) return;
+        const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        const deltaY = clientY - startY;
+        const trackHeight = track.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        const newThumbTop = Math.max(0, Math.min(maxThumbTop, startThumbTop + deltaY));
+        thumb.style.top = `${newThumbTop}px`;
+
+        const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
+        }
+        e.preventDefault();
+    }
+
+    function onPointerUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        thumb.classList.remove('dragging');
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+        document.removeEventListener('touchmove', onPointerMove);
+        document.removeEventListener('touchend', onPointerUp);
+    }
+
+    thumb.addEventListener('pointerdown', onPointerDown);
+    thumb.addEventListener('touchstart', onPointerDown, { passive: false });
+
+    track.addEventListener('click', (e) => {
+        if (e.target === thumb) return;
+        const rect = track.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const trackHeight = track.clientHeight;
+        const thumbHeight = thumb.offsetHeight;
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        const targetThumbTop = Math.max(0, Math.min(maxThumbTop, clickY - thumbHeight / 2));
+        const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
+        if (maxThumbTop > 0) {
+            scrollArea.scrollTop = (targetThumbTop / maxThumbTop) * maxScrollTop;
+        }
+    });
+
+    updateThumb();
+}
+
+function openLobbyGuideModal() {
+    const modal = document.getElementById('lobby-guide-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    const content = document.getElementById('lobby-guide-modal-content');
+    if (content) {
+        content.scrollTop = 0;
+    }
+    requestAnimationFrame(() => {
+        initLobbyGuideScrollbar();
+    });
+    setTimeout(() => {
+        initLobbyGuideScrollbar();
+    }, 100);
+}
+window.openLobbyGuideModal = openLobbyGuideModal;
+
+function closeLobbyGuideModal(permanentlyDismiss) {
+    const modal = document.getElementById('lobby-guide-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    try {
+        if (permanentlyDismiss) {
+            localStorage.setItem('morpheme_lobby_guide_dismissed', 'true');
+        } else {
+            localStorage.setItem('morpheme_lobby_guide_dismissed', 'false');
+        }
+    } catch (e) {
+        console.error('Error saving lobby guide state:', e);
+    }
+    initLobbyGuideState();
+}
+window.closeLobbyGuideModal = closeLobbyGuideModal;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLobbyGuideState);
+} else {
+    initLobbyGuideState();
+}
+
 console.log('lobby.js fully loaded with Lobby Players & Chat controller');
+

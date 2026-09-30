@@ -2411,6 +2411,299 @@
                         letter-spacing: 0.4px !important;
                     }
                 }
+
+                button.lobby-journey-message {
+                    font-family: inherit;
+                    cursor: pointer;
+                    outline: none;
+                    -webkit-tap-highlight-color: transparent;
+                    transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+                }
+                button.lobby-journey-message:hover {
+                    border-color: rgba(167, 139, 250, 0.45);
+                    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 0 16px rgba(167, 139, 250, 0.25);
+                }
+                button.lobby-journey-message:active {
+                    transform: scale(0.99);
+                }
+                [class*="theme-white"] button.lobby-journey-message,
+                body.theme-white button.lobby-journey-message {
+                    border-color: rgba(124, 58, 237, 0.35);
+                }
+
+                /* --- Lobby Guide Modal ("Welcome to Morpheme!") --- */
+                #lobby-guide-modal {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    width: 100vw !important;
+                    height: 100% !important;
+                    z-index: 100050 !important;
+                    background: rgba(8, 6, 18, 0.88) !important;
+                    backdrop-filter: blur(8px) !important;
+                    -webkit-backdrop-filter: blur(8px) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+                    box-sizing: border-box !important;
+                    overflow: hidden !important;
+                }
+                #lobby-guide-modal.hidden {
+                    display: none !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+                .lobby-guide-modal-card {
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    max-width: 860px;
+                    max-height: calc(100vh - 36px);
+                    background: linear-gradient(180deg, #18142a 0%, #120e20 100%);
+                    border: 1px solid rgba(167, 139, 250, 0.4);
+                    border-radius: 16px;
+                    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), 0 0 32px rgba(167, 139, 250, 0.2);
+                    overflow: hidden;
+                    box-sizing: border-box;
+                    color: #e2e8f0;
+                }
+                .lobby-guide-modal-header {
+                    padding: 22px 24px 16px 24px;
+                    background: linear-gradient(180deg, rgba(167, 139, 250, 0.12) 0%, rgba(20, 16, 36, 0.95) 100%);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    text-align: center;
+                    flex-shrink: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                .lobby-guide-header-title-wrap {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                }
+                .lobby-guide-header-icon {
+                    width: 36px;
+                    height: 36px;
+                    object-fit: contain;
+                    filter: drop-shadow(0 0 10px rgba(167, 139, 250, 0.6));
+                }
+                .lobby-guide-title {
+                    margin: 0;
+                    font-size: 1.65rem;
+                    font-weight: 800;
+                    letter-spacing: 0.5px;
+                    background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 50%, #c4b5fd 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .lobby-guide-subtitle {
+                    margin: 8px 0 0 0;
+                    font-size: 0.92rem;
+                    color: #cbd5e1;
+                    line-height: 1.45;
+                    max-width: 680px;
+                }
+                .lobby-guide-scroll-wrapper {
+                    position: relative;
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    width: 100%;
+                    overflow: hidden;
+                    background: rgba(10, 8, 18, 0.5);
+                }
+                .lobby-guide-modal-content {
+                    height: 100%;
+                    overflow-y: auto;
+                    padding: 22px 28px 22px 24px;
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 28px;
+                    scrollbar-width: thin;
+                    scrollbar-color: #a78bfa rgba(255, 255, 255, 0.08);
+                }
+                .lobby-guide-modal-content::-webkit-scrollbar {
+                    width: 9px;
+                }
+                .lobby-guide-modal-content::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 6px;
+                }
+                .lobby-guide-modal-content::-webkit-scrollbar-thumb {
+                    background: linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+                    border-radius: 6px;
+                    border: 2px solid #141024;
+                }
+                .lobby-guide-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.09);
+                    border-radius: 12px;
+                    padding: 18px 20px;
+                    box-sizing: border-box;
+                }
+                .lobby-guide-section-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    padding-bottom: 10px;
+                }
+                .lobby-guide-part-badge {
+                    font-size: 0.72rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    background: rgba(167, 139, 250, 0.2);
+                    border: 1px solid rgba(167, 139, 250, 0.5);
+                    color: #c4b5fd;
+                    white-space: nowrap;
+                }
+                .lobby-guide-section-title {
+                    margin: 0;
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+                .lobby-guide-intro {
+                    font-size: 0.92rem;
+                    line-height: 1.55;
+                    color: #cbd5e1;
+                    margin: 0;
+                }
+                .lobby-guide-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                    gap: 12px;
+                }
+                .lobby-guide-card {
+                    background: rgba(0, 0, 0, 0.35);
+                    border: 1px solid rgba(255, 255, 255, 0.07);
+                    border-radius: 10px;
+                    padding: 12px 14px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                .lobby-guide-card-title {
+                    font-size: 0.98rem;
+                    font-weight: 700;
+                    color: #ffd700;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin: 0;
+                }
+                .lobby-guide-card-desc {
+                    font-size: 0.86rem;
+                    line-height: 1.45;
+                    color: #e2e8f0;
+                    margin: 0;
+                }
+                .lobby-guide-visual-box {
+                    background: rgba(18, 14, 32, 0.85);
+                    border: 1px dashed rgba(167, 139, 250, 0.35);
+                    border-radius: 10px;
+                    padding: 14px 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .lobby-guide-visual-title {
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #a78bfa;
+                }
+                .lobby-guide-visual-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    flex-wrap: wrap;
+                }
+                .lobby-guide-modal-footer {
+                    flex-shrink: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    padding: 16px 24px;
+                    background: rgba(15, 12, 26, 0.98);
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    box-sizing: border-box;
+                }
+                .lobby-guide-footer-btn {
+                    width: 100%;
+                    padding: 12px 18px;
+                    border-radius: 10px;
+                    font-size: 0.92rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    text-align: center;
+                    box-sizing: border-box;
+                    touch-action: manipulation;
+                }
+                .lobby-guide-keep-btn {
+                    background: linear-gradient(135deg, rgba(167, 139, 250, 0.25) 0%, rgba(124, 58, 237, 0.35) 100%);
+                    border: 1px solid rgba(167, 139, 250, 0.55);
+                    color: #f5f3ff;
+                }
+                .lobby-guide-keep-btn:hover {
+                    background: linear-gradient(135deg, rgba(167, 139, 250, 0.45) 0%, rgba(124, 58, 237, 0.55) 100%);
+                    border-color: #a78bfa;
+                    box-shadow: 0 4px 16px rgba(167, 139, 250, 0.3);
+                }
+                .lobby-guide-dismiss-btn {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    color: rgba(255, 255, 255, 0.7);
+                }
+                .lobby-guide-dismiss-btn:hover {
+                    background: rgba(239, 68, 68, 0.15);
+                    border-color: rgba(239, 68, 68, 0.4);
+                    color: #fca5a5;
+                }
+
+                @media (max-width: 600px) {
+                    .lobby-guide-modal-header {
+                        padding: 16px 14px 12px 14px;
+                    }
+                    .lobby-guide-title {
+                        font-size: 1.35rem;
+                    }
+                    .lobby-guide-subtitle {
+                        font-size: 0.84rem;
+                    }
+                    .lobby-guide-modal-content {
+                        padding: 14px 16px;
+                        gap: 20px;
+                    }
+                    .lobby-guide-section {
+                        padding: 14px 14px;
+                    }
+                    .lobby-guide-section-title {
+                        font-size: 1.1rem;
+                    }
+                    .lobby-guide-modal-footer {
+                        padding: 12px 14px;
+                        gap: 8px;
+                    }
+                    .lobby-guide-footer-btn {
+                        font-size: 0.82rem;
+                        padding: 10px 12px;
+                    }
+                }
             </style>
 
             <div class="lobby-grid">
@@ -2575,10 +2868,24 @@
                     <!-- Global Filters/Settings -->
 
                     <div class="lobby-journey-sticky-header">
-                        <div class="lobby-journey-message">
+                        <div class="lobby-journey-message" id="lobby-journey-banner" style="display: none;">
                             <span>Enter a room to continue your journey</span>
                         </div>
+                        <button type="button" class="lobby-journey-message lobby-new-user-btn" id="lobby-new-user-guide-btn" onclick="window.openLobbyGuideModal()" title="For New Users Asking: “What am I looking at?”" style="display: flex;">
+                            <span>For New Users Asking: “What am I looking at?”</span>
+                        </button>
                     </div>
+                    <script>
+                        (function() {
+                            try {
+                                if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
+                                    var b = document.getElementById('lobby-journey-banner');
+                                    var g = document.getElementById('lobby-new-user-guide-btn');
+                                    if (b && g) { b.style.display = 'flex'; g.style.display = 'none'; }
+                                }
+                            } catch (e) {}
+                        })();
+                    </script>
 
                     <!-- Accumulative -->
                     <div class="game-section">
@@ -8120,11 +8427,287 @@
             </div>
         </div>
     </div>
+
+    <!-- Lobby Guide Modal ("Welcome to Morpheme!") -->
+    <div id="lobby-guide-modal" class="hidden" oncontextmenu="return false">
+        <div id="lobby-guide-modal-card" class="lobby-guide-modal-card">
+            <!-- Modal Header (NO X Button) -->
+            <div class="lobby-guide-modal-header">
+                <div class="lobby-guide-header-title-wrap">
+                    <img src="/static/images/morpheme_transparent.png" class="lobby-guide-header-icon" alt="Morpheme">
+                    <h2 class="lobby-guide-title">Welcome to Morpheme!</h2>
+                </div>
+                <p class="lobby-guide-subtitle">A comprehensive tour of your Lobby screen — where games begin, rooms await, and customized challenges are made.</p>
+            </div>
+
+            <!-- Scrollable Content with Custom Scrollbar -->
+            <div class="lobby-guide-scroll-wrapper">
+                <div id="lobby-guide-modal-content" class="lobby-guide-modal-content">
+
+                    <!-- PART 1: MAIN LOBBY (First) -->
+                    <div class="lobby-guide-section">
+                        <div class="lobby-guide-section-header">
+                            <span class="lobby-guide-part-badge">1. Start Here</span>
+                            <h3 class="lobby-guide-section-title">Main Lobby (Center Panel)</h3>
+                        </div>
+                        <p class="lobby-guide-intro">
+                            The center panel is the beating heart of Morpheme where live public matchmaking happens. You will see organized matrices categorized by game mode. Each matrix offers selectable board dimensions (<strong>4x4 Standard</strong>, <strong>4x6 Extended</strong>, <strong>5x7 Large</strong>, <strong>6x8 Massive</strong>, or <strong>3x3x3 Cube</strong>) across various round time limits.
+                        </p>
+
+                        <div class="lobby-guide-cards-grid">
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span>⚡</span> Accumulative</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> Pure word-finding fun without penalties! Every valid word you find and submit earns points based on length. Multiple players can find the exact same word and both get full credit.
+                                </p>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Button Action:</strong> Clicking any <code>Start [N]</code> button enters you directly into that public game room. If players are currently inside, the number in brackets <code>[N]</code> displays how many players are in the room. If a round is actively counting down or running, you join right in!
+                                </p>
+                                <p class="lobby-guide-card-desc" style="color: #94a3b8; font-size: 0.8rem;">
+                                    <em>Available: 4x4 to 6x8 across 45s, 3m, 10m, and 24h.</em>
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #38bdf8;">🏃</span> First Come First Serve (FCFS)</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> An adrenaline-pumping speed race! When you find and claim a word, its points are awarded exclusively to you. That word is immediately locked out and crossed off for everyone else in the room! Fast fingers and sharp eyes dominate.
+                                </p>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Button Action:</strong> Clicking <code>Show Rooms [N]</code> filters the <strong>ACTIVE ROOMS</strong> panel on the right with all live open and closed FCFS matches for that grid size and duration.
+                                </p>
+                                <p class="lobby-guide-card-desc" style="color: #94a3b8; font-size: 0.8rem;">
+                                    <em>Available: 4x4 to 6x8 across 45s and 3m.</em>
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #fbbf24;">⚖️</span> Split Points</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> Deep tactical multiplayer strategy! If only one player discovers a word, they earn 100% of its value. If multiple players find the same word, the point value is divided evenly among all who found it. Finding unique, rare words is the secret to winning.
+                                </p>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Button Action:</strong> Clicking <code>Show Rooms [N]</code> reveals all matching active rooms in the <strong>ACTIVE ROOMS</strong> panel on the right for direct entry or spectating.
+                                </p>
+                                <p class="lobby-guide-card-desc" style="color: #94a3b8; font-size: 0.8rem;">
+                                    <em>Available: 4x4 to 6x8 across 45s and 3m.</em>
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #ec4899;">🎲</span> Cube (3D)</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> Morpheme in full three-dimensional space! Played on a rotatable 3x3x3 cube with 27 letter dice. You can drag and rotate the cube in any direction to trace paths through faces, edges, and internal diagonals.
+                                </p>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Button Action:</strong> Clicking <code>Show Rooms [N]</code> populates the ACTIVE ROOMS panel with active Cube matches.
+                                </p>
+                                <p class="lobby-guide-card-desc" style="color: #94a3b8; font-size: 0.8rem;">
+                                    <em>Available: 3x3x3 Cube across 3m, 5m, and 10m.</em>
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #34d399;">🧩</span> Subanagrams (Practice)</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> Pure anagram puzzle training! You are given a fixed sequence of letters and a 2-minute timer. Your goal is to find all hidden sub-words contained within those letters.
+                                </p>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Button Action:</strong> Clicking <code>Start [N]</code> enters you straight into the Subanagrams practice board to test your vocabulary.
+                                </p>
+                                <p class="lobby-guide-card-desc" style="color: #94a3b8; font-size: 0.8rem;">
+                                    <em>Available: 2m Practice round.</em>
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #a78bfa;">💬</span> Players in Lobby & Chat</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>How It Works:</strong> Located along the bottom of the Lobby, click this collapsible sliding drawer to see all online users (<code>👥 Players in Lobby</code>) and participate in real-time community chat (<code>💬 Lobby Chat</code>) to arrange games and discuss strategies.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Visual Example Box -->
+                        <div class="lobby-guide-visual-box">
+                            <div class="lobby-guide-visual-title">Example: Main Lobby Action Buttons</div>
+                            <div class="lobby-guide-visual-row">
+                                <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <div style="font-size: 0.75rem; color: #a78bfa; font-weight: 700;">ACCUMULATIVE / SUBANAGRAMS</div>
+                                    <div class="game-btn acc-btn" style="width: 120px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; pointer-events: none; border-radius: 6px;">Start<br><span style="font-size: 0.72rem; opacity: 0.8;">[3]</span></div>
+                                    <span style="font-size: 0.72rem; color: #94a3b8; text-align: center;">Direct entry into active match</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                    <div style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">FCFS / SPLIT / CUBE</div>
+                                    <div class="game-btn fcfs-btn" style="width: 130px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; pointer-events: none; border-radius: 6px;">Show Rooms<br><span style="font-size: 0.72rem; opacity: 0.8;">[1]</span></div>
+                                    <span style="font-size: 0.72rem; color: #94a3b8; text-align: center;">Reveals rooms in ACTIVE ROOMS panel</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PART 2: ACTIVE ROOMS (Second) -->
+                    <div class="lobby-guide-section">
+                        <div class="lobby-guide-section-header">
+                            <span class="lobby-guide-part-badge">2. Next Step</span>
+                            <h3 class="lobby-guide-section-title">ACTIVE ROOMS (Right Panel)</h3>
+                        </div>
+                        <p class="lobby-guide-intro">
+                            The right panel is your live multiplayer directory and room browser. Whenever you click <code>Show Rooms</code> for any game type in the Main Lobby, this panel populates with all active matches fitting that criteria.
+                        </p>
+
+                        <div class="lobby-guide-cards-grid">
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #60a5fa;">🏷️</span> Selected Game Info</h4>
+                                <p class="lobby-guide-card-desc">
+                                    At the top of the panel, the header displays the exact game format, board size, and round duration currently filtered (e.g. <code>FCFS | 4x4 | 3m</code>).
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #34d399;">➕</span> Create Room Panel</h4>
+                                <p class="lobby-guide-card-desc">
+                                    You never have to wait for someone else! Set optional <strong>Min Rating</strong> and <strong>Max Rating</strong> boundaries to limit who can enter, then click <strong>+ Create Room</strong> to immediately launch your custom multiplayer lobby.
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #f59e0b;">🎯</span> Rating Filter & "My Rating"</h4>
+                                <p class="lobby-guide-card-desc">
+                                    Type a rating to sort rooms by proximity to that skill tier. Tapping the <strong>My Rating</strong> button automatically sorts rooms closest to your current rating so you can jump into balanced, competitive games.
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #a78bfa;">🚪</span> Open vs. Closed Rooms (Spectator Mode)</h4>
+                                <p class="lobby-guide-card-desc">
+                                    <strong>Open Rooms:</strong> Accepting new competitors. Tap to enter, get ready, and play when the countdown finishes.<br>
+                                    <strong>Closed Rooms:</strong> Match is currently mid-round. You can still join as a <strong>Spectator</strong> to watch live gameplay, word submissions, and scores unfold in real time!
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #38bdf8;">🔄</span> Instant Refresh</h4>
+                                <p class="lobby-guide-card-desc">
+                                    Tap the refresh button anytime to instantaneously query the server for updated room lists, new rooms, and live player counts.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Visual Example Box -->
+                        <div class="lobby-guide-visual-box">
+                            <div class="lobby-guide-visual-title">Example: Active Room Entry</div>
+                            <div class="lobby-guide-visual-row">
+                                <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; box-sizing: border-box; flex-wrap: wrap; gap: 8px;">
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span>
+                                            <span style="font-weight: 700; color: #ffffff; font-size: 0.88rem;">Room #204</span>
+                                            <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167,139,250,0.15); padding: 2px 6px; border-radius: 4px;">4x4 • 3m</span>
+                                        </div>
+                                        <span style="font-size: 0.78rem; color: #94a3b8;">Host: LexiMaster • Players: 3/8 • Rating: 1420</span>
+                                    </div>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button type="button" style="background: #22c55e; color: #000; border: none; font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; pointer-events: none;">Join</button>
+                                        <button type="button" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; pointer-events: none;">Watch</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PART 3: PLAY SOLO OR WITH FRIENDS (Last) -->
+                    <div class="lobby-guide-section">
+                        <div class="lobby-guide-section-header">
+                            <span class="lobby-guide-part-badge">3. Custom Games</span>
+                            <h3 class="lobby-guide-section-title">PLAY SOLO OR WITH FRIENDS (Left Panel)</h3>
+                        </div>
+                        <p class="lobby-guide-intro">
+                            The left panel provides complete freedom over tailored matches. Whether you want to practice solo, experiment with custom board modifiers, challenge intelligent AI bots, or invite friends to turn-based matches, configure everything here.
+                        </p>
+
+                        <div class="lobby-guide-cards-grid">
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #a78bfa;">⚙️</span> Comprehensive Board Parameters</h4>
+                                <p class="lobby-guide-card-desc">
+                                    • <strong>Board Size:</strong> 4x4 Standard, 4x6 Extended, 5x7 Large, 6x8 Massive, or 3x3x3 Cube.<br>
+                                    • <strong>Time Limit:</strong> From 45 seconds to 10 minutes.<br>
+                                    • <strong>Dictionary:</strong> NWL (American), CSW (International), Added Words (AW), combined dictionaries, or Random.<br>
+                                    • <strong>Min Word Len:</strong> Set minimum letters required per word (3, 4, or 5).<br>
+                                    • <strong>Bonus Word:</strong> Specify target word lengths (6 to 10 letters) for massive bonus scores.<br>
+                                    • <strong>Difficulty:</strong> Easy, Medium, Hard, or Random distribution.<br>
+                                    • <strong>Board Formats:</strong> Normal, Bounce, Checkerboard, Equality Frequency, Density, Penalty, Mania, Either/Or, Bonus Letter, Valued Letters, and Rotation.<br>
+                                    • <strong>Word Count Range:</strong> Target word abundance on the board (from 50-100 up to 500+).
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #38bdf8;">🤖</span> AI Bots Integration</h4>
+                                <p class="lobby-guide-card-desc">
+                                    Click <strong>+ Add Bot</strong> to add computer opponents with customizable skill levels. Play against bots at any time of day to sharpen your speed and vocabulary.
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #22c55e;">👤</span> Solo Match Tab</h4>
+                                <p class="lobby-guide-card-desc">
+                                    Tap <strong>Start Solo Match</strong> to immediately generate a private single-player match with your chosen settings and bots. Great for focused training and setting personal records.
+                                </p>
+                            </div>
+
+                            <div class="lobby-guide-card">
+                                <h4 class="lobby-guide-card-title"><span style="color: #ec4899;">👥</span> With Friends Tab</h4>
+                                <p class="lobby-guide-card-desc">
+                                    Enter any player's username to send a direct match invite. Easily switch between <strong>Your Turn</strong> (matches waiting on you), <strong>Their Turn</strong> (pending moves), <strong>Invites</strong>, and <strong>History</strong> to review completed games.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Visual Example Box -->
+                        <div class="lobby-guide-visual-box">
+                            <div class="lobby-guide-visual-title">Example: Solo & Friends Control Hub</div>
+                            <div class="lobby-guide-visual-row">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <div style="background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.4); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; color: #c4b5fd;">
+                                        Grid: <strong>4x4</strong>
+                                    </div>
+                                    <div style="background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.4); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; color: #c4b5fd;">
+                                        Time: <strong>3m</strong>
+                                    </div>
+                                    <div style="background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.4); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; color: #c4b5fd;">
+                                        Format: <strong>Normal</strong>
+                                    </div>
+                                    <button type="button" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.8rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; pointer-events: none;">+ Add Bot</button>
+                                    <button type="button" style="background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: #fff; border: none; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; pointer-events: none;">Start Solo Match</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Custom Scrollbar Track & Thumb -->
+                <div class="custom-scrollbar-track" id="lobby-guide-scrollbar-track">
+                    <div class="custom-scrollbar-thumb" id="lobby-guide-scrollbar-thumb"></div>
+                </div>
+            </div>
+
+            <!-- Modal Footer with Choice Buttons (NO X BUTTON) -->
+            <div class="lobby-guide-modal-footer">
+                <button type="button" class="lobby-guide-footer-btn lobby-guide-keep-btn" onclick="window.closeLobbyGuideModal(false)">
+                    Show the link to this explanation again next time I enter Lobby
+                </button>
+                <button type="button" class="lobby-guide-footer-btn lobby-guide-dismiss-btn" onclick="window.closeLobbyGuideModal(true)">
+                    Remove the link and do not show this message again
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790625000"></script>
-    <script src="/js/lobby.js?v=1790360000"></script>
+    <script src="/js/app.js?v=1790635000"></script>
+    <script src="/js/lobby.js?v=1790635000"></script>
     <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
