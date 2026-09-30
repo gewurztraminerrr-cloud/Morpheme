@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-02fb57f65b783986e00b23cc2552b32abc8a6176
+61fc0701749898d0e3cd073392510171c015bb4a
 ```
 
 ## Tags
@@ -13,15 +13,32 @@
 
 | Environment    | Commit                                     | Status |
 |----------------|--------------------------------------------|--------|
-| localhost      | `02fb57f65b783986e00b23cc2552b32abc8a6176` | ✅ Synchronized |
-| GitHub (main)  | `02fb57f65b783986e00b23cc2552b32abc8a6176` | ✅ Synchronized |
-| morpheme.games | `02fb57f65b783986e00b23cc2552b32abc8a6176` | ✅ Synchronized (HTTP 200 OK) |
+| localhost      | `61fc0701749898d0e3cd073392510171c015bb4a` | ✅ Synchronized |
+| GitHub (main)  | `61fc0701749898d0e3cd073392510171c015bb4a` | ✅ Synchronized |
+| morpheme.games | `61fc0701749898d0e3cd073392510171c015bb4a` | ✅ Synchronized (HTTP 200 OK) |
 
 ---
 
 ## Session Features & Fixes (September 30, 2026)
 
-### 1. Left-Align Personal Quote on Mobile Devices in Profile
+### 1. Word Lists Added to Tools Dropdowns & "All" Standardization
+- **6 Word Lists Added**: Added `CSW Only` (85,587 words), `NWL Uniques` (90,300 words), `New NWL Words` (2 words), `New CSW Words` (0 words), `New AW Words` (40 words with recorded dates), and `All New Words` (42 words) across dictionary dropdown menus in:
+  - Combo Checker (`#combo-dict`)
+  - Sequence (`#seq-dict`)
+  - Subanagrams Manual (`#sub-dict`) & Random (`#sub-dict-random`)
+  - Random Word (`#random-dict`)
+  - Unscramble (`#unscramble-dict`)
+  - Find Count (`#random-words-dict-select`)
+- **Unscramble Renaming**: Renamed `"Uniques"` option in Unscramble to `"NWL Uniques"`.
+- **"ALL" to "All" Standardization**: Changed all visible `"ALL"` labels across every dictionary dropdown in the application to mixed-case `"All"` (e.g., `"All (Full)"`, `"All"`, `"All Likelihood"`).
+- **Backend Dictionary Loader Guard**:
+  - In `load_tools_dictionary(dict_name)` in `app.py`, restricted merging of `16plus.txt` exclusively to full dictionaries (`ALL`, `All`, `NWL`, `CSW`). Subset and new word lists (`csw_only`, `uniqueNWL`, `new_nwl`, `new_csw`, `new_added`, `all_new`) now preserve their exact list integrity without injecting 9,227 unrelated 16+ words.
+  - Pre-warmed all subset and new word lists in `warm_up_server_resources()`.
+  - Added `all_new` to `/api/tools/lists` and frontend Lists helpers with date metadata sorted newest first.
+  - Updated `/api/tools/random-words` (Find Count) to dynamically support all dictionaries.
+- **Files**: `app.py`, `templates/index.html`, `static/js/tools.js`.
+
+### 2. Left-Align Personal Quote on Mobile Devices in Profile
 - **Requirement**: On mobile devices on Profile, align "PERSONAL QUOTE" to the left side in the same way as "ABOUT ME".
 - **Implementation**:
   - In `static/css/style.css`: updated mobile breakpoint styles for `.profile-quote-box .profile-quote-minimal p`, `.profile-quote-box .meta-label`, and `.profile-quote-minimal` from `text-align: center !important;` to `text-align: left !important;`.
