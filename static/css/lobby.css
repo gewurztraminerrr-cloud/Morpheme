@@ -2445,9 +2445,12 @@ body.theme-light-brown .lobby-chat-input:focus {
     flex: 1;
     overflow-y: auto;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: center;
     gap: 6px;
-    padding: 8px 6px 8px 6px;
+    padding: 8px 6px;
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04);
@@ -2471,6 +2474,7 @@ body.theme-light-brown .lobby-chat-input:focus {
 .lobby-player-row {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
     gap: 6px;
     padding: 6px 12px;
     background: rgba(255, 255, 255, 0.05);
@@ -2517,6 +2521,7 @@ body.theme-light-brown .lobby-chat-input:focus {
     color: var(--text-secondary, #777);
     font-size: 0.8rem;
     margin-top: 20px;
+    width: 100%;
     user-select: none !important;
     -webkit-user-select: none !important;
 }
