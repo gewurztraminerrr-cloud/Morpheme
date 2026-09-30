@@ -265,11 +265,8 @@ def get_added_words_dates():
     return _added_words_dates_cache
 
 def get_default_added_word_date():
-    try:
-        if os.path.exists(ADDED_WORDS_FILE):
-            return datetime.datetime.fromtimestamp(os.path.getmtime(ADDED_WORDS_FILE), tz=ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
-    except Exception:
-        pass
+    # Return fixed baseline date for Added Words.
+    # Never use os.path.getmtime(ADDED_WORDS_FILE) here because modifying the word list updates mtime to the current day!
     return "17/09/2026"
 
 def load_word_date_pairs(file_path, default_fallback_date=None):
