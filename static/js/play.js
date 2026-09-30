@@ -703,6 +703,7 @@ function safelyTransposeState(state) {
 
 let activeWordsTab = 'found'; // 'found' or 'remaining'
 window._cluesShowRemaining = false;
+window._cluesLengthFilter = 'ALL';
 let validationTimeout = null;
 let highlightedSplitWord = null; // Track word for shared highlighting in Split Points
 let highlightedFoundWord = null; // Track word from All Words list to highlight finders
@@ -3034,6 +3035,43 @@ async function updateGameState(incomingState = null) {
             cluesToggleBtn.textContent = window._cluesShowRemaining ? 'Return to Clues' : 'Remaining';
         }
 
+        const cluesTabsEl = document.getElementById('clues-length-tabs');
+        if (cluesTabsEl) {
+            const showTabs = is24H && !window._cluesShowRemaining;
+            cluesTabsEl.style.display = showTabs ? 'flex' : 'none';
+            if (showTabs) {
+                const boardLengths = new Set();
+                (allWords || []).forEach(w => {
+                    const wStr = (typeof w === 'string' ? w : (w.word || ''));
+                    if (wStr && wStr.length >= 3) boardLengths.add(wStr.length);
+                });
+                if (boardLengths.size === 0 && state.total_counts_by_len) {
+                    for (const [k, v] of Object.entries(state.total_counts_by_len)) {
+                        if (!k.startsWith('_')) {
+                            const num = parseInt(k, 10);
+                            if (!isNaN(num) && num >= 3 && v > 0) boardLengths.add(num);
+                        }
+                    }
+                }
+                const sortedLengths = Array.from(boardLengths).sort((a, b) => a - b);
+                
+                let currentFilter = window._cluesLengthFilter || 'ALL';
+                if (currentFilter !== 'ALL' && !boardLengths.has(parseInt(currentFilter, 10))) {
+                    currentFilter = 'ALL';
+                    window._cluesLengthFilter = 'ALL';
+                }
+
+                let tabsHtml = `<button type="button" class="clues-len-tab ${currentFilter === 'ALL' ? 'active' : ''}" data-length="ALL">ALL</button>`;
+                sortedLengths.forEach(len => {
+                    const isActive = (currentFilter === String(len) || currentFilter === len);
+                    tabsHtml += `<button type="button" class="clues-len-tab ${isActive ? 'active' : ''}" data-length="${len}">${len}LW</button>`;
+                });
+                if (cluesTabsEl.innerHTML !== tabsHtml) {
+                    cluesTabsEl.innerHTML = tabsHtml;
+                }
+            }
+        }
+
         if (cluesListEl && activeWordsTab === 'clues') {
             if (!window._cluesShowRemaining) {
                 cluesListEl.style.display = '';
@@ -3043,25 +3081,41 @@ async function updateGameState(incomingState = null) {
                 const myPlayer = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
                 const myWords = myPlayer ? myPlayer.submitted_words : [];
                 const foundSet = new Set(myWords.map(w => (typeof w === 'string' ? w : w.word).toUpperCase()));
-                const unfoundWords = allWords.filter(w => !foundSet.has(w.toUpperCase()));
+                const unfoundWords = allWords.filter(w => !foundSet.has((typeof w === 'string' ? w : (w.word || '')).toUpperCase()));
                 console.log('[CluesDebug] allWords:', allWords.length, 'foundSet:', foundSet.size, 'unfound:', unfoundWords.length);
 
-                if (unfoundWords.length === 0) {
-                    cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
+                let filteredUnfoundWords = unfoundWords;
+                const currentFilter = window._cluesLengthFilter || 'ALL';
+                if (currentFilter !== 'ALL') {
+                    const targetLen = parseInt(currentFilter, 10);
+                    filteredUnfoundWords = unfoundWords.filter(w => (typeof w === 'string' ? w : (w.word || '')).length === targetLen);
+                }
+
+                if (filteredUnfoundWords.length === 0) {
+                    if (currentFilter !== 'ALL') {
+                        cluesListEl.innerHTML = `<p class="placeholder">All ${currentFilter}LW clues found!</p>`;
+                    } else {
+                        cluesListEl.innerHTML = '<p class="placeholder">All words found!</p>';
+                    }
                 } else {
                     // Sort Clues Alpha for better searching
-                    unfoundWords.sort((a, b) => a.length - b.length || a.localeCompare(b));
-                    const clueListHtml = unfoundWords.map(w => {
-                        const prefix = w.substring(0, 2);
+                    filteredUnfoundWords.sort((a, b) => {
+                        const aStr = typeof a === 'string' ? a : (a.word || '');
+                        const bStr = typeof b === 'string' ? b : (b.word || '');
+                        return aStr.length - bStr.length || aStr.localeCompare(bStr);
+                    });
+                    const clueListHtml = filteredUnfoundWords.map(w => {
+                        const wordStr = typeof w === 'string' ? w : (w.word || '');
+                        const prefix = wordStr.substring(0, 2);
                         let sum = 0;
-                        for (let char of w.toUpperCase()) {
+                        for (let char of wordStr.toUpperCase()) {
                             sum += (window.LETTER_VALUES || LETTER_VALUES)[char] || 1;
                         }
                         return `
                             <div class="clue-item">
                                 <span class="clue-prefix">${prefix}..</span>
                                 <div class="clue-divider"></div>
-                                <span class="clue-stats">${w.length} Letters &bull; ${sum} pts</span>
+                                <span class="clue-stats">${wordStr.length} Letters &bull; ${sum} pts</span>
                             </div>
                         `;
                     }).join('');
@@ -9455,6 +9509,23 @@ document.addEventListener('click', (e) => {
         }
         if (window.lastGameState) {
             updateGameState(window.lastGameState);
+        }
+    }
+});
+
+// Clues letter length tab click listener
+document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.clues-len-tab');
+    if (tabBtn) {
+        const lenVal = tabBtn.getAttribute('data-length');
+        if (lenVal && window._cluesLengthFilter !== lenVal) {
+            window._cluesLengthFilter = lenVal;
+            const cluesListEl = document.getElementById('clues-list');
+            if (cluesListEl) cluesListEl.scrollTop = 0;
+            window.lastRenderedStateJSON = null;
+            if (window.lastGameState) {
+                updateGameState(window.lastGameState);
+            }
         }
     }
 });
