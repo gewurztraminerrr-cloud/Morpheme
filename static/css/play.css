@@ -7399,7 +7399,7 @@ input[type=range]::-moz-range-track {
         text-align: center !important;
     }
     .profile-quote-minimal {
-        text-align: center !important;
+        text-align: left !important;
     }
     .profile-metadata-row {
         justify-content: center !important;

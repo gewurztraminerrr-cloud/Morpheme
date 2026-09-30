@@ -8705,13 +8705,13 @@ select option,
         min-height: auto !important;
         max-height: 120px !important;
         font-size: 0.95rem !important;
-        text-align: center !important;
+        text-align: left !important;
     }
     .profile-quote-box .meta-label {
-        text-align: center !important;
+        text-align: left !important;
     }
     .profile-quote-minimal {
-        text-align: center !important;
+        text-align: left !important;
         margin: 0 !important;
     }
     .profile-stats-grid {
