@@ -7582,9 +7582,9 @@ async function loadRandomSuggestedWords(force = false) {
     const tableBody = document.getElementById('random-words-table-body');
     if (!tableBody) return;
 
-    const targetWords = _initialDesktopRandomWords || _cachedRandomWords;
+    const targetWords = _cachedRandomWords || _initialDesktopRandomWords;
 
-    // 1. If words are already cached and not forcing a refresh, keep original display permanently
+    // 1. If words are already cached and not forcing a refresh, keep current display permanently
     if (!force && targetWords && targetWords.length > 0) {
         renderSuggestedWordsTable(tableBody, targetWords);
         return;
@@ -7595,7 +7595,7 @@ async function loadRandomSuggestedWords(force = false) {
         try {
             await _randomWordsFetchPromise;
         } catch (e) {}
-        const currentWords = _initialDesktopRandomWords || _cachedRandomWords;
+        const currentWords = _cachedRandomWords || _initialDesktopRandomWords;
         if (!force && currentWords && currentWords.length > 0) {
             renderSuggestedWordsTable(tableBody, currentWords);
         }
@@ -7640,9 +7640,7 @@ async function loadRandomSuggestedWords(force = false) {
             }
 
             if (data.words && data.words.length > 0) {
-                if (!_initialDesktopRandomWords) {
-                    _initialDesktopRandomWords = data.words;
-                }
+                _initialDesktopRandomWords = data.words;
                 _cachedRandomWords = data.words;
                 _randomWordsLoadedOnce = true;
                 renderSuggestedWordsTable(tableBody, data.words);
