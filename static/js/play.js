@@ -4786,7 +4786,7 @@ function updateParameters(state) {
         'private': 'With Friends',
         'tournament': 'Tournament',
         'solo_accumulative': 'Solo',
-        'subanagrams': 'SUBANAGRAMS'
+        'subanagrams': 'Subanagrams'
     };
 
     const timerVal = document.getElementById('timer-value');
@@ -4965,7 +4965,7 @@ function updateParameters(state) {
                 headerMetaBoard.style.display = isSubanagrams ? 'none' : '';
             }
             if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
-            if (document.getElementById('param-time')) document.getElementById('param-time').textContent = isSubanagrams ? `PRACTICE | ${window._displayedParams.time}` : window._displayedParams.time;
+            if (document.getElementById('param-time')) document.getElementById('param-time').textContent = isSubanagrams ? `Practice | ${window._displayedParams.time}` : window._displayedParams.time;
             
             // Populate the new label above Spinner Set
             if (document.getElementById('label-game-type')) document.getElementById('label-game-type').textContent = document.getElementById('game-title').textContent;
