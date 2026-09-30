@@ -2928,7 +2928,7 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
 
 /* ── Desktop: Change Password/Email — fit both cards without vertical scroll ── */
 @media (min-width: 901px) {
-    #tool-change-account {
+    #tool-change-account.active {
         display: flex;
         flex-direction: column;
         height: 100%;
