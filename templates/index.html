@@ -3437,16 +3437,16 @@
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <button id="more-random-words-btn" class="more-random-words-btn" type="button">More random words</button>
                                 <select id="random-words-dict-select" style="padding: 8px 12px; font-size: 0.9rem; border-radius: 6px; border: 1px solid rgba(165, 180, 252, 0.3); background: var(--input-bg); color: var(--text-primary); cursor: pointer;" title="Select dictionary filter for random words">
-                                    <option value="ALL" selected>All</option>
                                     <option value="NWL">NWL</option>
                                     <option value="CSW">CSW</option>
+                                    <option value="AW">AW</option>
+                                    <option value="ALL" selected>All</option>
                                     <option value="csw_only">CSW Only</option>
                                     <option value="uniqueNWL">NWL Uniques</option>
                                     <option value="new_nwl">New NWL Words</option>
                                     <option value="new_csw">New CSW Words</option>
                                     <option value="new_added">New AW Words</option>
                                     <option value="all_new">All New Words</option>
-                                    <option value="AW">AW</option>
                                 </select>
                             </div>
                         </div>
@@ -3968,16 +3968,16 @@
                                     <option value="21">21</option>
                                 </select>
                                 <select id="random-dict" style="width: 155px;">
-                                    <option value="ALL">All (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">AW</option>
+                                    <option value="ALL">All (Full)</option>
                                     <option value="csw_only">CSW Only</option>
                                     <option value="uniqueNWL">NWL Uniques</option>
                                     <option value="new_nwl">New NWL Words</option>
                                     <option value="new_csw">New CSW Words</option>
                                     <option value="new_added">New AW Words</option>
                                     <option value="all_new">All New Words</option>
-                                    <option value="added_words">AW</option>
                                 </select>
                                 <button id="random-gen-btn">Generate Random Word</button>
                             </div>
@@ -4011,16 +4011,16 @@
                                     <input type="text" id="combo-input" placeholder="Enter letters to check..."
                                         autocomplete="off">
                                     <select id="combo-dict" style="min-width: 155px;">
-                                        <option value="ALL">All (Full)</option>
                                         <option value="NWL">NWL (US)</option>
                                         <option value="CSW" selected>CSW (Intl)</option>
+                                        <option value="added_words">AW</option>
+                                        <option value="ALL">All (Full)</option>
                                         <option value="csw_only">CSW Only</option>
                                         <option value="uniqueNWL">NWL Uniques</option>
                                         <option value="new_nwl">New NWL Words</option>
                                         <option value="new_csw">New CSW Words</option>
                                         <option value="new_added">New AW Words</option>
                                         <option value="all_new">All New Words</option>
-                                        <option value="added_words">AW</option>
                                     </select>
                                     <button id="combo-search-btn">Check</button>
                                 </div>
@@ -4081,10 +4081,10 @@
                                 <input type="text" id="valid-input" placeholder="Enter word to check..."
                                     autocomplete="off" style="width: 250px;">
                                 <select id="valid-dict" style="width: 140px;">
-                                    <option value="ALL">All (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW">CSW (Intl)</option>
                                     <option value="added_words">AW</option>
+                                    <option value="ALL" selected>All (Full)</option>
                                 </select>
                                 <button id="valid-check-btn">Validate</button>
                             </div>
@@ -4127,16 +4127,16 @@
                                     <input type="text" id="sub-input" placeholder="Letters..."
                                         autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="width: 100%; height: 42px; text-transform: uppercase; text-align: center; font-size: 1.05rem; letter-spacing: 1px; box-sizing: border-box;">
                                     <select id="sub-dict" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
-                                        <option value="ALL">Dictionary: All (Full)</option>
                                         <option value="NWL">Dictionary: NWL (US)</option>
                                         <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
+                                        <option value="ALL">Dictionary: All (Full)</option>
                                         <option value="csw_only">Dictionary: CSW Only</option>
                                         <option value="uniqueNWL">Dictionary: NWL Uniques</option>
                                         <option value="new_nwl">Dictionary: New NWL Words</option>
                                         <option value="new_csw">Dictionary: New CSW Words</option>
                                         <option value="new_added">Dictionary: New AW Words</option>
                                         <option value="all_new">Dictionary: All New Words</option>
-                                        <option value="added_words">Dictionary: AW</option>
                                     </select>
                                     <select id="sub-min-len" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="2" selected>Min Word Length: 2</option>
@@ -4170,16 +4170,16 @@
                                         <option value="12">Sequence Length: 12</option>
                                     </select>
                                     <select id="sub-dict-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
-                                        <option value="ALL">Dictionary: All (Full)</option>
                                         <option value="NWL">Dictionary: NWL (US)</option>
                                         <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
+                                        <option value="ALL">Dictionary: All (Full)</option>
                                         <option value="csw_only">Dictionary: CSW Only</option>
                                         <option value="uniqueNWL">Dictionary: NWL Uniques</option>
                                         <option value="new_nwl">Dictionary: New NWL Words</option>
                                         <option value="new_csw">Dictionary: New CSW Words</option>
                                         <option value="new_added">Dictionary: New AW Words</option>
                                         <option value="all_new">Dictionary: All New Words</option>
-                                        <option value="added_words">Dictionary: AW</option>
                                     </select>
                                     <select id="sub-min-len-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="2" selected>Min Word Length: 2</option>
@@ -4279,16 +4279,16 @@
                                 </select>
 
                                 <select id="seq-dict" style="width: 155px;">
-                                    <option value="ALL">All (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW" selected>CSW (Intl)</option>
+                                    <option value="added_words">AW</option>
+                                    <option value="ALL">All (Full)</option>
                                     <option value="csw_only">CSW Only</option>
                                     <option value="uniqueNWL">NWL Uniques</option>
                                     <option value="new_nwl">New NWL Words</option>
                                     <option value="new_csw">New CSW Words</option>
                                     <option value="new_added">New AW Words</option>
                                     <option value="all_new">All New Words</option>
-                                    <option value="added_words">AW</option>
                                 </select>
 
                                 <select id="seq-length" style="width: 120px;">
@@ -4389,9 +4389,9 @@
                                 <select id="list-type-filter" style="width: 190px;">
                                     <option value="nwl" selected>NWL</option>
                                     <option value="csw">CSW</option>
-                                    <option value="csw_only">CSW Only</option>
                                     <option value="added">AW</option>
                                     <option value="all_words">All</option>
+                                    <option value="csw_only">CSW Only</option>
                                     <option value="nwl_likelihood">NWL Likelihood</option>
                                     <option value="csw_likelihood">CSW Likelihood</option>
                                     <option value="csw_only_likelihood">CSW Only Likelihood</option>
@@ -4457,16 +4457,16 @@
                                     <option value="21">Len: 21</option>
                                 </select>
                                 <select id="unscramble-dict" style="width: 155px;">
-                                    <option value="ALL">All (Full)</option>
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW">CSW (Intl)</option>
+                                    <option value="added_words">AW</option>
+                                    <option value="ALL" selected>All (Full)</option>
                                     <option value="csw_only">CSW Only</option>
                                     <option value="uniqueNWL">NWL Uniques</option>
                                     <option value="new_nwl">New NWL Words</option>
                                     <option value="new_csw">New CSW Words</option>
                                     <option value="new_added">New AW Words</option>
                                     <option value="all_new">All New Words</option>
-                                    <option value="added_words">AW</option>
                                 </select>
                                 <div class="unscramble-must-have-group">
                                     <span class="unscramble-must-have-label" style="font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; margin-left: 10px; align-self: center;">Must Have:</span>
