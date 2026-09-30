@@ -1875,11 +1875,16 @@ function setupModalListeners() {
     const spinnerLabel = document.querySelector('.spinner-set-label');
     const spinnerModal = document.getElementById('spinner-set-modal');
 
-    if (spinnerModal) {
+    const subanagramsSpinnerModal = document.getElementById('subanagrams-spinner-set-modal');
+
+    if (spinnerModal || subanagramsSpinnerModal) {
         const openSpinnerModal = () => {
             const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
-            if (isSubanagrams) return;
-            spinnerModal.classList.remove('hidden');
+            if (isSubanagrams) {
+                if (subanagramsSpinnerModal) subanagramsSpinnerModal.classList.remove('hidden');
+                return;
+            }
+            if (spinnerModal) spinnerModal.classList.remove('hidden');
         };
 
         if (gameParams) {
@@ -1894,8 +1899,13 @@ function setupModalListeners() {
 
         // Escape key close support
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !spinnerModal.classList.contains('hidden')) {
-                spinnerModal.classList.add('hidden');
+            if (e.key === 'Escape') {
+                if (spinnerModal && !spinnerModal.classList.contains('hidden')) {
+                    spinnerModal.classList.add('hidden');
+                }
+                if (subanagramsSpinnerModal && !subanagramsSpinnerModal.classList.contains('hidden')) {
+                    subanagramsSpinnerModal.classList.add('hidden');
+                }
             }
         });
     }
