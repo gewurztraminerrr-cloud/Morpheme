@@ -1942,10 +1942,12 @@
                 }
 
                 if (activeUser) {
+                    var storedIsMod = (localStorage.getItem('morpheme_is_mod') === 'true');
                     if (typeof window.setCurrentUser === 'function') {
-                        window.setCurrentUser(activeUser);
+                        window.setCurrentUser(activeUser, null, false, storedIsMod);
                     } else {
                         window.currentUser = activeUser;
+                        window.currentUserIsMod = storedIsMod;
                         if (typeof window.updateAuthUI === 'function') {
                             window.updateAuthUI();
                         }
@@ -8070,14 +8072,14 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790620000"></script>
     <script src="/js/forum.js?v=1789822000"></script>
-    <script src="/js/app.js?v=1790610000"></script>
+    <script src="/js/app.js?v=1790625000"></script>
     <script src="/js/lobby.js?v=1790360000"></script>
     <script src="/js/play.js?v=1790623000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
     <script src="/js/tools.js?v=1790282000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1790017000"></script>
+    <script src="/js/mods.js?v=1790625000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
     <script src="/js/donate.js?v=33806"></script>
     

@@ -2867,6 +2867,12 @@ def init_db():
         conn.execute("CREATE TABLE IF NOT EXISTS moderators (username TEXT PRIMARY KEY, added_at REAL)")
         conn.execute("DELETE FROM moderators WHERE LOWER(username) = 'jeffbabiak'")
         conn.execute("INSERT OR IGNORE INTO moderators (username, added_at) VALUES ('jeffb', 1700000000.0)")
+        if os.path.exists(MODS_FILE):
+            with open(MODS_FILE, 'r') as f:
+                for line in f:
+                    m = line.strip().lower()
+                    if m and m != 'jeffbabiak':
+                        conn.execute("INSERT OR IGNORE INTO moderators (username, added_at) VALUES (?, ?)", (m, 1700000000.0))
         conn.commit()
     except Exception as e:
         print(f"[init_db] Error migrating email and moderators: {e}")

@@ -73,13 +73,13 @@ let currentUserEmail = window.currentUserEmail || null;
 let selectedRoom = null;
 let sessionStartTime = Date.now();
 window.sessionStartTime = sessionStartTime;
-window.currentUserIsMod = false;
+window.currentUserIsMod = (localStorage.getItem('morpheme_is_mod') === 'true');
 window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
 window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
 
-function setCurrentUser(username, email = null, isGuest = false, isMod = false, rating = null) {
+function setCurrentUser(username, email = null, isGuest = false, isMod = null, rating = null) {
     if (!username) {
         currentUser = null;
         window.currentUser = null;
@@ -87,6 +87,7 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = false, 
         window.currentUserIsGuest = false;
         window.currentUserIsMod = false;
         window.currentUserIsRootMod = false;
+        try { localStorage.removeItem('morpheme_is_mod'); } catch (e) {}
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
         }
@@ -108,6 +109,9 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = false, 
     }
     if (isMod !== null) {
         window.currentUserIsMod = Boolean(isMod);
+        try { localStorage.setItem('morpheme_is_mod', isMod ? 'true' : 'false'); } catch (e) {}
+    } else if (localStorage.getItem('morpheme_is_mod') !== null) {
+        window.currentUserIsMod = (localStorage.getItem('morpheme_is_mod') === 'true');
     }
     if (rating !== null) {
         window.currentUserRating = rating;
@@ -1327,6 +1331,7 @@ async function checkSession() {
             window.currentUser = null;
             window.currentUserIsGuest = false;
             window.currentUserIsMod = false;
+            try { localStorage.removeItem('morpheme_is_mod'); } catch (e) {}
             localStorage.removeItem('morpheme_logged_in');
             localStorage.removeItem('morpheme_username');
             localStorage.removeItem('morpheme_auth_token');
@@ -1374,7 +1379,8 @@ async function checkSession() {
             currentUserEmail = data.email;
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest; // Store guest status
-            window.currentUserIsMod = data.is_mod; // Store mod status
+            window.currentUserIsMod = Boolean(data.is_mod); // Store mod status
+            try { localStorage.setItem('morpheme_is_mod', data.is_mod ? 'true' : 'false'); } catch (e) {}
             localStorage.setItem('morpheme_username', currentUser);
             if (data.user_id) {
                 window.currentUserId = data.user_id;
@@ -1388,6 +1394,10 @@ async function checkSession() {
             // Check and sync timeout state immediately
             if (typeof window.syncLobbyTimeoutState === 'function') {
                 window.syncLobbyTimeoutState().catch(function() {});
+            }
+
+            if (data.is_mod && typeof checkModStatus === 'function') {
+                checkModStatus();
             }
 
             // LOAD ALL SETTINGS
@@ -1426,6 +1436,7 @@ async function checkSession() {
             window.currentUser = null;
             window.currentUserIsGuest = false;
             window.currentUserIsMod = false;
+            try { localStorage.removeItem('morpheme_is_mod'); } catch (e) {}
             localStorage.removeItem('morpheme_logged_in');
             localStorage.removeItem('morpheme_username');
             localStorage.removeItem('morpheme_auth_token');
@@ -2390,7 +2401,8 @@ async function handleSignIn() {
             currentUserEmail = data.email;
             window.currentUserEmail = currentUserEmail;
             window.currentUserIsGuest = data.is_guest || false;
-            window.currentUserIsMod = data.is_mod || false; // Set here too
+            window.currentUserIsMod = Boolean(data.is_mod); // Set here too
+            try { localStorage.setItem('morpheme_is_mod', data.is_mod ? 'true' : 'false'); } catch (e) {}
             if (data.user_id) {
                 window.currentUserId = data.user_id;
                 try { localStorage.setItem('morpheme_user_id', String(data.user_id)); } catch (e) {}
@@ -2644,7 +2656,7 @@ function updateAuthUI(rating = null) {
         // Handle Mods Button
         const modsBtn = document.getElementById('nav-mods-btn');
         if (modsBtn) {
-            const isAuthorized = window.currentUserIsMod;
+            const isAuthorized = Boolean(window.currentUserIsMod || (localStorage.getItem('morpheme_is_mod') === 'true'));
             modsBtn.style.display = isAuthorized ? 'block' : 'none';
         }
 
@@ -2719,6 +2731,7 @@ async function handleLogout() {
         window.currentUserConfigRatings = {};
         window.currentUserIsMod = false;
         window.currentUserIsRootMod = false;
+        try { localStorage.removeItem('morpheme_is_mod'); } catch (e) {}
         window.currentUser = null;
         window.currentUserIsGuest = false;
         currentUser = null;
