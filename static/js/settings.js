@@ -567,6 +567,83 @@ function debounce(func, wait) {
             }
         });
     });
+
+    // Reset Board Sizes to Defaults
+    function resetBoardSizesToDefault() {
+        const defaultSizes = { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 };
+        if (!window.userSettings) window.userSettings = getDefaultSettings();
+        window.userSettings.board_sizes = { ...defaultSizes };
+
+        Object.keys(defaultSizes).forEach(dim => {
+            const slider = document.querySelector(`.dim-size-slider[data-dim="${dim}"]`);
+            const valEl = document.getElementById(`val-dim-${dim}`);
+            if (slider) slider.value = defaultSizes[dim];
+            if (valEl) valEl.textContent = `${defaultSizes[dim]}px`;
+        });
+
+        const previewBoard = document.getElementById('preview-board');
+        if (previewBoard) {
+            previewBoard.style.setProperty('--cell-size', `${defaultSizes['4x4']}px`);
+        }
+
+        saveSettingsToStorage();
+        saveSettingDebounced('board_sizes', window.userSettings.board_sizes);
+
+        // Update live game board if in a matching room
+        const gs = window.lastGameState;
+        if (gs && gs.board && gs.board[0]) {
+            const activeCols = gs.board[0].length;
+            const activeRows = gs.board.length;
+            const minD = Math.min(activeCols, activeRows);
+            const maxD = Math.max(activeCols, activeRows);
+            const dim = `${minD}x${maxD}`;
+            if (defaultSizes[dim]) {
+                const val = defaultSizes[dim];
+                window.userManuallyOverrodeBoardSize = false;
+                if (!window.cachedCellSizes) window.cachedCellSizes = {};
+                window.cachedCellSizes[dim] = val;
+                document.documentElement.style.setProperty('--cell-size', `${val}px`);
+                const playPage = document.getElementById('page-play');
+                if (playPage) playPage.style.setProperty('--cell-size', `${val}px`);
+                const boardEl = document.getElementById('game-board');
+                if (boardEl) boardEl.style.setProperty('--cell-size', `${val}px`);
+                if (typeof window.checkBoardOverflow === 'function') {
+                    window.checkBoardOverflow();
+                } else if (typeof window.applyPanelLayout === 'function') {
+                    window.applyPanelLayout(val, activeCols);
+                }
+            }
+        }
+    }
+    window.resetBoardSizesToDefault = resetBoardSizesToDefault;
+
+    const resetBoardSizesBtn = document.getElementById('btn-reset-board-sizes');
+    if (resetBoardSizesBtn) {
+        resetBoardSizesBtn.onclick = () => {
+            resetBoardSizesToDefault();
+            const originalText = resetBoardSizesBtn.textContent;
+            resetBoardSizesBtn.textContent = 'Reset to Defaults!';
+            setTimeout(() => {
+                resetBoardSizesBtn.textContent = originalText;
+            }, 1200);
+        };
+    }
+
+    // Delegated click handler as backup
+    document.addEventListener('click', (e) => {
+        if (e.target && (e.target.id === 'btn-reset-board-sizes' || e.target.closest('#btn-reset-board-sizes'))) {
+            resetBoardSizesToDefault();
+            const btn = e.target.id === 'btn-reset-board-sizes' ? e.target : e.target.closest('#btn-reset-board-sizes');
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = 'Reset to Defaults!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 1200);
+            }
+        }
+    });
+
     const chatSizeSlider = document.getElementById('setting-chat-size');
     if (chatSizeSlider) {
         chatSizeSlider.addEventListener('input', (e) => {
