@@ -34,7 +34,7 @@ START_OVER_POINT_SEPTEMBER_30
   - Structured in the exact requested order:
     1. **Part 1: Main Lobby (Center Panel)**
     2. **Part 2: ACTIVE ROOMS (Right Panel)**
-    3. **Part 3: PLAY SOLO OR WITH FRIENDS (Left Panel)**
+    3. **Part 3: PLAY SOLO OR WITH FRIENDS (Left panel on mobile devices, and below multiplayer Subanagrams on laptops and desktops)**
     4. **Part 4: Live Match Example & Word Pathing**
   - Two persistent action buttons in the sticky footer:
     - `"Show the link to this explanation again next time I enter Lobby"` (keeps the guide button active).
