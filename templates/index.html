@@ -2552,10 +2552,10 @@
                 }
                 #lobby-guide-scrollbar-thumb {
                     position: absolute !important;
-                    top: 0 !important;
+                    top: 0;
                     left: 1px !important;
                     width: 10px !important;
-                    min-height: 48px !important;
+                    min-height: 36px;
                     background: linear-gradient(180deg, #c4b5fd 0%, #a78bfa 50%, #7c3aed 100%) !important;
                     border-radius: 5px !important;
                     border: 1.5px solid #ffffff !important;
@@ -8871,36 +8871,8 @@
                             <h3 class="lobby-guide-section-title">Selected Room & How to Play (Word Pathing)</h3>
                         </div>
                         <p class="lobby-guide-intro">
-                            Here is what happens once you select an open room (like <strong>Room #204</strong> from above) and step onto the board. See how Morpheme’s word-finding mechanics work and explore the full range of adjacent pathing.
+                            Here is what happens once you select an open room and step onto the board. See how Morpheme’s word-finding mechanics work and explore the full range of adjacent pathing.
                         </p>
-
-                        <!-- Room HUD Preview -->
-                        <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e;"></span>
-                                    <span style="font-weight: 800; color: #fff; font-size: 0.95rem;">Room #204: First Come First Serve</span>
-                                    <span style="font-size: 0.72rem; color: #a78bfa; background: rgba(167,139,250,0.18); padding: 2px 7px; border-radius: 4px; font-weight: 700;">FCFS • 4x4 • 3m</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 3px 8px; border-radius: 6px;">
-                                        ⏱️ 2:38
-                                    </div>
-                                    <div style="font-size: 0.85rem; font-weight: 800; color: #ffd700; background: rgba(255, 215, 0, 0.12); border: 1px solid rgba(255, 215, 0, 0.3); padding: 3px 8px; border-radius: 6px;">
-                                        ★ 14 pts
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="font-size: 0.78rem; color: #94a3b8; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <span><strong>Dictionary:</strong> NWL (American)</span>
-                                <span>•</span>
-                                <span><strong>Min Length:</strong> 3 Letters</span>
-                                <span>•</span>
-                                <span><strong>Format:</strong> Normal</span>
-                                <span>•</span>
-                                <span><strong>Players:</strong> 2/8 Active</span>
-                            </div>
-                        </div>
 
                         <!-- Shrunken Board & Pathing Showcase -->
                         <div style="background: rgba(10, 8, 22, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; box-sizing: border-box;">
@@ -9042,7 +9014,7 @@
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790635000"></script>
-    <script src="/js/lobby.js?v=1790639000"></script>
+    <script src="/js/lobby.js?v=1790640000"></script>
     <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
