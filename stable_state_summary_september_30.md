@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-bba4a2e7150daf7c4d4c4653c113bb66773df449
+4ddd5b56d711b61b7d37604cc54ac2237941252b
 ```
 
 ## Start Over Point Tag
@@ -111,3 +111,38 @@ START_OVER_POINT_SEPTEMBER_30
 
 ### 13. "Reset to Defaults" on Sound Theme in Sound Settings
 - Added instant sound theme reset to Default Sound Theme.
+
+### 14. Subtle Desktop Firefox Top Menu & Header Sizing (Desktops ONLY)
+- Applied exclusively to Firefox on desktop viewports (`min-width: 901px`, `body:not(.is-mobile)`) to align its visual metrics with Microsoft Edge and Google Chrome:
+  - **Slightly More Padding Above & Below Buttons**: `.nav-btn` vertical padding gently increased by ~1–2px (`8px 13px` / `6px 9px` / `5px 7px`).
+  - **Slightly More Padding Between Buttons**: Inter-button gap expanded (`6px` / `4px` / `3px`).
+  - **Slightly Larger MORPHEME MORE-FEEM & Top Menu**: Logo text (`1.92rem` / `1.28rem` / `1.16rem`), pronunciation (`0.88rem` / `0.77rem` / `0.72rem`), logo icon (`38px` / `30px` / `29px`), and nav font sizes subtly enlarged.
+  - **Slightly Increased Overall Vertical Length**: Header `min-height` increased to `60px` / `48px` / `44px` with dynamic spacer synchronization.
+  - All non-Firefox browsers (Edge, Chrome, Safari) and mobile devices remain 100% untouched.
+
+### 15. Added Words Definition Engine Overhaul (Web Search & Non-Proper-Noun Sourcing)
+- Programmatically fetches authentic dictionary definitions from Wordnik Century/Webster dictionaries and web search when words are added via the Added Words tab in Mods.
+- Filters out proper nouns (cities, municipalities, ports, capitals, provinces, rivers, islands, personal names, surnames, and living people).
+- Replaces trivial fallback strings with authentic lexicographical concepts.
+- Integrates seamlessly into real-time Added Words pre-check (`get_word_definitions_for_aw_check`).
+
+### 16. Definition Engine Logic Hardening Against SEO Titles & Marketing Headlines
+- Solved greedy colon matching that previously captured website title tags and marketing slogans (e.g. `grandeval: Explore its Definition & Usage | RedKiwi Words`).
+- Added Phrontistery rare/classical English dictionary query to directly extract genuine definitions for rare, literary, and archaic words (e.g., `GRANDEVAL` -> `(adjective) Of great age; ancient.`).
+- Automatically strips website branding and page title trailers by splitting on pipes (`|`).
+- Added strict junk patterns rejecting SEO marketing phrases (`Explore its Definition`, `Definition & Usage`, `Definition & Meaning`, `Usage & Examples`, `RedKiwi`, `WordHippo`, `Factsheet`, etc.).
+- Enforced strict lexicographical grammar starters on colon-separated matches, guaranteeing that CTA titles, headers, and marketing slogans are completely rejected.
+
+---
+
+## How to Roll Back to This Point
+
+```bash
+# On localhost:
+git checkout START_OVER_POINT_SEPTEMBER_30
+
+# On production (SSH to server):
+git fetch --tags -f origin
+git checkout START_OVER_POINT_SEPTEMBER_30
+pm2 reload morpheme
+```
