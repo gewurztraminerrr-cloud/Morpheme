@@ -1990,23 +1990,33 @@ function initLobbyGuideScrollbar() {
     const thumb = document.getElementById('lobby-guide-scrollbar-thumb');
     if (!scrollArea || !track || !thumb) return;
 
+    let isDragging = false;
+    let startY = 0;
+    let startThumbTop = 0;
+
     function updateThumb() {
         if (isDragging) return;
-        track.style.display = 'block';
-        thumb.style.display = 'block';
-
         const scrollHeight = scrollArea.scrollHeight;
         const clientHeight = scrollArea.clientHeight || scrollArea.offsetHeight;
         const scrollTop = scrollArea.scrollTop;
 
-        const trackHeight = track.clientHeight || (clientHeight - 20);
-        if (trackHeight <= 0) return;
-
-        const ratio = scrollHeight > 0 ? clientHeight / scrollHeight : 1;
-        const thumbHeight = Math.max(48, Math.min(trackHeight, trackHeight * ratio));
-        thumb.style.height = `${thumbHeight}px`;
+        const trackHeight = track.clientHeight;
+        if (!trackHeight || trackHeight <= 0) return;
 
         const maxScrollTop = scrollHeight - clientHeight;
+        if (maxScrollTop <= 0) {
+            track.style.display = 'none';
+            thumb.style.display = 'none';
+            return;
+        }
+
+        track.style.display = 'block';
+        thumb.style.display = 'block';
+
+        const ratio = clientHeight / scrollHeight;
+        const thumbHeight = Math.max(40, Math.min(trackHeight, trackHeight * ratio));
+        thumb.style.height = `${thumbHeight}px`;
+
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
         thumb.style.top = `${thumbTop}px`;
@@ -2019,10 +2029,6 @@ function initLobbyGuideScrollbar() {
         return;
     }
     scrollArea._guideScrollbarInit = true;
-
-    let isDragging = false;
-    let startY = 0;
-    let startThumbTop = 0;
 
     scrollArea.addEventListener('scroll', updateThumb, { passive: true });
     window.addEventListener('resize', updateThumb, { passive: true });
@@ -2039,19 +2045,23 @@ function initLobbyGuideScrollbar() {
         thumb.classList.add('dragging');
         startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         startThumbTop = parseFloat(thumb.style.top) || 0;
-        window.addEventListener('pointermove', onPointerMove);
+        if (e.pointerId !== undefined && typeof thumb.setPointerCapture === 'function') {
+            try { thumb.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+        window.addEventListener('pointermove', onPointerMove, { passive: false });
         window.addEventListener('pointerup', onPointerUp);
         window.addEventListener('touchmove', onPointerMove, { passive: false });
         window.addEventListener('touchend', onPointerUp);
         e.preventDefault();
+        e.stopPropagation();
     }
 
     function onPointerMove(e) {
         if (!isDragging) return;
         const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         const deltaY = clientY - startY;
-        const trackHeight = track.clientHeight || (scrollArea.clientHeight - 20);
-        const thumbHeight = thumb.offsetHeight || 48;
+        const trackHeight = track.clientHeight;
+        const thumbHeight = thumb.offsetHeight || 40;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const newThumbTop = Math.max(0, Math.min(maxThumbTop, startThumbTop + deltaY));
         thumb.style.top = `${newThumbTop}px`;
@@ -2060,13 +2070,17 @@ function initLobbyGuideScrollbar() {
         if (maxThumbTop > 0) {
             scrollArea.scrollTop = (newThumbTop / maxThumbTop) * maxScrollTop;
         }
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
     }
 
-    function onPointerUp() {
+    function onPointerUp(e) {
         if (!isDragging) return;
         isDragging = false;
         thumb.classList.remove('dragging');
+        if (e && e.pointerId !== undefined && typeof thumb.releasePointerCapture === 'function') {
+            try { thumb.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
         window.removeEventListener('pointermove', onPointerMove);
         window.removeEventListener('pointerup', onPointerUp);
         window.removeEventListener('touchmove', onPointerMove);
@@ -2076,12 +2090,12 @@ function initLobbyGuideScrollbar() {
     thumb.addEventListener('pointerdown', onPointerDown);
     thumb.addEventListener('touchstart', onPointerDown, { passive: false });
 
-    track.addEventListener('click', (e) => {
+    track.addEventListener('pointerdown', (e) => {
         if (e.target === thumb) return;
         const rect = track.getBoundingClientRect();
         const clickY = e.clientY - rect.top;
-        const trackHeight = track.clientHeight || (scrollArea.clientHeight - 20);
-        const thumbHeight = thumb.offsetHeight || 48;
+        const trackHeight = track.clientHeight;
+        const thumbHeight = thumb.offsetHeight || 40;
         const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
         const targetThumbTop = Math.max(0, Math.min(maxThumbTop, clickY - thumbHeight / 2));
         const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
@@ -2089,6 +2103,11 @@ function initLobbyGuideScrollbar() {
             scrollArea.scrollTop = (targetThumbTop / maxThumbTop) * maxScrollTop;
         }
     });
+
+    track.addEventListener('wheel', (e) => {
+        scrollArea.scrollTop += e.deltaY;
+        e.preventDefault();
+    }, { passive: false });
 
     updateThumb();
 }
