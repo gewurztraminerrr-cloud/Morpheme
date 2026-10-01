@@ -23,11 +23,14 @@ import re
 from db import get_db, get_db_connection, DB_PATH, execute_with_retry, init_db_indexes
 
 # Load environment variables from .env file
-_env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-if os.path.exists(_env_file):
-    load_dotenv(dotenv_path=_env_file, override=True)
-else:
-    load_dotenv(override=True)
+try:
+    _env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if os.path.exists(_env_file):
+        load_dotenv(dotenv_path=_env_file, override=True)
+    else:
+        load_dotenv(override=True)
+except Exception:
+    pass
 
 def parse_data_url(data_url):
     """
@@ -970,7 +973,7 @@ def lookup_web_search_definition(word_upper):
                             continue
 
                         # Match 1: Merriam-Webster 'The meaning of X is ...'
-                        m_mw = re.search(r'The meaning of [A-Z\-]+ is\s+([^—\n]+)', clean, re.IGNORECASE)
+                        m_mw = re.search(r'\bThe meaning of ' + re.escape(word) + r' is\s+([^—\n]+)', clean, re.IGNORECASE)
                         if m_mw:
                             defn = m_mw.group(1).strip()
                             defn = re.split(r'\.\s+[A-Z]|\s*See\s+the\s+full|\s*How\s+to\s+use', defn)[0].strip()
@@ -1000,8 +1003,8 @@ def lookup_web_search_definition(word_upper):
                                 if re.match(r'^(?:The|A|An|One|Of|In|Having|Marked|Characterized|To|Pertaining|Relating)\b', core, re.I):
                                     return f'{core}'
 
-                        # Match 5: 'noun The act of ...' or '(noun) The ...'
-                        m_noun = re.search(r'(?:\(noun\)|noun)\s+([A-Z][^\.\n]{15,200}\.?)', clean)
+                        # Match 5: 'X (noun) The act of ...' or 'X noun: The ...'
+                        m_noun = re.search(r'\b' + re.escape(word) + r'\b\s*(?:\([^)]*\)\s*)*(?:\(noun\)|\bnoun\b)\s*[:\-]?\s*([A-Z][^\.\n]{15,200}\.?)', clean, re.IGNORECASE)
                         if m_noun:
                             core = m_noun.group(1).strip()
                             if not any(re.search(j, core, re.I) for j in junk_pats) and not any(re.search(p, core, re.I) for p in proper_noun_pats):
@@ -1088,7 +1091,17 @@ def get_word_definitions_for_aw_check(word, allow_online=True):
             except Exception:
                 pass
 
-        # If Wiktionary API returned no definitions or only proper nouns, search web sources
+        # Check morphological suffix derivation from known dictionary words (e.g. plurals -S/-ES/-IES, conjugations -ED/-ING)
+        if (not defs) or all(d.startswith('(Proper noun)') for d in defs):
+            try:
+                morph_def = format_resolved_definition(w_upper)
+                if morph_def and morph_def not in seen:
+                    defs.append(morph_def)
+                    seen.add(morph_def)
+            except Exception:
+                pass
+
+        # If Wiktionary API & morphology returned no definitions or only proper nouns, search web sources
         if allow_online and ((not defs) or all(d.startswith('(Proper noun)') for d in defs)):
             try:
                 web_def = lookup_web_search_definition(w_upper)
@@ -1098,16 +1111,13 @@ def get_word_definitions_for_aw_check(word, allow_online=True):
             except Exception:
                 pass
 
-        # Cache definitions locally so future checks in same or subsequent operations are 0ms
+        # Cache definitions in memory for the duration of this check
+        # (DB insertion is deferred until word is actually accepted in ensure_aw_definitions_for_words)
         if defs:
             try:
                 def_str = "; ".join(defs)
-                if DEFINITIONS_CACHE is not None:
+                if DEFINITIONS_CACHE is not None and w_upper not in DEFINITIONS_CACHE:
                     DEFINITIONS_CACHE[w_upper] = def_str
-                conn = sqlite3.connect(DB_PATH, timeout=1)
-                with conn:
-                    conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w_upper, def_str))
-                conn.close()
             except Exception:
                 pass
 
@@ -7031,6 +7041,26 @@ def ensure_aw_definitions_for_words(words_list):
     sorted_words = sorted(words_list, key=len)
     resolved_pairs = []
     
+    def _is_unresolved_pointer(defn):
+        if not defn:
+            return False
+        m = re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive|alternative form|alternative spelling|variant)\s+(?:of|for)\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', defn, re.I)
+        if m:
+            after_target = defn[m.end(1):].lstrip()
+            if not after_target.startswith('('):
+                return True
+        return False
+
+    def _clean_root_for_pointer(root_def):
+        if not root_def:
+            return ""
+        clean = re.sub(r'^\s*Meaning Definition:\s*[A-Za-z0-9\-]+\s*(?:\([^)]*\)\s*)?(?:refers to|is)\s+', '', root_def.strip(), flags=re.I)
+        clean = re.sub(r'^\s*\((?:noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection)\)\s*', '', clean, flags=re.I).strip()
+        clean = re.sub(r'^\s*\[[^\]]+\]\s*', '', clean).strip()
+        if clean:
+            clean = clean[0].upper() + clean[1:]
+        return clean
+
     for w in sorted_words:
         w_upper = w.upper().strip()
         if not w_upper:
@@ -7044,105 +7074,113 @@ def ensure_aw_definitions_for_words(words_list):
             
         needs_resolution = (
             not current_def 
-            or bool(re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive)\s+of\b', current_def, re.I) and '(' not in current_def)
+            or _is_unresolved_pointer(current_def)
         )
         
         formatted_def = None
         if needs_resolution:
-            # 1. Check _AW_CHECK_DEF_CACHE from validation phase
-            cached_defs = _AW_CHECK_DEF_CACHE.get(w_upper)
-            if cached_defs:
-                for cd in cached_defs:
-                    if cd and "custom word added" not in cd.lower():
-                        formatted_def = cd
+            # 1. Suffix rules adhering strictly to AGENTS.md (Plurals -IES, -ES, -S, Verb conjugations -ING, -ED, -ERS)
+            # Evaluated FIRST so regular inflections inherit root definitions before external search/guesses
+            # Plurals (-IES, -ES, -S)
+            if w_upper.endswith('IES') and len(w_upper) > 4:
+                root = w_upper[:-3] + 'Y'
+                root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
+                if root_def:
+                    clean_root = _clean_root_for_pointer(root_def)
+                    formatted_def = f"plural of {root.lower()} ({clean_root})"
+            elif w_upper.endswith('ES') and len(w_upper) > 4:
+                for cand in [w_upper[:-2], w_upper[:-1]]:
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
                         break
-            
-            # 2. Standard resolution via Wiktionary API / online lookups
+            elif w_upper.endswith('S') and not w_upper.endswith(('SS', 'US', 'IS', 'AS')) and len(w_upper) > 3:
+                cand = w_upper[:-1]
+                root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                if root_def:
+                    clean_root = _clean_root_for_pointer(root_def)
+                    formatted_def = f"plural of {cand.lower()} ({clean_root})"
+                
+            # Verb conjugations (-ING, -ED)
+            if not formatted_def:
+                if w_upper.endswith('ING') and len(w_upper) > 5:
+                    for cand in [w_upper[:-3], w_upper[:-3] + 'E']:
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            clean_root = _clean_root_for_pointer(root_def)
+                            formatted_def = f"(verb) present participle and gerund of {cand.lower()} ({clean_root})"
+                            break
+                elif w_upper.endswith('ED') and len(w_upper) > 4:
+                    for cand in [w_upper[:-2], w_upper[:-1]]:
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            clean_root = _clean_root_for_pointer(root_def)
+                            formatted_def = f"(verb) simple past and past participle of {cand.lower()} ({clean_root})"
+                            break
+
+            # Agent nouns (-ERS, -ER)
+            if not formatted_def:
+                if w_upper.endswith('ERS') and len(w_upper) > 4:
+                    cand = w_upper[:-1]
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
+                elif w_upper.endswith('ER') and len(w_upper) > 3:
+                    for cand in [w_upper[:-2], w_upper[:-1]]:
+                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                        if root_def:
+                            clean_root = _clean_root_for_pointer(root_def)
+                            formatted_def = f"(noun) One who, or that which, {cand.lower()}s ({clean_root})."
+                            break
+
+            # -NESS and -LY derivations
+            if not formatted_def:
+                if w_upper.endswith('NESS') and len(w_upper) > 5:
+                    cand = w_upper[:-4]
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"The quality, state, or condition of being {cand.lower()} ({clean_root})"
+                elif w_upper.endswith('LY') and len(w_upper) > 4:
+                    cand = w_upper[:-2]
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"(adverb) In a {cand.lower()} manner ({clean_root})"
+
+            # 2. Standard resolution via Wiktionary API & pointer resolution
             if not formatted_def:
                 formatted_def = format_resolved_definition(w_upper)
-                
-            # 3. Check get_word_definitions_for_aw_check
+
+            # 3. Check _AW_CHECK_DEF_CACHE from validation phase
+            if not formatted_def:
+                cached_defs = _AW_CHECK_DEF_CACHE.get(w_upper)
+                if cached_defs:
+                    for cd in cached_defs:
+                        if cd and "custom word added" not in cd.lower():
+                            if _is_unresolved_pointer(cd):
+                                resolved_cd = format_resolved_definition(w_upper)
+                                if resolved_cd and not _is_unresolved_pointer(resolved_cd):
+                                    formatted_def = resolved_cd
+                                    break
+                            formatted_def = cd
+                            break
+
+            # 4. Check get_word_definitions_for_aw_check
             if not formatted_def:
                 chk_defs = get_word_definitions_for_aw_check(w_upper, allow_online=True)
                 if chk_defs:
                     for cd in chk_defs:
                         if cd and "custom word added" not in cd.lower():
+                            if _is_unresolved_pointer(cd):
+                                resolved_cd = format_resolved_definition(w_upper)
+                                if resolved_cd and not _is_unresolved_pointer(resolved_cd):
+                                    formatted_def = resolved_cd
+                                    break
                             formatted_def = cd
                             break
-
-            # 3b. Web Search Dictionary Lookup (Merriam-Webster, Century, OED, etc.)
-            if not formatted_def:
-                web_def = lookup_web_search_definition(w_upper)
-                if web_def:
-                    formatted_def = web_def
-
-            # 4. Suffix rules adhering strictly to AGENTS.md
-            if not formatted_def:
-                # Plurals (-IES, -ES, -S)
-                if w_upper.endswith('IES') and len(w_upper) > 4:
-                    root = w_upper[:-3] + 'Y'
-                    root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
-                    if root_def:
-                        clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
-                        formatted_def = f"plural of {root.lower()} ({clean_root})"
-                elif w_upper.endswith('ES') and len(w_upper) > 4:
-                    for cand in [w_upper[:-2], w_upper[:-1]]:
-                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                        if root_def:
-                            clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
-                            formatted_def = f"plural of {cand.lower()} ({clean_root})"
-                            break
-                elif w_upper.endswith('S') and not w_upper.endswith('SS') and len(w_upper) > 3:
-                    cand = w_upper[:-1]
-                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                    if root_def:
-                        clean_root = re.sub(r'^\s*\(noun\)\s*', '', root_def.strip(), flags=re.I)
-                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
-                
-                # Verb conjugations (-ING, -ED, -S)
-                if not formatted_def:
-                    if w_upper.endswith('ING') and len(w_upper) > 5:
-                        for cand in [w_upper[:-3], w_upper[:-3] + 'E']:
-                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                            if root_def:
-                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
-                                formatted_def = f"(verb) present participle and gerund of {cand.lower()} ({clean_root})"
-                                break
-                    elif w_upper.endswith('ED') and len(w_upper) > 4:
-                        for cand in [w_upper[:-2], w_upper[:-1]]:
-                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                            if root_def:
-                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
-                                formatted_def = f"(verb) simple past and past participle of {cand.lower()} ({clean_root})"
-                                break
-
-                # Agent nouns (-ERS, -ER)
-                if not formatted_def:
-                    if w_upper.endswith('ERS') and len(w_upper) > 4:
-                        cand = w_upper[:-1]
-                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                        if root_def:
-                            formatted_def = f"plural of {cand.lower()} ({root_def})"
-                    elif w_upper.endswith('ER') and len(w_upper) > 3:
-                        for cand in [w_upper[:-2], w_upper[:-1]]:
-                            root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                            if root_def:
-                                clean_root = re.sub(r'^\s*\((?:verb|noun)\)\s*', '', root_def.strip(), flags=re.I)
-                                formatted_def = f"(noun) One who, or that which, {cand.lower()}s ({clean_root})."
-                                break
-
-                # -NESS and -LY derivations
-                if not formatted_def:
-                    if w_upper.endswith('NESS') and len(w_upper) > 5:
-                        cand = w_upper[:-4]
-                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                        if root_def:
-                            formatted_def = f"The quality, state, or condition of being {cand.lower()} ({root_def})"
-                    elif w_upper.endswith('LY') and len(w_upper) > 4:
-                        cand = w_upper[:-2]
-                        root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
-                        if root_def:
-                            formatted_def = f"(adverb) In a {cand.lower()} manner ({root_def})"
 
             # 5. Prefix decomposition rules (DIS-, DE-, UN-, RE-, MIS-, OVER-, OUT-, PRE-, POST-, NON-, SUB-, INTER-)
             if not formatted_def:
@@ -7190,6 +7228,11 @@ def ensure_aw_definitions_for_words(words_list):
                     formatted_def = f"(noun) A term or concept referring to {w_upper.lower()}."
         else:
             formatted_def = current_def
+
+        if formatted_def and _is_unresolved_pointer(formatted_def):
+            resolved_ptr = format_resolved_definition(w_upper)
+            if resolved_ptr and not _is_unresolved_pointer(resolved_ptr):
+                formatted_def = resolved_ptr
 
         if formatted_def:
             resolved_pairs.append((w_upper, formatted_def))
