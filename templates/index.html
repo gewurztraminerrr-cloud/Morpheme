@@ -8634,21 +8634,103 @@
 
                         <!-- Visual Example Box -->
                         <div class="lobby-guide-visual-box" onclick="event.stopPropagation(); return false;">
-                            <div class="lobby-guide-visual-title">Example: Active Room Entry</div>
-                            <div class="lobby-guide-visual-row">
-                                <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; box-sizing: border-box; flex-wrap: wrap; gap: 8px;">
-                                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span>
-                                            <span style="font-weight: 700; color: #ffffff; font-size: 0.88rem;">Room #204</span>
-                                            <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167,139,250,0.15); padding: 2px 6px; border-radius: 4px;">4x4 • 3m</span>
+                            <div class="lobby-guide-visual-title">Example: Active Room Entry (Open vs. Closed)</div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; width: 100%; box-sizing: border-box;">
+                                <!-- OPEN ROOM CARD -->
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <span style="font-size: 0.78rem; font-weight: 700; color: #2ecc71; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71;"></span>
+                                            Open Room (Available to Join)
+                                        </span>
+                                        <span style="font-size: 0.72rem; color: #94a3b8;">2/8 Players</span>
+                                    </div>
+                                    <div class="room-item" style="border: 2px solid rgba(46, 204, 113, 0.45); pointer-events: none !important; user-select: none;">
+                                        <div class="room-header-row">
+                                            <div class="room-status active">ACTIVE</div>
+                                            <div class="room-meta">
+                                                <span class="rating-req-badge">Req: 1200 - 1600</span>
+                                                <span class="room-avg-rating">Avg Rating: 1350</span>
+                                            </div>
                                         </div>
-                                        <span style="font-size: 0.78rem; color: #94a3b8;">Host: LexiMaster • Players: 3/8 • Rating: 1420</span>
+                                        <div class="room-players-row">
+                                            <span class="room-player-pill" title="Rating: 1420" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff9900; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                LexiMaster (1420)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1280" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #0044ff; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                WordSmith (1280)
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; gap: 6px; width: 100%;">
+                                            <span style="background: #34495e; color: #ffffff; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center; justify-content: center;">Spectate</span>
+                                            <span style="background: #27ae60; color: #ffffff; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; flex: 1; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center; justify-content: center;">Join (1200-1600)</span>
+                                        </div>
                                     </div>
-                                    <div style="display: flex; gap: 6px;">
-                                        <span style="background: #22c55e; color: #000; font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">Join</span>
-                                        <span style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center;">Watch</span>
+                                    <span style="font-size: 0.74rem; color: #94a3b8; line-height: 1.35;">
+                                        Player count is under 8 and rating qualifies. Both <strong>Spectate</strong> and <strong>Join</strong> are available.
+                                    </span>
+                                </div>
+
+                                <!-- CLOSED ROOM CARD -->
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <span style="font-size: 0.78rem; font-weight: 700; color: #e74c3c; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; box-shadow: 0 0 6px #e74c3c;"></span>
+                                            Closed Room (Spectate Only)
+                                        </span>
+                                        <span style="font-size: 0.72rem; color: #e74c3c; font-weight: 600;">8/8 Full or Rating Mismatch</span>
                                     </div>
+                                    <div class="room-item" style="border: 2px solid rgba(231, 76, 60, 0.45); pointer-events: none !important; user-select: none;">
+                                        <div class="room-header-row">
+                                            <div class="room-status active">ACTIVE</div>
+                                            <div class="room-meta">
+                                                <span class="rating-req-badge">Req: 1700 - 2200</span>
+                                                <span class="room-avg-rating">Avg Rating: 1840</span>
+                                            </div>
+                                        </div>
+                                        <div class="room-players-row">
+                                            <span class="room-player-pill" title="Rating: 1920" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                GrandMaster (1920)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1840" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                ApexGrid (1840)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1760" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff6600; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                SpeedyWord (1760)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1840" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                VocabPro (1840)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1810" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                TileChamp (1810)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1790" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff6600; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                PuzzleMaster (1790)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1890" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                BoggleAce (1890)
+                                            </span>
+                                            <span class="room-player-pill" title="Rating: 1870" style="display:inline-flex; align-items:center;">
+                                                <span style="background-color: #ff3300; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block;"></span>
+                                                WordNinja (1870)
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; width: 100%;">
+                                            <span style="background: #34495e; color: #ffffff; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; width: 100%; pointer-events: none !important; user-select: none; display: inline-flex; align-items: center; justify-content: center;">Spectate</span>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.74rem; color: #94a3b8; line-height: 1.35;">
+                                        Room has 8 players (max capacity) or rating is outside 1700–2200. Only <strong>Spectate</strong> is displayed.
+                                    </span>
                                 </div>
                             </div>
                         </div>
