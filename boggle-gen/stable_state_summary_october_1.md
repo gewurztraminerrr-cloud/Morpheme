@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-c2247f0da1ee4b46c6fcbf18ea1b09b5558e8b62
+953ab9ef0d45ee9659b85558eef7a15a81cae932
 ```
 
 ## Start Over Point Tag
@@ -17,14 +17,22 @@ START_OVER_POINT_OCTOBER_1
 |----------------|--------|----------------|
 | localhost      | ✅ Synchronized | Working tree clean |
 | GitHub (main)  | ✅ Synchronized | Pushed to origin/main |
-| morpheme.games | ✅ Synchronized | HTTP 200 OK, PM2 Online |
+| morpheme.games | ✅ Synchronized | Deployed, HTTP 200 OK, PM2 Online |
 | App / Client   | ✅ Synchronized | Web client & backend endpoints verified |
 
 ---
 
 ## Session Features & Fixes (October 1, 2026)
 
-### 1. Hardened Added Words Definition Engine for Regular Plurals (`GUTTUSES`)
+### 1. Gateway Screen Music Autoplay
+- **Lobby Music on Gateway Screen**:
+  - Music begins playing immediately when the `#page-loading` gateway screen (`ENTER LOBBY` button) appears, instead of waiting for the user to click into the Lobby.
+  - Initialized both via early Web Audio API pre-decoded buffer and HTML5 audio element fallback in `templates/index.html`.
+  - Registered one-time capture gesture listeners to `window` for `['pointerdown', 'touchstart', 'mousedown', 'keydown']` so if browser autoplay policy blocks zero-gesture audio, the very first touch anywhere unlocks and plays audio instantly.
+  - In `static/js/app.js`, updated `handleLobbyMusicState()` and `playMusicOnFirstInteraction()` to treat `activePage === 'page-loading'` as eligible for music playback (`onLobby = (activePage === 'page-lobby' || onGateway)`).
+  - All gateway button styling, CSS classes, physical elevation, and fullscreen transition mechanics remain in their baseline stable state.
+
+### 2. Hardened Added Words Definition Engine for Regular Plurals (`GUTTUSES`)
 - **Loose Web Search Regex Elimination**:
   - Previously, `lookup_web_search_definition` matched unrelated text when querying words ending in `-es` or other suffixes (e.g. matching an eaves trough definition from "gutter" when querying "GUTTUSES").
   - Hardened Match 1 and Match 5 in `lookup_web_search_definition` to enforce `\bThe meaning of [word] is\b` and require the target word to directly precede or accompany the noun definition snippet.
@@ -33,7 +41,7 @@ START_OVER_POINT_OCTOBER_1
 - **Validation Pre-check Database Safeguards**:
   - In `get_word_definitions_for_aw_check`, unverified web search results are no longer written to `morpheme.db` during pre-validation checks.
 
-### 2. Comprehensive Classical & Irregular Plural Resolution (`LOCHI`)
+### 3. Comprehensive Classical & Irregular Plural Resolution (`LOCHI`)
 - **Classical Latin, Greek, and Irregular Plural Patterns**:
   - Expanded `ensure_aw_definitions_for_words` and `get_definition_cached_or_online_with_guess` to support classical declensions so any irregular or classical plural entered in Added Words inherits its root definition:
     - **`-I` → `-US`**: (e.g. `LOCHI` → `LOCHUS`, `CACTI` → `CACTUS`, `ALUMNI` → `ALUMNUS`, `FUNGI` → `FUNGUS`, `SYLLABI` → `SYLLABUS`)
@@ -46,7 +54,7 @@ START_OVER_POINT_OCTOBER_1
 - **Guaranteed Target Definition Expansion**:
   - In `ensure_aw_definitions_for_words`, if any definition is a pointer (`plural of [target]`, etc.) without an existing parenthetical definition, the engine extracts `[target]`, resolves its definition, and appends it within `(...)` per `AGENTS.md` rules.
 
-### 3. Synchronized Dictionary & Database Entries
+### 4. Synchronized Dictionary & Database Entries
 - **`GUTTUS` & `GUTTUSES`**:
   - `GUTTUS`: `(noun) A type of ancient Greek and Roman vessel designed for pouring liquids.`
   - `GUTTUSES`: `plural of guttus (A type of ancient Greek and Roman vessel designed for pouring liquids.)`
@@ -55,7 +63,7 @@ START_OVER_POINT_OCTOBER_1
   - `LOCHI`: `plural of lochus (In ancient Greece, a body of infantry; in Sparta, one of the larger divisions in which able-bodied men were grouped.)`
 - Synchronized across `Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, and production `morpheme.db`.
 
-### 4. Mobile Fullscreen & Continuous Fast Navigation Hardening
+### 5. Mobile Fullscreen & Continuous Fast Navigation Hardening
 - **Single-Entry Fullscreen Request (Once on First App Entry)**:
   - Fullscreen is requested synchronously only when the user first enters the app via the gateway button (`ENTER LOBBY` / `LOGIN`).
   - The Android OS *"morpheme.games — to exit full screen…"* notice is presented once upon entering the app, as designed.
@@ -65,11 +73,8 @@ START_OVER_POINT_OCTOBER_1
 - **Permanent Fullscreen Invariants Established (`.agents/AGENTS.md`)**:
   - Fullscreen is preserved continuously across all pages, top menu tabs (**Lobby**, **Play**, **Tools**, **Mods**, **Leaderboard**, **Settings**, **Profile**, **Forum**, **How to Play**, **Donate**), the Lobby Chat Drawer, textboxes, and dropdowns.
   - The Full List Modal (`openFullListModal`) in `tools.js` remains the **only** modal where `document.exitFullscreen()` is explicitly called.
-- **Gateway Screen Optimization (`#page-loading`)**:
-  - Removed competing touch event listeners (`ontouchstart`, `onpointerdown`, `onmousedown`, `onclick`) from the ENTER LOBBY button.
-  - Neutralized background taps on `#page-loading` to eliminate button twitches, double-tap jumps, and audio desynchronization.
 
-### 5. Mobile Virtual Keyboard Chatbox Elevation
+### 6. Mobile Virtual Keyboard Chatbox Elevation
 - **Interactive Widget Viewport Meta**:
   - Added `interactive-widget=resizes-content` to the viewport `<meta>` tag in `templates/index.html`.
 - **Dynamic Viewport Tracking (`window.visualViewport`)**:
@@ -78,7 +83,7 @@ START_OVER_POINT_OCTOBER_1
   - Anchors the chat textbox and "Send" button directly above the keyboard, preventing the software keyboard from covering user input.
   - Smoothly dismisses and restores layout upon blur or closing the chat drawer/panel.
 
-### 6. Expanded Mobile Chat Message Viewing Window
+### 7. Expanded Mobile Chat Message Viewing Window
 - **Lobby Chat Drawer (`.lobby-chat-drawer.keyboard-open`)**:
   - Expanded `.lobby-chat-history` `max-height` to `250px` (with responsive ceiling `min(260px, 38dvh)` and `min-height: 140px`), more than doubling previous visible message capacity so 5–7 messages are visible at once while typing.
   - Expanded `.lobby-chat-slide-panel` `max-height` up to `min(420px, 60dvh)` and `.lobby-slide-body` to `min(390px, 56dvh)`.
@@ -94,10 +99,11 @@ START_OVER_POINT_OCTOBER_1
 ## Verification & Health Check
 
 1. **Production Health & Endpoints**:
-   - `GET https://morpheme.games/` → `HTTP/1.1 200 OK`.
-   - PM2 Process `0` (`morpheme`) online, active, and responsive.
+   - `GET https://morpheme.games/` → `HTTP/2 200 OK`.
+   - PM2 Process `0` (`morpheme`) online, active (1.5 GB memory).
 2. **Asset Cache Busters**:
-   - `app.js`: `v=1790690000`
+   - `app.js`: `v=1790770000`
+   - `style.css`: `v=1790645000`
    - `lobby.css`: `v=1790680000`
    - `play.css`: `v=1790680000`
    - `lobby.js`: `v=1790680000`
