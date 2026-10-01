@@ -841,9 +841,9 @@ _AW_DISALLOWED_CHECK_CACHE = {}
 
 def lookup_web_search_definition(word_upper):
     """
-    Searches web sources (Wordnik Century/Webster dictionaries and web search)
-    for authentic non-proper-noun lexicographical definitions.
-    Strictly excludes proper nouns (cities, regions, personal names, persons).
+    Searches web sources (Phrontistery rare word dictionary, Wordnik Century/Webster dictionaries,
+    and web search) for authentic non-proper-noun lexicographical definitions.
+    Strictly excludes proper nouns (cities, regions, personal names, persons) and SEO clickbait titles.
     """
     word = word_upper.strip().lower()
     if not word:
@@ -871,6 +871,8 @@ def lookup_web_search_definition(word_upper):
         r'\bballet dancer\b',
         r'\bpolitician\b',
         r'\bfootballer\b',
+        r'\balbum by\b',
+        r'\bband\b',
     ]
 
     junk_pats = [
@@ -882,9 +884,40 @@ def lookup_web_search_definition(word_upper):
         r'Daily Jumble',
         r'WordFinder',
         r'Scrabble Word Finder',
+        r'Explore its Definition',
+        r'Definition & Usage',
+        r'Definition & Meaning',
+        r'Usage & Examples',
+        r'RedKiwi',
+        r'WordHippo',
+        r'Phrontistery',
+        r'Word of the Day',
+        r'What does [a-z\-]+ mean',
+        r'Factsheet',
+        r'There is one meaning in',
+        r'There are \w+ meanings',
     ]
 
-    # 1. Wordnik Century / Webster Dictionary
+    # 1. Phrontistery Rare English Words (Scholarly / Historical Dictionary)
+    if word and word[0].isalpha():
+        try:
+            import urllib.request, re, html
+            p_url = f'https://phrontistery.info/{word[0]}.html'
+            req = urllib.request.Request(p_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=3.0) as r:
+                p_html = r.read().decode('utf-8', errors='ignore')
+                m = re.search(r'<tr><td>\s*' + re.escape(word) + r'\s*<td>([^\r\n<]+)', p_html, re.I)
+                if m:
+                    raw_def = m.group(1).strip()
+                    if raw_def and len(raw_def) > 5:
+                        raw_def = raw_def.rstrip('.').strip()
+                        if any(kw in raw_def.lower() for kw in ['ancient', 'relating', 'pertaining', 'having', 'characterized by', 'of or relating']):
+                            return f'(adjective) {raw_def[0].upper() + raw_def[1:]}.'
+                        return f'{raw_def[0].upper() + raw_def[1:]}.'
+        except Exception:
+            pass
+
+    # 2. Wordnik Century / Webster Dictionary
     try:
         import urllib.request, urllib.parse, re, html
         url = f'https://www.wordnik.com/words/{urllib.parse.quote(word)}'
@@ -899,12 +932,12 @@ def lookup_web_search_definition(word_upper):
                         clean = html.unescape(clean)
                         clean = re.sub(r'\s+', ' ', clean)
                         if clean and not clean.startswith('Sorry') and len(clean) > 10:
-                            if not any(re.search(p, clean, re.I) for p in proper_noun_pats):
+                            if not any(re.search(p, clean, re.I) for p in proper_noun_pats) and not any(re.search(j, clean, re.I) for j in junk_pats):
                                 return clean
     except Exception:
         pass
 
-    # 2. Web search via DDG Lite for dictionary definitions
+    # 3. Web search via DDG Lite for dictionary definitions
     try:
         import urllib.request, urllib.parse, re, html
         queries = [f'define {word}', f'\"{word}\" definition', f'{word} dictionary meaning']
@@ -923,6 +956,8 @@ def lookup_web_search_definition(word_upper):
                         
                         if len(clean) < 25 or clean.startswith('http') or 'DuckDuckGo' in clean:
                             continue
+                        if '|' in clean:
+                            clean = clean.split('|')[0].strip()
                         if any(re.search(j, clean, re.I) for j in junk_pats):
                             continue
                         if any(re.search(p, clean, re.I) for p in proper_noun_pats):
@@ -939,35 +974,47 @@ def lookup_web_search_definition(word_upper):
                         if m_mw:
                             defn = m_mw.group(1).strip()
                             defn = re.split(r'\.\s+[A-Z]|\s*See\s+the\s+full|\s*How\s+to\s+use', defn)[0].strip()
-                            if defn and len(defn) > 10:
+                            if defn and len(defn) > 10 and not any(re.search(j, defn, re.I) for j in junk_pats):
                                 return f'(noun) {defn[0].upper() + defn[1:]}'
 
-                        # Match 2: 'X is a noun that refers to ...' / 'X is a device/instrument that...'
-                        m_is = re.search(r'\b' + re.escape(word) + r'\s+is\s+(?:a\s+noun\s+that\s+refers\s+to\s+|a\s+|an\s+)([^\.\n;]{15,250}\.?)', clean, re.IGNORECASE)
+                        # Match 2: 'X is an adjective/noun that describes/refers to ...'
+                        m_is = re.search(r'\b(?:The term\s+)?[\'\"‘“]?' + re.escape(word) + r'[\'\"’”]?\s+is\s+(?:an?\s+([a-z]+)\s+that\s+(?:describes|refers\s+to|means)\s+)([^\.\n;]{15,250}\.?)', clean, re.IGNORECASE)
                         if m_is:
-                            core = m_is.group(1).strip()
-                            return f'(noun) {core[0].upper() + core[1:]}'
+                            pos = m_is.group(1).lower()
+                            core = m_is.group(2).strip()
+                            if not any(re.search(j, core, re.I) for j in junk_pats):
+                                return f'({pos}) {core[0].upper() + core[1:]}'
 
-                        # Match 3: 'X : The act/state/device/person of ...'
+                        # Match 3: 'X is a device/instrument/...'
+                        m_dev = re.search(r'\b' + re.escape(word) + r'\s+is\s+(?:a\s+|an\s+)([^\.\n;]{15,250}\.?)', clean, re.IGNORECASE)
+                        if m_dev:
+                            core = m_dev.group(1).strip()
+                            if not any(re.search(j, core, re.I) for j in junk_pats) and not any(re.search(p, core, re.I) for p in proper_noun_pats):
+                                return f'(noun) {core[0].upper() + core[1:]}'
+
+                        # Match 4: Definition following colon 'X : [A-Z]...'
                         m_col = re.search(r'\b' + re.escape(word) + r'\b\s*:\s*([A-Z][^\.\n]{15,200}\.?)', clean)
                         if m_col:
                             core = m_col.group(1).strip()
-                            if not any(re.search(p, core, re.I) for p in proper_noun_pats):
-                                return f'(noun) {core}'
+                            if not any(re.search(j, core, re.I) for j in junk_pats) and not any(re.search(p, core, re.I) for p in proper_noun_pats):
+                                if re.match(r'^(?:The|A|An|One|Of|In|Having|Marked|Characterized|To|Pertaining|Relating)\b', core, re.I):
+                                    return f'{core}'
 
-                        # Match 4: 'noun The act of ...' or '(noun) The ...'
+                        # Match 5: 'noun The act of ...' or '(noun) The ...'
                         m_noun = re.search(r'(?:\(noun\)|noun)\s+([A-Z][^\.\n]{15,200}\.?)', clean)
                         if m_noun:
                             core = m_noun.group(1).strip()
-                            if not any(re.search(p, core, re.I) for p in proper_noun_pats):
-                                return f'(noun) {core}'
+                            if not any(re.search(j, core, re.I) for j in junk_pats) and not any(re.search(p, core, re.I) for p in proper_noun_pats):
+                                if not any(core.lower().startswith(b) for b in ['explore', 'learn', 'see', 'click', 'discover', 'check']):
+                                    return f'(noun) {core}'
 
-                        # Match 5: Standard snippet from Wiktionary/Vocabulary
+                        # Match 6: Standard snippet from Wiktionary/Vocabulary
                         m_snip = re.search(r'\b' + re.escape(word) + r'\b\s*(?:\([^)]*\)\s*)*([A-Z][^\.\n]{15,200}\.?)', clean)
                         if m_snip:
                             defn = m_snip.group(1).strip()
-                            if not any(re.search(p, defn, re.I) for p in proper_noun_pats):
-                                return defn
+                            if not any(re.search(j, defn, re.I) for j in junk_pats) and not any(re.search(p, defn, re.I) for p in proper_noun_pats):
+                                if not any(defn.lower().startswith(b) for b in ['explore', 'learn', 'see', 'click', 'discover', 'check', 'what', 'how', 'why']):
+                                    return defn
             except Exception:
                 continue
     except Exception:
