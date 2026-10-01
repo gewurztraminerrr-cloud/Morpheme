@@ -3883,10 +3883,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(updatePlayChatKeyboardPosition, 50);
             setTimeout(updatePlayChatKeyboardPosition, 150);
             setTimeout(updatePlayChatKeyboardPosition, 300);
-            setTimeout(() => {
+            const scrollHist = () => {
                 const hist = document.getElementById('chat-history');
                 if (hist) hist.scrollTop = hist.scrollHeight;
-            }, 100);
+            };
+            setTimeout(scrollHist, 50);
+            setTimeout(scrollHist, 150);
+            setTimeout(scrollHist, 300);
         });
         chatInput.addEventListener('blur', () => {
             if (chatPanel) {

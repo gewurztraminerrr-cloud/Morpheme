@@ -1850,10 +1850,13 @@ function setupLobbyMobileKeyboardSupport() {
         setTimeout(updateLobbyKeyboardPosition, 50);
         setTimeout(updateLobbyKeyboardPosition, 150);
         setTimeout(updateLobbyKeyboardPosition, 300);
-        setTimeout(() => {
+        const scrollBottom = () => {
             const chatHistory = document.getElementById('lobby-chat-history');
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
-        }, 100);
+        };
+        setTimeout(scrollBottom, 50);
+        setTimeout(scrollBottom, 150);
+        setTimeout(scrollBottom, 300);
     });
 
     input.addEventListener('blur', () => {

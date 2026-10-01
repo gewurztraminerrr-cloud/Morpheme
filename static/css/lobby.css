@@ -3099,7 +3099,7 @@ body.theme-light-brown .lobby-chat-input:focus {
         max-height: 100% !important;
     }
 
-    /* Mobile Chat Keyboard Open Adjustments - keeps textbox and send button in full view */
+    /* Mobile Chat Keyboard Open Adjustments - keeps textbox and send button in full view with ample message room */
     .lobby-chat-drawer.keyboard-open {
         transition: bottom 0.12s ease-out !important;
     }
@@ -3109,24 +3109,28 @@ body.theme-light-brown .lobby-chat-input:focus {
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-slide-panel {
-        max-height: 48vh !important;
-        max-height: 48dvh !important;
+        max-height: min(420px, 60vh) !important;
+        max-height: min(420px, 60dvh) !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-slide-body {
         height: auto !important;
-        max-height: 45vh !important;
-        max-height: 45dvh !important;
+        max-height: min(390px, 56vh) !important;
+        max-height: min(390px, 56dvh) !important;
+        padding: 6px 10px !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-half {
         height: auto !important;
         flex: 1 1 auto !important;
+        padding: 4px 6px !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-history {
-        max-height: 110px !important;
-        min-height: 45px !important;
+        max-height: 250px !important;
+        max-height: min(260px, 38vh) !important;
+        max-height: min(260px, 38dvh) !important;
+        min-height: 140px !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-form {

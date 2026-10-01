@@ -8954,16 +8954,21 @@ body.theme-light-brown .chat-collapse-btn:hover {
         min-height: 0 !important;
     }
 
-    /* Mobile Chat Keyboard Open Adjustments - keeps in-game chatbox and send button in full view */
+    /* Mobile Chat Keyboard Open Adjustments - keeps in-game chatbox, send button, and ample message history in full view */
     .chat-panel.keyboard-open {
         transition: bottom 0.12s ease-out !important;
         z-index: 10005 !important;
-        max-height: 240px !important;
+        min-height: 0 !important;
+        max-height: min(360px, calc(100vh - 280px), calc(100dvh - 280px)) !important;
         height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .chat-panel.keyboard-open #chat-history {
-        max-height: 140px !important;
+        max-height: min(260px, calc(100vh - 370px), calc(100dvh - 370px)) !important;
+        min-height: 140px !important;
+        flex: 1 1 auto !important;
     }
 
     .chat-panel.expanded,
