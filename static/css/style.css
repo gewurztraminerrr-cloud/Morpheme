@@ -10630,6 +10630,334 @@ body.is-tournament-round #show-everyone-btn {
     }
 }
 
+/* ==========================================================================
+   Firefox Desktop Top Menu & Header Subtle Sizing (Desktops ONLY)
+   Subtly aligns Firefox rendering with Microsoft Edge / Google Chrome metrics.
+   ========================================================================== */
+
+/* 1. Large Desktop Displays (> 1380px) */
+@media (min-width: 1381px) {
+    html.is-firefox-desktop body:not(.is-mobile) .header {
+        padding: 13px 22px !important;
+        gap: 14px !important;
+        min-height: 60px !important;
+        box-sizing: border-box !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo {
+        gap: 13px !important;
+        align-items: baseline !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-icon {
+        width: 38px !important;
+        height: 38px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-text {
+        font-size: 1.92rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 2px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo .pronunciation,
+    html.is-firefox-desktop body:not(.is-mobile) .pronunciation {
+        font-size: 0.88rem !important;
+        margin-right: 22px !important;
+        opacity: 0.95 !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav {
+        gap: 6px !important;
+        align-items: center !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav-btn {
+        padding: 8px 13px !important;
+        font-size: 0.88rem !important;
+        line-height: 1.25 !important;
+        border-radius: 6px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
+        gap: 12px !important;
+        padding-left: 15px !important;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) #username-display {
+        font-size: 0.98rem !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logout-btn {
+        padding: 5px 11px !important;
+        font-size: 0.78rem !important;
+    }
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        height: var(--top-menu-height, 62px) !important;
+    }
+}
+
+/* 2. Mid-size Desktop & Laptops (1101px - 1380px) */
+@media (min-width: 1101px) and (max-width: 1380px) {
+    html.is-firefox-desktop body:not(.is-mobile) .header {
+        padding: 9px 15px !important;
+        gap: 8px !important;
+        min-height: 48px !important;
+        box-sizing: border-box !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo {
+        gap: 8px !important;
+        align-items: baseline !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-icon {
+        width: 30px !important;
+        height: 30px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-text {
+        font-size: 1.28rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.2px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo .pronunciation,
+    html.is-firefox-desktop body:not(.is-mobile) .pronunciation {
+        font-size: 0.77rem !important;
+        margin-right: 10px !important;
+        opacity: 0.9 !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav {
+        gap: 4px !important;
+        align-items: center !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav-btn {
+        padding: 6px 9px !important;
+        font-size: 0.77rem !important;
+        line-height: 1.2 !important;
+        border-radius: 5px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
+        gap: 8px !important;
+        padding-left: 10px !important;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) #username-display {
+        font-size: 0.89rem !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logout-btn {
+        padding: 4px 9px !important;
+        font-size: 0.75rem !important;
+    }
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        height: var(--top-menu-height, 50px) !important;
+    }
+}
+
+/* 3. Compact Desktop & Smaller Laptop Screens (901px - 1100px) */
+@media (min-width: 901px) and (max-width: 1100px) {
+    html.is-firefox-desktop body:not(.is-mobile) .header {
+        padding: 7px 11px !important;
+        gap: 5px !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo {
+        gap: 5px !important;
+        align-items: baseline !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-icon {
+        width: 29px !important;
+        height: 29px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo-text {
+        font-size: 1.16rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.8px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logo .pronunciation,
+    html.is-firefox-desktop body:not(.is-mobile) .pronunciation {
+        font-size: 0.72rem !important;
+        margin-right: 5px !important;
+        opacity: 0.88 !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav {
+        gap: 3px !important;
+        align-items: center !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .nav-btn {
+        padding: 5px 7px !important;
+        font-size: 0.73rem !important;
+        line-height: 1.2 !important;
+        border-radius: 5px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
+        gap: 6px !important;
+        padding-left: 8px !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) #username-display {
+        font-size: 0.83rem !important;
+    }
+    html.is-firefox-desktop body:not(.is-mobile) .logout-btn {
+        padding: 4px 7px !important;
+        font-size: 0.72rem !important;
+    }
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        height: var(--top-menu-height, 46px) !important;
+    }
+}
+
+/* Also support via CSS feature query @supports (-moz-appearance: none) */
+@supports (-moz-appearance: none) {
+    @media (min-width: 1381px) {
+        body:not(.is-mobile) .header {
+            padding: 13px 22px !important;
+            gap: 14px !important;
+            min-height: 60px !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-mobile) .logo {
+            gap: 13px !important;
+            align-items: baseline !important;
+        }
+        body:not(.is-mobile) .logo-icon {
+            width: 38px !important;
+            height: 38px !important;
+        }
+        body:not(.is-mobile) .logo-text {
+            font-size: 1.92rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 2px !important;
+        }
+        body:not(.is-mobile) .logo .pronunciation,
+        body:not(.is-mobile) .pronunciation {
+            font-size: 0.88rem !important;
+            margin-right: 22px !important;
+            opacity: 0.95 !important;
+        }
+        body:not(.is-mobile) .nav {
+            gap: 6px !important;
+            align-items: center !important;
+        }
+        body:not(.is-mobile) .nav-btn {
+            padding: 8px 13px !important;
+            font-size: 0.88rem !important;
+            line-height: 1.25 !important;
+            border-radius: 6px !important;
+        }
+        body:not(.is-mobile) .user-display:not(.hidden) {
+            gap: 12px !important;
+            padding-left: 15px !important;
+            border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        }
+        body:not(.is-mobile) #username-display {
+            font-size: 0.98rem !important;
+        }
+        body:not(.is-mobile) .logout-btn {
+            padding: 5px 11px !important;
+            font-size: 0.78rem !important;
+        }
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+            height: var(--top-menu-height, 62px) !important;
+        }
+    }
+
+    @media (min-width: 1101px) and (max-width: 1380px) {
+        body:not(.is-mobile) .header {
+            padding: 9px 15px !important;
+            gap: 8px !important;
+            min-height: 48px !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-mobile) .logo {
+            gap: 8px !important;
+            align-items: baseline !important;
+        }
+        body:not(.is-mobile) .logo-icon {
+            width: 30px !important;
+            height: 30px !important;
+        }
+        body:not(.is-mobile) .logo-text {
+            font-size: 1.28rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 1.2px !important;
+        }
+        body:not(.is-mobile) .logo .pronunciation,
+        body:not(.is-mobile) .pronunciation {
+            font-size: 0.77rem !important;
+            margin-right: 10px !important;
+            opacity: 0.9 !important;
+        }
+        body:not(.is-mobile) .nav {
+            gap: 4px !important;
+            align-items: center !important;
+        }
+        body:not(.is-mobile) .nav-btn {
+            padding: 6px 9px !important;
+            font-size: 0.77rem !important;
+            line-height: 1.2 !important;
+            border-radius: 5px !important;
+        }
+        body:not(.is-mobile) .user-display:not(.hidden) {
+            gap: 8px !important;
+            padding-left: 10px !important;
+            border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
+        }
+        body:not(.is-mobile) #username-display {
+            font-size: 0.89rem !important;
+        }
+        body:not(.is-mobile) .logout-btn {
+            padding: 4px 9px !important;
+            font-size: 0.75rem !important;
+        }
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+            height: var(--top-menu-height, 50px) !important;
+        }
+    }
+
+    @media (min-width: 901px) and (max-width: 1100px) {
+        body:not(.is-mobile) .header {
+            padding: 7px 11px !important;
+            gap: 5px !important;
+            min-height: 44px !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-mobile) .logo {
+            gap: 5px !important;
+            align-items: baseline !important;
+        }
+        body:not(.is-mobile) .logo-icon {
+            width: 29px !important;
+            height: 29px !important;
+        }
+        body:not(.is-mobile) .logo-text {
+            font-size: 1.16rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.8px !important;
+        }
+        body:not(.is-mobile) .logo .pronunciation,
+        body:not(.is-mobile) .pronunciation {
+            font-size: 0.72rem !important;
+            margin-right: 5px !important;
+            opacity: 0.88 !important;
+        }
+        body:not(.is-mobile) .nav {
+            gap: 3px !important;
+            align-items: center !important;
+        }
+        body:not(.is-mobile) .nav-btn {
+            padding: 5px 7px !important;
+            font-size: 0.73rem !important;
+            line-height: 1.2 !important;
+            border-radius: 5px !important;
+        }
+        body:not(.is-mobile) .user-display:not(.hidden) {
+            gap: 6px !important;
+            padding-left: 8px !important;
+        }
+        body:not(.is-mobile) #username-display {
+            font-size: 0.83rem !important;
+        }
+        body:not(.is-mobile) .logout-btn {
+            padding: 4px 7px !important;
+            font-size: 0.72rem !important;
+        }
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+            height: var(--top-menu-height, 46px) !important;
+        }
+    }
+}
+
+
 /* New Word Lists Date Display */
 .new-word-date {
     font-size: 0.75rem;

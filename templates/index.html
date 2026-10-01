@@ -34,6 +34,19 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     
+    <script>
+        /* Instant Desktop Firefox Detection (Head-Executed before First Paint) */
+        (function() {
+            try {
+                var isFirefox = /firefox|fxios/i.test(navigator.userAgent);
+                var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isFirefox && !isMobile) {
+                    document.documentElement.classList.add('is-firefox-desktop');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <style>
         /* Safari Instant First-Paint Critical CSS */
         html, body {
@@ -155,9 +168,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790632000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790645000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790622000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790632000">
+    <link rel="stylesheet" href="/css/style.css?v=1790645000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790622000">
     <link rel="stylesheet" href="/css/play.css?v=1790632000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
@@ -9153,7 +9166,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790635000"></script>
+    <script src="/js/app.js?v=1790645000"></script>
     <script src="/js/lobby.js?v=1790642000"></script>
     <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
