@@ -3562,24 +3562,12 @@ document.addEventListener('visibilitychange', () => {
         }
     });
 
-    // PERMANENT INVARIANT: Immediately exit fullscreen before virtual keyboard opens to prevent Android Chrome black screen flash
-    document.addEventListener('focusin', (e) => {
-        const target = e.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-            if (isMobileDevice()) {
-                exitFullscreenForKeyboard();
-            }
-        }
-    }, { capture: true, passive: true });
-
-    // On user interaction, re-engage fullscreen if needed (e.g. after minimizing/unfocusing or modal exit)
+    // On user interaction, re-engage fullscreen if needed (e.g. after minimizing/unfocusing or full list modal)
     ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
-            const tag = e.target && e.target.tagName;
-            const isInputTarget = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
             const isFullListModal = e.target && e.target.closest && e.target.closest('#full-list-modal');
 
-            if (isInputTarget || isFullListModal) {
+            if (isFullListModal) {
                 if (isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
                     exitFullscreenForKeyboard();
                 }
