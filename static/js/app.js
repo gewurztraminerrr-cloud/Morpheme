@@ -490,6 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuth(); // Initialize auth listeners
     setupContactForm(); // Initialize contact form listeners
     setupFirstInteractionMusic(); // Ensure immediate audio unlock on first user gesture
+    if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
     if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
     
@@ -1193,17 +1194,19 @@ function handleLobbyMusicState() {
 
     // Use window.currentPageId if available to avoid DOM ID race conditions during transition
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onLobby = (activePage === 'page-lobby' || (activePage === 'page-loading' && window._gatewayPassed));
+    const onGateway = (activePage === 'page-loading');
+    const onLobby = (activePage === 'page-lobby' || onGateway);
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
-    // Play lobby music when in lobby or transitioning into lobby after gateway click
+    // Play lobby music when on gateway screen, in lobby, or transitioning into lobby
     const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     console.log('[LobbyMusic] State assessment:', {
         activePage,
         onLobby,
+        onGateway,
         inGameRoom,
         lobbyMusicSetting,
         shouldPlay,
@@ -1224,7 +1227,8 @@ function handleLobbyMusicState() {
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction(e) {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onLobby = (activePage === 'page-lobby' || (activePage === 'page-loading' && window._gatewayPassed));
+    const onGateway = (activePage === 'page-loading');
+    const onLobby = (activePage === 'page-lobby' || onGateway);
     const onPlay = (activePage === 'page-play');
     const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);

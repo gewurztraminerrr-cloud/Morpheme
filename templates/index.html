@@ -1689,6 +1689,11 @@
                                             window.lobbyMusicEngine._pendingPlay = false;
                                             window.lobbyMusicEngine.play();
                                         }
+                                    } else {
+                                        var pLoadEl = document.getElementById('page-loading');
+                                        if (pLoadEl && pLoadEl.classList.contains('active')) {
+                                            window.triggerGatewayAudioImmediate();
+                                        }
                                     }
                                 });
                             }
@@ -1697,11 +1702,9 @@
                 } catch(e) {}
 
                 window.triggerGatewayAudioImmediate = function() {
-                    if (window._gatewayAudioTriggered) return;
-                    window._gatewayAudioTriggered = true;
-
                     if (window.lobbyMusicEngine) {
                         window.lobbyMusicEngine.play();
+                        window._gatewayAudioTriggered = true;
                         return;
                     }
                     try {
@@ -1722,6 +1725,7 @@
                             src.start(0);
                             window._earlyWebAudioSource = src;
                             window._earlyWebAudioGain = gain;
+                            window._gatewayAudioTriggered = true;
                             return;
                         } catch(e) {}
                     }
@@ -1739,7 +1743,11 @@
                                 music.muted = false;
                                 if (music.paused) {
                                     var p = music.play();
-                                    if (p !== undefined) p.catch(function(){});
+                                    if (p !== undefined) {
+                                        p.then(function() {
+                                            window._gatewayAudioTriggered = true;
+                                        }).catch(function(){});
+                                    }
                                 }
                             }
                         } catch(e) {}
@@ -1751,6 +1759,20 @@
                     var m = document.getElementById('lobby-music');
                     if (m && typeof m.load === 'function') m.load();
                 } catch(e) {}
+
+                // Immediately begin music playback as soon as the ENTER LOBBY gateway screen appears
+                window.triggerGatewayAudioImmediate();
+
+                // Also attach immediate one-time gesture unlock in case browser autoplay policy requires user interaction
+                var unlockAudioOnGesture = function() {
+                    window.triggerGatewayAudioImmediate();
+                    ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function(evt) {
+                        window.removeEventListener(evt, unlockAudioOnGesture, true);
+                    });
+                };
+                ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function(evt) {
+                    window.addEventListener(evt, unlockAudioOnGesture, { capture: true, passive: true });
+                });
             })();
         </script>
 
@@ -9165,7 +9187,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790690000"></script>
+    <script src="/js/app.js?v=1790770000"></script>
     <script src="/js/lobby.js?v=1790680000"></script>
     <script src="/js/play.js?v=1790680000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
