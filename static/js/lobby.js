@@ -2112,6 +2112,105 @@ function initLobbyGuideScrollbar() {
     updateThumb();
 }
 
+function selectGuideWordPath(wordKey, btnElement) {
+    const paths = {
+        'stream': {
+            word: 'STREAM',
+            tiles: [
+                { id: 'gb-0-0', num: 1 },
+                { id: 'gb-0-1', num: 2 },
+                { id: 'gb-1-1', num: 3 },
+                { id: 'gb-2-1', num: 4 },
+                { id: 'gb-1-2', num: 5 },
+                { id: 'gb-1-3', num: 6 }
+            ],
+            type: 'Multi-Directional Zigzag Curve',
+            desc: 'Start at <strong>S(0,0)</strong> → right to <strong>T(0,1)</strong> → diagonal down to <strong>R(1,1)</strong> → vertical down to <strong>E(2,1)</strong> → diagonal up-right to <strong>A(1,2)</strong> → horizontal right to <strong>M(1,3)</strong>. Fluid multi-angle connection without tile reuse.',
+            pts: '+3 Points'
+        },
+        'stop': {
+            word: 'STOP',
+            tiles: [
+                { id: 'gb-0-0', num: 1 },
+                { id: 'gb-0-1', num: 2 },
+                { id: 'gb-0-2', num: 3 },
+                { id: 'gb-0-3', num: 4 }
+            ],
+            type: 'Straight Horizontal Line',
+            desc: 'Start at <strong>S(0,0)</strong> → right to <strong>T(0,1)</strong> → right to <strong>O(0,2)</strong> → right to <strong>P(0,3)</strong>. Straight horizontal orthogonal row.',
+            pts: '+1 Point'
+        },
+        'slow': {
+            word: 'SLOW',
+            tiles: [
+                { id: 'gb-0-0', num: 1 },
+                { id: 'gb-1-0', num: 2 },
+                { id: 'gb-2-0', num: 3 },
+                { id: 'gb-3-0', num: 4 }
+            ],
+            type: 'Straight Vertical Column',
+            desc: 'Start at <strong>S(0,0)</strong> → down to <strong>L(1,0)</strong> → down to <strong>O(2,0)</strong> → down to <strong>W(3,0)</strong>. Straight vertical orthogonal column.',
+            pts: '+1 Point'
+        },
+        'trap': {
+            word: 'TRAP',
+            tiles: [
+                { id: 'gb-0-1', num: 1 },
+                { id: 'gb-1-1', num: 2 },
+                { id: 'gb-1-2', num: 3 },
+                { id: 'gb-0-3', num: 4 }
+            ],
+            type: 'Diagonal & Directional Angle',
+            desc: 'Start at <strong>T(0,1)</strong> → down to <strong>R(1,1)</strong> → right to <strong>A(1,2)</strong> → diagonal up-right to <strong>P(0,3)</strong>. Diagonal navigation mixed with orthogonal shifts.',
+            pts: '+1 Point'
+        }
+    };
+
+    const data = paths[wordKey] || paths['stream'];
+
+    // Update active pill button
+    document.querySelectorAll('.guide-word-pill').forEach(b => b.classList.remove('active'));
+    if (btnElement) {
+        btnElement.classList.add('active');
+    } else {
+        const defaultBtn = document.getElementById(`guide-pill-${wordKey}`);
+        if (defaultBtn) defaultBtn.classList.add('active');
+    }
+
+    // Reset all board cells
+    document.querySelectorAll('.guide-board-cell').forEach(cell => {
+        cell.classList.remove('highlighted');
+        const badge = cell.querySelector('.guide-step-badge');
+        if (badge) badge.remove();
+    });
+
+    // Highlight path tiles
+    data.tiles.forEach(t => {
+        const el = document.getElementById(t.id);
+        if (el) {
+            el.classList.add('highlighted');
+            const b = document.createElement('span');
+            b.className = 'guide-step-badge';
+            b.textContent = t.num;
+            el.appendChild(b);
+        }
+    });
+
+    // Update text readouts
+    const titleEl = document.getElementById('guide-path-word-title');
+    const ptsEl = document.getElementById('guide-path-points-badge');
+    const typeEl = document.getElementById('guide-path-type-label');
+    const descEl = document.getElementById('guide-path-desc-text');
+    const inputEl = document.getElementById('guide-mock-input-text');
+
+    if (titleEl) titleEl.textContent = `Word: ${data.word.split('').join('-')}`;
+    if (ptsEl) ptsEl.textContent = data.pts;
+    if (typeEl) typeEl.textContent = `Movement Type: ${data.type}`;
+    if (descEl) descEl.innerHTML = data.desc;
+    if (inputEl) inputEl.textContent = data.word;
+}
+window.selectGuideWordPath = selectGuideWordPath;
+
 function openLobbyGuideModal() {
     const modal = document.getElementById('lobby-guide-modal');
     if (!modal) return;
@@ -2122,6 +2221,7 @@ function openLobbyGuideModal() {
         content.scrollTop = 0;
     }
     initLobbyGuideScrollbar();
+    selectGuideWordPath('stream');
     requestAnimationFrame(() => {
         if (window._updateLobbyGuideThumb) window._updateLobbyGuideThumb();
     });
