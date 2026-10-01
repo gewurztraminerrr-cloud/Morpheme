@@ -8626,6 +8626,146 @@
                             </div>
                         </div>
 
+                        <!-- CONSTANT PARAMETERS: MATCHMAKING ARRAY RULES -->
+                        <div style="background: rgba(147, 51, 234, 0.08); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: rgba(167, 139, 250, 0.25); color: #c4b5fd; font-weight: 800; font-size: 0.72rem; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(167, 139, 250, 0.4);">
+                                        Array Mechanics
+                                    </span>
+                                    <h4 style="margin: 0; font-size: 1.08rem; font-weight: 800; color: #fff;">
+                                        Constant Parameters: Dimensions, Time Limits & Game Types
+                                    </h4>
+                                </div>
+                                <span style="font-size: 0.75rem; color: #22c55e; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.35); padding: 3px 8px; border-radius: 6px; font-weight: 700;">
+                                    🔒 Immutable In-Game Rules
+                                </span>
+                            </div>
+
+                            <p style="margin: 0; font-size: 0.88rem; color: #cbd5e1; line-height: 1.55;">
+                                In Morpheme, the <strong>Game Type</strong> (e.g. FCFS, Accumulative), the <strong>Round Time</strong> (e.g. 3m, 45s), and the <strong>Board Dimensions</strong> (e.g. 4x6, 4x4) are all <strong>constant parameters: they never change in game rooms</strong>. Once a game room is opened in any array, these three rules are locked for the life of that room. Players can compete through continuous rounds without the timer or board size ever shifting.
+                            </p>
+
+                            <!-- Visual Diagram: Matchmaking Array with Horizontal & Vertical Parameters -->
+                            <div style="background: rgba(10, 8, 22, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-x: auto;">
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                    <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #ffd700;">
+                                        Visual Example: The Matchmaking Grid Array
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #94a3b8;">
+                                        Illustrated using First Come First Serve (FCFS)
+                                    </span>
+                                </div>
+
+                                <!-- The Matrix Table Mockup -->
+                                <div style="min-width: 480px; display: flex; flex-direction: column; gap: 8px; user-select: none; pointer-events: none !important;">
+                                    
+                                    <!-- Column Indicator Banner (Horizontal Parameter Callout) -->
+                                    <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px; align-items: end;">
+                                        <div></div>
+                                        <div style="text-align: center; font-size: 0.68rem; color: #64748b;">4x4 Column</div>
+                                        <div style="text-align: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 6px; padding: 4px; font-size: 0.72rem; font-weight: 800; color: #38bdf8;">
+                                            ↓ Top Constant<br><span style="font-size: 0.65rem; color: #bae6fd; font-weight: 600;">All below are 4x6</span>
+                                        </div>
+                                        <div style="text-align: center; font-size: 0.68rem; color: #64748b;">5x7 Column</div>
+                                        <div style="text-align: center; font-size: 0.68rem; color: #64748b;">6x8 Column</div>
+                                    </div>
+
+                                    <!-- Top Horizontal Header Row (Dimensions) -->
+                                    <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px;">
+                                        <div style="display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                            Time \ Dim
+                                        </div>
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 7px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.85rem;">
+                                            4x4
+                                        </div>
+                                        <div style="background: rgba(56, 189, 248, 0.22); border: 1.5px solid #38bdf8; color: #ffffff; padding: 7px; border-radius: 6px; text-align: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);">
+                                            4x6
+                                        </div>
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 7px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.85rem;">
+                                            5x7
+                                        </div>
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 7px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.85rem;">
+                                            6x8
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 1: 45s -->
+                                    <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px;">
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 7px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                                            45s
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.5) 0%, rgba(255, 177, 153, 0.35) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: 3m (Highlighted Vertical Parameter Row) -->
+                                    <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px; position: relative;">
+                                        <div style="background: rgba(251, 191, 36, 0.22); border: 1.5px solid #fbbf24; color: #ffffff; padding: 7px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);">
+                                            3m
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        
+                                        <!-- The Highlighted Intersection Button -->
+                                        <div style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border: 2px solid #ffd700; border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.8rem; font-weight: 800; text-align: center; min-height: 48px; box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); position: relative;">
+                                            <span style="position: absolute; top: -7px; right: -5px; background: #ffd700; color: #000; font-size: 0.58rem; font-weight: 900; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;">MATCH</span>
+                                            Show Rooms<br><span style="font-size: 0.72rem; opacity: 0.95; font-weight: 700;">[2]</span>
+                                        </div>
+
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; font-size: 0.76rem; font-weight: 600; text-align: center; min-height: 48px;">
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Explanation Footnotes for the Diagram -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 4px;">
+                                    <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 10px 12px;">
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #38bdf8; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                            <span>📐</span> Horizontal Constant (Top Columns)
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #e2e8f0; line-height: 1.4;">
+                                            Labels along the top (<code>4x4</code>, <code>4x6</code>, <code>5x7</code>, <code>6x8</code>) indicate <strong>Board Dimensions</strong>. <strong>All buttons positioned below a constant parameter in the array strictly abide by that parameter.</strong> Every button in the <code>4x6</code> column is always a 4x6 board (24 dice).
+                                        </div>
+                                    </div>
+
+                                    <div style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 8px; padding: 10px 12px;">
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #fbbf24; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                            <span>⏱️</span> Vertical Constant (Left-Side Rows)
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #e2e8f0; line-height: 1.4;">
+                                            Labels down the left side (<code>45s</code>, <code>3m</code>, <code>10m</code>, <code>24h</code>) indicate <strong>Round Duration</strong>. <strong>All buttons in that horizontal row strictly abide by that time limit.</strong> Every button in the <code>3m</code> row is always an exact 3-minute game.
+                                        </div>
+                                    </div>
+
+                                    <div style="background: rgba(255, 215, 0, 0.08); border: 1px solid rgba(255, 215, 0, 0.35); border-radius: 8px; padding: 10px 12px;">
+                                        <div style="font-size: 0.78rem; font-weight: 800; color: #ffd700; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                            <span>🎯</span> Array Intersection Point
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #e2e8f0; line-height: 1.4;">
+                                            The intersection cell marries both constant parameters: Column <code>4x6</code> meets Row <code>3m</code> at the highlighted button (<code>Show Rooms [2]</code>). Clicking it reveals rooms playing <strong>First Come First Serve</strong>, for <strong>3 minutes</strong>, on a <strong>4x6 board</strong>.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Visual Example Box -->
                         <div class="lobby-guide-visual-box" onclick="event.stopPropagation(); return false;">
                             <div class="lobby-guide-visual-title">Example: Main Lobby Action Buttons</div>
@@ -9014,7 +9154,7 @@
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790635000"></script>
-    <script src="/js/lobby.js?v=1790640000"></script>
+    <script src="/js/lobby.js?v=1790641000"></script>
     <script src="/js/play.js?v=1790628000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
