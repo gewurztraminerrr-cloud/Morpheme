@@ -972,6 +972,11 @@ def lookup_web_search_definition(word_upper):
                         if re.search(r'\|\s*(?:Merriam-Webster|Dictionary\.com|Oxford English Dictionary|Collins|Cambridge|Wiktionary|Goong|Definitions\.net|Wordnik)$', clean, re.I):
                             continue
 
+                        # Match 0: Dictionary.com / Oxford 'X definition: plural of Y' or similar pointer
+                        m_ptr = re.search(r'\b' + re.escape(word) + r'\b\s+(?:definition\s*:\s*)?(plural\s+of\s+[a-zA-Z\-]+)', clean, re.IGNORECASE)
+                        if m_ptr:
+                            return m_ptr.group(1).lower()
+
                         # Match 1: Merriam-Webster 'The meaning of X is ...'
                         m_mw = re.search(r'\bThe meaning of ' + re.escape(word) + r' is\s+([^—\n]+)', clean, re.IGNORECASE)
                         if m_mw:
@@ -6670,6 +6675,41 @@ def get_definition_cached_or_online_with_guess(w):
             if _local_lookup(r2):
                 DEFINITIONS_CACHE[w] = f"plural of {r2.lower()}"
                 return DEFINITIONS_CACHE[w]
+            # -ES -> -IS (e.g. CRISES -> CRISIS, THESES -> THESIS, AXES -> AXIS, SYNOPSES -> SYNOPSIS)
+            r_is = w[:-2] + 'IS'
+            if _local_lookup(r_is):
+                DEFINITIONS_CACHE[w] = f"plural of {r_is.lower()}"
+                return DEFINITIONS_CACHE[w]
+
+    # 3b. Classical Latin/Greek Plurals (-I -> -US, -AE -> -A, -A -> -UM/-ON, -ICES -> -EX/-IX)
+    if w.endswith('I') and len(w) > 3 and not w.endswith('AI'):
+        # -I -> -US (e.g. LOCHI -> LOCHUS, CACTI -> CACTUS, ALUMNI -> ALUMNUS, FUNGI -> FUNGUS, SYLLABI -> SYLLABUS)
+        r_us = w[:-1] + 'US'
+        if _local_lookup(r_us):
+            DEFINITIONS_CACHE[w] = f"plural of {r_us.lower()}"
+            return DEFINITIONS_CACHE[w]
+
+    if w.endswith('AE') and len(w) > 3:
+        # -AE -> -A (e.g. LARVAE -> LARVA, ALGAE -> ALGA, NEBULAE -> NEBULA)
+        r_a = w[:-1]
+        if _local_lookup(r_a):
+            DEFINITIONS_CACHE[w] = f"plural of {r_a.lower()}"
+            return DEFINITIONS_CACHE[w]
+
+    if w.endswith('A') and len(w) > 4:
+        # -A -> -UM (e.g. STRATA -> STRATUM, BACTERIA -> BACTERIUM, DATA -> DATUM)
+        # -A -> -ON (e.g. CRITERIA -> CRITERION, PHENOMENA -> PHENOMENON)
+        for r_cand in [w[:-1] + 'UM', w[:-1] + 'ON']:
+            if _local_lookup(r_cand):
+                DEFINITIONS_CACHE[w] = f"plural of {r_cand.lower()}"
+                return DEFINITIONS_CACHE[w]
+
+    if w.endswith('ICES') and len(w) > 5:
+        # -ICES -> -EX / -IX (e.g. VERTICES -> VERTEX, APICES -> APEX, MATRICES -> MATRIX, INDICES -> INDEX)
+        for r_cand in [w[:-4] + 'EX', w[:-4] + 'IX']:
+            if _local_lookup(r_cand):
+                DEFINITIONS_CACHE[w] = f"plural of {r_cand.lower()}"
+                return DEFINITIONS_CACHE[w]
 
     # 4. -NESS (The quality or state of being ...)
     if w.endswith('NESS') and len(w) > 5:
@@ -6866,6 +6906,8 @@ def format_resolved_definition(word_upper, visited=None):
             target_resolved = None
             if target != word_upper:
                 target_resolved = format_resolved_definition(target, visited.copy())
+            if not target_resolved and target != word_upper:
+                target_resolved = get_definition_cached_or_online(target) or lookup_wiki_definition_from_db(target)
             if not target_resolved and target_raw != word_upper:
                 target_resolved = get_definition_cached_or_online(target_raw)
             if not target_resolved and target == word_upper:
@@ -7089,7 +7131,7 @@ def ensure_aw_definitions_for_words(words_list):
                     clean_root = _clean_root_for_pointer(root_def)
                     formatted_def = f"plural of {root.lower()} ({clean_root})"
             elif w_upper.endswith('ES') and len(w_upper) > 4:
-                for cand in [w_upper[:-2], w_upper[:-1]]:
+                for cand in [w_upper[:-2], w_upper[:-1], w_upper[:-2] + 'IS']:
                     root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
                     if root_def:
                         clean_root = _clean_root_for_pointer(root_def)
@@ -7101,6 +7143,36 @@ def ensure_aw_definitions_for_words(words_list):
                 if root_def:
                     clean_root = _clean_root_for_pointer(root_def)
                     formatted_def = f"plural of {cand.lower()} ({clean_root})"
+            elif w_upper.endswith('I') and len(w_upper) > 3 and not w_upper.endswith('AI'):
+                # -I -> -US (e.g. LOCHI -> LOCHUS, CACTI -> CACTUS, ALUMNI -> ALUMNUS, FUNGI -> FUNGUS, SYLLABI -> SYLLABUS)
+                cand = w_upper[:-1] + 'US'
+                root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                if root_def:
+                    clean_root = _clean_root_for_pointer(root_def)
+                    formatted_def = f"plural of {cand.lower()} ({clean_root})"
+            elif w_upper.endswith('AE') and len(w_upper) > 3:
+                # -AE -> -A (e.g. LARVAE -> LARVA, ALGAE -> ALGA, NEBULAE -> NEBULA)
+                cand = w_upper[:-1]
+                root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                if root_def:
+                    clean_root = _clean_root_for_pointer(root_def)
+                    formatted_def = f"plural of {cand.lower()} ({clean_root})"
+            elif w_upper.endswith('A') and len(w_upper) > 4:
+                # -A -> -UM or -ON (e.g. STRATA -> STRATUM, BACTERIA -> BACTERIUM, CRITERIA -> CRITERION)
+                for cand in [w_upper[:-1] + 'UM', w_upper[:-1] + 'ON']:
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
+                        break
+            elif w_upper.endswith('ICES') and len(w_upper) > 5:
+                # -ICES -> -EX or -IX (e.g. VERTICES -> VERTEX, MATRICES -> MATRIX, INDICES -> INDEX)
+                for cand in [w_upper[:-4] + 'EX', w_upper[:-4] + 'IX']:
+                    root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
+                    if root_def:
+                        clean_root = _clean_root_for_pointer(root_def)
+                        formatted_def = f"plural of {cand.lower()} ({clean_root})"
+                        break
                 
             # Verb conjugations (-ING, -ED)
             if not formatted_def:
@@ -7230,9 +7302,20 @@ def ensure_aw_definitions_for_words(words_list):
             formatted_def = current_def
 
         if formatted_def and _is_unresolved_pointer(formatted_def):
+            # 1. Try format_resolved_definition
             resolved_ptr = format_resolved_definition(w_upper)
             if resolved_ptr and not _is_unresolved_pointer(resolved_ptr):
                 formatted_def = resolved_ptr
+            else:
+                # 2. Extract target word and look up definition directly
+                m_t = re.search(r'\b(?:plural|conjugation|participle|past tense|past|gerund|diminutive|alternative form|alternative spelling|variant)\s+(?:of|for)\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', formatted_def, re.I)
+                if m_t:
+                    target_w = m_t.group(1).upper()
+                    target_d = DEFINITIONS_CACHE.get(target_w) or lookup_wiki_definition_from_db(target_w) or format_resolved_definition(target_w)
+                    if target_d:
+                        clean_t = _clean_root_for_pointer(target_d)
+                        if clean_t:
+                            formatted_def = f"{formatted_def.strip()} ({clean_t})"
 
         if formatted_def:
             resolved_pairs.append((w_upper, formatted_def))
