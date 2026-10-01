@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-953ab9ef0d45ee9659b85558eef7a15a81cae932
+8a5fb3b9fa7297e684074218eb0f02758157e841
 ```
 
 ## Start Over Point Tag
@@ -94,6 +94,27 @@ START_OVER_POINT_OCTOBER_1
   - Expanded `.chat-panel` `max-height` up to `min(360px, calc(100dvh - 280px))`.
   - Updated scroll listeners in `play.js` to ensure the newest chat messages are scrolled into view when the input is focused.
 
+### 8. Tools "Is Valid" Tab Description Polish
+- **Navigation Sidebar Tab**:
+  - Updated tab description for "Is Valid" in the Tools navigation sidebar from `"Check if a word exists in dictionaries and see their definitions"` to `"Check word validity and definition"`.
+- **Content Panel Integrity**:
+  - Kept the description inside the `#tool-is-valid` content panel unchanged (`"Check if a word exists in the official dictionaries and see their definitions."`).
+
+### 9. Lobby Guide Popup Dismissal Button Clarification
+- **Reworded Dismissal Button**:
+  - In the "What am I looking at?" explanation modal footer, updated the dismissal button from `"Remove the link and do not show this message again"` to `"Remove the link leading to this explanation in Lobby and do not show it again"`.
+  - Preserved the keep button (`"Show the link to this explanation again next time I enter Lobby"`).
+
+### 10. Find & Count Mobile Layout Alignment & Text Truncation
+- **Side-by-Side Horizontal Row**:
+  - Positioned the dictionary/word list dropdown menu (`#random-words-dict-select`) directly to the right of the "More random words" button (`#more-random-words-btn`) on the same row with `flex-wrap: nowrap;`.
+- **Snug Edge-to-Edge Fitting**:
+  - Set both controls to equal `calc(50% - 4px)` length with an `8px` gap, spanning flush edge-to-edge from the left side of the screen to the right side of the screen.
+  - Equalized both elements vertically to `42px` height.
+- **Text Truncation for Overflowing Word Lists**:
+  - Applied `overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;` to the dropdown menu so long options (e.g. *"New NWL Words"*, *"New CSW Words"*) gracefully truncate with ellipsis on narrow screens without distorting the layout.
+  - Bumped `play.css` cache buster to `v=1790780000`.
+
 ---
 
 ## Verification & Health Check
@@ -105,7 +126,7 @@ START_OVER_POINT_OCTOBER_1
    - `app.js`: `v=1790770000`
    - `style.css`: `v=1790645000`
    - `lobby.css`: `v=1790680000`
-   - `play.css`: `v=1790680000`
+   - `play.css`: `v=1790780000`
    - `lobby.js`: `v=1790680000`
    - `play.js`: `v=1790680000`
    - Viewport meta: `interactive-widget=resizes-content`
