@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-4ddd5b56d711b61b7d37604cc54ac2237941252b
+0dfab184156000fb1c9406fa50574055315e9395
 ```
 
 ## Start Over Point Tag
@@ -132,6 +132,12 @@ START_OVER_POINT_SEPTEMBER_30
 - Automatically strips website branding and page title trailers by splitting on pipes (`|`).
 - Added strict junk patterns rejecting SEO marketing phrases (`Explore its Definition`, `Definition & Usage`, `Definition & Meaning`, `Usage & Examples`, `RedKiwi`, `WordHippo`, `Factsheet`, etc.).
 - Enforced strict lexicographical grammar starters on colon-separated matches, guaranteeing that CTA titles, headers, and marketing slogans are completely rejected.
+
+### 17. Preservation & Synchronization of 39 Words Added via Mods on September 30
+- Completely preserved and synchronized all 39 words added by moderators on September 30 across all files and systems:
+  `LUMET`, `LUMI`, `MAZAGAN`, `MAZAGANS`, `GIGMANIC`, `HALELY`, `LUMETER`, `LUMETERS`, `FILICIN`, `GUILLEM`, `GUILLEMS`, `GUIMAUVE`, `GUIMAUVES`, `GUINZO`, `GUINZOS`, `LYSIMACHIA`, `LUNGEOUS`, `GLOSSOPTERIS`, `GOKY`, `GONGORISM`, `GOREE`, `GRANDEVAL`, `GRASSANT`, `GRAVIFIC`, `GRAZET`, `GRAZETS`, `GREESHOCH`, `GRESSIBLE`, `GRILLO`, `GROOSE`, `GRYLLOTALPA`, `GUERRILLO`, `GUGLIA`, `GUMPHEON`, `GUNIBRI`, `GUTTUR`, `GUVNER`, `GUTTUS`, `GUTTUSES`.
+- Synchronously committed and mirrored into `added_words_dates.txt` (dated `30/09/2026`), `added_words.txt`, `added_words_duplicate.txt`, `Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, and `morpheme.db`.
+- Verified in Tools -> Is Valid under `Added Words`, `New AW Words`, `All New Words`, and `All`.
 
 ---
 
