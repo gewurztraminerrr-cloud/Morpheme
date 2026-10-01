@@ -15,9 +15,9 @@ START_OVER_POINT_OCTOBER_1
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | `db443210` (Working tree clean) |
-| GitHub (main)  | ✅ Synchronized | `db443210` (Pushed to origin/main) |
-| morpheme.games | ✅ Synchronized | `db443210` (HTTP 200 OK, PM2 Online) |
+| localhost      | ✅ Synchronized | Working tree clean |
+| GitHub (main)  | ✅ Synchronized | Pushed to origin/main |
+| morpheme.games | ✅ Synchronized | HTTP 200 OK, PM2 Online |
 | App / Client   | ✅ Synchronized | Web client & backend endpoints verified |
 
 ---
@@ -56,14 +56,18 @@ START_OVER_POINT_OCTOBER_1
 - Synchronized across `Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, and production `morpheme.db`.
 
 ### 4. Mobile Fullscreen & Continuous Fast Navigation Hardening
+- **Single-Entry Fullscreen Request (Once on First App Entry)**:
+  - Fullscreen is requested synchronously only when the user first enters the app via the gateway button (`ENTER LOBBY` / `LOGIN`).
+  - The Android OS *"morpheme.games — to exit full screen…"* notice is presented once upon entering the app, as designed.
+- **Elimination of Post-Minimize Re-engagement**:
+  - Completely removed `visibilitychange`, `pageshow`, `focus`, and global `pointerdown`/`touchstart` background listeners that previously called `attemptFullscreen(false)` whenever a user tapped after returning from minimizing.
+  - Users can minimize Morpheme, switch apps, return, and tap anywhere on the screen without triggering the Android OS notice or the 3-button system navigation bar.
 - **Permanent Fullscreen Invariants Established (`.agents/AGENTS.md`)**:
   - Fullscreen is preserved continuously across all pages, top menu tabs (**Lobby**, **Play**, **Tools**, **Mods**, **Leaderboard**, **Settings**, **Profile**, **Forum**, **How to Play**, **Donate**), the Lobby Chat Drawer, textboxes, and dropdowns.
-  - Eliminated the recurring Android OS *"morpheme.games — to exit full screen…"* notice and the bottom 3-button system navigation bar (recents, home, back) by completely removing intrusive `exitFullscreenForKeyboard()` calls on input/textarea focus and tab switching.
   - The Full List Modal (`openFullListModal`) in `tools.js` remains the **only** modal where `document.exitFullscreen()` is explicitly called.
 - **Gateway Screen Optimization (`#page-loading`)**:
   - Removed competing touch event listeners (`ontouchstart`, `onpointerdown`, `onmousedown`, `onclick`) from the ENTER LOBBY button.
   - Neutralized background taps on `#page-loading` to eliminate button twitches, double-tap jumps, and audio desynchronization.
-  - Fullscreen request executes synchronously upon pressing ENTER LOBBY / LOGIN for seamless entry into the app.
 
 ### 5. Mobile Virtual Keyboard Chatbox Elevation
 - **Interactive Widget Viewport Meta**:
@@ -90,14 +94,15 @@ START_OVER_POINT_OCTOBER_1
 ## Verification & Health Check
 
 1. **Production Health & Endpoints**:
-   - `GET https://morpheme.games/` → `HTTP/1.1 200 OK` (Content-Length: 705167 bytes).
+   - `GET https://morpheme.games/` → `HTTP/1.1 200 OK`.
    - PM2 Process `0` (`morpheme`) online, active, and responsive.
 2. **Asset Cache Busters**:
-   - `lobby.css`: `v=1790680000` (live on morpheme.games)
-   - `play.css`: `v=1790680000` (live on morpheme.games)
-   - `lobby.js`: `v=1790680000` (live on morpheme.games)
-   - `play.js`: `v=1790680000` (live on morpheme.games)
-   - Viewport meta: `interactive-widget=resizes-content` (live on morpheme.games)
+   - `app.js`: `v=1790690000`
+   - `lobby.css`: `v=1790680000`
+   - `play.css`: `v=1790680000`
+   - `lobby.js`: `v=1790680000`
+   - `play.js`: `v=1790680000`
+   - Viewport meta: `interactive-widget=resizes-content`
 3. **Definitions Engine Verification**:
    - `GET https://morpheme.games/api/definition?word=GUTTUSES` → returns `"plural of guttus (A type of ancient Greek and Roman vessel designed for pouring liquids.)"`
    - `GET https://morpheme.games/api/definition?word=LOCHI` → returns `"plural of lochus (In ancient Greece, a body of infantry; in Sparta, one of the larger divisions in which able-bodied men were grouped.)"`

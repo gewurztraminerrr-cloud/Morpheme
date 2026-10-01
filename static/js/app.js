@@ -3489,10 +3489,8 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Mobile Fullscreen Re-engagement Manager: re-engages fullscreen on tap after minimizing/leaving, but exits immediately before virtual keyboard opens
+// Mobile Fullscreen Manager: requests fullscreen synchronously upon entering the app (gateway), preserving uninterrupted navigation without repeated OS notices
 (function _setupMobileFullscreenManager() {
-    let needsReEngage = true;
-
     function isMobileDevice() {
         return (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
@@ -3509,11 +3507,16 @@ document.addEventListener('visibilitychange', () => {
         }
     }
 
+    let initialFullscreenRequested = false;
+
     function attemptFullscreen(force) {
         if (!isMobileDevice()) return;
         
         // Return early if already in fullscreen
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
+
+        // Only allow fullscreen when explicitly forced (user tapped gateway button to enter app)
+        if (!force && initialFullscreenRequested) return;
 
         // On gateway screen, only allow fullscreen if explicitly forced (user tapped gateway button)
         const pLoad = document.getElementById('page-loading');
@@ -3529,6 +3532,7 @@ document.addEventListener('visibilitychange', () => {
             const docEl = document.documentElement;
             const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
             if (req) {
+                initialFullscreenRequested = true;
                 req.call(docEl, { navigationUI: 'hide' }).catch(() => {
                     try { req.call(docEl).catch(() => {}); } catch(e) {}
                 });
@@ -3536,58 +3540,13 @@ document.addEventListener('visibilitychange', () => {
         } catch (e) {}
     }
 
-    // Flag when user minimizes app, switches tabs, or returns to screen
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden' || document.visibilityState === 'visible') {
-            needsReEngage = true;
-        }
-    });
-
-    window.addEventListener('pageshow', () => {
-        needsReEngage = true;
-    });
-
-    window.addEventListener('focus', () => {
-        needsReEngage = true;
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            needsReEngage = true;
-        }
-    });
-    document.addEventListener('webkitfullscreenchange', () => {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            needsReEngage = true;
-        }
-    });
-
-    // On user interaction, re-engage fullscreen if needed (e.g. after minimizing/unfocusing or full list modal)
+    // Safety check for Full List Modal touch events to ensure fullscreen is cleanly exited when interacting with full list
     ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
             const isFullListModal = e.target && e.target.closest && e.target.closest('#full-list-modal');
-
-            if (isFullListModal) {
-                if (isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
-                    exitFullscreenForKeyboard();
-                }
-                return;
+            if (isFullListModal && isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
+                exitFullscreenForKeyboard();
             }
-
-            // On gateway screen, background taps do nothing
-            const pLoad = document.getElementById('page-loading');
-            if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed && !window._gatewayTransitioning) {
-                return;
-            }
-
-            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                needsReEngage = false;
-                return;
-            }
-
-            attemptFullscreen(false);
-            needsReEngage = false;
         }, { passive: true });
     });
 
