@@ -839,6 +839,142 @@ _AW_POINTER_PATTERN = re.compile(
 _AW_CHECK_DEF_CACHE = {}
 _AW_DISALLOWED_CHECK_CACHE = {}
 
+def lookup_web_search_definition(word_upper):
+    """
+    Searches web sources (Wordnik Century/Webster dictionaries and web search)
+    for authentic non-proper-noun lexicographical definitions.
+    Strictly excludes proper nouns (cities, regions, personal names, persons).
+    """
+    word = word_upper.strip().lower()
+    if not word:
+        return None
+        
+    proper_noun_pats = [
+        r'\b(?:is a|is an)\s+(?:port\s+|coastal\s+)?city\b',
+        r'\b(?:is a|is an)\s+municipality\b',
+        r'\b(?:is a|is an)\s+capital\b',
+        r'\b(?:is a|is an)\s+commune\b',
+        r'\b(?:is a|is an)\s+town\b',
+        r'\b(?:is a|is an)\s+village\b',
+        r'\b(?:is a|is an)\s+province\b',
+        r'\b(?:is a|is an)\s+district\b',
+        r'\b(?:is a|is an)\s+river\b',
+        r'\b(?:is a|is an)\s+island\b',
+        r'\b(?:is a|is an)\s+county\b',
+        r'\b(?:is a|is an)\s+(?:Catalan|Spanish|French|German|English|Italian|Arabic|Hebrew|Russian|Japanese|Chinese|given|first|family|sur)?name\b',
+        r'\bcapital of\b',
+        r'\blocated in\b',
+        r'\bsituate(?:d)? in\b',
+        r'\bfirst name\b',
+        r'\bsurname\b',
+        r'\bborn \d{4}\b',
+        r'\bballet dancer\b',
+        r'\bpolitician\b',
+        r'\bfootballer\b',
+    ]
+
+    junk_pats = [
+        r'has no English definition',
+        r'may be misspelled',
+        r'Not English',
+        r'WikiDiff',
+        r'JumbleSolver',
+        r'Daily Jumble',
+        r'WordFinder',
+        r'Scrabble Word Finder',
+    ]
+
+    # 1. Wordnik Century / Webster Dictionary
+    try:
+        import urllib.request, urllib.parse, re, html
+        url = f'https://www.wordnik.com/words/{urllib.parse.quote(word)}'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'})
+        with urllib.request.urlopen(req, timeout=3.0) as r:
+            html_text = r.read().decode('utf-8', errors='ignore')
+            for block in re.findall(r'<div class=\"guts[^>]*>(.*?)</div>', html_text, re.DOTALL):
+                if any(src in block for src in ['from The Century Dictionary', 'from Webster', 'from Wiktionary', 'from the GNU']):
+                    lines = re.findall(r'<li[^>]*>(.*?)</li>', block, re.DOTALL)
+                    for line in lines:
+                        clean = re.sub(r'<[^>]+>', ' ', line).strip()
+                        clean = html.unescape(clean)
+                        clean = re.sub(r'\s+', ' ', clean)
+                        if clean and not clean.startswith('Sorry') and len(clean) > 10:
+                            if not any(re.search(p, clean, re.I) for p in proper_noun_pats):
+                                return clean
+    except Exception:
+        pass
+
+    # 2. Web search via DDG Lite for dictionary definitions
+    try:
+        import urllib.request, urllib.parse, re, html
+        queries = [f'define {word}', f'\"{word}\" definition', f'{word} dictionary meaning']
+        for q in queries:
+            url = 'https://lite.duckduckgo.com/lite/'
+            data = urllib.parse.urlencode({'q': q}).encode()
+            req = urllib.request.Request(url, data=data, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            try:
+                with urllib.request.urlopen(req, timeout=3.0) as r:
+                    content = r.read().decode('utf-8', errors='ignore')
+                    rows = re.findall(r'<td[^>]*>(.*?)</td>', content, re.DOTALL)
+                    for raw in rows:
+                        clean = re.sub(r'<[^>]+>', ' ', raw).strip()
+                        clean = html.unescape(clean)
+                        clean = re.sub(r'\s+', ' ', clean)
+                        
+                        if len(clean) < 25 or clean.startswith('http') or 'DuckDuckGo' in clean:
+                            continue
+                        if any(re.search(j, clean, re.I) for j in junk_pats):
+                            continue
+                        if any(re.search(p, clean, re.I) for p in proper_noun_pats):
+                            continue
+                            
+                        # Skip page title headers
+                        if re.search(r'-\s*(?:Merriam-Webster|Dictionary\.com|Oxford|Collins|Cambridge|Wiktionary|Goong|Definitions\.net|Wordnik)$', clean, re.I):
+                            continue
+                        if re.search(r'\|\s*(?:Merriam-Webster|Dictionary\.com|Oxford English Dictionary|Collins|Cambridge|Wiktionary|Goong|Definitions\.net|Wordnik)$', clean, re.I):
+                            continue
+
+                        # Match 1: Merriam-Webster 'The meaning of X is ...'
+                        m_mw = re.search(r'The meaning of [A-Z\-]+ is\s+([^—\n]+)', clean, re.IGNORECASE)
+                        if m_mw:
+                            defn = m_mw.group(1).strip()
+                            defn = re.split(r'\.\s+[A-Z]|\s*See\s+the\s+full|\s*How\s+to\s+use', defn)[0].strip()
+                            if defn and len(defn) > 10:
+                                return f'(noun) {defn[0].upper() + defn[1:]}'
+
+                        # Match 2: 'X is a noun that refers to ...' / 'X is a device/instrument that...'
+                        m_is = re.search(r'\b' + re.escape(word) + r'\s+is\s+(?:a\s+noun\s+that\s+refers\s+to\s+|a\s+|an\s+)([^\.\n;]{15,250}\.?)', clean, re.IGNORECASE)
+                        if m_is:
+                            core = m_is.group(1).strip()
+                            return f'(noun) {core[0].upper() + core[1:]}'
+
+                        # Match 3: 'X : The act/state/device/person of ...'
+                        m_col = re.search(r'\b' + re.escape(word) + r'\b\s*:\s*([A-Z][^\.\n]{15,200}\.?)', clean)
+                        if m_col:
+                            core = m_col.group(1).strip()
+                            if not any(re.search(p, core, re.I) for p in proper_noun_pats):
+                                return f'(noun) {core}'
+
+                        # Match 4: 'noun The act of ...' or '(noun) The ...'
+                        m_noun = re.search(r'(?:\(noun\)|noun)\s+([A-Z][^\.\n]{15,200}\.?)', clean)
+                        if m_noun:
+                            core = m_noun.group(1).strip()
+                            if not any(re.search(p, core, re.I) for p in proper_noun_pats):
+                                return f'(noun) {core}'
+
+                        # Match 5: Standard snippet from Wiktionary/Vocabulary
+                        m_snip = re.search(r'\b' + re.escape(word) + r'\b\s*(?:\([^)]*\)\s*)*([A-Z][^\.\n]{15,200}\.?)', clean)
+                        if m_snip:
+                            defn = m_snip.group(1).strip()
+                            if not any(re.search(p, defn, re.I) for p in proper_noun_pats):
+                                return defn
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    return None
+
 def get_word_definitions_for_aw_check(word, allow_online=True):
     w_upper = word.upper().strip()
     if w_upper in _AW_CHECK_DEF_CACHE:
@@ -902,6 +1038,16 @@ def get_word_definitions_for_aw_check(word, allow_online=True):
                                     defs.append(f"({pos}) {text}" if pos else text)
                         if defs:
                             break
+            except Exception:
+                pass
+
+        # If Wiktionary API returned no definitions or only proper nouns, search web sources
+        if allow_online and ((not defs) or all(d.startswith('(Proper noun)') for d in defs)):
+            try:
+                web_def = lookup_web_search_definition(w_upper)
+                if web_def and web_def not in seen:
+                    defs.append(web_def)
+                    seen.add(web_def)
             except Exception:
                 pass
 
@@ -6381,19 +6527,11 @@ def lookup_raw_definition_online(word_upper):
     except Exception:
         pass
 
-    # 4. Wikipedia Summary Fallback
+    # 4. Web Search Dictionary Fallback (Wordnik Century/Webster, Merriam-Webster, OED, Wiktionary Search)
     try:
-        import urllib.request, json
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{word_upper.lower()}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'MorphemeApp/1.0 (jeff@morpheme.games)'})
-        with urllib.request.urlopen(req, timeout=1.2) as response:
-            api_data = json.loads(response.read().decode('utf-8'))
-            if isinstance(api_data, dict):
-                page_type = api_data.get('type', '')
-                extract = api_data.get('extract', '')
-                if page_type != 'disambiguation' and extract and len(extract) > 10:
-                    first_sentence = extract.split('. ')[0] + '.'
-                    return first_sentence
+        web_def = lookup_web_search_definition(word_upper)
+        if web_def:
+            return web_def
     except Exception:
         pass
 
@@ -6885,6 +7023,12 @@ def ensure_aw_definitions_for_words(words_list):
                             formatted_def = cd
                             break
 
+            # 3b. Web Search Dictionary Lookup (Merriam-Webster, Century, OED, etc.)
+            if not formatted_def:
+                web_def = lookup_web_search_definition(w_upper)
+                if web_def:
+                    formatted_def = web_def
+
             # 4. Suffix rules adhering strictly to AGENTS.md
             if not formatted_def:
                 # Plurals (-IES, -ES, -S)
@@ -6984,16 +7128,19 @@ def ensure_aw_definitions_for_words(words_list):
                                 formatted_def = f"(noun) {n_template} {root.lower()} ({clean_root})."
                             break
 
-            # 6. Fallback lexicographical definition based on grammatical structure
+            # 6. Fallback lexicographical definition based on web search & grammatical structure
             if not formatted_def:
-                if w_upper.endswith('IZE') or w_upper.endswith('ISE') or w_upper.endswith('ATE') or w_upper.endswith('IFY'):
+                web_def = lookup_web_search_definition(w_upper)
+                if web_def:
+                    formatted_def = web_def
+                elif w_upper.endswith('IZE') or w_upper.endswith('ISE') or w_upper.endswith('ATE') or w_upper.endswith('IFY'):
                     formatted_def = f"(verb) To cause to be or make {w_upper.lower()}."
                 elif w_upper.endswith('TION') or w_upper.endswith('SION') or w_upper.endswith('MENT') or w_upper.endswith('ANCE') or w_upper.endswith('ENCE'):
                     formatted_def = f"(noun) The act, process, or result of {w_upper.lower()}."
                 elif w_upper.endswith('ABLE') or w_upper.endswith('IBLE') or w_upper.endswith('IC') or w_upper.endswith('AL') or w_upper.endswith('OUS'):
                     formatted_def = f"(adjective) Capable of being, or pertaining to, {w_upper.lower()}."
                 else:
-                    formatted_def = f"(noun) That which is known as {w_upper.lower()}."
+                    formatted_def = f"(noun) A term or concept referring to {w_upper.lower()}."
         else:
             formatted_def = current_def
 
