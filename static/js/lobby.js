@@ -1600,6 +1600,11 @@ function closeLobbyChatDrawer() {
     if (drawer) {
         drawer.classList.remove('open');
         drawer.classList.remove('keyboard-open');
+        drawer.style.bottom = '';
+    }
+    const input = document.getElementById('lobby-chat-input');
+    if (input && document.activeElement === input) {
+        input.blur();
     }
 }
 window.closeLobbyChatDrawer = closeLobbyChatDrawer;
@@ -1819,7 +1824,32 @@ function setupLobbyMobileKeyboardSupport() {
         }
     });
 
+    function updateLobbyKeyboardPosition() {
+        if (!drawer || !drawer.classList.contains('open')) return;
+        const isInputFocused = document.activeElement === input;
+        const vv = window.visualViewport;
+        const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
+
+        if (isInputFocused && kbHeight > 50) {
+            drawer.classList.add('keyboard-open');
+            drawer.style.bottom = kbHeight + 'px';
+            setTimeout(() => {
+                input.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                const chatHistory = document.getElementById('lobby-chat-history');
+                if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+            }, 40);
+        } else if (!isInputFocused) {
+            drawer.classList.remove('keyboard-open');
+            drawer.style.bottom = '';
+        }
+    }
+
     input.addEventListener('focus', () => {
+        drawer.classList.add('keyboard-open');
+        updateLobbyKeyboardPosition();
+        setTimeout(updateLobbyKeyboardPosition, 50);
+        setTimeout(updateLobbyKeyboardPosition, 150);
+        setTimeout(updateLobbyKeyboardPosition, 300);
         setTimeout(() => {
             const chatHistory = document.getElementById('lobby-chat-history');
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -1827,8 +1857,14 @@ function setupLobbyMobileKeyboardSupport() {
     });
 
     input.addEventListener('blur', () => {
-        // Keep size completely constant
+        drawer.classList.remove('keyboard-open');
+        drawer.style.bottom = '';
     });
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updateLobbyKeyboardPosition);
+        window.visualViewport.addEventListener('scroll', updateLobbyKeyboardPosition);
+    }
 }
 window.setupLobbyMobileKeyboardSupport = setupLobbyMobileKeyboardSupport;
 

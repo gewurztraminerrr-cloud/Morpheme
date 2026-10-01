@@ -3852,10 +3852,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send-btn');
 
+    function updatePlayChatKeyboardPosition() {
+        if (!chatPanel) return;
+        const isInputFocused = document.activeElement === chatInput;
+        const vv = window.visualViewport;
+        const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
+
+        if (isInputFocused && kbHeight > 50) {
+            chatPanel.classList.add('keyboard-open');
+            chatPanel.style.bottom = (kbHeight + 10) + 'px';
+            setTimeout(() => {
+                chatInput.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                const hist = document.getElementById('chat-history');
+                if (hist) hist.scrollTop = hist.scrollHeight;
+            }, 40);
+        } else if (!isInputFocused) {
+            chatPanel.classList.remove('keyboard-open');
+            chatPanel.style.bottom = '';
+        }
+    }
+
     if (chatInput) {
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendChatMessage();
         });
+        chatInput.addEventListener('focus', () => {
+            if (typeof expandChat === 'function') expandChat();
+            if (chatPanel) chatPanel.classList.add('keyboard-open');
+            updatePlayChatKeyboardPosition();
+            setTimeout(updatePlayChatKeyboardPosition, 50);
+            setTimeout(updatePlayChatKeyboardPosition, 150);
+            setTimeout(updatePlayChatKeyboardPosition, 300);
+            setTimeout(() => {
+                const hist = document.getElementById('chat-history');
+                if (hist) hist.scrollTop = hist.scrollHeight;
+            }, 100);
+        });
+        chatInput.addEventListener('blur', () => {
+            if (chatPanel) {
+                chatPanel.classList.remove('keyboard-open');
+                chatPanel.style.bottom = '';
+            }
+        });
+    }
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updatePlayChatKeyboardPosition);
+        window.visualViewport.addEventListener('scroll', updatePlayChatKeyboardPosition);
     }
 
     if (chatSend) {
@@ -3884,6 +3927,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chatPanel) {
             chatPanel.style.transform = '';
             chatPanel.style.willChange = '';
+            chatPanel.classList.remove('keyboard-open');
+            chatPanel.style.bottom = '';
         }
 
         chatPanel.classList.add('collapsing');
