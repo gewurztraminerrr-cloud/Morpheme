@@ -1944,18 +1944,8 @@ window.showPage = showPage;
         }
     }
     window.currentPageId = pageId;
-    // PERMANENT INVARIANT (DO NOT REMOVE): Always exit fullscreen when leaving play/lobby to prevent keyboard black screens on utility pages
-    if (pageId !== 'page-play' && pageId !== 'page-lobby') {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-            try {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen().catch(() => {});
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen().catch(() => {});
-                }
-            } catch(e) {}
-        }
-    }
+    // Continuous fullscreen is preserved across all top menu tabs (Lobby, Play, Tools, Mods, Leaderboard, Settings, Profile, Forum)
+    // to provide fast navigation without OS 'To exit full screen' prompts or bottom navigation bar jumps.
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
@@ -3519,22 +3509,21 @@ document.addEventListener('visibilitychange', () => {
         }
     }
 
-    function attemptFullscreen() {
+    function attemptFullscreen(force) {
         if (!isMobileDevice()) return;
         
-        // Never trigger fullscreen on Tools, Settings, Profile, Forum, How to Play, Donate
-        const activePage = document.querySelector('.page.active');
-        if (activePage && (activePage.id === 'page-tools' || activePage.id === 'page-settings' || activePage.id === 'page-profile' || activePage.id === 'page-forum' || activePage.id === 'page-howtoplay' || activePage.id === 'page-donate')) {
+        // Return early if already in fullscreen
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+
+        // On gateway screen, only allow fullscreen if explicitly forced (user tapped gateway button)
+        const pLoad = document.getElementById('page-loading');
+        if (!force && pLoad && pLoad.classList.contains('active') && !window._gatewayPassed && !window._gatewayTransitioning) {
             return;
         }
+
         const fullListModal = document.getElementById('full-list-modal');
         if (fullListModal && (fullListModal.classList.contains('forced-show') || !fullListModal.classList.contains('hidden'))) return;
-        const lobbyDrawer = document.getElementById('lobby-chat-drawer');
-        if (lobbyDrawer && lobbyDrawer.classList.contains('open')) return;
-        const activeOverlay = document.querySelector('.modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), .overlay:not(.hidden), .modal-window:not(.hidden)');
-        if (activeOverlay && activeOverlay.style.display !== 'none') return;
         if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
-        if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
         try {
             const docEl = document.documentElement;
@@ -3583,29 +3572,40 @@ document.addEventListener('visibilitychange', () => {
         }
     }, { capture: true, passive: true });
 
-    // On any user tap/press on the screen (including on the ENTER LOBBY screen), engage fullscreen
-    ['pointerdown', 'touchstart', 'mousedown', 'click'].forEach(evtType => {
+    // On user interaction, re-engage fullscreen if needed (e.g. after minimizing/unfocusing or modal exit)
+    ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
             const tag = e.target && e.target.tagName;
             const isInputTarget = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-            const isInsideDrawerOrModal = e.target && e.target.closest && e.target.closest('#full-list-modal, #lobby-chat-drawer, .modal-overlay, .mini-profile-overlay, .modal-window, .sf-modal');
+            const isFullListModal = e.target && e.target.closest && e.target.closest('#full-list-modal');
 
-            if (isInputTarget || (isInsideDrawerOrModal && (evtType === 'pointerdown' || evtType === 'touchstart'))) {
-                if (isMobileDevice()) {
+            if (isInputTarget || isFullListModal) {
+                if (isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
                     exitFullscreenForKeyboard();
                 }
                 return;
             }
 
-            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
-            if (isInputTarget || isInsideDrawerOrModal) return;
+            // On gateway screen, background taps do nothing
+            const pLoad = document.getElementById('page-loading');
+            if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed && !window._gatewayTransitioning) {
+                return;
+            }
 
-            attemptFullscreen();
+            if (!needsReEngage && (document.fullscreenElement || document.webkitFullscreenElement)) return;
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                needsReEngage = false;
+                return;
+            }
+
+            attemptFullscreen(false);
             needsReEngage = false;
         }, { passive: true });
     });
 
-    window.triggerMobileFullscreen = attemptFullscreen;
+    window.triggerMobileFullscreen = function(force) {
+        attemptFullscreen(force !== false);
+    };
     window.exitFullscreenForKeyboard = exitFullscreenForKeyboard;
 })();
 

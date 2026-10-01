@@ -1609,15 +1609,6 @@ function openLobbyChatDrawer() {
     const drawer = document.getElementById('lobby-chat-drawer');
     if (drawer) {
         drawer.classList.add('open');
-        // Android Chrome virtual keyboard black screen prevention
-        if (typeof window.exitFullscreenForKeyboard === 'function') {
-            window.exitFullscreenForKeyboard();
-        } else if (document.fullscreenElement || document.webkitFullscreenElement) {
-            try {
-                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
-            } catch (e) {}
-        }
         fetchLobbyState();
         setTimeout(() => {
             const chatHistory = document.getElementById('lobby-chat-history');

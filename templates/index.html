@@ -78,9 +78,8 @@
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
+            width: 100% !important;
+            height: 100% !important;
             z-index: 999999 !important;
             background-color: #0d0411 !important;
             overflow: hidden !important;
@@ -1799,8 +1798,8 @@
         </style>
 
         <!-- Loading / Gateway Page (Instantly Visible) -->
-        <div id="page-loading" class="page active" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="color: #fff; font-family: 'Inter', sans-serif;">
-            <div id="loading-gateway-container" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div id="page-loading" class="page active" style="color: #fff; font-family: 'Inter', sans-serif;">
+            <div id="loading-gateway-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div class="gateway-btn-housing" id="gateway-housing">
                     <button id="btn-enter-lobby-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); if(window.triggerMobileFullscreen) window.triggerMobileFullscreen();" onclick="if(window.handleEnterLobbyClick) window.handleEnterLobbyClick(this, event);">ENTER LOBBY</button>
                     <button id="btn-login-gateway" class="neon-gateway-btn" style="display:none;" onpointerdown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" ontouchstart="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onmousedown="if(window.triggerGatewayAudioImmediate) window.triggerGatewayAudioImmediate(); this.classList.remove('dragged-out'); this.classList.add('pressed', 'flattened');" onclick="if(window.handleLoginGatewayClick) window.handleLoginGatewayClick(this, event);">LOGIN</button>
@@ -9166,12 +9165,12 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790627000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790645000"></script>
-    <script src="/js/lobby.js?v=1790642000"></script>
-    <script src="/js/play.js?v=1790628000"></script>
+    <script src="/js/app.js?v=1790650000"></script>
+    <script src="/js/lobby.js?v=1790650000"></script>
+    <script src="/js/play.js?v=1790650000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
-    <script src="/js/tools.js?v=1790633000"></script>
+    <script src="/js/tools.js?v=1790650000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
