@@ -3260,8 +3260,8 @@ body.theme-light-brown .bottom-back-btn:focus-visible {
 }
 
 #more-random-words-btn {
-    height: 40px !important;
-    min-height: 40px !important;
+    height: 42px !important;
+    min-height: 42px !important;
     padding: 0 18px !important;
     font-size: 0.92rem !important;
     font-weight: 700 !important;
@@ -3340,6 +3340,78 @@ body.theme-gray #more-random-words-btn:active,
 body.theme-light-brown #more-random-words-btn:active {
     transform: translateY(1px) !important;
     background: #3730a3 !important;
+}
+
+/* Find & Count Tool - Action Row & Random Words Dropdown */
+.find-count-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#random-words-dict-select {
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+    .find-count-actions,
+    body.is-mobile .find-count-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .find-count-actions #more-random-words-btn,
+    body.is-mobile .find-count-actions #more-random-words-btn {
+        flex: 1 1 0 !important;
+        width: calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
+        min-width: 0 !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 6px !important;
+        font-size: clamp(0.78rem, 3.2vw, 0.88rem) !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        line-height: normal !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .find-count-actions #random-words-dict-select,
+    body.is-mobile .find-count-actions #random-words-dict-select {
+        flex: 1 1 0 !important;
+        width: calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
+        min-width: 0 !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 8px !important;
+        font-size: clamp(0.78rem, 3.2vw, 0.88rem) !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
 }
 
 /* Unified Dropdowns Across All Tools (Vertically Equal at 42px) */
