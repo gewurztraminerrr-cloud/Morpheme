@@ -2,21 +2,22 @@
 
 ## Latest Feature Commit ID
 ```
-747e8b5e9e03d49b2c3c6f4974fdbfe457f920f7
+db4432104dd21f82f281e05d0e2e2ecb5c8be009
 ```
 
 ## Start Over Point Tag
 ```
 START_OVER_POINT_OCTOBER_1
 ```
+*(Also tagged as `stable-2026-10-01`)*
 
 ## Synchronization Status
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | `747e8b5e` |
-| GitHub (main)  | ✅ Synchronized | `747e8b5e` |
-| morpheme.games | ✅ Synchronized | `747e8b5e` (HTTP 200 OK, PM2 Online) |
+| localhost      | ✅ Synchronized | `db443210` (Working tree clean) |
+| GitHub (main)  | ✅ Synchronized | `db443210` (Pushed to origin/main) |
+| morpheme.games | ✅ Synchronized | `db443210` (HTTP 200 OK, PM2 Online) |
 | App / Client   | ✅ Synchronized | Web client & backend endpoints verified |
 
 ---
@@ -54,19 +55,51 @@ START_OVER_POINT_OCTOBER_1
   - `LOCHI`: `plural of lochus (In ancient Greece, a body of infantry; in Sparta, one of the larger divisions in which able-bodied men were grouped.)`
 - Synchronized across `Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, and production `morpheme.db`.
 
+### 4. Mobile Fullscreen & Continuous Fast Navigation Hardening
+- **Permanent Fullscreen Invariants Established (`.agents/AGENTS.md`)**:
+  - Fullscreen is preserved continuously across all pages, top menu tabs (**Lobby**, **Play**, **Tools**, **Mods**, **Leaderboard**, **Settings**, **Profile**, **Forum**, **How to Play**, **Donate**), the Lobby Chat Drawer, textboxes, and dropdowns.
+  - Eliminated the recurring Android OS *"morpheme.games — to exit full screen…"* notice and the bottom 3-button system navigation bar (recents, home, back) by completely removing intrusive `exitFullscreenForKeyboard()` calls on input/textarea focus and tab switching.
+  - The Full List Modal (`openFullListModal`) in `tools.js` remains the **only** modal where `document.exitFullscreen()` is explicitly called.
+- **Gateway Screen Optimization (`#page-loading`)**:
+  - Removed competing touch event listeners (`ontouchstart`, `onpointerdown`, `onmousedown`, `onclick`) from the ENTER LOBBY button.
+  - Neutralized background taps on `#page-loading` to eliminate button twitches, double-tap jumps, and audio desynchronization.
+  - Fullscreen request executes synchronously upon pressing ENTER LOBBY / LOGIN for seamless entry into the app.
+
+### 5. Mobile Virtual Keyboard Chatbox Elevation
+- **Interactive Widget Viewport Meta**:
+  - Added `interactive-widget=resizes-content` to the viewport `<meta>` tag in `templates/index.html`.
+- **Dynamic Viewport Tracking (`window.visualViewport`)**:
+  - In `static/js/lobby.js` and `static/js/play.js`, wired `window.visualViewport` resize and scroll listeners to dynamically measure the virtual keyboard height (`window.innerHeight - visualViewport.height`).
+  - Dynamically elevates `.lobby-chat-drawer` and `.chat-panel` with `style.bottom = kbHeight + 'px'` while keyboard is open (`.keyboard-open`).
+  - Anchors the chat textbox and "Send" button directly above the keyboard, preventing the software keyboard from covering user input.
+  - Smoothly dismisses and restores layout upon blur or closing the chat drawer/panel.
+
+### 6. Expanded Mobile Chat Message Viewing Window
+- **Lobby Chat Drawer (`.lobby-chat-drawer.keyboard-open`)**:
+  - Expanded `.lobby-chat-history` `max-height` to `250px` (with responsive ceiling `min(260px, 38dvh)` and `min-height: 140px`), more than doubling previous visible message capacity so 5–7 messages are visible at once while typing.
+  - Expanded `.lobby-chat-slide-panel` `max-height` up to `min(420px, 60dvh)` and `.lobby-slide-body` to `min(390px, 56dvh)`.
+  - Tightened inner padding to dedicate maximum screen space to message history while hiding the player list during active typing.
+  - Updated scroll listeners in `lobby.js` to smoothly scroll to the latest messages at 50ms, 150ms, and 300ms as the keyboard finishes rising.
+- **Game Room Chat Panel (`.chat-panel.keyboard-open`)**:
+  - Expanded `#chat-history` `max-height` to `min(260px, calc(100dvh - 370px))` with `min-height: 140px`, allowing 6–8 chat messages to be read comfortably while typing.
+  - Expanded `.chat-panel` `max-height` up to `min(360px, calc(100dvh - 280px))`.
+  - Updated scroll listeners in `play.js` to ensure the newest chat messages are scrolled into view when the input is focused.
+
 ---
 
 ## Verification & Health Check
 
-1. **`GUTTUSES` Live Endpoint Verification**:
-   - `GET https://morpheme.games/api/definition?word=GUTTUSES`
-   - Returns: `"plural of guttus (A type of ancient Greek and Roman vessel designed for pouring liquids.)"`
-2. **`LOCHI` Live Endpoint Verification**:
-   - `GET https://morpheme.games/api/definition?word=LOCHI`
-   - Returns: `"plural of lochus (In ancient Greece, a body of infantry; in Sparta, one of the larger divisions in which able-bodied men were grouped.)"`
-3. **Plural Resolution Engine**:
-   - Tested across Latin/Greek and irregular plural forms (`ALUMNI` → `ALUMNUS`, `CACTI` → `CACTUS`, `LARVAE` → `LARVA`, `CRISES` → `CRISIS`, `VERTICES` → `VERTEX`).
-4. **Room States & Server Health**:
-   - `GET https://morpheme.games/api/lobby-stats` → HTTP 200 OK.
-   - `GET https://morpheme.games/api/room/pub_v2_accumulative_5x7_86400/state` → HTTP 200 OK.
-   - PM2 Process `morpheme` online and responsive.
+1. **Production Health & Endpoints**:
+   - `GET https://morpheme.games/` → `HTTP/1.1 200 OK` (Content-Length: 705167 bytes).
+   - PM2 Process `0` (`morpheme`) online, active, and responsive.
+2. **Asset Cache Busters**:
+   - `lobby.css`: `v=1790680000` (live on morpheme.games)
+   - `play.css`: `v=1790680000` (live on morpheme.games)
+   - `lobby.js`: `v=1790680000` (live on morpheme.games)
+   - `play.js`: `v=1790680000` (live on morpheme.games)
+   - Viewport meta: `interactive-widget=resizes-content` (live on morpheme.games)
+3. **Definitions Engine Verification**:
+   - `GET https://morpheme.games/api/definition?word=GUTTUSES` → returns `"plural of guttus (A type of ancient Greek and Roman vessel designed for pouring liquids.)"`
+   - `GET https://morpheme.games/api/definition?word=LOCHI` → returns `"plural of lochus (In ancient Greece, a body of infantry; in Sparta, one of the larger divisions in which able-bodied men were grouped.)"`
+4. **Git & Production Synchronization**:
+   - All code synchronized across `localhost`, `github.com/gewurztraminerrr-cloud/Morpheme`, and `morpheme.games`.
