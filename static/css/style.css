@@ -54,6 +54,17 @@ body.theme-white {
     --btn-text: #fff;
 }
 
+body.theme-light-light-gray {
+    --bg-primary: #ececec;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #222;
+    --text-primary-rgb: 34, 34, 34;
+    --accent-color: #444;
+    --accent-gradient: linear-gradient(135deg, #bbb 0%, #eee 100%);
+    --btn-text: #fff;
+}
+
 body.theme-light-gray {
     --bg-primary: #d8d8d8;
     --bg-panel: rgba(0, 0, 0, 0.08);
@@ -83,6 +94,15 @@ body.theme-dark-gray {
     --text-primary-rgb: 255, 255, 255;
 }
 
+body.theme-light-light-red {
+    --bg-primary: #ffe5e5;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #440000;
+    --text-primary-rgb: 68, 0, 0;
+    --accent-color: #cc0000;
+}
+
 body.theme-light-red {
     --bg-primary: #ffcccc;
     --bg-panel: rgba(0, 0, 0, 0.08);
@@ -108,6 +128,15 @@ body.theme-dark-red {
     --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
+}
+
+body.theme-light-light-orange {
+    --bg-primary: #fff0db;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #442200;
+    --text-primary-rgb: 68, 34, 0;
+    --accent-color: #cc6600;
 }
 
 body.theme-light-orange {
@@ -137,6 +166,15 @@ body.theme-dark-orange {
     --text-primary-rgb: 255, 255, 255;
 }
 
+body.theme-light-light-yellow {
+    --bg-primary: #ffffe5;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #444400;
+    --text-primary-rgb: 68, 68, 0;
+    --accent-color: #8b8b00;
+}
+
 body.theme-light-yellow {
     --bg-primary: #ffffcc;
     --bg-panel: rgba(0, 0, 0, 0.08);
@@ -162,6 +200,15 @@ body.theme-dark-yellow {
     --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
+}
+
+body.theme-light-light-green {
+    --bg-primary: #e6ffe6;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #004400;
+    --text-primary-rgb: 0, 68, 0;
+    --accent-color: #008000;
 }
 
 body.theme-light-green {
@@ -191,6 +238,15 @@ body.theme-dark-green {
     --text-primary-rgb: 255, 255, 255;
 }
 
+body.theme-light-light-blue {
+    --bg-primary: #e5f6ff;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #002244;
+    --text-primary-rgb: 0, 34, 68;
+    --accent-color: #0066cc;
+}
+
 body.theme-light-blue {
     --bg-primary: #cceeff;
     --bg-panel: rgba(0, 0, 0, 0.08);
@@ -216,6 +272,15 @@ body.theme-dark-blue {
     --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
+}
+
+body.theme-light-light-purple {
+    --bg-primary: #f9f2fa;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #4a148c;
+    --text-primary-rgb: 74, 20, 140;
+    --accent-color: #7b1fa2;
 }
 
 body.theme-light-purple {
@@ -245,6 +310,15 @@ body.theme-dark-purple {
     --text-primary-rgb: 255, 255, 255;
 }
 
+body.theme-light-light-pink {
+    --bg-primary: #fef0f5;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #880e4f;
+    --text-primary-rgb: 136, 14, 79;
+    --accent-color: #c2185b;
+}
+
 body.theme-light-pink {
     --bg-primary: #fce4ec;
     --bg-panel: rgba(0, 0, 0, 0.08);
@@ -270,6 +344,15 @@ body.theme-dark-pink {
     --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
+}
+
+body.theme-light-light-brown {
+    --bg-primary: #f7efe5;
+    --bg-panel: rgba(0, 0, 0, 0.08);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #3e2723;
+    --text-primary-rgb: 62, 39, 35;
+    --accent-color: #795548;
 }
 
 body.theme-light-brown {
@@ -6345,6 +6428,12 @@ body .tab-btn.active {
     box-shadow: 0 0 16px #ffffff, 0 0 6px rgba(255, 255, 255, 0.95) !important;
     border: 3px solid #ffffff !important;
     z-index: 10 !important;
+}
+
+[class*="theme-light-"] .theme-btn.active,
+body.theme-white .theme-btn.active {
+    box-shadow: 0 0 16px rgba(0, 0, 0, 0.45), 0 0 6px rgba(0, 0, 0, 0.75) !important;
+    border: 3px solid #111111 !important;
 }
 
 /* Tournament Page Styles */
