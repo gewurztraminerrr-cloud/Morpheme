@@ -5742,12 +5742,12 @@
                                             <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; justify-content: center; margin-top: 16px;">
+                                    <div style="display: flex; justify-content: center; margin-top: 16px; margin-bottom: 16px;">
                                         <button id="btn-reset-board-sizes" class="mini-action-btn secondary" style="padding: 7px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 8px;">Set to Default Sizes</button>
                                     </div>
                                 </div>
 
-                                <div class="preview-board-container" style="margin-top: 25px;">
+                                <div class="preview-board-container" style="margin-top: 0;">
                                     <div class="preview-board" id="preview-board">
                                         <div class="board-cell">A</div>
                                         <div class="board-cell">B</div>
@@ -6013,10 +6013,12 @@
                                         <div class="setting-title">Synesthesia</div>
                                         <div class="setting-desc">Tailor the color of each individual letter on the game board.</div>
                                     </div>
+                                </div>
+                                <div style="display: flex; justify-content: flex-start; margin-top: 10px; margin-bottom: 8px;">
                                     <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
                                         style="padding: 6px 12px; font-size: 0.75rem;">Reset All to Black</button>
                                 </div>
-                                <div id="synesthesia-letters-grid" style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
+                                <div id="synesthesia-letters-grid" style="margin-top: 0; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
                                     <!-- Letters A-Z injected by settings.js -->
                                 </div>
 
@@ -9258,7 +9260,7 @@
                                         <strong style="color: #38bdf8;">📱 For mobile devices:</strong> Press down, drag, and let go to submit a word.
                                     </div>
                                     <div>
-                                        <strong style="color: #a78bfa;">💻 For laptops and desktops:</strong> Either mouse by pressing mouse on word, dragging, and letting go to submit words OR type words in the textbox.
+                                        <strong style="color: #a78bfa;">💻 For laptops and desktops:</strong> Either mouse by clicking mouse on letter, dragging, and letting go to submit words OR type words into the textbox.
                                     </div>
                                 </div>
                             </div>
@@ -9335,7 +9337,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1790840000"></script>
+    <script src="/js/settings.js?v=1790900000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790870000"></script>
     <script src="/js/lobby.js?v=1790890000"></script>
