@@ -10728,17 +10728,18 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)) !important;
     gap: 6px !important;
+    margin-top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    padding: 4px 8px 8px 8px !important;
+    padding: 1px 8px 8px 8px !important;
 }
 
 #setting-tab-appearance .synesthesia-unit {
     width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    padding: 5px 2px 7px 2px !important;
+    padding: 2px 2px 5px 2px !important;
 }
 
 /* =========================================================
@@ -10845,10 +10846,11 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
         gap: 12px !important;
+        margin-top: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        padding: 4px 12px 10px 12px !important;
+        padding: 1px 12px 10px 12px !important;
     }
 }
 
@@ -11330,17 +11332,18 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important;
         gap: 6px !important;
+        margin-top: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        padding: 4px 6px 6px 6px !important;
+        padding: 1px 6px 6px 6px !important;
     }
     #page-settings .synesthesia-unit {
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        padding: 4px 2px 6px 2px !important;
+        padding: 2px 2px 5px 2px !important;
     }
     #page-settings .settings-preview-box {
         width: 100% !important;
@@ -11589,17 +11592,18 @@ body.is-mobile #page-settings #synesthesia-letters-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)) !important;
     gap: 6px !important;
+    margin-top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    padding: 4px 6px 6px 6px !important;
+    padding: 1px 6px 6px 6px !important;
 }
 body.is-mobile #page-settings .synesthesia-unit {
     width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    padding: 4px 2px 6px 2px !important;
+    padding: 2px 2px 5px 2px !important;
 }
 body.is-mobile #page-settings .theme-selector-grid {
     display: grid !important;
