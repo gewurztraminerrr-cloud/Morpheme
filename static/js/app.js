@@ -2706,9 +2706,10 @@ async function handleLogout() {
     try {
         console.info('[Auth] Logout initiated (instant local purge)...');
 
-        // Preserve global "read" states (Notices, Forum markers) across login sessions
+        // Preserve global "read" states (Notices, Forum markers, Lobby Guide Dismissal) across login sessions
         const noticeId = localStorage.getItem('morpheme_read_notice_id');
         const forumViewed = localStorage.getItem('forum_last_viewed');
+        const lobbyGuideDismissed = localStorage.getItem('morpheme_lobby_guide_dismissed');
 
         // Clear session and auth data immediately
         localStorage.clear();
@@ -2719,6 +2720,10 @@ async function handleLogout() {
         // Restore non-sensitive global markers
         if (noticeId) localStorage.setItem('morpheme_read_notice_id', noticeId);
         if (forumViewed) localStorage.setItem('forum_last_viewed', forumViewed);
+        if (lobbyGuideDismissed) localStorage.setItem('morpheme_lobby_guide_dismissed', lobbyGuideDismissed);
+        if (typeof window.initLobbyGuideState === 'function') {
+            window.initLobbyGuideState();
+        }
         
         // Reset settings state so logged out user's settings/colors never bleed into next user or login screen
         if (typeof window.resetSettingsToDefault === 'function') {

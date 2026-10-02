@@ -100,6 +100,16 @@ function debounce(func, wait) {
 
     // 2. Apply Settings to UI and State
     function applySettings(settings) {
+        // Lobby Guide Dismissal State
+        if (settings && settings.lobby_guide_dismissed !== undefined) {
+            try {
+                localStorage.setItem('morpheme_lobby_guide_dismissed', settings.lobby_guide_dismissed === 'true' ? 'true' : 'false');
+                if (typeof window.initLobbyGuideState === 'function') {
+                    window.initLobbyGuideState();
+                }
+            } catch (e) {}
+        }
+
         // Dimension Specific Board Sizes
         if (settings.board_sizes) {
             let sizes = settings.board_sizes;

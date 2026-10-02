@@ -2325,8 +2325,18 @@ function closeLobbyGuideModal(permanentlyDismiss) {
     try {
         if (permanentlyDismiss) {
             localStorage.setItem('morpheme_lobby_guide_dismissed', 'true');
+            fetch('/api/save_setting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'lobby_guide_dismissed', value: 'true' })
+            }).catch(() => {});
         } else {
             localStorage.setItem('morpheme_lobby_guide_dismissed', 'false');
+            fetch('/api/save_setting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'lobby_guide_dismissed', value: 'false' })
+            }).catch(() => {});
         }
     } catch (e) {
         console.error('Error saving lobby guide state:', e);
