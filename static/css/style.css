@@ -58,10 +58,10 @@ body.theme-light-gray {
     --bg-primary: #d8d8d8;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
-    --accent-color: #333;
-    --accent-gradient: linear-gradient(135deg, #333 0%, #666 100%);
+    --text-primary: #222;
+    --text-primary-rgb: 34, 34, 34;
+    --accent-color: #444;
+    --accent-gradient: linear-gradient(135deg, #bbb 0%, #eee 100%);
     --btn-text: #fff;
 }
 
@@ -87,8 +87,8 @@ body.theme-light-red {
     --bg-primary: #ffcccc;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #440000;
+    --text-primary-rgb: 68, 0, 0;
     --accent-color: #cc0000;
 }
 
@@ -114,8 +114,8 @@ body.theme-light-orange {
     --bg-primary: #ffe0b3;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #442200;
+    --text-primary-rgb: 68, 34, 0;
     --accent-color: #cc6600;
 }
 
@@ -141,8 +141,8 @@ body.theme-light-yellow {
     --bg-primary: #ffffcc;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #444400;
+    --text-primary-rgb: 68, 68, 0;
     --accent-color: #8b8b00;
 }
 
@@ -168,8 +168,8 @@ body.theme-light-green {
     --bg-primary: #ccffcc;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #004400;
+    --text-primary-rgb: 0, 68, 0;
     --accent-color: #008000;
 }
 
@@ -195,8 +195,8 @@ body.theme-light-blue {
     --bg-primary: #cceeff;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #002244;
+    --text-primary-rgb: 0, 34, 68;
     --accent-color: #0066cc;
 }
 
@@ -222,8 +222,8 @@ body.theme-light-purple {
     --bg-primary: #f3e5f5;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #4a148c;
+    --text-primary-rgb: 74, 20, 140;
     --accent-color: #7b1fa2;
 }
 
@@ -249,8 +249,8 @@ body.theme-light-pink {
     --bg-primary: #fce4ec;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #880e4f;
+    --text-primary-rgb: 136, 14, 79;
     --accent-color: #c2185b;
 }
 
@@ -276,8 +276,8 @@ body.theme-light-brown {
     --bg-primary: #efe0cc;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
-    --text-primary: #111;
-    --text-primary-rgb: 0, 0, 0;
+    --text-primary: #3e2723;
+    --text-primary-rgb: 62, 39, 35;
     --accent-color: #795548;
 }
 
@@ -345,10 +345,17 @@ select option {
     color: #111111 !important;
 }
 
-[class*="theme-white"] .achievement-card,
-[class*="theme-light-"] .achievement-card {
+[class*="theme-white"] .achievement-card {
     background: #ffffff !important;
     color: #111 !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4) !important;
+}
+
+[class*="theme-light-"] .achievement-card {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4) !important;
 }
 
@@ -723,12 +730,19 @@ select option {
 }
 
 [class*="theme-white"] .tool-header p,
-[class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box,
-[class*="theme-light-"] .tool-header p,
-[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box {
+[class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #475569 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[class*="theme-light-"] .tool-header p,
+[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -9458,10 +9472,16 @@ body.theme-white #sub-input::placeholder,
 }
 
 body.theme-white #tool-subanagrams .subanagrams-game-area,
-[class*="theme-white"] #tool-subanagrams .subanagrams-game-area,
-[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area {
+[class*="theme-white"] #tool-subanagrams .subanagrams-game-area {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
 }
 
@@ -9539,10 +9559,16 @@ body.theme-white #sub-submit-word-btn,
 }
 
 body.theme-white #sub-results-container,
-[class*="theme-white"] #sub-results-container,
-[class*="theme-light-"] #sub-results-container {
+[class*="theme-white"] #sub-results-container {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+[class*="theme-light-"] #sub-results-container {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
 

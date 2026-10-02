@@ -12794,20 +12794,19 @@ body.theme-light-pink #history-review-overlay {
 
 /* Main Modal Card */
 [class*="theme-white"] .history-review-modal,
-[class*="theme-light-"] .history-review-modal,
-body.theme-white .history-review-modal,
-body.theme-light-gray .history-review-modal,
-body.theme-light-red .history-review-modal,
-body.theme-light-orange .history-review-modal,
-body.theme-light-yellow .history-review-modal,
-body.theme-light-green .history-review-modal,
-body.theme-light-blue .history-review-modal,
-body.theme-light-purple .history-review-modal,
-body.theme-light-pink .history-review-modal {
+body.theme-white .history-review-modal {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] .history-review-modal {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Modal Header */

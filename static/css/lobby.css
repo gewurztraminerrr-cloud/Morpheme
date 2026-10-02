@@ -2117,12 +2117,19 @@ body.theme-white .lobby-journey-sticky-header {
 /* ============================================================
    LIGHT THEME ADAPTIVE LOBBY CHAT & PLAYERS DRAWER
    ============================================================ */
-[class*="theme-white"] .lobby-chat-toggle-btn,
-[class*="theme-light-"] .lobby-chat-toggle-btn {
+[class*="theme-white"] .lobby-chat-toggle-btn {
     background: #ffffff !important;
     border: 1.5px solid rgba(0, 0, 0, 0.18) !important;
     color: #111111 !important;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+}
+
+[class*="theme-light-"] .lobby-chat-toggle-btn {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1) !important;
 }
 
 [class*="theme-white"] .lobby-chat-toggle-btn:hover,
@@ -2160,13 +2167,21 @@ body.theme-white .lobby-journey-sticky-header {
 }
 
 /* Panel Body & Halves for Light Themes */
-[class*="theme-white"] .lobby-chat-slide-panel,
-[class*="theme-light-"] .lobby-chat-slide-panel {
+[class*="theme-white"] .lobby-chat-slide-panel {
     background: #ffffff !important;
     border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
     border-bottom: none !important;
     box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 0, 0, 0.05) !important;
     color: #111111 !important;
+}
+
+[class*="theme-light-"] .lobby-chat-slide-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    border-bottom: none !important;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .lobby-chat-slide-panel *,
