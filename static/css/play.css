@@ -979,7 +979,12 @@ body.is-subanagrams #game-color-bar,
 body.is-subanagrams .global-rating-bar,
 body.is-subanagrams .left-panel-container #game-color-bar,
 body.is-subanagrams.is-desktop .left-panel-container #game-color-bar,
-body.is-subanagrams.is-mobile .left-panel-container #game-color-bar {
+body.is-subanagrams.is-mobile .left-panel-container #game-color-bar,
+body.is-tournament-round #game-color-bar,
+body.is-tournament-round .global-rating-bar,
+body.is-tournament-round .left-panel-container #game-color-bar,
+body.is-tournament-round.is-desktop .left-panel-container #game-color-bar,
+body.is-tournament-round.is-mobile .left-panel-container #game-color-bar {
     display: none !important;
 }
 
@@ -13605,8 +13610,15 @@ body.theme-gray .cube-replay-face-label {
     animation: jumpTargetGlow 1.4s ease-out !important;
 }
 
-/* Hide player filter buttons and color chart during Tournament rounds */
+/* Hide player filter buttons, color chart, and Players title during Tournament rounds */
 body.is-tournament-round #game-color-bar,
+body.is-tournament-round .global-rating-bar,
+body.is-tournament-round .left-panel-container #game-color-bar,
+body.is-tournament-round.is-desktop .left-panel-container #game-color-bar,
+body.is-tournament-round.is-mobile .left-panel-container #game-color-bar,
+body.is-tournament-round #players-heading,
+body.is-tournament-round .players-panel h3,
+body.is-tournament-round .left-panel-container #players-heading,
 body.is-tournament-round .player-actions-row,
 body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,

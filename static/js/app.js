@@ -2234,11 +2234,13 @@ window.showPage = showPage;
     }
 
     // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds and subanagrams)
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const isTournament = (pageId === 'page-play') && (window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
+    document.body.classList.toggle('is-tournament-round', !!isTournament);
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const colorBar = document.getElementById('game-color-bar');
     if (colorBar) {
         if (pageId === 'page-play' && !isTournament && !isSubanagrams) {
+            colorBar.style.removeProperty('display');
             colorBar.style.display = 'flex';
             setTimeout(() => {
                 if (typeof adjustPlayHeaderForDevice === 'function') {
@@ -2246,7 +2248,15 @@ window.showPage = showPage;
                 }
             }, 50);
         } else {
-            colorBar.style.display = 'none';
+            colorBar.style.setProperty('display', 'none', 'important');
+        }
+    }
+    const headingEl = document.getElementById('players-heading');
+    if (headingEl) {
+        if (isTournament) {
+            headingEl.style.setProperty('display', 'none', 'important');
+        } else {
+            headingEl.style.removeProperty('display');
         }
     }
 
@@ -3435,12 +3445,12 @@ window.showConfirmModal = function (title, message, onConfirm) {
 };
 
 function renderGameColorBar() {
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
     if (isTournament || isSubanagrams) {
-        bar.style.display = 'none';
+        bar.style.setProperty('display', 'none', 'important');
         return;
     }
     

@@ -174,11 +174,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790870000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790970000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790680000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790870000">
+    <link rel="stylesheet" href="/css/style.css?v=1790970000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790680000">
-    <link rel="stylesheet" href="/css/play.css?v=1790780000">
+    <link rel="stylesheet" href="/css/play.css?v=1790970000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
     <link rel="stylesheet" href="/css/forum.css?v=1790632000">
     <link rel="stylesheet" href="/css/donate.css?v=1789324000">
@@ -9463,9 +9463,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790910000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790870000"></script>
+    <script src="/js/app.js?v=1790970000"></script>
     <script src="/js/lobby.js?v=1790920000"></script>
-    <script src="/js/play.js?v=1790680000"></script>
+    <script src="/js/play.js?v=1790970000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
     <script src="/js/tools.js?v=1790660000"></script>
@@ -9617,9 +9617,14 @@
                 }
             }
 
+            const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
             const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
-            if (colorBar && isSubanagrams) {
-                colorBar.style.display = 'none';
+            if (colorBar && (isTournament || isSubanagrams)) {
+                colorBar.style.setProperty('display', 'none', 'important');
+            }
+            const headingEl = document.getElementById('players-heading');
+            if (headingEl && isTournament) {
+                headingEl.style.setProperty('display', 'none', 'important');
             }
         }
 

@@ -3467,16 +3467,17 @@ function renderPlayers(players, currentUser = null, state = null) {
     const findFriendsBtn = document.getElementById('find-friends-btn');
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active');
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
     const playerActionsRow = document.querySelector('.player-actions-row');
 
     if (isTournament) {
-        if (headingEl) headingEl.textContent = `Players`;
-        if (playerActionsRow) playerActionsRow.style.display = 'none';
-        if (findMeBtn) findMeBtn.style.display = 'none';
-        if (findFriendsBtn) findFriendsBtn.style.display = 'none';
-        if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
+        if (headingEl) headingEl.style.setProperty('display', 'none', 'important');
+        if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
+        if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
+        if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
+        if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
     } else if (state && state.game_type === 'accumulative') {
+        if (headingEl) headingEl.style.removeProperty('display');
         let activePlayerCount = 0;
         if (state.state === 'intermission' || state.intermission === true) {
             // Intermission: Count only players who actively participated (did not DNP)
@@ -3498,6 +3499,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
         if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
     } else {
+        if (headingEl) headingEl.style.removeProperty('display');
         const playerCount = players ? players.length : 0;
         if (headingEl) headingEl.textContent = playerCount > 0 ? `Players [${playerCount}]` : `Players`;
         if (playerActionsRow) playerActionsRow.style.display = 'none';
@@ -8809,8 +8811,12 @@ async function leaveCurrentRoom() {
     window._displayedParams = null;
     document.body.classList.remove('is-subanagrams');
     const colorBar = document.getElementById('game-color-bar');
-    if (colorBar && !window.isTournamentPlay) {
-        colorBar.style.display = '';
+    if (colorBar && !window.isTournamentPlay && !document.body.classList.contains('is-tournament-round')) {
+        colorBar.style.removeProperty('display');
+    }
+    const headingEl = document.getElementById('players-heading');
+    if (headingEl && !window.isTournamentPlay && !document.body.classList.contains('is-tournament-round')) {
+        headingEl.style.removeProperty('display');
     }
     
     const playBtn = document.getElementById('play-btn');
@@ -9708,18 +9714,20 @@ async function initTournamentPlay() {
     // Stop any standard polling
     stopPolling();
 
-    // Tournament mode: mark body and hide player filters & color chart
+    // Tournament mode: mark body and hide player filters, color chart & Players title
     document.body.classList.add('is-tournament-round');
     const colorBar = document.getElementById('game-color-bar');
-    if (colorBar) colorBar.style.display = 'none';
+    if (colorBar) colorBar.style.setProperty('display', 'none', 'important');
+    const headingEl = document.getElementById('players-heading');
+    if (headingEl) headingEl.style.setProperty('display', 'none', 'important');
     const playerActionsRow = document.querySelector('.player-actions-row');
-    if (playerActionsRow) playerActionsRow.style.display = 'none';
+    if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
     const findMeBtn = document.getElementById('find-me-btn');
-    if (findMeBtn) findMeBtn.style.display = 'none';
+    if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
     const findFriendsBtn = document.getElementById('find-friends-btn');
-    if (findFriendsBtn) findFriendsBtn.style.display = 'none';
+    if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
-    if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
+    if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
 
     // Clear UI
     resetChat();
@@ -10153,8 +10161,12 @@ function exitTournamentPlay(targetPage = 'tournaments') {
     window.isTournamentPlay = false;
     document.body.classList.remove('is-tournament-round');
     document.querySelectorAll('.low-time-warning').forEach(el => el.classList.remove('low-time-warning'));
+    const colorBar = document.getElementById('game-color-bar');
+    if (colorBar) colorBar.style.removeProperty('display');
+    const headingEl = document.getElementById('players-heading');
+    if (headingEl) headingEl.style.removeProperty('display');
     const playerActionsRow = document.querySelector('.player-actions-row');
-    if (playerActionsRow) playerActionsRow.style.display = '';
+    if (playerActionsRow) playerActionsRow.style.removeProperty('display');
     isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
     isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();

@@ -10615,8 +10615,15 @@ body.theme-light-brown .t-versus-opponent-name {
     }
 }
 
-/* Hide player filter buttons and color chart during Tournament rounds & Subanagrams */
+/* Hide player filter buttons, color chart, and Players title during Tournament rounds & Subanagrams */
 body.is-tournament-round #game-color-bar,
+body.is-tournament-round .global-rating-bar,
+body.is-tournament-round .left-panel-container #game-color-bar,
+body.is-tournament-round.is-desktop .left-panel-container #game-color-bar,
+body.is-tournament-round.is-mobile .left-panel-container #game-color-bar,
+body.is-tournament-round #players-heading,
+body.is-tournament-round .players-panel h3,
+body.is-tournament-round .left-panel-container #players-heading,
 body.is-subanagrams #game-color-bar,
 body.is-subanagrams .global-rating-bar,
 body.is-subanagrams .left-panel-container #game-color-bar,
