@@ -12027,6 +12027,20 @@ body.is-desktop .play-header {
     flex-shrink: 0 !important;
 }
 
+[class*="theme-white"] .play-header:not(.low-time-warning),
+body.theme-white .play-header:not(.low-time-warning),
+body.is-desktop[class*="theme-white"] .play-header:not(.low-time-warning),
+body.is-desktop.theme-white .play-header:not(.low-time-warning),
+[class*="theme-light-"] .play-header:not(.low-time-warning),
+body[class*="theme-light-"] .play-header:not(.low-time-warning),
+body.theme-yellow .play-header:not(.low-time-warning),
+body.theme-pink .play-header:not(.low-time-warning),
+body.theme-orange .play-header:not(.low-time-warning),
+body.theme-gray .play-header:not(.low-time-warning),
+body.theme-light-brown .play-header:not(.low-time-warning) {
+    box-shadow: none !important;
+}
+
 body.is-desktop .header-title-group {
     display: flex !important;
     flex-direction: column !important;
@@ -13530,6 +13544,19 @@ body.theme-gray .cube-replay-face-label {
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .definitions-panel,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .spectator-panel {
         background: rgba(45, 45, 75, 0.82) !important;
+    }
+
+    /* White & Light Theme Layouts: Remove glowing effect / box shadow around header in game rooms on desktops & laptops */
+    [class*="theme-white"] #page-play .play-header:not(.low-time-warning),
+    body.theme-white #page-play .play-header:not(.low-time-warning),
+    [class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
+    body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
+    body.theme-yellow #page-play .play-header:not(.low-time-warning),
+    body.theme-pink #page-play .play-header:not(.low-time-warning),
+    body.theme-orange #page-play .play-header:not(.low-time-warning),
+    body.theme-gray #page-play .play-header:not(.low-time-warning),
+    body.theme-light-brown #page-play .play-header:not(.low-time-warning) {
+        box-shadow: none !important;
     }
 
     .board-panel .timer-display {

@@ -11020,4 +11020,19 @@ body.theme-light-brown .full-list-item:hover .new-word-date {
     color: #1e293b !important;
 }
 
+/* White & Light Theme Layouts: Remove glowing effect / box shadow around header in game rooms on desktops & laptops */
+[class*="theme-white"] .play-header:not(.low-time-warning),
+body.theme-white .play-header:not(.low-time-warning),
+body.is-desktop[class*="theme-white"] .play-header:not(.low-time-warning),
+body.is-desktop.theme-white .play-header:not(.low-time-warning),
+[class*="theme-light-"] .play-header:not(.low-time-warning),
+body[class*="theme-light-"] .play-header:not(.low-time-warning),
+body.theme-yellow .play-header:not(.low-time-warning),
+body.theme-pink .play-header:not(.low-time-warning),
+body.theme-orange .play-header:not(.low-time-warning),
+body.theme-gray .play-header:not(.low-time-warning),
+body.theme-light-brown .play-header:not(.low-time-warning) {
+    box-shadow: none !important;
+}
+
 
