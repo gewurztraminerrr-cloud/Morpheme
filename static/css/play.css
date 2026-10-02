@@ -13337,7 +13337,9 @@ body.is-tournament-round .left-panel-container #players-heading,
 body.is-tournament-round .player-actions-row,
 body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,
-body.is-tournament-round #show-everyone-btn {
+body.is-tournament-round #show-everyone-btn,
+body.is-tournament-round .chat-panel,
+body.is-tournament-round .left-panel-container .chat-panel {
     display: none !important;
 }
 

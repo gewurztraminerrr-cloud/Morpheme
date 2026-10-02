@@ -9742,6 +9742,8 @@ async function initTournamentPlay() {
     if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
     if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
+    const chatPanel = document.querySelector('.chat-panel');
+    if (chatPanel) chatPanel.style.setProperty('display', 'none', 'important');
 
     // Clear UI
     resetChat();
@@ -10181,6 +10183,8 @@ function exitTournamentPlay(targetPage = 'tournaments') {
     if (headingEl) headingEl.style.removeProperty('display');
     const playerActionsRow = document.querySelector('.player-actions-row');
     if (playerActionsRow) playerActionsRow.style.removeProperty('display');
+    const chatPanel = document.querySelector('.chat-panel');
+    if (chatPanel) chatPanel.style.removeProperty('display');
     isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
     isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();

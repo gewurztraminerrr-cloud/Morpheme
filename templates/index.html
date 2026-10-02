@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791060000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791060000">
     <link rel="stylesheet" href="/css/lobby.css?v=1791060000">
-    <link rel="stylesheet" href="/css/play.css?v=1791060000">
+    <link rel="stylesheet" href="/css/play.css?v=1791070000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791060000">
     <link rel="stylesheet" href="/css/forum.css?v=1791060000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -9431,7 +9431,7 @@
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1791010000"></script>
     <script src="/js/lobby.js?v=1790920000"></script>
-    <script src="/js/play.js?v=1791000000"></script>
+    <script src="/js/play.js?v=1791070000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
     <script src="/js/tools.js?v=1790660000"></script>
@@ -9591,6 +9591,14 @@
             const headingEl = document.getElementById('players-heading');
             if (headingEl && isTournament) {
                 headingEl.style.setProperty('display', 'none', 'important');
+            }
+            const chatPanel = document.querySelector('.chat-panel');
+            if (chatPanel) {
+                if (isTournament) {
+                    chatPanel.style.setProperty('display', 'none', 'important');
+                } else if (!isTournament && !document.body.classList.contains('is-tournament-round')) {
+                    chatPanel.style.removeProperty('display');
+                }
             }
         }
 
