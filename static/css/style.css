@@ -1034,6 +1034,13 @@ body {
     animation: rating-flash-black 1.2s ease-in-out infinite;
 }
 
+.color-bar-segment.user-rating-segment.flash-white,
+.color-bar-segment.user-rating-segment-white {
+    position: relative;
+    z-index: 5;
+    animation: rating-flash-white 1.2s ease-in-out infinite;
+}
+
 @keyframes rating-flash-black {
     0%, 100% {
         filter: brightness(1);
@@ -1042,6 +1049,19 @@ body {
     50% {
         filter: brightness(0);
         -webkit-filter: brightness(0);
+    }
+}
+
+@keyframes rating-flash-white {
+    0%, 100% {
+        box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0);
+        filter: brightness(1);
+        -webkit-filter: brightness(1);
+    }
+    50% {
+        box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 1), 0 0 8px rgba(255, 255, 255, 0.95);
+        filter: brightness(1.8);
+        -webkit-filter: brightness(1.8);
     }
 }
 

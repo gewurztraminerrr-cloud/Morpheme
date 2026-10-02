@@ -3518,15 +3518,25 @@ window.updateUserRatingHighlight = function(rating) {
     if (!bar) return;
 
     const segments = bar.querySelectorAll('.color-bar-segment');
-    segments.forEach(s => s.classList.remove('user-rating-segment'));
+    segments.forEach(s => {
+        s.classList.remove('user-rating-segment');
+        s.classList.remove('flash-white');
+        s.classList.remove('user-rating-segment-white');
+    });
 
-    if (rating === undefined || rating === null || rating <= 0) return;
+    const numRating = Number(rating);
+    if (isNaN(numRating) || numRating <= 0) return;
 
     // Find the range index that matches the user's rating
-    const rangeIndex = RATING_RANGES.findIndex(r => rating >= r.min && rating <= r.max);
+    const rangeIndex = RATING_RANGES.findIndex(r => numRating >= r.min && numRating <= r.max);
     
     if (rangeIndex !== -1 && segments[rangeIndex]) {
         segments[rangeIndex].classList.add('user-rating-segment');
+        // When rating is high (2000+), flash white so the user can clearly see where they stand
+        if (numRating >= 2000) {
+            segments[rangeIndex].classList.add('flash-white');
+            segments[rangeIndex].classList.add('user-rating-segment-white');
+        }
     }
 }
 
