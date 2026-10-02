@@ -838,23 +838,29 @@ select option {
 }
 
 /* Profile Visibility for Light Themes */
-[class*="theme-white"] .profile-card.premium {
+[class*="theme-white"] .profile-card.premium,
+[class*="theme-white"] .mini-profile-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
+    color: #111111 !important;
 }
 
-[class*="theme-light-"] .profile-card.premium {
+[class*="theme-light-"] .profile-card.premium,
+[class*="theme-light-"] .mini-profile-card {
     background: var(--bg-primary) !important;
     background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
     border: 1px solid var(--card-border) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Ensure text is dark and readable on light premium cards */
 [class*="theme-white"] .profile-card.premium *,
-[class*="theme-light-"] .profile-card.premium * {
-    color: #222 !important;
+[class*="theme-white"] .mini-profile-card *,
+[class*="theme-light-"] .profile-card.premium *,
+[class*="theme-light-"] .mini-profile-card * {
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .stat-num,
@@ -878,9 +884,22 @@ select option {
 }
 
 [class*="theme-white"] .meta-item,
-[class*="theme-light-"] .meta-item {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.08);
+[class*="theme-light-"] .meta-item,
+[class*="theme-white"] .stat-box,
+[class*="theme-light-"] .stat-box,
+[class*="theme-white"] .profile-quote-box,
+[class*="theme-light-"] .profile-quote-box,
+[class*="theme-white"] .profile-description-minimal,
+[class*="theme-light-"] .profile-description-minimal {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: var(--card-border, rgba(0, 0, 0, 0.08)) !important;
+}
+
+[class*="theme-white"] .profile-avatar.large,
+[class*="theme-light-"] .profile-avatar.large {
+    background: var(--bg-primary) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .meta-text,
@@ -1148,10 +1167,24 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    /* Reduced padding */
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--bg-primary);
+    background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
     backdrop-filter: blur(10px);
     touch-action: none;
+}
+
+[class*="theme-light-"] .header,
+body[class*="theme-light-"] .header {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border-bottom: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+}
+
+[class*="theme-white"] .header,
+body.theme-white .header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 
 .logo {
@@ -1753,8 +1786,9 @@ body {
 }
 
 .profile-card.premium {
-    background: linear-gradient(135deg, rgba(30, 30, 45, 0.95), rgba(15, 15, 25, 0.98));
-    border: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    background: var(--bg-primary);
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.28) 100%);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
     border-radius: 24px;
     padding: 40px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(var(--text-primary-rgb), 0.02);
@@ -2739,8 +2773,9 @@ body {
 }
 
 .mini-profile-card {
-    background: var(--toast-bg);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    background: var(--bg-primary);
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.28) 100%);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(var(--text-primary-rgb), 0.05);
     border-radius: 24px;
     width: 880px;

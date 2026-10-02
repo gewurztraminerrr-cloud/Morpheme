@@ -174,16 +174,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790976000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1790976000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790976000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1790976000">
-    <link rel="stylesheet" href="/css/play.css?v=1790976000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1790976000">
-    <link rel="stylesheet" href="/css/forum.css?v=1790976000">
-    <link rel="stylesheet" href="/css/donate.css?v=1790976000">
+    <link rel="preload" href="/css/style.css?v=1790980000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1790980000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1790980000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1790980000">
+    <link rel="stylesheet" href="/css/play.css?v=1790980000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1790980000">
+    <link rel="stylesheet" href="/css/forum.css?v=1790980000">
+    <link rel="stylesheet" href="/css/donate.css?v=1790980000">
     <style id="mobile-back-nav-theme-override">
-        /* Mobile Back Button Panel: light grey for white layouts */
+        /* Mobile Back Button Panel: Clean white for white layouts */
         body.is-mobile[class*="theme-white"] .mobile-bottom-nav,
         body.is-mobile[class*="theme-white"] .tools-bottom-nav,
         body.is-mobile[class*="theme-white"] .mods-bottom-nav,
@@ -220,15 +220,34 @@
         body[class*="theme-white"] #page-forums .forum-bottom-bar,
         body.theme-white .forum-bottom-bar,
         body.theme-white #page-forums .forum-bottom-bar,
-        body.is-mobile[class*="theme-light-"] .mobile-bottom-nav,
         [class*="theme-white"] .mobile-bottom-nav,
         [class*="theme-white"] .tools-bottom-nav,
         [class*="theme-white"] .mods-bottom-nav,
         [class*="theme-white"] .settings-bottom-nav,
         [class*="theme-white"] .forum-bottom-bar {
-            background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
-            border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
-            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
+            background: #ffffff !important;
+            border-top: 1.5px solid #cbd5e1 !important;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
+            padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.is-mobile[class*="theme-light-"] .mobile-bottom-nav,
+        body.is-mobile[class*="theme-light-"] .tools-bottom-nav,
+        body.is-mobile[class*="theme-light-"] .mods-bottom-nav,
+        body.is-mobile[class*="theme-light-"] .settings-bottom-nav,
+        body.is-mobile[class*="theme-light-"] #page-tools .mobile-bottom-nav,
+        body.is-mobile[class*="theme-light-"] #page-mods .mobile-bottom-nav,
+        body.is-mobile[class*="theme-light-"] #page-settings .mobile-bottom-nav,
+        [class*="theme-light-"] .mobile-bottom-nav,
+        [class*="theme-light-"] .tools-bottom-nav,
+        [class*="theme-light-"] .mods-bottom-nav,
+        [class*="theme-light-"] .settings-bottom-nav,
+        [class*="theme-light-"] .forum-bottom-bar {
+            background: var(--bg-primary) !important;
+            background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+            border-top: 1.5px solid var(--card-border, rgba(0, 0, 0, 0.16)) !important;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
             padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
             margin-bottom: 0 !important;
         }
@@ -247,59 +266,65 @@
             margin-bottom: 0 !important;
         }
 
-        /* Mobile Back Button: Elevated dark styling for white layouts */
+        /* Mobile Back Button: Elevated styling matching layout themes */
         body.is-mobile[class*="theme-white"] .bottom-back-btn,
         body.is-mobile.theme-white .bottom-back-btn,
         body[class*="theme-white"] .bottom-back-btn,
         body.theme-white .bottom-back-btn,
         [class*="theme-white"] .bottom-back-btn,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn,
-        [class*="theme-light-"] .bottom-back-btn,
         body.is-mobile[class*="theme-white"] .forum-back-btn,
         body.is-mobile.theme-white .forum-back-btn,
         body[class*="theme-white"] .forum-back-btn,
         body.theme-white .forum-back-btn,
         [class*="theme-white"] .forum-back-btn {
-            background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
-            color: #ffffff !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+            background: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
             font-weight: 700 !important;
         }
 
-        /* Mobile Back Button: High-visibility blue highlight when pressed / active / hovered */
-        .bottom-back-btn:active,
-        .bottom-back-btn:hover,
-        .bottom-back-btn:focus,
-        .bottom-back-btn:focus-visible,
-        .forum-back-btn:active,
-        .forum-back-btn:hover,
-        .forum-back-btn:focus,
-        .forum-back-btn:focus-visible,
-        body.is-mobile[class*="theme-white"] .bottom-back-btn:active,
         body.is-mobile[class*="theme-white"] .bottom-back-btn:hover,
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:active,
         body.is-mobile[class*="theme-white"] .bottom-back-btn:focus,
-        body.is-mobile[class*="theme-white"] .bottom-back-btn:focus-visible,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn:active,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn:hover,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus-visible,
-        [class*="theme-white"] .bottom-back-btn:active,
         [class*="theme-white"] .bottom-back-btn:hover,
+        [class*="theme-white"] .bottom-back-btn:active,
         [class*="theme-white"] .bottom-back-btn:focus,
-        [class*="theme-white"] .bottom-back-btn:focus-visible,
-        [class*="theme-light-"] .bottom-back-btn:active,
-        [class*="theme-light-"] .bottom-back-btn:hover,
-        [class*="theme-light-"] .bottom-back-btn:focus,
-        [class*="theme-light-"] .bottom-back-btn:focus-visible,
-        [class*="theme-white"] .forum-back-btn:active,
         [class*="theme-white"] .forum-back-btn:hover,
-        [class*="theme-white"] .forum-back-btn:focus,
-        [class*="theme-white"] .forum-back-btn:focus-visible {
-            background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
-            border-color: #38bdf8 !important;
-            color: #38bdf8 !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
+        [class*="theme-white"] .forum-back-btn:active,
+        [class*="theme-white"] .forum-back-btn:focus {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn,
+        [class*="theme-light-"] .bottom-back-btn,
+        [class*="theme-light-"] .forum-back-btn,
+        [class*="theme-light-"] #forum-category-back-btn,
+        [class*="theme-light-"] #forum-back-to-list,
+        [class*="theme-light-"] #forum-cancel-create {
+            background: var(--bg-primary) !important;
+            background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.12) 100%) !important;
+            border: 1.5px solid var(--card-border, rgba(0, 0, 0, 0.22)) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+            font-weight: 700 !important;
+        }
+
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:hover,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:active,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus,
+        [class*="theme-light-"] .bottom-back-btn:hover,
+        [class*="theme-light-"] .bottom-back-btn:active,
+        [class*="theme-light-"] .bottom-back-btn:focus,
+        [class*="theme-light-"] .forum-back-btn:hover,
+        [class*="theme-light-"] .forum-back-btn:active,
+        [class*="theme-light-"] .forum-back-btn:focus {
+            background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 100%) !important;
+            border-color: var(--card-border) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
         }
     </style>
     <script>
@@ -3718,68 +3743,6 @@
 
         <!-- Forum Page -->
         <div id="page-forums" class="page">
-            <style>
-                /* Elevated High-Visibility Back to Category and Forum Back Buttons across desktop and mobile */
-                #page-forums #forum-back-to-list,
-                #page-forums #forum-category-back-btn,
-                #page-forums .forum-back-btn,
-                #page-forums .bottom-back-btn {
-                    width: 100% !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    box-sizing: border-box !important;
-                    background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
-                    border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
-                    color: #ffffff !important;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-                    font-weight: 700 !important;
-                }
-                #page-forums #forum-back-to-list:hover,
-                #page-forums #forum-back-to-list:focus,
-                #page-forums #forum-category-back-btn:hover,
-                #page-forums #forum-category-back-btn:focus,
-                #page-forums .forum-back-btn:hover,
-                #page-forums .forum-back-btn:focus,
-                #page-forums .bottom-back-btn:hover,
-                #page-forums .bottom-back-btn:focus {
-                    background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
-                    border-color: #38bdf8 !important;
-                    color: #38bdf8 !important;
-                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
-                    transform: translateY(-1px);
-                }
-                #page-forums #forum-back-to-list:active,
-                #page-forums #forum-category-back-btn:active,
-                #page-forums .forum-back-btn:active,
-                #page-forums .bottom-back-btn:active {
-                    background: linear-gradient(180deg, #303d57 0%, #202a3c 100%) !important;
-                    border-color: #38bdf8 !important;
-                    color: #38bdf8 !important;
-                    transform: translateX(-4px) scale(0.98) !important;
-                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 14px rgba(56, 189, 248, 0.45) !important;
-                }
-                #page-forums .forum-bottom-bar {
-                    background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
-                    border-top: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-                    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-                }
-                /* Light theme overrides — forum-bottom-bar background only.
-                   Back buttons (#forum-back-to-list, #forum-category-back-btn, .bottom-back-btn)
-                   intentionally inherit the dark-navy style from play.css so they match
-                   the Tools ← Back button on white/light layouts. */
-                [class*="theme-white"] #page-forums .forum-bottom-bar,
-                [class*="theme-white"] .forum-bottom-bar,
-                body.theme-white #page-forums .forum-bottom-bar,
-                body.theme-white .forum-bottom-bar,
-                [class*="theme-light-"] #page-forums .forum-bottom-bar,
-                [class*="theme-light-"] .forum-bottom-bar {
-                    background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
-                    border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
-                    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
-                    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
-                    margin-bottom: 0 !important;
-                }
-            </style>
             <div class="forum-container">
                 <div class="forum-sidebar">
                     <div class="forum-sidebar-header">
