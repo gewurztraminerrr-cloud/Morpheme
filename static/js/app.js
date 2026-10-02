@@ -714,7 +714,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!btn || btn._3dAttached) return;
         btn._3dAttached = true;
         let isPointerDown = false;
+        let hasDraggedOut = false;
         let activePointerId = null;
+
+        const housing = btn.closest ? (btn.closest('#gateway-housing') || btn.parentElement) : btn.parentElement;
 
         // Prevent native browser drag-and-drop or text selection on button
         btn.setAttribute('draggable', 'false');
@@ -728,16 +731,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             return null;
         }
 
-        function isInside(e) {
-            const coords = getCoords(e);
-            if (!coords) return false;
-            const rect = btn.getBoundingClientRect();
-            // During drag tracking, check button boundaries (plus 6px for housing socket rim)
-            const margin = 6;
-            return coords.x >= (rect.left - margin) &&
-                   coords.x <= (rect.right + margin) &&
-                   coords.y >= (rect.top - margin) &&
-                   coords.y <= (rect.bottom + margin);
+        function isInsideTarget(coords) {
+            if (!coords) return true;
+            const bRect = btn.getBoundingClientRect();
+            const hRect = housing ? housing.getBoundingClientRect() : bRect;
+            const left = Math.min(bRect.left, hRect.left);
+            const right = Math.max(bRect.right, hRect.right);
+            const top = Math.min(bRect.top, hRect.top);
+            const bottom = Math.max(bRect.bottom, hRect.bottom);
+            // 24px leeway around the entire outer socket perimeter covers edge taps & bevel clicks
+            const tolerance = 24;
+            return coords.x >= (left - tolerance) &&
+                   coords.x <= (right + tolerance) &&
+                   coords.y >= (top - tolerance) &&
+                   coords.y <= (bottom + tolerance);
         }
 
         const setStandingTall = () => {
@@ -752,9 +759,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const handlePressMove = (e) => {
             if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
-            if (isInside(e)) {
+            const coords = getCoords(e);
+            if (isInsideTarget(coords)) {
                 setFlattened();
             } else {
+                hasDraggedOut = true;
                 setStandingTall();
             }
         };
@@ -767,16 +776,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             isPointerDown = false;
             removeWindowTracking();
 
-            if (activePointerId !== null && btn.releasePointerCapture) {
-                try { btn.releasePointerCapture(activePointerId); } catch(_) {}
+            if (activePointerId !== null) {
+                try {
+                    if (btn.releasePointerCapture) btn.releasePointerCapture(activePointerId);
+                    if (housing && housing.releasePointerCapture) housing.releasePointerCapture(activePointerId);
+                } catch(_) {}
                 activePointerId = null;
             }
 
-            if (isInside(e)) {
+            const coords = getCoords(e);
+            // If the user never dragged out, or if they released inside target area:
+            // It is an intentional click -> keep flattened and transition to Lobby!
+            if (!hasDraggedOut || isInsideTarget(coords)) {
                 setFlattened();
                 onExecute(e);
             } else {
-                // Dragged outside: Stand tall, cancel press, do NOT enter lobby
+                // Dragged outside and released outside: Stand tall, cancel press, do NOT enter lobby
                 setStandingTall();
                 window._preventGatewayClick = true;
                 setTimeout(() => {
@@ -794,17 +809,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             isPointerDown = false;
             removeWindowTracking();
 
-            if (activePointerId !== null && btn.releasePointerCapture) {
-                try { btn.releasePointerCapture(activePointerId); } catch(_) {}
+            if (activePointerId !== null) {
+                try {
+                    if (btn.releasePointerCapture) btn.releasePointerCapture(activePointerId);
+                    if (housing && housing.releasePointerCapture) housing.releasePointerCapture(activePointerId);
+                } catch(_) {}
                 activePointerId = null;
             }
 
-            setStandingTall();
-            window._preventGatewayClick = true;
-            setTimeout(() => {
-                window._preventGatewayClick = false;
-                btn.classList.remove('dragged-out');
-            }, 250);
+            if (hasDraggedOut) {
+                setStandingTall();
+                window._preventGatewayClick = true;
+                setTimeout(() => {
+                    window._preventGatewayClick = false;
+                    btn.classList.remove('dragged-out');
+                }, 250);
+            }
         };
 
         const addWindowTracking = () => {
@@ -832,13 +852,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const handlePressStart = (e) => {
             if (gatewayTransitioning || window._gatewayTransitioning) return;
             isPointerDown = true;
+            hasDraggedOut = false;
             setFlattened();
 
-            if (e && typeof e.pointerId === 'number' && btn.setPointerCapture) {
-                try {
-                    btn.setPointerCapture(e.pointerId);
-                    activePointerId = e.pointerId;
-                } catch(_) {}
+            if (e && typeof e.pointerId === 'number') {
+                const target = (e.target && e.target.setPointerCapture) ? e.target : btn;
+                if (target && target.setPointerCapture) {
+                    try {
+                        target.setPointerCapture(e.pointerId);
+                        activePointerId = e.pointerId;
+                    } catch(_) {}
+                }
             }
 
             addWindowTracking();
@@ -866,7 +890,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Also allow the parent housing socket to trigger the button press if tapped around the edges
-        const housing = btn.closest ? (btn.closest('#gateway-housing') || btn.parentElement) : btn.parentElement;
         if (housing && !housing._housingForwarderAttached) {
             housing._housingForwarderAttached = true;
             housing.setAttribute('draggable', 'false');
