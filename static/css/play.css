@@ -549,12 +549,7 @@
 
 /* Theme-aware score color for light themes */
 [class*="theme-white"] .player-score-val,
-[class*="theme-light-"] .player-score-val,
-body.theme-yellow .player-score-val,
-body.theme-pink .player-score-val,
-body.theme-orange .player-score-val,
-body.theme-gray .player-score-val,
-body.theme-light-brown .player-score-val {
+[class*="theme-light-"] .player-score-val {
     color: #444 !important;
     /* Dark gray for better visibility */
 }
@@ -768,12 +763,7 @@ body.theme-light-brown .player-score-val {
 [class*="theme-white"] .board-panel.low-time-warning,
 body.theme-white .board-panel.low-time-warning,
 [class*="theme-light-"] .board-panel.low-time-warning,
-body[class*="theme-light-"] .board-panel.low-time-warning,
-body.theme-yellow .board-panel.low-time-warning,
-body.theme-pink .board-panel.low-time-warning,
-body.theme-orange .board-panel.low-time-warning,
-body.theme-gray .board-panel.low-time-warning,
-body.theme-light-brown .board-panel.low-time-warning {
+body[class*="theme-light-"] .board-panel.low-time-warning {
     animation: low-time-pulse-white 3s infinite ease-in-out !important;
     border: 2px solid rgba(220, 38, 38, 0.85) !important;
     will-change: background-color, box-shadow, border-color !important;
@@ -1853,17 +1843,7 @@ body.theme-light-blue .notepad-item.bonus-word,
 body.theme-light-purple .word-item.bonus-word,
 body.theme-light-purple .notepad-item.bonus-word,
 body.theme-light-pink .word-item.bonus-word,
-body.theme-light-pink .notepad-item.bonus-word,
-body.theme-light-brown .word-item.bonus-word,
-body.theme-light-brown .notepad-item.bonus-word,
-body.theme-yellow .word-item.bonus-word,
-body.theme-yellow .notepad-item.bonus-word,
-body.theme-pink .word-item.bonus-word,
-body.theme-pink .notepad-item.bonus-word,
-body.theme-orange .word-item.bonus-word,
-body.theme-orange .notepad-item.bonus-word,
-body.theme-gray .word-item.bonus-word,
-body.theme-gray .notepad-item.bonus-word {
+body.theme-light-pink .notepad-item.bonus-word {
     background: rgba(50, 255, 50, 0.45) !important;
     border: 3px solid #16a34a !important;
     box-shadow: 0 0 16px rgba(50, 255, 50, 0.5) !important;
@@ -1879,12 +1859,7 @@ body.theme-gray .notepad-item.bonus-word {
 body.theme-white .word-item.bonus-word .word-text,
 body.theme-white .notepad-item.bonus-word .word-text,
 body.theme-light-gray .word-item.bonus-word .word-text,
-body.theme-light-gray .notepad-item.bonus-word .word-text,
-body.theme-yellow .word-item.bonus-word .word-text,
-body.theme-pink .word-item.bonus-word .word-text,
-body.theme-orange .word-item.bonus-word .word-text,
-body.theme-gray .word-item.bonus-word .word-text,
-body.theme-light-brown .word-item.bonus-word .word-text {
+body.theme-light-gray .notepad-item.bonus-word .word-text {
     color: #052e16 !important;
     font-weight: 800 !important;
 }
@@ -1994,12 +1969,7 @@ body.theme-light-brown .word-item.bonus-word .word-text {
 [class*="theme-white"] .word-item.missed,
 [class*="theme-light-"] .word-item.missed,
 body.theme-white .word-item.missed,
-body.theme-light-gray .word-item.missed,
-body.theme-yellow .word-item.missed,
-body.theme-pink .word-item.missed,
-body.theme-orange .word-item.missed,
-body.theme-gray .word-item.missed,
-body.theme-light-brown .word-item.missed {
+body.theme-light-gray .word-item.missed {
     color: #9f1239 !important;
     background: rgba(244, 63, 94, 0.12) !important;
     border: 1.5px solid rgba(244, 63, 94, 0.35) !important;
@@ -2008,12 +1978,7 @@ body.theme-light-brown .word-item.missed {
 [class*="theme-white"] .word-item.missed .word-text,
 [class*="theme-light-"] .word-item.missed .word-text,
 body.theme-white .word-item.missed .word-text,
-body.theme-light-gray .word-item.missed .word-text,
-body.theme-yellow .word-item.missed .word-text,
-body.theme-pink .word-item.missed .word-text,
-body.theme-orange .word-item.missed .word-text,
-body.theme-gray .word-item.missed .word-text,
-body.theme-light-brown .word-item.missed .word-text {
+body.theme-light-gray .word-item.missed .word-text {
     color: #9f1239 !important;
 }
 
@@ -2285,23 +2250,13 @@ body.is-mobile[class*="theme-white"] #random-word-display,
 body.is-mobile.theme-white #random-word-display,
 body[class*="theme-light-"] #random-word-display,
 [class*="theme-light-"] #random-word-display,
-body.theme-yellow #random-word-display,
-body.theme-pink #random-word-display,
-body.theme-orange #random-word-display,
-body.theme-gray #random-word-display,
-body.theme-light-brown #random-word-display,
 body.theme-white #tool-random .random-word-large,
 [class*="theme-white"] #tool-random .random-word-large,
 body[class*="theme-white"] #tool-random .random-word-large,
 body.is-mobile[class*="theme-white"] #tool-random .random-word-large,
 body.is-mobile.theme-white #tool-random .random-word-large,
 body[class*="theme-light-"] #tool-random .random-word-large,
-[class*="theme-light-"] #tool-random .random-word-large,
-body.theme-yellow #tool-random .random-word-large,
-body.theme-pink #tool-random .random-word-large,
-body.theme-orange #tool-random .random-word-large,
-body.theme-gray #tool-random .random-word-large,
-body.theme-light-brown #tool-random .random-word-large {
+[class*="theme-light-"] #tool-random .random-word-large {
     color: #000000 !important;
     text-shadow: none !important;
 }
@@ -2560,32 +2515,7 @@ body.theme-white #page-settings .mobile-bottom-nav,
 [class*="theme-light-"] .tools-content-column > .mobile-bottom-nav,
 [class*="theme-light-"] #page-tools .mobile-bottom-nav,
 [class*="theme-light-"] #page-mods .mobile-bottom-nav,
-[class*="theme-light-"] #page-settings .mobile-bottom-nav,
-body.theme-yellow .mobile-bottom-nav,
-body.theme-yellow .tools-content-column > .mobile-bottom-nav,
-body.theme-yellow #page-tools .mobile-bottom-nav,
-body.theme-yellow #page-mods .mobile-bottom-nav,
-body.theme-yellow #page-settings .mobile-bottom-nav,
-body.theme-pink .mobile-bottom-nav,
-body.theme-pink .tools-content-column > .mobile-bottom-nav,
-body.theme-pink #page-tools .mobile-bottom-nav,
-body.theme-pink #page-mods .mobile-bottom-nav,
-body.theme-pink #page-settings .mobile-bottom-nav,
-body.theme-orange .mobile-bottom-nav,
-body.theme-orange .tools-content-column > .mobile-bottom-nav,
-body.theme-orange #page-tools .mobile-bottom-nav,
-body.theme-orange #page-mods .mobile-bottom-nav,
-body.theme-orange #page-settings .mobile-bottom-nav,
-body.theme-gray .mobile-bottom-nav,
-body.theme-gray .tools-content-column > .mobile-bottom-nav,
-body.theme-gray #page-tools .mobile-bottom-nav,
-body.theme-gray #page-mods .mobile-bottom-nav,
-body.theme-gray #page-settings .mobile-bottom-nav,
-body.theme-light-brown .mobile-bottom-nav,
-body.theme-light-brown .tools-content-column > .mobile-bottom-nav,
-body.theme-light-brown #page-tools .mobile-bottom-nav,
-body.theme-light-brown #page-mods .mobile-bottom-nav,
-body.theme-light-brown #page-settings .mobile-bottom-nav {
+[class*="theme-light-"] #page-settings .mobile-bottom-nav {
     background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
     border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
@@ -2594,12 +2524,7 @@ body.theme-light-brown #page-settings .mobile-bottom-nav {
 }
 
 [class*="theme-white"] .bottom-back-btn,
-[class*="theme-light-"] .bottom-back-btn,
-body.theme-yellow .bottom-back-btn,
-body.theme-pink .bottom-back-btn,
-body.theme-orange .bottom-back-btn,
-body.theme-gray .bottom-back-btn,
-body.theme-light-brown .bottom-back-btn {
+[class*="theme-light-"] .bottom-back-btn {
     background: linear-gradient(180deg, #2a3449 0%, #1e2636 100%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.32) !important;
     color: #ffffff !important;
@@ -2613,27 +2538,7 @@ body.theme-light-brown .bottom-back-btn {
 [class*="theme-light-"] .bottom-back-btn:hover,
 [class*="theme-light-"] .bottom-back-btn:active,
 [class*="theme-light-"] .bottom-back-btn:focus,
-[class*="theme-light-"] .bottom-back-btn:focus-visible,
-body.theme-yellow .bottom-back-btn:hover,
-body.theme-yellow .bottom-back-btn:active,
-body.theme-yellow .bottom-back-btn:focus,
-body.theme-yellow .bottom-back-btn:focus-visible,
-body.theme-pink .bottom-back-btn:hover,
-body.theme-pink .bottom-back-btn:active,
-body.theme-pink .bottom-back-btn:focus,
-body.theme-pink .bottom-back-btn:focus-visible,
-body.theme-orange .bottom-back-btn:hover,
-body.theme-orange .bottom-back-btn:active,
-body.theme-orange .bottom-back-btn:focus,
-body.theme-orange .bottom-back-btn:focus-visible,
-body.theme-gray .bottom-back-btn:hover,
-body.theme-gray .bottom-back-btn:active,
-body.theme-gray .bottom-back-btn:focus,
-body.theme-gray .bottom-back-btn:focus-visible,
-body.theme-light-brown .bottom-back-btn:hover,
-body.theme-light-brown .bottom-back-btn:active,
-body.theme-light-brown .bottom-back-btn:focus,
-body.theme-light-brown .bottom-back-btn:focus-visible {
+[class*="theme-light-"] .bottom-back-btn:focus-visible {
     background: linear-gradient(180deg, #374460 0%, #263145 100%) !important;
     border-color: #38bdf8 !important;
     color: #38bdf8 !important;
@@ -3300,12 +3205,7 @@ body.theme-white #more-random-words-btn,
 body.is-mobile[class*="theme-white"] #more-random-words-btn,
 body.is-mobile.theme-white #more-random-words-btn,
 body[class*="theme-light-"] #more-random-words-btn,
-[class*="theme-light-"] #more-random-words-btn,
-body.theme-yellow #more-random-words-btn,
-body.theme-pink #more-random-words-btn,
-body.theme-orange #more-random-words-btn,
-body.theme-gray #more-random-words-btn,
-body.theme-light-brown #more-random-words-btn {
+[class*="theme-light-"] #more-random-words-btn {
     background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
     border: 1px solid #3730a3 !important;
     color: #ffffff !important;
@@ -3319,12 +3219,7 @@ body.theme-white #more-random-words-btn:hover,
 body.is-mobile[class*="theme-white"] #more-random-words-btn:hover,
 body.is-mobile.theme-white #more-random-words-btn:hover,
 body[class*="theme-light-"] #more-random-words-btn:hover,
-[class*="theme-light-"] #more-random-words-btn:hover,
-body.theme-yellow #more-random-words-btn:hover,
-body.theme-pink #more-random-words-btn:hover,
-body.theme-orange #more-random-words-btn:hover,
-body.theme-gray #more-random-words-btn:hover,
-body.theme-light-brown #more-random-words-btn:hover {
+[class*="theme-light-"] #more-random-words-btn:hover {
     background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
     border-color: #312e81 !important;
     color: #ffffff !important;
@@ -3337,12 +3232,7 @@ body.theme-white #more-random-words-btn:active,
 body.is-mobile[class*="theme-white"] #more-random-words-btn:active,
 body.is-mobile.theme-white #more-random-words-btn:active,
 body[class*="theme-light-"] #more-random-words-btn:active,
-[class*="theme-light-"] #more-random-words-btn:active,
-body.theme-yellow #more-random-words-btn:active,
-body.theme-pink #more-random-words-btn:active,
-body.theme-orange #more-random-words-btn:active,
-body.theme-gray #more-random-words-btn:active,
-body.theme-light-brown #more-random-words-btn:active {
+[class*="theme-light-"] #more-random-words-btn:active {
     transform: translateY(1px) !important;
     background: #3730a3 !important;
 }
@@ -7026,32 +6916,7 @@ input[type=range]::-moz-range-track {
     [class*="theme-light-"] .tools-content-column > .mobile-bottom-nav,
     [class*="theme-light-"] #page-tools .mobile-bottom-nav,
     [class*="theme-light-"] #page-mods .mobile-bottom-nav,
-    [class*="theme-light-"] #page-settings .mobile-bottom-nav,
-    body.theme-yellow .mobile-bottom-nav,
-    body.theme-yellow .tools-content-column > .mobile-bottom-nav,
-    body.theme-yellow #page-tools .mobile-bottom-nav,
-    body.theme-yellow #page-mods .mobile-bottom-nav,
-    body.theme-yellow #page-settings .mobile-bottom-nav,
-    body.theme-pink .mobile-bottom-nav,
-    body.theme-pink .tools-content-column > .mobile-bottom-nav,
-    body.theme-pink #page-tools .mobile-bottom-nav,
-    body.theme-pink #page-mods .mobile-bottom-nav,
-    body.theme-pink #page-settings .mobile-bottom-nav,
-    body.theme-orange .mobile-bottom-nav,
-    body.theme-orange .tools-content-column > .mobile-bottom-nav,
-    body.theme-orange #page-tools .mobile-bottom-nav,
-    body.theme-orange #page-mods .mobile-bottom-nav,
-    body.theme-orange #page-settings .mobile-bottom-nav,
-    body.theme-gray .mobile-bottom-nav,
-    body.theme-gray .tools-content-column > .mobile-bottom-nav,
-    body.theme-gray #page-tools .mobile-bottom-nav,
-    body.theme-gray #page-mods .mobile-bottom-nav,
-    body.theme-gray #page-settings .mobile-bottom-nav,
-    body.theme-light-brown .mobile-bottom-nav,
-    body.theme-light-brown .tools-content-column > .mobile-bottom-nav,
-    body.theme-light-brown #page-tools .mobile-bottom-nav,
-    body.theme-light-brown #page-mods .mobile-bottom-nav,
-    body.theme-light-brown #page-settings .mobile-bottom-nav {
+    [class*="theme-light-"] #page-settings .mobile-bottom-nav {
         background: linear-gradient(180deg, #e4e7ed 0%, #d8dce4 100%) !important;
         border-top: 1.5px solid rgba(0, 0, 0, 0.16) !important;
         box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff !important;
@@ -8197,17 +8062,7 @@ input[type=range]::-moz-range-track {
     [class*="theme-light-"] .board-panel.low-time-warning .play-header,
     body[class*="theme-light-"] .board-panel.low-time-warning .play-header,
     [class*="theme-light-"] .play-header.low-time-warning,
-    body[class*="theme-light-"] .play-header.low-time-warning,
-    body.theme-yellow .board-panel.low-time-warning,
-    body.theme-yellow .play-header.low-time-warning,
-    body.theme-pink .board-panel.low-time-warning,
-    body.theme-pink .play-header.low-time-warning,
-    body.theme-orange .board-panel.low-time-warning,
-    body.theme-orange .play-header.low-time-warning,
-    body.theme-gray .board-panel.low-time-warning,
-    body.theme-gray .play-header.low-time-warning,
-    body.theme-light-brown .board-panel.low-time-warning,
-    body.theme-light-brown .play-header.low-time-warning {
+    body[class*="theme-light-"] .play-header.low-time-warning {
         animation: mobile-low-time-pulse-white 3s infinite ease-in-out !important;
         border: none !important;
         will-change: background-color, box-shadow !important;
@@ -8916,12 +8771,7 @@ body.is-desktop .word-input-section {
 }
 
 body[class*="theme-white"] .chat-collapse-btn,
-body[class*="theme-light-"] .chat-collapse-btn,
-body.theme-yellow .chat-collapse-btn,
-body.theme-pink .chat-collapse-btn,
-body.theme-orange .chat-collapse-btn,
-body.theme-gray .chat-collapse-btn,
-body.theme-light-brown .chat-collapse-btn {
+body[class*="theme-light-"] .chat-collapse-btn {
     background: rgba(240, 243, 246, 0.95);
     border: 1.5px solid rgba(15, 23, 42, 0.35);
     color: #0f172a;
@@ -8929,12 +8779,7 @@ body.theme-light-brown .chat-collapse-btn {
 }
 
 body[class*="theme-white"] .chat-collapse-btn:hover,
-body[class*="theme-light-"] .chat-collapse-btn:hover,
-body.theme-yellow .chat-collapse-btn:hover,
-body.theme-pink .chat-collapse-btn:hover,
-body.theme-orange .chat-collapse-btn:hover,
-body.theme-gray .chat-collapse-btn:hover,
-body.theme-light-brown .chat-collapse-btn:hover {
+body[class*="theme-light-"] .chat-collapse-btn:hover {
     background: #ffffff;
     border-color: rgba(15, 23, 42, 0.7);
     color: #000000;
@@ -11620,21 +11465,6 @@ body.is-mobile.theme-white #page-settings .mobile-bottom-nav,
 body.is-mobile[class*="theme-light-"] #page-tools .mobile-bottom-nav,
 body.is-mobile[class*="theme-light-"] #page-mods .mobile-bottom-nav,
 body.is-mobile[class*="theme-light-"] #page-settings .mobile-bottom-nav,
-body.is-mobile.theme-yellow #page-tools .mobile-bottom-nav,
-body.is-mobile.theme-yellow #page-mods .mobile-bottom-nav,
-body.is-mobile.theme-yellow #page-settings .mobile-bottom-nav,
-body.is-mobile.theme-pink #page-tools .mobile-bottom-nav,
-body.is-mobile.theme-pink #page-mods .mobile-bottom-nav,
-body.is-mobile.theme-pink #page-settings .mobile-bottom-nav,
-body.is-mobile.theme-orange #page-tools .mobile-bottom-nav,
-body.is-mobile.theme-orange #page-mods .mobile-bottom-nav,
-body.is-mobile.theme-orange #page-settings .mobile-bottom-nav,
-body.is-mobile.theme-gray #page-tools .mobile-bottom-nav,
-body.is-mobile.theme-gray #page-mods .mobile-bottom-nav,
-body.is-mobile.theme-gray #page-settings .mobile-bottom-nav,
-body.is-mobile.theme-light-brown #page-tools .mobile-bottom-nav,
-body.is-mobile.theme-light-brown #page-mods .mobile-bottom-nav,
-body.is-mobile.theme-light-brown #page-settings .mobile-bottom-nav,
 [class*="theme-white"] .mobile-bottom-nav,
 [class*="theme-white"] #page-tools .mobile-bottom-nav,
 [class*="theme-white"] #page-mods .mobile-bottom-nav,
@@ -12032,12 +11862,7 @@ body.theme-white .play-header:not(.low-time-warning),
 body.is-desktop[class*="theme-white"] .play-header:not(.low-time-warning),
 body.is-desktop.theme-white .play-header:not(.low-time-warning),
 [class*="theme-light-"] .play-header:not(.low-time-warning),
-body[class*="theme-light-"] .play-header:not(.low-time-warning),
-body.theme-yellow .play-header:not(.low-time-warning),
-body.theme-pink .play-header:not(.low-time-warning),
-body.theme-orange .play-header:not(.low-time-warning),
-body.theme-gray .play-header:not(.low-time-warning),
-body.theme-light-brown .play-header:not(.low-time-warning) {
+body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     box-shadow: none !important;
 }
 
@@ -12254,12 +12079,7 @@ body.is-desktop.theme-light-yellow .timer-controls-group .rotate-btn,
 body.is-desktop.theme-light-green .timer-controls-group .rotate-btn,
 body.is-desktop.theme-light-blue .timer-controls-group .rotate-btn,
 body.is-desktop.theme-light-purple .timer-controls-group .rotate-btn,
-body.is-desktop.theme-light-pink .timer-controls-group .rotate-btn,
-body.is-desktop.theme-light-brown .timer-controls-group .rotate-btn,
-body.is-desktop.theme-yellow .timer-controls-group .rotate-btn,
-body.is-desktop.theme-pink .timer-controls-group .rotate-btn,
-body.is-desktop.theme-orange .timer-controls-group .rotate-btn,
-body.is-desktop.theme-gray .timer-controls-group .rotate-btn {
+body.is-desktop.theme-light-pink .timer-controls-group .rotate-btn {
     border-color: rgba(0, 0, 0, 0.55) !important;
 }
 
@@ -12273,12 +12093,7 @@ body.is-desktop.theme-light-yellow .timer-controls-group #transpose-board-btn,
 body.is-desktop.theme-light-green .timer-controls-group #transpose-board-btn,
 body.is-desktop.theme-light-blue .timer-controls-group #transpose-board-btn,
 body.is-desktop.theme-light-purple .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-light-brown .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-yellow .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-pink .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-orange .timer-controls-group #transpose-board-btn,
-body.is-desktop.theme-gray .timer-controls-group #transpose-board-btn {
+body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
     border-left-color: rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -12391,20 +12206,10 @@ body.is-desktop.theme-gray .timer-controls-group #transpose-board-btn {
     body.theme-light-blue .board-panel .game-board:not(.game-board-loading),
     body.theme-light-purple .board-panel .game-board:not(.game-board-loading),
     body.theme-light-pink .board-panel .game-board:not(.game-board-loading),
-    body.theme-light-brown .board-panel .game-board:not(.game-board-loading),
-    body.theme-yellow .board-panel .game-board:not(.game-board-loading),
-    body.theme-pink .board-panel .game-board:not(.game-board-loading),
-    body.theme-orange .board-panel .game-board:not(.game-board-loading),
-    body.theme-gray .board-panel .game-board:not(.game-board-loading),
     [class*="theme-white"] #game-board:not(.split-notepads-container):not(.game-board-loading),
     [class*="theme-light-"] #game-board:not(.split-notepads-container):not(.game-board-loading),
     body.theme-white #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-light-gray #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-yellow #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-pink #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-orange #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-gray #game-board:not(.split-notepads-container):not(.game-board-loading),
-    body.theme-light-brown #game-board:not(.split-notepads-container):not(.game-board-loading) {
+    body.theme-light-gray #game-board:not(.split-notepads-container):not(.game-board-loading) {
         background: rgba(0, 0, 0, 0.2) !important;
         border: none !important;
         box-shadow: none !important;
@@ -12435,12 +12240,7 @@ body.theme-light-yellow .word-item,
 body.theme-light-green .word-item,
 body.theme-light-blue .word-item,
 body.theme-light-purple .word-item,
-body.theme-light-pink .word-item,
-body.theme-light-brown .word-item,
-body.theme-yellow .word-item,
-body.theme-pink .word-item,
-body.theme-orange .word-item,
-body.theme-gray .word-item {
+body.theme-light-pink .word-item {
     color: #111111 !important;
     background: rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -12456,12 +12256,7 @@ body.theme-light-yellow .word-item .word-text,
 body.theme-light-green .word-item .word-text,
 body.theme-light-blue .word-item .word-text,
 body.theme-light-purple .word-item .word-text,
-body.theme-light-pink .word-item .word-text,
-body.theme-light-brown .word-item .word-text,
-body.theme-yellow .word-item .word-text,
-body.theme-pink .word-item .word-text,
-body.theme-orange .word-item .word-text,
-body.theme-gray .word-item .word-text {
+body.theme-light-pink .word-item .word-text {
     color: #111111 !important;
 }
 
@@ -12475,12 +12270,7 @@ body.theme-light-yellow .word-item.unfound:not(.csw-only):not(.added-word):not(.
 body.theme-light-green .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
 body.theme-light-blue .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
 body.theme-light-purple .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-light-pink .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-light-brown .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-yellow .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-pink .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-orange .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-gray .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word) {
+body.theme-light-pink .word-item.unfound:not(.csw-only):not(.added-word):not(.bonus-word) {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     color: #111111 !important;
@@ -12496,12 +12286,7 @@ body.theme-light-yellow .nwl-word,
 body.theme-light-green .nwl-word,
 body.theme-light-blue .nwl-word,
 body.theme-light-purple .nwl-word,
-body.theme-light-pink .nwl-word,
-body.theme-light-brown .nwl-word,
-body.theme-yellow .nwl-word,
-body.theme-pink .nwl-word,
-body.theme-orange .nwl-word,
-body.theme-gray .nwl-word {
+body.theme-light-pink .nwl-word {
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
     color: #111111 !important;
@@ -12518,12 +12303,7 @@ body.theme-light-yellow .word-item.player-word,
 body.theme-light-green .word-item.player-word,
 body.theme-light-blue .word-item.player-word,
 body.theme-light-purple .word-item.player-word,
-body.theme-light-pink .word-item.player-word,
-body.theme-light-brown .word-item.player-word,
-body.theme-yellow .word-item.player-word,
-body.theme-pink .word-item.player-word,
-body.theme-orange .word-item.player-word,
-body.theme-gray .word-item.player-word {
+body.theme-light-pink .word-item.player-word {
     background: rgba(59, 130, 246, 0.5) !important;
     border: 2px solid #2563eb !important;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.35) !important;
@@ -12541,12 +12321,7 @@ body.theme-light-yellow .word-item.player-word .word-text,
 body.theme-light-green .word-item.player-word .word-text,
 body.theme-light-blue .word-item.player-word .word-text,
 body.theme-light-purple .word-item.player-word .word-text,
-body.theme-light-pink .word-item.player-word .word-text,
-body.theme-light-brown .word-item.player-word .word-text,
-body.theme-yellow .word-item.player-word .word-text,
-body.theme-pink .word-item.player-word .word-text,
-body.theme-orange .word-item.player-word .word-text,
-body.theme-gray .word-item.player-word .word-text {
+body.theme-light-pink .word-item.player-word .word-text {
     color: #0f172a !important;
     font-weight: 800 !important;
 }
@@ -12573,17 +12348,7 @@ body.theme-light-blue .added-word,
 body.theme-light-purple .word-item.added-word,
 body.theme-light-purple .added-word,
 body.theme-light-pink .word-item.added-word,
-body.theme-light-pink .added-word,
-body.theme-light-brown .word-item.added-word,
-body.theme-light-brown .added-word,
-body.theme-yellow .word-item.added-word,
-body.theme-yellow .added-word,
-body.theme-pink .word-item.added-word,
-body.theme-pink .added-word,
-body.theme-orange .word-item.added-word,
-body.theme-orange .added-word,
-body.theme-gray .word-item.added-word,
-body.theme-gray .added-word {
+body.theme-light-pink .added-word {
     background: rgba(168, 85, 247, 0.45) !important;
     border: 2px solid #9333ea !important;
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.35) !important;
@@ -12612,17 +12377,7 @@ body.theme-light-blue .added-word .word-text,
 body.theme-light-purple .word-item.added-word .word-text,
 body.theme-light-purple .added-word .word-text,
 body.theme-light-pink .word-item.added-word .word-text,
-body.theme-light-pink .added-word .word-text,
-body.theme-light-brown .word-item.added-word .word-text,
-body.theme-light-brown .added-word .word-text,
-body.theme-yellow .word-item.added-word .word-text,
-body.theme-yellow .added-word .word-text,
-body.theme-pink .word-item.added-word .word-text,
-body.theme-pink .added-word .word-text,
-body.theme-orange .word-item.added-word .word-text,
-body.theme-orange .added-word .word-text,
-body.theme-gray .word-item.added-word .word-text,
-body.theme-gray .added-word .word-text {
+body.theme-light-pink .added-word .word-text {
     color: #3b0764 !important;
     font-weight: 800 !important;
 }
@@ -12638,12 +12393,7 @@ body.theme-light-yellow .word-item.csw-only,
 body.theme-light-green .word-item.csw-only,
 body.theme-light-blue .word-item.csw-only,
 body.theme-light-purple .word-item.csw-only,
-body.theme-light-pink .word-item.csw-only,
-body.theme-light-brown .word-item.csw-only,
-body.theme-yellow .word-item.csw-only,
-body.theme-pink .word-item.csw-only,
-body.theme-orange .word-item.csw-only,
-body.theme-gray .word-item.csw-only {
+body.theme-light-pink .word-item.csw-only {
     background: rgba(255, 215, 0, 0.75) !important;
     border: 2px solid #eab308 !important;
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.45) !important;
@@ -12661,12 +12411,7 @@ body.theme-light-yellow .word-item.csw-only .word-text,
 body.theme-light-green .word-item.csw-only .word-text,
 body.theme-light-blue .word-item.csw-only .word-text,
 body.theme-light-purple .word-item.csw-only .word-text,
-body.theme-light-pink .word-item.csw-only .word-text,
-body.theme-light-brown .word-item.csw-only .word-text,
-body.theme-yellow .word-item.csw-only .word-text,
-body.theme-pink .word-item.csw-only .word-text,
-body.theme-orange .word-item.csw-only .word-text,
-body.theme-gray .word-item.csw-only .word-text {
+body.theme-light-pink .word-item.csw-only .word-text {
     color: #000000 !important;
     font-weight: 800 !important;
 }
@@ -12675,12 +12420,7 @@ body.theme-gray .word-item.csw-only .word-text {
 [class*="theme-white"] .word-item.opponent-word,
 [class*="theme-light-"] .word-item.opponent-word,
 body.theme-white .word-item.opponent-word,
-body.theme-light-gray .word-item.opponent-word,
-body.theme-yellow .word-item.opponent-word,
-body.theme-pink .word-item.opponent-word,
-body.theme-orange .word-item.opponent-word,
-body.theme-gray .word-item.opponent-word,
-body.theme-light-brown .word-item.opponent-word {
+body.theme-light-gray .word-item.opponent-word {
     background: rgba(255, 99, 71, 0.35) !important;
     border: 1.5px solid rgba(255, 99, 71, 0.6) !important;
     box-shadow: 0 0 8px rgba(255, 99, 71, 0.3) !important;
@@ -12699,12 +12439,7 @@ body.theme-light-gray .word-item.opponent-word .word-text {
 [class*="theme-white"] .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
 [class*="theme-light-"] .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
 body.theme-white .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-light-gray .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-yellow .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-pink .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-orange .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-gray .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word),
-body.theme-light-brown .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word) {
+body.theme-light-gray .word-item.found-by-other:not(.csw-only):not(.added-word):not(.bonus-word) {
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
     color: #111111 !important;
@@ -12713,12 +12448,7 @@ body.theme-light-brown .word-item.found-by-other:not(.csw-only):not(.added-word)
 [class*="theme-white"] .word-item .points-math,
 [class*="theme-light-"] .word-item .points-math,
 body.theme-white .word-item .points-math,
-body.theme-light-gray .word-item .points-math,
-body.theme-yellow .word-item .points-math,
-body.theme-pink .word-item .points-math,
-body.theme-orange .word-item .points-math,
-body.theme-gray .word-item .points-math,
-body.theme-light-brown .word-item .points-math {
+body.theme-light-gray .word-item .points-math {
     background: rgba(0, 0, 0, 0.65) !important;
     color: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.2) !important;
@@ -12736,12 +12466,7 @@ body.theme-light-yellow #page-mods,
 body.theme-light-green #page-mods,
 body.theme-light-blue #page-mods,
 body.theme-light-purple #page-mods,
-body.theme-light-pink #page-mods,
-body.theme-light-brown #page-mods,
-body.theme-yellow #page-mods,
-body.theme-pink #page-mods,
-body.theme-orange #page-mods,
-body.theme-gray #page-mods {
+body.theme-light-pink #page-mods {
     color: #0f172a;
 }
 
@@ -12764,32 +12489,7 @@ body.theme-light-gray #page-mods .mod-action-card,
 body.theme-light-gray #page-mods .def-entry-card,
 body.theme-light-gray #page-mods .def-guidelines-card,
 body.theme-light-gray #page-mods .mod-section,
-body.theme-light-gray #page-mods .mod-add-section,
-body.theme-yellow #page-mods .mod-action-card,
-body.theme-yellow #page-mods .def-entry-card,
-body.theme-yellow #page-mods .def-guidelines-card,
-body.theme-yellow #page-mods .mod-section,
-body.theme-yellow #page-mods .mod-add-section,
-body.theme-pink #page-mods .mod-action-card,
-body.theme-pink #page-mods .def-entry-card,
-body.theme-pink #page-mods .def-guidelines-card,
-body.theme-pink #page-mods .mod-section,
-body.theme-pink #page-mods .mod-add-section,
-body.theme-orange #page-mods .mod-action-card,
-body.theme-orange #page-mods .def-entry-card,
-body.theme-orange #page-mods .def-guidelines-card,
-body.theme-orange #page-mods .mod-section,
-body.theme-orange #page-mods .mod-add-section,
-body.theme-gray #page-mods .mod-action-card,
-body.theme-gray #page-mods .def-entry-card,
-body.theme-gray #page-mods .def-guidelines-card,
-body.theme-gray #page-mods .mod-section,
-body.theme-gray #page-mods .mod-add-section,
-body.theme-light-brown #page-mods .mod-action-card,
-body.theme-light-brown #page-mods .def-entry-card,
-body.theme-light-brown #page-mods .def-guidelines-card,
-body.theme-light-brown #page-mods .mod-section,
-body.theme-light-brown #page-mods .mod-add-section {
+body.theme-light-gray #page-mods .mod-add-section {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
@@ -12807,22 +12507,7 @@ body.theme-white #page-mods textarea,
 body.theme-white #page-mods select,
 body.theme-light-gray #page-mods input,
 body.theme-light-gray #page-mods textarea,
-body.theme-light-gray #page-mods select,
-body.theme-yellow #page-mods input,
-body.theme-yellow #page-mods textarea,
-body.theme-yellow #page-mods select,
-body.theme-pink #page-mods input,
-body.theme-pink #page-mods textarea,
-body.theme-pink #page-mods select,
-body.theme-orange #page-mods input,
-body.theme-orange #page-mods textarea,
-body.theme-orange #page-mods select,
-body.theme-gray #page-mods input,
-body.theme-gray #page-mods textarea,
-body.theme-gray #page-mods select,
-body.theme-light-brown #page-mods input,
-body.theme-light-brown #page-mods textarea,
-body.theme-light-brown #page-mods select {
+body.theme-light-gray #page-mods select {
     background: #f8fafc !important;
     color: #0f172a !important;
     border: 1px solid #cbd5e1 !important;
@@ -12841,12 +12526,7 @@ body.theme-white #page-mods textarea::placeholder {
 [class*="theme-white"] #page-mods .def-guidelines-card div[style*="border-left"],
 [class*="theme-light-"] #page-mods .def-guidelines-card div[style*="border-left"],
 body.theme-white #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-light-gray #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-yellow #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-pink #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-orange #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-gray #page-mods .def-guidelines-card div[style*="border-left"],
-body.theme-light-brown #page-mods .def-guidelines-card div[style*="border-left"] {
+body.theme-light-gray #page-mods .def-guidelines-card div[style*="border-left"] {
     background: #f1f5f9 !important;
     color: #1e293b !important;
     border-radius: 6px !important;
@@ -12860,12 +12540,7 @@ body.theme-light-brown #page-mods .def-guidelines-card div[style*="border-left"]
 body.theme-white #page-mods .def-guidelines-card span[style*="color: #fff"],
 body.theme-white #page-mods .def-guidelines-card span[style*="color:#fff"],
 body.theme-light-gray #page-mods .def-guidelines-card span[style*="color: #fff"],
-body.theme-light-gray #page-mods .def-guidelines-card span[style*="color:#fff"],
-body.theme-yellow #page-mods .def-guidelines-card span[style*="color: #fff"],
-body.theme-pink #page-mods .def-guidelines-card span[style*="color: #fff"],
-body.theme-orange #page-mods .def-guidelines-card span[style*="color: #fff"],
-body.theme-gray #page-mods .def-guidelines-card span[style*="color: #fff"],
-body.theme-light-brown #page-mods .def-guidelines-card span[style*="color: #fff"] {
+body.theme-light-gray #page-mods .def-guidelines-card span[style*="color:#fff"] {
     color: #0f172a !important;
     font-weight: 600 !important;
 }
@@ -12968,12 +12643,7 @@ body.theme-light-yellow .loading-container,
 body.theme-light-green .loading-container,
 body.theme-light-blue .loading-container,
 body.theme-light-purple .loading-container,
-body.theme-light-pink .loading-container,
-body.theme-light-brown .loading-container,
-body.theme-yellow .loading-container,
-body.theme-pink .loading-container,
-body.theme-orange .loading-container,
-body.theme-gray .loading-container {
+body.theme-light-pink .loading-container {
     background: #ffffff !important;
     border: 1.5px solid #e2e8f0 !important;
     border-radius: 16px !important;
@@ -12991,12 +12661,7 @@ body.theme-light-yellow .glow-spinner,
 body.theme-light-green .glow-spinner,
 body.theme-light-blue .glow-spinner,
 body.theme-light-purple .glow-spinner,
-body.theme-light-pink .glow-spinner,
-body.theme-light-brown .glow-spinner,
-body.theme-yellow .glow-spinner,
-body.theme-pink .glow-spinner,
-body.theme-orange .glow-spinner,
-body.theme-gray .glow-spinner {
+body.theme-light-pink .glow-spinner {
     border: 3.5px solid #e2e8f0 !important;
     border-top: 3.5px solid var(--accent-color, #2563eb) !important;
     border-right: 3.5px solid var(--accent-color, #2563eb) !important;
@@ -13013,12 +12678,7 @@ body.theme-light-yellow .glow-title,
 body.theme-light-green .glow-title,
 body.theme-light-blue .glow-title,
 body.theme-light-purple .glow-title,
-body.theme-light-pink .glow-title,
-body.theme-light-brown .glow-title,
-body.theme-yellow .glow-title,
-body.theme-pink .glow-title,
-body.theme-orange .glow-title,
-body.theme-gray .glow-title {
+body.theme-light-pink .glow-title {
     color: #0f172a !important;
     font-weight: 800 !important;
     letter-spacing: 1.2px !important;
@@ -13036,12 +12696,7 @@ body.theme-light-yellow .status-ticker,
 body.theme-light-green .status-ticker,
 body.theme-light-blue .status-ticker,
 body.theme-light-purple .status-ticker,
-body.theme-light-pink .status-ticker,
-body.theme-light-brown .status-ticker,
-body.theme-yellow .status-ticker,
-body.theme-pink .status-ticker,
-body.theme-orange .status-ticker,
-body.theme-gray .status-ticker {
+body.theme-light-pink .status-ticker {
     background: #f1f5f9 !important;
     color: #1e40af !important;
     border: 1px solid #cbd5e1 !important;
@@ -13060,12 +12715,7 @@ body.theme-light-yellow .why-text,
 body.theme-light-green .why-text,
 body.theme-light-blue .why-text,
 body.theme-light-purple .why-text,
-body.theme-light-pink .why-text,
-body.theme-light-brown .why-text,
-body.theme-yellow .why-text,
-body.theme-pink .why-text,
-body.theme-orange .why-text,
-body.theme-gray .why-text {
+body.theme-light-pink .why-text {
     color: #475569 !important;
     border-top: 1px solid #e2e8f0 !important;
     font-weight: 450 !important;
@@ -13083,12 +12733,7 @@ body.theme-light-yellow #global-loading-overlay,
 body.theme-light-green #global-loading-overlay,
 body.theme-light-blue #global-loading-overlay,
 body.theme-light-purple #global-loading-overlay,
-body.theme-light-pink #global-loading-overlay,
-body.theme-light-brown #global-loading-overlay,
-body.theme-yellow #global-loading-overlay,
-body.theme-pink #global-loading-overlay,
-body.theme-orange #global-loading-overlay,
-body.theme-gray #global-loading-overlay {
+body.theme-light-pink #global-loading-overlay {
     background: rgba(255, 255, 255, 0.88) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
@@ -13104,12 +12749,7 @@ body.theme-light-yellow #global-loading-overlay .loading-spinner,
 body.theme-light-green #global-loading-overlay .loading-spinner,
 body.theme-light-blue #global-loading-overlay .loading-spinner,
 body.theme-light-purple #global-loading-overlay .loading-spinner,
-body.theme-light-pink #global-loading-overlay .loading-spinner,
-body.theme-light-brown #global-loading-overlay .loading-spinner,
-body.theme-yellow #global-loading-overlay .loading-spinner,
-body.theme-pink #global-loading-overlay .loading-spinner,
-body.theme-orange #global-loading-overlay .loading-spinner,
-body.theme-gray #global-loading-overlay .loading-spinner {
+body.theme-light-pink #global-loading-overlay .loading-spinner {
     border: 4px solid #e2e8f0 !important;
     border-top-color: var(--accent-color, #2563eb) !important;
     box-shadow: 0 0 20px rgba(37, 99, 235, 0.25) !important;
@@ -13125,12 +12765,7 @@ body.theme-light-yellow #global-loading-overlay #loading-message,
 body.theme-light-green #global-loading-overlay #loading-message,
 body.theme-light-blue #global-loading-overlay #loading-message,
 body.theme-light-purple #global-loading-overlay #loading-message,
-body.theme-light-pink #global-loading-overlay #loading-message,
-body.theme-light-brown #global-loading-overlay #loading-message,
-body.theme-yellow #global-loading-overlay #loading-message,
-body.theme-pink #global-loading-overlay #loading-message,
-body.theme-orange #global-loading-overlay #loading-message,
-body.theme-gray #global-loading-overlay #loading-message {
+body.theme-light-pink #global-loading-overlay #loading-message {
     color: #0f172a !important;
     text-shadow: none !important;
     font-weight: 800 !important;
@@ -13151,12 +12786,7 @@ body.theme-light-yellow #history-review-overlay,
 body.theme-light-green #history-review-overlay,
 body.theme-light-blue #history-review-overlay,
 body.theme-light-purple #history-review-overlay,
-body.theme-light-pink #history-review-overlay,
-body.theme-light-brown #history-review-overlay,
-body.theme-yellow #history-review-overlay,
-body.theme-pink #history-review-overlay,
-body.theme-orange #history-review-overlay,
-body.theme-gray #history-review-overlay {
+body.theme-light-pink #history-review-overlay {
     background: rgba(15, 23, 42, 0.45) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
@@ -13173,12 +12803,7 @@ body.theme-light-yellow .history-review-modal,
 body.theme-light-green .history-review-modal,
 body.theme-light-blue .history-review-modal,
 body.theme-light-purple .history-review-modal,
-body.theme-light-pink .history-review-modal,
-body.theme-light-brown .history-review-modal,
-body.theme-yellow .history-review-modal,
-body.theme-pink .history-review-modal,
-body.theme-orange .history-review-modal,
-body.theme-gray .history-review-modal {
+body.theme-light-pink .history-review-modal {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
@@ -13189,12 +12814,7 @@ body.theme-gray .history-review-modal {
 [class*="theme-white"] .history-review-modal .overlay-header,
 [class*="theme-light-"] .history-review-modal .overlay-header,
 body.theme-white .history-review-modal .overlay-header,
-body.theme-light-gray .history-review-modal .overlay-header,
-body.theme-yellow .history-review-modal .overlay-header,
-body.theme-pink .history-review-modal .overlay-header,
-body.theme-orange .history-review-modal .overlay-header,
-body.theme-gray .history-review-modal .overlay-header,
-body.theme-light-brown .history-review-modal .overlay-header {
+body.theme-light-gray .history-review-modal .overlay-header {
     background: #f8fafc !important;
     border-bottom: 1.5px solid #e2e8f0 !important;
 }
@@ -13390,12 +13010,7 @@ body.theme-white .walkthrough-list .placeholder {
 [class*="theme-white"] .review-board-main,
 [class*="theme-light-"] .review-board-main,
 body.theme-white .review-board-main,
-body.theme-light-gray .review-board-main,
-body.theme-yellow .review-board-main,
-body.theme-pink .review-board-main,
-body.theme-orange .review-board-main,
-body.theme-gray .review-board-main,
-body.theme-light-brown .review-board-main {
+body.theme-light-gray .review-board-main {
     background: #f8fafc !important;
     border: 1.5px solid #e2e8f0 !important;
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(15, 23, 42, 0.03) !important;
@@ -13411,12 +13026,7 @@ body.theme-light-yellow .review-cell,
 body.theme-light-green .review-cell,
 body.theme-light-blue .review-cell,
 body.theme-light-purple .review-cell,
-body.theme-light-pink .review-cell,
-body.theme-light-brown .review-cell,
-body.theme-yellow .review-cell,
-body.theme-pink .review-cell,
-body.theme-orange .review-cell,
-body.theme-gray .review-cell {
+body.theme-light-pink .review-cell {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -13501,12 +13111,7 @@ body.theme-light-yellow .cube-replay-grid,
 body.theme-light-green .cube-replay-grid,
 body.theme-light-blue .cube-replay-grid,
 body.theme-light-purple .cube-replay-grid,
-body.theme-light-pink .cube-replay-grid,
-body.theme-light-brown .cube-replay-grid,
-body.theme-yellow .cube-replay-grid,
-body.theme-pink .cube-replay-grid,
-body.theme-orange .cube-replay-grid,
-body.theme-gray .cube-replay-grid {
+body.theme-light-pink .cube-replay-grid {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
@@ -13521,12 +13126,7 @@ body.theme-light-yellow .cube-replay-face-label,
 body.theme-light-green .cube-replay-face-label,
 body.theme-light-blue .cube-replay-face-label,
 body.theme-light-purple .cube-replay-face-label,
-body.theme-light-pink .cube-replay-face-label,
-body.theme-light-brown .cube-replay-face-label,
-body.theme-yellow .cube-replay-face-label,
-body.theme-pink .cube-replay-face-label,
-body.theme-orange .cube-replay-face-label,
-body.theme-gray .cube-replay-face-label {
+body.theme-light-pink .cube-replay-face-label {
     color: #0f172a !important;
     font-weight: 900 !important;
 }
@@ -13550,12 +13150,7 @@ body.theme-gray .cube-replay-face-label {
     [class*="theme-white"] #page-play .play-header:not(.low-time-warning),
     body.theme-white #page-play .play-header:not(.low-time-warning),
     [class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
-    body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
-    body.theme-yellow #page-play .play-header:not(.low-time-warning),
-    body.theme-pink #page-play .play-header:not(.low-time-warning),
-    body.theme-orange #page-play .play-header:not(.low-time-warning),
-    body.theme-gray #page-play .play-header:not(.low-time-warning),
-    body.theme-light-brown #page-play .play-header:not(.low-time-warning) {
+    body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning) {
         box-shadow: none !important;
     }
 
@@ -13572,12 +13167,7 @@ body.theme-gray .cube-replay-face-label {
     [class*="theme-white"] .board-panel.low-time-warning,
     body.theme-white .board-panel.low-time-warning,
     [class*="theme-light-"] .board-panel.low-time-warning,
-    body[class*="theme-light-"] .board-panel.low-time-warning,
-    body.theme-yellow .board-panel.low-time-warning,
-    body.theme-pink .board-panel.low-time-warning,
-    body.theme-orange .board-panel.low-time-warning,
-    body.theme-gray .board-panel.low-time-warning,
-    body.theme-light-brown .board-panel.low-time-warning {
+    body[class*="theme-light-"] .board-panel.low-time-warning {
         animation: low-time-pulse-white 3s infinite ease-in-out !important;
         border: 2px solid rgba(220, 38, 38, 0.85) !important;
         will-change: background-color, box-shadow, border-color !important;

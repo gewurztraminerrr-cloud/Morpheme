@@ -39,6 +39,7 @@ body.theme-black {
     --accent-color: var(--text-primary);
     --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --btn-text: #000;
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
 }
 
@@ -56,218 +57,251 @@ body.theme-white {
 body.theme-light-gray {
     --bg-primary: #d8d8d8;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #222;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
     --text-primary-rgb: 0, 0, 0;
-    --accent-color: #444;
-    --accent-gradient: linear-gradient(135deg, #bbb 0%, #eee 100%);
+    --accent-color: #333;
+    --accent-gradient: linear-gradient(135deg, #333 0%, #666 100%);
+    --btn-text: #fff;
 }
 
 body.theme-gray {
-    --bg-primary: #808080;
-    --bg-panel: rgba(0, 0, 0, 0.1);
-    --text-primary: #111111;
-    --text-primary-rgb: 0, 0, 0;
-    --accent-color: #000000;
+    --bg-primary: #484848;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-gray {
-    --bg-primary: #333333;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.05);
+    --bg-primary: #242424;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #cccccc;
 }
 
 body.theme-light-red {
     --bg-primary: #ffcccc;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #440000;
-    --text-primary-rgb: 68, 0, 0;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #cc0000;
 }
 
 body.theme-red {
-    --bg-primary: #cc0000;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.15);
-    --text-primary-rgb: 255, 255, 255;
+    --bg-primary: #801010;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-red {
-    --bg-primary: #660000;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.05);
+    --bg-primary: #440000;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #ffcccc;
 }
 
 body.theme-light-orange {
     --bg-primary: #ffe0b3;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #442200;
-    --text-primary-rgb: 68, 34, 0;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #cc6600;
 }
 
 body.theme-orange {
-    --bg-primary: #ff8c00;
-    --bg-panel: rgba(0, 0, 0, 0.1);
-    --text-primary: #111111;
-    --text-primary-rgb: 0, 0, 0;
-    --accent-color: #000000;
+    --bg-primary: #8c3e00;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-orange {
-    --bg-primary: #804000;
-    --bg-panel: rgba(255, 255, 255, 0.1);
+    --bg-primary: #4a2000;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #ffaa00;
 }
 
 body.theme-light-yellow {
     --bg-primary: #ffffcc;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #444400;
-    --text-primary-rgb: 68, 68, 0;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #8b8b00;
-    /* Darker yellow-green for contrast */
 }
 
 body.theme-yellow {
-    --bg-primary: #ffff00;
-    --bg-panel: rgba(0, 0, 0, 0.08);
-    --text-primary: #111111;
-    --text-primary-rgb: 0, 0, 0;
-    --accent-color: #000000;
+    --bg-primary: #705f00;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-yellow {
-    --bg-primary: #808000;
-    --bg-panel: rgba(255, 255, 255, 0.1);
+    --bg-primary: #3d3400;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #ffff00;
 }
 
 body.theme-light-green {
     --bg-primary: #ccffcc;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #004400;
-    --text-primary-rgb: 0, 68, 0;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #008000;
 }
 
 body.theme-green {
-    --bg-primary: #008000;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.15);
-    --text-primary-rgb: 255, 255, 255;
+    --bg-primary: #0f590f;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-green {
-    --bg-primary: #003300;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.05);
+    --bg-primary: #002900;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #ccffcc;
 }
 
 body.theme-light-blue {
     --bg-primary: #cceeff;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #002244;
-    --text-primary-rgb: 0, 34, 68;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #0066cc;
 }
 
 body.theme-blue {
-    --bg-primary: #0000ff;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.15);
-    --text-primary-rgb: 255, 255, 255;
+    --bg-primary: #0a3a78;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-blue {
-    --bg-primary: #000066;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.1);
+    --bg-primary: #001445;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #cceeff;
 }
 
 body.theme-light-purple {
     --bg-primary: #f3e5f5;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #4a148c;
-    --text-primary-rgb: 74, 20, 140;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #7b1fa2;
 }
 
 body.theme-purple {
-    --bg-primary: #800080;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.15);
-    --text-primary-rgb: 255, 255, 255;
+    --bg-primary: #591759;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-purple {
-    --bg-primary: #330066;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.1);
+    --bg-primary: #2e082e;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #e6ccff;
 }
 
 body.theme-light-pink {
     --bg-primary: #fce4ec;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #880e4f;
-    --text-primary-rgb: 136, 14, 79;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #c2185b;
 }
 
 body.theme-pink {
-    --bg-primary: #ffc0cb;
-    --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #333333;
-    --text-primary-rgb: 0, 0, 0;
-    --accent-color: #e91e63;
+    --bg-primary: #851b47;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-pink {
-    --bg-primary: #c2185b;
-    --bg-panel: rgba(255, 255, 255, 0.1);
+    --bg-primary: #4a0a26;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
     --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #fce4ec;
 }
 
 body.theme-light-brown {
     --bg-primary: #efe0cc;
     --bg-panel: rgba(0, 0, 0, 0.05);
-    --text-primary: #3e2723;
-    --text-primary-rgb: 62, 39, 35;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #111;
+    --text-primary-rgb: 0, 0, 0;
     --accent-color: #795548;
 }
 
 body.theme-brown {
-    --bg-primary: #795548;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.15);
-    --text-primary-rgb: 255, 255, 255;
+    --bg-primary: #52362b;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
+    --text-primary-rgb: 255, 255, 255;
 }
 
 body.theme-dark-brown {
-    --bg-primary: #3e2723;
-    --bg-panel: rgba(var(--text-primary-rgb), 0.05);
+    --bg-primary: #2b1812;
+    --bg-panel: rgba(var(--text-primary-rgb), 0.08);
+    --accent-color: var(--text-primary);
+    --accent-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+    --text-primary: #ffffff;
     --text-primary-rgb: 255, 255, 255;
-    --accent-color: #d7ccc8;
 }
 
 /* Light Theme Variables and Base Text Colors */
 [class*="theme-white"],
-[class*="theme-light-"],
-body.theme-yellow,
-body.theme-pink,
-body.theme-orange,
-body.theme-gray,
-body.theme-light-brown {
+[class*="theme-light-"] {
     color: var(--text-primary);
     --muted-text: rgba(var(--text-primary-rgb), 0.75);
     /* Increased contrast for light themes */
@@ -299,47 +333,27 @@ select option {
 }
 
 [class*="theme-white"] select,
-[class*="theme-light-"] select,
-body.theme-yellow select,
-body.theme-pink select,
-body.theme-orange select,
-body.theme-gray select,
-body.theme-light-brown select {
+[class*="theme-light-"] select {
     background: rgba(0, 0, 0, 0.06) !important;
     color: var(--text-primary) !important;
     border-color: rgba(0, 0, 0, 0.25) !important;
 }
 
 [class*="theme-white"] select option,
-[class*="theme-light-"] select option,
-body.theme-yellow select option,
-body.theme-pink select option,
-body.theme-orange select option,
-body.theme-gray select option,
-body.theme-light-brown select option {
+[class*="theme-light-"] select option {
     background: #ffffff !important;
     color: #111111 !important;
 }
 
 [class*="theme-white"] .achievement-card,
-[class*="theme-light-"] .achievement-card,
-body.theme-yellow .achievement-card,
-body.theme-pink .achievement-card,
-body.theme-orange .achievement-card,
-body.theme-gray .achievement-card,
-body.theme-light-brown .achievement-card {
+[class*="theme-light-"] .achievement-card {
     background: #ffffff !important;
     color: #111 !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4) !important;
 }
 
 [class*="theme-white"] .modal-header,
-[class*="theme-light-"] .modal-header,
-body.theme-yellow .modal-header,
-body.theme-pink .modal-header,
-body.theme-orange .modal-header,
-body.theme-gray .modal-header,
-body.theme-light-brown .modal-header {
+[class*="theme-light-"] .modal-header {
     background: #f0f0f0 !important;
     border-bottom-color: rgba(0, 0, 0, 0.1) !important;
 }
@@ -347,35 +361,15 @@ body.theme-light-brown .modal-header {
 [class*="theme-white"] #generic-modal-title,
 [class*="theme-white"] #generic-confirm-title,
 [class*="theme-light-"] #generic-modal-title,
-[class*="theme-light-"] #generic-confirm-title,
-body.theme-yellow #generic-modal-title,
-body.theme-yellow #generic-confirm-title,
-body.theme-pink #generic-modal-title,
-body.theme-pink #generic-confirm-title,
-body.theme-orange #generic-modal-title,
-body.theme-orange #generic-confirm-title,
-body.theme-gray #generic-modal-title,
-body.theme-gray #generic-confirm-title,
-body.theme-light-brown #generic-modal-title,
-body.theme-light-brown #generic-confirm-title {
+[class*="theme-light-"] #generic-confirm-title {
     color: #111 !important;
 }
 
 /* Ensure Logo, Titles, etc. use theme primary color */
 [class*="theme-white"] .logo-text,
 [class*="theme-light-"] .logo-text,
-body.theme-yellow .logo-text,
-body.theme-pink .logo-text,
-body.theme-orange .logo-text,
-body.theme-gray .logo-text,
-body.theme-light-brown .logo-text,
 [class*="theme-white"] .logo .pronunciation,
 [class*="theme-light-"] .logo .pronunciation,
-body.theme-yellow .logo .pronunciation,
-body.theme-pink .logo .pronunciation,
-body.theme-orange .logo .pronunciation,
-body.theme-gray .logo .pronunciation,
-body.theme-light-brown .logo .pronunciation,
 .page h2,
 .setting-title,
 .tool-header h2,
@@ -387,34 +381,19 @@ body.theme-light-brown .logo .pronunciation,
 }
 
 [class*="theme-white"] .tool-nav-btn,
-[class*="theme-light-"] .tool-nav-btn,
-body.theme-yellow .tool-nav-btn,
-body.theme-pink .tool-nav-btn,
-body.theme-orange .tool-nav-btn,
-body.theme-gray .tool-nav-btn,
-body.theme-light-brown .tool-nav-btn {
+[class*="theme-light-"] .tool-nav-btn {
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
 }
 
 [class*="theme-white"] .tool-nav-btn:hover,
-[class*="theme-light-"] .tool-nav-btn:hover,
-body.theme-yellow .tool-nav-btn:hover,
-body.theme-pink .tool-nav-btn:hover,
-body.theme-orange .tool-nav-btn:hover,
-body.theme-gray .tool-nav-btn:hover,
-body.theme-light-brown .tool-nav-btn:hover {
+[class*="theme-light-"] .tool-nav-btn:hover {
     background: rgba(0, 0, 0, 0.08) !important;
     border-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 [class*="theme-white"] .tool-nav-btn.active,
-[class*="theme-light-"] .tool-nav-btn.active,
-body.theme-yellow .tool-nav-btn.active,
-body.theme-pink .tool-nav-btn.active,
-body.theme-orange .tool-nav-btn.active,
-body.theme-gray .tool-nav-btn.active,
-body.theme-light-brown .tool-nav-btn.active {
+[class*="theme-light-"] .tool-nav-btn.active {
     background: rgba(37, 99, 235, 0.12) !important;
     border-color: rgba(37, 99, 235, 0.5) !important;
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.15) !important;
@@ -422,42 +401,22 @@ body.theme-light-brown .tool-nav-btn.active {
 }
 
 [class*="theme-white"] .tool-nav-btn.active .tool-btn-title,
-[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title,
-body.theme-yellow .tool-nav-btn.active .tool-btn-title,
-body.theme-pink .tool-nav-btn.active .tool-btn-title,
-body.theme-orange .tool-nav-btn.active .tool-btn-title,
-body.theme-gray .tool-nav-btn.active .tool-btn-title,
-body.theme-light-brown .tool-nav-btn.active .tool-btn-title {
+[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title {
     color: #2563eb !important;
 }
 
 [class*="theme-white"] .tool-btn-title,
-[class*="theme-light-"] .tool-btn-title,
-body.theme-yellow .tool-btn-title,
-body.theme-pink .tool-btn-title,
-body.theme-orange .tool-btn-title,
-body.theme-gray .tool-btn-title,
-body.theme-light-brown .tool-btn-title {
+[class*="theme-light-"] .tool-btn-title {
     color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .tool-btn-desc,
-[class*="theme-light-"] .tool-btn-desc,
-body.theme-yellow .tool-btn-desc,
-body.theme-pink .tool-btn-desc,
-body.theme-orange .tool-btn-desc,
-body.theme-gray .tool-btn-desc,
-body.theme-light-brown .tool-btn-desc {
+[class*="theme-light-"] .tool-btn-desc {
     color: rgba(0, 0, 0, 0.7) !important;
 }
 
 /* Control Panels & Dashboard Cards for Light Themes */
-[class*="theme-light-"] .combo-control-panel,
-body.theme-yellow .combo-control-panel,
-body.theme-pink .combo-control-panel,
-body.theme-orange .combo-control-panel,
-body.theme-gray .combo-control-panel,
-body.theme-light-brown .combo-control-panel {
+[class*="theme-light-"] .combo-control-panel {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
@@ -712,57 +671,7 @@ body.theme-light-brown .combo-control-panel {
 [class*="theme-light-"] .combo-results-container,
 [class*="theme-light-"] .lists-container,
 [class*="theme-light-"] .list-column,
-[class*="theme-light-"] .list-scroll-area,
-body.theme-yellow .subanagrams-game-area,
-body.theme-yellow .seq-results-container,
-body.theme-yellow #sub-results-container,
-body.theme-yellow #seq-results-container,
-body.theme-yellow .random-word-container,
-body.theme-yellow .wotd-container,
-body.theme-yellow .combo-results-container,
-body.theme-yellow .lists-container,
-body.theme-yellow .list-column,
-body.theme-yellow .list-scroll-area,
-body.theme-pink .subanagrams-game-area,
-body.theme-pink .seq-results-container,
-body.theme-pink #sub-results-container,
-body.theme-pink #seq-results-container,
-body.theme-pink .random-word-container,
-body.theme-pink .wotd-container,
-body.theme-pink .combo-results-container,
-body.theme-pink .lists-container,
-body.theme-pink .list-column,
-body.theme-pink .list-scroll-area,
-body.theme-orange .subanagrams-game-area,
-body.theme-orange .seq-results-container,
-body.theme-orange #sub-results-container,
-body.theme-orange #seq-results-container,
-body.theme-orange .random-word-container,
-body.theme-orange .wotd-container,
-body.theme-orange .combo-results-container,
-body.theme-orange .lists-container,
-body.theme-orange .list-column,
-body.theme-orange .list-scroll-area,
-body.theme-gray .subanagrams-game-area,
-body.theme-gray .seq-results-container,
-body.theme-gray #sub-results-container,
-body.theme-gray #seq-results-container,
-body.theme-gray .random-word-container,
-body.theme-gray .wotd-container,
-body.theme-gray .combo-results-container,
-body.theme-gray .lists-container,
-body.theme-gray .list-column,
-body.theme-gray .list-scroll-area,
-body.theme-light-brown .subanagrams-game-area,
-body.theme-light-brown .seq-results-container,
-body.theme-light-brown #sub-results-container,
-body.theme-light-brown #seq-results-container,
-body.theme-light-brown .random-word-container,
-body.theme-light-brown .wotd-container,
-body.theme-light-brown .combo-results-container,
-body.theme-light-brown .lists-container,
-body.theme-light-brown .list-column,
-body.theme-light-brown .list-scroll-area {
+[class*="theme-light-"] .list-scroll-area {
     background: rgba(0, 0, 0, 0.04) !important;
     border-color: rgba(0, 0, 0, 0.12) !important;
     color: var(--text-primary) !important;
@@ -783,47 +692,7 @@ body.theme-light-brown .list-scroll-area {
 [class*="theme-light-"] .valid-definition-display,
 [class*="theme-light-"] #valid-definition-display,
 [class*="theme-light-"] .definition-text,
-[class*="theme-light-"] #valid-definition-display .definition-text,
-body.theme-yellow .wotd-definition,
-body.theme-yellow #wotd-definition,
-body.theme-yellow .random-word-definition,
-body.theme-yellow #random-word-definition,
-body.theme-yellow .valid-definition-display,
-body.theme-yellow #valid-definition-display,
-body.theme-yellow .definition-text,
-body.theme-yellow #valid-definition-display .definition-text,
-body.theme-pink .wotd-definition,
-body.theme-pink #wotd-definition,
-body.theme-pink .random-word-definition,
-body.theme-pink #random-word-definition,
-body.theme-pink .valid-definition-display,
-body.theme-pink #valid-definition-display,
-body.theme-pink .definition-text,
-body.theme-pink #valid-definition-display .definition-text,
-body.theme-orange .wotd-definition,
-body.theme-orange #wotd-definition,
-body.theme-orange .random-word-definition,
-body.theme-orange #random-word-definition,
-body.theme-orange .valid-definition-display,
-body.theme-orange #valid-definition-display,
-body.theme-orange .definition-text,
-body.theme-orange #valid-definition-display .definition-text,
-body.theme-gray .wotd-definition,
-body.theme-gray #wotd-definition,
-body.theme-gray .random-word-definition,
-body.theme-gray #random-word-definition,
-body.theme-gray .valid-definition-display,
-body.theme-gray #valid-definition-display,
-body.theme-gray .definition-text,
-body.theme-gray #valid-definition-display .definition-text,
-body.theme-light-brown .wotd-definition,
-body.theme-light-brown #wotd-definition,
-body.theme-light-brown .random-word-definition,
-body.theme-light-brown #random-word-definition,
-body.theme-light-brown .valid-definition-display,
-body.theme-light-brown #valid-definition-display,
-body.theme-light-brown .definition-text,
-body.theme-light-brown #valid-definition-display .definition-text {
+[class*="theme-light-"] #valid-definition-display .definition-text {
     color: var(--text-primary) !important;
     opacity: 0.9 !important;
 }
@@ -848,70 +717,15 @@ body.theme-light-brown #valid-definition-display .definition-text {
 [class*="theme-light-"] .unscramble-must-have-label,
 [class*="theme-light-"] .seq-results-placeholder,
 [class*="theme-light-"] #sub-count-info,
-body.theme-yellow .tool-header p,
-body.theme-yellow .page-title-header p,
-body.theme-yellow .chart-desc,
-body.theme-yellow .wotd-intro,
-body.theme-yellow .sub-len-label,
-body.theme-yellow .unscramble-must-have-label,
-body.theme-yellow .seq-results-placeholder,
-body.theme-yellow #sub-count-info,
-body.theme-pink .tool-header p,
-body.theme-pink .page-title-header p,
-body.theme-pink .chart-desc,
-body.theme-pink .wotd-intro,
-body.theme-pink .sub-len-label,
-body.theme-pink .unscramble-must-have-label,
-body.theme-pink .seq-results-placeholder,
-body.theme-pink #sub-count-info,
-body.theme-orange .tool-header p,
-body.theme-orange .page-title-header p,
-body.theme-orange .chart-desc,
-body.theme-orange .wotd-intro,
-body.theme-orange .sub-len-label,
-body.theme-orange .unscramble-must-have-label,
-body.theme-orange .seq-results-placeholder,
-body.theme-orange #sub-count-info,
-body.theme-gray .tool-header p,
-body.theme-gray .page-title-header p,
-body.theme-gray .chart-desc,
-body.theme-gray .wotd-intro,
-body.theme-gray .sub-len-label,
-body.theme-gray .unscramble-must-have-label,
-body.theme-gray .seq-results-placeholder,
-body.theme-gray #sub-count-info,
-body.theme-light-brown .tool-header p,
-body.theme-light-brown .page-title-header p,
-body.theme-light-brown .chart-desc,
-body.theme-light-brown .wotd-intro,
-body.theme-light-brown .sub-len-label,
-body.theme-light-brown .unscramble-must-have-label,
 [class*="theme-white"] .sub-empty-prompt,
-[class*="theme-light-"] .sub-empty-prompt,
-body.theme-yellow .sub-empty-prompt,
-body.theme-pink .sub-empty-prompt,
-body.theme-orange .sub-empty-prompt,
-body.theme-gray .sub-empty-prompt,
-body.theme-light-brown .sub-empty-prompt,
-body.theme-light-brown .seq-results-placeholder,
-body.theme-light-brown #sub-count-info {
+[class*="theme-light-"] .sub-empty-prompt {
     color: rgba(0, 0, 0, 0.75) !important;
 }
 
 [class*="theme-white"] .tool-header p,
 [class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box,
 [class*="theme-light-"] .tool-header p,
-[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box,
-body.theme-yellow .tool-header p,
-body.theme-yellow #forum-category-desc.forum-desc-scrolling-box,
-body.theme-pink .tool-header p,
-body.theme-pink #forum-category-desc.forum-desc-scrolling-box,
-body.theme-orange .tool-header p,
-body.theme-orange #forum-category-desc.forum-desc-scrolling-box,
-body.theme-gray .tool-header p,
-body.theme-gray #forum-category-desc.forum-desc-scrolling-box,
-body.theme-light-brown .tool-header p,
-body.theme-light-brown #forum-category-desc.forum-desc-scrolling-box {
+[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #475569 !important;
@@ -923,44 +737,19 @@ body.theme-light-brown #forum-category-desc.forum-desc-scrolling-box {
 [class*="theme-white"] .chart-desc::-webkit-scrollbar-thumb,
 [class*="theme-light-"] .tool-header p::-webkit-scrollbar-thumb,
 [class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-[class*="theme-light-"] .chart-desc::-webkit-scrollbar-thumb,
-body.theme-yellow .tool-header p::-webkit-scrollbar-thumb,
-body.theme-yellow #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-body.theme-yellow .chart-desc::-webkit-scrollbar-thumb,
-body.theme-pink .tool-header p::-webkit-scrollbar-thumb,
-body.theme-pink #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-body.theme-pink .chart-desc::-webkit-scrollbar-thumb,
-body.theme-orange .tool-header p::-webkit-scrollbar-thumb,
-body.theme-orange #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-body.theme-orange .chart-desc::-webkit-scrollbar-thumb,
-body.theme-gray .tool-header p::-webkit-scrollbar-thumb,
-body.theme-gray #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-body.theme-gray .chart-desc::-webkit-scrollbar-thumb,
-body.theme-light-brown .tool-header p::-webkit-scrollbar-thumb,
-body.theme-light-brown #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb,
-body.theme-light-brown .chart-desc::-webkit-scrollbar-thumb {
+[class*="theme-light-"] .chart-desc::-webkit-scrollbar-thumb {
     background: #94a3b8 !important;
 }
 
 [class*="theme-white"] .nav-btn,
-[class*="theme-light-"] .nav-btn,
-body.theme-yellow .nav-btn,
-body.theme-pink .nav-btn,
-body.theme-orange .nav-btn,
-body.theme-gray .nav-btn,
-body.theme-light-brown .nav-btn {
+[class*="theme-light-"] .nav-btn {
     color: var(--text-primary);
     border-color: rgba(0, 0, 0, 0.2);
     background: rgba(0, 0, 0, 0.05);
 }
 
 [class*="theme-white"] .auth-container,
-[class*="theme-light-"] .auth-container,
-body.theme-yellow .auth-container,
-body.theme-pink .auth-container,
-body.theme-orange .auth-container,
-body.theme-gray .auth-container,
-body.theme-light-brown .auth-container {
+[class*="theme-light-"] .auth-container {
     background: var(--bg-panel);
     color: var(--text-primary);
     border: 1px solid var(--input-border);
@@ -970,17 +759,7 @@ body.theme-light-brown .auth-container {
 [class*="theme-white"] input[type="text"],
 [class*="theme-white"] textarea,
 [class*="theme-light-"] input[type="text"],
-[class*="theme-light-"] textarea,
-body.theme-yellow input[type="text"],
-body.theme-yellow textarea,
-body.theme-pink input[type="text"],
-body.theme-pink textarea,
-body.theme-orange input[type="text"],
-body.theme-orange textarea,
-body.theme-gray input[type="text"],
-body.theme-gray textarea,
-body.theme-light-brown input[type="text"],
-body.theme-light-brown textarea {
+[class*="theme-light-"] textarea {
     background: rgba(0, 0, 0, 0.06) !important;
     border-color: rgba(0, 0, 0, 0.2) !important;
     color: var(--text-primary) !important;
@@ -989,28 +768,13 @@ body.theme-light-brown textarea {
 [class*="theme-white"] input::placeholder,
 [class*="theme-white"] textarea::placeholder,
 [class*="theme-light-"] input::placeholder,
-[class*="theme-light-"] textarea::placeholder,
-body.theme-yellow input::placeholder,
-body.theme-yellow textarea::placeholder,
-body.theme-pink input::placeholder,
-body.theme-pink textarea::placeholder,
-body.theme-orange input::placeholder,
-body.theme-orange textarea::placeholder,
-body.theme-gray input::placeholder,
-body.theme-gray textarea::placeholder,
-body.theme-light-brown input::placeholder,
-body.theme-light-brown textarea::placeholder {
+[class*="theme-light-"] textarea::placeholder {
     color: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Gameplay Elements for Light Themes */
 [class*="theme-white"] .board-cell,
-[class*="theme-light-"] .board-cell,
-body.theme-yellow .board-cell,
-body.theme-pink .board-cell,
-body.theme-orange .board-cell,
-body.theme-gray .board-cell,
-body.theme-light-brown .board-cell {
+[class*="theme-light-"] .board-cell {
     background: #ffffff;
     /* Active gameplay always white */
     color: #111;
@@ -1018,12 +782,7 @@ body.theme-light-brown .board-cell {
 }
 
 [class*="theme-white"] .board-cell.grayed,
-[class*="theme-light-"] .board-cell.grayed,
-body.theme-yellow .board-cell.grayed,
-body.theme-pink .board-cell.grayed,
-body.theme-orange .board-cell.grayed,
-body.theme-gray .board-cell.grayed,
-body.theme-light-brown .board-cell.grayed {
+[class*="theme-light-"] .board-cell.grayed {
     background: rgba(0, 0, 0, 0.08);
     /* The grey previously used during round now at END of round */
     color: #666;
@@ -1031,12 +790,7 @@ body.theme-light-brown .board-cell.grayed {
 }
 
 [class*="theme-white"] .timer-value,
-[class*="theme-light-"] .timer-value,
-body.theme-yellow .timer-value,
-body.theme-pink .timer-value,
-body.theme-orange .timer-value,
-body.theme-gray .timer-value,
-body.theme-light-brown .timer-value {
+[class*="theme-light-"] .timer-value {
     color: #000 !important;
     /* Pure black for maximum readability in bright settings */
     text-shadow: none;
@@ -1044,60 +798,30 @@ body.theme-light-brown .timer-value {
 
 /* Tournament Visibility for Light Themes */
 [class*="theme-white"] .tournament-card,
-[class*="theme-light-"] .tournament-card,
-body.theme-yellow .tournament-card,
-body.theme-pink .tournament-card,
-body.theme-orange .tournament-card,
-body.theme-gray .tournament-card,
-body.theme-light-brown .tournament-card {
+[class*="theme-light-"] .tournament-card {
     background: var(--bg-panel);
     border-color: var(--card-border);
 }
 
 [class*="theme-white"] .tournament-card h3,
 [class*="theme-light-"] .tournament-card h3,
-body.theme-yellow .tournament-card h3,
-body.theme-pink .tournament-card h3,
-body.theme-orange .tournament-card h3,
-body.theme-gray .tournament-card h3,
-body.theme-light-brown .tournament-card h3,
 [class*="theme-white"] .param-label,
 [class*="theme-light-"] .param-label,
-body.theme-yellow .param-label,
-body.theme-pink .param-label,
-body.theme-orange .param-label,
-body.theme-gray .param-label,
-body.theme-light-brown .param-label,
 [class*="theme-white"] .history-table th,
-[class*="theme-light-"] .history-table th,
-body.theme-yellow .history-table th,
-body.theme-pink .history-table th,
-body.theme-orange .history-table th,
-body.theme-gray .history-table th,
-body.theme-light-brown .history-table th {
+[class*="theme-light-"] .history-table th {
     color: var(--text-primary);
     opacity: 0.7;
     border-bottom-color: rgba(0, 0, 0, 0.1);
 }
 
 [class*="theme-white"] .countdown-timer,
-[class*="theme-light-"] .countdown-timer,
-body.theme-yellow .countdown-timer,
-body.theme-pink .countdown-timer,
-body.theme-orange .countdown-timer,
-body.theme-gray .countdown-timer,
-body.theme-light-brown .countdown-timer {
+[class*="theme-light-"] .countdown-timer {
     background: rgba(0, 0, 0, 0.05);
 }
 
 /* Profile Visibility for Light Themes */
 [class*="theme-white"] .profile-card.premium,
-[class*="theme-light-"] .profile-card.premium,
-body.theme-yellow .profile-card.premium,
-body.theme-pink .profile-card.premium,
-body.theme-orange .profile-card.premium,
-body.theme-gray .profile-card.premium,
-body.theme-light-brown .profile-card.premium {
+[class*="theme-light-"] .profile-card.premium {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
@@ -1105,12 +829,7 @@ body.theme-light-brown .profile-card.premium {
 
 /* Ensure text is dark and readable on light premium cards */
 [class*="theme-white"] .profile-card.premium *,
-[class*="theme-light-"] .profile-card.premium *,
-body.theme-yellow .profile-card.premium *,
-body.theme-pink .profile-card.premium *,
-body.theme-orange .profile-card.premium *,
-body.theme-gray .profile-card.premium *,
-body.theme-light-brown .profile-card.premium * {
+[class*="theme-light-"] .profile-card.premium * {
     color: #222 !important;
 }
 
@@ -1120,12 +839,7 @@ body.theme-light-brown .profile-card.premium * {
 }
 
 [class*="theme-white"] .profile-username-large,
-[class*="theme-light-"] .profile-username-large,
-body.theme-yellow .profile-username-large,
-body.theme-pink .profile-username-large,
-body.theme-orange .profile-username-large,
-body.theme-gray .profile-username-large,
-body.theme-light-brown .profile-username-large {
+[class*="theme-light-"] .profile-username-large {
     background: linear-gradient(to bottom, var(--text-primary) 40%, rgba(0, 0, 0, 0.6));
     -webkit-background-clip: text;
     background-clip: text;
@@ -1135,69 +849,29 @@ body.theme-light-brown .profile-username-large {
 [class*="theme-white"] #profile-search-btn,
 [class*="theme-white"] #profile-my-profile-btn,
 [class*="theme-light-"] #profile-search-btn,
-[class*="theme-light-"] #profile-my-profile-btn,
-body.theme-yellow #profile-search-btn,
-body.theme-yellow #profile-my-profile-btn,
-body.theme-pink #profile-search-btn,
-body.theme-pink #profile-my-profile-btn,
-body.theme-orange #profile-search-btn,
-body.theme-orange #profile-my-profile-btn,
-body.theme-gray #profile-search-btn,
-body.theme-gray #profile-my-profile-btn,
-body.theme-light-brown #profile-search-btn,
-body.theme-light-brown #profile-my-profile-btn {
+[class*="theme-light-"] #profile-my-profile-btn {
     color: #111 !important;
 }
 
 [class*="theme-white"] .meta-item,
-[class*="theme-light-"] .meta-item,
-body.theme-yellow .meta-item,
-body.theme-pink .meta-item,
-body.theme-orange .meta-item,
-body.theme-gray .meta-item,
-body.theme-light-brown .meta-item {
+[class*="theme-light-"] .meta-item {
     background: rgba(0, 0, 0, 0.04);
     border-color: rgba(0, 0, 0, 0.08);
 }
 
 [class*="theme-white"] .meta-text,
 [class*="theme-light-"] .meta-text,
-body.theme-yellow .meta-text,
-body.theme-pink .meta-text,
-body.theme-orange .meta-text,
-body.theme-gray .meta-text,
-body.theme-light-brown .meta-text,
 [class*="theme-white"] .stat-num,
-[class*="theme-light-"] .stat-num,
-body.theme-yellow .stat-num,
-body.theme-pink .stat-num,
-body.theme-orange .stat-num,
-body.theme-gray .stat-num,
-body.theme-light-brown .stat-num {
+[class*="theme-light-"] .stat-num {
     color: var(--text-primary);
 }
 
 [class*="theme-white"] .meta-label,
 [class*="theme-light-"] .meta-label,
-body.theme-yellow .meta-label,
-body.theme-pink .meta-label,
-body.theme-orange .meta-label,
-body.theme-gray .meta-label,
-body.theme-light-brown .meta-label,
 [class*="theme-white"] .stat-desc,
 [class*="theme-light-"] .stat-desc,
-body.theme-yellow .stat-desc,
-body.theme-pink .stat-desc,
-body.theme-orange .stat-desc,
-body.theme-gray .stat-desc,
-body.theme-light-brown .stat-desc,
 [class*="theme-white"] .rating-label,
-[class*="theme-light-"] .rating-label,
-body.theme-yellow .rating-label,
-body.theme-pink .rating-label,
-body.theme-orange .rating-label,
-body.theme-gray .rating-label,
-body.theme-light-brown .rating-label {
+[class*="theme-light-"] .rating-label {
     color: rgba(0, 0, 0, 0.5);
 }
 
@@ -1205,62 +879,35 @@ body.theme-light-brown .rating-label {
 [class*="theme-white"] .dim-label,
 [class*="theme-white"] .time-label,
 [class*="theme-light-"] .dim-label,
-[class*="theme-light-"] .time-label,
-body.theme-yellow .dim-label,
-body.theme-yellow .time-label {
+[class*="theme-light-"] .time-label {
     color: var(--text-primary);
 }
 
 /* Tools and Profile Visibility for Light Themes */
 [class*="theme-white"] .tools-sidebar,
-[class*="theme-light-"] .tools-sidebar,
-body.theme-yellow .tools-sidebar,
-body.theme-pink .tools-sidebar,
-body.theme-orange .tools-sidebar,
-body.theme-gray .tools-sidebar,
-body.theme-light-brown .tools-sidebar {
+[class*="theme-light-"] .tools-sidebar {
     background: rgba(0, 0, 0, 0.03);
     border-right-color: var(--card-border);
 }
 
 [class*="theme-white"] .tool-nav-btn,
-[class*="theme-light-"] .tool-nav-btn,
-body.theme-yellow .tool-nav-btn,
-body.theme-pink .tool-nav-btn,
-body.theme-orange .tool-nav-btn,
-body.theme-gray .tool-nav-btn,
-body.theme-light-brown .tool-nav-btn {
+[class*="theme-light-"] .tool-nav-btn {
     color: var(--text-muted-fixed);
 }
 
 [class*="theme-white"] .tool-nav-btn:hover,
-[class*="theme-light-"] .tool-nav-btn:hover,
-body.theme-yellow .tool-nav-btn:hover,
-body.theme-pink .tool-nav-btn:hover,
-body.theme-orange .tool-nav-btn:hover,
-body.theme-gray .tool-nav-btn:hover,
-body.theme-light-brown .tool-nav-btn:hover {
+[class*="theme-light-"] .tool-nav-btn:hover {
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
 }
 
 [class*="theme-white"] .tools-content,
-[class*="theme-light-"] .tools-content,
-body.theme-yellow .tools-content,
-body.theme-pink .tools-content,
-body.theme-orange .tools-content,
-body.theme-gray .tools-content,
-body.theme-light-brown .tools-content {
+[class*="theme-light-"] .tools-content {
     background: rgba(0, 0, 0, 0.01);
 }
 
 [class*="theme-white"] .tool-header h2,
-[class*="theme-light-"] .tool-header h2,
-body.theme-yellow .tool-header h2,
-body.theme-pink .tool-header h2,
-body.theme-orange .tool-header h2,
-body.theme-gray .tool-header h2,
-body.theme-light-brown .tool-header h2 {
+[class*="theme-light-"] .tool-header h2 {
     background: linear-gradient(to right, var(--text-primary), rgba(0, 0, 0, 0.5));
     -webkit-background-clip: text;
     background-clip: text;
@@ -1269,46 +916,21 @@ body.theme-light-brown .tool-header h2 {
 
 [class*="theme-white"] .tool-header p,
 [class*="theme-light-"] .tool-header p,
-body.theme-yellow .tool-header p,
-body.theme-pink .tool-header p,
-body.theme-orange .tool-header p,
-body.theme-gray .tool-header p,
-body.theme-light-brown .tool-header p,
 [class*="theme-white"] .profile-quote-minimal p,
-[class*="theme-light-"] .profile-quote-minimal p,
-body.theme-yellow .profile-quote-minimal p,
-body.theme-pink .profile-quote-minimal p,
-body.theme-orange .profile-quote-minimal p,
-body.theme-gray .profile-quote-minimal p,
-body.theme-light-brown .profile-quote-minimal p {
+[class*="theme-light-"] .profile-quote-minimal p {
     color: var(--text-muted-fixed);
 }
 
 [class*="theme-white"] .stat-box,
-[class*="theme-light-"] .stat-box,
-body.theme-yellow .stat-box,
-body.theme-pink .stat-box,
-body.theme-orange .stat-box,
-body.theme-gray .stat-box,
-body.theme-light-brown .stat-box {
+[class*="theme-light-"] .stat-box {
     background: rgba(0, 0, 0, 0.04);
 }
 
 /* Tournament and Tool Header Gradients for Light Themes */
 [class*="theme-white"] .tournament-header h2,
 [class*="theme-light-"] .tournament-header h2,
-body.theme-yellow .tournament-header h2,
-body.theme-pink .tournament-header h2,
-body.theme-orange .tournament-header h2,
-body.theme-gray .tournament-header h2,
-body.theme-light-brown .tournament-header h2,
 [class*="theme-white"] .tool-header h2,
-[class*="theme-light-"] .tool-header h2,
-body.theme-yellow .tool-header h2,
-body.theme-pink .tool-header h2,
-body.theme-orange .tool-header h2,
-body.theme-gray .tool-header h2,
-body.theme-light-brown .tool-header h2 {
+[class*="theme-light-"] .tool-header h2 {
     background: none !important;
     -webkit-text-fill-color: var(--text-primary) !important;
     color: var(--text-primary) !important;
@@ -4349,22 +3971,7 @@ body.theme-white #close-history-review,
 body.theme-white #close-integrated-replay,
 body.theme-light-gray .close-overlay,
 body.theme-light-gray #close-history-review,
-body.theme-light-gray #close-integrated-replay,
-body.theme-yellow .close-overlay,
-body.theme-yellow #close-history-review,
-body.theme-yellow #close-integrated-replay,
-body.theme-pink .close-overlay,
-body.theme-pink #close-history-review,
-body.theme-pink #close-integrated-replay,
-body.theme-orange .close-overlay,
-body.theme-orange #close-history-review,
-body.theme-orange #close-integrated-replay,
-body.theme-gray .close-overlay,
-body.theme-gray #close-history-review,
-body.theme-gray #close-integrated-replay,
-body.theme-light-brown .close-overlay,
-body.theme-light-brown #close-history-review,
-body.theme-light-brown #close-integrated-replay {
+body.theme-light-gray #close-integrated-replay {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -4382,22 +3989,7 @@ body.theme-white #close-history-review:hover,
 body.theme-white #close-integrated-replay:hover,
 body.theme-light-gray .close-overlay:hover,
 body.theme-light-gray #close-history-review:hover,
-body.theme-light-gray #close-integrated-replay:hover,
-body.theme-yellow .close-overlay:hover,
-body.theme-yellow #close-history-review:hover,
-body.theme-yellow #close-integrated-replay:hover,
-body.theme-pink .close-overlay:hover,
-body.theme-pink #close-history-review:hover,
-body.theme-pink #close-integrated-replay:hover,
-body.theme-orange .close-overlay:hover,
-body.theme-orange #close-history-review:hover,
-body.theme-orange #close-integrated-replay:hover,
-body.theme-gray .close-overlay:hover,
-body.theme-gray #close-history-review:hover,
-body.theme-gray #close-integrated-replay:hover,
-body.theme-light-brown .close-overlay:hover,
-body.theme-light-brown #close-history-review:hover,
-body.theme-light-brown #close-integrated-replay:hover {
+body.theme-light-gray #close-integrated-replay:hover {
     background: #fee2e2 !important;
     border-color: #f87171 !important;
     color: #ef4444 !important;
@@ -4934,33 +4526,18 @@ body.theme-light-brown #close-integrated-replay:hover {
 }
 
 [class*="theme-white"] .achievement-card,
-[class*="theme-light-"] .achievement-card,
-body.theme-yellow .achievement-card,
-body.theme-pink .achievement-card,
-body.theme-orange .achievement-card,
-body.theme-gray .achievement-card,
-body.theme-light-brown .achievement-card {
+[class*="theme-light-"] .achievement-card {
     scrollbar-color: #2563eb rgba(0, 0, 0, 0.08);
 }
 
 [class*="theme-white"] .achievement-card::-webkit-scrollbar-track,
-[class*="theme-light-"] .achievement-card::-webkit-scrollbar-track,
-body.theme-yellow .achievement-card::-webkit-scrollbar-track,
-body.theme-pink .achievement-card::-webkit-scrollbar-track,
-body.theme-orange .achievement-card::-webkit-scrollbar-track,
-body.theme-gray .achievement-card::-webkit-scrollbar-track,
-body.theme-light-brown .achievement-card::-webkit-scrollbar-track {
+[class*="theme-light-"] .achievement-card::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 [class*="theme-white"] .achievement-card::-webkit-scrollbar-thumb,
-[class*="theme-light-"] .achievement-card::-webkit-scrollbar-thumb,
-body.theme-yellow .achievement-card::-webkit-scrollbar-thumb,
-body.theme-pink .achievement-card::-webkit-scrollbar-thumb,
-body.theme-orange .achievement-card::-webkit-scrollbar-thumb,
-body.theme-gray .achievement-card::-webkit-scrollbar-thumb,
-body.theme-light-brown .achievement-card::-webkit-scrollbar-thumb {
+[class*="theme-light-"] .achievement-card::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #38bdf8 0%, #2563eb 100%);
     border: 2px solid rgba(255, 255, 255, 0.8);
 }
@@ -9220,12 +8797,7 @@ main.pages,
 /* 1. View Full List Trigger Button (#list-view-full-btn) */
 body.theme-white #list-view-full-btn,
 [class*="theme-white"] #list-view-full-btn,
-[class*="theme-light-"] #list-view-full-btn,
-body.theme-yellow #list-view-full-btn,
-body.theme-pink #list-view-full-btn,
-body.theme-orange #list-view-full-btn,
-body.theme-gray #list-view-full-btn,
-body.theme-light-brown #list-view-full-btn {
+[class*="theme-light-"] #list-view-full-btn {
     background: #6d28d9 !important;
     border: 1px solid #5b21b6 !important;
     color: #ffffff !important;
@@ -9235,12 +8807,7 @@ body.theme-light-brown #list-view-full-btn {
 
 body.theme-white #list-view-full-btn:hover,
 [class*="theme-white"] #list-view-full-btn:hover,
-[class*="theme-light-"] #list-view-full-btn:hover,
-body.theme-yellow #list-view-full-btn:hover,
-body.theme-pink #list-view-full-btn:hover,
-body.theme-orange #list-view-full-btn:hover,
-body.theme-gray #list-view-full-btn:hover,
-body.theme-light-brown #list-view-full-btn:hover {
+[class*="theme-light-"] #list-view-full-btn:hover {
     background: #5b21b6 !important;
     border-color: #4c1d95 !important;
     color: #ffffff !important;
@@ -9250,12 +8817,7 @@ body.theme-light-brown #list-view-full-btn:hover {
 /* 2. Inline "View Full List" Text Link */
 body.theme-white .view-full-list-link,
 [class*="theme-white"] .view-full-list-link,
-[class*="theme-light-"] .view-full-list-link,
-body.theme-yellow .view-full-list-link,
-body.theme-pink .view-full-list-link,
-body.theme-orange .view-full-list-link,
-body.theme-gray .view-full-list-link,
-body.theme-light-brown .view-full-list-link {
+[class*="theme-light-"] .view-full-list-link {
     color: #6d28d9 !important;
     font-weight: 700 !important;
     text-decoration: underline !important;
@@ -9264,12 +8826,7 @@ body.theme-light-brown .view-full-list-link {
 /* 3. Full List Modal Overlay (#full-list-modal) */
 body.theme-white #full-list-modal,
 [class*="theme-white"] #full-list-modal,
-[class*="theme-light-"] #full-list-modal,
-body.theme-yellow #full-list-modal,
-body.theme-pink #full-list-modal,
-body.theme-orange #full-list-modal,
-body.theme-gray #full-list-modal,
-body.theme-light-brown #full-list-modal {
+[class*="theme-light-"] #full-list-modal {
     background: rgba(15, 23, 42, 0.65) !important;
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
@@ -9278,12 +8835,7 @@ body.theme-light-brown #full-list-modal {
 @media (max-width: 600px) {
     body.theme-white #full-list-modal,
     [class*="theme-white"] #full-list-modal,
-    [class*="theme-light-"] #full-list-modal,
-    body.theme-yellow #full-list-modal,
-    body.theme-pink #full-list-modal,
-    body.theme-orange #full-list-modal,
-    body.theme-gray #full-list-modal,
-    body.theme-light-brown #full-list-modal {
+    [class*="theme-light-"] #full-list-modal {
         background: #ffffff !important;
     }
 }
@@ -9291,12 +8843,7 @@ body.theme-light-brown #full-list-modal {
 /* 4. Full List Modal Card Container */
 body.theme-white #full-list-modal-card,
 [class*="theme-white"] #full-list-modal-card,
-[class*="theme-light-"] #full-list-modal-card,
-body.theme-yellow #full-list-modal-card,
-body.theme-pink #full-list-modal-card,
-body.theme-orange #full-list-modal-card,
-body.theme-gray #full-list-modal-card,
-body.theme-light-brown #full-list-modal-card {
+[class*="theme-light-"] #full-list-modal-card {
     background: #ffffff !important;
     border: 1px solid #d1d5db !important;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
@@ -9305,50 +8852,25 @@ body.theme-light-brown #full-list-modal-card {
 /* 5. Modal Header, Title, and Counter */
 body.theme-white #full-list-modal-header,
 [class*="theme-white"] #full-list-modal-header,
-[class*="theme-light-"] #full-list-modal-header,
-body.theme-yellow #full-list-modal-header,
-body.theme-pink #full-list-modal-header,
-body.theme-orange #full-list-modal-header,
-body.theme-gray #full-list-modal-header,
-body.theme-light-brown #full-list-modal-header {
+[class*="theme-light-"] #full-list-modal-header {
     border-bottom: 1px solid #e5e7eb !important;
 }
 
 body.theme-white #full-list-modal-title,
 [class*="theme-white"] #full-list-modal-title,
-[class*="theme-light-"] #full-list-modal-title,
-body.theme-yellow #full-list-modal-title,
-body.theme-pink #full-list-modal-title,
-body.theme-orange #full-list-modal-title,
-body.theme-gray #full-list-modal-title,
-body.theme-light-brown #full-list-modal-title {
+[class*="theme-light-"] #full-list-modal-title {
     color: #4c1d95 !important;
 }
 
 body.theme-white #main-list-count,
 [class*="theme-white"] #main-list-count,
 [class*="theme-light-"] #main-list-count,
-body.theme-yellow #main-list-count,
-body.theme-pink #main-list-count,
-body.theme-orange #main-list-count,
-body.theme-gray #main-list-count,
-body.theme-light-brown #main-list-count,
 body.theme-white .list-count,
 [class*="theme-white"] .list-count,
 [class*="theme-light-"] .list-count,
-body.theme-yellow .list-count,
-body.theme-pink .list-count,
-body.theme-orange .list-count,
-body.theme-gray .list-count,
-body.theme-light-brown .list-count,
 body.theme-white #full-list-modal-count,
 [class*="theme-white"] #full-list-modal-count,
-[class*="theme-light-"] #full-list-modal-count,
-body.theme-yellow #full-list-modal-count,
-body.theme-pink #full-list-modal-count,
-body.theme-orange #full-list-modal-count,
-body.theme-gray #full-list-modal-count,
-body.theme-light-brown #full-list-modal-count {
+[class*="theme-light-"] #full-list-modal-count {
     color: #475569 !important;
     opacity: 1 !important;
     font-weight: 600 !important;
@@ -9357,12 +8879,7 @@ body.theme-light-brown #full-list-modal-count {
 /* 6. Modal Close Button */
 body.theme-white #full-list-modal-close,
 [class*="theme-white"] #full-list-modal-close,
-[class*="theme-light-"] #full-list-modal-close,
-body.theme-yellow #full-list-modal-close,
-body.theme-pink #full-list-modal-close,
-body.theme-orange #full-list-modal-close,
-body.theme-gray #full-list-modal-close,
-body.theme-light-brown #full-list-modal-close {
+[class*="theme-light-"] #full-list-modal-close {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -9370,12 +8887,7 @@ body.theme-light-brown #full-list-modal-close {
 
 body.theme-white #full-list-modal-close:hover,
 [class*="theme-white"] #full-list-modal-close:hover,
-[class*="theme-light-"] #full-list-modal-close:hover,
-body.theme-yellow #full-list-modal-close:hover,
-body.theme-pink #full-list-modal-close:hover,
-body.theme-orange #full-list-modal-close:hover,
-body.theme-gray #full-list-modal-close:hover,
-body.theme-light-brown #full-list-modal-close:hover {
+[class*="theme-light-"] #full-list-modal-close:hover {
     background: #e2e8f0 !important;
     border-color: #94a3b8 !important;
     color: #000000 !important;
@@ -9384,12 +8896,7 @@ body.theme-light-brown #full-list-modal-close:hover {
 /* 7. Word Jump Input & Button */
 body.theme-white #full-list-jump-input,
 [class*="theme-white"] #full-list-jump-input,
-[class*="theme-light-"] #full-list-jump-input,
-body.theme-yellow #full-list-jump-input,
-body.theme-pink #full-list-jump-input,
-body.theme-orange #full-list-jump-input,
-body.theme-gray #full-list-jump-input,
-body.theme-light-brown #full-list-jump-input {
+[class*="theme-light-"] #full-list-jump-input {
     background: #ffffff !important;
     border: 1.5px solid #94a3b8 !important;
     color: #0f172a !important;
@@ -9398,35 +8905,20 @@ body.theme-light-brown #full-list-jump-input {
 
 body.theme-white #full-list-jump-input::placeholder,
 [class*="theme-white"] #full-list-jump-input::placeholder,
-[class*="theme-light-"] #full-list-jump-input::placeholder,
-body.theme-yellow #full-list-jump-input::placeholder,
-body.theme-pink #full-list-jump-input::placeholder,
-body.theme-orange #full-list-jump-input::placeholder,
-body.theme-gray #full-list-jump-input::placeholder,
-body.theme-light-brown #full-list-jump-input::placeholder {
+[class*="theme-light-"] #full-list-jump-input::placeholder {
     color: #64748b !important;
 }
 
 body.theme-white #full-list-jump-input:focus,
 [class*="theme-white"] #full-list-jump-input:focus,
-[class*="theme-light-"] #full-list-jump-input:focus,
-body.theme-yellow #full-list-jump-input:focus,
-body.theme-pink #full-list-jump-input:focus,
-body.theme-orange #full-list-jump-input:focus,
-body.theme-gray #full-list-jump-input:focus,
-body.theme-light-brown #full-list-jump-input:focus {
+[class*="theme-light-"] #full-list-jump-input:focus {
     border-color: #6d28d9 !important;
     box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2) !important;
 }
 
 body.theme-white #full-list-jump-btn,
 [class*="theme-white"] #full-list-jump-btn,
-[class*="theme-light-"] #full-list-jump-btn,
-body.theme-yellow #full-list-jump-btn,
-body.theme-pink #full-list-jump-btn,
-body.theme-orange #full-list-jump-btn,
-body.theme-gray #full-list-jump-btn,
-body.theme-light-brown #full-list-jump-btn {
+[class*="theme-light-"] #full-list-jump-btn {
     background: #6d28d9 !important;
     border: 1px solid #5b21b6 !important;
     color: #ffffff !important;
@@ -9435,12 +8927,7 @@ body.theme-light-brown #full-list-jump-btn {
 
 body.theme-white #full-list-jump-btn:hover,
 [class*="theme-white"] #full-list-jump-btn:hover,
-[class*="theme-light-"] #full-list-jump-btn:hover,
-body.theme-yellow #full-list-jump-btn:hover,
-body.theme-pink #full-list-jump-btn:hover,
-body.theme-orange #full-list-jump-btn:hover,
-body.theme-gray #full-list-jump-btn:hover,
-body.theme-light-brown #full-list-jump-btn:hover {
+[class*="theme-light-"] #full-list-jump-btn:hover {
     background: #5b21b6 !important;
     border-color: #4c1d95 !important;
     color: #ffffff !important;
@@ -9448,12 +8935,7 @@ body.theme-light-brown #full-list-jump-btn:hover {
 
 body.theme-white #full-list-jump-toast,
 [class*="theme-white"] #full-list-jump-toast,
-[class*="theme-light-"] #full-list-jump-toast,
-body.theme-yellow #full-list-jump-toast,
-body.theme-pink #full-list-jump-toast,
-body.theme-orange #full-list-jump-toast,
-body.theme-gray #full-list-jump-toast,
-body.theme-light-brown #full-list-jump-toast {
+[class*="theme-light-"] #full-list-jump-toast {
     background: #1f2937 !important;
     border: 1px solid #374151 !important;
     color: #f9fafb !important;
@@ -9463,12 +8945,7 @@ body.theme-light-brown #full-list-jump-toast {
 /* 8. Word Grid Results Area (#full-list-modal-results) */
 body.theme-white #full-list-modal-results,
 [class*="theme-white"] #full-list-modal-results,
-[class*="theme-light-"] #full-list-modal-results,
-body.theme-yellow #full-list-modal-results,
-body.theme-pink #full-list-modal-results,
-body.theme-orange #full-list-modal-results,
-body.theme-gray #full-list-modal-results,
-body.theme-light-brown #full-list-modal-results {
+[class*="theme-light-"] #full-list-modal-results {
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
     scrollbar-color: #cbd5e1 #f1f5f9 !important;
@@ -9476,35 +8953,20 @@ body.theme-light-brown #full-list-modal-results {
 
 body.theme-white #full-list-modal-results::-webkit-scrollbar-track,
 [class*="theme-white"] #full-list-modal-results::-webkit-scrollbar-track,
-[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-track,
-body.theme-yellow #full-list-modal-results::-webkit-scrollbar-track,
-body.theme-pink #full-list-modal-results::-webkit-scrollbar-track,
-body.theme-orange #full-list-modal-results::-webkit-scrollbar-track,
-body.theme-gray #full-list-modal-results::-webkit-scrollbar-track,
-body.theme-light-brown #full-list-modal-results::-webkit-scrollbar-track {
+[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-track {
     background: #f1f5f9 !important;
 }
 
 body.theme-white #full-list-modal-results::-webkit-scrollbar-thumb,
 [class*="theme-white"] #full-list-modal-results::-webkit-scrollbar-thumb,
-[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-thumb,
-body.theme-yellow #full-list-modal-results::-webkit-scrollbar-thumb,
-body.theme-pink #full-list-modal-results::-webkit-scrollbar-thumb,
-body.theme-orange #full-list-modal-results::-webkit-scrollbar-thumb,
-body.theme-gray #full-list-modal-results::-webkit-scrollbar-thumb,
-body.theme-light-brown #full-list-modal-results::-webkit-scrollbar-thumb {
+[class*="theme-light-"] #full-list-modal-results::-webkit-scrollbar-thumb {
     background: #cbd5e1 !important;
 }
 
 /* 9. Word Items in Full List Modal (.full-list-item) */
 body.theme-white .full-list-item,
 [class*="theme-white"] .full-list-item,
-[class*="theme-light-"] .full-list-item,
-body.theme-yellow .full-list-item,
-body.theme-pink .full-list-item,
-body.theme-orange .full-list-item,
-body.theme-gray .full-list-item,
-body.theme-light-brown .full-list-item {
+[class*="theme-light-"] .full-list-item {
     color: #0f172a !important;
     opacity: 1 !important;
     font-weight: 700 !important;
@@ -9512,62 +8974,32 @@ body.theme-light-brown .full-list-item {
 
 body.theme-white .full-list-item .clickable-word-link,
 [class*="theme-white"] .full-list-item .clickable-word-link,
-[class*="theme-light-"] .full-list-item .clickable-word-link,
-body.theme-yellow .full-list-item .clickable-word-link,
-body.theme-pink .full-list-item .clickable-word-link,
-body.theme-orange .full-list-item .clickable-word-link,
-body.theme-gray .full-list-item .clickable-word-link,
-body.theme-light-brown .full-list-item .clickable-word-link {
+[class*="theme-light-"] .full-list-item .clickable-word-link {
     color: #0f172a !important;
 }
 
 body.theme-white .full-list-item:hover,
 [class*="theme-white"] .full-list-item:hover,
-[class*="theme-light-"] .full-list-item:hover,
-body.theme-yellow .full-list-item:hover,
-body.theme-pink .full-list-item:hover,
-body.theme-orange .full-list-item:hover,
-body.theme-gray .full-list-item:hover,
-body.theme-light-brown .full-list-item:hover {
+[class*="theme-light-"] .full-list-item:hover {
     background: rgba(109, 40, 217, 0.12) !important;
     color: #4c1d95 !important;
 }
 
 body.theme-white .full-list-item:hover .clickable-word-link,
 [class*="theme-white"] .full-list-item:hover .clickable-word-link,
-[class*="theme-light-"] .full-list-item:hover .clickable-word-link,
-body.theme-yellow .full-list-item:hover .clickable-word-link,
-body.theme-pink .full-list-item:hover .clickable-word-link,
-body.theme-orange .full-list-item:hover .clickable-word-link,
-body.theme-gray .full-list-item:hover .clickable-word-link,
-body.theme-light-brown .full-list-item:hover .clickable-word-link {
+[class*="theme-light-"] .full-list-item:hover .clickable-word-link {
     color: #4c1d95 !important;
 }
 
 body.theme-white .likelihood-score,
 [class*="theme-white"] .likelihood-score,
 [class*="theme-light-"] .likelihood-score,
-body.theme-yellow .likelihood-score,
-body.theme-pink .likelihood-score,
-body.theme-orange .likelihood-score,
-body.theme-gray .likelihood-score,
-body.theme-light-brown .likelihood-score,
 body.theme-white .list-item .likelihood-score,
 [class*="theme-white"] .list-item .likelihood-score,
 [class*="theme-light-"] .list-item .likelihood-score,
-body.theme-yellow .list-item .likelihood-score,
-body.theme-pink .list-item .likelihood-score,
-body.theme-orange .list-item .likelihood-score,
-body.theme-gray .list-item .likelihood-score,
-body.theme-light-brown .list-item .likelihood-score,
 body.theme-white .full-list-item .likelihood-score,
 [class*="theme-white"] .full-list-item .likelihood-score,
-[class*="theme-light-"] .full-list-item .likelihood-score,
-body.theme-yellow .full-list-item .likelihood-score,
-body.theme-pink .full-list-item .likelihood-score,
-body.theme-orange .full-list-item .likelihood-score,
-body.theme-gray .full-list-item .likelihood-score,
-body.theme-light-brown .full-list-item .likelihood-score {
+[class*="theme-light-"] .full-list-item .likelihood-score {
     color: #6d28d9 !important;
     opacity: 1 !important;
     font-weight: 700 !important;
@@ -9576,19 +9008,9 @@ body.theme-light-brown .full-list-item .likelihood-score {
 body.theme-white .full-list-item:hover .likelihood-score,
 [class*="theme-white"] .full-list-item:hover .likelihood-score,
 [class*="theme-light-"] .full-list-item:hover .likelihood-score,
-body.theme-yellow .full-list-item:hover .likelihood-score,
-body.theme-pink .full-list-item:hover .likelihood-score,
-body.theme-orange .full-list-item:hover .likelihood-score,
-body.theme-gray .full-list-item:hover .likelihood-score,
-body.theme-light-brown .full-list-item:hover .likelihood-score,
 body.theme-white .list-item:hover .likelihood-score,
 [class*="theme-white"] .list-item:hover .likelihood-score,
-[class*="theme-light-"] .list-item:hover .likelihood-score,
-body.theme-yellow .list-item:hover .likelihood-score,
-body.theme-pink .list-item:hover .likelihood-score,
-body.theme-orange .list-item:hover .likelihood-score,
-body.theme-gray .list-item:hover .likelihood-score,
-body.theme-light-brown .list-item:hover .likelihood-score {
+[class*="theme-light-"] .list-item:hover .likelihood-score {
     color: #5b21b6 !important;
     opacity: 1 !important;
 }
@@ -9596,12 +9018,7 @@ body.theme-light-brown .list-item:hover .likelihood-score {
 /* 10. Search Jump Target Highlight on Light Themes */
 body.theme-white .full-list-item.jump-target-highlight,
 [class*="theme-white"] .full-list-item.jump-target-highlight,
-[class*="theme-light-"] .full-list-item.jump-target-highlight,
-body.theme-yellow .full-list-item.jump-target-highlight,
-body.theme-pink .full-list-item.jump-target-highlight,
-body.theme-orange .full-list-item.jump-target-highlight,
-body.theme-gray .full-list-item.jump-target-highlight,
-body.theme-light-brown .full-list-item.jump-target-highlight {
+[class*="theme-light-"] .full-list-item.jump-target-highlight {
     background: #fef08a !important;
     border: 1.5px solid #d97706 !important;
     box-shadow: 0 0 12px rgba(217, 119, 6, 0.35) !important;
@@ -9609,12 +9026,7 @@ body.theme-light-brown .full-list-item.jump-target-highlight {
 
 body.theme-white .full-list-item.jump-target-highlight .clickable-word-link,
 [class*="theme-white"] .full-list-item.jump-target-highlight .clickable-word-link,
-[class*="theme-light-"] .full-list-item.jump-target-highlight .clickable-word-link,
-body.theme-yellow .full-list-item.jump-target-highlight .clickable-word-link,
-body.theme-pink .full-list-item.jump-target-highlight .clickable-word-link,
-body.theme-orange .full-list-item.jump-target-highlight .clickable-word-link,
-body.theme-gray .full-list-item.jump-target-highlight .clickable-word-link,
-body.theme-light-brown .full-list-item.jump-target-highlight .clickable-word-link {
+[class*="theme-light-"] .full-list-item.jump-target-highlight .clickable-word-link {
     color: #78350f !important;
     font-weight: 800 !important;
     text-shadow: none !important;
@@ -9623,24 +9035,14 @@ body.theme-light-brown .full-list-item.jump-target-highlight .clickable-word-lin
 /* 11. Large Custom Scrollbar Track & Thumb */
 body.theme-white #full-list-scrollbar-track,
 [class*="theme-white"] #full-list-scrollbar-track,
-[class*="theme-light-"] #full-list-scrollbar-track,
-body.theme-yellow #full-list-scrollbar-track,
-body.theme-pink #full-list-scrollbar-track,
-body.theme-orange #full-list-scrollbar-track,
-body.theme-gray #full-list-scrollbar-track,
-body.theme-light-brown #full-list-scrollbar-track {
+[class*="theme-light-"] #full-list-scrollbar-track {
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 body.theme-white #full-list-scrollbar-thumb,
 [class*="theme-white"] #full-list-scrollbar-thumb,
-[class*="theme-light-"] #full-list-scrollbar-thumb,
-body.theme-yellow #full-list-scrollbar-thumb,
-body.theme-pink #full-list-scrollbar-thumb,
-body.theme-orange #full-list-scrollbar-thumb,
-body.theme-gray #full-list-scrollbar-thumb,
-body.theme-light-brown #full-list-scrollbar-thumb {
+[class*="theme-light-"] #full-list-scrollbar-thumb {
     background: linear-gradient(180deg, #7c3aed, #5b21b6) !important;
     border: 1px solid #4c1d95 !important;
     box-shadow: 0 0 8px rgba(109, 40, 217, 0.3) !important;
@@ -9649,46 +9051,26 @@ body.theme-light-brown #full-list-scrollbar-thumb {
 /* 12. Loading & Error States in Full List Modal */
 body.theme-white .full-list-loading-state,
 [class*="theme-white"] .full-list-loading-state,
-[class*="theme-light-"] .full-list-loading-state,
-body.theme-yellow .full-list-loading-state,
-body.theme-pink .full-list-loading-state,
-body.theme-orange .full-list-loading-state,
-body.theme-gray .full-list-loading-state,
-body.theme-light-brown .full-list-loading-state {
+[class*="theme-light-"] .full-list-loading-state {
     color: #374151 !important;
 }
 
 body.theme-white .full-list-loading-state .full-list-spinner,
 [class*="theme-white"] .full-list-loading-state .full-list-spinner,
-[class*="theme-light-"] .full-list-loading-state .full-list-spinner,
-body.theme-yellow .full-list-loading-state .full-list-spinner,
-body.theme-pink .full-list-loading-state .full-list-spinner,
-body.theme-orange .full-list-loading-state .full-list-spinner,
-body.theme-gray .full-list-loading-state .full-list-spinner,
-body.theme-light-brown .full-list-loading-state .full-list-spinner {
+[class*="theme-light-"] .full-list-loading-state .full-list-spinner {
     border-color: rgba(109, 40, 217, 0.2) !important;
     border-top-color: #6d28d9 !important;
 }
 
 body.theme-white .full-list-error-state,
 [class*="theme-white"] .full-list-error-state,
-[class*="theme-light-"] .full-list-error-state,
-body.theme-yellow .full-list-error-state,
-body.theme-pink .full-list-error-state,
-body.theme-orange .full-list-error-state,
-body.theme-gray .full-list-error-state,
-body.theme-light-brown .full-list-error-state {
+[class*="theme-light-"] .full-list-error-state {
     color: #dc2626 !important;
 }
 
 body.theme-white .full-list-retry-btn,
 [class*="theme-white"] .full-list-retry-btn,
-[class*="theme-light-"] .full-list-retry-btn,
-body.theme-yellow .full-list-retry-btn,
-body.theme-pink .full-list-retry-btn,
-body.theme-orange .full-list-retry-btn,
-body.theme-gray .full-list-retry-btn,
-body.theme-light-brown .full-list-retry-btn {
+[class*="theme-light-"] .full-list-retry-btn {
     background: #6d28d9 !important;
     border-color: #5b21b6 !important;
     color: #ffffff !important;
@@ -9697,12 +9079,7 @@ body.theme-light-brown .full-list-retry-btn {
 /* 13. Word Definition Popover for Light Themes (.tool-def-popover) */
 body.theme-white .tool-def-popover,
 [class*="theme-white"] .tool-def-popover,
-[class*="theme-light-"] .tool-def-popover,
-body.theme-yellow .tool-def-popover,
-body.theme-pink .tool-def-popover,
-body.theme-orange .tool-def-popover,
-body.theme-gray .tool-def-popover,
-body.theme-light-brown .tool-def-popover {
+[class*="theme-light-"] .tool-def-popover {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 0, 0, 0.05) !important;
@@ -9711,23 +9088,13 @@ body.theme-light-brown .tool-def-popover {
 
 body.theme-white .tool-def-word-title,
 [class*="theme-white"] .tool-def-word-title,
-[class*="theme-light-"] .tool-def-word-title,
-body.theme-yellow .tool-def-word-title,
-body.theme-pink .tool-def-word-title,
-body.theme-orange .tool-def-word-title,
-body.theme-gray .tool-def-word-title,
-body.theme-light-brown .tool-def-word-title {
+[class*="theme-light-"] .tool-def-word-title {
     color: #4c1d95 !important;
 }
 
 body.theme-white .tool-def-len-badge,
 [class*="theme-white"] .tool-def-len-badge,
-[class*="theme-light-"] .tool-def-len-badge,
-body.theme-yellow .tool-def-len-badge,
-body.theme-pink .tool-def-len-badge,
-body.theme-orange .tool-def-len-badge,
-body.theme-gray .tool-def-len-badge,
-body.theme-light-brown .tool-def-len-badge {
+[class*="theme-light-"] .tool-def-len-badge {
     background: #ede9fe !important;
     border: 1px solid #c4b5fd !important;
     color: #5b21b6 !important;
@@ -9735,12 +9102,7 @@ body.theme-light-brown .tool-def-len-badge {
 
 body.theme-white .tool-def-close-btn,
 [class*="theme-white"] .tool-def-close-btn,
-[class*="theme-light-"] .tool-def-close-btn,
-body.theme-yellow .tool-def-close-btn,
-body.theme-pink .tool-def-close-btn,
-body.theme-orange .tool-def-close-btn,
-body.theme-gray .tool-def-close-btn,
-body.theme-light-brown .tool-def-close-btn {
+[class*="theme-light-"] .tool-def-close-btn {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
     color: #64748b !important;
@@ -9748,46 +9110,26 @@ body.theme-light-brown .tool-def-close-btn {
 
 body.theme-white .tool-def-content,
 [class*="theme-white"] .tool-def-content,
-[class*="theme-light-"] .tool-def-content,
-body.theme-yellow .tool-def-content,
-body.theme-pink .tool-def-content,
-body.theme-orange .tool-def-content,
-body.theme-gray .tool-def-content,
-body.theme-light-brown .tool-def-content {
+[class*="theme-light-"] .tool-def-content {
     color: #1e293b !important;
 }
 
 body.theme-white .tool-def-pronunciation,
 [class*="theme-white"] .tool-def-pronunciation,
-[class*="theme-light-"] .tool-def-pronunciation,
-body.theme-yellow .tool-def-pronunciation,
-body.theme-pink .tool-def-pronunciation,
-body.theme-orange .tool-def-pronunciation,
-body.theme-gray .tool-def-pronunciation,
-body.theme-light-brown .tool-def-pronunciation {
+[class*="theme-light-"] .tool-def-pronunciation {
     color: #6d28d9 !important;
 }
 
 body.theme-white .tool-def-isvalid-link,
 [class*="theme-white"] .tool-def-isvalid-link,
-[class*="theme-light-"] .tool-def-isvalid-link,
-body.theme-yellow .tool-def-isvalid-link,
-body.theme-pink .tool-def-isvalid-link,
-body.theme-orange .tool-def-isvalid-link,
-body.theme-gray .tool-def-isvalid-link,
-body.theme-light-brown .tool-def-isvalid-link {
+[class*="theme-light-"] .tool-def-isvalid-link {
     color: #6d28d9 !important;
 }
 
 /* 14. Country Flag Selector Dropdown for White/Light Themes */
 body.theme-white .dropdown-menu,
 [class*="theme-white"] .dropdown-menu,
-[class*="theme-light-"] .dropdown-menu,
-body.theme-yellow .dropdown-menu,
-body.theme-pink .dropdown-menu,
-body.theme-orange .dropdown-menu,
-body.theme-gray .dropdown-menu,
-body.theme-light-brown .dropdown-menu {
+[class*="theme-light-"] .dropdown-menu {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
@@ -9795,24 +9137,14 @@ body.theme-light-brown .dropdown-menu {
 
 body.theme-white .dropdown-header,
 [class*="theme-white"] .dropdown-header,
-[class*="theme-light-"] .dropdown-header,
-body.theme-yellow .dropdown-header,
-body.theme-pink .dropdown-header,
-body.theme-orange .dropdown-header,
-body.theme-gray .dropdown-header,
-body.theme-light-brown .dropdown-header {
+[class*="theme-light-"] .dropdown-header {
     background: #f8fafc !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
 body.theme-white .dropdown-search,
 [class*="theme-white"] .dropdown-search,
-[class*="theme-light-"] .dropdown-search,
-body.theme-yellow .dropdown-search,
-body.theme-pink .dropdown-search,
-body.theme-orange .dropdown-search,
-body.theme-gray .dropdown-search,
-body.theme-light-brown .dropdown-search {
+[class*="theme-light-"] .dropdown-search {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -9826,23 +9158,13 @@ body.theme-white .dropdown-search::placeholder,
 
 body.theme-white .dropdown-item,
 [class*="theme-white"] .dropdown-item,
-[class*="theme-light-"] .dropdown-item,
-body.theme-yellow .dropdown-item,
-body.theme-pink .dropdown-item,
-body.theme-orange .dropdown-item,
-body.theme-gray .dropdown-item,
-body.theme-light-brown .dropdown-item {
+[class*="theme-light-"] .dropdown-item {
     color: #1e293b !important;
 }
 
 body.theme-white .dropdown-item:hover,
 [class*="theme-white"] .dropdown-item:hover,
-[class*="theme-light-"] .dropdown-item:hover,
-body.theme-yellow .dropdown-item:hover,
-body.theme-pink .dropdown-item:hover,
-body.theme-orange .dropdown-item:hover,
-body.theme-gray .dropdown-item:hover,
-body.theme-light-brown .dropdown-item:hover {
+[class*="theme-light-"] .dropdown-item:hover {
     background: #f1f5f9 !important;
 }
 
@@ -9855,12 +9177,7 @@ body.theme-white .dropdown-item-text,
 /* 15. Tools: Change Password & Change Email Cards on White/Light Themes */
 body.theme-white .account-card,
 [class*="theme-white"] .account-card,
-[class*="theme-light-"] .account-card,
-body.theme-yellow .account-card,
-body.theme-pink .account-card,
-body.theme-orange .account-card,
-body.theme-gray .account-card,
-body.theme-light-brown .account-card {
+[class*="theme-light-"] .account-card {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
@@ -9868,12 +9185,7 @@ body.theme-light-brown .account-card {
 
 body.theme-white .account-card h3,
 [class*="theme-white"] .account-card h3,
-[class*="theme-light-"] .account-card h3,
-body.theme-yellow .account-card h3,
-body.theme-pink .account-card h3,
-body.theme-orange .account-card h3,
-body.theme-gray .account-card h3,
-body.theme-light-brown .account-card h3 {
+[class*="theme-light-"] .account-card h3 {
     color: #0f172a !important;
 }
 
@@ -9883,53 +9195,28 @@ body.theme-light-brown .account-card h3 {
 
 body.theme-white .account-card-desc,
 [class*="theme-white"] .account-card-desc,
-[class*="theme-light-"] .account-card-desc,
-body.theme-yellow .account-card-desc,
-body.theme-pink .account-card-desc,
-body.theme-orange .account-card-desc,
-body.theme-gray .account-card-desc,
-body.theme-light-brown .account-card-desc {
+[class*="theme-light-"] .account-card-desc {
     color: #475569 !important;
 }
 
 body.theme-white .account-card div,
 [class*="theme-white"] .account-card div,
-[class*="theme-light-"] .account-card div,
-body.theme-yellow .account-card div,
-body.theme-pink .account-card div,
-body.theme-orange .account-card div,
-body.theme-gray .account-card div,
-body.theme-light-brown .account-card div {
+[class*="theme-light-"] .account-card div {
     color: #475569 !important;
 }
 
 body.theme-white .account-card label,
 [class*="theme-white"] .account-card label,
-[class*="theme-light-"] .account-card label,
-body.theme-yellow .account-card label,
-body.theme-pink .account-card label,
-body.theme-orange .account-card label,
-body.theme-gray .account-card label,
-body.theme-light-brown .account-card label {
+[class*="theme-light-"] .account-card label {
     color: #1e293b !important;
 }
 
 body.theme-white .account-card input[type="password"],
 [class*="theme-white"] .account-card input[type="password"],
 [class*="theme-light-"] .account-card input[type="password"],
-body.theme-yellow .account-card input[type="password"],
-body.theme-pink .account-card input[type="password"],
-body.theme-orange .account-card input[type="password"],
-body.theme-gray .account-card input[type="password"],
-body.theme-light-brown .account-card input[type="password"],
 body.theme-white .account-card input[type="email"],
 [class*="theme-white"] .account-card input[type="email"],
-[class*="theme-light-"] .account-card input[type="email"],
-body.theme-yellow .account-card input[type="email"],
-body.theme-pink .account-card input[type="email"],
-body.theme-orange .account-card input[type="email"],
-body.theme-gray .account-card input[type="email"],
-body.theme-light-brown .account-card input[type="email"] {
+[class*="theme-light-"] .account-card input[type="email"] {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -9937,23 +9224,13 @@ body.theme-light-brown .account-card input[type="email"] {
 
 body.theme-white .account-card input::placeholder,
 [class*="theme-white"] .account-card input::placeholder,
-[class*="theme-light-"] .account-card input::placeholder,
-body.theme-yellow .account-card input::placeholder,
-body.theme-pink .account-card input::placeholder,
-body.theme-orange .account-card input::placeholder,
-body.theme-gray .account-card input::placeholder,
-body.theme-light-brown .account-card input::placeholder {
+[class*="theme-light-"] .account-card input::placeholder {
     color: #94a3b8 !important;
 }
 
 body.theme-white #email-current-display,
 [class*="theme-white"] #email-current-display,
-[class*="theme-light-"] #email-current-display,
-body.theme-yellow #email-current-display,
-body.theme-pink #email-current-display,
-body.theme-orange #email-current-display,
-body.theme-gray #email-current-display,
-body.theme-light-brown #email-current-display {
+[class*="theme-light-"] #email-current-display {
     background: #f8fafc !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -10038,12 +9315,7 @@ body.theme-light-brown #email-current-display {
 /* 16. Tools: Subanagrams on White/Light Themes */
 body.theme-white #tool-subanagrams .combo-control-panel,
 [class*="theme-white"] #tool-subanagrams .combo-control-panel,
-[class*="theme-light-"] #tool-subanagrams .combo-control-panel,
-body.theme-yellow #tool-subanagrams .combo-control-panel,
-body.theme-pink #tool-subanagrams .combo-control-panel,
-body.theme-orange #tool-subanagrams .combo-control-panel,
-body.theme-gray #tool-subanagrams .combo-control-panel,
-body.theme-light-brown #tool-subanagrams .combo-control-panel {
+[class*="theme-light-"] #tool-subanagrams .combo-control-panel {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
 }
@@ -10051,23 +9323,13 @@ body.theme-light-brown #tool-subanagrams .combo-control-panel {
 /* Subanagrams Tab Bar & Buttons on Light Themes */
 body.theme-white .sub-tab-bar,
 [class*="theme-white"] .sub-tab-bar,
-[class*="theme-light-"] .sub-tab-bar,
-body.theme-yellow .sub-tab-bar,
-body.theme-pink .sub-tab-bar,
-body.theme-orange .sub-tab-bar,
-body.theme-gray .sub-tab-bar,
-body.theme-light-brown .sub-tab-bar {
+[class*="theme-light-"] .sub-tab-bar {
     border-bottom: 1.5px solid #cbd5e1 !important;
 }
 
 body.theme-white .sub-mode-tab,
 [class*="theme-white"] .sub-mode-tab,
-[class*="theme-light-"] .sub-mode-tab,
-body.theme-yellow .sub-mode-tab,
-body.theme-pink .sub-mode-tab,
-body.theme-orange .sub-mode-tab,
-body.theme-gray .sub-mode-tab,
-body.theme-light-brown .sub-mode-tab {
+[class*="theme-light-"] .sub-mode-tab {
     color: #475569 !important;
     background: transparent !important;
     border-bottom: 2px solid transparent !important;
@@ -10075,24 +9337,14 @@ body.theme-light-brown .sub-mode-tab {
 
 body.theme-white .sub-mode-tab:hover,
 [class*="theme-white"] .sub-mode-tab:hover,
-[class*="theme-light-"] .sub-mode-tab:hover,
-body.theme-yellow .sub-mode-tab:hover,
-body.theme-pink .sub-mode-tab:hover,
-body.theme-orange .sub-mode-tab:hover,
-body.theme-gray .sub-mode-tab:hover,
-body.theme-light-brown .sub-mode-tab:hover {
+[class*="theme-light-"] .sub-mode-tab:hover {
     color: #0f172a !important;
     background: rgba(0, 0, 0, 0.04) !important;
 }
 
 body.theme-white .sub-mode-tab.active,
 [class*="theme-white"] .sub-mode-tab.active,
-[class*="theme-light-"] .sub-mode-tab.active,
-body.theme-yellow .sub-mode-tab.active,
-body.theme-pink .sub-mode-tab.active,
-body.theme-orange .sub-mode-tab.active,
-body.theme-gray .sub-mode-tab.active,
-body.theme-light-brown .sub-mode-tab.active {
+[class*="theme-light-"] .sub-mode-tab.active {
     color: #1d4ed8 !important;
     background: rgba(37, 99, 235, 0.12) !important;
     border-bottom: 2.5px solid #2563eb !important;
@@ -10100,12 +9352,7 @@ body.theme-light-brown .sub-mode-tab.active {
 
 body.theme-white #sub-tab-random.sub-mode-tab.active,
 [class*="theme-white"] #sub-tab-random.sub-mode-tab.active,
-[class*="theme-light-"] #sub-tab-random.sub-mode-tab.active,
-body.theme-yellow #sub-tab-random.sub-mode-tab.active,
-body.theme-pink #sub-tab-random.sub-mode-tab.active,
-body.theme-orange #sub-tab-random.sub-mode-tab.active,
-body.theme-gray #sub-tab-random.sub-mode-tab.active,
-body.theme-light-brown #sub-tab-random.sub-mode-tab.active {
+[class*="theme-light-"] #sub-tab-random.sub-mode-tab.active {
     color: #6d28d9 !important;
     background: rgba(109, 40, 217, 0.12) !important;
     border-bottom: 2.5px solid #7c3aed !important;
@@ -10114,12 +9361,7 @@ body.theme-light-brown #sub-tab-random.sub-mode-tab.active {
 /* Practice button in Light Themes */
 body.theme-white #sub-practice-btn,
 [class*="theme-white"] #sub-practice-btn,
-[class*="theme-light-"] #sub-practice-btn,
-body.theme-yellow #sub-practice-btn,
-body.theme-pink #sub-practice-btn,
-body.theme-orange #sub-practice-btn,
-body.theme-gray #sub-practice-btn,
-body.theme-light-brown #sub-practice-btn {
+[class*="theme-light-"] #sub-practice-btn {
     background: rgba(109, 40, 217, 0.1) !important;
     border: 1.5px solid rgba(109, 40, 217, 0.45) !important;
     color: #6d28d9 !important;
@@ -10128,12 +9370,7 @@ body.theme-light-brown #sub-practice-btn {
 
 body.theme-white #sub-practice-btn:hover,
 [class*="theme-white"] #sub-practice-btn:hover,
-[class*="theme-light-"] #sub-practice-btn:hover,
-body.theme-yellow #sub-practice-btn:hover,
-body.theme-pink #sub-practice-btn:hover,
-body.theme-orange #sub-practice-btn:hover,
-body.theme-gray #sub-practice-btn:hover,
-body.theme-light-brown #sub-practice-btn:hover {
+[class*="theme-light-"] #sub-practice-btn:hover {
     background: rgba(109, 40, 217, 0.18) !important;
     border-color: #6d28d9 !important;
 }
@@ -10141,12 +9378,7 @@ body.theme-light-brown #sub-practice-btn:hover {
 /* Find All Words button in Light Themes */
 body.theme-white #sub-find-all-btn,
 [class*="theme-white"] #sub-find-all-btn,
-[class*="theme-light-"] #sub-find-all-btn,
-body.theme-yellow #sub-find-all-btn,
-body.theme-pink #sub-find-all-btn,
-body.theme-orange #sub-find-all-btn,
-body.theme-gray #sub-find-all-btn,
-body.theme-light-brown #sub-find-all-btn {
+[class*="theme-light-"] #sub-find-all-btn {
     background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
@@ -10157,12 +9389,7 @@ body.theme-light-brown #sub-find-all-btn {
 /* Random button in Light Themes */
 body.theme-white #sub-random-btn,
 [class*="theme-white"] #sub-random-btn,
-[class*="theme-light-"] #sub-random-btn,
-body.theme-yellow #sub-random-btn,
-body.theme-pink #sub-random-btn,
-body.theme-orange #sub-random-btn,
-body.theme-gray #sub-random-btn,
-body.theme-light-brown #sub-random-btn {
+[class*="theme-light-"] #sub-random-btn {
     background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
@@ -10177,12 +9404,7 @@ body[class*="theme-white"] #more-random-words-btn,
 body.is-mobile[class*="theme-white"] #more-random-words-btn,
 body.is-mobile.theme-white #more-random-words-btn,
 body[class*="theme-light-"] #more-random-words-btn,
-[class*="theme-light-"] #more-random-words-btn,
-body.theme-yellow #more-random-words-btn,
-body.theme-pink #more-random-words-btn,
-body.theme-orange #more-random-words-btn,
-body.theme-gray #more-random-words-btn,
-body.theme-light-brown #more-random-words-btn {
+[class*="theme-light-"] #more-random-words-btn {
     background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
     border: 1px solid #3730a3 !important;
     color: #ffffff !important;
@@ -10196,12 +9418,7 @@ body[class*="theme-white"] #more-random-words-btn:hover,
 body.is-mobile[class*="theme-white"] #more-random-words-btn:hover,
 body.is-mobile.theme-white #more-random-words-btn:hover,
 body[class*="theme-light-"] #more-random-words-btn:hover,
-[class*="theme-light-"] #more-random-words-btn:hover,
-body.theme-yellow #more-random-words-btn:hover,
-body.theme-pink #more-random-words-btn:hover,
-body.theme-orange #more-random-words-btn:hover,
-body.theme-gray #more-random-words-btn:hover,
-body.theme-light-brown #more-random-words-btn:hover {
+[class*="theme-light-"] #more-random-words-btn:hover {
     background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
     border-color: #312e81 !important;
     color: #ffffff !important;
@@ -10214,12 +9431,7 @@ body[class*="theme-white"] #more-random-words-btn:active,
 body.is-mobile[class*="theme-white"] #more-random-words-btn:active,
 body.is-mobile.theme-white #more-random-words-btn:active,
 body[class*="theme-light-"] #more-random-words-btn:active,
-[class*="theme-light-"] #more-random-words-btn:active,
-body.theme-yellow #more-random-words-btn:active,
-body.theme-pink #more-random-words-btn:active,
-body.theme-orange #more-random-words-btn:active,
-body.theme-gray #more-random-words-btn:active,
-body.theme-light-brown #more-random-words-btn:active {
+[class*="theme-light-"] #more-random-words-btn:active {
     transform: translateY(1px) !important;
     background: #3730a3 !important;
 }
@@ -10228,27 +9440,12 @@ body.theme-light-brown #more-random-words-btn:active {
 body.theme-white #sub-input,
 [class*="theme-white"] #sub-input,
 [class*="theme-light-"] #sub-input,
-body.theme-yellow #sub-input,
-body.theme-pink #sub-input,
-body.theme-orange #sub-input,
-body.theme-gray #sub-input,
-body.theme-light-brown #sub-input,
 body.theme-white #sub-panel-manual select,
 [class*="theme-white"] #sub-panel-manual select,
 [class*="theme-light-"] #sub-panel-manual select,
-body.theme-yellow #sub-panel-manual select,
-body.theme-pink #sub-panel-manual select,
-body.theme-orange #sub-panel-manual select,
-body.theme-gray #sub-panel-manual select,
-body.theme-light-brown #sub-panel-manual select,
 body.theme-white #sub-panel-random select,
 [class*="theme-white"] #sub-panel-random select,
-[class*="theme-light-"] #sub-panel-random select,
-body.theme-yellow #sub-panel-random select,
-body.theme-pink #sub-panel-random select,
-body.theme-orange #sub-panel-random select,
-body.theme-gray #sub-panel-random select,
-body.theme-light-brown #sub-panel-random select {
+[class*="theme-light-"] #sub-panel-random select {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
@@ -10256,23 +9453,13 @@ body.theme-light-brown #sub-panel-random select {
 
 body.theme-white #sub-input::placeholder,
 [class*="theme-white"] #sub-input::placeholder,
-[class*="theme-light-"] #sub-input::placeholder,
-body.theme-yellow #sub-input::placeholder,
-body.theme-pink #sub-input::placeholder,
-body.theme-orange #sub-input::placeholder,
-body.theme-gray #sub-input::placeholder,
-body.theme-light-brown #sub-input::placeholder {
+[class*="theme-light-"] #sub-input::placeholder {
     color: #94a3b8 !important;
 }
 
 body.theme-white #tool-subanagrams .subanagrams-game-area,
 [class*="theme-white"] #tool-subanagrams .subanagrams-game-area,
-[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area,
-body.theme-yellow #tool-subanagrams .subanagrams-game-area,
-body.theme-pink #tool-subanagrams .subanagrams-game-area,
-body.theme-orange #tool-subanagrams .subanagrams-game-area,
-body.theme-gray #tool-subanagrams .subanagrams-game-area,
-body.theme-light-brown #tool-subanagrams .subanagrams-game-area {
+[class*="theme-light-"] #tool-subanagrams .subanagrams-game-area {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
@@ -10280,12 +9467,7 @@ body.theme-light-brown #tool-subanagrams .subanagrams-game-area {
 
 body.theme-white #sub-letters-display,
 [class*="theme-white"] #sub-letters-display,
-[class*="theme-light-"] #sub-letters-display,
-body.theme-yellow #sub-letters-display,
-body.theme-pink #sub-letters-display,
-body.theme-orange #sub-letters-display,
-body.theme-gray #sub-letters-display,
-body.theme-light-brown #sub-letters-display {
+[class*="theme-light-"] #sub-letters-display {
     color: #5b21b6 !important;
     text-shadow: none !important;
 }
@@ -10297,47 +9479,27 @@ body.is-mobile[class*="theme-white"] #random-word-display,
 body.is-mobile.theme-white #random-word-display,
 body[class*="theme-light-"] #random-word-display,
 [class*="theme-light-"] #random-word-display,
-body.theme-yellow #random-word-display,
-body.theme-pink #random-word-display,
-body.theme-orange #random-word-display,
-body.theme-gray #random-word-display,
-body.theme-light-brown #random-word-display,
 body.theme-white #tool-random .random-word-large,
 [class*="theme-white"] #tool-random .random-word-large,
 body[class*="theme-white"] #tool-random .random-word-large,
 body.is-mobile[class*="theme-white"] #tool-random .random-word-large,
 body.is-mobile.theme-white #tool-random .random-word-large,
 body[class*="theme-light-"] #tool-random .random-word-large,
-[class*="theme-light-"] #tool-random .random-word-large,
-body.theme-yellow #tool-random .random-word-large,
-body.theme-pink #tool-random .random-word-large,
-body.theme-orange #tool-random .random-word-large,
-body.theme-gray #tool-random .random-word-large,
-body.theme-light-brown #tool-random .random-word-large {
+[class*="theme-light-"] #tool-random .random-word-large {
     color: #000000 !important;
     text-shadow: none !important;
 }
 
 body.theme-white #sub-count-info,
 [class*="theme-white"] #sub-count-info,
-[class*="theme-light-"] #sub-count-info,
-body.theme-yellow #sub-count-info,
-body.theme-pink #sub-count-info,
-body.theme-orange #sub-count-info,
-body.theme-gray #sub-count-info,
-body.theme-light-brown #sub-count-info {
+[class*="theme-light-"] #sub-count-info {
     color: #475569 !important;
     font-weight: 700 !important;
 }
 
 body.theme-white #sub-word-input,
 [class*="theme-white"] #sub-word-input,
-[class*="theme-light-"] #sub-word-input,
-body.theme-yellow #sub-word-input,
-body.theme-pink #sub-word-input,
-body.theme-orange #sub-word-input,
-body.theme-gray #sub-word-input,
-body.theme-light-brown #sub-word-input {
+[class*="theme-light-"] #sub-word-input {
     background: #ffffff !important;
     border: 2px solid #a78bfa !important;
     color: #0f172a !important;
@@ -10345,23 +9507,13 @@ body.theme-light-brown #sub-word-input {
 
 body.theme-white #sub-word-input::placeholder,
 [class*="theme-white"] #sub-word-input::placeholder,
-[class*="theme-light-"] #sub-word-input::placeholder,
-body.theme-yellow #sub-word-input::placeholder,
-body.theme-pink #sub-word-input::placeholder,
-body.theme-orange #sub-word-input::placeholder,
-body.theme-gray #sub-word-input::placeholder,
-body.theme-light-brown #sub-word-input::placeholder {
+[class*="theme-light-"] #sub-word-input::placeholder {
     color: #94a3b8 !important;
 }
 
 body.theme-white #sub-reveal-btn,
 [class*="theme-white"] #sub-reveal-btn,
-[class*="theme-light-"] #sub-reveal-btn,
-body.theme-yellow #sub-reveal-btn,
-body.theme-pink #sub-reveal-btn,
-body.theme-orange #sub-reveal-btn,
-body.theme-gray #sub-reveal-btn,
-body.theme-light-brown #sub-reveal-btn {
+[class*="theme-light-"] #sub-reveal-btn {
     background: linear-gradient(135deg, #0284c7, #0369a1) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
@@ -10370,12 +9522,7 @@ body.theme-light-brown #sub-reveal-btn {
 
 body.theme-white #sub-reset-btn,
 [class*="theme-white"] #sub-reset-btn,
-[class*="theme-light-"] #sub-reset-btn,
-body.theme-yellow #sub-reset-btn,
-body.theme-pink #sub-reset-btn,
-body.theme-orange #sub-reset-btn,
-body.theme-gray #sub-reset-btn,
-body.theme-light-brown #sub-reset-btn {
+[class*="theme-light-"] #sub-reset-btn {
     background: #f1f5f9 !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #1e293b !important;
@@ -10384,12 +9531,7 @@ body.theme-light-brown #sub-reset-btn {
 
 body.theme-white #sub-submit-word-btn,
 [class*="theme-white"] #sub-submit-word-btn,
-[class*="theme-light-"] #sub-submit-word-btn,
-body.theme-yellow #sub-submit-word-btn,
-body.theme-pink #sub-submit-word-btn,
-body.theme-orange #sub-submit-word-btn,
-body.theme-gray #sub-submit-word-btn,
-body.theme-light-brown #sub-submit-word-btn {
+[class*="theme-light-"] #sub-submit-word-btn {
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
@@ -10398,12 +9540,7 @@ body.theme-light-brown #sub-submit-word-btn {
 
 body.theme-white #sub-results-container,
 [class*="theme-white"] #sub-results-container,
-[class*="theme-light-"] #sub-results-container,
-body.theme-yellow #sub-results-container,
-body.theme-pink #sub-results-container,
-body.theme-orange #sub-results-container,
-body.theme-gray #sub-results-container,
-body.theme-light-brown #sub-results-container {
+[class*="theme-light-"] #sub-results-container {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
@@ -10424,90 +9561,50 @@ body.theme-light-brown #sub-results-container {
 body.theme-white #sub-results-container .seq-results-placeholder,
 [class*="theme-white"] #sub-results-container .seq-results-placeholder,
 [class*="theme-light-"] #sub-results-container .seq-results-placeholder,
-body.theme-yellow #sub-results-container .seq-results-placeholder,
-body.theme-pink #sub-results-container .seq-results-placeholder,
-body.theme-orange #sub-results-container .seq-results-placeholder,
-body.theme-gray #sub-results-container .seq-results-placeholder,
-body.theme-light-brown #sub-results-container .seq-results-placeholder,
 body.theme-white .sub-empty-prompt,
 [class*="theme-white"] .sub-empty-prompt,
-[class*="theme-light-"] .sub-empty-prompt,
-body.theme-yellow .sub-empty-prompt,
-body.theme-pink .sub-empty-prompt,
-body.theme-orange .sub-empty-prompt,
-body.theme-gray .sub-empty-prompt,
-body.theme-light-brown .sub-empty-prompt {
+[class*="theme-light-"] .sub-empty-prompt {
     color: #334155 !important;
     font-weight: 500 !important;
 }
 
 body.theme-white .sub-highlight-letters,
 [class*="theme-white"] .sub-highlight-letters,
-[class*="theme-light-"] .sub-highlight-letters,
-body.theme-yellow .sub-highlight-letters,
-body.theme-pink .sub-highlight-letters,
-body.theme-orange .sub-highlight-letters,
-body.theme-gray .sub-highlight-letters,
-body.theme-light-brown .sub-highlight-letters {
+[class*="theme-light-"] .sub-highlight-letters {
     color: #6d28d9 !important;
     font-weight: 800 !important;
 }
 
 body.theme-white .sub-group-header,
 [class*="theme-white"] .sub-group-header,
-[class*="theme-light-"] .sub-group-header,
-body.theme-yellow .sub-group-header,
-body.theme-pink .sub-group-header,
-body.theme-orange .sub-group-header,
-body.theme-gray .sub-group-header,
-body.theme-light-brown .sub-group-header {
+[class*="theme-light-"] .sub-group-header {
     color: #475569 !important;
     font-weight: 800 !important;
 }
 
 body.theme-white #sub-results-container .group-table td,
 [class*="theme-white"] #sub-results-container .group-table td,
-[class*="theme-light-"] #sub-results-container .group-table td,
-body.theme-yellow #sub-results-container .group-table td,
-body.theme-pink #sub-results-container .group-table td,
-body.theme-orange #sub-results-container .group-table td,
-body.theme-gray #sub-results-container .group-table td,
-body.theme-light-brown #sub-results-container .group-table td {
+[class*="theme-light-"] #sub-results-container .group-table td {
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
 body.theme-white #sub-results-container .clickable-word-link,
 [class*="theme-white"] #sub-results-container .clickable-word-link,
-[class*="theme-light-"] #sub-results-container .clickable-word-link,
-body.theme-yellow #sub-results-container .clickable-word-link,
-body.theme-pink #sub-results-container .clickable-word-link,
-body.theme-orange #sub-results-container .clickable-word-link,
-body.theme-gray #sub-results-container .clickable-word-link,
-body.theme-light-brown #sub-results-container .clickable-word-link {
+[class*="theme-light-"] #sub-results-container .clickable-word-link {
     color: #0f172a !important;
     font-weight: 700 !important;
 }
 
 body.theme-white #sub-results-container .sub-pts-badge,
 [class*="theme-white"] #sub-results-container .sub-pts-badge,
-[class*="theme-light-"] #sub-results-container .sub-pts-badge,
-body.theme-yellow #sub-results-container .sub-pts-badge,
-body.theme-pink #sub-results-container .sub-pts-badge,
-body.theme-orange #sub-results-container .sub-pts-badge,
-body.theme-gray #sub-results-container .sub-pts-badge,
-body.theme-light-brown #sub-results-container .sub-pts-badge {
+[class*="theme-light-"] #sub-results-container .sub-pts-badge {
     color: #6d28d9 !important;
     font-weight: 700 !important;
 }
 
 body.theme-white #sub-results-container div[style*="font-weight: 800"],
 [class*="theme-white"] #sub-results-container div[style*="font-weight: 800"],
-[class*="theme-light-"] #sub-results-container div[style*="font-weight: 800"],
-body.theme-yellow #sub-results-container div[style*="font-weight: 800"],
-body.theme-pink #sub-results-container div[style*="font-weight: 800"],
-body.theme-orange #sub-results-container div[style*="font-weight: 800"],
-body.theme-gray #sub-results-container div[style*="font-weight: 800"],
-body.theme-light-brown #sub-results-container div[style*="font-weight: 800"] {
+[class*="theme-light-"] #sub-results-container div[style*="font-weight: 800"] {
     color: #475569 !important;
 }
 
@@ -10521,24 +9618,14 @@ body.theme-light-brown #sub-results-container div[style*="font-weight: 800"] {
 
 body.theme-white .cube-replay-grid,
 [class*="theme-white"] .cube-replay-grid,
-[class*="theme-light-"] .cube-replay-grid,
-body.theme-yellow .cube-replay-grid,
-body.theme-pink .cube-replay-grid,
-body.theme-orange .cube-replay-grid,
-body.theme-gray .cube-replay-grid,
-body.theme-light-brown .cube-replay-grid {
+[class*="theme-light-"] .cube-replay-grid {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 body.theme-white .cube-replay-face-label,
 [class*="theme-white"] .cube-replay-face-label,
-[class*="theme-light-"] .cube-replay-face-label,
-body.theme-yellow .cube-replay-face-label,
-body.theme-pink .cube-replay-face-label,
-body.theme-orange .cube-replay-face-label,
-body.theme-gray .cube-replay-face-label,
-body.theme-light-brown .cube-replay-face-label {
+[class*="theme-light-"] .cube-replay-face-label {
     color: #0f172a !important;
     font-weight: 900 !important;
 }
@@ -10570,12 +9657,7 @@ body.theme-light-brown .cube-replay-face-label {
 /* 18. Tournaments: VERSUS Opponent Username on White/Light Themes */
 body.theme-white .t-versus-opponent-name,
 [class*="theme-white"] .t-versus-opponent-name,
-[class*="theme-light-"] .t-versus-opponent-name,
-body.theme-yellow .t-versus-opponent-name,
-body.theme-pink .t-versus-opponent-name,
-body.theme-orange .t-versus-opponent-name,
-body.theme-gray .t-versus-opponent-name,
-body.theme-light-brown .t-versus-opponent-name {
+[class*="theme-light-"] .t-versus-opponent-name {
     color: #0f172a !important;
     font-weight: 700 !important;
 }
@@ -10991,12 +10073,7 @@ body.is-tournament-round #show-everyone-btn {
 
 body.theme-white .new-word-date,
 [class*="theme-white"] .new-word-date,
-[class*="theme-light-"] .new-word-date,
-body.theme-yellow .new-word-date,
-body.theme-pink .new-word-date,
-body.theme-orange .new-word-date,
-body.theme-gray .new-word-date,
-body.theme-light-brown .new-word-date {
+[class*="theme-light-"] .new-word-date {
     color: #475569 !important;
     font-weight: 600 !important;
 }
@@ -11004,19 +10081,9 @@ body.theme-light-brown .new-word-date {
 body.theme-white .list-item:hover .new-word-date,
 [class*="theme-white"] .list-item:hover .new-word-date,
 [class*="theme-light-"] .list-item:hover .new-word-date,
-body.theme-yellow .list-item:hover .new-word-date,
-body.theme-pink .list-item:hover .new-word-date,
-body.theme-orange .list-item:hover .new-word-date,
-body.theme-gray .list-item:hover .new-word-date,
-body.theme-light-brown .list-item:hover .new-word-date,
 body.theme-white .full-list-item:hover .new-word-date,
 [class*="theme-white"] .full-list-item:hover .new-word-date,
-[class*="theme-light-"] .full-list-item:hover .new-word-date,
-body.theme-yellow .full-list-item:hover .new-word-date,
-body.theme-pink .full-list-item:hover .new-word-date,
-body.theme-orange .full-list-item:hover .new-word-date,
-body.theme-gray .full-list-item:hover .new-word-date,
-body.theme-light-brown .full-list-item:hover .new-word-date {
+[class*="theme-light-"] .full-list-item:hover .new-word-date {
     color: #1e293b !important;
 }
 
@@ -11026,12 +10093,7 @@ body.theme-white .play-header:not(.low-time-warning),
 body.is-desktop[class*="theme-white"] .play-header:not(.low-time-warning),
 body.is-desktop.theme-white .play-header:not(.low-time-warning),
 [class*="theme-light-"] .play-header:not(.low-time-warning),
-body[class*="theme-light-"] .play-header:not(.low-time-warning),
-body.theme-yellow .play-header:not(.low-time-warning),
-body.theme-pink .play-header:not(.low-time-warning),
-body.theme-orange .play-header:not(.low-time-warning),
-body.theme-gray .play-header:not(.low-time-warning),
-body.theme-light-brown .play-header:not(.low-time-warning) {
+body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     box-shadow: none !important;
 }
 
