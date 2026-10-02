@@ -3856,6 +3856,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePlayChatKeyboardPosition() {
         if (!chatPanel) return;
+        // Only adjust keyboard elevation if the chat panel is actually expanded
+        if (!chatPanel.classList.contains('expanded')) {
+            chatPanel.classList.remove('keyboard-open');
+            chatPanel.style.bottom = '';
+            return;
+        }
         const isInputFocused = document.activeElement === chatInput;
         const vv = window.visualViewport;
         const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
@@ -3878,13 +3884,19 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendChatMessage();
         });
+        chatInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
         chatInput.addEventListener('focus', () => {
-            if (typeof expandChat === 'function') expandChat();
-            if (chatPanel) chatPanel.classList.add('keyboard-open');
-            updatePlayChatKeyboardPosition();
-            setTimeout(updatePlayChatKeyboardPosition, 50);
-            setTimeout(updatePlayChatKeyboardPosition, 150);
-            setTimeout(updatePlayChatKeyboardPosition, 300);
+            // User requested: Clicking on the textbox to send a message in Chat does NOT expand the entire chatbox.
+            // Only clicking on the chatbox itself expands the chat.
+            if (chatPanel && chatPanel.classList.contains('expanded')) {
+                chatPanel.classList.add('keyboard-open');
+                updatePlayChatKeyboardPosition();
+                setTimeout(updatePlayChatKeyboardPosition, 50);
+                setTimeout(updatePlayChatKeyboardPosition, 150);
+                setTimeout(updatePlayChatKeyboardPosition, 300);
+            }
             const scrollHist = () => {
                 const hist = document.getElementById('chat-history');
                 if (hist) hist.scrollTop = hist.scrollHeight;
@@ -3992,6 +4004,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatPanel.addEventListener('touchstart', (e) => {
             if (chatPanel.classList.contains('expanded')) return;
+            if (e.target.closest('.chat-input-section')) return;
             if (e.touches.length === 1) {
                 touchStartPos = {
                     x: e.touches[0].clientX,
@@ -4004,6 +4017,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatPanel.addEventListener('touchmove', (e) => {
             if (chatPanel.classList.contains('expanded')) return;
+            if (e.target.closest('.chat-input-section')) return;
             if (e.touches.length === 1) {
                 const moveDist = Math.hypot(e.touches[0].clientX - touchStartPos.x, e.touches[0].clientY - touchStartPos.y);
                 if (moveDist > 10) {
