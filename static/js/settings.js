@@ -925,7 +925,7 @@ function debounce(func, wait) {
             }
             return;
         }
-        const audio = new Audio(`/static/audio/${type}.wav`);
+        const audio = new Audio(`/static/audio/${type}.wav?v=1790990000`);
         audio.play().catch(e => console.log('Audio play failed:', e));
     }
 

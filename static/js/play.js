@@ -322,7 +322,7 @@ window.intermissionBellAudio = new Audio();
 window.updateIntermissionBellSource = function() {
     if (window.intermissionBellAudio) {
         const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
-        window.intermissionBellAudio.src = `/static/audio/${bellType}.wav`;
+        window.intermissionBellAudio.src = `/static/audio/${bellType}.wav?v=1790990000`;
         try {
             window.intermissionBellAudio.load();
         } catch (e) {
