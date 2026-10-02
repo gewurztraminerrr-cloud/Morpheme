@@ -174,14 +174,14 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1791050000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1791050000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791050000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1791050000">
-    <link rel="stylesheet" href="/css/play.css?v=1791050000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1791050000">
-    <link rel="stylesheet" href="/css/forum.css?v=1791050000">
-    <link rel="stylesheet" href="/css/donate.css?v=1791050000">
+    <link rel="preload" href="/css/style.css?v=1791060000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1791060000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1791060000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1791060000">
+    <link rel="stylesheet" href="/css/play.css?v=1791060000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1791060000">
+    <link rel="stylesheet" href="/css/forum.css?v=1791060000">
+    <link rel="stylesheet" href="/css/donate.css?v=1791060000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
         body.is-mobile[class*="theme-white"] .mobile-bottom-nav,
@@ -5999,12 +5999,14 @@
                                         <div class="setting-desc">Tailor the color of each individual letter on the game board.</div>
                                     </div>
                                 </div>
-                                <div style="display: flex; justify-content: flex-start; margin-top: 3px; margin-bottom: 0 !important;">
-                                    <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
-                                        style="padding: 3px 10px; font-size: 0.75rem; margin-bottom: 0 !important;">Reset All to Black</button>
-                                </div>
-                                <div id="synesthesia-letters-grid" style="margin-top: 0 !important; padding-top: 1px !important; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
-                                    <!-- Letters A-Z injected by settings.js -->
+                                <div class="synesthesia-section" style="display: flex; flex-direction: column; gap: 4px; width: 100%; margin-top: 0; box-sizing: border-box;">
+                                    <div style="display: flex; justify-content: flex-start;">
+                                        <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
+                                            style="padding: 4px 10px; font-size: 0.75rem;">Reset All to Black</button>
+                                    </div>
+                                    <div id="synesthesia-letters-grid" style="margin-top: 0 !important; padding-top: 4px !important; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
+                                        <!-- Letters A-Z injected by settings.js -->
+                                    </div>
                                 </div>
 
                                 <style>
