@@ -56,7 +56,7 @@ body.theme-white {
 
 body.theme-light-gray {
     --bg-primary: #d8d8d8;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #222;
     --text-primary-rgb: 34, 34, 34;
@@ -85,7 +85,7 @@ body.theme-dark-gray {
 
 body.theme-light-red {
     --bg-primary: #ffcccc;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #440000;
     --text-primary-rgb: 68, 0, 0;
@@ -112,7 +112,7 @@ body.theme-dark-red {
 
 body.theme-light-orange {
     --bg-primary: #ffe0b3;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #442200;
     --text-primary-rgb: 68, 34, 0;
@@ -139,7 +139,7 @@ body.theme-dark-orange {
 
 body.theme-light-yellow {
     --bg-primary: #ffffcc;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #444400;
     --text-primary-rgb: 68, 68, 0;
@@ -166,7 +166,7 @@ body.theme-dark-yellow {
 
 body.theme-light-green {
     --bg-primary: #ccffcc;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #004400;
     --text-primary-rgb: 0, 68, 0;
@@ -193,7 +193,7 @@ body.theme-dark-green {
 
 body.theme-light-blue {
     --bg-primary: #cceeff;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #002244;
     --text-primary-rgb: 0, 34, 68;
@@ -220,7 +220,7 @@ body.theme-dark-blue {
 
 body.theme-light-purple {
     --bg-primary: #f3e5f5;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #4a148c;
     --text-primary-rgb: 74, 20, 140;
@@ -247,7 +247,7 @@ body.theme-dark-purple {
 
 body.theme-light-pink {
     --bg-primary: #fce4ec;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #880e4f;
     --text-primary-rgb: 136, 14, 79;
@@ -274,7 +274,7 @@ body.theme-dark-pink {
 
 body.theme-light-brown {
     --bg-primary: #efe0cc;
-    --bg-panel: rgba(0, 0, 0, 0.05);
+    --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
     --text-primary: #3e2723;
     --text-primary-rgb: 62, 39, 35;
@@ -339,10 +339,14 @@ select option {
     border-color: rgba(0, 0, 0, 0.25) !important;
 }
 
-[class*="theme-white"] select option,
-[class*="theme-light-"] select option {
+[class*="theme-white"] select option {
     background: #ffffff !important;
     color: #111111 !important;
+}
+
+[class*="theme-light-"] select option {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .achievement-card {
@@ -834,11 +838,17 @@ select option {
 }
 
 /* Profile Visibility for Light Themes */
-[class*="theme-white"] .profile-card.premium,
-[class*="theme-light-"] .profile-card.premium {
+[class*="theme-white"] .profile-card.premium {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
+}
+
+[class*="theme-light-"] .profile-card.premium {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Ensure text is dark and readable on light premium cards */
@@ -8848,19 +8858,28 @@ body.theme-white #full-list-modal,
 
 @media (max-width: 600px) {
     body.theme-white #full-list-modal,
-    [class*="theme-white"] #full-list-modal,
-    [class*="theme-light-"] #full-list-modal {
+    [class*="theme-white"] #full-list-modal {
         background: #ffffff !important;
+    }
+    [class*="theme-light-"] #full-list-modal {
+        background: var(--bg-primary) !important;
     }
 }
 
 /* 4. Full List Modal Card Container */
 body.theme-white #full-list-modal-card,
-[class*="theme-white"] #full-list-modal-card,
-[class*="theme-light-"] #full-list-modal-card {
+[class*="theme-white"] #full-list-modal-card {
     background: #ffffff !important;
     border: 1px solid #d1d5db !important;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
+}
+
+[class*="theme-light-"] #full-list-modal-card {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
+    color: var(--text-primary) !important;
 }
 
 /* 5. Modal Header, Title, and Counter */
@@ -8892,11 +8911,17 @@ body.theme-white #full-list-modal-count,
 
 /* 6. Modal Close Button */
 body.theme-white #full-list-modal-close,
-[class*="theme-white"] #full-list-modal-close,
-[class*="theme-light-"] #full-list-modal-close {
+[class*="theme-white"] #full-list-modal-close {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] #full-list-modal-close {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white #full-list-modal-close:hover,
@@ -8909,11 +8934,17 @@ body.theme-white #full-list-modal-close:hover,
 
 /* 7. Word Jump Input & Button */
 body.theme-white #full-list-jump-input,
-[class*="theme-white"] #full-list-jump-input,
-[class*="theme-light-"] #full-list-jump-input {
+[class*="theme-white"] #full-list-jump-input {
     background: #ffffff !important;
     border: 1.5px solid #94a3b8 !important;
     color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+[class*="theme-light-"] #full-list-jump-input {
+    background: var(--bg-primary) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
     font-weight: 700 !important;
 }
 
@@ -8958,11 +8989,17 @@ body.theme-white #full-list-jump-toast,
 
 /* 8. Word Grid Results Area (#full-list-modal-results) */
 body.theme-white #full-list-modal-results,
-[class*="theme-white"] #full-list-modal-results,
-[class*="theme-light-"] #full-list-modal-results {
+[class*="theme-white"] #full-list-modal-results {
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
     scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
+
+[class*="theme-light-"] #full-list-modal-results {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04)) !important;
+    border: 1px solid var(--card-border) !important;
+    scrollbar-color: var(--card-border) var(--bg-primary) !important;
 }
 
 body.theme-white #full-list-modal-results::-webkit-scrollbar-track,
@@ -9092,12 +9129,19 @@ body.theme-white .full-list-retry-btn,
 
 /* 13. Word Definition Popover for Light Themes (.tool-def-popover) */
 body.theme-white .tool-def-popover,
-[class*="theme-white"] .tool-def-popover,
-[class*="theme-light-"] .tool-def-popover {
+[class*="theme-white"] .tool-def-popover {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 0, 0, 0.05) !important;
     color: #111827 !important;
+}
+
+[class*="theme-light-"] .tool-def-popover {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white .tool-def-word-title,
@@ -9115,11 +9159,16 @@ body.theme-white .tool-def-len-badge,
 }
 
 body.theme-white .tool-def-close-btn,
-[class*="theme-white"] .tool-def-close-btn,
-[class*="theme-light-"] .tool-def-close-btn {
+[class*="theme-white"] .tool-def-close-btn {
     background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
     color: #64748b !important;
+}
+
+[class*="theme-light-"] .tool-def-close-btn {
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white .tool-def-content,
@@ -9142,26 +9191,41 @@ body.theme-white .tool-def-isvalid-link,
 
 /* 14. Country Flag Selector Dropdown for White/Light Themes */
 body.theme-white .dropdown-menu,
-[class*="theme-white"] .dropdown-menu,
-[class*="theme-light-"] .dropdown-menu {
+[class*="theme-white"] .dropdown-menu {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
+[class*="theme-light-"] .dropdown-menu {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
 body.theme-white .dropdown-header,
-[class*="theme-white"] .dropdown-header,
-[class*="theme-light-"] .dropdown-header {
+[class*="theme-white"] .dropdown-header {
     background: #f8fafc !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
+[class*="theme-light-"] .dropdown-header {
+    background: rgba(0, 0, 0, 0.06) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
 body.theme-white .dropdown-search,
-[class*="theme-white"] .dropdown-search,
-[class*="theme-light-"] .dropdown-search {
+[class*="theme-white"] .dropdown-search {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] .dropdown-search {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white .dropdown-search::placeholder,
@@ -9177,9 +9241,12 @@ body.theme-white .dropdown-item,
 }
 
 body.theme-white .dropdown-item:hover,
-[class*="theme-white"] .dropdown-item:hover,
-[class*="theme-light-"] .dropdown-item:hover {
+[class*="theme-white"] .dropdown-item:hover {
     background: #f1f5f9 !important;
+}
+
+[class*="theme-light-"] .dropdown-item:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
 }
 
 body.theme-white .dropdown-item-text,
@@ -9190,11 +9257,18 @@ body.theme-white .dropdown-item-text,
 
 /* 15. Tools: Change Password & Change Email Cards on White/Light Themes */
 body.theme-white .account-card,
-[class*="theme-white"] .account-card,
-[class*="theme-light-"] .account-card {
+[class*="theme-white"] .account-card {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+[class*="theme-light-"] .account-card {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white .account-card h3,
@@ -9227,13 +9301,18 @@ body.theme-white .account-card label,
 
 body.theme-white .account-card input[type="password"],
 [class*="theme-white"] .account-card input[type="password"],
-[class*="theme-light-"] .account-card input[type="password"],
 body.theme-white .account-card input[type="email"],
-[class*="theme-white"] .account-card input[type="email"],
-[class*="theme-light-"] .account-card input[type="email"] {
+[class*="theme-white"] .account-card input[type="email"] {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] .account-card input[type="password"],
+[class*="theme-light-"] .account-card input[type="email"] {
+    background: var(--bg-primary) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white .account-card input::placeholder,
@@ -9243,11 +9322,17 @@ body.theme-white .account-card input::placeholder,
 }
 
 body.theme-white #email-current-display,
-[class*="theme-white"] #email-current-display,
-[class*="theme-light-"] #email-current-display {
+[class*="theme-white"] #email-current-display {
     background: #f8fafc !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] #email-current-display {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Base Subanagrams Tabs & Buttons (Dark Theme Default) */
@@ -9328,10 +9413,16 @@ body.theme-white #email-current-display,
 
 /* 16. Tools: Subanagrams on White/Light Themes */
 body.theme-white #tool-subanagrams .combo-control-panel,
-[class*="theme-white"] #tool-subanagrams .combo-control-panel,
-[class*="theme-light-"] #tool-subanagrams .combo-control-panel {
+[class*="theme-white"] #tool-subanagrams .combo-control-panel {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
+}
+
+[class*="theme-light-"] #tool-subanagrams .combo-control-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Subanagrams Tab Bar & Buttons on Light Themes */
@@ -9453,16 +9544,21 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 /* Inputs and Selects on Light Themes */
 body.theme-white #sub-input,
 [class*="theme-white"] #sub-input,
-[class*="theme-light-"] #sub-input,
 body.theme-white #sub-panel-manual select,
 [class*="theme-white"] #sub-panel-manual select,
-[class*="theme-light-"] #sub-panel-manual select,
 body.theme-white #sub-panel-random select,
-[class*="theme-white"] #sub-panel-random select,
-[class*="theme-light-"] #sub-panel-random select {
+[class*="theme-white"] #sub-panel-random select {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] #sub-input,
+[class*="theme-light-"] #sub-panel-manual select,
+[class*="theme-light-"] #sub-panel-random select {
+    background: var(--bg-primary) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white #sub-input::placeholder,
@@ -9518,11 +9614,16 @@ body.theme-white #sub-count-info,
 }
 
 body.theme-white #sub-word-input,
-[class*="theme-white"] #sub-word-input,
-[class*="theme-light-"] #sub-word-input {
+[class*="theme-white"] #sub-word-input {
     background: #ffffff !important;
     border: 2px solid #a78bfa !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] #sub-word-input {
+    background: var(--bg-primary) !important;
+    border: 2px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 body.theme-white #sub-word-input::placeholder,
@@ -9541,11 +9642,17 @@ body.theme-white #sub-reveal-btn,
 }
 
 body.theme-white #sub-reset-btn,
-[class*="theme-white"] #sub-reset-btn,
-[class*="theme-light-"] #sub-reset-btn {
+[class*="theme-white"] #sub-reset-btn {
     background: #f1f5f9 !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #1e293b !important;
+    font-weight: 700 !important;
+}
+
+[class*="theme-light-"] #sub-reset-btn {
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
     font-weight: 700 !important;
 }
 

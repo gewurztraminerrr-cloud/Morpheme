@@ -1332,15 +1332,22 @@
 }
 
 [class*="theme-white"] .instruction-card,
-[class*="theme-light-"] .instruction-card,
 [class*="theme-white"] .faq-container,
-[class*="theme-light-"] .faq-container,
-[class*="theme-white"] .faq-category,
-[class*="theme-light-"] .faq-category {
+[class*="theme-white"] .faq-category {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
     color: #111111 !important;
+}
+
+[class*="theme-light-"] .instruction-card,
+[class*="theme-light-"] .faq-container,
+[class*="theme-light-"] .faq-category {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .instruction-card h2,
@@ -1366,11 +1373,18 @@
     color: #333333 !important;
 }
 
-[class*="theme-white"] .faq-item,
-[class*="theme-light-"] .faq-item {
+[class*="theme-white"] .faq-item {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-light-"] .faq-item {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .faq-question,
@@ -1380,11 +1394,18 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-[class*="theme-white"] .faq-nav-link,
-[class*="theme-light-"] .faq-nav-link {
+[class*="theme-white"] .faq-nav-link {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
     color: #111111 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-light-"] .faq-nav-link {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    color: var(--text-primary) !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
 }
 

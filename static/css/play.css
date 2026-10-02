@@ -8778,11 +8778,16 @@ body[class*="theme-light-"] .chat-collapse-btn {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-body[class*="theme-white"] .chat-collapse-btn:hover,
-body[class*="theme-light-"] .chat-collapse-btn:hover {
+body[class*="theme-white"] .chat-collapse-btn:hover {
     background: #ffffff;
     border-color: rgba(15, 23, 42, 0.7);
     color: #000000;
+}
+
+body[class*="theme-light-"] .chat-collapse-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--card-border);
+    color: var(--text-primary);
 }
 
 /* Unified Smooth Bottom-Anchored Upward Sliding Expansion (Desktop & Mobile) */
@@ -12475,25 +12480,32 @@ body.theme-light-pink #page-mods {
 [class*="theme-white"] #page-mods .def-guidelines-card,
 [class*="theme-white"] #page-mods .mod-section,
 [class*="theme-white"] #page-mods .mod-add-section,
+body.theme-white #page-mods .mod-action-card,
+body.theme-white #page-mods .def-entry-card,
+body.theme-white #page-mods .def-guidelines-card,
+body.theme-white #page-mods .mod-section,
+body.theme-white #page-mods .mod-add-section {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    color: #1e293b !important;
+}
+
 [class*="theme-light-"] #page-mods .mod-action-card,
 [class*="theme-light-"] #page-mods .def-entry-card,
 [class*="theme-light-"] #page-mods .def-guidelines-card,
 [class*="theme-light-"] #page-mods .mod-section,
 [class*="theme-light-"] #page-mods .mod-add-section,
-body.theme-white #page-mods .mod-action-card,
-body.theme-white #page-mods .def-entry-card,
-body.theme-white #page-mods .def-guidelines-card,
-body.theme-white #page-mods .mod-section,
-body.theme-white #page-mods .mod-add-section,
 body.theme-light-gray #page-mods .mod-action-card,
 body.theme-light-gray #page-mods .def-entry-card,
 body.theme-light-gray #page-mods .def-guidelines-card,
 body.theme-light-gray #page-mods .mod-section,
 body.theme-light-gray #page-mods .mod-add-section {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-    color: #1e293b !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] #page-mods input,
@@ -12567,10 +12579,6 @@ body.theme-light-gray #current-notice-preview {
 [class*="theme-white"] #mod-donations-list-container,
 [class*="theme-white"] .undef-words-box,
 [class*="theme-white"] .undef-words-list-scroll,
-[class*="theme-light-"] #ip-bans-list-container,
-[class*="theme-light-"] #mod-donations-list-container,
-[class*="theme-light-"] .undef-words-box,
-[class*="theme-light-"] .undef-words-list-scroll,
 body.theme-white #ip-bans-list-container,
 body.theme-white #mod-donations-list-container,
 body.theme-white .undef-words-box,
@@ -12578,6 +12586,16 @@ body.theme-white .undef-words-list-scroll {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] #ip-bans-list-container,
+[class*="theme-light-"] #mod-donations-list-container,
+[class*="theme-light-"] .undef-words-box,
+[class*="theme-light-"] .undef-words-list-scroll {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] #ip-bans-table th,
@@ -12634,8 +12652,15 @@ body.theme-white label[for="toggle-use-added-words"] {
 }
 
 [class*="theme-white"] .loading-container,
+body.theme-white .loading-container {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+    color: #0f172a !important;
+}
+
 [class*="theme-light-"] .loading-container,
-body.theme-white .loading-container,
 body.theme-light-gray .loading-container,
 body.theme-light-red .loading-container,
 body.theme-light-orange .loading-container,
@@ -12644,11 +12669,12 @@ body.theme-light-green .loading-container,
 body.theme-light-blue .loading-container,
 body.theme-light-purple .loading-container,
 body.theme-light-pink .loading-container {
-    background: #ffffff !important;
-    border: 1.5px solid #e2e8f0 !important;
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
     border-radius: 16px !important;
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
-    color: #0f172a !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .glow-spinner,
@@ -13016,8 +13042,15 @@ body.theme-light-gray .review-board-main {
 }
 
 [class*="theme-white"] .review-cell,
+body.theme-white .review-cell {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
 [class*="theme-light-"] .review-cell,
-body.theme-white .review-cell,
 body.theme-light-gray .review-cell,
 body.theme-light-red .review-cell,
 body.theme-light-orange .review-cell,
@@ -13026,9 +13059,10 @@ body.theme-light-green .review-cell,
 body.theme-light-blue .review-cell,
 body.theme-light-purple .review-cell,
 body.theme-light-pink .review-cell {
-    background: #ffffff !important;
-    border: 1.5px solid #cbd5e1 !important;
-    color: #0f172a !important;
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
     text-shadow: none !important;
     box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
@@ -13055,12 +13089,18 @@ body.theme-light-gray .review-cell.highlight-bonus {
 
 /* Integrated Replay in Profile for light mode */
 [class*="theme-white"] .integrated-replay-container,
-[class*="theme-light-"] .integrated-replay-container,
-body.theme-white .integrated-replay-container,
-body.theme-light-gray .integrated-replay-container {
+body.theme-white .integrated-replay-container {
     background: #ffffff !important;
     border: 1.5px solid #cbd5e1 !important;
     color: #0f172a !important;
+}
+
+[class*="theme-light-"] .integrated-replay-container,
+body.theme-light-gray .integrated-replay-container {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .integrated-replay-header,
@@ -13144,6 +13184,21 @@ body.theme-light-pink .cube-replay-face-label {
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .spectator-panel {
         background: rgba(45, 45, 75, 0.82) !important;
     }
+
+    /* Light Theme Game Room Panels: A darker/lighter shade of the theme's background, not white */
+    body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
+    body[class*="theme-light-"] #page-play .players-panel,
+    body[class*="theme-light-"] #page-play .board-panel:not(.low-time-warning),
+    body[class*="theme-light-"] #page-play .words-table-box,
+    body[class*="theme-light-"] #page-play .chat-panel,
+    body[class*="theme-light-"] #page-play .definitions-panel,
+    body[class*="theme-light-"] #page-play .spectator-panel {
+        background: var(--bg-primary) !important;
+        background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+        border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+        color: var(--text-primary) !important;
+    }
+
 
     /* White & Light Theme Layouts: Remove glowing effect / box shadow around header in game rooms on desktops & laptops */
     [class*="theme-white"] #page-play .play-header:not(.low-time-warning),

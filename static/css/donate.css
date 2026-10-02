@@ -725,12 +725,19 @@
 /* ============================================================
    LIGHT THEME STYLING FOR DONATE TAB
    ============================================================ */
-[class*="theme-white"] .donate-container .glass-panel,
-[class*="theme-light-"] .donate-container .glass-panel {
+[class*="theme-white"] .donate-container .glass-panel {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
     color: #111111 !important;
+}
+
+[class*="theme-light-"] .donate-container .glass-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-primary) !important;
 }
 
 [class*="theme-white"] .donate-hero h1,
@@ -779,10 +786,15 @@
     color: #444444 !important;
 }
 
-[class*="theme-white"] .custom-donate-panel,
-[class*="theme-light-"] .custom-donate-panel {
+[class*="theme-white"] .custom-donate-panel {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+[class*="theme-light-"] .custom-donate-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
 }
 
 [class*="theme-white"] .custom-donate-title,

@@ -3129,3 +3129,16 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
 
 
 
+
+
+/* Light Theme Lobby Panels: A darker shade of the theme's background, not white */
+[class*="theme-light-"] .solo-friends-panel,
+[class*="theme-light-"] #mobile-panel-solo,
+[class*="theme-light-"] .active-rooms-panel,
+[class*="theme-light-"] #mobile-panel-rooms,
+[class*="theme-light-"] .create-room-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    color: var(--text-primary) !important;
+}

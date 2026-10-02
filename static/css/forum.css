@@ -1397,3 +1397,18 @@ body.theme-white #page-forums .forum-bottom-bar,
         }
     }
 }
+
+
+/* Light Theme Forum Panels: A darker shade of the theme's background, not white */
+[class*="theme-light-"] .forum-sidebar {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+    border-right-color: var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+}
+
+[class*="theme-light-"] .forum-post-card {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04)) !important;
+    border-color: var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    color: var(--text-primary) !important;
+}
