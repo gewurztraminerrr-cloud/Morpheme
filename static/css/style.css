@@ -8399,8 +8399,8 @@ select option,
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    cursor: default;
-    pointer-events: none !important;
+    cursor: pointer;
+    pointer-events: auto !important;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;

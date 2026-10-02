@@ -674,7 +674,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleEnterLobbyClick = (btn, evt) => {
         const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
-        if (evt && evt.target && evt.target !== gatewayBtn && gatewayBtn && !gatewayBtn.contains(evt.target)) return;
+        const housing = document.getElementById('gateway-housing');
+        if (evt && evt.target && evt.target !== gatewayBtn && (!gatewayBtn || !gatewayBtn.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
         executeGatewayTransition(evt);
     };
 
@@ -702,7 +703,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleLoginGatewayClick = (btn, evt) => {
         const loginGwBtn = document.getElementById('btn-login-gateway');
-        if (evt && evt.target && evt.target !== loginGwBtn && loginGwBtn && !loginGwBtn.contains(evt.target)) return;
+        const housing = document.getElementById('gateway-housing');
+        if (evt && evt.target && evt.target !== loginGwBtn && (!loginGwBtn || !loginGwBtn.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
         executeLoginGatewayTransition(evt);
     };
 
@@ -723,7 +725,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const coords = getCoords(e);
             if (!coords) return false;
             const rect = btn.getBoundingClientRect();
-            return coords.x >= rect.left && coords.x <= rect.right && coords.y >= rect.top && coords.y <= rect.bottom;
+            // Allow 28px edge leeway around the button so taps on edges/housing reliably register
+            const margin = 28;
+            return coords.x >= (rect.left - margin) &&
+                   coords.x <= (rect.right + margin) &&
+                   coords.y >= (rect.top - margin) &&
+                   coords.y <= (rect.bottom + margin);
         }
 
         const handlePressMove = (e) => {
@@ -785,7 +792,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const handlePressStart = (e) => {
             if (gatewayTransitioning || window._gatewayTransitioning) return;
-            if (e && e.target && e.target !== btn && !btn.contains(e.target)) return;
             isPointerDown = true;
             btn.classList.remove('dragged-out');
             btn.classList.add('pressed', 'flattened');
@@ -802,6 +808,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('mousedown', handlePressStart);
         btn.addEventListener('touchstart', handlePressStart, { passive: true });
         btn.addEventListener('click', (e) => onExecute(e));
+
+        // Also allow the parent housing socket to trigger the button press if tapped around the edges
+        const housing = btn.closest ? (btn.closest('#gateway-housing') || btn.parentElement) : btn.parentElement;
+        if (housing && !housing._housingForwarderAttached) {
+            housing._housingForwarderAttached = true;
+            housing.addEventListener('pointerdown', (e) => {
+                if (e.target !== btn && !btn.contains(e.target)) {
+                    handlePressStart(e);
+                }
+            });
+            housing.addEventListener('touchstart', (e) => {
+                if (e.target !== btn && !btn.contains(e.target)) {
+                    handlePressStart(e);
+                }
+            }, { passive: true });
+            housing.addEventListener('click', (e) => {
+                if (e.target !== btn && !btn.contains(e.target)) {
+                    onExecute(e);
+                }
+            });
+        }
     }
 
     const activePageEl = document.querySelector('.page.active');

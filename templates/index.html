@@ -109,7 +109,8 @@
             position: relative;
             user-select: none;
             -webkit-user-select: none;
-            pointer-events: none !important;
+            pointer-events: auto !important;
+            cursor: pointer;
         }
         .neon-gateway-btn {
             position: relative;
@@ -167,9 +168,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1790645000" as="style">
+    <link rel="preload" href="/css/style.css?v=1790840000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1790680000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1790645000">
+    <link rel="stylesheet" href="/css/style.css?v=1790840000">
     <link rel="stylesheet" href="/css/lobby.css?v=1790680000">
     <link rel="stylesheet" href="/css/play.css?v=1790780000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1789330000">
@@ -1908,7 +1909,8 @@
             window.handleLoginGatewayClick = function(btn, evt) {
                 if (window._gatewayTransitioning) return;
                 var lb = document.getElementById('btn-login-gateway');
-                if (evt && evt.target && evt.target !== lb && lb && !lb.contains(evt.target)) return;
+                var housing = document.getElementById('gateway-housing');
+                if (evt && evt.target && evt.target !== lb && (!lb || !lb.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
                 window._gatewayTransitioning = true;
                 window.currentPageId = 'page-login';
                 if (lb) {
@@ -1939,7 +1941,8 @@
             window.handleEnterLobbyClick = async function(btn, evt) {
                 if (window._gatewayTransitioning) return;
                 var gb = document.getElementById('btn-enter-lobby-gateway');
-                if (evt && evt.target && evt.target !== gb && !gb.contains(evt.target)) return;
+                var housing = document.getElementById('gateway-housing');
+                if (evt && evt.target && evt.target !== gb && (!gb || !gb.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
 
                 // Immediately trigger mobile fullscreen synchronously on direct user gesture
                 if (typeof window.triggerMobileFullscreen === 'function') {
@@ -9182,7 +9185,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790830000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
-    <script src="/js/app.js?v=1790830000"></script>
+    <script src="/js/app.js?v=1790840000"></script>
     <script src="/js/lobby.js?v=1790830000"></script>
     <script src="/js/play.js?v=1790680000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
