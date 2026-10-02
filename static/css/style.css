@@ -8511,8 +8511,11 @@ select option,
 }
 
 /* Force 3D Elevated Standing Position when dragged out */
-.neon-gateway-btn.dragged-out {
-    transform: translateY(-12px) !important;
+.neon-gateway-btn.dragged-out,
+.neon-gateway-btn.dragged-out:active,
+.neon-gateway-btn.dragged-out:hover,
+.neon-gateway-btn.dragged-out:focus {
+    transform: translateY(-12px) scale(1) !important;
     background: linear-gradient(180deg, #ff47a3 0%, #ff007f 35%, #d6006b 75%, #b30059 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.3) !important;
@@ -8534,7 +8537,12 @@ select option,
         0 12px 0 #120009,
         0 14px 20px rgba(0, 0, 0, 0.65),
         0 20px 35px rgba(255, 0, 127, 0.4) !important;
+    text-shadow:
+        0 -1px 1px rgba(0, 0, 0, 0.35),
+        0 1px 2px rgba(255, 255, 255, 0.4),
+        0 0 14px rgba(255, 255, 255, 0.7) !important;
     filter: none !important;
+    transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, filter 0.12s ease !important;
 }
 
 

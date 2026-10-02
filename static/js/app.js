@@ -673,6 +673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.handleEnterLobbyClick = (btn, evt) => {
+        if (window._preventGatewayClick || window._gatewayTransitioning) return;
         const gatewayBtn = document.getElementById('btn-enter-lobby-gateway');
         const housing = document.getElementById('gateway-housing');
         if (evt && evt.target && evt.target !== gatewayBtn && (!gatewayBtn || !gatewayBtn.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
@@ -702,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.handleLoginGatewayClick = (btn, evt) => {
+        if (window._preventGatewayClick || window._gatewayTransitioning) return;
         const loginGwBtn = document.getElementById('btn-login-gateway');
         const housing = document.getElementById('gateway-housing');
         if (evt && evt.target && evt.target !== loginGwBtn && (!loginGwBtn || !loginGwBtn.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
@@ -712,6 +714,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!btn || btn._3dAttached) return;
         btn._3dAttached = true;
         let isPointerDown = false;
+        let activePointerId = null;
+
+        // Prevent native browser drag-and-drop or text selection on button
+        btn.setAttribute('draggable', 'false');
+        btn.addEventListener('dragstart', (e) => e.preventDefault());
 
         function getCoords(e) {
             if (!e) return null;
@@ -725,47 +732,79 @@ document.addEventListener('DOMContentLoaded', async () => {
             const coords = getCoords(e);
             if (!coords) return false;
             const rect = btn.getBoundingClientRect();
-            // Allow 28px edge leeway around the button so taps on edges/housing reliably register
-            const margin = 28;
+            // During drag tracking, check button boundaries (plus 6px for housing socket rim)
+            const margin = 6;
             return coords.x >= (rect.left - margin) &&
                    coords.x <= (rect.right + margin) &&
                    coords.y >= (rect.top - margin) &&
                    coords.y <= (rect.bottom + margin);
         }
 
+        const setStandingTall = () => {
+            btn.classList.add('dragged-out');
+            btn.classList.remove('pressed', 'flattened');
+        };
+
+        const setFlattened = () => {
+            btn.classList.remove('dragged-out');
+            btn.classList.add('pressed', 'flattened');
+        };
+
         const handlePressMove = (e) => {
             if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
             if (isInside(e)) {
-                btn.classList.remove('dragged-out');
-                btn.classList.add('pressed', 'flattened');
+                setFlattened();
             } else {
-                btn.classList.add('dragged-out');
-                btn.classList.remove('pressed', 'flattened');
+                setStandingTall();
             }
         };
 
         const handlePressEnd = (e) => {
-            removeWindowTracking();
-            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) {
+                removeWindowTracking();
+                return;
+            }
             isPointerDown = false;
+            removeWindowTracking();
+
+            if (activePointerId !== null && btn.releasePointerCapture) {
+                try { btn.releasePointerCapture(activePointerId); } catch(_) {}
+                activePointerId = null;
+            }
+
             if (isInside(e)) {
-                btn.classList.remove('dragged-out');
-                btn.classList.add('pressed', 'flattened');
+                setFlattened();
                 onExecute(e);
             } else {
-                btn.classList.add('dragged-out');
-                btn.classList.remove('pressed', 'flattened');
-                setTimeout(() => btn.classList.remove('dragged-out'), 100);
+                // Dragged outside: Stand tall, cancel press, do NOT enter lobby
+                setStandingTall();
+                window._preventGatewayClick = true;
+                setTimeout(() => {
+                    window._preventGatewayClick = false;
+                    btn.classList.remove('dragged-out');
+                }, 250);
             }
         };
 
         const handlePressCancel = () => {
-            removeWindowTracking();
-            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
+            if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) {
+                removeWindowTracking();
+                return;
+            }
             isPointerDown = false;
-            btn.classList.add('dragged-out');
-            btn.classList.remove('pressed', 'flattened');
-            setTimeout(() => btn.classList.remove('dragged-out'), 100);
+            removeWindowTracking();
+
+            if (activePointerId !== null && btn.releasePointerCapture) {
+                try { btn.releasePointerCapture(activePointerId); } catch(_) {}
+                activePointerId = null;
+            }
+
+            setStandingTall();
+            window._preventGatewayClick = true;
+            setTimeout(() => {
+                window._preventGatewayClick = false;
+                btn.classList.remove('dragged-out');
+            }, 250);
         };
 
         const addWindowTracking = () => {
@@ -793,8 +832,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const handlePressStart = (e) => {
             if (gatewayTransitioning || window._gatewayTransitioning) return;
             isPointerDown = true;
-            btn.classList.remove('dragged-out');
-            btn.classList.add('pressed', 'flattened');
+            setFlattened();
+
+            if (e && typeof e.pointerId === 'number' && btn.setPointerCapture) {
+                try {
+                    btn.setPointerCapture(e.pointerId);
+                    activePointerId = e.pointerId;
+                } catch(_) {}
+            }
+
             addWindowTracking();
 
             if (btn.id === 'btn-enter-lobby-gateway') {
@@ -805,14 +851,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         btn.addEventListener('pointerdown', handlePressStart);
-        btn.addEventListener('mousedown', handlePressStart);
         btn.addEventListener('touchstart', handlePressStart, { passive: true });
-        btn.addEventListener('click', (e) => onExecute(e));
+        btn.addEventListener('mousedown', (e) => {
+            if (!isPointerDown) handlePressStart(e);
+        });
+
+        btn.addEventListener('click', (e) => {
+            if (window._preventGatewayClick) {
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
+            onExecute(e);
+        });
 
         // Also allow the parent housing socket to trigger the button press if tapped around the edges
         const housing = btn.closest ? (btn.closest('#gateway-housing') || btn.parentElement) : btn.parentElement;
         if (housing && !housing._housingForwarderAttached) {
             housing._housingForwarderAttached = true;
+            housing.setAttribute('draggable', 'false');
+            housing.addEventListener('dragstart', (e) => e.preventDefault());
             housing.addEventListener('pointerdown', (e) => {
                 if (e.target !== btn && !btn.contains(e.target)) {
                     handlePressStart(e);
@@ -824,6 +882,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }, { passive: true });
             housing.addEventListener('click', (e) => {
+                if (window._preventGatewayClick) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
                 if (e.target !== btn && !btn.contains(e.target)) {
                     onExecute(e);
                 }
