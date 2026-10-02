@@ -631,11 +631,6 @@ function debounce(func, wait) {
     if (resetBoardSizesBtn) {
         resetBoardSizesBtn.onclick = () => {
             resetBoardSizesToDefault();
-            const originalText = resetBoardSizesBtn.textContent;
-            resetBoardSizesBtn.textContent = 'Reset to Defaults!';
-            setTimeout(() => {
-                resetBoardSizesBtn.textContent = originalText;
-            }, 1200);
         };
     }
 
@@ -643,14 +638,6 @@ function debounce(func, wait) {
     document.addEventListener('click', (e) => {
         if (e.target && (e.target.id === 'btn-reset-board-sizes' || e.target.closest('#btn-reset-board-sizes'))) {
             resetBoardSizesToDefault();
-            const btn = e.target.id === 'btn-reset-board-sizes' ? e.target : e.target.closest('#btn-reset-board-sizes');
-            if (btn) {
-                const originalText = btn.textContent;
-                btn.textContent = 'Reset to Defaults!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 1200);
-            }
         }
     });
 
