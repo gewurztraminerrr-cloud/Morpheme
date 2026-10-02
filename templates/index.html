@@ -2822,6 +2822,26 @@
                     cursor: pointer;
                     transition: all 0.2s ease;
                 }
+                .guide-matrix-table-horizontal {
+                    display: flex;
+                }
+                .guide-matrix-table-vertical {
+                    display: none;
+                }
+                .guide-diagram-mobile-note {
+                    display: none;
+                }
+                @media (max-width: 768px) {
+                    .guide-matrix-table-horizontal {
+                        display: none !important;
+                    }
+                    .guide-matrix-table-vertical {
+                        display: flex !important;
+                    }
+                    .guide-diagram-mobile-note {
+                        display: flex !important;
+                    }
+                }
                 .guide-diagram-expand-hint {
                     display: none;
                     align-items: center;
@@ -8858,8 +8878,8 @@
                                     <span>🔍 Tap diagram to expand / zoom</span>
                                 </div>
 
-                                <!-- The Matrix Table Mockup -->
-                                <div class="guide-matrix-table-inner" style="min-width: 480px; display: flex; flex-direction: column; gap: 8px; user-select: none; pointer-events: none !important;">
+                                <!-- The Matrix Table Mockup (Horizontal for Desktop, Vertical for Mobile) -->
+                                <div class="guide-matrix-table-inner guide-matrix-table-horizontal" style="min-width: 480px; display: flex; flex-direction: column; gap: 8px; user-select: none; pointer-events: none !important;">
                                     
                                     <!-- Column Indicator Banner (Horizontal Parameter Callout) -->
                                     <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px; align-items: end;">
@@ -8932,6 +8952,92 @@
                                             Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.7;">[0]</span>
                                         </div>
                                     </div>
+                                </div>
+
+                                <!-- Vertical Layout for Mobile (Longest side: 4x4, 4x6, 5x7, 6x8 runs vertically down rows) -->
+                                <div class="guide-matrix-table-inner guide-matrix-table-vertical" style="width: 100%; max-width: 100%; display: none; flex-direction: column; gap: 6px; user-select: none; pointer-events: none !important;">
+                                    
+                                    <!-- Top Indicator for the 3m Column (Duration Parameter Callout) -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px; align-items: end;">
+                                        <div></div>
+                                        <div style="text-align: center; font-size: 0.65rem; color: #64748b;">45s Column</div>
+                                        <div style="text-align: center; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 6px; padding: 3px 4px; font-size: 0.68rem; font-weight: 800; color: #fbbf24;">
+                                            ↓ Constant Column<br><span style="font-size: 0.58rem; color: #fef08a; font-weight: 600;">All below are 3m</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Top Header Row (Durations Across Columns) -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px;">
+                                        <div style="display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                            Dim \ Time
+                                        </div>
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 4px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.8rem;">
+                                            45s
+                                        </div>
+                                        <div style="background: rgba(251, 191, 36, 0.22); border: 1.5px solid #fbbf24; color: #ffffff; padding: 6px 4px; border-radius: 6px; text-align: center; font-weight: 800; font-size: 0.82rem; box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);">
+                                            3m
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 1: 4x4 -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px;">
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                                            4x4
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: 4x6 (Highlighted Constant Row) -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px; position: relative;">
+                                        <div style="background: rgba(56, 189, 248, 0.22); border: 1.5px solid #38bdf8; color: #ffffff; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);">
+                                            4x6
+                                            <span style="font-size: 0.55rem; color: #bae6fd; font-weight: 700; line-height: 1;">Row</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <!-- Highlighted Intersection Button: 4x6 Row meets 3m Column -->
+                                        <div style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); border: 2px solid #ffd700; border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.75rem; font-weight: 800; text-align: center; min-height: 38px; box-shadow: 0 0 14px rgba(255, 215, 0, 0.6); position: relative;">
+                                            <span style="position: absolute; top: -6px; right: -4px; background: #ffd700; color: #000; font-size: 0.54rem; font-weight: 900; padding: 1px 4px; border-radius: 3px; text-transform: uppercase;">MATCH</span>
+                                            Show Rooms<br><span style="font-size: 0.68rem; opacity: 0.95; font-weight: 700;">[2]</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: 5x7 -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px;">
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                                            5x7
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 4: 6x8 -->
+                                    <div style="display: grid; grid-template-columns: 58px 1fr 1fr; gap: 6px;">
+                                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                                            6x8
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                        <div style="background: linear-gradient(135deg, rgba(255, 8, 68, 0.45) 0%, rgba(255, 177, 153, 0.3) 100%); border: 1px solid rgba(255, 8, 68, 0.4); border-radius: 6px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; font-size: 0.72rem; font-weight: 600; text-align: center; min-height: 38px;">
+                                            Show Rooms<br><span style="font-size: 0.64rem; opacity: 0.7;">[0]</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Note for Mobile Orientation -->
+                                <div class="guide-diagram-mobile-note">
+                                    <span>📱 <em>Longest side (dimensions) oriented vertically to fit portrait screen. Tap diagram to enlarge!</em></span>
                                 </div>
 
                                 <!-- Explanation Footnotes for the Diagram -->
@@ -9358,7 +9464,7 @@
     <script src="/js/settings.js?v=1790910000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790870000"></script>
-    <script src="/js/lobby.js?v=1790910000"></script>
+    <script src="/js/lobby.js?v=1790920000"></script>
     <script src="/js/play.js?v=1790680000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>

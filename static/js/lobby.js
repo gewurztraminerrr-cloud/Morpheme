@@ -2354,12 +2354,14 @@ function openGuideDiagramLightbox(triggerEl) {
     const mount = document.getElementById('guide-diagram-lightbox-mount');
     if (!lightbox || !mount) return;
 
-    // Clone the inner diagram table or diagram box content into lightbox mount
-    const originalTable = document.querySelector('#guide-matrix-diagram-box .guide-matrix-table-inner');
+    // Mount the full horizontal diagram enlarged in the lightbox
+    const originalTable = document.querySelector('#guide-matrix-diagram-box .guide-matrix-table-horizontal') || document.querySelector('#guide-matrix-diagram-box .guide-matrix-table-inner');
     if (originalTable) {
         mount.innerHTML = '';
         const clone = originalTable.cloneNode(true);
-        clone.style.minWidth = '480px';
+        clone.classList.remove('guide-matrix-table-horizontal');
+        clone.style.setProperty('display', 'flex', 'important');
+        clone.style.minWidth = '500px';
         clone.style.margin = '0 auto';
         clone.style.transform = 'none';
         mount.appendChild(clone);
