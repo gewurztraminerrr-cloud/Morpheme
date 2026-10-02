@@ -5661,6 +5661,32 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
+    .lb-header {
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 12px !important;
+    }
+
+    .lb-header h2 {
+        text-align: center !important;
+        width: 100% !important;
+    }
+
+    .lb-tabs {
+        display: flex !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .lb-attribution {
+        text-align: center !important;
+        width: 100% !important;
+    }
+
     .lb-grid {
         grid-template-columns: 1fr !important;
         gap: 15px !important;
@@ -7726,7 +7752,7 @@ input[type=range]::-moz-range-track {
     }
 
     #page-leaderboards {
-        padding: 10px 22px 10px 6px !important;
+        padding: 10px 10px !important;
         position: relative !important;
     }
 
