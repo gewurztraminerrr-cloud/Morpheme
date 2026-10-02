@@ -2345,6 +2345,36 @@ function closeLobbyGuideModal(permanentlyDismiss) {
 }
 window.closeLobbyGuideModal = closeLobbyGuideModal;
 
+function openGuideDiagramLightbox(triggerEl) {
+    const lightbox = document.getElementById('guide-diagram-lightbox');
+    const mount = document.getElementById('guide-diagram-lightbox-mount');
+    if (!lightbox || !mount) return;
+
+    // Clone the inner diagram table or diagram box content into lightbox mount
+    const originalTable = document.querySelector('#guide-matrix-diagram-box .guide-matrix-table-inner');
+    if (originalTable) {
+        mount.innerHTML = '';
+        const clone = originalTable.cloneNode(true);
+        clone.style.minWidth = '480px';
+        clone.style.margin = '0 auto';
+        clone.style.transform = 'none';
+        mount.appendChild(clone);
+    }
+    lightbox.classList.add('active');
+}
+window.openGuideDiagramLightbox = openGuideDiagramLightbox;
+
+function closeGuideDiagramLightbox(e) {
+    if (e && e.target && e.target.closest('.guide-lightbox-content') && !e.target.closest('.guide-lightbox-close-btn') && e.target.tagName !== 'BUTTON') {
+        return;
+    }
+    const lightbox = document.getElementById('guide-diagram-lightbox');
+    if (lightbox) {
+        lightbox.classList.remove('active');
+    }
+}
+window.closeGuideDiagramLightbox = closeGuideDiagramLightbox;
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initLobbyGuideState);
 } else {

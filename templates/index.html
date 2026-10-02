@@ -2542,6 +2542,7 @@
                     font-size: 1.65rem;
                     font-weight: 800;
                     letter-spacing: 0.5px;
+                    white-space: nowrap;
                     background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 50%, #c4b5fd 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
@@ -2816,33 +2817,165 @@
                     color: #fca5a5;
                 }
 
+                /* Mobile Diagram Expand / Zoom Styles */
+                .guide-diagram-expandable {
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .guide-diagram-expand-hint {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    font-size: 0.76rem;
+                    font-weight: 700;
+                    color: #ffd700;
+                    background: rgba(255, 215, 0, 0.12);
+                    border: 1px dashed rgba(255, 215, 0, 0.45);
+                    border-radius: 6px;
+                    padding: 6px 10px;
+                    margin-top: 6px;
+                    text-align: center;
+                    user-select: none;
+                }
+                .guide-diagram-lightbox {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    z-index: 100060;
+                    background: rgba(5, 3, 12, 0.94);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+                    box-sizing: border-box;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .guide-diagram-lightbox.active {
+                    display: flex !important;
+                }
+                .guide-lightbox-content {
+                    width: 100%;
+                    max-width: 600px;
+                    max-height: 90vh;
+                    overflow: auto;
+                    -webkit-overflow-scrolling: touch;
+                    background: #151128;
+                    border: 1.5px solid #a78bfa;
+                    border-radius: 14px;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    box-shadow: 0 16px 48px rgba(0,0,0,0.8), 0 0 24px rgba(167,139,250,0.3);
+                }
+                .guide-lightbox-close-btn {
+                    margin-top: 14px;
+                    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 24px;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+                }
+
                 @media (max-width: 600px) {
+                    #lobby-guide-modal {
+                        padding: max(6px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)) !important;
+                    }
+                    .lobby-guide-modal-card {
+                        width: 100% !important;
+                        height: 98vh !important;
+                        max-height: 100% !important;
+                        border-radius: 10px !important;
+                        border-left-width: 0 !important;
+                        border-right-width: 0 !important;
+                    }
                     .lobby-guide-modal-header {
-                        padding: 16px 14px 12px 14px;
+                        padding: 12px 10px 10px 10px;
+                    }
+                    .lobby-guide-header-title-wrap {
+                        gap: 8px;
+                        flex-wrap: nowrap;
+                    }
+                    .lobby-guide-header-icon {
+                        width: 24px;
+                        height: 24px;
+                        flex-shrink: 0;
                     }
                     .lobby-guide-title {
-                        font-size: 1.35rem;
+                        font-size: clamp(1.05rem, 4.3vw, 1.35rem) !important;
+                        white-space: nowrap !important;
+                        letter-spacing: 0px;
                     }
                     .lobby-guide-subtitle {
-                        font-size: 0.84rem;
+                        font-size: 0.78rem;
+                        margin-top: 4px;
+                        line-height: 1.35;
                     }
                     .lobby-guide-modal-content {
-                        padding: 14px 16px;
-                        gap: 20px;
+                        padding: 10px 18px 12px 10px !important;
+                        gap: 14px;
                     }
                     .lobby-guide-section {
-                        padding: 14px 14px;
+                        padding: 10px 10px;
+                        border-radius: 8px;
+                        gap: 10px;
+                    }
+                    .lobby-guide-section-header {
+                        gap: 8px;
+                        padding-bottom: 6px;
+                    }
+                    .lobby-guide-part-badge {
+                        font-size: 0.65rem;
+                        padding: 2px 7px;
                     }
                     .lobby-guide-section-title {
-                        font-size: 1.1rem;
+                        font-size: 0.98rem;
+                        line-height: 1.3;
                     }
-                    .lobby-guide-modal-footer {
-                        padding: 12px 14px;
+                    .lobby-guide-intro {
+                        font-size: 0.82rem;
+                        line-height: 1.45;
+                    }
+                    .lobby-guide-cards-grid {
+                        grid-template-columns: 1fr;
                         gap: 8px;
                     }
+                    .lobby-guide-card {
+                        padding: 10px 10px;
+                    }
+                    .lobby-guide-card-title {
+                        font-size: 0.88rem;
+                    }
+                    .lobby-guide-card-desc {
+                        font-size: 0.8rem;
+                        line-height: 1.4;
+                    }
+                    .guide-diagram-expand-hint {
+                        display: flex;
+                    }
+                    .lobby-guide-visual-box {
+                        padding: 10px 10px;
+                    }
+                    .lobby-guide-modal-footer {
+                        padding: 8px 10px;
+                        gap: 6px;
+                    }
                     .lobby-guide-footer-btn {
-                        font-size: 0.82rem;
-                        padding: 10px 12px;
+                        font-size: 0.78rem;
+                        padding: 8px 10px;
+                        line-height: 1.3;
+                    }
+                    #lobby-guide-scrollbar-track {
+                        width: 10px !important;
+                        right: 3px !important;
+                    }
+                    #lobby-guide-scrollbar-thumb {
+                        width: 8px !important;
+                        left: 0px !important;
                     }
                 }
             </style>
@@ -8690,7 +8823,7 @@
                             </p>
 
                             <!-- Visual Diagram: Matchmaking Array with Horizontal & Vertical Parameters -->
-                            <div style="background: rgba(10, 8, 22, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-x: auto;">
+                            <div id="guide-matrix-diagram-box" class="guide-diagram-expandable" style="background: rgba(10, 8, 22, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; overflow-x: auto;" onclick="window.openGuideDiagramLightbox(this)">
                                 
                                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                     <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #ffd700;">
@@ -8701,8 +8834,12 @@
                                     </span>
                                 </div>
 
+                                <div class="guide-diagram-expand-hint">
+                                    <span>🔍 Tap diagram to expand / zoom</span>
+                                </div>
+
                                 <!-- The Matrix Table Mockup -->
-                                <div style="min-width: 480px; display: flex; flex-direction: column; gap: 8px; user-select: none; pointer-events: none !important;">
+                                <div class="guide-matrix-table-inner" style="min-width: 480px; display: flex; flex-direction: column; gap: 8px; user-select: none; pointer-events: none !important;">
                                     
                                     <!-- Column Indicator Banner (Horizontal Parameter Callout) -->
                                     <div style="display: grid; grid-template-columns: 60px repeat(4, 1fr); gap: 8px; align-items: end;">
@@ -8807,6 +8944,7 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
                         <!-- Visual Example Box -->
@@ -9109,16 +9247,6 @@
                                 </div>
                             </div>
 
-                            <!-- Simulated In-Game Word Input Box -->
-                            <div style="display: flex; gap: 8px; width: 100%; max-width: 420px; align-items: center;">
-                                <div style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(167, 139, 250, 0.5); border-radius: 8px; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #38bdf8; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
-                                    <span id="guide-mock-input-text">STREAM</span>
-                                    <span style="font-size: 0.72rem; color: #22c55e; font-weight: 800;">VALID (NWL)</span>
-                                </div>
-                                <span style="background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); color: #fff; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; pointer-events: none !important; user-select: none;">
-                                    Submit
-                                </span>
-                            </div>
 
                             <!-- How to Enter Words (Mobile & Desktop) -->
                             <div style="background: rgba(147, 51, 234, 0.08); border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 10px; padding: 12px 16px; width: 100%; max-width: 520px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;">
@@ -9188,11 +9316,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Lightbox Modal for Zooming / Expanding the Matchmaking Grid Diagram -->
+    <div id="guide-diagram-lightbox" class="guide-diagram-lightbox" onclick="window.closeGuideDiagramLightbox(event)">
+        <div class="guide-lightbox-content" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                <span style="font-size: 0.95rem; font-weight: 800; color: #ffd700; text-transform: uppercase; letter-spacing: 0.8px;">
+                    Expanded View: Matchmaking Grid Array
+                </span>
+                <button type="button" onclick="window.closeGuideDiagramLightbox()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; line-height: 1;">✕</button>
+            </div>
+            <div id="guide-diagram-lightbox-mount" style="overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 4px 0;"></div>
+            <div style="text-align: center; margin-top: 12px;">
+                <button type="button" class="guide-lightbox-close-btn" onclick="window.closeGuideDiagramLightbox()">
+                    Close Expanded View
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1790840000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790870000"></script>
-    <script src="/js/lobby.js?v=1790830000"></script>
+    <script src="/js/lobby.js?v=1790890000"></script>
     <script src="/js/play.js?v=1790680000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
