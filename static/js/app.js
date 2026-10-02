@@ -731,20 +731,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             return null;
         }
 
-        function isInsideTarget(coords) {
-            if (!coords) return true;
-            const bRect = btn.getBoundingClientRect();
-            const hRect = housing ? housing.getBoundingClientRect() : bRect;
-            const left = Math.min(bRect.left, hRect.left);
-            const right = Math.max(bRect.right, hRect.right);
-            const top = Math.min(bRect.top, hRect.top);
-            const bottom = Math.max(bRect.bottom, hRect.bottom);
-            // 24px leeway around the entire outer socket perimeter covers edge taps & bevel clicks
-            const tolerance = 24;
-            return coords.x >= (left - tolerance) &&
-                   coords.x <= (right + tolerance) &&
-                   coords.y >= (top - tolerance) &&
-                   coords.y <= (bottom + tolerance);
+        function isInsideButton(coords) {
+            if (!coords) return false;
+            const h = (housing && housing.getBoundingClientRect) ? housing : btn;
+            const r = h.getBoundingClientRect();
+            // The stationary housing socket defines the perimeter of the button
+            return coords.x >= r.left &&
+                   coords.x <= r.right &&
+                   coords.y >= r.top &&
+                   coords.y <= r.bottom;
         }
 
         const setStandingTall = () => {
@@ -760,7 +755,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const handlePressMove = (e) => {
             if (!isPointerDown || gatewayTransitioning || window._gatewayTransitioning) return;
             const coords = getCoords(e);
-            if (isInsideTarget(coords)) {
+            if (!coords) return;
+            if (isInsideButton(coords)) {
                 setFlattened();
             } else {
                 hasDraggedOut = true;
@@ -785,19 +781,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const coords = getCoords(e);
-            // If the user never dragged out, or if they released inside target area:
-            // It is an intentional click -> keep flattened and transition to Lobby!
-            if (!hasDraggedOut || isInsideTarget(coords)) {
-                setFlattened();
-                onExecute(e);
-            } else {
-                // Dragged outside and released outside: Stand tall, cancel press, do NOT enter lobby
+            const inside = coords ? isInsideButton(coords) : false;
+
+            // Only cancel if user actively dragged out and released while outside
+            if (hasDraggedOut && !inside) {
                 setStandingTall();
                 window._preventGatewayClick = true;
                 setTimeout(() => {
                     window._preventGatewayClick = false;
                     btn.classList.remove('dragged-out');
                 }, 250);
+            } else {
+                setFlattened();
+                onExecute(e);
             }
         };
 
@@ -829,23 +825,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const addWindowTracking = () => {
             window.addEventListener('pointermove', handlePressMove, { passive: true });
-            window.addEventListener('touchmove', handlePressMove, { passive: true });
+            document.addEventListener('pointermove', handlePressMove, { passive: true });
+            btn.addEventListener('pointermove', handlePressMove, { passive: true });
+
             window.addEventListener('mousemove', handlePressMove, { passive: true });
+            document.addEventListener('mousemove', handlePressMove, { passive: true });
+            btn.addEventListener('mousemove', handlePressMove, { passive: true });
+
+            window.addEventListener('touchmove', handlePressMove, { passive: true });
+
             window.addEventListener('pointerup', handlePressEnd);
-            window.addEventListener('touchend', handlePressEnd);
+            document.addEventListener('pointerup', handlePressEnd);
+            btn.addEventListener('pointerup', handlePressEnd);
+
             window.addEventListener('mouseup', handlePressEnd);
+            document.addEventListener('mouseup', handlePressEnd);
+            btn.addEventListener('mouseup', handlePressEnd);
+
+            window.addEventListener('touchend', handlePressEnd);
+
             window.addEventListener('pointercancel', handlePressCancel);
+            document.addEventListener('pointercancel', handlePressCancel);
+            btn.addEventListener('pointercancel', handlePressCancel);
+
             window.addEventListener('touchcancel', handlePressCancel);
         };
 
         const removeWindowTracking = () => {
             window.removeEventListener('pointermove', handlePressMove);
-            window.removeEventListener('touchmove', handlePressMove);
+            document.removeEventListener('pointermove', handlePressMove);
+            btn.removeEventListener('pointermove', handlePressMove);
+
             window.removeEventListener('mousemove', handlePressMove);
+            document.removeEventListener('mousemove', handlePressMove);
+            btn.removeEventListener('mousemove', handlePressMove);
+
+            window.removeEventListener('touchmove', handlePressMove);
+
             window.removeEventListener('pointerup', handlePressEnd);
-            window.removeEventListener('touchend', handlePressEnd);
+            document.removeEventListener('pointerup', handlePressEnd);
+            btn.removeEventListener('pointerup', handlePressEnd);
+
             window.removeEventListener('mouseup', handlePressEnd);
+            document.removeEventListener('mouseup', handlePressEnd);
+            btn.removeEventListener('mouseup', handlePressEnd);
+
+            window.removeEventListener('touchend', handlePressEnd);
+
             window.removeEventListener('pointercancel', handlePressCancel);
+            document.removeEventListener('pointercancel', handlePressCancel);
+            btn.removeEventListener('pointercancel', handlePressCancel);
+
             window.removeEventListener('touchcancel', handlePressCancel);
         };
 
