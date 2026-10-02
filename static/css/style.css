@@ -6394,9 +6394,9 @@ body .tab-btn.active {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
     gap: 16px;
-    margin-top: 15px;
+    margin-top: 4px;
     max-width: 900px;
-    padding: 16px 14px !important;
+    padding: 6px 14px 14px 14px !important;
     overflow: visible !important;
     box-sizing: border-box;
     contain: none !important;

@@ -10670,13 +10670,14 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
     gap: 10px !important;
+    margin-top: 4px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
-    padding: 8px 6px !important;
+    padding: 4px 6px 8px 6px !important;
     contain: none !important;
 }
 
@@ -10785,13 +10786,14 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)) !important;
         gap: 16px !important;
+        margin-top: 4px !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow: visible !important;
         overflow-x: visible !important;
         overflow-y: visible !important;
-        padding: 16px 14px !important;
+        padding: 6px 14px 14px 14px !important;
         contain: none !important;
     }
 
@@ -10846,7 +10848,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
-        padding: 15px !important;
+        padding: 8px 12px 12px 12px !important;
     }
 }
 
@@ -11282,11 +11284,12 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
         gap: 10px !important;
+        margin-top: 4px !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        padding: 10px 8px !important;
+        padding: 4px 8px 10px 8px !important;
         overflow: visible !important;
     }
     #page-settings .dimension-sliders-grid {
@@ -11602,11 +11605,12 @@ body.is-mobile #page-settings .theme-selector-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)) !important;
     gap: 10px !important;
+    margin-top: 4px !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    padding: 10px 8px !important;
+    padding: 4px 8px 10px 8px !important;
     overflow: visible !important;
 }
 
