@@ -36,7 +36,8 @@ function debounce(func, wait) {
             board_sounds: true,
             app_theme: 'default',
             allow_pm: true,
-            allow_invites: true
+            allow_invites: true,
+            lobby_guide_dismissed: false
         };
     }
     window.getDefaultSettings = getDefaultSettings;
@@ -103,7 +104,10 @@ function debounce(func, wait) {
         // Lobby Guide Dismissal State
         if (settings && settings.lobby_guide_dismissed !== undefined) {
             try {
-                localStorage.setItem('morpheme_lobby_guide_dismissed', settings.lobby_guide_dismissed === 'true' ? 'true' : 'false');
+                const isDismissed = settings.lobby_guide_dismissed === 'true' || settings.lobby_guide_dismissed === true;
+                localStorage.setItem('morpheme_lobby_guide_dismissed', isDismissed ? 'true' : 'false');
+                const guideToggle = document.getElementById('setting-lobby-guide-toggle');
+                if (guideToggle) guideToggle.checked = !isDismissed;
                 if (typeof window.initLobbyGuideState === 'function') {
                     window.initLobbyGuideState();
                 }
@@ -876,6 +880,21 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.allow_invites = val;
             saveSettingDebounced('allow_invites', val);
+        });
+    }
+
+    const guideToggle = document.getElementById('setting-lobby-guide-toggle');
+    if (guideToggle) {
+        guideToggle.addEventListener('change', (e) => {
+            const isEnabled = e.target.checked;
+            const dismissed = (!isEnabled).toString();
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.lobby_guide_dismissed = dismissed;
+            localStorage.setItem('morpheme_lobby_guide_dismissed', dismissed);
+            saveSettingDebounced('lobby_guide_dismissed', dismissed);
+            if (typeof window.initLobbyGuideState === 'function') {
+                window.initLobbyGuideState();
+            }
         });
     }
 

@@ -1994,6 +1994,10 @@ function initLobbyGuideState() {
                 journeyBanner.style.display = 'none';
             }
         }
+        const guideToggle = document.getElementById('setting-lobby-guide-toggle');
+        if (guideToggle) {
+            guideToggle.checked = !isDismissed;
+        }
     } catch (e) {
         console.error('Error reading lobby guide state:', e);
     }

@@ -3142,7 +3142,7 @@
                     <!-- Global Filters/Settings -->
 
                     <div class="lobby-journey-sticky-header">
-                        <div class="lobby-journey-message" id="lobby-journey-banner" style="display: none;">
+                        <div class="lobby-journey-message" id="lobby-journey-banner" onclick="window.openLobbyGuideModal()" title="Click to view Lobby Guide (“What am I looking at?”)" style="display: none; cursor: pointer;">
                             <span>Enter a room to continue your journey</span>
                         </div>
                         <button type="button" class="lobby-journey-message lobby-new-user-btn" id="lobby-new-user-guide-btn" onclick="window.openLobbyGuideModal()" title="For New Users Asking: “What am I looking at?”" style="display: flex;">
@@ -3152,6 +3152,10 @@
                     <script>
                         (function() {
                             try {
+                                if (!localStorage.getItem('morpheme_lobby_guide_reset_v1')) {
+                                    localStorage.removeItem('morpheme_lobby_guide_dismissed');
+                                    localStorage.setItem('morpheme_lobby_guide_reset_v1', 'true');
+                                }
                                 if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
                                     var b = document.getElementById('lobby-journey-banner');
                                     var g = document.getElementById('lobby-new-user-guide-btn');
@@ -5742,7 +5746,7 @@
                                             <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; justify-content: center; margin-top: 16px; margin-bottom: 16px;">
+                                    <div style="display: flex; justify-content: center; margin-top: 8px; margin-bottom: 8px;">
                                         <button id="btn-reset-board-sizes" class="mini-action-btn secondary" style="padding: 7px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 8px;">Set to Default Sizes</button>
                                     </div>
                                 </div>
@@ -6371,6 +6375,20 @@
                                     </div>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-allow-invites" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <!-- Lobby Guide Banner ("What am I looking at?") -->
+                            <div class="setting-panel">
+                                <label for="setting-lobby-guide-toggle" class="setting-header" style="cursor: pointer;">
+                                    <div>
+                                        <div class="setting-title">Lobby Guide ("What am I looking at?")</div>
+                                        <div class="setting-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</div>
+                                    </div>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-lobby-guide-toggle" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
@@ -9337,10 +9355,10 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1790900000"></script>
+    <script src="/js/settings.js?v=1790910000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1790870000"></script>
-    <script src="/js/lobby.js?v=1790890000"></script>
+    <script src="/js/lobby.js?v=1790910000"></script>
     <script src="/js/play.js?v=1790680000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1790024000"></script>
