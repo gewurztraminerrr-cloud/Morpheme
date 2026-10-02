@@ -586,6 +586,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchInput && searchInput.value.trim()) {
             highlightRows(searchInput.value.trim().toLowerCase());
         }
+
+        if (typeof mobileScrollbarScheduleUpdate === 'function') {
+            mobileScrollbarScheduleUpdate();
+            setTimeout(mobileScrollbarScheduleUpdate, 50);
+            setTimeout(mobileScrollbarScheduleUpdate, 150);
+        }
     }
 
     function createTableCard(container, title, rows, rowRenderer, customClass = '') {
@@ -727,11 +733,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(scrollMatchingRows, 150);
     }
 
+    let mobileScrollbarScheduleUpdate = null;
+
     function initMobileScrollbar() {
         const page = document.getElementById('page-leaderboards');
         const track = document.getElementById('lb-mobile-scrollbar-track');
         const thumb = document.getElementById('lb-mobile-scrollbar-thumb');
         if (!page || !track || !thumb) return;
+        if (track.dataset.initialized === 'true') {
+            if (mobileScrollbarScheduleUpdate) mobileScrollbarScheduleUpdate();
+            return;
+        }
+        track.dataset.initialized = 'true';
 
         let isDragging = false;
         let startY = 0;
@@ -773,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateThumb();
             });
         }
+        mobileScrollbarScheduleUpdate = scheduleUpdate;
 
         page.addEventListener('scroll', scheduleUpdate, { passive: true });
         window.addEventListener('resize', scheduleUpdate, { passive: true });
