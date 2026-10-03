@@ -1824,6 +1824,7 @@ function setupLobbyMobileKeyboardSupport() {
         }
     });
 
+    let lobbyKeyboardWasShown = false;
     function updateLobbyKeyboardPosition() {
         if (!drawer || !drawer.classList.contains('open')) return;
         const isInputFocused = document.activeElement === input;
@@ -1838,9 +1839,14 @@ function setupLobbyMobileKeyboardSupport() {
                 const chatHistory = document.getElementById('lobby-chat-history');
                 if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
             }, 40);
-        } else if (!isInputFocused) {
+            lobbyKeyboardWasShown = true;
+        } else if (!isInputFocused || (lobbyKeyboardWasShown && kbHeight <= 50)) {
+            // Keyboard dismissed via the OS hide-keyboard arrow (input keeps focus, no blur fires):
+            // restore the Players in Lobby half and release focus.
+            lobbyKeyboardWasShown = false;
             drawer.classList.remove('keyboard-open');
             drawer.style.bottom = '';
+            if (isInputFocused) input.blur();
         }
     }
 
@@ -1860,6 +1866,7 @@ function setupLobbyMobileKeyboardSupport() {
     });
 
     input.addEventListener('blur', () => {
+        lobbyKeyboardWasShown = false;
         drawer.classList.remove('keyboard-open');
         drawer.style.bottom = '';
     });
