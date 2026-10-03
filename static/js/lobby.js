@@ -1825,23 +1825,34 @@ function setupLobbyMobileKeyboardSupport() {
     });
 
     let lobbyKeyboardWasShown = false;
+    let lobbyBaselineH = 0;
+    const curViewportH = () => (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+    // Remember the full (keyboard-closed) viewport height whenever the input is not focused.
+    const recordBaseline = () => {
+        if (document.activeElement !== input) lobbyBaselineH = Math.max(curViewportH(), window.innerHeight);
+    };
+    recordBaseline();
+    window.addEventListener('resize', recordBaseline);
+
     function updateLobbyKeyboardPosition() {
         if (!drawer || !drawer.classList.contains('open')) return;
         const isInputFocused = document.activeElement === input;
         const vv = window.visualViewport;
+        // Works whether the browser resizes only the visual viewport (iOS) or the layout viewport too (Android).
+        const shrink = lobbyBaselineH ? Math.max(0, lobbyBaselineH - curViewportH()) : 0;
         const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
 
-        if (isInputFocused && kbHeight > 50) {
+        if (isInputFocused && shrink > 100) {
+            lobbyKeyboardWasShown = true;
             drawer.classList.add('keyboard-open');
-            drawer.style.bottom = kbHeight + 'px';
+            drawer.style.bottom = kbHeight > 50 ? kbHeight + 'px' : '';
             setTimeout(() => {
                 input.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 const chatHistory = document.getElementById('lobby-chat-history');
                 if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
             }, 40);
-            lobbyKeyboardWasShown = true;
-        } else if (!isInputFocused || (lobbyKeyboardWasShown && kbHeight <= 50)) {
-            // Keyboard dismissed via the OS hide-keyboard arrow (input keeps focus, no blur fires):
+        } else if (!isInputFocused || (lobbyKeyboardWasShown && shrink <= 100)) {
+            // Keyboard dismissed (e.g. OS hide-keyboard arrow, which does not blur the input):
             // restore the Players in Lobby half and release focus.
             lobbyKeyboardWasShown = false;
             drawer.classList.remove('keyboard-open');
@@ -1871,6 +1882,7 @@ function setupLobbyMobileKeyboardSupport() {
         drawer.style.bottom = '';
     });
 
+    window.addEventListener('resize', updateLobbyKeyboardPosition);
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', updateLobbyKeyboardPosition);
         window.visualViewport.addEventListener('scroll', updateLobbyKeyboardPosition);
