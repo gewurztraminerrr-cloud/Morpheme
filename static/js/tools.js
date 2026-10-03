@@ -1021,8 +1021,8 @@ window.showMiniProfile = async function (username) {
         }
         const fullNEl = document.getElementById('mini-profile-fullname');
         if (fullNEl) {
-            fullNEl.innerText = data.full_name || '-';
-            fullNEl.title = data.full_name || '-';
+            fullNEl.innerText = data.full_name || '';
+            fullNEl.title = data.full_name || '';
         }
 
         // Stats: Games, Wins, Win Rate
@@ -1046,9 +1046,10 @@ window.showMiniProfile = async function (username) {
         // Demographics: Age and Gender
         const demoEl = document.getElementById('mini-profile-demographics');
         if (demoEl) {
-            const age = data.age || '-';
-            const gender = data.gender || '-';
-            demoEl.innerText = `Age: ${age}, Gender: ${gender}`;
+            const demoParts = [];
+            if (data.age) demoParts.push(`Age: ${data.age}`);
+            if (data.gender) demoParts.push(`Gender: ${data.gender}`);
+            demoEl.innerText = demoParts.join(', ');
             demoEl.title = demoEl.innerText;
         }
 
