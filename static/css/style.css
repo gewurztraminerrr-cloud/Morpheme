@@ -10375,3 +10375,29 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 }
 
 
+
+
+/* Profile Name / Age / Gender: large, bordered, blank click-to-type boxes (no hyphen / placeholder) */
+#profile-full-name,
+#profile-age-val,
+#profile-gender-val {
+    display: inline-block;
+    min-width: 140px;
+    min-height: 1.6em;
+    padding: 4px 10px !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.45) !important;
+    border-radius: 8px;
+    background: rgba(var(--text-primary-rgb), 0.06);
+    box-sizing: border-box;
+}
+#profile-age-val { min-width: 90px; }
+#profile-full-name:empty::before,
+#profile-age-val:empty::before,
+#profile-gender-val:empty::before {
+    content: '\200b';
+}
+#profile-full-name:focus,
+#profile-age-val:focus,
+#profile-gender-val:focus {
+    border-color: #3b82f6 !important;
+}

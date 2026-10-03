@@ -1883,7 +1883,7 @@ async function renderProfile(user) {
 
     // Full Name
     const fullNameEl = document.getElementById('profile-full-name');
-    if (fullNameEl) fullNameEl.innerText = user.full_name || '-';
+    if (fullNameEl) fullNameEl.innerText = user.full_name || '';
 
     // PT SUM
     const ptSumEl = document.getElementById('profile-pt-sum');
@@ -1980,9 +1980,9 @@ async function renderProfile(user) {
     const descriptionEl = document.getElementById('profile-description-val');
     const locationEl = document.getElementById('profile-location-val');
 
-    if (ageEl) ageEl.innerText = user.age || '-';
-    if (genderEl) genderEl.innerText = user.gender || '-';
-    if (locationEl) locationEl.innerText = user.location || '-';
+    if (ageEl) ageEl.innerText = user.age || '';
+    if (genderEl) genderEl.innerText = user.gender || '';
+    // Location text comes from the selected flag (profile-flag-name); no separate value field.
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
 
     // Timezone Handling
