@@ -1021,8 +1021,8 @@ window.showMiniProfile = async function (username) {
         }
         const fullNEl = document.getElementById('mini-profile-fullname');
         if (fullNEl) {
-            fullNEl.innerText = data.full_name || '';
-            fullNEl.title = data.full_name || '';
+            fullNEl.innerText = cleanProfileText(data.full_name);
+            fullNEl.title = cleanProfileText(data.full_name);
         }
 
         // Stats: Games, Wins, Win Rate
@@ -1047,8 +1047,8 @@ window.showMiniProfile = async function (username) {
         const demoEl = document.getElementById('mini-profile-demographics');
         if (demoEl) {
             const demoParts = [];
-            if (data.age) demoParts.push(`Age: ${data.age}`);
-            if (data.gender) demoParts.push(`Gender: ${data.gender}`);
+            if (cleanProfileText(data.age)) demoParts.push(`Age: ${cleanProfileText(data.age)}`);
+            if (cleanProfileText(data.gender)) demoParts.push(`Gender: ${cleanProfileText(data.gender)}`);
             demoEl.innerText = demoParts.join(', ');
             demoEl.title = demoEl.innerText;
         }
@@ -1873,6 +1873,14 @@ async function performProfileSearch(username, activeTab = null, period = 'all') 
 }
 window.performProfileSearch = performProfileSearch;
 
+// Placeholder hyphens (legacy saved value "-") are treated as empty so profile fields stay blank.
+function cleanProfileText(v) {
+    if (v === null || v === undefined) return '';
+    const s = String(v).trim();
+    return (s === '-' || s === '—' || s === '–') ? '' : s;
+}
+window.cleanProfileText = cleanProfileText;
+
 async function renderProfile(user) {
     // Check Ownership for Editing
     const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
@@ -1884,7 +1892,7 @@ async function renderProfile(user) {
 
     // Full Name
     const fullNameEl = document.getElementById('profile-full-name');
-    if (fullNameEl) fullNameEl.innerText = user.full_name || '';
+    if (fullNameEl) fullNameEl.innerText = cleanProfileText(user.full_name);
 
     // PT SUM
     const ptSumEl = document.getElementById('profile-pt-sum');
@@ -1981,8 +1989,8 @@ async function renderProfile(user) {
     const descriptionEl = document.getElementById('profile-description-val');
     const locationEl = document.getElementById('profile-location-val');
 
-    if (ageEl) ageEl.innerText = user.age || '';
-    if (genderEl) genderEl.innerText = user.gender || '';
+    if (ageEl) ageEl.innerText = cleanProfileText(user.age);
+    if (genderEl) genderEl.innerText = cleanProfileText(user.gender);
     // Location text comes from the selected flag (profile-flag-name); no separate value field.
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
 
@@ -4081,7 +4089,7 @@ function setupProfileEditing(isOwner) {
             el.parentNode.replaceChild(newEl, el);
 
             newEl.addEventListener('blur', () => {
-                saveProfileField(field.key, newEl.innerText.trim());
+                saveProfileField(field.key, cleanProfileText(newEl.innerText.trim()));
                 if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
                     initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
                 }
