@@ -342,7 +342,7 @@
     border-radius: 6px;
     padding: 5px 8px;
     color: var(--text-primary);
-    font-size: 0.85rem;
+    font-size: var(--chat-font-size) !important;
     outline: none;
     transition: all 0.3s ease;
     height: 28px;
@@ -645,7 +645,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    font-size: 0.9em;
+    font-size: var(--def-font-size);
     line-height: 1.4;
     color: var(--text-primary);
     word-wrap: break-word;
@@ -682,7 +682,7 @@
     display: block;
     opacity: 0.9;
     font-style: italic;
-    font-size: 1em;
+    font-size: var(--def-font-size);
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -6680,8 +6680,6 @@ input[type=range]::-moz-range-track {
 @media (min-width: 1600px) {
     :root {
         --cell-size: 68px; /* Prominent board cells */
-        --chat-font-size: 14px !important;
-        --def-font-size: 16px !important;
     }
     .play-grid {
         --left-panel-w: 500px;
@@ -6704,8 +6702,6 @@ input[type=range]::-moz-range-track {
 @media (min-width: 1920px) {
     :root {
         --cell-size: 72px; /* Large, gorgeous high-fidelity board */
-        --chat-font-size: 15px !important;
-        --def-font-size: 17px !important;
     }
     .play-grid {
         --left-panel-w: 540px; /* Tons of space for users and scores */

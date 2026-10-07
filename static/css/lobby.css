@@ -2454,7 +2454,7 @@ body.theme-white .lobby-journey-sticky-header {
 }
 
 .lobby-chat-text {
-    font-size: 0.82rem;
+    font-size: var(--chat-font-size, 0.82rem);
     color: var(--text-primary, #e0e0e0);
     line-height: 1.35;
     word-break: break-word;
@@ -2476,7 +2476,7 @@ body.theme-white .lobby-journey-sticky-header {
     padding: 0 10px;
     color: var(--text-primary, #fff);
     font-family: inherit;
-    font-size: 0.82rem;
+    font-size: var(--chat-font-size, 0.82rem);
     outline: none;
     transition: border-color 0.2s ease;
 }

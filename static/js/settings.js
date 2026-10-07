@@ -76,8 +76,16 @@ function debounce(func, wait) {
 
     // Global Settings State - Isolated per user
     window.userSettings = loadCachedSettings();
-    if (window.userSettings && window.userSettings.subanagrams_tile_size) {
-        document.documentElement.style.setProperty('--subanagrams-cell-size', `${window.userSettings.subanagrams_tile_size}px`);
+    if (window.userSettings) {
+        if (window.userSettings.subanagrams_tile_size) {
+            document.documentElement.style.setProperty('--subanagrams-cell-size', `${window.userSettings.subanagrams_tile_size}px`);
+        }
+        if (window.userSettings.chat_font_size) {
+            document.documentElement.style.setProperty('--chat-font-size', `${window.userSettings.chat_font_size}px`, 'important');
+        }
+        if (window.userSettings.def_font_size) {
+            document.documentElement.style.setProperty('--def-font-size', `${window.userSettings.def_font_size}px`, 'important');
+        }
     }
 
     // 1. Load Settings on Startup / User Login
@@ -190,7 +198,7 @@ function debounce(func, wait) {
         if (settings.chat_font_size) {
             const size = parseInt(settings.chat_font_size);
             if (!isNaN(size)) {
-                document.documentElement.style.setProperty('--chat-font-size', `${size}px`);
+                document.documentElement.style.setProperty('--chat-font-size', `${size}px`, 'important');
                 const slider = document.getElementById('setting-chat-size');
                 if (slider) slider.value = size;
                 const label = document.getElementById('setting-chat-size-val');
@@ -199,10 +207,12 @@ function debounce(func, wait) {
                 if (preview) {
                     const container = preview.closest('.settings-preview-box');
                     if (container) container.style.fontSize = `${size}px`;
-                    else preview.style.fontSize = `${size}px`;
+                    preview.style.fontSize = `${size}px`;
                 }
                 const chatInput = document.getElementById('chat-input');
                 if (chatInput) chatInput.style.fontSize = `${size}px`;
+                const lobbyChatInput = document.getElementById('lobby-chat-input');
+                if (lobbyChatInput) lobbyChatInput.style.fontSize = `${size}px`;
             }
         }
 
@@ -210,7 +220,7 @@ function debounce(func, wait) {
         if (settings.def_font_size) {
             const size = parseInt(settings.def_font_size);
             if (!isNaN(size)) {
-                document.documentElement.style.setProperty('--def-font-size', `${size}px`);
+                document.documentElement.style.setProperty('--def-font-size', `${size}px`, 'important');
                 const slider = document.getElementById('setting-def-size');
                 if (slider) slider.value = size;
                 const label = document.getElementById('setting-def-size-val');
@@ -219,7 +229,7 @@ function debounce(func, wait) {
                 if (preview) {
                     const container = preview.closest('.settings-preview-box');
                     if (container) container.style.fontSize = `${size}px`;
-                    else preview.style.fontSize = `${size}px`;
+                    preview.style.fontSize = `${size}px`;
                 }
             }
         }
@@ -649,15 +659,19 @@ function debounce(func, wait) {
     if (chatSizeSlider) {
         chatSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
-            document.documentElement.style.setProperty('--chat-font-size', `${val}px`);
+            document.documentElement.style.setProperty('--chat-font-size', `${val}px`, 'important');
             const label = document.getElementById('setting-chat-size-val');
             if (label) label.textContent = `${val}px`;
             const preview = document.getElementById('preview-chat-text');
             if (preview) {
                 const container = preview.closest('.settings-preview-box');
                 if (container) container.style.fontSize = `${val}px`;
-                else preview.style.fontSize = `${val}px`;
+                preview.style.fontSize = `${val}px`;
             }
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) chatInput.style.fontSize = `${val}px`;
+            const lobbyChatInput = document.getElementById('lobby-chat-input');
+            if (lobbyChatInput) lobbyChatInput.style.fontSize = `${val}px`;
             saveSettingDebounced('chat_font_size', val);
         });
     }
@@ -666,14 +680,14 @@ function debounce(func, wait) {
     if (defSizeSlider) {
         defSizeSlider.addEventListener('input', (e) => {
             const val = e.target.value;
-            document.documentElement.style.setProperty('--def-font-size', `${val}px`);
+            document.documentElement.style.setProperty('--def-font-size', `${val}px`, 'important');
             const label = document.getElementById('setting-def-size-val');
             if (label) label.textContent = `${val}px`;
             const preview = document.getElementById('preview-def-text');
             if (preview) {
                 const container = preview.closest('.settings-preview-box');
                 if (container) container.style.fontSize = `${val}px`;
-                else preview.style.fontSize = `${val}px`;
+                preview.style.fontSize = `${val}px`;
             }
             saveSettingDebounced('def_font_size', val);
         });
