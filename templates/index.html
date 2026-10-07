@@ -3426,10 +3426,8 @@
                                 <!-- Messages will be rendered here -->
                             </div>
                             <form id="lobby-chat-form" class="lobby-chat-form" onsubmit="window.handleLobbyChatSubmit(event)">
-                                <div class="lobby-chat-input-wrapper" style="flex: 1; display: flex; align-items: center; min-width: 0; position: relative;">
-                                    <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="1000" autocomplete="off" style="flex: 1; min-width: 0; padding-right: 48px;">
-                                    <span id="lobby-chat-counter" class="chat-input-char-counter" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.70rem; font-weight: 600; color: var(--text-secondary, #94a3b8); pointer-events: none; white-space: nowrap; line-height: 1;">1000</span>
-                                </div>
+                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="1000" autocomplete="off">
+                                <span id="lobby-chat-counter" class="chat-input-char-counter" style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary, #94a3b8); flex-shrink: 0; white-space: nowrap; line-height: 1; padding: 0 2px;">1000</span>
                                 <button type="submit" id="lobby-chat-send-btn" class="lobby-chat-send-btn">Send</button>
                             </form>
                         </div>
@@ -3487,11 +3485,9 @@
                         <div id="chat-history">
                             <p class="placeholder">No messages yet</p>
                         </div>
-                        <div class="chat-input-section">
-                            <div class="room-chat-input-wrapper" style="flex: 1; display: flex; align-items: center; min-width: 0; position: relative;">
-                                <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" style="flex: 1; min-width: 0; padding-right: 48px;">
-                                <span id="room-chat-counter" class="chat-input-char-counter" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.70rem; font-weight: 600; color: var(--text-secondary, #94a3b8); pointer-events: none; white-space: nowrap; line-height: 1;">1000</span>
-                            </div>
+                        <div class="chat-input-section" style="display: flex; align-items: center; gap: 6px;">
+                            <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                            <span id="room-chat-counter" class="chat-input-char-counter" style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary, #94a3b8); flex-shrink: 0; white-space: nowrap; line-height: 1; padding: 0 2px;">1000</span>
                             <button id="chat-send-btn">Send</button>
                         </div>
                     </div>
@@ -9542,8 +9538,8 @@
     <script src="/js/settings.js?v=1791095000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1791100000"></script>
-    <script src="/js/lobby.js?v=1791100003"></script>
-    <script src="/js/play.js?v=1791100003"></script>
+    <script src="/js/lobby.js?v=1791100004"></script>
+    <script src="/js/play.js?v=1791100004"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082000"></script>
