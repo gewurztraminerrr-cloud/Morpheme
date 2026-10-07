@@ -10401,3 +10401,171 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 #profile-gender-val:focus {
     border-color: #3b82f6 !important;
 }
+
+
+
+/* ============================================================
+   GLOBAL POPUP & MODAL TEXT SELECTION PREVENTION
+   Disable text highlighting for all popups, modals, overlays,
+   dialogs, lightboxes, and toasts across the entire site.
+   Inputs, textareas, and contenteditable elements remain editable.
+   ============================================================ */
+
+.modal-window,
+.modal-overlay,
+.mini-profile-overlay,
+.chat-modal,
+.overlay,
+.image-lightbox-overlay,
+.guide-diagram-lightbox,
+.tool-def-popover,
+.pm-toast-notification,
+#modal-howtoplay,
+#history-review-overlay,
+#private-chat-modal,
+#color-tier-modal,
+#spinner-set-modal,
+#subanagrams-spinner-set-modal,
+#mini-profile-modal,
+#mod-timeout-modal,
+#mod-ban-modal,
+#generic-info-modal,
+#generic-confirm-modal,
+#image-lightbox-modal,
+#room-achievements-modal,
+#full-list-modal,
+#lobby-guide-modal,
+#lobby-action-toast,
+#full-list-jump-toast,
+#invite-toast,
+#invite-sent-toast,
+#pm-toast,
+#tool-word-def-popover,
+[class*="modal"],
+[class*="overlay"],
+[class*="popup"],
+[class*="lightbox"],
+[class*="toast"] {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+.modal-window *,
+.modal-overlay *,
+.mini-profile-overlay *,
+.chat-modal *,
+.overlay *,
+.image-lightbox-overlay *,
+.guide-diagram-lightbox *,
+.tool-def-popover *,
+.pm-toast-notification *,
+#modal-howtoplay *,
+#history-review-overlay *,
+#private-chat-modal *,
+#color-tier-modal *,
+#spinner-set-modal *,
+#subanagrams-spinner-set-modal *,
+#mini-profile-modal *,
+#mod-timeout-modal *,
+#mod-ban-modal *,
+#generic-info-modal *,
+#generic-confirm-modal *,
+#image-lightbox-modal *,
+#room-achievements-modal *,
+#full-list-modal *,
+#lobby-guide-modal *,
+#lobby-action-toast *,
+#full-list-jump-toast *,
+#invite-toast *,
+#invite-sent-toast *,
+#pm-toast *,
+#tool-word-def-popover *,
+[class*="modal"] *:not(input):not(textarea):not([contenteditable="true"]),
+[class*="overlay"] *:not(input):not(textarea):not([contenteditable="true"]),
+[class*="popup"] *:not(input):not(textarea):not([contenteditable="true"]),
+[class*="lightbox"] *:not(input):not(textarea):not([contenteditable="true"]),
+[class*="toast"] *:not(input):not(textarea):not([contenteditable="true"]) {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Also ensure ::selection background is completely invisible on all popups/modals */
+.modal-window ::selection,
+.modal-overlay ::selection,
+.mini-profile-overlay ::selection,
+.chat-modal ::selection,
+.overlay ::selection,
+.image-lightbox-overlay ::selection,
+.guide-diagram-lightbox ::selection,
+.tool-def-popover ::selection,
+.pm-toast-notification ::selection,
+#modal-howtoplay ::selection,
+#history-review-overlay ::selection,
+#color-tier-modal ::selection,
+#spinner-set-modal ::selection,
+#subanagrams-spinner-set-modal ::selection,
+#mini-profile-modal ::selection,
+#generic-info-modal ::selection,
+#generic-confirm-modal ::selection,
+#image-lightbox-modal ::selection,
+#room-achievements-modal ::selection,
+#full-list-modal ::selection,
+#lobby-guide-modal ::selection,
+#lobby-action-toast ::selection,
+#full-list-jump-toast ::selection,
+#tool-word-def-popover ::selection,
+[class*="modal"]:not(input):not(textarea) ::selection,
+[class*="overlay"]:not(input):not(textarea) ::selection,
+[class*="popup"]:not(input):not(textarea) ::selection,
+[class*="lightbox"]:not(input):not(textarea) ::selection,
+[class*="toast"]:not(input):not(textarea) ::selection {
+    background: transparent !important;
+    color: inherit !important;
+}
+
+/* Explicitly preserve normal typing/selection in interactive input/textarea fields within modals */
+.modal-window input,
+.modal-window textarea,
+.modal-overlay input,
+.modal-overlay textarea,
+.mini-profile-overlay input,
+.mini-profile-overlay textarea,
+.chat-modal input,
+.chat-modal textarea,
+.overlay input,
+.overlay textarea,
+#private-chat-modal input,
+#mod-timeout-modal input,
+#mod-timeout-modal textarea,
+#mod-ban-modal textarea,
+#full-list-jump-input,
+[contenteditable="true"] {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+.modal-window input::selection,
+.modal-window textarea::selection,
+.modal-overlay input::selection,
+.modal-overlay textarea::selection,
+.mini-profile-overlay input::selection,
+.mini-profile-overlay textarea::selection,
+.chat-modal input::selection,
+.chat-modal textarea::selection,
+.overlay input::selection,
+.overlay textarea::selection,
+#private-chat-modal input::selection,
+#mod-timeout-modal input::selection,
+#mod-timeout-modal textarea::selection,
+#mod-ban-modal textarea::selection,
+#full-list-jump-input::selection,
+[contenteditable="true"]::selection {
+    background: rgba(59, 130, 246, 0.5) !important;
+    color: #ffffff !important;
+}

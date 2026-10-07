@@ -11744,8 +11744,8 @@ body.is-mobile #page-settings .theme-selector-grid {
     transform: scale(0.95) translateY(4px);
     transition: opacity 0.15s ease, transform 0.15s ease;
     pointer-events: none;
-    user-select: text;
-    -webkit-user-select: text;
+    user-select: none !important;
+    -webkit-user-select: none !important;
     display: flex;
     flex-direction: column;
 }
