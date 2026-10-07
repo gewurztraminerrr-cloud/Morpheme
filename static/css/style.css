@@ -9186,6 +9186,7 @@ body.theme-white .full-list-item:hover .clickable-word-link,
     color: #4c1d95 !important;
 }
 
+/* High-contrast likelihood numerical score for White and all Light Themes */
 body.theme-white .likelihood-score,
 [class*="theme-white"] .likelihood-score,
 [class*="theme-light-"] .likelihood-score,
@@ -9195,9 +9196,9 @@ body.theme-white .list-item .likelihood-score,
 body.theme-white .full-list-item .likelihood-score,
 [class*="theme-white"] .full-list-item .likelihood-score,
 [class*="theme-light-"] .full-list-item .likelihood-score {
-    color: #6d28d9 !important;
+    color: #4338ca !important; /* Bold indigo with high contrast against light backgrounds */
     opacity: 1 !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
 }
 
 body.theme-white .full-list-item:hover .likelihood-score,
@@ -9206,8 +9207,87 @@ body.theme-white .full-list-item:hover .likelihood-score,
 body.theme-white .list-item:hover .likelihood-score,
 [class*="theme-white"] .list-item:hover .likelihood-score,
 [class*="theme-light-"] .list-item:hover .likelihood-score {
-    color: #5b21b6 !important;
+    color: #312e81 !important;
     opacity: 1 !important;
+}
+
+/* Specific theme refinements for maximum contrast across each light theme palette */
+body.theme-light-light-red .full-list-item .likelihood-score,
+body.theme-light-red .full-list-item .likelihood-score {
+    color: #991b1b !important; /* Deep crimson for high contrast on light red/pink */
+}
+body.theme-light-light-orange .full-list-item .likelihood-score,
+body.theme-light-orange .full-list-item .likelihood-score {
+    color: #9a3412 !important; /* Deep burnt orange on light orange */
+}
+body.theme-light-light-yellow .full-list-item .likelihood-score,
+body.theme-light-yellow .full-list-item .likelihood-score {
+    color: #854d0e !important; /* Deep amber on light yellow */
+}
+body.theme-light-light-green .full-list-item .likelihood-score,
+body.theme-light-green .full-list-item .likelihood-score {
+    color: #166534 !important; /* Deep forest green on light green */
+}
+body.theme-light-light-blue .full-list-item .likelihood-score,
+body.theme-light-blue .full-list-item .likelihood-score {
+    color: #1e40af !important; /* Deep navy on light blue */
+}
+body.theme-light-light-purple .full-list-item .likelihood-score,
+body.theme-light-purple .full-list-item .likelihood-score {
+    color: #581c87 !important; /* Deep purple on light purple */
+}
+body.theme-light-light-pink .full-list-item .likelihood-score,
+body.theme-light-pink .full-list-item .likelihood-score {
+    color: #9d174d !important; /* Deep maroon/magenta on light pink */
+}
+body.theme-light-light-brown .full-list-item .likelihood-score,
+body.theme-light-brown .full-list-item .likelihood-score {
+    color: #451a03 !important; /* Deep espresso brown on light brown */
+}
+body.theme-light-light-gray .full-list-item .likelihood-score,
+body.theme-light-gray .full-list-item .likelihood-score {
+    color: #1e293b !important; /* Deep slate on light gray */
+}
+
+/* Specific theme refinements for maximum contrast across dark & colored theme palettes */
+body.theme-black .full-list-item .likelihood-score {
+    color: #38bdf8 !important; /* Vibrant sky blue on pitch black */
+}
+body.theme-gray .full-list-item .likelihood-score,
+body.theme-dark-gray .full-list-item .likelihood-score {
+    color: #38bdf8 !important; /* Vibrant sky blue on dark gray */
+}
+body.theme-red .full-list-item .likelihood-score,
+body.theme-dark-red .full-list-item .likelihood-score {
+    color: #fde047 !important; /* Vibrant golden yellow on red/dark-red */
+}
+body.theme-orange .full-list-item .likelihood-score,
+body.theme-dark-orange .full-list-item .likelihood-score {
+    color: #fef08a !important; /* Vibrant warm yellow on orange/dark-orange */
+}
+body.theme-yellow .full-list-item .likelihood-score,
+body.theme-dark-yellow .full-list-item .likelihood-score {
+    color: #67e8f9 !important; /* Vibrant cyan on dark yellow */
+}
+body.theme-green .full-list-item .likelihood-score,
+body.theme-dark-green .full-list-item .likelihood-score {
+    color: #fef08a !important; /* Bright lemon yellow on green/dark-green */
+}
+body.theme-blue .full-list-item .likelihood-score,
+body.theme-dark-blue .full-list-item .likelihood-score {
+    color: #38bdf8 !important; /* Crisp sky blue on navy/dark-blue */
+}
+body.theme-purple .full-list-item .likelihood-score,
+body.theme-dark-purple .full-list-item .likelihood-score {
+    color: #67e8f9 !important; /* Bright cyan on purple/dark-purple */
+}
+body.theme-pink .full-list-item .likelihood-score,
+body.theme-dark-pink .full-list-item .likelihood-score {
+    color: #fef08a !important; /* Bright yellow on pink/dark-pink */
+}
+body.theme-brown .full-list-item .likelihood-score,
+body.theme-dark-brown .full-list-item .likelihood-score {
+    color: #fde047 !important; /* Bright gold on brown/dark-brown */
 }
 
 /* 10. Search Jump Target Highlight on Light Themes */

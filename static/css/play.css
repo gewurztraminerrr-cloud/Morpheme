@@ -11073,8 +11073,11 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
 }
 .full-list-item .likelihood-score {
     font-size: 0.72rem;
-    opacity: 0.6;
+    font-weight: 700;
+    color: #38bdf8 !important;
+    opacity: 1 !important;
     margin-right: 3px;
+    display: inline-block;
 }
 
 #full-list-modal {
