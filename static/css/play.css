@@ -9970,6 +9970,15 @@ body .board-cell.tile-flash-purple * {
         margin: 0 !important;
         border-radius: 8px !important;
         padding-right: 16px !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    #page-tools #tool-new-users .history-table-wrapper::-webkit-scrollbar,
+    body.is-mobile #page-tools #tool-new-users .history-table-wrapper::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
 
     #page-tools #tool-new-users .history-table th {
@@ -9999,15 +10008,19 @@ body.is-mobile #page-tools .tools-content.has-new-users-active {
     min-height: 0 !important;
 }
 
+body.is-mobile #page-tools #new-users-table-scroll {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar {
-    display: block !important;
-    width: 6px !important;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
-    display: block !important;
-    background: rgba(var(--text-primary-rgb), 0.45) !important;
-    border-radius: 6px !important;
+    display: none !important;
 }
 
 /* Find Count Tool Styles */
