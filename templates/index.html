@@ -3426,7 +3426,10 @@
                                 <!-- Messages will be rendered here -->
                             </div>
                             <form id="lobby-chat-form" class="lobby-chat-form" onsubmit="window.handleLobbyChatSubmit(event)">
-                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="1000" autocomplete="off">
+                                <div class="lobby-chat-input-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative;">
+                                    <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="1000" autocomplete="off">
+                                    <span id="lobby-chat-counter" class="chat-input-char-counter" style="font-size: 0.68rem; color: var(--text-secondary, #94a3b8); margin-top: 2px; text-align: right; padding-right: 4px; line-height: 1.2;">1000 remaining</span>
+                                </div>
                                 <button type="submit" id="lobby-chat-send-btn" class="lobby-chat-send-btn">Send</button>
                             </form>
                         </div>
@@ -3485,7 +3488,10 @@
                             <p class="placeholder">No messages yet</p>
                         </div>
                         <div class="chat-input-section">
-                            <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                            <div class="room-chat-input-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative;">
+                                <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                                <span id="room-chat-counter" class="chat-input-char-counter" style="font-size: 0.68rem; color: var(--text-secondary, #94a3b8); margin-top: 2px; text-align: right; padding-right: 4px; line-height: 1.2;">1000 remaining</span>
+                            </div>
                             <button id="chat-send-btn">Send</button>
                         </div>
                     </div>

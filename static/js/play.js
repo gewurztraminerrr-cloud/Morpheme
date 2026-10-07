@@ -3819,7 +3819,16 @@ function renderChat(messages) {
     }
 }
 
-let isSendingChat = false;
+function updateRoomChatCounter() {
+    const input = document.getElementById('chat-input');
+    const counter = document.getElementById('room-chat-counter');
+    if (!input || !counter) return;
+    const len = (input.value || '').length;
+    const remaining = Math.max(0, 1000 - len);
+    counter.textContent = `${remaining} remaining`;
+    counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= 100 ? '#fbbf24' : '');
+}
+window.updateRoomChatCounter = updateRoomChatCounter;
 
 async function sendChatMessage() {
     if (isSendingChat) return;
@@ -3835,6 +3844,7 @@ async function sendChatMessage() {
 
     isSendingChat = true;
     input.value = ''; // Synchronously clear input immediately so double-press cannot grab the message again
+    updateRoomChatCounter();
 
     const sendBtn = document.getElementById('chat-send-btn');
     if (sendBtn) sendBtn.disabled = true;
@@ -3889,6 +3899,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendChatMessage();
         });
+        chatInput.addEventListener('input', updateRoomChatCounter);
+        chatInput.addEventListener('paste', () => setTimeout(updateRoomChatCounter, 10));
         chatInput.addEventListener('click', (e) => {
             e.stopPropagation();
         });

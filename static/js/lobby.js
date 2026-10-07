@@ -1747,6 +1747,17 @@ function renderLobbyState(data) {
     }
 }
 
+function updateLobbyChatCounter() {
+    const input = document.getElementById('lobby-chat-input');
+    const counter = document.getElementById('lobby-chat-counter');
+    if (!input || !counter) return;
+    const len = (input.value || '').length;
+    const remaining = Math.max(0, 1000 - len);
+    counter.textContent = `${remaining} remaining`;
+    counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= 100 ? '#fbbf24' : '');
+}
+window.updateLobbyChatCounter = updateLobbyChatCounter;
+
 async function handleLobbyChatSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (isSendingLobbyChat) return;
@@ -1764,6 +1775,7 @@ async function handleLobbyChatSubmit(e) {
     // Clear input immediately and set single-send lock
     isSendingLobbyChat = true;
     input.value = '';
+    updateLobbyChatCounter();
     if (sendBtn) sendBtn.disabled = true;
 
     // Optimistically append the message immediately so there is zero delay in UI
@@ -1845,6 +1857,9 @@ function setupLobbyMobileKeyboardSupport() {
             handleLobbyChatSubmit(e);
         }
     });
+
+    input.addEventListener('input', updateLobbyChatCounter);
+    input.addEventListener('paste', () => setTimeout(updateLobbyChatCounter, 10));
 
     let lobbyKeyboardWasShown = false;
     let lobbyBaselineH = 0;
