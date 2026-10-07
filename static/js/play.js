@@ -5115,7 +5115,7 @@ function updateParameters(state) {
 
             const diffLabelEl = document.getElementById('param-diff-label');
             if (diffLabelEl) {
-                diffLabelEl.textContent = isSubanagrams ? 'Letters' : 'Diff';
+                diffLabelEl.textContent = isSubanagrams ? 'Letters:' : 'Diff:';
             }
 
             const diffEl = document.getElementById('param-diff');
