@@ -3871,19 +3871,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePlayChatKeyboardPosition() {
         if (!chatPanel) return;
-        // Only adjust keyboard elevation if the chat panel is actually expanded
-        if (!chatPanel.classList.contains('expanded')) {
-            chatPanel.classList.remove('keyboard-open');
-            chatPanel.style.bottom = '';
-            return;
-        }
         const isInputFocused = document.activeElement === chatInput;
         const vv = window.visualViewport;
         const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
+        const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile'));
 
         if (isInputFocused && kbHeight > 50) {
             chatPanel.classList.add('keyboard-open');
-            chatPanel.style.bottom = (kbHeight + 10) + 'px';
+            if (leftPanelContainer) leftPanelContainer.classList.add('keyboard-active');
+            chatPanel.style.bottom = (kbHeight + 8) + 'px';
             setTimeout(() => {
                 chatInput.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 const hist = document.getElementById('chat-history');
@@ -3891,6 +3887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 40);
         } else if (!isInputFocused) {
             chatPanel.classList.remove('keyboard-open');
+            if (leftPanelContainer) leftPanelContainer.classList.remove('keyboard-active');
             chatPanel.style.bottom = '';
         }
     }
@@ -3905,15 +3902,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
         });
         chatInput.addEventListener('focus', () => {
-            // User requested: Clicking on the textbox to send a message in Chat does NOT expand the entire chatbox.
-            // Only clicking on the chatbox itself expands the chat.
-            if (chatPanel && chatPanel.classList.contains('expanded')) {
-                chatPanel.classList.add('keyboard-open');
-                updatePlayChatKeyboardPosition();
-                setTimeout(updatePlayChatKeyboardPosition, 50);
-                setTimeout(updatePlayChatKeyboardPosition, 150);
-                setTimeout(updatePlayChatKeyboardPosition, 300);
-            }
+            chatPanel.classList.add('keyboard-open');
+            if (leftPanelContainer) leftPanelContainer.classList.add('keyboard-active');
+            updatePlayChatKeyboardPosition();
+            setTimeout(updatePlayChatKeyboardPosition, 50);
+            setTimeout(updatePlayChatKeyboardPosition, 150);
+            setTimeout(updatePlayChatKeyboardPosition, 300);
             const scrollHist = () => {
                 const hist = document.getElementById('chat-history');
                 if (hist) hist.scrollTop = hist.scrollHeight;
@@ -3927,6 +3921,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatPanel.classList.remove('keyboard-open');
                 chatPanel.style.bottom = '';
             }
+            if (leftPanelContainer) {
+                leftPanelContainer.classList.remove('keyboard-active');
+            }
         });
     }
 
@@ -3936,7 +3933,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (chatSend) {
-        chatSend.addEventListener('click', sendChatMessage);
+        // Prevent blur when tapping Send on touchscreens so input isn't blurred before sending
+        chatSend.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            sendChatMessage();
+        });
+        chatSend.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendChatMessage();
+        });
     }
 
     // --- CHAT PANEL EXPAND / COLLAPSE SYSTEM ---

@@ -8990,16 +8990,25 @@ body[class*="theme-light-"] .chat-collapse-btn:hover {
         transition: bottom 0.12s ease-out !important;
         z-index: 10005 !important;
         min-height: 0 !important;
-        max-height: min(360px, calc(100vh - 280px), calc(100dvh - 280px)) !important;
+        max-height: calc(100vh - 40px) !important;
+        max-height: calc(100dvh - 40px) !important;
         height: auto !important;
         display: flex !important;
         flex-direction: column !important;
     }
 
     .chat-panel.keyboard-open #chat-history {
-        max-height: min(260px, calc(100vh - 370px), calc(100dvh - 370px)) !important;
-        min-height: 140px !important;
+        max-height: none !important;
+        min-height: 180px !important;
+        height: auto !important;
         flex: 1 1 auto !important;
+    }
+
+    .left-panel-container:has(.chat-panel.keyboard-open) .mobile-nav-indicators,
+    .left-panel-container.keyboard-active .mobile-nav-indicators {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
     .chat-panel.expanded,

@@ -1849,6 +1849,10 @@ function setupLobbyMobileKeyboardSupport() {
         sendBtn.addEventListener('mousedown', (e) => {
             e.preventDefault();
         });
+        sendBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleLobbyChatSubmit(e);
+        });
     }
 
     input.addEventListener('keydown', (e) => {

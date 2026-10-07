@@ -2971,14 +2971,14 @@ body.theme-white .lobby-journey-sticky-header {
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-slide-panel {
-        max-height: min(420px, 60vh) !important;
-        max-height: min(420px, 60dvh) !important;
+        max-height: min(480px, 75vh) !important;
+        max-height: min(480px, 75dvh) !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-slide-body {
         height: auto !important;
-        max-height: min(390px, 56vh) !important;
-        max-height: min(390px, 56dvh) !important;
+        max-height: min(450px, 70vh) !important;
+        max-height: min(450px, 70dvh) !important;
         padding: 6px 10px !important;
     }
 
@@ -2989,10 +2989,9 @@ body.theme-white .lobby-journey-sticky-header {
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-history {
-        max-height: 250px !important;
-        max-height: min(260px, 38vh) !important;
-        max-height: min(260px, 38dvh) !important;
-        min-height: 140px !important;
+        max-height: min(320px, 48vh) !important;
+        max-height: min(320px, 48dvh) !important;
+        min-height: 180px !important;
     }
 
     .lobby-chat-drawer.keyboard-open .lobby-chat-form {
