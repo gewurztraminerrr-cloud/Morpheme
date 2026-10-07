@@ -3825,7 +3825,7 @@ function updateRoomChatCounter() {
     if (!input || !counter) return;
     const len = (input.value || '').length;
     const remaining = Math.max(0, 1000 - len);
-    counter.textContent = `${remaining} remaining`;
+    counter.textContent = remaining;
     counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= 100 ? '#fbbf24' : '');
 }
 window.updateRoomChatCounter = updateRoomChatCounter;
