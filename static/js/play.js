@@ -7857,7 +7857,14 @@ function calculateWordScoreLocally(word, path) {
         else if (length === 5) score = 2;
         else if (length === 6) score = 3;
         else if (length === 7) score = 5;
-        else score = 11;
+        else if (length === 8) score = 9;
+        else if (length === 9) score = 13;
+        else if (length === 10) score = 17;
+        else if (length === 11) score = 21;
+        else if (length === 12) score = 25;
+        else if (length === 13) score = 29;
+        else if (length === 14) score = 33;
+        else score = 37;
     }
 
     // 2. Hidden Bonus Word (+Length)
@@ -11091,9 +11098,14 @@ window.showFinderModal = function (word) {
         else if (len === 5) defaultWordVal = 2;
         else if (len === 6) defaultWordVal = 3;
         else if (len === 7) defaultWordVal = 5;
-        else if (len === 8) defaultWordVal = 8;
-        else if (len === 9) defaultWordVal = 11;
-        else if (len >= 10) defaultWordVal = 15;
+        else if (len === 8) defaultWordVal = 9;
+        else if (len === 9) defaultWordVal = 13;
+        else if (len === 10) defaultWordVal = 17;
+        else if (len === 11) defaultWordVal = 21;
+        else if (len === 12) defaultWordVal = 25;
+        else if (len === 13) defaultWordVal = 29;
+        else if (len === 14) defaultWordVal = 33;
+        else if (len >= 15) defaultWordVal = 37;
         
         if (window.lastGameState && window.lastGameState.bonus_word && wordUpper === String(window.lastGameState.bonus_word).toUpperCase()) {
             defaultWordVal += len;
