@@ -8948,6 +8948,7 @@ async function fetchDefinition(word) {
     }
     if (defPron) {
         defPron.textContent = '';
+        defPron.classList.add('hidden');
         defPron.style.display = 'none';
     }
 
@@ -8960,9 +8961,11 @@ async function fetchDefinition(word) {
         if (data.definition || data.pronunciation || data.image_url) {
             if (data.pronunciation && defPron) {
                 defPron.textContent = data.pronunciation;
+                defPron.classList.remove('hidden');
                 defPron.style.display = 'block';
             } else if (defPron) {
                 defPron.textContent = '';
+                defPron.classList.add('hidden');
                 defPron.style.display = 'none';
             }
 
@@ -8980,6 +8983,7 @@ async function fetchDefinition(word) {
         } else {
             if (defPron) {
                 defPron.textContent = '';
+                defPron.classList.add('hidden');
                 defPron.style.display = 'none';
             }
             defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
@@ -8988,6 +8992,7 @@ async function fetchDefinition(word) {
         console.error('Definition error:', e);
         if (defPron) {
             defPron.textContent = '';
+            defPron.classList.add('hidden');
             defPron.style.display = 'none';
         }
         defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;

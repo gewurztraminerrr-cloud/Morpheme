@@ -678,6 +678,22 @@
     display: block;
 }
 
+.definitions-panel #definition-pronunciation:empty,
+.definitions-panel #definition-pronunciation.hidden,
+.definitions-panel #definition-pronunciation[style*="display: none"],
+.definitions-panel .pronunciation:empty,
+.definitions-panel .pronunciation.hidden,
+.definitions-panel .pronunciation[style*="display: none"] {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    border: none !important;
+}
+
 .definition-text {
     display: block;
     opacity: 0.9;
@@ -6613,8 +6629,8 @@ input[type=range]::-moz-range-track {
     }
     .definitions-panel .definition-word,
     .definitions-panel #definition-word,
-    .definitions-panel .pronunciation,
-    .definitions-panel #definition-pronunciation {
+    .definitions-panel .pronunciation:not(.hidden):not(:empty):not([style*="display: none"]),
+    .definitions-panel #definition-pronunciation:not(.hidden):not(:empty):not([style*="display: none"]) {
         text-align: center !important;
         display: block !important;
         width: 100% !important;
