@@ -2589,7 +2589,10 @@ body.theme-white #page-settings .mobile-bottom-nav {
     body.settings-active,
     html:has(#page-mods.active),
     body:has(#page-mods.active),
-    body.mods-active {
+    body.mods-active,
+    html:has(#page-forums.active),
+    body:has(#page-forums.active),
+    body.forums-active {
         height: 100vh !important;
         height: 100dvh !important;
         max-height: 100vh !important;
@@ -2606,7 +2609,10 @@ body.theme-white #page-settings .mobile-bottom-nav {
     body.settings-active .pages,
     .pages:has(#page-mods.active),
     body:has(#page-mods.active) .pages,
-    body.mods-active .pages {
+    body.mods-active .pages,
+    .pages:has(#page-forums.active),
+    body:has(#page-forums.active) .pages,
+    body.forums-active .pages {
         padding-top: 4px !important;
         padding-bottom: 4px !important;
         box-sizing: border-box !important;
@@ -2614,7 +2620,8 @@ body.theme-white #page-settings .mobile-bottom-nav {
 
     #page-tools,
     #page-settings,
-    #page-mods {
+    #page-mods,
+    #page-forums {
         height: calc(100vh - 86px) !important;
         height: calc(100dvh - 86px) !important;
         max-height: calc(100vh - 86px) !important;
@@ -2642,6 +2649,18 @@ body.theme-white #page-settings .mobile-bottom-nav {
         min-height: 0 !important;
         max-height: calc(100% - 34px) !important;
         overflow: hidden !important;
+    }
+    #page-forums .forum-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        border-radius: 12px !important;
+        box-sizing: border-box !important;
     }
     .tools-sidebar {
         flex: 0 0 280px !important;
@@ -4956,7 +4975,8 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 
 #page-tools,
 #page-settings,
-#page-mods {
+#page-mods,
+#page-forums {
     display: none;
     flex-direction: column;
     align-items: center;
@@ -4970,7 +4990,8 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 
 #page-tools.active,
 #page-settings.active,
-#page-mods.active {
+#page-mods.active,
+#page-forums.active {
     display: flex !important;
     opacity: 1 !important;
 }
@@ -11211,7 +11232,8 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         }
         #page-tools,
         #page-mods,
-        #page-settings {
+        #page-settings,
+        #page-forums {
             height: calc(100dvh - 120px) !important;
         }
     }
@@ -11472,14 +11494,17 @@ body.is-mobile #mod-tab-notice #clear-notice-btn {
 body.is-mobile #page-tools,
 body.is-mobile #page-mods,
 body.is-mobile #page-settings,
+body.is-mobile #page-forums,
 body.is-mobile #page-tools *,
 body.is-mobile #page-mods *,
-body.is-mobile #page-settings * {
+body.is-mobile #page-settings *,
+body.is-mobile #page-forums * {
     box-sizing: border-box !important;
 }
 body.is-mobile #page-tools,
 body.is-mobile #page-mods,
-body.is-mobile #page-settings {
+body.is-mobile #page-settings,
+body.is-mobile #page-forums {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -11493,13 +11518,15 @@ body.is-mobile #page-settings {
 @supports (height: 100dvh) {
     body.is-mobile #page-tools,
     body.is-mobile #page-mods,
-    body.is-mobile #page-settings {
+    body.is-mobile #page-settings,
+    body.is-mobile #page-forums {
         height: calc(100dvh - 120px) !important;
     }
 }
 body.is-mobile #page-tools.active,
 body.is-mobile #page-mods.active,
-body.is-mobile #page-settings.active {
+body.is-mobile #page-settings.active,
+body.is-mobile #page-forums.active {
     display: flex !important;
 }
 body.is-mobile #page-tools .tools-split-layout,
@@ -11592,12 +11619,15 @@ body.theme-white #page-settings .mobile-bottom-nav {
 body.is-mobile[class*="theme-white"] #page-tools,
 body.is-mobile[class*="theme-white"] #page-mods,
 body.is-mobile[class*="theme-white"] #page-settings,
+body.is-mobile[class*="theme-white"] #page-forums,
 body.is-mobile.theme-white #page-tools,
 body.is-mobile.theme-white #page-mods,
 body.is-mobile.theme-white #page-settings,
+body.is-mobile.theme-white #page-forums,
 body.is-mobile[class*="theme-light-"] #page-tools,
 body.is-mobile[class*="theme-light-"] #page-mods,
-body.is-mobile[class*="theme-light-"] #page-settings {
+body.is-mobile[class*="theme-light-"] #page-settings,
+body.is-mobile[class*="theme-light-"] #page-forums {
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
 }

@@ -2173,7 +2173,7 @@ window.showPage = showPage;
                 window.resetSettingsTab(true);
             }
             page.classList.add('active');
-            page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile') ? 'flex' : 'block';
+            page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile' || page.id === 'page-tools' || page.id === 'page-settings' || page.id === 'page-mods' || page.id === 'page-forums') ? 'flex' : 'block';
             page.style.opacity = '1';
             page.style.visibility = 'visible';
             page.scrollTop = 0;
@@ -2206,6 +2206,7 @@ window.showPage = showPage;
     document.body.classList.toggle('tools-active', pageId === 'page-tools');
     document.body.classList.toggle('settings-active', pageId === 'page-settings');
     document.body.classList.toggle('mods-active', pageId === 'page-mods');
+    document.body.classList.toggle('forums-active', pageId === 'page-forums');
     document.body.classList.toggle('login-active', pageId === 'page-login');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {

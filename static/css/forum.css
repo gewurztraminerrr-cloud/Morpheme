@@ -1,14 +1,18 @@
 /* Forum Page Styles */
 .forum-container {
     display: flex;
-    height: calc(100vh - 120px);
-    max-width: 98%;
-    margin: 10px auto;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     background: var(--bg-panel);
     backdrop-filter: blur(10px);
-    border-radius: 15px;
+    border-radius: 12px;
     border: 1px solid var(--input-border);
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .forum-sidebar {
@@ -1122,8 +1126,15 @@ body.theme-white #page-forums .forum-bottom-bar {
 
 @media (max-width: 900px) {
     #page-forums {
-        padding-top: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
         border-top: none !important;
+        height: calc(100vh - 120px) !important;
+    }
+    @supports (height: 100dvh) {
+        #page-forums {
+            height: calc(100dvh - 120px) !important;
+        }
     }
     .forum-container {
         display: flex !important;
@@ -1134,7 +1145,12 @@ body.theme-white #page-forums .forum-bottom-bar {
         scroll-behavior: auto !important;
         gap: 0 !important;
         width: 100% !important;
-        height: calc(100vh - 120px) !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        margin: 0 !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
         border-radius: 0 !important;
         border: none !important;
@@ -1403,18 +1419,43 @@ body.theme-white #page-forums .forum-bottom-bar {
     }
 }
 /* ============================================================
-   DYNAMIC VIEWPORT HEIGHT: Mobile Browser Chrome Fix
+   DYNAMIC VIEWPORT HEIGHT & DESKTOP HARMONIZATION
    ============================================================ */
-@supports (height: 100dvh) {
+@media (min-width: 901px) {
+    #page-forums {
+        height: calc(100vh - 86px) !important;
+        height: calc(100dvh - 86px) !important;
+        max-height: calc(100vh - 86px) !important;
+        max-height: calc(100dvh - 86px) !important;
+        overflow: hidden !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        box-sizing: border-box !important;
+    }
+    #page-forums .forum-container,
     .forum-container {
-        height: calc(100dvh - 120px);
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        border-radius: 12px !important;
+        box-sizing: border-box !important;
     }
 }
 
 @media (max-width: 900px) {
     @supports (height: 100dvh) {
-        .forum-container {
+        #page-forums {
             height: calc(100dvh - 120px) !important;
+        }
+        .forum-container {
+            height: 100% !important;
         }
     }
 }
