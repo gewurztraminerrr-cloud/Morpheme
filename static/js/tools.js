@@ -1046,10 +1046,11 @@ window.showMiniProfile = async function (username) {
         // Demographics: Age and Gender
         const demoEl = document.getElementById('mini-profile-demographics');
         if (demoEl) {
-            const demoParts = [];
-            if (cleanProfileText(data.age)) demoParts.push(`Age: ${cleanProfileText(data.age)}`);
-            if (cleanProfileText(data.gender)) demoParts.push(`Gender: ${cleanProfileText(data.gender)}`);
-            demoEl.innerText = demoParts.join(', ');
+            const ageVal = cleanProfileText(data.age);
+            const genderVal = cleanProfileText(data.gender);
+            const ageStr = ageVal ? `Age: ${ageVal}` : 'Age:';
+            const genderStr = genderVal ? `Gender: ${genderVal}` : 'Gender:';
+            demoEl.innerText = `${ageStr} ${genderStr}`;
             demoEl.title = demoEl.innerText;
         }
 
