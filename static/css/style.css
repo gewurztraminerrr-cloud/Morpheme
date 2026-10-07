@@ -1417,7 +1417,10 @@ body.theme-white .header {
 
 /* Separator */
 .separator {
-    display: none !important;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(var(--text-primary-rgb), 0.5), transparent);
+    margin: 0 40px;
+    touch-action: none;
 }
 
 /* Pages */
@@ -5128,7 +5131,13 @@ body.login-active .nav-btn:not(.active) {
 }
 
 .separator {
-    display: none !important;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent,
+            var(--primary),
+            var(--secondary),
+            transparent);
+    box-shadow: none !important;
 }
 
 /* Main Content */
