@@ -1419,14 +1419,20 @@ function leaveLobbyPresence() {
     if (typeof stopLobbyChatPolling === 'function') {
         stopLobbyChatPolling();
     }
+    let sent = false;
     try {
         if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/lobby/leave');
-        } else {
-            fetch('/api/lobby/leave', { method: 'POST', keepalive: true }).catch(() => {});
+            sent = navigator.sendBeacon('/api/lobby/leave');
         }
     } catch (e) {
-        fetch('/api/lobby/leave', { method: 'POST' }).catch(() => {});
+        sent = false;
+    }
+    if (!sent) {
+        try {
+            fetch('/api/lobby/leave', { method: 'POST', keepalive: true }).catch(() => {});
+        } catch (e) {
+            fetch('/api/lobby/leave', { method: 'POST' }).catch(() => {});
+        }
     }
 }
 window.leaveLobbyPresence = leaveLobbyPresence;
@@ -1636,9 +1642,22 @@ window.toggleLobbyChatDrawer = toggleLobbyChatDrawer;
 
 let lastLobbyFetchSuccessTime = 0;
 let isFetchingLobbyState = false;
+let isDeviceSuspended = false;
+let userInteractionConfirmedSinceWake = true;
+let lastHeartbeatTime = Date.now();
+
+function canParticipateInLobbyPresence() {
+    if (!isOnLobby()) return false;
+    if (isDeviceSuspended) return false;
+    if (document.hidden || document.visibilityState !== 'visible') return false;
+    if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false;
+    if (!userInteractionConfirmedSinceWake) return false;
+    return true;
+}
+window.canParticipateInLobbyPresence = canParticipateInLobbyPresence;
 
 async function fetchLobbyState() {
-    if (!isOnLobby()) return;
+    if (!canParticipateInLobbyPresence()) return;
     if (isFetchingLobbyState) return;
     isFetchingLobbyState = true;
     try {
@@ -1899,9 +1918,10 @@ if (document.readyState === 'loading') {
 
 function startLobbyChatPolling() {
     stopLobbyChatPolling();
+    if (!canParticipateInLobbyPresence()) return;
     fetchLobbyState();
     lobbyChatPollInterval = setInterval(() => {
-        if (isOnLobby()) {
+        if (canParticipateInLobbyPresence()) {
             fetchLobbyState();
         }
     }, 2000);
@@ -1916,11 +1936,13 @@ function stopLobbyChatPolling() {
 }
 window.stopLobbyChatPolling = stopLobbyChatPolling;
 
-// Start Lobby Chat & Presence Polling
-startLobbyChatPolling();
+// Start Lobby Chat & Presence Polling only if eligible
+if (canParticipateInLobbyPresence()) {
+    startLobbyChatPolling();
+}
 
 function resumeLobbyPresenceAndPolling() {
-    if (!isOnLobby()) return;
+    if (!canParticipateInLobbyPresence()) return;
     if (typeof window.fetchLobbyStats === 'function') {
         try { window.fetchLobbyStats('all'); } catch(e) {}
     }
@@ -1932,15 +1954,46 @@ function resumeLobbyPresenceAndPolling() {
 }
 window.resumeLobbyPresenceAndPolling = resumeLobbyPresenceAndPolling;
 
+function handleUserReturnToLobby() {
+    if (!isOnLobby()) return;
+    isDeviceSuspended = false;
+    userInteractionConfirmedSinceWake = true;
+    lastHeartbeatTime = Date.now();
+    if (canParticipateInLobbyPresence()) {
+        resumeLobbyPresenceAndPolling();
+    }
+}
+window.handleUserReturnToLobby = handleUserReturnToLobby;
+
+// Sleep Gap Heartbeat Monitor:
+// Detects operating system sleep / suspend (e.g. closed laptop lid, locked/off phone screen).
+// While the device is asleep or suspended, presence is cleared and polling halted.
+setInterval(() => {
+    const now = Date.now();
+    const elapsed = now - lastHeartbeatTime;
+    lastHeartbeatTime = now;
+    if (elapsed > 3000) {
+        // System was asleep or background-suspended: mark suspended immediately
+        isDeviceSuspended = true;
+        userInteractionConfirmedSinceWake = false;
+        stopLobbyChatPolling();
+        leaveLobbyPresence();
+    }
+}, 1000);
+
 // Lifecycle & Visibility listeners:
-// When tab/window is hidden or minimized, pause high-frequency polling to conserve battery/network,
-// but DO NOT send /api/lobby/leave (the player is still on the lobby, not navigated away).
-// Genuine abandonment is cleaned up by the server LobbyManager 30-second TTL.
+// When tab/window is hidden, blurred, or minimized (e.g. phone screen turned off or laptop shut),
+// immediately exit lobby presence and stop polling so the user never lingers or ghost-reappears.
 function handleLobbyVisibilityChange() {
     if (document.hidden || document.visibilityState === 'hidden') {
+        isDeviceSuspended = true;
+        userInteractionConfirmedSinceWake = false;
         stopLobbyChatPolling();
+        leaveLobbyPresence();
     } else {
-        resumeLobbyPresenceAndPolling();
+        if (typeof document.hasFocus === 'function' && document.hasFocus() && !isDeviceSuspended) {
+            handleUserReturnToLobby();
+        }
     }
 }
 
@@ -1948,49 +2001,73 @@ function handleLobbyVisibilityChange() {
 document.addEventListener('visibilitychange', handleLobbyVisibilityChange);
 window.addEventListener('visibilitychange', handleLobbyVisibilityChange);
 
-// Page Lifecycle events (restore from bfcache, tab switch, unminimize)
+// Page Lifecycle events
 window.addEventListener('pageshow', () => {
-    resumeLobbyPresenceAndPolling();
+    if (!isDeviceSuspended && (typeof document.hasFocus !== 'function' || document.hasFocus()) && !document.hidden) {
+        handleUserReturnToLobby();
+    }
 });
 
 document.addEventListener('resume', () => {
-    resumeLobbyPresenceAndPolling();
+    if (!isDeviceSuspended && (typeof document.hasFocus !== 'function' || document.hasFocus()) && !document.hidden) {
+        handleUserReturnToLobby();
+    }
 });
 
 window.addEventListener('focus', () => {
-    resumeLobbyPresenceAndPolling();
-});
-
-// Pause polling if browser freezes tab
-window.addEventListener('freeze', () => {
-    stopLobbyChatPolling();
-});
-
-// Only leave lobby presence when the page is actually unloading/closing or navigated away
-window.addEventListener('pagehide', (e) => {
-    if (!e.persisted) {
-        leaveLobbyPresence();
-    } else {
-        stopLobbyChatPolling();
+    if (isOnLobby() && !document.hidden && document.visibilityState === 'visible' && (typeof document.hasFocus !== 'function' || document.hasFocus())) {
+        if (!isDeviceSuspended) {
+            handleUserReturnToLobby();
+        }
     }
+});
+
+window.addEventListener('blur', () => {
+    // If user is focused on an in-app input/textarea, do not treat as window departure
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+    }
+    if (isOnLobby()) {
+        isDeviceSuspended = true;
+        userInteractionConfirmedSinceWake = false;
+        stopLobbyChatPolling();
+        leaveLobbyPresence();
+    }
+});
+
+// Pause polling and drop presence if browser freezes tab
+window.addEventListener('freeze', () => {
+    isDeviceSuspended = true;
+    userInteractionConfirmedSinceWake = false;
+    stopLobbyChatPolling();
+    leaveLobbyPresence();
+});
+
+// Leave presence on pagehide and unload
+window.addEventListener('pagehide', () => {
+    isDeviceSuspended = true;
+    userInteractionConfirmedSinceWake = false;
+    leaveLobbyPresence();
 });
 
 window.addEventListener('beforeunload', () => {
     leaveLobbyPresence();
 });
 
-// Fast self-recovery on any user gesture while on lobby:
-['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evtName => {
-    document.addEventListener(evtName, () => {
-        if (isOnLobby() && (!lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 3500))) {
-            resumeLobbyPresenceAndPolling();
+// Physical user interaction handlers:
+// The user is confirmed active and can return to the lobby ONLY when they physically touch, click,
+// or interact with the app upon opening their laptop or mobile device.
+['pointerdown', 'touchstart', 'mousedown', 'keydown', 'click', 'mousemove'].forEach(evtName => {
+    window.addEventListener(evtName, () => {
+        if (isOnLobby() && (isDeviceSuspended || !userInteractionConfirmedSinceWake || !lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 3500))) {
+            handleUserReturnToLobby();
         }
     }, { passive: true });
 });
 
-// Background Watchdog: if active on lobby and polling was stalled or dropped, revive immediately
+// Background Watchdog: only revive if fully qualified to participate in lobby presence
 setInterval(() => {
-    if (isOnLobby() && !document.hidden && (!lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 5000))) {
+    if (canParticipateInLobbyPresence() && (!lobbyChatPollInterval || (Date.now() - lastLobbyFetchSuccessTime > 5000))) {
         resumeLobbyPresenceAndPolling();
     }
 }, 3000);

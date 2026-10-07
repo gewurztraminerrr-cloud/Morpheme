@@ -7887,7 +7887,7 @@ class LobbyManager:
             active_users = []
             stale_keys = []
             for uid_str, data in list(self.lobby_users.items()):
-                if (now - data['last_seen']) > 30 or self.is_user_in_any_room(data['user_id']):
+                if (now - data['last_seen']) > 15 or self.is_user_in_any_room(data['user_id']):
                     stale_keys.append(uid_str)
                 else:
                     active_users.append({

@@ -5504,12 +5504,18 @@ def leave_lobby():
     if 'user_id' in session:
         user_id = session['user_id']
         lobby_manager.remove_user(user_id)
+    if 'username' in session:
+        lobby_manager.remove_user(session['username'])
     return jsonify({'success': True})
 
 @app.route('/api/lobby/chat', methods=['GET'])
 def get_lobby_chat():
     """Fetch active lobby players and the 100-message chat history."""
-    if 'user_id' in session:
+    is_prefetch = (request.headers.get('Purpose') == 'prefetch' or 
+                   request.headers.get('Sec-Purpose') == 'prefetch')
+    is_passive = (request.args.get('presence') == '0' or is_prefetch)
+    
+    if 'user_id' in session and not is_passive:
         user_id = session['user_id']
         username = session.get('username') or 'Guest'
         is_guest = session.get('is_guest', False)
