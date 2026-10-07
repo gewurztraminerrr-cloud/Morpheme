@@ -3780,8 +3780,10 @@ function renderChat(messages) {
             }
         }
 
+        const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+
         let ratingSuffix = '';
-        if (rating !== undefined && rating !== null) {
+        if (!isSubanagrams && rating !== undefined && rating !== null) {
             ratingSuffix = ` (${rating})`;
         }
 
