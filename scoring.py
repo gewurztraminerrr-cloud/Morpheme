@@ -71,7 +71,14 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         elif length == 5: score = 2
         elif length == 6: score = 3
         elif length == 7: score = 5
-        elif length >= 8: score = 11
+        elif length == 8: score = 9
+        elif length == 9: score = 13
+        elif length == 10: score = 17
+        elif length == 11: score = 21
+        elif length == 12: score = 25
+        elif length == 13: score = 29
+        elif length == 14: score = 33
+        elif length >= 15: score = 37
 
     base_score = score 
 

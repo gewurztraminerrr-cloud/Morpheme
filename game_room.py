@@ -1780,7 +1780,14 @@ class GameRoom:
                 elif length == 5: s = 2
                 elif length == 6: s = 3
                 elif length == 7: s = 5
-                elif length >= 8: s = 11
+                elif length == 8: s = 9
+                elif length == 9: s = 13
+                elif length == 10: s = 17
+                elif length == 11: s = 21
+                elif length == 12: s = 25
+                elif length == 13: s = 29
+                elif length == 14: s = 33
+                elif length >= 15: s = 37
                 e_scores[w] = {'total': s, 'base': s}
         self.next_round_word_scores = e_scores
         
@@ -2097,7 +2104,14 @@ class GameRoom:
                         elif l == 5: s = 2
                         elif l == 6: s = 3
                         elif l == 7: s = 5
-                        elif l >= 8: s = 11
+                        elif l == 8: s = 9
+                        elif l == 9: s = 13
+                        elif l == 10: s = 17
+                        elif l == 11: s = 21
+                        elif l == 12: s = 25
+                        elif l == 13: s = 29
+                        elif l == 14: s = 33
+                        elif l >= 15: s = 37
                         fast_scores[word] = {'total': s, 'base': s}
                     self.solved_words_with_scores = fast_scores
                     
@@ -2499,7 +2513,14 @@ class GameRoom:
                 elif length == 5: s = 2
                 elif length == 6: s = 3
                 elif length == 7: s = 5
-                elif length >= 8: s = 11
+                elif length == 8: s = 9
+                elif length == 9: s = 13
+                elif length == 10: s = 17
+                elif length == 11: s = 21
+                elif length == 12: s = 25
+                elif length == 13: s = 29
+                elif length == 14: s = 33
+                elif length >= 15: s = 37
                 scored_dict[w] = {'total': s, 'base': s}
         self.next_round_word_scores = scored_dict
         self.next_round_total_points = sum(pts['total'] for pts in scored_dict.values())
@@ -2701,7 +2722,14 @@ class GameRoom:
                         elif length == 5: attainable += 2
                         elif length == 6: attainable += 3
                         elif length == 7: attainable += 5
-                        else:             attainable += 11
+                        elif length == 8: attainable += 9
+                        elif length == 9: attainable += 13
+                        elif length == 10: attainable += 17
+                        elif length == 11: attainable += 21
+                        elif length == 12: attainable += 25
+                        elif length == 13: attainable += 29
+                        elif length == 14: attainable += 33
+                        else:             attainable += 37
 
             self.total_points_count = attainable
             if attainable == 0 and len(scores or {}) > 0:
@@ -3938,7 +3966,14 @@ class RoomManager:
                 elif length == 5: s = 2
                 elif length == 6: s = 3
                 elif length == 7: s = 5
-                else: s = 11
+                elif length == 8: s = 9
+                elif length == 9: s = 13
+                elif length == 10: s = 17
+                elif length == 11: s = 21
+                elif length == 12: s = 25
+                elif length == 13: s = 29
+                elif length == 14: s = 33
+                else: s = 37
                 kick_scores[w] = {'total': s, 'base': s}
         room.solved_words_with_scores = kick_scores
         # Sync counts and word_count_range label to the actual filtered set
@@ -4866,7 +4901,14 @@ class RoomManager:
                     elif length == 5: s = 2
                     elif length == 6: s = 3
                     elif length == 7: s = 5
-                    elif length >= 8: s = 11
+                    elif length == 8: s = 9
+                    elif length == 9: s = 13
+                    elif length == 10: s = 17
+                    elif length == 11: s = 21
+                    elif length == 12: s = 25
+                    elif length == 13: s = 29
+                    elif length == 14: s = 33
+                    elif length >= 15: s = 37
                     else: s = 1 # Fallback for 3/4 if logic misses
                     init_scored_dict[word] = {'total': max(1, s), 'base': max(1, s)}
             
@@ -5357,7 +5399,18 @@ class RoomManager:
                                 scored_dict[w] = {'total': v_score, 'base': v_score}
                             else:
                                 length = len(w)
-                                s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
+                                if length <= 4: s = 1
+                                elif length == 5: s = 2
+                                elif length == 6: s = 3
+                                elif length == 7: s = 5
+                                elif length == 8: s = 9
+                                elif length == 9: s = 13
+                                elif length == 10: s = 17
+                                elif length == 11: s = 21
+                                elif length == 12: s = 25
+                                elif length == 13: s = 29
+                                elif length == 14: s = 33
+                                else: s = 37
                                 scored_dict[w] = {'total': s, 'base': s}
                         room.next_round_word_scores = scored_dict
                         
@@ -5592,7 +5645,14 @@ class RoomManager:
                                 elif length == 5: s = 2
                                 elif length == 6: s = 3
                                 elif length == 7: s = 5
-                                else: s = 11
+                                elif length == 8: s = 9
+                                elif length == 9: s = 13
+                                elif length == 10: s = 17
+                                elif length == 11: s = 21
+                                elif length == 12: s = 25
+                                elif length == 13: s = 29
+                                elif length == 14: s = 33
+                                else: s = 37
                                 scored_dict[w] = {'total': s, 'base': s}
                         room.next_round_word_scores = scored_dict
                         room.solving_complete = True
@@ -6062,7 +6122,18 @@ class RoomManager:
                             scored_dict[word] = {'total': v_score, 'base': v_score}
                         else:
                             length = len(word)
-                            s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
+                            if length <= 4: s = 1
+                            elif length == 5: s = 2
+                            elif length == 6: s = 3
+                            elif length == 7: s = 5
+                            elif length == 8: s = 9
+                            elif length == 9: s = 13
+                            elif length == 10: s = 17
+                            elif length == 11: s = 21
+                            elif length == 12: s = 25
+                            elif length == 13: s = 29
+                            elif length == 14: s = 33
+                            else: s = 37
                             scored_dict[word] = {'total': s, 'base': s}
                     
                     room.next_round_word_scores = scored_dict
@@ -6838,7 +6909,14 @@ class RoomManager:
                             elif length == 5: s = 2
                             elif length == 6: s = 3
                             elif length == 7: s = 5
-                            elif length >= 8: s = 11
+                            elif length == 8: s = 9
+                            elif length == 9: s = 13
+                            elif length == 10: s = 17
+                            elif length == 11: s = 21
+                            elif length == 12: s = 25
+                            elif length == 13: s = 29
+                            elif length == 14: s = 33
+                            elif length >= 15: s = 37
                             e_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
                     room.next_round_word_scores = e_scores
                 

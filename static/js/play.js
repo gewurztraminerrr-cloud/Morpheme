@@ -10548,14 +10548,21 @@ async function handlePrivateMatchWord(word, path = null) {
                 pts += letterValues[char] || 1;
             }
         } else {
-            // Standard length-based scoring (Fix: 5-letter words = 2 points)
+            // Standard length-based scoring
             const L = word.length;
             if (L <= 2) pts = 0;
             else if (L <= 4) pts = 1;
             else if (L === 5) pts = 2;
             else if (L === 6) pts = 3;
             else if (L === 7) pts = 5;
-            else pts = 11;
+            else if (L === 8) pts = 9;
+            else if (L === 9) pts = 13;
+            else if (L === 10) pts = 17;
+            else if (L === 11) pts = 21;
+            else if (L === 12) pts = 25;
+            else if (L === 13) pts = 29;
+            else if (L === 14) pts = 33;
+            else pts = 37;
         }
 
         // Hidden Bonus Word (+Length)
