@@ -1755,8 +1755,11 @@ async function handleLobbyChatSubmit(e) {
     const sendBtn = document.getElementById('lobby-chat-send-btn');
     if (!input) return;
     
-    const text = input.value.trim();
+    let text = input.value.trim();
     if (!text) return;
+    if (text.length > 1000) {
+        text = text.slice(0, 1000);
+    }
     
     // Clear input immediately and set single-send lock
     isSendingLobbyChat = true;

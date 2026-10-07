@@ -1463,14 +1463,20 @@
 
                                 <div class="profile-narrative-row">
                                     <div class="profile-quote-box">
-                                        <span class="meta-label">Personal Quote</span>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                            <span class="meta-label">Personal Quote</span>
+                                            <span id="profile-quote-counter" class="profile-char-counter" style="display: none; font-size: 0.75rem; font-weight: 600; opacity: 0.75;">150 remaining</span>
+                                        </div>
                                         <div class="profile-quote-minimal">
                                             <p id="profile-quote-val">Enter a personal quote</p>
                                         </div>
                                     </div>
 
                                     <div class="profile-description-minimal">
-                                        <span class="meta-label">About Me</span>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                            <span class="meta-label">About Me</span>
+                                            <span id="profile-desc-counter" class="profile-char-counter" style="display: none; font-size: 0.75rem; font-weight: 600; opacity: 0.75;">10000 remaining</span>
+                                        </div>
                                         <div class="list-scroll-area-wrapper" style="position: relative; width: 100%;">
                                             <div id="profile-description-val" class="description-text">
                                                 Add a
@@ -3420,7 +3426,7 @@
                                 <!-- Messages will be rendered here -->
                             </div>
                             <form id="lobby-chat-form" class="lobby-chat-form" onsubmit="window.handleLobbyChatSubmit(event)">
-                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="300" autocomplete="off">
+                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type a message to the lobby..." maxlength="1000" autocomplete="off">
                                 <button type="submit" id="lobby-chat-send-btn" class="lobby-chat-send-btn">Send</button>
                             </form>
                         </div>
@@ -3479,7 +3485,7 @@
                             <p class="placeholder">No messages yet</p>
                         </div>
                         <div class="chat-input-section">
-                            <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                            <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
                             <button id="chat-send-btn">Send</button>
                         </div>
                     </div>
@@ -3794,7 +3800,10 @@
                             <div class="forum-comments-section">
                                 <div class="forum-comment-form hidden" id="forum-comment-form-container">
                                     <div class="comment-input-wrapper">
-                                        <textarea id="forum-comment-input"
+                                        <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+                                            <span id="forum-comment-counter" style="font-size: 0.75rem; font-weight: 600; opacity: 0.75;">2000 remaining</span>
+                                        </div>
+                                        <textarea id="forum-comment-input" maxlength="2000"
                                             placeholder="Join the conversation..."></textarea>
                                         
                                         <div id="forum-comment-image-upload" class="forum-upload-group" style="padding: 8px 10px; margin-bottom: 10px; border-width: 1px; border-style: solid;">
@@ -3836,14 +3845,20 @@
                                 <form id="forum-post-form" class="forum-form">
                                     <input type="hidden" id="forum-post-category-id">
                                     <div class="form-group">
-                                        <label>What's on your mind?</label>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                            <label style="margin-bottom: 0;">What's on your mind?</label>
+                                            <span id="forum-post-title-counter" style="font-size: 0.75rem; font-weight: 600; opacity: 0.75;">100 remaining</span>
+                                        </div>
                                         <input type="text" id="forum-post-title"
-                                            placeholder="Give your thread a clear, descriptive title" required>
+                                            placeholder="Give your thread a clear, descriptive title" maxlength="100" required>
                                     </div>
                                     <div class="form-group">
-                                        <label>Details</label>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                            <label style="margin-bottom: 0;">Details</label>
+                                            <span id="forum-post-content-counter" style="font-size: 0.75rem; font-weight: 600; opacity: 0.75;">2000 remaining</span>
+                                        </div>
                                         <textarea id="forum-post-content" placeholder="Write your post content here..."
-                                            required></textarea>
+                                            maxlength="2000" required></textarea>
                                     </div>
                                     <div id="forum-image-upload-section" class="forum-upload-group hidden">
                                         <label style="display: block; margin-bottom: 8px; font-weight: 700; opacity: 0.9; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Attach Images (up to 4)</label>
@@ -7592,7 +7607,7 @@
                     <!-- Messages injected here -->
                 </div>
                 <div class="chat-modal-input-area">
-                    <input type="text" id="pm-input" placeholder="Type a message..." autocomplete="off">
+                    <input type="text" id="pm-input" placeholder="Type a message..." maxlength="100" autocomplete="off">
                     <button id="pm-send-btn">Send</button>
                 </div>
             </div>

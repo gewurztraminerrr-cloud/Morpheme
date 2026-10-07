@@ -3949,4 +3949,55 @@ function handleAppVisibilityChange() {
 document.addEventListener('visibilitychange', handleAppVisibilityChange);
 window.addEventListener('visibilitychange', handleAppVisibilityChange);
 
+// Enforce maximum allowable character count of 100 on all other textboxes not explicitly configured with higher limits
+function enforceDefaultInputLimits() {
+    const textSelectors = 'input:not([type]), input[type="text"], input[type="password"], input[type="email"], input[type="search"], textarea';
+    const elements = document.querySelectorAll(textSelectors);
+    elements.forEach(el => {
+        // Exempt elements with explicitly permitted higher limits:
+        // - Forum post content (2000), forum comment (2000), forum title (100)
+        // - Lobby chat (1000)
+        // - In-game room chat (1000)
+        // - Contact message (if long) or custom exempted IDs
+        if (el.id === 'lobby-chat-input' || el.id === 'chat-input' || el.id === 'forum-post-content' || el.id === 'forum-comment-input') {
+            return;
+        }
+        const currentMax = el.getAttribute('maxlength');
+        if (!currentMax) {
+            el.setAttribute('maxlength', '100');
+        } else {
+            const parsed = parseInt(currentMax, 10);
+            if (isNaN(parsed) || parsed > 100) {
+                // If it was higher than 100 and not one of the explicitly allowed inputs, cap it to 100
+                el.setAttribute('maxlength', '100');
+            }
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enforceDefaultInputLimits);
+} else {
+    enforceDefaultInputLimits();
+}
+
+// Observe any dynamically inserted inputs/modals in the DOM
+if (typeof MutationObserver !== 'undefined') {
+    const _inputLimitObserver = new MutationObserver((mutations) => {
+        let shouldEnforce = false;
+        for (const m of mutations) {
+            if (m.addedNodes && m.addedNodes.length > 0) {
+                shouldEnforce = true;
+                break;
+            }
+        }
+        if (shouldEnforce) {
+            enforceDefaultInputLimits();
+        }
+    });
+    try {
+        _inputLimitObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    } catch(e) {}
+}
+
 console.log('app.js fully loaded - version with UI optimizations');

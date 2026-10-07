@@ -431,6 +431,32 @@ const Forum = {
             postForm.addEventListener('submit', (e) => this.handlePostSubmit(e));
         }
 
+        // Dynamic character counters for Forum inputs
+        const postTitleInput = document.getElementById('forum-post-title');
+        const postTitleCounter = document.getElementById('forum-post-title-counter');
+        const postContentInput = document.getElementById('forum-post-content');
+        const postContentCounter = document.getElementById('forum-post-content-counter');
+        const commentInput = document.getElementById('forum-comment-input');
+        const commentCounter = document.getElementById('forum-comment-counter');
+
+        const updateCounter = (input, counter, max) => {
+            if (!input || !counter) return;
+            const remaining = Math.max(0, max - (input.value || '').length);
+            counter.textContent = `${remaining} remaining`;
+            counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= (max * 0.1) ? '#fbbf24' : '');
+        };
+        this.updateCounter = updateCounter;
+
+        if (postTitleInput && postTitleCounter) {
+            postTitleInput.addEventListener('input', () => updateCounter(postTitleInput, postTitleCounter, 100));
+        }
+        if (postContentInput && postContentCounter) {
+            postContentInput.addEventListener('input', () => updateCounter(postContentInput, postContentCounter, 2000));
+        }
+        if (commentInput && commentCounter) {
+            commentInput.addEventListener('input', () => updateCounter(commentInput, commentCounter, 2000));
+        }
+
         // Comment form
         const submitCommentBtn = document.getElementById('forum-submit-comment');
         if (submitCommentBtn) {
@@ -1046,9 +1072,12 @@ const Forum = {
 
     handlePostSubmit: async function (e) {
         e.preventDefault();
-        const title = document.getElementById('forum-post-title').value;
-        const content = document.getElementById('forum-post-content').value;
+        const rawTitle = document.getElementById('forum-post-title').value;
+        const rawContent = document.getElementById('forum-post-content').value;
         const catId = document.getElementById('forum-post-category-id').value;
+
+        const title = (rawTitle || '').trim().slice(0, 100);
+        const content = (rawContent || '').trim().slice(0, 2000);
 
         if (!title || !content) return;
 
@@ -1094,6 +1123,10 @@ const Forum = {
             const data = await response.json();
             if (data.success) {
                 document.getElementById('forum-post-form').reset();
+                if (this.updateCounter) {
+                    this.updateCounter(document.getElementById('forum-post-title'), document.getElementById('forum-post-title-counter'), 100);
+                    this.updateCounter(document.getElementById('forum-post-content'), document.getElementById('forum-post-content-counter'), 2000);
+                }
                 this.selectedPostFiles = [];
                 this.renderImagePreviews('post');
                 
@@ -1114,7 +1147,8 @@ const Forum = {
     },
 
     handleCommentSubmit: async function () {
-        const content = document.getElementById('forum-comment-input').value;
+        const rawContent = document.getElementById('forum-comment-input').value;
+        const content = (rawContent || '').trim().slice(0, 2000);
 
         if (!content) return;
 
@@ -1159,6 +1193,9 @@ const Forum = {
             const data = await response.json();
             if (data.success) {
                 document.getElementById('forum-comment-input').value = '';
+                if (this.updateCounter) {
+                    this.updateCounter(document.getElementById('forum-comment-input'), document.getElementById('forum-comment-counter'), 2000);
+                }
                 this.selectedCommentFiles = [];
                 this.renderImagePreviews('comment');
 

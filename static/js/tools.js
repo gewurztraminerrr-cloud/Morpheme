@@ -4066,14 +4066,52 @@ function showImageLightbox(url, caption = "") {
 }
 window.showImageLightbox = showImageLightbox;
 
+function updateProfileFieldCounter(key, text) {
+    if (key === 'quote') {
+        const counter = document.getElementById('profile-quote-counter');
+        if (counter) {
+            const raw = text || '';
+            const actualText = (raw === 'Enter a personal quote') ? '' : raw;
+            const remaining = Math.max(0, 150 - actualText.length);
+            counter.textContent = `${remaining} remaining`;
+            counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= 20 ? '#fbbf24' : '');
+        }
+    } else if (key === 'description') {
+        const counter = document.getElementById('profile-desc-counter');
+        if (counter) {
+            const raw = text || '';
+            const actualText = (raw === 'Add a detailed description about yourself...' || raw.startsWith('Add a\n')) ? '' : raw;
+            const remaining = Math.max(0, 10000 - actualText.length);
+            counter.textContent = `${remaining} remaining`;
+            counter.style.color = (remaining === 0) ? '#f43f5e' : (remaining <= 500 ? '#fbbf24' : '');
+        }
+    }
+}
+window.updateProfileFieldCounter = updateProfileFieldCounter;
+
 function setupProfileEditing(isOwner) {
+    const quoteCounter = document.getElementById('profile-quote-counter');
+    const descCounter = document.getElementById('profile-desc-counter');
+
+    if (isOwner) {
+        if (quoteCounter) quoteCounter.style.display = 'inline-block';
+        if (descCounter) descCounter.style.display = 'inline-block';
+        const qEl = document.getElementById('profile-quote-val');
+        const dEl = document.getElementById('profile-description-val');
+        updateProfileFieldCounter('quote', qEl ? qEl.innerText : '');
+        updateProfileFieldCounter('description', dEl ? dEl.innerText : '');
+    } else {
+        if (quoteCounter) quoteCounter.style.display = 'none';
+        if (descCounter) descCounter.style.display = 'none';
+    }
+
     const editableFields = [
-        { id: 'profile-full-name', key: 'full_name', placeholder: 'Full Name' },
-        { id: 'profile-age-val', key: 'age', placeholder: 'Age' },
-        { id: 'profile-gender-val', key: 'gender', placeholder: 'Gender' },
-        { id: 'profile-location-val', key: 'location', placeholder: 'Location' },
-        { id: 'profile-quote-val', key: 'quote', placeholder: 'Enter a personal quote' },
-        { id: 'profile-description-val', key: 'description', placeholder: 'Add a detailed description about yourself...' }
+        { id: 'profile-full-name', key: 'full_name', placeholder: 'Full Name', max: 100 },
+        { id: 'profile-age-val', key: 'age', placeholder: 'Age', max: 100 },
+        { id: 'profile-gender-val', key: 'gender', placeholder: 'Gender', max: 100 },
+        { id: 'profile-location-val', key: 'location', placeholder: 'Location', max: 100 },
+        { id: 'profile-quote-val', key: 'quote', placeholder: 'Enter a personal quote', max: 150 },
+        { id: 'profile-description-val', key: 'description', placeholder: 'Add a detailed description about yourself...', max: 10000 }
     ];
 
     editableFields.forEach(field => {
@@ -4090,21 +4128,55 @@ function setupProfileEditing(isOwner) {
             el.parentNode.replaceChild(newEl, el);
 
             newEl.addEventListener('blur', () => {
-                saveProfileField(field.key, cleanProfileText(newEl.innerText.trim()));
+                const cleaned = cleanProfileText(newEl.innerText.trim()).slice(0, field.max);
+                saveProfileField(field.key, cleaned);
+                updateProfileFieldCounter(field.key, newEl.innerText);
                 if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
                     initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
                 }
             });
+
             newEl.addEventListener('input', () => {
+                let current = newEl.innerText;
+                if (current.length > field.max) {
+                    newEl.innerText = current.slice(0, field.max);
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(newEl);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+                updateProfileFieldCounter(field.key, newEl.innerText);
                 if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
                     initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
                 }
             });
+
             newEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && field.key !== 'description') {
                     e.preventDefault();
                     newEl.blur();
+                    return;
                 }
+                const isNavOrControl = e.ctrlKey || e.metaKey || ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'].includes(e.key);
+                const sel = window.getSelection();
+                const hasSelectedText = sel && sel.toString().length > 0;
+                if (!isNavOrControl && !hasSelectedText && newEl.innerText.length >= field.max) {
+                    e.preventDefault();
+                }
+            });
+
+            newEl.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const sel = window.getSelection();
+                const selectedLen = sel ? sel.toString().length : 0;
+                const currentLen = newEl.innerText.length - selectedLen;
+                const allowed = Math.max(0, field.max - currentLen);
+                const insertText = pasteText.slice(0, allowed);
+                document.execCommand('insertText', false, insertText);
+                updateProfileFieldCounter(field.key, newEl.innerText);
             });
         } else {
             el.contentEditable = "false";
@@ -4114,11 +4186,13 @@ function setupProfileEditing(isOwner) {
 }
 
 async function saveProfileField(key, value) {
+    const maxLen = (key === 'quote') ? 150 : (key === 'description' ? 10000 : 100);
+    const safeVal = (typeof value === 'string') ? value.slice(0, maxLen) : value;
     try {
         const response = await fetch('/api/profile/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ [key]: value })
+            body: JSON.stringify({ [key]: safeVal })
         });
         const data = await response.json();
         if (data.error) {

@@ -7923,7 +7923,7 @@ class LobbyManager:
                 'username': username,
                 'rating': rating if rating is not None else 1200,
                 'country_flag': country_flag or '🏳️',
-                'message': message.strip()[:300],
+                'message': message.strip()[:1000],
                 'time': now,
                 'timestamp': iso_ts
             }

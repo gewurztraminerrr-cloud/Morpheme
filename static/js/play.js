@@ -3825,10 +3825,13 @@ async function sendChatMessage() {
     if (isSendingChat) return;
     const input = document.getElementById('chat-input');
     if (!input) return;
-    const message = input.value.trim();
+    let message = input.value.trim();
     const roomId = getCurrentRoomId();
 
     if (!message || !roomId) return;
+    if (message.length > 1000) {
+        message = message.slice(0, 1000);
+    }
 
     isSendingChat = true;
     input.value = ''; // Synchronously clear input immediately so double-press cannot grab the message again

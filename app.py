@@ -4310,6 +4310,15 @@ def update_profile():
     if not updates:
         return jsonify({'error': 'No valid fields provided'}), 400
         
+    # Enforce strict character limits
+    if 'quote' in updates:
+        updates['quote'] = str(updates['quote'])[:150]
+    if 'description' in updates:
+        updates['description'] = str(updates['description'])[:10000]
+    for k in ['full_name', 'age', 'gender', 'location', 'proof_url', 'timezone']:
+        if k in updates:
+            updates[k] = str(updates[k])[:100]
+        
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
         set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
@@ -5567,7 +5576,7 @@ def send_lobby_chat():
     if not message:
         return jsonify({'error': 'Message cannot be empty'}), 400
     
-    message = message[:300]
+    message = message[:1000]
     
     rating = 1200
     avatar_url = None
@@ -6204,9 +6213,9 @@ def submit_chat_message(room_id):
     if not message and not image:
         return jsonify({'error': 'Message or image required'}), 400
         
-    # Optional: Truncate long messages
-    if len(message) > 200:
-        message = message[:200]
+    # Truncate messages to 1000 characters
+    if len(message) > 1000:
+        message = message[:1000]
         
     # Optional: Basic validation on image size (length of base64 string) if needed
     # base64 factor is ~1.33. 1MB image is ~1.33MB string. Limit to ~2MB string.
@@ -9325,8 +9334,8 @@ def create_forum_post():
         
     data = request.form
     category_id = data.get('category_id')
-    title = data.get('title')
-    content = data.get('content')
+    title = (data.get('title') or '').strip()[:100]
+    content = (data.get('content') or '').strip()[:2000]
     
     if not category_id or not title or not content:
         return jsonify({'error': 'Missing fields'}), 400
@@ -9390,7 +9399,7 @@ def create_forum_comment():
         
     data = request.form
     post_id = data.get('post_id')
-    content = data.get('content')
+    content = (data.get('content') or '').strip()[:2000]
     
     if not post_id or not content:
         return jsonify({'error': 'Missing fields'}), 400
