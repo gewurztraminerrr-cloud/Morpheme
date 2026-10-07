@@ -163,6 +163,11 @@ class TournamentManager:
                         conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u1, m['id']))
                         has_changes = True
                     continue
+                if u1 == -1:
+                    if not m['winner_id']:
+                        conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u2, m['id']))
+                        has_changes = True
+                    continue
                 
                 u1_submitted = u1 in score_dict
                 u2_submitted = u2 in score_dict
@@ -477,9 +482,19 @@ class TournamentManager:
                 u1 = m['user1_id']
                 u2 = m['user2_id']
                 
-                if u2 == -1:
+                if u2 == -1 and u1 != -1:
                     # Bye! u1 advances automatically
                     winners.append(u1)
+                    if m['winner_id'] != u1:
+                        conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u1, m['id']))
+                    continue
+                if u1 == -1 and u2 != -1:
+                    # Bye! u2 advances automatically
+                    winners.append(u2)
+                    if m['winner_id'] != u2:
+                        conn.execute('UPDATE tournament_matchups SET winner_id = ? WHERE id = ?', (u2, m['id']))
+                    continue
+                if u1 == -1 and u2 == -1:
                     continue
                     
                 s1 = score_dict.get(u1, 0)
@@ -563,13 +578,103 @@ class TournamentManager:
             res['my_score'] = res['u1_score']
         else:
             res['opponent_id'] = res['user1_id']
-            res['opponent_name'] = res['u1_name']
-            res['opponent_flag'] = res['u1_flag']
+            res['opponent_name'] = res['u1_name'] if res['user1_id'] != -1 else "BYE"
+            res['opponent_flag'] = res['u1_flag'] if res['user1_id'] != -1 else ""
             res['my_flag'] = res['u2_flag']
-            res['opponent_score'] = res['u1_score']
+            res['opponent_score'] = res['u1_score'] if res['user1_id'] != -1 else 0
             res['my_score'] = res['u2_score']
             
         return res
+
+    def handle_user_banned(self, user_id, conn=None):
+        """
+        When a user is banned (or deleted) while participating in a tournament:
+        1. For any active tournament, their opponent in the current round receives an automatic win (walkover/BYE).
+           - The matchup is normalized to user1_id = opponent_id, user2_id = -1, winner_id = opponent_id.
+           - The opponent remains active and will advance when the round concludes.
+        2. In past rounds of an active tournament, replace the banned user with -1 so that matchup history
+           and brackets are preserved without dangling foreign keys or broken pairs.
+        3. Remove the banned user from tournament_participants and tournament_scores for active tournaments.
+        4. For non-active tournaments (signup, completed, cancelled), clean up the banned user's entries.
+        """
+        should_close = False
+        if conn is None:
+            conn = self.get_db()
+            should_close = True
+
+        try:
+            # 1. Process active tournaments
+            active_tournaments = conn.execute(
+                "SELECT id, current_round FROM tournaments WHERE status = 'active'"
+            ).fetchall()
+
+            for t in active_tournaments:
+                tid = t['id']
+                cur_round = t['current_round']
+
+                matchups = conn.execute("""
+                    SELECT id, round_number, user1_id, user2_id, winner_id
+                    FROM tournament_matchups
+                    WHERE tournament_id = ? AND (user1_id = ? OR user2_id = ?)
+                """, (tid, user_id, user_id)).fetchall()
+
+                for m in matchups:
+                    mid = m['id']
+                    r_num = m['round_number']
+                    u1 = m['user1_id']
+                    u2 = m['user2_id']
+                    opp_id = u2 if u1 == user_id else u1
+
+                    if r_num == cur_round:
+                        if opp_id and opp_id > 0 and opp_id != user_id:
+                            # Award opponent an automatic win / walkover BYE
+                            conn.execute("""
+                                UPDATE tournament_matchups
+                                SET user1_id = ?, user2_id = -1, winner_id = ?
+                                WHERE id = ?
+                            """, (opp_id, opp_id, mid))
+                            conn.execute("""
+                                UPDATE tournament_participants
+                                SET status = 'active'
+                                WHERE tournament_id = ? AND user_id = ?
+                            """, (tid, opp_id))
+                        else:
+                            # No valid opponent (banned user already had a BYE or both invalid)
+                            conn.execute("DELETE FROM tournament_matchups WHERE id = ?", (mid,))
+                    else:
+                        # Prior round: preserve matchup row for bracket integrity, replace user with -1
+                        new_u1 = -1 if u1 == user_id else u1
+                        new_u2 = -1 if u2 == user_id else u2
+                        new_winner = -1 if m['winner_id'] == user_id else m['winner_id']
+                        conn.execute("""
+                            UPDATE tournament_matchups
+                            SET user1_id = ?, user2_id = ?, winner_id = ?
+                            WHERE id = ?
+                        """, (new_u1, new_u2, new_winner, mid))
+
+                # Clean active tournament participants and scores for banned user
+                conn.execute("DELETE FROM tournament_participants WHERE tournament_id = ? AND user_id = ?", (tid, user_id))
+                conn.execute("DELETE FROM tournament_scores WHERE tournament_id = ? AND user_id = ?", (tid, user_id))
+
+            # 2. Clean up non-active tournaments
+            conn.execute("""
+                DELETE FROM tournament_matchups
+                WHERE tournament_id NOT IN (SELECT id FROM tournaments WHERE status = 'active')
+                  AND (user1_id = ? OR user2_id = ? OR winner_id = ?)
+            """, (user_id, user_id, user_id))
+            conn.execute("DELETE FROM tournament_participants WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM tournament_scores WHERE user_id = ?", (user_id,))
+
+            if should_close:
+                conn.commit()
+        except Exception as e:
+            print(f"[Tournament] Error in handle_user_banned for user {user_id}: {e}")
+            if should_close:
+                conn.rollback()
+            raise
+        finally:
+            if should_close:
+                conn.close()
 
     def forfeit_turn(self, tid, round_number, user_id):
         """Mark user turn as done with 0 score (forfeit)"""
@@ -717,11 +822,12 @@ class TournamentManager:
             conn.close()
             return False
             
-        # Check if user has a BYE this round (user2_id = -1)
+        # Check if user has a BYE this round (user2_id = -1 or user1_id = -1)
         bye_match = conn.execute('''
             SELECT 1 FROM tournament_matchups
-            WHERE tournament_id = ? AND round_number = ? AND user1_id = ? AND user2_id = -1
-        ''', (tid, round_num, user_id)).fetchone()
+            WHERE tournament_id = ? AND round_number = ? 
+              AND ((user1_id = ? AND user2_id = -1) OR (user2_id = ? AND user1_id = -1))
+        ''', (tid, round_num, user_id, user_id)).fetchone()
         if bye_match:
             conn.close()
             return False
