@@ -601,8 +601,8 @@
                         var panelHtml = '<div class="create-room-panel" ' + guestStyle + '>' +
                             '<div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-bottom: 8px; text-align: center;">' + guestText + '</div>' +
                             '<div class="rating-inputs-row">' +
-                                '<input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ' + guestDis + '>' +
-                                '<input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ' + guestDis + '>' +
+                                '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\').slice(0,5)" ' + guestDis + '>' +
+                                '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\').slice(0,5)" ' + guestDis + '>' +
                             '</div>' +
                             '<button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ' + guestBtnStyle + '>' + guestBtnText + '</button>' +
                         '</div>';
@@ -3374,8 +3374,8 @@
                             Set Rating Limits (Optional)
                         </div>
                         <div class="rating-inputs-row">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
                         </div>
                         <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)">+ Create Room</button>
                     </div>
@@ -9584,7 +9584,7 @@
     <script src="/js/settings.js?v=1791095000"></script>
     <script src="/js/forum.js?v=1790632000"></script>
     <script src="/js/app.js?v=1791100001"></script>
-    <script src="/js/lobby.js?v=1791100005"></script>
+    <script src="/js/lobby.js?v=1791100006"></script>
     <script src="/js/play.js?v=1791100012"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>

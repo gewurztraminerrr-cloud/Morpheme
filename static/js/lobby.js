@@ -994,8 +994,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                         ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
                     </div>
                     <div class="rating-inputs-row">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ${isGuest ? 'disabled' : ''}>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ${isGuest ? 'disabled' : ''}>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\').slice(0,5)" ${isGuest ? 'disabled' : ''}>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\').slice(0,5)" ${isGuest ? 'disabled' : ''}>
                     </div>
                     <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
                         ${isGuest ? 'Registered Only' : '+ Create Room'}
@@ -2508,7 +2508,7 @@ if (document.readyState === 'loading') {
 // --- STRICT NUMERIC GUARDS FOR RATING INPUTS ---
 // Disallows letters, symbols, signs, decimals or any other non-digit character in "Set Rating Limits" textboxes.
 (function initRatingInputNumericGuards() {
-    // 1. Block non-numeric keystrokes on keydown
+    // 1. Block non-numeric keystrokes on keydown and enforce max 5 digits
     document.addEventListener('keydown', (e) => {
         const target = e.target;
         if (!target || !target.classList || !target.classList.contains('rating-input')) return;
@@ -2517,18 +2517,18 @@ if (document.readyState === 'loading') {
         const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
         if (allowedKeys.includes(e.key)) return;
 
-        // Up/Down arrows increment/decrement by 100
+        // Up/Down arrows increment/decrement by 100 (capped at 99999 for 5 digits)
         if (e.key === 'ArrowUp') {
             e.preventDefault();
             const current = parseInt(target.value) || 0;
-            target.value = Math.max(0, current + 100);
+            target.value = String(Math.min(99999, Math.max(0, current + 100)));
             target.dispatchEvent(new Event('input', { bubbles: true }));
             return;
         }
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             const current = parseInt(target.value) || 0;
-            target.value = Math.max(0, current - 100);
+            target.value = String(Math.max(0, current - 100));
             target.dispatchEvent(new Event('input', { bubbles: true }));
             return;
         }
@@ -2539,29 +2539,43 @@ if (document.readyState === 'loading') {
         // Block all non-digit keys (letters, 'e', 'E', '+', '-', '.', punctuation, spaces, etc.)
         if (!/^[0-9]$/.test(e.key)) {
             e.preventDefault();
+            return;
         }
-    });
 
-    // 2. Block non-numeric character insertions before input happens
-    document.addEventListener('beforeinput', (e) => {
-        const target = e.target;
-        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
-        if (e.data && !/^[0-9]+$/.test(e.data)) {
+        // Enforce 5-digit limit on key entry
+        const selectedLen = Math.abs((target.selectionEnd || 0) - (target.selectionStart || 0));
+        if (target.value.length >= 5 && selectedLen === 0) {
             e.preventDefault();
         }
     });
 
-    // 3. Clean up any non-digit characters on input (catches IME, autofill, etc.)
+    // 2. Block non-numeric character insertions and enforce max 5 digits before input happens
+    document.addEventListener('beforeinput', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+        if (e.data) {
+            if (!/^[0-9]+$/.test(e.data)) {
+                e.preventDefault();
+                return;
+            }
+            const selectedLen = Math.abs((target.selectionEnd || 0) - (target.selectionStart || 0));
+            if (target.value.length - selectedLen + e.data.length > 5) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    // 3. Clean up any non-digit characters and truncate to 5 digits on input (catches IME, autofill, etc.)
     document.addEventListener('input', (e) => {
         const target = e.target;
         if (!target || !target.classList || !target.classList.contains('rating-input')) return;
-        const cleaned = target.value.replace(/[^0-9]/g, '');
+        const cleaned = target.value.replace(/[^0-9]/g, '').slice(0, 5);
         if (target.value !== cleaned) {
             target.value = cleaned;
         }
     });
 
-    // 4. Filter pasted content so only digits are inserted
+    // 4. Filter pasted content so only digits are inserted, capped at 5 digits
     document.addEventListener('paste', (e) => {
         const target = e.target;
         if (!target || !target.classList || !target.classList.contains('rating-input')) return;
@@ -2572,20 +2586,21 @@ if (document.readyState === 'loading') {
             const start = target.selectionStart || 0;
             const end = target.selectionEnd || 0;
             const val = target.value;
-            target.value = val.slice(0, start) + digits + val.slice(end);
-            const newPos = start + digits.length;
+            const combined = (val.slice(0, start) + digits + val.slice(end)).slice(0, 5);
+            target.value = combined;
+            const newPos = Math.min(combined.length, start + digits.length);
             target.setSelectionRange(newPos, newPos);
             target.dispatchEvent(new Event('input', { bubbles: true }));
         }
     });
 
-    // 5. Prevent dropping non-numeric text
+    // 5. Prevent dropping non-numeric text and truncate to 5 digits
     document.addEventListener('drop', (e) => {
         const target = e.target;
         if (!target || !target.classList || !target.classList.contains('rating-input')) return;
         e.preventDefault();
         const text = e.dataTransfer ? e.dataTransfer.getData('text') : '';
-        const digits = (text || '').replace(/[^0-9]/g, '');
+        const digits = (text || '').replace(/[^0-9]/g, '').slice(0, 5);
         if (digits) {
             target.value = digits;
             target.dispatchEvent(new Event('input', { bubbles: true }));
