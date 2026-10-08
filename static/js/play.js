@@ -2424,6 +2424,8 @@ async function updateGameState(incomingState = null) {
             if (filterContainer) filterContainer.style.display = 'none';
             const findersContainer = document.getElementById('finders-button-container');
             if (findersContainer) findersContainer.style.display = 'none';
+            const workOnGameContainer = document.getElementById('work-on-game-btn-container');
+            if (workOnGameContainer) workOnGameContainer.style.display = 'none';
         }
 
 
@@ -4684,6 +4686,71 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const findersContainer = document.getElementById('finders-button-container');
     const findersBtn = document.getElementById('view-finders-btn-top');
     
+    const workOnGameContainer = document.getElementById('work-on-game-btn-container');
+    const workOnGameBtn = document.getElementById('add-to-work-on-game-btn');
+    if (workOnGameContainer && workOnGameBtn) {
+        if (highlightedFoundWord) {
+            workOnGameContainer.style.display = 'block';
+            workOnGameBtn.onclick = async () => {
+                const targetWord = highlightedFoundWord;
+                if (!targetWord) return;
+
+                // Check existence via localStorage
+                const storedRaw = localStorage.getItem('morpheme_words_to_work_on');
+                let curList = [];
+                try {
+                    if (storedRaw) curList = JSON.parse(storedRaw) || [];
+                } catch(e) {}
+
+                const alreadyThere = curList.some(item => {
+                    const w = (typeof item === 'object' && item !== null) ? item.word : item;
+                    return (w || '').toUpperCase() === targetWord;
+                });
+
+                if (alreadyThere) {
+                    if (window.showAlertModal) {
+                        window.showAlertModal('Already on List', `"${targetWord}" is already on your Words to Work on list.`);
+                    } else {
+                        alert(`"${targetWord}" is already on your Words to Work on list.`);
+                    }
+                    return;
+                }
+
+                if (typeof window.addWordToWorkOn === 'function') {
+                    const added = await window.addWordToWorkOn(targetWord);
+                    if (added && window.showAlertModal) {
+                        window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
+                    }
+                } else {
+                    // Fallback if tools.js function is not yet globally loaded
+                    try {
+                        const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(targetWord)}`);
+                        const info = await resp.json();
+                        if (info && info.valid) {
+                            curList.unshift({
+                                word: targetWord,
+                                lists: info.lists || ['NWL', 'CSW'],
+                                timestamp: Date.now()
+                            });
+                            localStorage.setItem('morpheme_words_to_work_on', JSON.stringify(curList));
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
+                            }
+                        } else {
+                            if (window.showAlertModal) {
+                                window.showAlertModal('Invalid Word', `"${targetWord}" is not a valid word and was not added.`);
+                            }
+                        }
+                    } catch(err) {
+                        console.error('Failed to add word to work on list:', err);
+                    }
+                }
+            };
+        } else {
+            workOnGameContainer.style.display = 'none';
+        }
+    }
+
     if (findersContainer && findersBtn) {
         const isSubanagrams = Boolean(window.lastGameState && window.lastGameState.game_type === 'subanagrams');
         if (highlightedFoundWord && !isSubanagrams) {

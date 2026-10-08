@@ -8,6 +8,7 @@ window._cachedFullWordLists = window._cachedFullWordLists || {};
 function initToolsModules() {
     const inits = [
         setupToolsNavigation, setupProfileTool, setupComboChecker, setupListsTool,
+        setupWordsToWorkOnTool,
         setupSequenceTool, setupManualTool, setupRandomWordTool, setupWotdTool,
         setupSubanagramsTool, setupIsValidTool, setupPrivateMessaging, setupMiniProfileModal,
         setupImageLightbox, setupUnscrambleTool, setupFindCountTool, setupPersonalTimer
@@ -246,6 +247,11 @@ window.showTool = function(toolId) {
             setTimeout(() => {
                 window.applyDynamicValidationStyle(displayEl, displayEl.innerText.trim());
             }, 60);
+        }
+    }
+    if (toolId === 'work-on') {
+        if (typeof renderWordsToWorkOnTable === 'function') {
+            renderWordsToWorkOnTable();
         }
     }
     if (toolId === 'random') {
@@ -5342,11 +5348,52 @@ async function fetchListsData(typeOverride) {
         'new_nwl': 'New NWL Words',
         'new_csw': 'New CSW Words',
         'all_new': 'All New Words',
+        'words_to_work_on': 'Words to Work on',
         'all_words': 'All Words'
     };
 
     if (titleEl) {
         titleEl.innerText = typeMap[selectedType] || 'Word List';
+    }
+
+    if (selectedType === 'words_to_work_on') {
+        if (listsFetchTimeoutId) {
+            clearTimeout(listsFetchTimeoutId);
+            listsFetchTimeoutId = null;
+        }
+        if (listsFetchAbortController === currentController) {
+            listsFetchAbortController = null;
+        }
+
+        const items = typeof getWordsToWorkOn === 'function' ? getWordsToWorkOn() : [];
+        let words = items.map(it => (typeof it === 'object' && it !== null) ? it.word : it);
+
+        if (lengthSelect && lengthSelect.value !== 'all') {
+            const reqLen = parseInt(lengthSelect.value, 10);
+            words = words.filter(w => w.length === reqLen);
+        }
+        if (startSelect && startSelect.value !== 'all') {
+            const reqStart = startSelect.value.toUpperCase();
+            words = words.filter(w => w.startsWith(reqStart));
+        }
+
+        if (countEl) {
+            countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
+        }
+
+        currentWordsList = words;
+        currentWordsRenderedCount = 0;
+        currentWordsType = selectedType;
+        window.listsServerTruncated = false;
+
+        if (!words || words.length === 0) {
+            if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found in Words to Work on matching these filters.</div>';
+            return;
+        }
+
+        startProgressiveRendering();
+        listsDataLoaded = true;
+        return;
     }
 
     if (scrollArea) {
@@ -5444,6 +5491,333 @@ async function fetchListsData(typeOverride) {
         }
     }
 }
+
+// --- Words to Work on Tool Logic ---
+
+const WORDS_TO_WORK_ON_KEY = 'morpheme_words_to_work_on';
+let selectedWorkOnIndex = null;
+
+function getWordsToWorkOn() {
+    try {
+        const raw = localStorage.getItem(WORDS_TO_WORK_ON_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+        return [];
+    } catch (e) {
+        console.error('[Words to Work on] Error reading localStorage:', e);
+        return [];
+    }
+}
+
+function saveWordsToWorkOn(list) {
+    try {
+        localStorage.setItem(WORDS_TO_WORK_ON_KEY, JSON.stringify(list || []));
+    } catch (e) {
+        console.error('[Words to Work on] Error saving localStorage:', e);
+    }
+}
+
+window.getWordsToWorkOn = getWordsToWorkOn;
+window.saveWordsToWorkOn = saveWordsToWorkOn;
+
+async function checkWordMembership(word) {
+    const clean = (word || '').trim().toUpperCase();
+    if (!clean) return { valid: false, lists: [] };
+    try {
+        const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(clean)}`);
+        if (!resp.ok) return { valid: false, lists: [] };
+        return await resp.json();
+    } catch (e) {
+        console.error('[Words to Work on] Membership check failed:', e);
+        return { valid: false, lists: [] };
+    }
+}
+window.checkWordMembership = checkWordMembership;
+
+async function addWordToWorkOn(rawWord) {
+    const word = (rawWord || '').trim().toUpperCase();
+    if (!word) return false;
+
+    // Check if already in list
+    const currentList = getWordsToWorkOn();
+    const exists = currentList.some(item => {
+        const w = (typeof item === 'object' && item !== null) ? item.word : item;
+        return (w || '').toUpperCase() === word;
+    });
+
+    if (exists) {
+        if (window.showAlertModal) {
+            window.showAlertModal('Already on List', `"${word}" is already on your Words to Work on list.`);
+        } else {
+            alert(`"${word}" is already on your Words to Work on list.`);
+        }
+        return false;
+    }
+
+    // Verify validity across NWL, CSW, AW
+    const info = await checkWordMembership(word);
+    if (!info.valid || !info.lists || info.lists.length === 0) {
+        if (window.showAlertModal) {
+            window.showAlertModal('Invalid Word', `"${word}" is not a valid word and was not added.`);
+        } else {
+            alert(`"${word}" is not a valid word and was not added.`);
+        }
+        return false;
+    }
+
+    const newItem = {
+        word: word,
+        lists: info.lists,
+        timestamp: Date.now()
+    };
+
+    // Newest words added go to the TOP of the table
+    currentList.unshift(newItem);
+    saveWordsToWorkOn(currentList);
+
+    // Reset selected index
+    selectedWorkOnIndex = null;
+    renderWordsToWorkOnTable();
+
+    // If Lists tool is currently showing words_to_work_on, refresh it
+    const typeSelect = document.getElementById('list-type-filter');
+    if (typeSelect && typeSelect.value === 'words_to_work_on' && typeof fetchListsData === 'function') {
+        fetchListsData();
+    }
+
+    return true;
+}
+window.addWordToWorkOn = addWordToWorkOn;
+
+function removeSelectedWordToWorkOn() {
+    if (selectedWorkOnIndex === null || selectedWorkOnIndex < 0) return;
+    const currentList = getWordsToWorkOn();
+    if (selectedWorkOnIndex >= currentList.length) return;
+
+    currentList.splice(selectedWorkOnIndex, 1);
+    saveWordsToWorkOn(currentList);
+    selectedWorkOnIndex = null;
+
+    renderWordsToWorkOnTable();
+
+    const typeSelect = document.getElementById('list-type-filter');
+    if (typeSelect && typeSelect.value === 'words_to_work_on' && typeof fetchListsData === 'function') {
+        fetchListsData();
+    }
+}
+window.removeSelectedWordToWorkOn = removeSelectedWordToWorkOn;
+
+function clearAllWordsToWorkOn() {
+    const list = getWordsToWorkOn();
+    if (list.length === 0) return;
+
+    const doClear = () => {
+        saveWordsToWorkOn([]);
+        selectedWorkOnIndex = null;
+        renderWordsToWorkOnTable();
+
+        const typeSelect = document.getElementById('list-type-filter');
+        if (typeSelect && typeSelect.value === 'words_to_work_on' && typeof fetchListsData === 'function') {
+            fetchListsData();
+        }
+    };
+
+    if (window.showConfirmModal) {
+        window.showConfirmModal(
+            'Clear All Words',
+            'Are you sure you want to clear all words from your Words to Work on list? This cannot be undone.',
+            doClear
+        );
+    } else {
+        if (confirm('Are you sure you want to clear all words from your Words to Work on list?')) {
+            doClear();
+        }
+    }
+}
+window.clearAllWordsToWorkOn = clearAllWordsToWorkOn;
+
+function renderWordsToWorkOnTable() {
+    const tableBody = document.getElementById('work-on-table-body');
+    const totalCountEl = document.getElementById('work-on-total-count');
+    const removeBtn = document.getElementById('work-on-remove-btn');
+    const dictFilterEl = document.getElementById('work-on-dict-filter');
+    if (!tableBody) return;
+
+    const allItems = getWordsToWorkOn();
+    if (totalCountEl) {
+        totalCountEl.textContent = `Total Words: ${allItems.length.toLocaleString()}`;
+    }
+
+    const filterVal = dictFilterEl ? dictFilterEl.value : 'all';
+
+    // Filter items according to dropdown
+    const filteredItems = [];
+    allItems.forEach((it, origIdx) => {
+        const itemObj = (typeof it === 'object' && it !== null) ? it : { word: it, lists: ['NWL', 'CSW'] };
+        const lists = itemObj.lists || [];
+        if (filterVal === 'all' || lists.includes(filterVal)) {
+            filteredItems.push({ item: itemObj, origIdx: origIdx });
+        }
+    });
+
+    // Update Remove button state
+    if (removeBtn) {
+        if (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < allItems.length) {
+            removeBtn.disabled = false;
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.style.opacity = '1';
+            removeBtn.style.background = '#e11d48';
+            removeBtn.style.color = '#ffffff';
+            removeBtn.style.border = 'none';
+        } else {
+            removeBtn.disabled = true;
+            removeBtn.style.cursor = 'not-allowed';
+            removeBtn.style.opacity = '0.6';
+            removeBtn.style.background = 'rgba(244, 63, 94, 0.2)';
+            removeBtn.style.color = '#f43f5e';
+            removeBtn.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+        }
+    }
+
+    if (filteredItems.length === 0) {
+        tableBody.innerHTML = `
+            <div style="padding: 30px 20px; text-align: center; color: var(--text-secondary); opacity: 0.7; font-size: 0.95rem;">
+                ${allItems.length === 0 ? 'No words in your list yet. Enter a word above to get started!' : 'No words in your list match the selected dictionary filter.'}
+            </div>
+        `;
+        if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('work-on-table-scroll', 'work-on-scrollbar-track', 'work-on-scrollbar-thumb');
+        }
+        return;
+    }
+
+    let rowsHtml = '';
+    filteredItems.forEach((entry, displayIdx) => {
+        const itemObj = entry.item;
+        const origIdx = entry.origIdx;
+        const word = (itemObj.word || '').toUpperCase();
+        const lists = itemObj.lists || [];
+        const isSelected = (selectedWorkOnIndex === origIdx);
+
+        // Position number (1-based from top of table)
+        const posNum = displayIdx + 1;
+
+        // Render dictionary membership badges
+        let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">';
+        ['NWL', 'CSW', 'AW'].forEach(dictName => {
+            if (lists.includes(dictName)) {
+                let badgeBg = 'rgba(167, 139, 250, 0.2)';
+                let badgeColor = '#c4b5fd';
+                let badgeBorder = 'rgba(167, 139, 250, 0.4)';
+                if (dictName === 'NWL') {
+                    badgeBg = 'rgba(59, 130, 246, 0.2)';
+                    badgeColor = '#93c5fd';
+                    badgeBorder = 'rgba(59, 130, 246, 0.4)';
+                } else if (dictName === 'CSW') {
+                    badgeBg = 'rgba(16, 185, 129, 0.2)';
+                    badgeColor = '#6ee7b7';
+                    badgeBorder = 'rgba(16, 185, 129, 0.4)';
+                } else if (dictName === 'AW') {
+                    badgeBg = 'rgba(245, 158, 11, 0.2)';
+                    badgeColor = '#fcd34d';
+                    badgeBorder = 'rgba(245, 158, 11, 0.4)';
+                }
+                badgesHtml += `<span style="font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder};">${dictName}</span>`;
+            }
+        });
+        badgesHtml += '</div>';
+
+        const rowBg = isSelected ? 'rgba(167, 139, 250, 0.25)' : (displayIdx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent');
+        const rowBorder = isSelected ? '1px solid rgba(167, 139, 250, 0.6)' : '1px solid rgba(255, 255, 255, 0.04)';
+
+        rowsHtml += `
+            <div class="work-on-row" data-orig-idx="${origIdx}" style="display: flex; align-items: center; padding: 10px 16px; border-bottom: ${rowBorder}; background: ${rowBg}; cursor: pointer; transition: background 0.15s; user-select: none;">
+                <div style="width: 55px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8;">
+                    ${posNum}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <span class="clickable-word-link" onclick="window.lookupWord('${word}', event)" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">
+                        ${word}
+                    </span>
+                </div>
+                <div style="width: 200px; flex-shrink: 0; text-align: right;">
+                    ${badgesHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    tableBody.innerHTML = rowsHtml;
+
+    // Attach row selection click listeners (clicking row toggles highlight/selection)
+    tableBody.querySelectorAll('.work-on-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            // If user clicked the word link directly, don't toggle selection
+            if (e.target.closest('.clickable-word-link')) return;
+
+            const idx = parseInt(row.dataset.origIdx, 10);
+            if (selectedWorkOnIndex === idx) {
+                selectedWorkOnIndex = null;
+            } else {
+                selectedWorkOnIndex = idx;
+            }
+            renderWordsToWorkOnTable();
+        });
+    });
+
+    if (typeof initCustomScrollbarForElement === 'function') {
+        initCustomScrollbarForElement('work-on-table-scroll', 'work-on-scrollbar-track', 'work-on-scrollbar-thumb');
+    }
+}
+window.renderWordsToWorkOnTable = renderWordsToWorkOnTable;
+
+function setupWordsToWorkOnTool() {
+    const input = document.getElementById('work-on-input');
+    const addBtn = document.getElementById('work-on-add-btn');
+    const removeBtn = document.getElementById('work-on-remove-btn');
+    const clearBtn = document.getElementById('work-on-clear-btn');
+    const dictFilter = document.getElementById('work-on-dict-filter');
+
+    if (addBtn && input) {
+        const handleAdd = async () => {
+            const word = input.value.trim().toUpperCase();
+            if (!word) return;
+            const ok = await addWordToWorkOn(word);
+            if (ok) {
+                input.value = '';
+                input.focus();
+            }
+        };
+
+        addBtn.addEventListener('click', handleAdd);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAdd();
+            }
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            removeSelectedWordToWorkOn();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            clearAllWordsToWorkOn();
+        });
+    }
+
+    if (dictFilter) {
+        dictFilter.addEventListener('change', () => {
+            renderWordsToWorkOnTable();
+        });
+    }
+}
+window.setupWordsToWorkOnTool = setupWordsToWorkOnTool;
 
 // --- Sequence Tool Logic ---
 

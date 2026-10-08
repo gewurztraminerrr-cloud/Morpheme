@@ -8519,6 +8519,38 @@ def tools_subanagrams_random():
         'has_full_word': has_full_word
     })
 
+@app.route('/api/tools/word-membership', methods=['GET'])
+def tools_word_membership():
+    word = request.args.get('word', '').upper().strip()
+    if not word:
+        return jsonify({'error': 'No word provided'}), 400
+
+    # Ensure dictionaries are loaded
+    word_validator.ensure_csw_loaded()
+    
+    in_nwl = word in getattr(word_validator, 'nwl_words', set()) or word in getattr(word_validator, 'long_words', set())
+    in_csw = word in getattr(word_validator, 'csw_words', set()) or word in getattr(word_validator, 'long_words', set())
+    in_aw = word in getattr(word_validator, 'added_words', set())
+
+    # Build list of valid lists
+    lists = []
+    if in_nwl:
+        lists.append('NWL')
+    if in_csw:
+        lists.append('CSW')
+    if in_aw:
+        lists.append('AW')
+
+    is_valid = bool(lists)
+    return jsonify({
+        'word': word,
+        'valid': is_valid,
+        'nwl': in_nwl,
+        'csw': in_csw,
+        'aw': in_aw,
+        'lists': lists
+    })
+
 @app.route('/api/tools/validate', methods=['POST'])
 def tools_validate_word():
     data = request.json

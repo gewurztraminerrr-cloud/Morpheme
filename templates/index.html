@@ -3542,6 +3542,11 @@
                                 <h3 id="words-panel-title">Your Words</h3>
                                 <p class="words-stats" id="words-stats"></p>
                             </div>
+                            <div id="work-on-game-btn-container" style="display: none; margin: 5px 0; width: 100%;">
+                                <button id="add-to-work-on-game-btn" type="button" style="width: 100%; padding: 4px 5px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; background: rgba(167, 139, 250, 0.15); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s;">
+                                    Add to Words to Work on
+                                </button>
+                            </div>
                             <div id="finders-button-container" style="display: none; margin: 5px 0; width: 100%;">
                                 <button id="view-finders-btn-top" style="width: 100%; padding: 4px 5px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
                                     <span>Finders: None</span>
@@ -3921,6 +3926,10 @@
                     <button class="tool-nav-btn" data-tool="lists" onclick="window.showTool('lists')">
                         <div class="tool-btn-title">Lists</div>
                         <div class="tool-btn-desc">Browse official word lists</div>
+                    </button>
+                    <button class="tool-nav-btn" data-tool="work-on" onclick="window.showTool('work-on')">
+                        <div class="tool-btn-title">Words to Work on</div>
+                        <div class="tool-btn-desc">Add or remove words to study</div>
                     </button>
                     <button class="tool-nav-btn" data-tool="sequence" onclick="window.showTool('sequence')">
                         <div class="tool-btn-title">Sequence</div>
@@ -4964,6 +4973,7 @@
                                     <option value="new_nwl">New NWL Words</option>
                                     <option value="new_csw">New CSW Words</option>
                                     <option value="all_new">All New Words</option>
+                                    <option value="words_to_work_on">Words to Work on</option>
                                 </select>
                                 <button id="list-update-btn">Update</button>
                             </div>
@@ -4980,6 +4990,62 @@
                                     <div class="custom-scrollbar-track" id="list-scrollbar-track">
                                         <div class="custom-scrollbar-thumb" id="list-scrollbar-thumb"></div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Words to Work on Tool Interface -->
+                    <div id="tool-work-on" class="tool-pane" style="flex-direction: column; width: 100%; box-sizing: border-box; overflow-y: auto !important; padding-bottom: 30px;">
+                        <div class="tool-header">
+                            <h2>Words to Work on</h2>
+                            <p>A dedicated space to add or remove words to study or work on. If you wish to categorize the words in any way, use the Lists tab in Tools to do that.</p>
+                        </div>
+
+                        <!-- Top Input & Action Controls -->
+                        <div style="background: var(--bg-panel); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; box-sizing: border-box; width: 100%;">
+                            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 480px;">
+                                <input type="text" id="work-on-input" placeholder="Enter word to add..." maxlength="30" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="padding: 10px 14px; font-size: 1rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="work-on-add-btn" type="button" class="sf-action-btn" style="flex: 1; padding: 10px 16px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; background: #2563eb; color: #ffffff; border: none; cursor: pointer; transition: background 0.2s;">Add</button>
+                                    <button id="work-on-remove-btn" type="button" class="sf-action-btn" disabled style="flex: 1; padding: 10px 16px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Control Bar: Dropdown, Clear All, Counter -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding: 0 4px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <select id="work-on-dict-filter" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
+                                    <option value="all" selected>All Lists</option>
+                                    <option value="NWL">NWL</option>
+                                    <option value="CSW">CSW</option>
+                                    <option value="AW">AW</option>
+                                </select>
+                                <button id="work-on-clear-btn" type="button" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 600; border-radius: 6px; background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); cursor: pointer; transition: all 0.2s;">Clear All Words</button>
+                            </div>
+                            <div id="work-on-total-count" style="font-size: 0.88rem; font-weight: 600; color: #c4b5fd;">
+                                Total Words: 0
+                            </div>
+                        </div>
+
+                        <!-- Words Table Box with Custom Scrollbar -->
+                        <div style="background: var(--bg-panel); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
+                            <!-- Table Header -->
+                            <div style="display: flex; background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 10px 16px; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; user-select: none;">
+                                <div style="width: 55px; flex-shrink: 0;">#</div>
+                                <div style="flex: 1; min-width: 0;">Word</div>
+                                <div style="width: 200px; flex-shrink: 0; text-align: right;">Word lists valid in</div>
+                            </div>
+                            <!-- Scroll Area Container -->
+                            <div class="list-scroll-area-wrapper" style="position: relative; height: 420px; overflow: hidden;">
+                                <div id="work-on-table-scroll" style="height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none;">
+                                    <div id="work-on-table-body" style="display: flex; flex-direction: column;">
+                                        <!-- Injected rows -->
+                                    </div>
+                                </div>
+                                <div class="custom-scrollbar-track" id="work-on-scrollbar-track" style="position: absolute; right: 2px; top: 2px; bottom: 2px; width: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px;">
+                                    <div class="custom-scrollbar-thumb" id="work-on-scrollbar-thumb" style="width: 100%; background: rgba(167, 139, 250, 0.5); border-radius: 3px; position: absolute; top: 0; left: 0;"></div>
                                 </div>
                             </div>
                         </div>
