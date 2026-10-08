@@ -3561,20 +3561,34 @@ body.theme-white .header {
     /* Increased height */
     min-height: 300px;
     overflow-y: auto;
+    padding-right: 14px;
+    /* space for custom scrollbar */
     scrollbar-width: thin;
-    padding-right: 10px;
-    /* space for scrollbar */
-
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.1) transparent;
+    scrollbar-color: #409cff rgba(255, 255, 255, 0.10);
 }
 
 .walkthrough-list::-webkit-scrollbar {
-    width: 6px;
+    width: 14px;
+}
+
+.walkthrough-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
 }
 
 .walkthrough-list::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-primary-rgb), 0.1);
-    border-radius: 3px;
+    background: linear-gradient(180deg, #409cff, #2980b9);
+    border: 1px solid rgba(64, 156, 255, 0.7);
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(64, 156, 255, 0.5);
+    min-height: 40px;
+}
+
+.walkthrough-list::-webkit-scrollbar-thumb:hover,
+.walkthrough-list::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #60adff, #3498db);
+    box-shadow: 0 0 12px rgba(64, 156, 255, 0.8);
 }
 
 
@@ -4360,6 +4374,31 @@ body.theme-light-gray #close-integrated-replay:hover {
     border: 1px solid rgba(var(--text-primary-rgb), 0.05);
     margin-top: 20px;
     scrollbar-width: thin;
+    scrollbar-color: #409cff rgba(255, 255, 255, 0.10);
+}
+
+.integrated-walkthrough-list::-webkit-scrollbar {
+    width: 14px;
+}
+
+.integrated-walkthrough-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+}
+
+.integrated-walkthrough-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #409cff, #2980b9);
+    border: 1px solid rgba(64, 156, 255, 0.7);
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(64, 156, 255, 0.5);
+    min-height: 40px;
+}
+
+.integrated-walkthrough-list::-webkit-scrollbar-thumb:hover,
+.integrated-walkthrough-list::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #60adff, #3498db);
+    box-shadow: 0 0 12px rgba(64, 156, 255, 0.8);
 }
 
 .integrated-review-board {
