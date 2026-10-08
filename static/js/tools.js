@@ -5609,9 +5609,6 @@ function removeSelectedWordToWorkOn() {
 window.removeSelectedWordToWorkOn = removeSelectedWordToWorkOn;
 
 function clearAllWordsToWorkOn() {
-    const list = getWordsToWorkOn();
-    if (list.length === 0) return;
-
     const doClear = () => {
         saveWordsToWorkOn([]);
         selectedWorkOnIndex = null;
@@ -5626,11 +5623,13 @@ function clearAllWordsToWorkOn() {
     if (window.showConfirmModal) {
         window.showConfirmModal(
             'Clear All Words',
-            'Are you sure you want to clear all words from your Words to Work on list? This cannot be undone.',
-            doClear
+            'Are you sure you want to remove all words from your Words to Work on list?',
+            doClear,
+            'Yes',
+            'No'
         );
     } else {
-        if (confirm('Are you sure you want to clear all words from your Words to Work on list?')) {
+        if (confirm('Are you sure you want to remove all words from your Words to Work on list?')) {
             doClear();
         }
     }

@@ -3410,7 +3410,7 @@ window.alert = function (message) {
     }
 };
 
-window.showConfirmModal = function (title, message, onConfirm) {
+window.showConfirmModal = function (title, message, onConfirm, okText = 'Confirm', cancelText = 'Cancel') {
     const modal = document.getElementById('generic-confirm-modal');
     const titleEl = document.getElementById('generic-confirm-title');
     const bodyEl = document.getElementById('generic-confirm-body');
@@ -3420,16 +3420,25 @@ window.showConfirmModal = function (title, message, onConfirm) {
     if (modal && titleEl && bodyEl && cancelBtn && okBtn) {
         titleEl.textContent = title;
         bodyEl.innerHTML = `<p style="white-space: pre-wrap; margin: 0;">${message}</p>`;
+        okBtn.textContent = okText;
+        cancelBtn.textContent = cancelText;
 
         const cleanup = () => {
             modal.style.display = 'none';
             modal.classList.add('hidden');
+            okBtn.textContent = 'Confirm';
+            cancelBtn.textContent = 'Cancel';
             cancelBtn.onclick = null;
             okBtn.onclick = null;
+            modal.onclick = null;
         };
 
         cancelBtn.onclick = () => { cleanup(); };
-        document.getElementById('close-generic-confirm').onclick = () => { cleanup(); };
+        const closeBtn = document.getElementById('close-generic-confirm');
+        if (closeBtn) closeBtn.onclick = () => { cleanup(); };
+        modal.onclick = (e) => {
+            if (e.target === modal) cleanup();
+        };
 
         okBtn.onclick = () => {
             cleanup();
