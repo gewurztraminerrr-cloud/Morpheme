@@ -2656,6 +2656,11 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     if (useOverlay) {
         overlay.classList.add('forced-show');
         overlay.classList.remove('hidden');
+        if (typeof window.updateReplayScroller === 'function') {
+            setTimeout(window.updateReplayScroller, 50);
+            setTimeout(window.updateReplayScroller, 250);
+            setTimeout(window.updateReplayScroller, 600);
+        }
         // Setup Close Handler
         const closeBtn = document.getElementById('close-history-review');
         if (closeBtn) {

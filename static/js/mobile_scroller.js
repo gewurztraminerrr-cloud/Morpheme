@@ -5,8 +5,6 @@
     const MOBILE_MAX = 992;
 
     function attachScroller(targetSpec) {
-        // targetSpec can be a string (pageId) or an object:
-        // { getTarget: () => HTMLElement, isOverlay: boolean }
         let getTarget;
         let isOverlayTarget = false;
 
@@ -47,27 +45,31 @@
             }
 
             const replayOverlay = document.getElementById('history-review-overlay');
-            const isReplayOpen = replayOverlay && !replayOverlay.classList.contains('hidden') && replayOverlay.offsetParent !== null;
+            const isReplayOpen = replayOverlay &&
+                !replayOverlay.classList.contains('hidden') &&
+                (replayOverlay.classList.contains('forced-show') || replayOverlay.offsetParent !== null || window.getComputedStyle(replayOverlay).display !== 'none');
 
             if (isOverlayTarget) {
-                // This scroller is specifically for Round Replay overlay
+                // Round Replay overlay custom scroller
+                const isRendered = el && (el.offsetParent !== null || window.getComputedStyle(el).display !== 'none');
                 const visible = window.innerWidth <= MOBILE_MAX &&
                     isReplayOpen &&
-                    el.offsetParent !== null &&
-                    el.scrollHeight > el.clientHeight + 15;
+                    isRendered &&
+                    (el.scrollHeight > el.clientHeight + 5);
+
                 if (!visible) {
                     track.style.display = 'none';
                     return;
                 }
             } else {
-                // Scroller for background pages (leaderboards / tournaments)
-                // If any modal/overlay is open, hide the background page scroller
+                // Background page scroller (leaderboards / tournaments)
                 const isAnyModalOpen = isReplayOpen || !!document.querySelector('.overlay:not(.hidden), .modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), #full-list-modal:not(.hidden)');
                 const visible = window.innerWidth <= MOBILE_MAX &&
                     !isAnyModalOpen &&
                     el.classList.contains('active') &&
                     el.offsetParent !== null &&
-                    el.scrollHeight > el.clientHeight + 15;
+                    (el.scrollHeight > el.clientHeight + 15);
+
                 if (!visible) {
                     track.style.display = 'none';
                     return;
@@ -76,7 +78,7 @@
 
             const r = el.getBoundingClientRect();
             track.style.display = 'block';
-            track.style.top = (r.top + 6) + 'px';
+            track.style.top = Math.max(0, r.top + 6) + 'px';
             track.style.height = Math.max(40, r.height - 12) + 'px';
 
             if (dragging) return;
@@ -157,9 +159,14 @@
         setInterval(() => {
             bindTargetScroll();
             update();
-        }, 300);
+        }, 200);
         bindTargetScroll();
         update();
+
+        // Expose update for modal opening
+        if (isOverlayTarget) {
+            window.updateReplayScroller = update;
+        }
     }
 
     function init() {

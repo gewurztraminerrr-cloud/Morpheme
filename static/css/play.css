@@ -7899,6 +7899,9 @@ input[type=range]::-moz-range-track {
         z-index: 2147483000;
         touch-action: none;
     }
+    .m-scroller-track.m-scroller-track-overlay {
+        z-index: 2147483647 !important;
+    }
     .m-scroller-thumb {
         position: absolute;
         top: 0;
