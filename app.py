@@ -5458,8 +5458,12 @@ def get_lobby_stats():
     
     for room in list(room_manager.rooms.values()):
         try:
-            # Hide solo and private rooms from lobby stats
-            if room.is_solo or getattr(room, 'is_private', False):
+            # Hide private rooms and custom solo practice from lobby stats.
+            # Public singleton hubs (pub_...) are never skipped as solo!
+            is_pub = str(getattr(room, 'room_id', '')).startswith('pub_')
+            if getattr(room, 'is_private', False):
+                continue
+            if not is_pub and (room.is_solo or 'practice_' in str(getattr(room, 'room_id', ''))):
                 continue
                 
             try:
@@ -5468,30 +5472,39 @@ def get_lobby_stats():
                 t_lim = 45
             is_daily = (t_lim >= 7200)
             
-            # Aggregate all active players (and daily archives for 24h rooms)
+            # Aggregate all active players (and spectators, and daily archives for 24h rooms)
             all_candidate_players = list(room.players)
+            candidate_uids = {str(getattr(p, 'user_id', None) or getattr(p, 'username', '')) for p in all_candidate_players}
+            if hasattr(room, 'spectators') and room.spectators:
+                for s in room.spectators:
+                    s_uid = str(getattr(s, 'user_id', None) or getattr(s, 'username', ''))
+                    if s and s_uid and s_uid not in candidate_uids:
+                        all_candidate_players.append(s)
+                        candidate_uids.add(s_uid)
             if is_daily and hasattr(room, 'past_players') and isinstance(room.past_players, dict):
-                seen_uids = {str(p.user_id) for p in room.players if getattr(p, 'user_id', None)}
                 for pp in room.past_players.values():
-                    if pp and str(getattr(pp, 'user_id', '')) not in seen_uids:
+                    pp_uid = str(getattr(pp, 'user_id', None) or getattr(pp, 'username', ''))
+                    if pp and pp_uid and pp_uid not in candidate_uids:
                         all_candidate_players.append(pp)
+                        candidate_uids.add(pp_uid)
             
             humans = []
             for p in all_candidate_players:
                 if getattr(p, 'is_ai', False):
                     continue
-                # For real-time rooms (non-24h), count players active within 60s or freshly joined
+                # For real-time rooms (non-24h), count players active within room inactivity window (600s) or freshly joined
                 if not is_daily:
                     p_active = getattr(p, 'last_active', 0)
-                    if p_active > 0 and (now - p_active) > 60:
+                    if p_active > 0 and (now - p_active) > 600:
                         continue
                 humans.append(p)
                 
             if len(humans) == 0 and not is_daily:
                 continue
                 
-            # Create a unique key for this configuration (case-insensitive)
-            key = f"{str(room.game_type).lower()}|{str(room.board_dimensions).lower()}|{t_lim}"
+            # Create a unique key for this configuration (case-insensitive, strip solo_ prefix)
+            clean_type = str(room.game_type).lower().replace('solo_', '')
+            key = f"{clean_type}|{str(room.board_dimensions).lower()}|{t_lim}"
             
             if key not in config_humans:
                 config_humans[key] = set()

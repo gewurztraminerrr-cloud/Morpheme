@@ -1302,19 +1302,28 @@ window.syncLobbyTimeoutState = async function() {
     }
 };
 
+let isFetchingLobbyStats = false;
+let lastLobbyTimeoutSyncTime = 0;
+
 // mode: 'all' (initial/entry) | 'accumulative_only' (auto-poll) | 'fcfs_sp_only' (Refresh click)
 async function fetchLobbyStats(mode = 'all') {
+    if (isFetchingLobbyStats) return;
+    isFetchingLobbyStats = true;
     try {
-        if (typeof window.syncLobbyTimeoutState === 'function') {
+        const now = Date.now();
+        if (now - lastLobbyTimeoutSyncTime > 30000 && typeof window.syncLobbyTimeoutState === 'function') {
+            lastLobbyTimeoutSyncTime = now;
             window.syncLobbyTimeoutState().catch(() => {});
         }
-        const response = await fetch(`/api/lobby-stats?_t=${Date.now()}`, { cache: 'no-store' });
+        const response = await fetch(`/api/lobby-stats?_t=${now}`, { cache: 'no-store' });
         const data = await response.json();
-        if (data.stats) {
+        if (data && data.stats) {
             updateLobbyButtons(data.stats, mode);
         }
     } catch (error) {
         console.error('Error fetching lobby stats:', error);
+    } finally {
+        isFetchingLobbyStats = false;
     }
 }
 window.fetchLobbyStats = fetchLobbyStats;
@@ -1362,7 +1371,6 @@ async function handleLobbyRefresh(btn) {
     }
 }
 window.handleLobbyRefresh = handleLobbyRefresh;
-window.handleLobbyRefresh = handleLobbyRefresh;
 
 function updateLobbyButtons(stats, mode = 'all') {
     // Stats format: "game_type|board|time": count
@@ -1371,7 +1379,7 @@ function updateLobbyButtons(stats, mode = 'all') {
     // mode = 'fcfs_sp_only'      → only update FCFS and SP buttons (Refresh button click)
     const buttons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     buttons.forEach(btn => {
-        const game = (btn.dataset.game || '').toLowerCase();
+        const game = (btn.dataset.game || '').toLowerCase().replace('solo_', '');
         const board = (btn.dataset.board || '').toLowerCase();
         const time = btn.dataset.time;
         if (!game || !board || !time) return;
@@ -2013,8 +2021,12 @@ function handleLobbyVisibilityChange() {
         stopLobbyChatPolling();
         leaveLobbyPresence();
     } else {
-        if (typeof document.hasFocus === 'function' && document.hasFocus() && !isDeviceSuspended) {
+        isDeviceSuspended = false;
+        userInteractionConfirmedSinceWake = true;
+        lastHeartbeatTime = Date.now();
+        if (isOnLobby()) {
             handleUserReturnToLobby();
+            fetchLobbyStats('all');
         }
     }
 }
@@ -2025,22 +2037,35 @@ window.addEventListener('visibilitychange', handleLobbyVisibilityChange);
 
 // Page Lifecycle events
 window.addEventListener('pageshow', () => {
-    if (!isDeviceSuspended && (typeof document.hasFocus !== 'function' || document.hasFocus()) && !document.hidden) {
-        handleUserReturnToLobby();
+    if (!document.hidden && document.visibilityState === 'visible') {
+        isDeviceSuspended = false;
+        userInteractionConfirmedSinceWake = true;
+        lastHeartbeatTime = Date.now();
+        if (isOnLobby()) {
+            handleUserReturnToLobby();
+            fetchLobbyStats('all');
+        }
     }
 });
 
 document.addEventListener('resume', () => {
-    if (!isDeviceSuspended && (typeof document.hasFocus !== 'function' || document.hasFocus()) && !document.hidden) {
-        handleUserReturnToLobby();
+    if (!document.hidden && document.visibilityState === 'visible') {
+        isDeviceSuspended = false;
+        userInteractionConfirmedSinceWake = true;
+        lastHeartbeatTime = Date.now();
+        if (isOnLobby()) {
+            handleUserReturnToLobby();
+            fetchLobbyStats('all');
+        }
     }
 });
 
 window.addEventListener('focus', () => {
-    if (isOnLobby() && !document.hidden && document.visibilityState === 'visible' && (typeof document.hasFocus !== 'function' || document.hasFocus())) {
-        if (!isDeviceSuspended) {
-            handleUserReturnToLobby();
-        }
+    if (isOnLobby() && !document.hidden && document.visibilityState === 'visible') {
+        isDeviceSuspended = false;
+        userInteractionConfirmedSinceWake = true;
+        handleUserReturnToLobby();
+        fetchLobbyStats('all');
     }
 });
 
