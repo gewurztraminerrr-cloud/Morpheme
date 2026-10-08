@@ -748,10 +748,11 @@ function resetIdleTimer() {
         localStorage.setItem('morpheme_last_active_timestamp', now);
     } catch(e) {}
     // Always clear any stale suppress-notice flags so Session Expired popup is
-    // never silenced for an actively playing user. DOMContentLoaded may have set
-    // these when the user launched the app after a >1h absence.
-    window._suppressInactivityNotice = false;
-    try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
+    // never silenced for an actively playing user.
+    if (isOnPlayPage() && window.currentPageId === 'page-play') {
+        window._suppressInactivityNotice = false;
+        try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
+    }
 }
 
 function isOnPlayPage() {
@@ -787,6 +788,9 @@ async function ejectToLobby(reason = "inactivity") {
         window._transitionPollTimer = null;
     }
     window.currentRoomId = null;
+    window.lastGameState = null;
+    window._lastGameStateFetchedTime = 0;
+    lastGameInteractionTime = Date.now();
     window._wasEverInRoster = false;
     window._emptyPlayersPollCount = 0;
     try {
@@ -812,36 +816,48 @@ async function ejectToLobby(reason = "inactivity") {
         window.fetchLobbyStats('all').catch(() => {});
     }
 
-    // Check if inactivity notice should be suppressed (e.g. absent >= 1 hour)
-    // Only suppress if the user was GENUINELY absent for over 1 hour.
-    // Trust the in-memory lastGameInteractionTime first (it's updated on every click/tap
-    // while on the play page). Only fall back to localStorage when memory is unavailable.
-    // Bug fix: using OR between storage and memory allowed a stale localStorage value from
-    // a prior session (hours ago) to falsely suppress the notice after only 10m idle.
-    // Only suppress the inactivity notice when the user has been GENUINELY absent for >1 hour.
-    // isSuppressedFlag can be set by DOMContentLoaded when launching after a long gap — but if
-    // in-memory evidence shows activity within the last hour, always show the notice regardless.
+    // Check if inactivity notice should be suppressed (e.g. absent >= 10m, minimized, already on lobby, or recently shown)
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
         try {
             const now = Date.now();
-            const memoryAvailable = typeof lastGameInteractionTime === 'number' && lastGameInteractionTime > 0;
-            const exceededOneHourMemory = memoryAvailable && ((now - lastGameInteractionTime) >= 60 * 60 * 1000);
-            // Only consult localStorage when in-memory timer was never set (e.g. page reload mid-session)
-            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-            const exceededOneHourStorage = !memoryAvailable && (lastActive > 0) && ((now - lastActive) >= 60 * 60 * 1000);
-            // isSuppressedFlag (sessionStorage/window) ONLY suppresses when memory also confirms >1h absence.
-            // If the user was active within the last hour (in-memory), never let a stale flag silence the popup.
+
+            // 1. Deduplication: Never repeat inactivity notice within 5 minutes
+            if (window._lastInactivityNoticeTime && (now - window._lastInactivityNoticeTime < 300000)) {
+                shouldSuppressNotice = true;
+            }
+
+            // 2. Suppress if explicitly flagged by visibility/absence checks
             const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
                                      (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
-            const recentlyActive = memoryAvailable && !exceededOneHourMemory;
-            shouldSuppressNotice = (recentlyActive ? false : isSuppressedFlag) || exceededOneHourMemory || exceededOneHourStorage;
-            console.warn('[eject] Suppress check: isSuppressedFlag=', isSuppressedFlag, 'recentlyActive=', recentlyActive, 'exceededOneHourMemory=', exceededOneHourMemory, 'exceededOneHourStorage=', exceededOneHourStorage, '→ shouldSuppressNotice=', shouldSuppressNotice);
+            if (isSuppressedFlag) {
+                shouldSuppressNotice = true;
+            }
+
+            // 3. Suppress if document is hidden / minimized
+            if (document.hidden) {
+                shouldSuppressNotice = true;
+            }
+
+            // 4. Suppress if user was absent / minimized for >= 10 minutes
+            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+            if (lastActive > 0 && ((now - lastActive) >= 10 * 60 * 1000)) {
+                shouldSuppressNotice = true;
+            }
+
+            // 5. Suppress if user is NOT on the Play page (e.g. already in Lobby, Tools, Profile)
+            if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+                shouldSuppressNotice = true;
+            }
+
+            if (!shouldSuppressNotice) {
+                window._lastInactivityNoticeTime = now;
+            }
         } catch(e) {}
     }
 
     if (shouldSuppressNotice) {
-        console.log('[play.js] Session Expired notice suppressed because last visit exceeded 1 hour.');
+        console.log('[play.js] Session Expired notice suppressed.');
         if (window.navigateToPage) window.navigateToPage('lobby');
         else if (window.showPage) window.showPage('page-lobby');
         else window.location.href = '#page-lobby';
@@ -983,13 +999,15 @@ let lastTouchTime = 0;
 document.addEventListener('mousedown', (e) => {
     if (Date.now() - lastTouchTime < 1500) return; // ignore ghost mouse from touch
     updateInputMethod('mouse');
-    if (isOnPlayPage()) resetIdleTimer(); // only count play-page clicks
+    if (isOnPlayPage() && window.currentPageId === 'page-play') resetIdleTimer();
+    else lastGameInteractionTime = Date.now();
 }, true);
 
 document.addEventListener('touchstart', () => {
     lastTouchTime = Date.now();
     updateInputMethod('touch');
-    if (isOnPlayPage()) resetIdleTimer(); // only count play-page taps
+    if (isOnPlayPage() && window.currentPageId === 'page-play') resetIdleTimer();
+    else lastGameInteractionTime = Date.now();
 }, true);
 
 document.addEventListener('keydown', (e) => {
@@ -1005,13 +1023,20 @@ document.addEventListener('keydown', (e) => {
         }
     }
     updateInputMethod('keyboard');
-    if (isOnPlayPage()) resetIdleTimer(); // only count play-page keystrokes
+    if (isOnPlayPage() && window.currentPageId === 'page-play') resetIdleTimer();
+    else lastGameInteractionTime = Date.now();
 }, true);
 
 // Check for idle logout every 5 seconds.
-// Single clock: no play-page interaction in 10 min = eject, regardless of which tab they are on.
+// Only applies when the user is actively on the Play page and the page is visible.
 setInterval(() => {
-    const roomId = getCurrentRoomId();
+    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+        return;
+    }
+    if (document.hidden) {
+        return;
+    }
+    const roomId = window.currentRoomId;
     if (!roomId) return;
 
     // EXEMPTION: No idle limit for 24h rooms
@@ -1323,6 +1348,7 @@ function setTimerWaitingState(isWaiting) {
 // Global Visibility Listener to handle battery management
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
+        lastGameInteractionTime = Date.now();
         if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
             return;
         }
