@@ -878,6 +878,7 @@ class GameRoom:
                         )
                         self.total_words_count = len(self.all_words)
                         self.recalculate_total_points()
+                        self.update_counts_by_len()
 
             if not matched_word:
                 player.invalid_words.append(word)
@@ -1041,6 +1042,7 @@ class GameRoom:
                         # Recalculate stats
                         self.recalculate_total_points()
                         self.total_words_count = len(self.all_words)
+                        self.update_counts_by_len()
                         
                         matched_word = cand
                         print(f"[DynamicAccept] Dynamically accepted and added truncated/missing word: {cand}")

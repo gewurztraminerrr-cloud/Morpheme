@@ -1027,6 +1027,9 @@ setInterval(() => {
 
 function getCurrentRoomId() {
     let rid = window.currentRoomId;
+    if (!rid && window.lastGameState && window.lastGameState.room_id) {
+        rid = window.lastGameState.room_id;
+    }
     if (!rid) {
         // Fallback 1: URL path /room/xyz
         const m = window.location.pathname.match(/\/room\/([^\/]+)/);
@@ -3031,7 +3034,8 @@ async function updateGameState(incomingState = null) {
                 });
                 
                 for (let i = 1; i <= 30; i++) {
-                    countsByLen[i] = Math.max(0, (totalByLen[i] || 0) - (foundByLen[i] || 0));
+                    const serverTotalForLen = (totalByLen[i] !== undefined ? totalByLen[i] : (totalByLen[String(i)] !== undefined ? totalByLen[String(i)] : 0));
+                    countsByLen[i] = Math.max(0, serverTotalForLen - (foundByLen[i] || 0));
                 }
 
                 // HEADER SYNC is handled by updateGameStatsHeader to avoid fighting/duplicate labels
@@ -3919,7 +3923,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (chatInput) {
         chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                sendChatMessage();
+            }
         });
         chatInput.addEventListener('input', updateRoomChatCounter);
         chatInput.addEventListener('paste', () => setTimeout(updateRoomChatCounter, 10));
@@ -8342,8 +8350,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             updateGameState();
                         }
                     }
-                } else if (!isPenaltyMode) {
+                } else if (!isPenaltyMode && !((preState.time_limit >= 7200) || (preState.room_id && (preState.room_id.includes('24h') || preState.room_id.includes('86400'))) || (preState.game_type === '24h'))) {
                     // Optimistic Instant Feedback: Word not in dictionary, trigger failure sound immediately without waiting for network roundtrip
+                    // NOTE: In 24h rooms, the server dynamically validates & accepts valid dictionary words on the board, so do not optimistically flash red!
                     showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath, true);
                     optimisticColor = 'red';
                     optimisticIsDefinitive = true;
@@ -8442,7 +8451,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             // Skip redundant second flash on server response.
         } else {
             // Local check didn't run or server result differs from local check — trigger feedback flash
-            const shouldPlayServerSound = (optimisticColor === null);
+            // If optimistic check flashed red but server confirms SUCCESS, ALWAYS play success sound!
+            const shouldPlayServerSound = (optimisticColor === null) || (data.success && optimisticColor === 'red');
             showValidationFeedback(msg, data.success, isBonusWord, finalPath, shouldPlayServerSound);
         }
 
