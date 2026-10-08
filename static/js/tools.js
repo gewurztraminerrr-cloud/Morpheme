@@ -5703,45 +5703,29 @@ function renderWordsToWorkOnTable() {
         // Position number (1-based from top of table)
         const posNum = displayIdx + 1;
 
-        // Render dictionary membership badges
+        // Render dictionary membership badges with high contrast across all layouts
         let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">';
         ['NWL', 'CSW', 'AW'].forEach(dictName => {
             if (lists.includes(dictName)) {
-                let badgeBg = 'rgba(167, 139, 250, 0.2)';
-                let badgeColor = '#c4b5fd';
-                let badgeBorder = 'rgba(167, 139, 250, 0.4)';
-                if (dictName === 'NWL') {
-                    badgeBg = 'rgba(59, 130, 246, 0.2)';
-                    badgeColor = '#93c5fd';
-                    badgeBorder = 'rgba(59, 130, 246, 0.4)';
-                } else if (dictName === 'CSW') {
-                    badgeBg = 'rgba(16, 185, 129, 0.2)';
-                    badgeColor = '#6ee7b7';
-                    badgeBorder = 'rgba(16, 185, 129, 0.4)';
-                } else if (dictName === 'AW') {
-                    badgeBg = 'rgba(245, 158, 11, 0.2)';
-                    badgeColor = '#fcd34d';
-                    badgeBorder = 'rgba(245, 158, 11, 0.4)';
-                }
-                badgesHtml += `<span style="font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder};">${dictName}</span>`;
+                let badgeClass = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
+                badgesHtml += `<span class="${badgeClass}">${dictName}</span>`;
             }
         });
         badgesHtml += '</div>';
 
-        const rowBg = isSelected ? 'rgba(167, 139, 250, 0.25)' : (displayIdx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent');
-        const rowBorder = isSelected ? '1px solid rgba(167, 139, 250, 0.6)' : '1px solid rgba(255, 255, 255, 0.04)';
+        const selectedClass = isSelected ? ' selected' : '';
 
         rowsHtml += `
-            <div class="work-on-row" data-orig-idx="${origIdx}" style="display: flex; align-items: center; padding: 10px 16px; border-bottom: ${rowBorder}; background: ${rowBg}; cursor: pointer; transition: background 0.15s; user-select: none;">
-                <div style="width: 55px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8;">
+            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}">
+                <div class="work-on-col-num">
                     ${posNum}
                 </div>
-                <div style="flex: 1; min-width: 0;">
-                    <span class="clickable-word-link" onclick="window.lookupWord('${word}', event)" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">
+                <div class="work-on-col-word">
+                    <span class="clickable-word-link work-on-word-link" onclick="window.lookupWord('${word}', event)">
                         ${word}
                     </span>
                 </div>
-                <div style="width: 200px; flex-shrink: 0; text-align: right;">
+                <div class="work-on-col-lists">
                     ${badgesHtml}
                 </div>
             </div>
