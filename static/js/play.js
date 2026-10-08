@@ -763,6 +763,7 @@ function isOnPlayPage() {
 }
 
 async function ejectToLobby(reason = "inactivity") {
+    window.ejectToLobby = ejectToLobby;
     if (window._isEjectingToLobby) {
         console.log(`[play.js] Ejection already in progress (reason: ${reason}). Skipping duplicate call.`);
         return;
@@ -816,7 +817,7 @@ async function ejectToLobby(reason = "inactivity") {
         window.fetchLobbyStats('all').catch(() => {});
     }
 
-    // Check if inactivity notice should be suppressed (e.g. absent >= 10m, minimized, already on lobby, or recently shown)
+    // Check if inactivity notice should be suppressed (e.g. deduplication or initial launch)
     let shouldSuppressNotice = false;
     if (reason === "inactivity") {
         try {
@@ -827,31 +828,20 @@ async function ejectToLobby(reason = "inactivity") {
                 shouldSuppressNotice = true;
             }
 
-            // 2. Suppress if explicitly flagged by visibility/absence checks
-            const isSuppressedFlag = (window._suppressInactivityNotice === true) || 
-                                     (sessionStorage.getItem('morpheme_suppress_inactivity_notice') === 'true');
-            if (isSuppressedFlag) {
+            // 2. Suppress ONLY if explicitly silenced on cold start launch (not for in-game ejections)
+            if (window._initialLaunchSilenced === true) {
                 shouldSuppressNotice = true;
             }
 
-            // 3. Suppress if document is hidden / minimized
-            if (document.hidden) {
-                shouldSuppressNotice = true;
-            }
-
-            // 4. Suppress if user was absent / minimized for >= 10 minutes
-            const lastActive = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-            if (lastActive > 0 && ((now - lastActive) >= 10 * 60 * 1000)) {
-                shouldSuppressNotice = true;
-            }
-
-            // 5. Suppress if user is NOT on the Play page (e.g. already in Lobby, Tools, Profile)
-            if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+            // 3. Deduplication if priority modal is already visible
+            if (window._hasPriorityModal && window._lastInactivityNoticeTime && (now - window._lastInactivityNoticeTime < 60000)) {
                 shouldSuppressNotice = true;
             }
 
             if (!shouldSuppressNotice) {
                 window._lastInactivityNoticeTime = now;
+                window._suppressInactivityNotice = false;
+                try { sessionStorage.removeItem('morpheme_suppress_inactivity_notice'); } catch(e) {}
             }
         } catch(e) {}
     }
@@ -1028,15 +1018,15 @@ document.addEventListener('keydown', (e) => {
 }, true);
 
 // Check for idle logout every 5 seconds.
-// Only applies when the user is actively on the Play page and the page is visible.
+// Applies when the user is on the Play page and has been idle for 10 minutes.
 setInterval(() => {
-    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+    if (!isOnPlayPage()) {
         return;
     }
     if (document.hidden) {
         return;
     }
-    const roomId = window.currentRoomId;
+    const roomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
     if (!roomId) return;
 
     // EXEMPTION: No idle limit for 24h rooms
@@ -1044,7 +1034,7 @@ setInterval(() => {
     if (is24h) return;
 
     const idleMs = Date.now() - lastGameInteractionTime;
-    if (idleMs > 10 * 60 * 1000) { // 10 minutes
+    if (idleMs >= 10 * 60 * 1000) { // 10 minutes
         console.warn('[play.js] 10m idle from Play page (' + Math.round(idleMs/1000) + 's). EVICTING.');
         ejectToLobby("inactivity");
     }
@@ -1348,7 +1338,30 @@ function setTimerWaitingState(isWaiting) {
 // Global Visibility Listener to handle battery management
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        lastGameInteractionTime = Date.now();
+        const now = Date.now();
+        const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+        const idleGap = Math.max(now - lastGameInteractionTime, lastActiveStored > 0 ? (now - lastActiveStored) : 0);
+
+        if (isOnPlayPage()) {
+            const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
+            const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
+
+            // IDLE EVICTION ON RETURN: If minimized/idle for >= 10m while in a non-24h game room, eject immediately to lobby!
+            if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
+                console.warn('[play.js] Returned from background after ' + Math.round(idleGap / 1000) + 's (>= 10m). Ejecting to lobby for inactivity.');
+                ejectToLobby("inactivity");
+                return;
+            }
+        }
+
+        // Active return under timeout threshold: refresh interaction time
+        lastGameInteractionTime = now;
+        try {
+            const nowStr = now.toString();
+            localStorage.setItem('morpheme_last_active_time', nowStr);
+            localStorage.setItem('morpheme_last_active_timestamp', nowStr);
+        } catch(e) {}
+
         if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
             return;
         }
@@ -1446,6 +1459,22 @@ document.addEventListener('visibilitychange', () => {
 // Window Focus Listener: Provides robust mobile wake-up when focus is gained
 window.addEventListener('focus', () => {
     if (!document.hidden) {
+        const now = Date.now();
+        const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+        const idleGap = Math.max(now - lastGameInteractionTime, lastActiveStored > 0 ? (now - lastActiveStored) : 0);
+
+        if (isOnPlayPage()) {
+            const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
+            const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
+
+            // IDLE EVICTION ON RETURN: If idle for >= 10m while in a non-24h game room, eject immediately to lobby!
+            if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
+                console.warn('[play.js] Focus gained after ' + Math.round(idleGap / 1000) + 's (>= 10m). Ejecting to lobby for inactivity.');
+                ejectToLobby("inactivity");
+                return;
+            }
+        }
+
         if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
             return;
         }

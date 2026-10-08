@@ -3938,12 +3938,27 @@ function handleAppVisibilityChange() {
         }
         try {
             const last = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-            if (last > 0 && (Date.now() - last >= 10 * 60 * 1000)) {
-                window._suppressInactivityNotice = true;
-                sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
-                localStorage.removeItem('last_joined_room');
-                if (window.currentRoomId) window.currentRoomId = null;
-                if (window.lastGameState) window.lastGameState = null;
+            const isExceededTimeout = (last > 0) && (Date.now() - last >= 10 * 60 * 1000);
+            if (isExceededTimeout) {
+                const playPage = document.getElementById('page-play');
+                const wasOnPlayPage = playPage && !playPage.classList.contains('hidden') && playPage.style.display !== 'none';
+                const hasRoom = window.currentRoomId || localStorage.getItem('last_joined_room') || (window.lastGameState && window.lastGameState.room_id);
+
+                if (wasOnPlayPage && hasRoom) {
+                    console.log('[app.js] User returned to room after >= 10m idle. Invoking ejectToLobby.');
+                    if (typeof window.ejectToLobby === 'function') {
+                        window.ejectToLobby("inactivity");
+                    } else if (typeof window.navigateToPage === 'function') {
+                        window.navigateToPage("lobby");
+                    }
+                } else {
+                    // Stale background session cleanup when not actively in a room
+                    window._suppressInactivityNotice = true;
+                    sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
+                    localStorage.removeItem('last_joined_room');
+                    if (window.currentRoomId) window.currentRoomId = null;
+                    if (window.lastGameState) window.lastGameState = null;
+                }
             }
         } catch(e) {}
     }
