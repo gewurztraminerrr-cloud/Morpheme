@@ -607,8 +607,23 @@ class WordValidator:
 
 # Global instance
 word_validator = WordValidator()
+word_validator.word_validator = word_validator  # Self-alias to tolerate imports like `from word_validator import word_validator` then `word_validator.word_validator`
 
 # Pre-load CSW dictionary in a background thread on startup to prevent lobby transition delay
 import threading
 threading.Thread(target=word_validator.ensure_csw_loaded, daemon=True).start()
+
+# Module-level aliases to tolerate direct module attribute access
+csw_by_len = word_validator.csw_by_len
+nwl_by_len = word_validator.nwl_by_len
+nwl_words = word_validator.nwl_words
+csw_words = word_validator.csw_words
+added_words = word_validator.added_words
+long_words = word_validator.long_words
+ensure_csw_loaded = word_validator.ensure_csw_loaded
+is_valid_word = word_validator.is_valid_word
+is_csw_only = word_validator.is_csw_only
+is_added_word = word_validator.is_added_word
+find_word_on_board = word_validator.find_word_on_board
+get_use_added_words = word_validator.get_use_added_words
 
