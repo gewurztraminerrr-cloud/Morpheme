@@ -3859,18 +3859,29 @@ function updateRoomChatCounter() {
 }
 window.updateRoomChatCounter = updateRoomChatCounter;
 
+let isSendingChat = false;
+let lastChatSendTime = 0;
+
 async function sendChatMessage() {
+    const now = Date.now();
+    if (now - lastChatSendTime < 250) return;
     if (isSendingChat) return;
+
     const input = document.getElementById('chat-input');
     if (!input) return;
     let message = input.value.trim();
     const roomId = getCurrentRoomId();
 
-    if (!message || !roomId) return;
+    if (!message) return;
+    if (!roomId) {
+        console.warn('[Chat] Aborting sendChatMessage: No room ID found.');
+        return;
+    }
     if (message.length > 1000) {
         message = message.slice(0, 1000);
     }
 
+    lastChatSendTime = now;
     isSendingChat = true;
     input.value = ''; // Synchronously clear input immediately so double-press cannot grab the message again
     updateRoomChatCounter();
@@ -3879,12 +3890,22 @@ async function sendChatMessage() {
     if (sendBtn) sendBtn.disabled = true;
 
     try {
-        await fetch(`/api/room/${roomId}/chat`, {
+        const resp = await fetch(`/api/room/${roomId}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
         });
-        // updateGameState will pick it up on next poll
+        if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            console.warn('[Chat] Server returned error sending chat:', resp.status, data);
+            if (data && data.error && window.showToast) {
+                window.showToast(data.error);
+            }
+        } else {
+            if (typeof updateGameState === 'function') {
+                updateGameState();
+            }
+        }
     } catch (e) {
         console.error('Failed to send chat:', e);
     } finally {
@@ -3892,9 +3913,10 @@ async function sendChatMessage() {
         if (sendBtn) sendBtn.disabled = false;
     }
 }
+window.sendChatMessage = sendChatMessage;
 
-// Add event listeners for chat
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize Play DOM elements and listeners
+function initPlayDOMElements() {
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send-btn');
 
@@ -4342,6 +4364,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 playersListEl.scrollTop = 0;
             }
         });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPlayDOMElements);
+} else {
+    initPlayDOMElements();
+}
+
+// Delegated fallback event listeners for in-game chat to ensure submission works under all conditions
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target && e.target.id === 'chat-input') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof sendChatMessage === 'function') {
+            sendChatMessage();
+        }
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target && (e.target.id === 'chat-send-btn' || e.target.closest('#chat-send-btn'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof sendChatMessage === 'function') {
+            sendChatMessage();
+        }
     }
 });
 
