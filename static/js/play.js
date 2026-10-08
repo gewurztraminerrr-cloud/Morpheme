@@ -2358,6 +2358,7 @@ async function updateGameState(incomingState = null) {
             window.lastRenderedIntermissionWords = null;
             window.lastSolvingComplete = false;
             window.lastRenderedIntermissionKey = null; // Clear render cache key outside intermission
+            window.allWordsSortMode = 'length';
             const filterContainer = document.getElementById('length-filter-container');
             if (filterContainer) filterContainer.style.display = 'none';
             const findersContainer = document.getElementById('finders-button-container');
@@ -2720,7 +2721,8 @@ async function updateGameState(incomingState = null) {
                 const roundId = `${state.room_id}_${state.current_round}`;
                 const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
                 const selectedLen = window.selectedAllWordsLength || 'all';
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+                const sortMode = window.allWordsSortMode || 'length';
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -4497,7 +4499,8 @@ function updateIntermissionRenderKey() {
     const roundId = `${state.room_id}_${state.current_round}`;
     const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
     const selectedLen = window.selectedAllWordsLength || 'all';
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+    const sortMode = window.allWordsSortMode || 'length';
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 }
 
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
@@ -4587,9 +4590,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
+    const sortBtn = document.getElementById('all-words-sort-btn');
     
     if (filterContainer && filterDropdown) {
-        filterContainer.style.display = 'block';
+        filterContainer.style.display = 'flex';
         
         // Save current selection
         const prevSelection = window.selectedAllWordsLength || 'all';
@@ -4621,6 +4625,22 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                 displayAllWords(...window.lastDisplayAllWordsArgs);
             });
             filterDropdown.dataset.listenerAdded = 'true';
+        }
+    }
+
+    if (sortBtn) {
+        window.allWordsSortMode = window.allWordsSortMode || 'length';
+        sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Sort by Letter Length' : 'Sort by Point Value';
+        if (!sortBtn.dataset.listenerAdded) {
+            sortBtn.addEventListener('click', () => {
+                window.allWordsSortMode = (window.allWordsSortMode === 'points') ? 'length' : 'points';
+                sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Sort by Letter Length' : 'Sort by Point Value';
+                updateIntermissionRenderKey();
+                if (window.lastDisplayAllWordsArgs) {
+                    displayAllWords(...window.lastDisplayAllWordsArgs);
+                }
+            });
+            sortBtn.dataset.listenerAdded = 'true';
         }
     }
 
@@ -4663,16 +4683,35 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         ? displayWords 
         : displayWords.filter(entry => entry.len.toString() === selectedLength);
 
+    // Helper to get total points for sorting
+    const getEntryPoints = (entry) => {
+        const p = allWordScores[entry.word] || allWordScores[entry.wordUpper] || 0;
+        if (typeof p === 'object' && p !== null) return (p.total !== undefined ? p.total : 0);
+        return typeof p === 'number' ? p : (parseInt(p, 10) || 0);
+    };
+
+    const isSortByPoints = (window.allWordsSortMode === 'points');
+
     // Sort the filtered subset only (using optimized comparator)
     filteredWords.sort((a, b) => {
         // 0. Bonus Word (Absolute Top Priority)
         if (a.isBonus) return -1;
         if (b.isBonus) return 1;
 
-        // 1. Length (Desc) - Primary sort
-        if (a.len !== b.len) return b.len - a.len;
+        if (isSortByPoints) {
+            // Sort by Point Value (Desc)
+            const ptsA = getEntryPoints(a);
+            const ptsB = getEntryPoints(b);
+            if (ptsA !== ptsB) return ptsB - ptsA;
 
-        // 2. Alphabetical (Asc) - Secondary sort (ASCII operators are 10-20x faster than localeCompare)
+            // Secondary: Length (Desc)
+            if (a.len !== b.len) return b.len - a.len;
+        } else {
+            // Default: Length (Desc) - Primary sort
+            if (a.len !== b.len) return b.len - a.len;
+        }
+
+        // Alphabetical (Asc) - (ASCII operators are 10-20x faster than localeCompare)
         if (a.wordUpper < b.wordUpper) return -1;
         if (a.wordUpper > b.wordUpper) return 1;
         return 0;
