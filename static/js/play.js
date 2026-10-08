@@ -775,6 +775,9 @@ async function ejectToLobby(reason = "inactivity") {
 
     // Stop all polling and timer intervals immediately to prevent cascading polls
     stopPolling();
+    if (typeof stopDefinitionFireworks === 'function') {
+        stopDefinitionFireworks();
+    }
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -2369,6 +2372,9 @@ async function updateGameState(incomingState = null) {
         
         // Check for state transitions (Cleanup/Misc)
         const roomChanged = previousState && state.room_id !== previousState.room_id;
+        if (roomChanged && typeof stopDefinitionFireworks === 'function') {
+            stopDefinitionFireworks();
+        }
 
         // Issue 8: Detect rejoin (previousState is null but we have a stored round from sessionStorage)
         // If round changed since we last played this room, wipe local submitted words
@@ -2433,6 +2439,9 @@ async function updateGameState(incomingState = null) {
                 if (defPanel) {
                     // Keep timer-flash alive across rounds — Personal Timer expiry persists until user stops it
                     defPanel.classList.remove('winner-flash');
+                }
+                if (typeof stopDefinitionFireworks === 'function') {
+                    stopDefinitionFireworks();
                 }
                 window.userViewingDefinitionIntermission = false;
 
@@ -2783,6 +2792,13 @@ async function updateGameState(incomingState = null) {
                     safeWordsStats.style.display = 'block';
                 }
 
+                // 24H Room Fireworks: Check if all words on the board have been found
+                if (is24H && totalWords > 0 && uniqueFound >= totalWords) {
+                    startDefinitionFireworks();
+                } else if (is24H && totalWords > 0 && uniqueFound < totalWords && defFireworksActive) {
+                    stopDefinitionFireworks();
+                }
+
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
                     listEl.innerHTML = '<p class="placeholder">Find words on the board!</p>';
@@ -2891,6 +2907,13 @@ async function updateGameState(incomingState = null) {
 
                 const safeWordsStats = document.getElementById('words-stats');
                 if (safeWordsStats) safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
+
+                // 24H Room Fireworks: Check if all words on the board have been found (FCFS)
+                if (is24H && totalWords > 0 && uniqueFound >= totalWords) {
+                    startDefinitionFireworks();
+                } else if (is24H && totalWords > 0 && uniqueFound < totalWords && defFireworksActive) {
+                    stopDefinitionFireworks();
+                }
 
                 const sortedWords = allFoundWords.sort((a, b) => (b.time || 0) - (a.time || 0));
                 const threshold = 150;
@@ -8996,10 +9019,220 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// --- 24H ROOM CELEBRATION FIREWORKS ENGINE ---
+let defFireworksActive = false;
+let defFireworksAnimId = null;
+let defFireworksRockets = [];
+let defFireworksParticles = [];
+
+const defPalette = [
+    '#ff3b30', '#ff9500', '#ffcc00', '#34c759', 
+    '#00c7be', '#30b0c7', '#32ade6', '#007aff', 
+    '#5856d6', '#af52de', '#ff2d55', '#ffffff', '#ffd700'
+];
+
+class DefParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3.6 + 0.8;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.015;
+        this.gravity = 0.055;
+        this.radius = Math.random() * 1.8 + 1.2;
+    }
+    update() {
+        this.vx *= 0.96;
+        this.vy *= 0.96;
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+    }
+    draw(c) {
+        c.save();
+        c.globalAlpha = Math.max(this.alpha, 0);
+        c.fillStyle = this.color;
+        c.shadowColor = this.color;
+        c.shadowBlur = 4;
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+    }
+}
+
+class DefRocket {
+    constructor(w, h) {
+        this.x = Math.random() * (w - 40) + 20;
+        this.y = h + 5;
+        this.targetY = Math.random() * (h * 0.6) + (h * 0.15);
+        this.speed = Math.random() * 2.5 + 4.5;
+        this.color = defPalette[Math.floor(Math.random() * defPalette.length)];
+        this.exploded = false;
+    }
+    update() {
+        this.y -= this.speed;
+        if (this.y <= this.targetY) {
+            this.exploded = true;
+        }
+    }
+    draw(c) {
+        c.save();
+        c.fillStyle = this.color;
+        c.shadowColor = this.color;
+        c.shadowBlur = 6;
+        c.beginPath();
+        c.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+    }
+}
+
+function startDefinitionFireworks() {
+    const defPanel = document.querySelector('.definitions-panel');
+    if (!defPanel) return;
+
+    if (defFireworksActive && document.getElementById('def-fireworks-canvas')) {
+        return; // Already running
+    }
+
+    defFireworksActive = true;
+    defPanel.classList.add('has-fireworks');
+
+    // Hide standard definition elements while celebration is active
+    const defHeader = document.getElementById('definition-header');
+    if (defHeader) {
+        defHeader.classList.add('hidden');
+        defHeader.style.display = 'none';
+    }
+    const defContent = document.getElementById('definition-content');
+    if (defContent) {
+        defContent.style.display = 'none';
+    }
+
+    // Remove old elements if any
+    const oldCanvas = document.getElementById('def-fireworks-canvas');
+    if (oldCanvas) oldCanvas.remove();
+    const oldOverlay = document.getElementById('def-congrats-overlay');
+    if (oldOverlay) oldOverlay.remove();
+
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    canvas.id = 'def-fireworks-canvas';
+    canvas.className = 'def-fireworks-canvas';
+    defPanel.appendChild(canvas);
+
+    // Create congratulations overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'def-congrats-overlay';
+    overlay.className = 'def-congrats-overlay';
+    overlay.innerHTML = `
+        <h2 class="def-congrats-title">Congratulations!</h2>
+        <div class="def-congrats-sub">You found all the words!</div>
+        <div class="def-badge-all-words">
+            <span>✨</span> Board Cleared <span>✨</span>
+        </div>
+    `;
+    defPanel.appendChild(overlay);
+
+    const ctx = canvas.getContext('2d');
+    let width = 0;
+    let height = 0;
+
+    function resizeCanvas() {
+        if (!canvas) return;
+        const rect = defPanel.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        width = rect.width || 300;
+        height = rect.height || 130;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    defFireworksRockets = [];
+    defFireworksParticles = [];
+
+    function renderLoop() {
+        if (!defFireworksActive || !document.getElementById('def-fireworks-canvas')) {
+            window.removeEventListener('resize', resizeCanvas);
+            return;
+        }
+
+        ctx.fillStyle = 'rgba(20, 20, 28, 0.28)';
+        ctx.fillRect(0, 0, width, height);
+
+        if (Math.random() < 0.055) {
+            defFireworksRockets.push(new DefRocket(width, height));
+        }
+
+        for (let i = defFireworksRockets.length - 1; i >= 0; i--) {
+            const r = defFireworksRockets[i];
+            r.update();
+            r.draw(ctx);
+            if (r.exploded) {
+                const count = Math.floor(Math.random() * 26) + 30;
+                for (let k = 0; k < count; k++) {
+                    const pColor = (Math.random() < 0.3) ? defPalette[Math.floor(Math.random() * defPalette.length)] : r.color;
+                    defFireworksParticles.push(new DefParticle(r.x, r.y, pColor));
+                }
+                defFireworksRockets.splice(i, 1);
+            }
+        }
+
+        for (let i = defFireworksParticles.length - 1; i >= 0; i--) {
+            const p = defFireworksParticles[i];
+            p.update();
+            p.draw(ctx);
+            if (p.alpha <= 0) {
+                defFireworksParticles.splice(i, 1);
+            }
+        }
+
+        defFireworksAnimId = requestAnimationFrame(renderLoop);
+    }
+
+    if (defFireworksAnimId) cancelAnimationFrame(defFireworksAnimId);
+    defFireworksAnimId = requestAnimationFrame(renderLoop);
+}
+
+function stopDefinitionFireworks() {
+    defFireworksActive = false;
+    if (defFireworksAnimId) {
+        cancelAnimationFrame(defFireworksAnimId);
+        defFireworksAnimId = null;
+    }
+    defFireworksRockets = [];
+    defFireworksParticles = [];
+
+    const defPanel = document.querySelector('.definitions-panel');
+    if (defPanel) {
+        defPanel.classList.remove('has-fireworks');
+    }
+
+    const canvas = document.getElementById('def-fireworks-canvas');
+    if (canvas) canvas.remove();
+    const overlay = document.getElementById('def-congrats-overlay');
+    if (overlay) overlay.remove();
+
+    const defContent = document.getElementById('definition-content');
+    if (defContent) {
+        defContent.style.display = '';
+    }
+}
+
 // Definition Logic
 async function fetchDefinition(word) {
     if (!word) return;
     if (window.isSpectatorMode) return; // Block spectators from overwriting definition panel
+    if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
     const defHeader = document.getElementById('definition-header');

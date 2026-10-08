@@ -704,6 +704,89 @@
     word-break: break-word;
 }
 
+/* 24H Room Fireworks Celebration */
+.definitions-panel.has-fireworks {
+    position: relative !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+
+.def-fireworks-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.def-congrats-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 10;
+    padding: 8px 12px;
+    background: radial-gradient(ellipse at center, rgba(15, 15, 25, 0.6) 0%, rgba(10, 10, 18, 0.85) 100%);
+    pointer-events: none;
+}
+
+.def-congrats-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #fff3a8 0%, #ffd700 50%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 16px rgba(255, 215, 0, 0.45);
+    animation: def-pulse-title 2s ease-in-out infinite alternate;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.def-congrats-sub {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    opacity: 0.95;
+    margin-top: 3px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.01em;
+}
+
+.def-badge-all-words {
+    margin-top: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 9999px;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+}
+
+@keyframes def-pulse-title {
+    0% {
+        transform: scale(0.98);
+        filter: brightness(0.95);
+    }
+    100% {
+        transform: scale(1.02);
+        filter: brightness(1.2);
+    }
+}
+
 /* Board Panel */
 .board-panel {
     background: var(--bg-panel);
