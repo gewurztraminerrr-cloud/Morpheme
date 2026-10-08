@@ -994,8 +994,8 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                         ${isGuest ? 'Register to Create Custom Rooms' : 'Set Rating Limits (Optional)'}
                     </div>
                     <div class="rating-inputs-row">
-                        <input type="number" class="rating-input min-rating-input" placeholder="Min Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
-                        <input type="number" class="rating-input max-rating-input" placeholder="Max Rating" min="0" step="100" ${isGuest ? 'disabled' : ''}>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input min-rating-input" placeholder="Min Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ${isGuest ? 'disabled' : ''}>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="rating-input max-rating-input" placeholder="Max Rating" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\'\')" ${isGuest ? 'disabled' : ''}>
                     </div>
                     <button class="confirm-create-room-btn" onclick="window.handleCreateRoomButtonClick(this, event)" ${isGuest ? 'disabled style="cursor:not-allowed;"' : ''}>
                         ${isGuest ? 'Registered Only' : '+ Create Room'}
@@ -2504,6 +2504,94 @@ if (document.readyState === 'loading') {
 } else {
     initLobbyGuideState();
 }
+
+// --- STRICT NUMERIC GUARDS FOR RATING INPUTS ---
+// Disallows letters, symbols, signs, decimals or any other non-digit character in "Set Rating Limits" textboxes.
+(function initRatingInputNumericGuards() {
+    // 1. Block non-numeric keystrokes on keydown
+    document.addEventListener('keydown', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+
+        // Allow navigation and editing control keys
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+        if (allowedKeys.includes(e.key)) return;
+
+        // Up/Down arrows increment/decrement by 100
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const current = parseInt(target.value) || 0;
+            target.value = Math.max(0, current + 100);
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const current = parseInt(target.value) || 0;
+            target.value = Math.max(0, current - 100);
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        }
+
+        // Allow standard shortcuts (Ctrl/Cmd + A, C, V, X, Z)
+        if (e.ctrlKey || e.metaKey) return;
+
+        // Block all non-digit keys (letters, 'e', 'E', '+', '-', '.', punctuation, spaces, etc.)
+        if (!/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    // 2. Block non-numeric character insertions before input happens
+    document.addEventListener('beforeinput', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+        if (e.data && !/^[0-9]+$/.test(e.data)) {
+            e.preventDefault();
+        }
+    });
+
+    // 3. Clean up any non-digit characters on input (catches IME, autofill, etc.)
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+        const cleaned = target.value.replace(/[^0-9]/g, '');
+        if (target.value !== cleaned) {
+            target.value = cleaned;
+        }
+    });
+
+    // 4. Filter pasted content so only digits are inserted
+    document.addEventListener('paste', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        const digits = text.replace(/[^0-9]/g, '');
+        if (digits) {
+            const start = target.selectionStart || 0;
+            const end = target.selectionEnd || 0;
+            const val = target.value;
+            target.value = val.slice(0, start) + digits + val.slice(end);
+            const newPos = start + digits.length;
+            target.setSelectionRange(newPos, newPos);
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    // 5. Prevent dropping non-numeric text
+    document.addEventListener('drop', (e) => {
+        const target = e.target;
+        if (!target || !target.classList || !target.classList.contains('rating-input')) return;
+        e.preventDefault();
+        const text = e.dataTransfer ? e.dataTransfer.getData('text') : '';
+        const digits = (text || '').replace(/[^0-9]/g, '');
+        if (digits) {
+            target.value = digits;
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+})();
 
 console.log('lobby.js fully loaded with Lobby Players & Chat controller');
 
