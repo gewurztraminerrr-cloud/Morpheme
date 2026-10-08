@@ -3215,18 +3215,17 @@ class RoomManager:
                     
                 last_round = row[0]
             
-            # 2. Query all player entries for this round
-            cursor.execute('''
-                SELECT rh.user_id, u.username, rh.words_json, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, rh.board_dimensions, rh.total_words_avail
-                FROM round_history rh
-                LEFT JOIN users u ON rh.user_id = u.id
-                WHERE rh.room_id = ? AND rh.round_number = ?
-            ''', (room.room_id, last_round))
-            
-            rows = cursor.fetchall()
-            if not rows:
-                conn.close()
-                return
+                # 2. Query all player entries for this round
+                cursor.execute('''
+                    SELECT rh.user_id, u.username, rh.words_json, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, rh.board_dimensions, rh.total_words_avail
+                    FROM round_history rh
+                    LEFT JOIN users u ON rh.user_id = u.id
+                    WHERE rh.room_id = ? AND rh.round_number = ?
+                ''', (room.room_id, last_round))
+                
+                rows = cursor.fetchall()
+                if not rows:
+                    return
                 
             # Parse common board/round attributes from the first entry
             first_row = rows[0]
