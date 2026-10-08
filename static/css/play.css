@@ -11993,11 +11993,63 @@ body.is-mobile #page-settings .theme-selector-grid {
 
 .tool-def-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 6px;
     flex-shrink: 0;
+    gap: 8px;
+}
+
+.tool-def-action-left,
+.tool-def-action-center,
+.tool-def-action-right {
+    display: flex;
+    align-items: center;
+}
+
+.tool-def-action-left {
+    justify-content: flex-start;
+}
+
+.tool-def-action-center {
+    justify-content: center;
+    flex: 1;
+}
+
+.tool-def-action-right {
+    justify-content: flex-end;
+}
+
+.tool-def-footer-link {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a78bfa;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(167, 139, 250, 0.1);
+    user-select: none;
+}
+
+.tool-def-footer-link:hover {
+    color: #c4b5fd;
+    background: rgba(167, 139, 250, 0.22);
+    text-decoration: none;
+}
+
+.tool-def-added-badge {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    user-select: none;
 }
 
 .tool-def-isvalid-link {

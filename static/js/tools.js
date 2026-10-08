@@ -156,12 +156,28 @@ window.showTool = function(toolId) {
         clearTimeout(window._toolsSlideTimeout);
         window._toolsSlideTimeout = null;
     }
-    // Save lists scroll position before navigating away from Lists tool
+    // Save scroll position of currently active tool before switching
     const currentActivePane = document.querySelector('.tool-pane.active');
-    if (currentActivePane && currentActivePane.id === 'tool-lists') {
-        const listScrollArea = document.getElementById('main-list-results');
-        if (listScrollArea) {
-            window._savedListsScrollTop = listScrollArea.scrollTop;
+    if (currentActivePane) {
+        const curId = currentActivePane.id.replace('tool-', '');
+        window._savedToolScrollPositions = window._savedToolScrollPositions || {};
+        window._savedToolScrollPositions[curId] = currentActivePane.scrollTop;
+
+        if (curId === 'lists') {
+            const listScrollArea = document.getElementById('main-list-results');
+            if (listScrollArea) {
+                window._savedListsScrollTop = listScrollArea.scrollTop;
+            }
+        } else if (curId === 'work-on') {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll) {
+                window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            }
+        } else if (curId === 'combo') {
+            const comboScroll = document.getElementById('combo-scroll-container');
+            if (comboScroll) {
+                window._savedComboScrollTop = comboScroll.scrollTop;
+            }
         }
     }
 
@@ -252,6 +268,28 @@ window.showTool = function(toolId) {
     if (toolId === 'work-on') {
         if (typeof renderWordsToWorkOnTable === 'function') {
             renderWordsToWorkOnTable();
+        }
+        const workOnScroll = document.getElementById('work-on-table-scroll');
+        if (workOnScroll && typeof window._savedWorkOnScrollTop === 'number') {
+            setTimeout(() => {
+                workOnScroll.scrollTop = window._savedWorkOnScrollTop;
+            }, 30);
+        }
+    }
+    if (toolId === 'combo') {
+        const comboScroll = document.getElementById('combo-scroll-container');
+        if (comboScroll && typeof window._savedComboScrollTop === 'number') {
+            setTimeout(() => {
+                comboScroll.scrollTop = window._savedComboScrollTop;
+            }, 30);
+        }
+    }
+    if (window._savedToolScrollPositions && typeof window._savedToolScrollPositions[toolId] === 'number') {
+        const targetPaneEl = document.getElementById(`tool-${toolId}`);
+        if (targetPaneEl) {
+            setTimeout(() => {
+                targetPaneEl.scrollTop = window._savedToolScrollPositions[toolId];
+            }, 30);
         }
     }
     if (toolId === 'random') {
@@ -8343,6 +8381,34 @@ window.openWordInIsValid = function (word) {
 window._wordDefCache = window._wordDefCache || new Map();
 let _defPopoverDocListenerAdded = false;
 
+window.saveCurrentToolsPosition = function () {
+    const fullListModal = document.getElementById('full-list-modal');
+    const fullListResults = document.getElementById('full-list-modal-results');
+    if (fullListModal && fullListModal.style.display !== 'none' && !fullListModal.classList.contains('hidden') && fullListResults) {
+        window._savedFullListScrollTop = fullListResults.scrollTop;
+        window._wasFullListModalOpen = true;
+    }
+
+    const currentActivePane = document.querySelector('.tool-pane.active');
+    if (currentActivePane) {
+        const curId = currentActivePane.id.replace('tool-', '');
+        window._savedOriginToolId = curId;
+        window._savedToolScrollPositions = window._savedToolScrollPositions || {};
+        window._savedToolScrollPositions[curId] = currentActivePane.scrollTop;
+
+        if (curId === 'lists') {
+            const listScrollArea = document.getElementById('main-list-results');
+            if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
+        } else if (curId === 'work-on') {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+        } else if (curId === 'combo') {
+            const comboScroll = document.getElementById('combo-scroll-container');
+            if (comboScroll) window._savedComboScrollTop = comboScroll.scrollTop;
+        }
+    }
+};
+
 window.hideWordDefinitionPopup = function () {
     const popover = document.getElementById('tool-word-def-popover');
     if (popover) {
@@ -8381,10 +8447,36 @@ window.showWordDefinitionPopup = async function (word, event) {
             </div>
             <div id="tool-def-content" class="tool-def-content">Loading definition...</div>
             <div class="tool-def-actions">
-                <a href="javascript:void(0)" id="tool-def-isvalid-btn" class="tool-def-isvalid-link">Open in Is Valid ↗</a>
+                <div class="tool-def-action-left">
+                    <a href="javascript:void(0)" id="tool-def-cc-btn" class="tool-def-footer-link" title="Combo Checker (CC)">CC</a>
+                </div>
+                <div class="tool-def-action-center">
+                    <a href="javascript:void(0)" id="tool-def-fc-btn" class="tool-def-footer-link" title="Find Count (FC)">FC</a>
+                </div>
+                <div class="tool-def-action-right">
+                    <a href="javascript:void(0)" id="tool-def-add-btn" class="tool-def-footer-link tool-def-add-link" title="Add to Words to Work on">ADD</a>
+                    <span id="tool-def-added-badge" class="tool-def-added-badge" style="display: none;">ADDED</span>
+                </div>
             </div>
         `;
         document.body.appendChild(popover);
+    } else if (popover.querySelector('#tool-def-isvalid-btn')) {
+        // Upgrade existing popover footer markup if still present
+        const actionsEl = popover.querySelector('.tool-def-actions');
+        if (actionsEl) {
+            actionsEl.innerHTML = `
+                <div class="tool-def-action-left">
+                    <a href="javascript:void(0)" id="tool-def-cc-btn" class="tool-def-footer-link" title="Combo Checker (CC)">CC</a>
+                </div>
+                <div class="tool-def-action-center">
+                    <a href="javascript:void(0)" id="tool-def-fc-btn" class="tool-def-footer-link" title="Find Count (FC)">FC</a>
+                </div>
+                <div class="tool-def-action-right">
+                    <a href="javascript:void(0)" id="tool-def-add-btn" class="tool-def-footer-link tool-def-add-link" title="Add to Words to Work on">ADD</a>
+                    <span id="tool-def-added-badge" class="tool-def-added-badge" style="display: none;">ADDED</span>
+                </div>
+            `;
+        }
     }
 
     if (!_defPopoverDocListenerAdded) {
@@ -8412,7 +8504,10 @@ window.showWordDefinitionPopup = async function (word, event) {
     const lenBadgeEl = document.getElementById('tool-def-len-badge');
     const pronEl = document.getElementById('tool-def-pronunciation');
     const contentEl = document.getElementById('tool-def-content');
-    const isValidBtn = document.getElementById('tool-def-isvalid-btn');
+    const ccBtn = document.getElementById('tool-def-cc-btn');
+    const fcBtn = document.getElementById('tool-def-fc-btn');
+    const addBtn = document.getElementById('tool-def-add-btn');
+    const addedBadge = document.getElementById('tool-def-added-badge');
 
     if (wordTextEl) {
         wordTextEl.textContent = cleanWord;
@@ -8426,11 +8521,86 @@ window.showWordDefinitionPopup = async function (word, event) {
     }
     if (lenBadgeEl) lenBadgeEl.textContent = `${cleanWord.length}L`;
     if (pronEl) pronEl.style.display = 'none';
-    if (isValidBtn) {
-        isValidBtn.onclick = (e) => {
+
+    // CC (Combo Checker) Click Handler
+    if (ccBtn) {
+        ccBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            window.openWordInIsValid(cleanWord);
+            if (typeof window.saveCurrentToolsPosition === 'function') {
+                window.saveCurrentToolsPosition();
+            }
+            window.hideWordDefinitionPopup();
+            if (typeof window.closeFullListModal === 'function') {
+                window.closeFullListModal();
+            }
+            if (typeof window.showTool === 'function') {
+                window.showTool('combo');
+            }
+            const comboInput = document.getElementById('combo-input');
+            if (comboInput) {
+                comboInput.value = cleanWord;
+                if (typeof runComboSearch === 'function') {
+                    runComboSearch();
+                }
+            }
         };
+    }
+
+    // FC (Find Count) Click Handler
+    if (fcBtn) {
+        fcBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.saveCurrentToolsPosition === 'function') {
+                window.saveCurrentToolsPosition();
+            }
+            window.hideWordDefinitionPopup();
+            if (typeof window.closeFullListModal === 'function') {
+                window.closeFullListModal();
+            }
+            if (typeof window.showTool === 'function') {
+                window.showTool('find-count');
+            }
+            const fcInput = document.getElementById('find-count-input');
+            if (fcInput) {
+                fcInput.value = cleanWord;
+                if (typeof runFindCountSearch === 'function') {
+                    runFindCountSearch();
+                }
+            }
+        };
+    }
+
+    // ADD / ADDED Click Handler & State Check
+    const currentList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+    const isAlreadyOnList = currentList.some(item => {
+        const w = (typeof item === 'object' && item !== null) ? item.word : item;
+        return (w || '').toUpperCase() === cleanWord;
+    });
+
+    if (addBtn && addedBadge) {
+        if (isAlreadyOnList) {
+            // "If the word is already on their list, then don’t do anything (do not display “ADD”)."
+            addBtn.style.display = 'none';
+            addedBadge.style.display = 'none';
+            addBtn.onclick = null;
+        } else {
+            addBtn.style.display = 'inline-flex';
+            addBtn.style.pointerEvents = 'auto';
+            addBtn.style.opacity = '1';
+            addedBadge.style.display = 'none';
+            addBtn.onclick = async (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof addWordToWorkOn === 'function') {
+                    const ok = await addWordToWorkOn(cleanWord);
+                    if (ok) {
+                        // "If the word is successfully added, add a green “ADDED” text next to it to ensure to the user the word was added."
+                        addedBadge.style.display = 'inline-flex';
+                        addBtn.style.pointerEvents = 'none';
+                        addBtn.style.opacity = '0.5';
+                    }
+                }
+            };
+        }
     }
 
     // Smart Positioning

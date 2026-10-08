@@ -9452,6 +9452,32 @@ body.theme-white .tool-def-isvalid-link,
     color: #6d28d9 !important;
 }
 
+body.theme-white .tool-def-footer-link,
+[class*="theme-white"] .tool-def-footer-link,
+[class*="theme-light-"] .tool-def-footer-link {
+    color: #4338ca !important;
+    background: rgba(67, 56, 202, 0.08) !important;
+}
+
+body.theme-white .tool-def-footer-link:hover,
+[class*="theme-white"] .tool-def-footer-link:hover,
+[class*="theme-light-"] .tool-def-footer-link:hover {
+    color: #312e81 !important;
+    background: rgba(67, 56, 202, 0.16) !important;
+}
+
+body.theme-white .tool-def-added-badge,
+[class*="theme-white"] .tool-def-added-badge,
+[class*="theme-light-"] .tool-def-added-badge {
+    color: #059669 !important;
+}
+
+body.theme-white .tool-def-actions,
+[class*="theme-white"] .tool-def-actions,
+[class*="theme-light-"] .tool-def-actions {
+    border-top: 1px solid #cbd5e1 !important;
+}
+
 /* 14. Country Flag Selector Dropdown for White/Light Themes */
 body.theme-white .dropdown-menu,
 [class*="theme-white"] .dropdown-menu {
