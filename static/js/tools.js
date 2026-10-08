@@ -4916,6 +4916,58 @@ function handleFullListWordJump() {
 }
 window.handleFullListWordJump = handleFullListWordJump;
 
+function restoreOrRenderFullList(currentFilterKey) {
+    const results = document.getElementById('full-list-modal-results');
+    const hasSavedPlacement = (window._savedFullListFilterKey === currentFilterKey) &&
+        (typeof window._savedFullListRenderedStart === 'number' || window._savedFullListWord);
+
+    if (hasSavedPlacement) {
+        let startIdx = 0;
+        let wordToCenter = window._savedFullListWord || null;
+
+        if (wordToCenter && _fullListAllWords && _fullListAllWords.length > 0) {
+            const query = wordToCenter.toUpperCase();
+            let foundIdx = -1;
+            const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
+            if (wordType && (wordType.includes('likelihood') || isNewWordList(wordType))) {
+                foundIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' && item !== null ? item.word : item).toUpperCase() === query);
+            } else {
+                let low = 0, high = _fullListAllWords.length - 1;
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    const w = (typeof _fullListAllWords[mid] === 'object' ? _fullListAllWords[mid].word : _fullListAllWords[mid]).toUpperCase();
+                    if (w === query) { foundIdx = mid; break; }
+                    if (w < query) low = mid + 1; else high = mid - 1;
+                }
+            }
+            if (foundIdx !== -1) {
+                const halfBatch = Math.floor(FULL_LIST_INITIAL_BATCH / 2);
+                startIdx = Math.max(0, foundIdx - halfBatch);
+            } else if (typeof window._savedFullListRenderedStart === 'number') {
+                startIdx = window._savedFullListRenderedStart;
+            }
+        } else if (typeof window._savedFullListRenderedStart === 'number') {
+            startIdx = window._savedFullListRenderedStart;
+        }
+
+        renderFullListInitial(startIdx, wordToCenter);
+
+        if (typeof window._savedFullListScrollTop === 'number' && !wordToCenter && results) {
+            const savedScroll = window._savedFullListScrollTop;
+            requestAnimationFrame(() => {
+                results.scrollTop = savedScroll;
+                updateFullListVirtualScrollbar();
+            });
+            setTimeout(() => {
+                results.scrollTop = savedScroll;
+                updateFullListVirtualScrollbar();
+            }, 30);
+        }
+    } else {
+        renderFullListInitial(0);
+    }
+}
+
 window.openFullListModal = function() {
     let modal = document.getElementById('full-list-modal');
     let results = document.getElementById('full-list-modal-results');
@@ -4961,12 +5013,7 @@ window.openFullListModal = function() {
     const fullListCount = document.getElementById('full-list-modal-count');
 
     window._lastFullListFilterKey = currentFilterKey;
-    _fullListRenderedStart = 0;
-    _fullListRenderedEnd = 0;
     _currentFullListJumpedWord = null;
-
-    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
-    results.scrollTop = 0;
 
     modal.classList.remove('hidden');
     modal.classList.add('forced-show');
@@ -4975,28 +5022,29 @@ window.openFullListModal = function() {
     document.body.style.height = '100%';
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+
+    // If list data is already cached in memory, directly restore saved placement without clearing DOM
+    const hasCachedList = (window._cachedFullWordLists[currentFilterKey] && window._cachedFullWordLists[currentFilterKey].length > 0) ||
+        (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && !window.listsServerTruncated && currentWordsType === selectedType);
+
+    if (hasCachedList) {
+        _fullListAllWords = window._cachedFullWordLists[currentFilterKey] || currentWordsList;
+        window._cachedFullWordLists[currentFilterKey] = _fullListAllWords;
+        window.isFullListLoading = false;
+        initFullListVirtualScrollbar();
+        restoreOrRenderFullList(currentFilterKey);
+        return;
+    }
+
+    // Only when fetching fresh list data from network do we show loading state
+    _fullListRenderedStart = 0;
+    _fullListRenderedEnd = 0;
+    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
+    results.scrollTop = 0;
     window.isFullListLoading = true;
 
     if (fullListCount) {
         fullListCount.textContent = `Loading…`;
-    }
-
-    if (window._cachedFullWordLists[currentFilterKey] && window._cachedFullWordLists[currentFilterKey].length > 0) {
-        _fullListAllWords = window._cachedFullWordLists[currentFilterKey];
-        window.isFullListLoading = false;
-        initFullListVirtualScrollbar();
-        renderFullListWindow(0);
-        return;
-    }
-
-    // Reuse in-memory client list if it was not truncated
-    if (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && !window.listsServerTruncated && currentWordsType === selectedType) {
-        _fullListAllWords = currentWordsList;
-        window._cachedFullWordLists[currentFilterKey] = currentWordsList;
-        window.isFullListLoading = false;
-        initFullListVirtualScrollbar();
-        renderFullListWindow(0);
-        return;
     }
 
     let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
@@ -5020,7 +5068,7 @@ window.openFullListModal = function() {
             window._cachedFullWordLists[currentFilterKey] = rawWords;
             window.isFullListLoading = false;
             initFullListVirtualScrollbar();
-            renderFullListWindow(0);
+            restoreOrRenderFullList(currentFilterKey);
         })
         .catch(err => {
             clearTimeout(fetchTimeout);
@@ -5033,6 +5081,12 @@ window.openFullListModal = function() {
 
 window.closeFullListModal = function() {
     const modal = document.getElementById('full-list-modal');
+    const results = document.getElementById('full-list-modal-results');
+    if (results) {
+        window._savedFullListScrollTop = results.scrollTop;
+        window._savedFullListRenderedStart = (typeof _fullListRenderedStart === 'number') ? _fullListRenderedStart : 0;
+        window._savedFullListFilterKey = window._lastFullListFilterKey;
+    }
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('forced-show');
@@ -8381,11 +8435,14 @@ window.openWordInIsValid = function (word) {
 window._wordDefCache = window._wordDefCache || new Map();
 let _defPopoverDocListenerAdded = false;
 
-window.saveCurrentToolsPosition = function () {
+window.saveCurrentToolsPosition = function (wordClicked = null) {
     const fullListModal = document.getElementById('full-list-modal');
     const fullListResults = document.getElementById('full-list-modal-results');
     if (fullListModal && fullListModal.style.display !== 'none' && !fullListModal.classList.contains('hidden') && fullListResults) {
         window._savedFullListScrollTop = fullListResults.scrollTop;
+        window._savedFullListRenderedStart = (typeof _fullListRenderedStart === 'number') ? _fullListRenderedStart : 0;
+        window._savedFullListWord = wordClicked;
+        window._savedFullListFilterKey = window._lastFullListFilterKey;
         window._wasFullListModalOpen = true;
     }
 
@@ -8527,7 +8584,7 @@ window.showWordDefinitionPopup = async function (word, event) {
         ccBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             if (typeof window.saveCurrentToolsPosition === 'function') {
-                window.saveCurrentToolsPosition();
+                window.saveCurrentToolsPosition(cleanWord);
             }
             window.hideWordDefinitionPopup();
             if (typeof window.closeFullListModal === 'function') {
@@ -8551,7 +8608,7 @@ window.showWordDefinitionPopup = async function (word, event) {
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             if (typeof window.saveCurrentToolsPosition === 'function') {
-                window.saveCurrentToolsPosition();
+                window.saveCurrentToolsPosition(cleanWord);
             }
             window.hideWordDefinitionPopup();
             if (typeof window.closeFullListModal === 'function') {
