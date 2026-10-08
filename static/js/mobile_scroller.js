@@ -26,7 +26,13 @@
         }
 
         function update() {
+            // If an overlay or modal is open (e.g. Round Replay, Full List, Profile, etc.), hide the background page scroller
+            const replayOverlay = document.getElementById('history-review-overlay');
+            const isReplayOpen = replayOverlay && !replayOverlay.classList.contains('hidden') && replayOverlay.offsetParent !== null;
+            const isAnyModalOpen = isReplayOpen || !!document.querySelector('.overlay:not(.hidden), .modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), #full-list-modal:not(.hidden)');
+
             const visible = window.innerWidth <= MOBILE_MAX &&
+                !isAnyModalOpen &&
                 page.classList.contains('active') &&
                 page.offsetParent !== null &&
                 page.scrollHeight > page.clientHeight + 15;
