@@ -7266,7 +7266,7 @@ class RoomManager:
             return None
         with room._state_lock:
             from board_generator import pop_any_cached_board, pop_compatible_cached_board
-            from word_validator import word_validator
+            import word_validator
             
             # Check if room already has an active board with letters
             has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
@@ -7366,7 +7366,7 @@ class RoomManager:
     def _get_bonus_word(self, length=8, dictionary='NWL', alternating=False, difficulty='Medium', exclude=None):
         """Get a bonus word of specified length, optionally enforcing C/V alternating pattern for Checkerboard"""
         import time
-        from word_validator import word_validator
+        import word_validator
         
         # USER MANDATE: Bonus word length MUST be strictly between 6 and 10 letters!
         try:
@@ -7651,7 +7651,7 @@ class RoomManager:
             import json
             import datetime
             import os
-            from word_validator import word_validator
+            import word_validator
             
             # 1. Efficient Tally: Number of unique USERS who found each word in THIS round
             word_counts = collections.Counter()
