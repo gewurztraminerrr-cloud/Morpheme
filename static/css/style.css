@@ -10791,6 +10791,12 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     border-bottom-color: rgba(167, 139, 250, 0.5) !important;
 }
 
+#tool-work-on .work-on-row.jump-target-pulse {
+    animation: jumpTargetGlow 2.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: rgba(167, 139, 250, 0.3) !important;
+    border-bottom-color: rgba(167, 139, 250, 0.6) !important;
+}
+
 #tool-work-on .work-on-col-num {
     width: 55px;
     flex: 0 0 55px;

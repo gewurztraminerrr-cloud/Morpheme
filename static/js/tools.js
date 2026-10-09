@@ -269,11 +269,8 @@ window.showTool = function(toolId) {
         if (typeof renderWordsToWorkOnTable === 'function') {
             renderWordsToWorkOnTable();
         }
-        const workOnScroll = document.getElementById('work-on-table-scroll');
-        if (workOnScroll && typeof window._savedWorkOnScrollTop === 'number') {
-            setTimeout(() => {
-                workOnScroll.scrollTop = window._savedWorkOnScrollTop;
-            }, 30);
+        if (typeof restoreWordsToWorkOnPosition === 'function') {
+            restoreWordsToWorkOnPosition();
         }
     }
     if (toolId === 'combo') {
@@ -423,6 +420,17 @@ function setupToolsNavigation() {
     const toolsBackBtn = document.getElementById('tools-mobile-back-btn');
     if (toolsBackBtn) {
         toolsBackBtn.addEventListener('click', () => {
+            const currentActivePane = document.querySelector('#page-tools .tool-pane.active');
+            if (currentActivePane) {
+                const curId = currentActivePane.id.replace('tool-', '');
+                if (curId === 'work-on') {
+                    const workOnScroll = document.getElementById('work-on-table-scroll');
+                    if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+                } else if (curId === 'lists') {
+                    const listScrollArea = document.getElementById('main-list-results');
+                    if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
+                }
+            }
             if (typeof window.resetToolsTab === 'function') {
                 window.resetToolsTab(false);
             } else {
@@ -5807,7 +5815,7 @@ function renderWordsToWorkOnTable() {
         const selectedClass = isSelected ? ' selected' : '';
 
         rowsHtml += `
-            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}" style="width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
+            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}" data-word="${word}" style="width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
                 <div class="work-on-col-num">
                     ${posNum}
                 </div>
@@ -5846,6 +5854,60 @@ function renderWordsToWorkOnTable() {
     }
 }
 window.renderWordsToWorkOnTable = renderWordsToWorkOnTable;
+
+function restoreWordsToWorkOnPosition() {
+    const workOnScroll = document.getElementById('work-on-table-scroll');
+    const tableBody = document.getElementById('work-on-table-body');
+    if (!workOnScroll || !tableBody) return;
+
+    const wordToCenter = window._savedWorkOnWord || null;
+    const savedScrollTop = typeof window._savedWorkOnScrollTop === 'number' ? window._savedWorkOnScrollTop : null;
+
+    if (!wordToCenter && savedScrollTop === null) return;
+
+    const performScroll = () => {
+        let targetRow = null;
+        if (wordToCenter) {
+            try {
+                targetRow = tableBody.querySelector(`.work-on-row[data-word="${CSS.escape(wordToCenter)}"]`);
+            } catch (_) {}
+        }
+
+        if (targetRow) {
+            const rowTop = targetRow.offsetTop;
+            const rowHeight = targetRow.offsetHeight || targetRow.clientHeight;
+            const containerHeight = workOnScroll.clientHeight;
+            const targetScroll = Math.max(0, rowTop - (containerHeight / 2) + (rowHeight / 2));
+            workOnScroll.scrollTop = targetScroll;
+            targetRow.classList.add('jump-target-pulse');
+            setTimeout(() => {
+                targetRow.classList.remove('jump-target-pulse');
+            }, 2500);
+        } else if (savedScrollTop !== null) {
+            workOnScroll.scrollTop = savedScrollTop;
+        }
+
+        if (typeof workOnScroll._updateCustomScrollbar === 'function') {
+            workOnScroll._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('work-on-table-scroll', 'work-on-scrollbar-track', 'work-on-scrollbar-thumb');
+        }
+    };
+
+    // Run across multiple animation frames and layout settling ticks
+    requestAnimationFrame(performScroll);
+    setTimeout(performScroll, 40);
+    setTimeout(performScroll, 150);
+    setTimeout(performScroll, 360);
+    setTimeout(performScroll, 500);
+
+    if (wordToCenter) {
+        setTimeout(() => {
+            window._savedWorkOnWord = null;
+        }, 700);
+    }
+}
+window.restoreWordsToWorkOnPosition = restoreWordsToWorkOnPosition;
 
 function setupWordsToWorkOnTool() {
     const input = document.getElementById('work-on-input');
@@ -8458,10 +8520,22 @@ window.saveCurrentToolsPosition = function (wordClicked = null) {
             if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
         } else if (curId === 'work-on') {
             const workOnScroll = document.getElementById('work-on-table-scroll');
-            if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            if (workOnScroll) {
+                window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            }
+            if (wordClicked) {
+                window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
+            }
         } else if (curId === 'combo') {
             const comboScroll = document.getElementById('combo-scroll-container');
             if (comboScroll) window._savedComboScrollTop = comboScroll.scrollTop;
+        }
+    } else {
+        const workOnPane = document.getElementById('tool-work-on');
+        if (workOnPane && (workOnPane.classList.contains('active') || window._savedOriginToolId === 'work-on')) {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            if (wordClicked) window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
         }
     }
 };
