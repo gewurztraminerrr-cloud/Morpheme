@@ -10806,18 +10806,18 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 @media (max-width: 600px) {
     #tool-work-on .work-on-table-header,
     #tool-work-on .work-on-row {
-        padding: 8px 10px !important;
+        padding: 8px 4px 8px 10px !important;
     }
 
     #tool-work-on .work-on-col-num {
-        width: 36px !important;
+        width: 32px !important;
         font-size: 0.8rem !important;
     }
 
     #tool-work-on .work-on-col-word {
         flex: 1 1 auto !important;
         min-width: 0 !important;
-        padding-right: 6px !important;
+        padding-right: 4px !important;
         overflow: visible !important;
     }
 
@@ -10829,6 +10829,7 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
         width: 125px !important;
         flex-shrink: 0 !important;
         margin-left: auto !important;
+        padding-right: 0 !important;
         text-align: right !important;
         display: flex !important;
         justify-content: flex-end !important;
@@ -10841,7 +10842,8 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     #tool-work-on .work-on-badge {
         font-size: 0.65rem !important;
         padding: 1px 4px !important;
-        margin-left: 1px !important;
+        margin-left: 2px !important;
+        margin-right: 0 !important;
     }
 }
 
