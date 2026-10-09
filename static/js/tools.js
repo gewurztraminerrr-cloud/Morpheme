@@ -5795,7 +5795,7 @@ function renderWordsToWorkOnTable() {
         const posNum = displayIdx + 1;
 
         // Render dictionary membership badges with high contrast across all layouts
-        let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; width: 100%;">';
+        let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; width: 100%; white-space: nowrap;">';
         ['NWL', 'CSW', 'AW'].forEach(dictName => {
             if (lists.includes(dictName)) {
                 let badgeClass = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
@@ -5807,16 +5807,16 @@ function renderWordsToWorkOnTable() {
         const selectedClass = isSelected ? ' selected' : '';
 
         rowsHtml += `
-            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}">
+            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}" style="width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
                 <div class="work-on-col-num">
                     ${posNum}
                 </div>
-                <div class="work-on-col-word">
+                <div class="work-on-col-word" style="flex: 1 1 0px; min-width: 0; text-align: left;">
                     <span class="clickable-word-link work-on-word-link" onclick="window.lookupWord('${word}', event)">
                         ${word}
                     </span>
                 </div>
-                <div class="work-on-col-lists">
+                <div class="work-on-col-lists" style="margin-left: auto; flex-shrink: 0; text-align: right; display: flex; justify-content: flex-end; align-items: center; white-space: nowrap;">
                     ${badgesHtml}
                 </div>
             </div>

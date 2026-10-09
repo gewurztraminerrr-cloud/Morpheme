@@ -174,9 +174,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1791102002" as="style">
+    <link rel="preload" href="/css/style.css?v=1791102003" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791095000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791102002">
+    <link rel="stylesheet" href="/css/style.css?v=1791102003">
     <link rel="stylesheet" href="/css/lobby.css?v=1791095000">
     <link rel="stylesheet" href="/css/play.css?v=1791100001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
@@ -5032,15 +5032,15 @@
                         <!-- Words Table Box with Custom Scrollbar -->
                         <div class="work-on-table-card" style="background: var(--bg-panel); border: 1px solid var(--input-border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
                             <!-- Table Header -->
-                            <div class="work-on-table-header">
+                            <div class="work-on-table-header" style="width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
                                 <div class="work-on-col-num">#</div>
-                                <div class="work-on-col-word">Words</div>
-                                <div class="work-on-col-lists">Word lists valid in</div>
+                                <div class="work-on-col-word" style="flex: 1 1 0px; min-width: 0; text-align: left;">Words</div>
+                                <div class="work-on-col-lists" style="margin-left: auto; flex-shrink: 0; text-align: right; display: flex; justify-content: flex-end; align-items: center; white-space: nowrap;">Word lists valid in</div>
                             </div>
                             <!-- Scroll Area Container -->
-                            <div class="list-scroll-area-wrapper" style="position: relative; height: 420px; overflow: hidden;">
-                                <div id="work-on-table-scroll" style="height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none;">
-                                    <div id="work-on-table-body" style="display: flex; flex-direction: column;">
+                            <div class="list-scroll-area-wrapper" style="position: relative; height: 420px; overflow: hidden; width: 100%; box-sizing: border-box;">
+                                <div id="work-on-table-scroll" style="height: 100%; width: 100%; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none;">
+                                    <div id="work-on-table-body" style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
                                         <!-- Injected rows -->
                                     </div>
                                 </div>
@@ -9669,7 +9669,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1791094001"></script>
+    <script src="/js/tools.js?v=1791102003"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
