@@ -10827,6 +10827,12 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
     #tool-work-on .work-on-col-lists {
         width: 125px !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        text-align: right !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
         font-size: 0.72rem !important;
         line-height: 1.15 !important;
         white-space: normal !important;

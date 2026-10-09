@@ -5795,7 +5795,7 @@ function renderWordsToWorkOnTable() {
         const posNum = displayIdx + 1;
 
         // Render dictionary membership badges with high contrast across all layouts
-        let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">';
+        let badgesHtml = '<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; width: 100%;">';
         ['NWL', 'CSW', 'AW'].forEach(dictName => {
             if (lists.includes(dictName)) {
                 let badgeClass = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
