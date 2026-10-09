@@ -5695,17 +5695,19 @@ function removeSelectedWordToWorkOn() {
     const inputWord = (input && input.value) ? input.value.trim().toUpperCase() : '';
     const currentList = getWordsToWorkOn();
 
-    // Check if the typed word in textbox is in the list
     let removeIdx = -1;
     if (inputWord) {
+        // If user typed in the textbox, ONLY remove if that exact typed word is on the list
         removeIdx = currentList.findIndex(item => {
             const w = (typeof item === 'object' && item !== null) ? item.word : item;
             return (w || '').toUpperCase() === inputWord;
         });
-    }
-
-    // If not matched by textbox word, fall back to selected table row index
-    if (removeIdx === -1) {
+        if (removeIdx === -1) {
+            // Typed word is not in the list; do NOT remove another word
+            return;
+        }
+    } else {
+        // If textbox is empty, fall back to explicitly selected table row
         if (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < currentList.length) {
             removeIdx = selectedWorkOnIndex;
         }
@@ -5747,10 +5749,17 @@ function updateWorkOnRemoveBtnState() {
         });
     }
 
-    // Check if table row is selected
-    const hasRowSelected = (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < currentList.length);
+    // If user has typed in the textbox:
+    // The Remove button is enabled IF AND ONLY IF the typed text matches a word on the list.
+    // If textbox is empty, the Remove button is enabled if a row is selected.
+    let isRemovable = false;
+    if (inputWord) {
+        isRemovable = wordInList;
+    } else {
+        isRemovable = (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < currentList.length);
+    }
 
-    if (wordInList || hasRowSelected) {
+    if (isRemovable) {
         removeBtn.disabled = false;
         removeBtn.style.cursor = 'pointer';
         removeBtn.style.opacity = '1';
@@ -6013,13 +6022,22 @@ function setupWordsToWorkOnTool() {
                     updateWorkOnRemoveBtnState();
                 }
             } else {
-                updateWorkOnRemoveBtnState();
+                // If user typed something that is NOT on the list, unselect any previous row selection
+                if (typed && selectedWorkOnIndex !== null) {
+                    selectedWorkOnIndex = null;
+                    renderWordsToWorkOnTable();
+                } else {
+                    updateWorkOnRemoveBtnState();
+                }
             }
         };
 
         input.addEventListener('input', syncWithTypedWord);
         input.addEventListener('keyup', syncWithTypedWord);
         input.addEventListener('change', syncWithTypedWord);
+        input.addEventListener('cut', () => setTimeout(syncWithTypedWord, 0));
+        input.addEventListener('paste', () => setTimeout(syncWithTypedWord, 0));
+        input.addEventListener('blur', syncWithTypedWord);
     }
 
     if (removeBtn) {
