@@ -1559,3 +1559,23 @@ body.theme-white #page-forums .forum-bottom-bar {
     box-shadow: 0 0 18px rgba(255, 215, 0, 0.45) !important;
     transform: translateY(-1px);
 }
+
+.forum-user-clickable {
+    cursor: pointer !important;
+    transition: opacity 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    outline: none;
+}
+
+.forum-user-clickable:hover {
+    opacity: 0.82;
+    text-decoration: underline;
+}
+
+.author-avatar.forum-user-clickable:hover,
+.comment-avatar.forum-user-clickable:hover {
+    opacity: 0.85;
+    transform: scale(1.04);
+}
+

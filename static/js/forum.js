@@ -841,7 +841,10 @@ const Forum = {
                     <div class="forum-post-card responder-card ${isUnclicked ? 'responder-card-gold' : ''}" data-responder-id="${r.id}" data-post-id="${r.post_id}">
                         <div class="post-card-header">
                             <span class="post-card-title responder-title">
-                                ${this.escapeHtml(r.category_name)} @${this.escapeHtml(r.recipient_username)} #${r.post_number} by ${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong>
+                                ${this.escapeHtml(r.category_name)} 
+                                <span class="forum-user-clickable" data-username="${this.escapeHtml(r.recipient_username)}" title="View ${this.escapeHtml(r.recipient_username)}'s Profile">@${this.escapeHtml(r.recipient_username)}</span>
+                                #${r.post_number} by 
+                                <span class="forum-user-clickable" data-username="${this.escapeHtml(r.responder_username)}" title="View ${this.escapeHtml(r.responder_username)}'s Profile">${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong></span>
                             </span>
                             <span class="post-card-meta">
                                 <span>${dateStr}</span>
@@ -852,9 +855,22 @@ const Forum = {
                 `;
             }).join('');
 
+            // Attach user-clickable listeners inside responder cards
+            postsList.querySelectorAll('.responder-card .forum-user-clickable').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const uname = el.getAttribute('data-username');
+                    Forum.openMiniProfile(uname, e);
+                });
+            });
+
             // Attach listeners to responder cards
             postsList.querySelectorAll('.responder-card').forEach(card => {
-                card.addEventListener('click', async () => {
+                card.addEventListener('click', async (e) => {
+                    // Ignore clicks on user links
+                    if (e.target.closest('.forum-user-clickable')) return;
+
                     const responderId = card.getAttribute('data-responder-id');
                     const postId = parseInt(card.getAttribute('data-post-id'), 10);
 
@@ -1038,7 +1054,7 @@ const Forum = {
                     <div class="post-card-header">
                         <span class="post-card-title">${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
-                            <span>${isComment ? 'Replied' : 'Posted'} by <strong>${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</strong></span>
+                            <span>${isComment ? 'Replied' : 'Posted'} by <strong class="forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</strong></span>
                             <span>${dateStr}</span>
                         </span>
                     </div>
@@ -1051,10 +1067,21 @@ const Forum = {
             `;
         }).join('');
 
+        // Attach user-clickable listeners inside post cards
+        postsList.querySelectorAll('.forum-post-card .forum-user-clickable').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const uname = el.getAttribute('data-username');
+                Forum.openMiniProfile(uname, e);
+            });
+        });
 
         // Attach listeners
         postsList.querySelectorAll('.forum-post-card').forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                // Ignore clicks on user links
+                if (e.target.closest('.forum-user-clickable')) return;
                 const postId = parseInt(card.getAttribute('data-id'));
                 this.loadPostDetail(postId);
             });
@@ -1144,9 +1171,9 @@ const Forum = {
             <div class="post-detail-header">
                 <h1 class="post-detail-title">${postNumBadge}${this.escapeHtml(post.title)}</h1>
                 <div class="post-author-box">
-                    <div class="author-avatar">${post.username[0].toUpperCase()}</div>
+                    <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
                     <div class="author-info">
-                        <span class="author-name">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</span>
+                        <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
                         <span class="post-date">${dateStr}</span>
                     </div>
                     <button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
@@ -1200,11 +1227,11 @@ const Forum = {
 
                 return `
                     <div class="forum-comment">
-                        <div class="comment-avatar">${c.username[0].toUpperCase()}</div>
+                        <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
                         <div class="comment-body">
                             <div class="comment-header">
                                 ${commentNumBadge}
-                                <span class="comment-author">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${c.username}</span>
+                                <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
                                 <span class="comment-date">${cDate}</span>
                                 <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                                 ${window.currentUserIsMod ? `
@@ -1225,6 +1252,20 @@ const Forum = {
                 });
             });
         }
+
+        // Attach listeners for user-clickable links in post detail & comments
+        const detailUserClickables = [
+            ...detailEl.querySelectorAll('.post-author-box .forum-user-clickable'),
+            ...commentsListEl.querySelectorAll('.forum-user-clickable')
+        ];
+        detailUserClickables.forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const uname = el.getAttribute('data-username');
+                Forum.openMiniProfile(uname, e);
+            });
+        });
 
         // Attach listeners for reply buttons
         const allReplyBtns = [
@@ -1586,6 +1627,20 @@ const Forum = {
         return escaped.replace(urlRegex, function (match) {
             return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="forum-clickable-link" onclick="event.stopPropagation();">${match}</a>`;
         });
+    },
+
+    openMiniProfile: function (username, evt) {
+        if (evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+        }
+        if (window.getSelection) {
+            try { window.getSelection().removeAllRanges(); } catch (e) {}
+        }
+        if (!username) return;
+        if (typeof window.showMiniProfile === 'function') {
+            window.showMiniProfile(username);
+        }
     }
 };
 
