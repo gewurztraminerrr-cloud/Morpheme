@@ -12001,35 +12001,30 @@ body.is-mobile #page-settings .theme-selector-grid {
 
 .tool-def-actions {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 6px;
     flex-shrink: 0;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tool-def-action-left,
 .tool-def-action-center,
 .tool-def-action-right {
     display: flex;
+    flex: 1 1 0%;
+    min-width: 0;
+    width: 0;
     align-items: center;
-}
-
-.tool-def-action-left {
-    justify-content: flex-start;
-}
-
-.tool-def-action-center {
     justify-content: center;
-    flex: 1;
-}
-
-.tool-def-action-right {
-    justify-content: flex-end;
+    position: relative;
 }
 
 .tool-def-footer-link {
+    width: 100%;
+    box-sizing: border-box;
     font-size: 0.75rem;
     font-weight: 700;
     color: #a78bfa;
@@ -12038,11 +12033,14 @@ body.is-mobile #page-settings .theme-selector-grid {
     transition: color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     letter-spacing: 0.5px;
     padding: 2px 6px;
+    height: 28px;
     border-radius: 4px;
     background: rgba(167, 139, 250, 0.1);
     user-select: none;
+    text-align: center;
 }
 
 .tool-def-footer-link:hover {
@@ -12052,12 +12050,17 @@ body.is-mobile #page-settings .theme-selector-grid {
 }
 
 .tool-def-added-badge {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     color: #10b981;
-    font-weight: 700;
-    font-size: 0.75rem;
+    font-weight: 800;
+    font-size: 0.68rem;
     letter-spacing: 0.5px;
-    margin-left: 6px;
     user-select: none;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 .tool-def-isvalid-link {

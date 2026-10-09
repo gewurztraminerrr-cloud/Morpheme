@@ -8931,13 +8931,18 @@ window.showWordDefinitionPopup = async function (word, event) {
         return (w || '').toUpperCase() === cleanWord;
     });
 
+    const actionRightEl = popover.querySelector('.tool-def-action-right');
+
     if (addBtn && addedBadge) {
         if (isAlreadyOnList) {
             // "If the word is already on their list, then don’t do anything (do not display “ADD”)."
+            // Hide the container so CC and FC expand equally across the full width
+            if (actionRightEl) actionRightEl.style.display = 'none';
             addBtn.style.display = 'none';
             addedBadge.style.display = 'none';
             addBtn.onclick = null;
         } else {
+            if (actionRightEl) actionRightEl.style.display = 'flex';
             addBtn.style.display = 'inline-flex';
             addBtn.style.pointerEvents = 'auto';
             addBtn.style.opacity = '1';
