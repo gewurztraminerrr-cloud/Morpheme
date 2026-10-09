@@ -300,6 +300,7 @@ const Forum = {
         console.log("[Forum] Initializing forum module...");
         this.setupEventListeners();
         await this.loadCategories();
+        this.resetToEmptyState();
         this.initialized = true;
 
         // Auto-refresh categories every 30s while the forum is open to show new posts from others
@@ -794,11 +795,9 @@ const Forum = {
 
         const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
-            const sidebar = document.querySelector('.forum-sidebar');
-            const main = document.querySelector('.forum-main');
-            if (sidebar && main) {
-                sidebar.classList.add('hidden-mobile');
-                main.classList.remove('hidden-mobile');
+            const forumMain = document.querySelector('.forum-main');
+            if (forumMain) {
+                forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
             }
         }
     },
@@ -1535,7 +1534,7 @@ const Forum = {
         this.renderImagePreviews(type);
     },
 
-    showListView: function () {
+    showListView: function (noMobileScroll = false) {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-list').classList.add('active');
 
@@ -1547,7 +1546,7 @@ const Forum = {
         if (deleteContainer) deleteContainer.style.display = 'none';
 
         // On mobile devices, scroll down so they see the category title and threads
-        if (window.innerWidth <= 820) {
+        if (!noMobileScroll && window.innerWidth <= 820) {
             const titleEl = document.getElementById('forum-category-title');
             if (titleEl) {
                 titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1627,9 +1626,74 @@ const Forum = {
         if (typeof window.showMiniProfile === 'function') {
             window.showMiniProfile(username);
         }
+    },
+
+    resetToEmptyState: function () {
+        this.currentCategoryId = null;
+        this.currentPostId = null;
+
+        // Ensure list view is active, skipping mobile auto-scroll to main
+        this.showListView(true);
+
+        // Unpress all categories and responders tab
+        document.querySelectorAll('.forum-cat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Hide New Post button
+        const newPostBtn = document.getElementById('forum-new-post-btn');
+        if (newPostBtn) newPostBtn.classList.add('hidden');
+
+        // Reset category header titles
+        const titleEl = document.getElementById('forum-category-title');
+        if (titleEl) titleEl.textContent = 'Community Board';
+
+        const descEl = document.getElementById('forum-category-desc');
+        if (descEl) {
+            descEl.textContent = 'Connect with other players.';
+            descEl.classList.remove('forum-desc-scrolling-box');
+        }
+
+        // Clear user search input
+        const searchInput = document.getElementById('forum-user-search-input');
+        if (searchInput) searchInput.value = '';
+
+        // Default Forum content panel to empty with welcome placeholder
+        const postsList = document.getElementById('forum-posts-list');
+        if (postsList) {
+            postsList.innerHTML = `
+                <div class="forum-placeholder">
+                    <div class="placeholder-icon">💬</div>
+                    <h3>Welcome to the Forums</h3>
+                    <p>Select a category from the sidebar to begin exploring the community.</p>
+                </div>
+            `;
+        }
+
+        // Reset mobile layout scrolls and ensure sidebar is in view
+        const container = document.querySelector('#page-forums .forum-container');
+        if (container) {
+            container.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+        }
+        const sidebar = document.querySelector('.forum-sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('hidden-mobile');
+            sidebar.scrollIntoView({ behavior: 'auto', inline: 'start' });
+        }
+        const main = document.querySelector('.forum-main');
+        if (main) {
+            main.classList.remove('hidden-mobile');
+        }
     }
 };
 
 window.initForum = function () {
     Forum.init();
 };
+
+window.resetForumTab = function (immediate = false) {
+    if (typeof Forum !== 'undefined' && typeof Forum.resetToEmptyState === 'function') {
+        Forum.resetToEmptyState();
+    }
+};
+

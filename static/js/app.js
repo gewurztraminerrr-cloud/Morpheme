@@ -1886,6 +1886,8 @@ function setupNavigation() {
                 window.resetModsTab(true);
             } else if (pageTarget === 'settings' && typeof window.resetSettingsTab === 'function') {
                 window.resetSettingsTab(true);
+            } else if (pageTarget === 'forums' && typeof window.resetForumTab === 'function') {
+                window.resetForumTab(true);
             }
             showPage(pageId);
             updateActiveNav(btn);
@@ -2171,6 +2173,8 @@ window.showPage = showPage;
                 window.resetModsTab(true);
             } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
                 window.resetSettingsTab(true);
+            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
+                window.resetForumTab(true);
             }
             page.classList.add('active');
             page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile' || page.id === 'page-tools' || page.id === 'page-settings' || page.id === 'page-mods' || page.id === 'page-forums') ? 'flex' : 'block';
@@ -2188,13 +2192,15 @@ window.showPage = showPage;
         } else {
             page.classList.remove('active');
             page.style.display = 'none';
-            // When leaving Tools, Mods, or Settings, immediately reset tab state so previous tab never flashes upon return
+            // When leaving Tools, Mods, Settings, or Forums, immediately reset tab state so previous tab never flashes upon return
             if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
                 window.resetToolsTab(true);
             } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
                 window.resetModsTab(true);
             } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
                 window.resetSettingsTab(true);
+            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
+                window.resetForumTab(true);
             }
         }
     });
@@ -2407,6 +2413,9 @@ window.showPage = showPage;
         }
         if (typeof window.initForum === 'function') {
             window.initForum();
+        }
+        if (typeof window.resetForumTab === 'function') {
+            window.resetForumTab(true);
         }
     } else if (pageId === 'page-tournaments') {
         if (typeof window.initTournamentsPage === 'function') {
