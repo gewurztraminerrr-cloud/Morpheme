@@ -1642,34 +1642,25 @@ document.addEventListener('visibilitychange', () => {
 });
 
 async function checkForumActivity() {
-    if (!currentUser) return;
+    if (!currentUser || window.currentUserIsGuest) {
+        const btn = document.getElementById('btn-forums');
+        if (btn) btn.classList.remove('has-new');
+        return;
+    }
     try {
-        const res = await fetch('/api/forum/categories');
+        const res = await fetch('/api/forum/responders/status');
+        if (!res.ok) return;
         const data = await res.json();
         const btn = document.getElementById('btn-forums');
         if (!btn) return;
 
-        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
-        let hasNewGlobally = false;
-
-        data.categories.forEach(cat => {
-            const lastContent = cat.last_content_at ? new Date(cat.last_content_at).getTime() : 0;
-            // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
-            const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
-            const hasNew = lastContent > lastView;
-            if (hasNew) {
-                hasNewGlobally = true;
-            }
-            console.debug(`[Forum Global] Cat ${cat.id}: content=${lastContent}, view=${lastView}, new=${hasNew}`);
-        });
-
-        if (hasNewGlobally) {
+        if (data.has_new) {
             btn.classList.add('has-new');
         } else {
             btn.classList.remove('has-new');
         }
     } catch (e) {
-        console.warn('[Forum] Activity check failed', e);
+        console.warn('[Forum] Responder activity check failed', e);
     }
 }
 window.checkForumActivity = checkForumActivity;

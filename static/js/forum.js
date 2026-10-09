@@ -394,7 +394,9 @@ const Forum = {
                 }
                 refreshBtn.style.opacity = '0.7';
                 
-                if (this.currentCategoryId) {
+                if (this.currentCategoryId === 'responders') {
+                    await this.loadRespondersFeed();
+                } else if (this.currentCategoryId) {
                     await this.loadPosts(this.currentCategoryId);
                 } else {
                     const username = document.getElementById('forum-user-search-input').value.trim();
@@ -684,9 +686,22 @@ const Forum = {
 
     loadCategories: async function () {
         try {
-            const response = await fetch('/api/forum/categories');
-            const data = await response.json();
-            this.categories = data.categories;
+            const promises = [
+                fetch('/api/forum/categories').then(r => r.json())
+            ];
+            if (window.currentUser && !window.currentUserIsGuest) {
+                promises.push(
+                    fetch('/api/forum/responders/status')
+                        .then(r => r.json())
+                        .catch(() => ({ has_new: false }))
+                );
+            } else {
+                promises.push(Promise.resolve({ has_new: false }));
+            }
+
+            const [catData, respData] = await Promise.all(promises);
+            this.categories = catData.categories;
+            this.hasNewResponders = respData && respData.has_new;
             this.renderCategories();
         } catch (err) {
             console.error("[Forum] Failed to load categories:", err);
@@ -698,28 +713,176 @@ const Forum = {
         if (!listEl) return;
 
         const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
-        
-        listEl.innerHTML = this.categories.map(cat => {
+
+        let respondersHtml = '';
+        if (window.currentUser && !window.currentUserIsGuest) {
+            const isRespActive = (this.currentCategoryId === 'responders');
+            const hasNewResp = this.hasNewResponders && !isRespActive;
+            respondersHtml = `
+                <div class="forum-cat-item forum-responders-tab ${isRespActive ? 'active' : ''} ${hasNewResp ? 'has-new' : ''}" data-id="responders">
+                    <span class="forum-cat-name">View Responders</span>
+                    <span class="forum-cat-desc">Recent replies to you across the forum</span>
+                </div>
+            `;
+        }
+
+        const categoriesHtml = this.categories.map(cat => {
             const lastContent = cat.last_content_at ? parseUTCTimestamp(cat.last_content_at).getTime() : 0;
             // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
             const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
             const hasNew = lastContent > lastView;
-            
+            const isActive = (this.currentCategoryId === cat.id);
+
             return `
-                <div class="forum-cat-item ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
+                <div class="forum-cat-item ${isActive ? 'active' : ''} ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
                     <span class="forum-cat-name">${cat.name}</span>
                     <span class="forum-cat-desc">${cat.description}</span>
                 </div>
             `;
         }).join('');
 
+        listEl.innerHTML = respondersHtml + categoriesHtml;
+
         // Attach listeners
         listEl.querySelectorAll('.forum-cat-item').forEach(item => {
             item.addEventListener('click', () => {
-                const catId = parseInt(item.getAttribute('data-id'));
-                this.selectCategory(catId);
+                const idAttr = item.getAttribute('data-id');
+                if (idAttr === 'responders') {
+                    this.selectRespondersCategory();
+                } else {
+                    const catId = parseInt(idAttr, 10);
+                    this.selectCategory(catId);
+                }
             });
         });
+    },
+
+    selectRespondersCategory: async function () {
+        this.currentCategoryId = 'responders';
+
+        // Update UI
+        document.querySelectorAll('.forum-cat-item').forEach(item => {
+            const isThis = item.getAttribute('data-id') === 'responders';
+            item.classList.toggle('active', isThis);
+            if (isThis) {
+                item.classList.remove('has-new');
+            }
+        });
+
+        // Clear gold state from top menu Forum button and "View Responders" tab
+        this.hasNewResponders = false;
+        const btnForums = document.getElementById('btn-forums');
+        if (btnForums) {
+            btnForums.classList.remove('has-new');
+        }
+
+        // Notify server that user viewed responders
+        try {
+            await fetch('/api/forum/responders/view', { method: 'POST' });
+        } catch (e) {
+            console.error('[Forum] View responders error:', e);
+        }
+
+        const titleEl = document.getElementById('forum-category-title');
+        if (titleEl) titleEl.textContent = 'View Responders';
+
+        const descEl = document.getElementById('forum-category-desc');
+        if (descEl) {
+            descEl.textContent = 'Recent replies to your posts across the Forum';
+            descEl.classList.remove('forum-desc-scrolling-box');
+        }
+
+        const newPostBtn = document.getElementById('forum-new-post-btn');
+        if (newPostBtn) newPostBtn.classList.add('hidden');
+
+        await this.loadRespondersFeed();
+        this.showListView();
+
+        const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const sidebar = document.querySelector('.forum-sidebar');
+            const main = document.querySelector('.forum-main');
+            if (sidebar && main) {
+                sidebar.classList.add('hidden-mobile');
+                main.classList.remove('hidden-mobile');
+            }
+        }
+    },
+
+    loadRespondersFeed: async function () {
+        const postsList = document.getElementById('forum-posts-list');
+        if (!postsList) return;
+
+        postsList.innerHTML = '<div class="forum-cat-loading" style="padding: 24px; text-align: center;">Loading responders...</div>';
+
+        try {
+            const res = await fetch('/api/forum/responders');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const responders = data.responders || [];
+
+            if (responders.length === 0) {
+                postsList.innerHTML = `
+                    <div class="forum-placeholder">
+                        <div class="placeholder-icon">📬</div>
+                        <h3>No replies yet</h3>
+                        <p>When another user responds to your posts across the Forum, their replies will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            postsList.innerHTML = responders.map(r => {
+                const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(r.timestamp, true) : r.timestamp;
+                const flagHtml = window.getFlagHtml ? window.getFlagHtml(r.responder_flag) : (r.responder_flag || '');
+                const isUnclicked = (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked);
+
+                return `
+                    <div class="forum-post-card responder-card ${isUnclicked ? 'responder-card-gold' : ''}" data-responder-id="${r.id}" data-post-id="${r.post_id}">
+                        <div class="post-card-header">
+                            <span class="post-card-title responder-title">
+                                ${this.escapeHtml(r.category_name)} @${this.escapeHtml(r.recipient_username)} #${r.post_number} by ${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong>
+                            </span>
+                            <span class="post-card-meta">
+                                <span>${dateStr}</span>
+                            </span>
+                        </div>
+                        <div class="post-card-excerpt">${this.escapeHtml(r.content)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Attach listeners to responder cards
+            postsList.querySelectorAll('.responder-card').forEach(card => {
+                card.addEventListener('click', async () => {
+                    const responderId = card.getAttribute('data-responder-id');
+                    const postId = parseInt(card.getAttribute('data-post-id'), 10);
+
+                    if (card.classList.contains('responder-card-gold')) {
+                        card.classList.remove('responder-card-gold');
+                        try {
+                            fetch(`/api/forum/responders/click/${responderId}`, { method: 'POST' });
+                        } catch (e) {
+                            console.error('[Forum] Click responder error:', e);
+                        }
+                    }
+
+                    if (postId) {
+                        await this.loadPostDetail(postId);
+                    }
+                });
+            });
+
+        } catch (err) {
+            console.error("[Forum] Failed to load responders feed:", err);
+            postsList.innerHTML = `
+                <div class="forum-placeholder">
+                    <div class="placeholder-icon">⚠️</div>
+                    <h3>Failed to load responders</h3>
+                    <p>Please try refreshing the page.</p>
+                </div>
+            `;
+        }
     },
 
     selectCategory: async function (catId) {
@@ -868,11 +1031,12 @@ const Forum = {
             const isComment = post.type === 'comment';
             const postId = post.post_id || post.id;
             const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
+            const numBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
             
             return `
                 <div class="forum-post-card" data-id="${postId}">
                     <div class="post-card-header">
-                        <span class="post-card-title">${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
+                        <span class="post-card-title">${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
                             <span>${isComment ? 'Replied' : 'Posted'} by <strong>${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</strong></span>
                             <span>${dateStr}</span>
@@ -974,15 +1138,18 @@ const Forum = {
             `;
         }
 
+        const postNumBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
+
         detailEl.innerHTML = `
             <div class="post-detail-header">
-                <h1 class="post-detail-title">${this.escapeHtml(post.title)}</h1>
+                <h1 class="post-detail-title">${postNumBadge}${this.escapeHtml(post.title)}</h1>
                 <div class="post-author-box">
                     <div class="author-avatar">${post.username[0].toUpperCase()}</div>
                     <div class="author-info">
                         <span class="author-name">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${post.username}</span>
                         <span class="post-date">${dateStr}</span>
                     </div>
+                    <button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                 </div>
             </div>
             <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
@@ -1036,8 +1203,9 @@ const Forum = {
                             <div class="comment-header">
                                 <span class="comment-author">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${c.username}</span>
                                 <span class="comment-date">${cDate}</span>
+                                <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                                 ${window.currentUserIsMod ? `
-                                    <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: auto; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
+                                    <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 8px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
                                 ` : ''}
                             </div>
                             <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
@@ -1055,6 +1223,20 @@ const Forum = {
             });
         }
 
+        // Attach listeners for reply buttons
+        const allReplyBtns = [
+            ...detailEl.querySelectorAll('.forum-reply-btn'),
+            ...commentsListEl.querySelectorAll('.forum-reply-btn')
+        ];
+        allReplyBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const uname = btn.getAttribute('data-username');
+                const pnum = btn.getAttribute('data-post-number');
+                this.handleReplyToUser(uname, pnum);
+            });
+        });
+
         const triggers = document.querySelectorAll('.forum-lightbox-trigger');
         triggers.forEach(img => {
             img.addEventListener('click', () => {
@@ -1068,6 +1250,39 @@ const Forum = {
 
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
         document.getElementById('forum-comment-form-container').classList.toggle('hidden', isGuest);
+    },
+
+    handleReplyToUser: function (username, postNumber) {
+        const isGuest = window.currentUserIsGuest || (window.currentUser === null);
+        if (isGuest) {
+            if (window.showAuthModal) {
+                window.showAuthModal('login');
+            } else {
+                alert("Forum replies are restricted to registered members only. Please log in or register!");
+            }
+            return;
+        }
+
+        const formContainer = document.getElementById('forum-comment-form-container');
+        if (formContainer) {
+            formContainer.classList.remove('hidden');
+        }
+
+        const input = document.getElementById('forum-comment-input');
+        if (!input) return;
+
+        const tag = `@${username} #${postNumber}\n`;
+        const currentVal = input.value;
+        if (!currentVal.trim()) {
+            input.value = tag;
+        } else {
+            input.value = currentVal.trim() + '\n\n' + tag;
+        }
+
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
     },
 
     handlePostSubmit: async function (e) {

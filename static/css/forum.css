@@ -1474,3 +1474,88 @@ body.theme-white #page-forums .forum-bottom-bar {
     border-color: var(--card-border, rgba(0, 0, 0, 0.15)) !important;
     color: var(--text-primary) !important;
 }
+
+/* --- Forum Responders & Post Numbering Styles --- */
+
+.forum-cat-item.forum-responders-tab {
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12);
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+}
+
+.forum-cat-item.forum-responders-tab.has-new {
+    border-left-color: #ffd700 !important;
+    background: rgba(255, 215, 0, 0.15) !important;
+    box-shadow: inset 5px 0 15px rgba(255, 215, 0, 0.15), 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.forum-cat-item.forum-responders-tab.has-new .forum-cat-name {
+    color: #ffd700 !important;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.forum-cat-item.forum-responders-tab.has-new .forum-cat-desc {
+    color: #ffd700 !important;
+    opacity: 0.9;
+}
+
+.forum-post-number-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(167, 139, 250, 0.35);
+    border-radius: 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+}
+
+.forum-reply-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.forum-reply-btn:hover {
+    background: rgba(56, 189, 248, 0.25);
+    color: #7dd3fc;
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: translateY(-1px);
+}
+
+.forum-reply-btn:active {
+    transform: translateY(0);
+}
+
+.responder-card.responder-card-gold {
+    background: rgba(255, 215, 0, 0.12) !important;
+    border: 1.5px solid #daa520 !important;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25) !important;
+}
+
+.responder-card.responder-card-gold .responder-title {
+    color: #ffd700 !important;
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.responder-card.responder-card-gold:hover {
+    background: rgba(255, 215, 0, 0.22) !important;
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.45) !important;
+    transform: translateY(-1px);
+}

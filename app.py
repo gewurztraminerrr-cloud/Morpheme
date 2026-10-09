@@ -2951,9 +2951,54 @@ def init_db():
             conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
         
         # MIGRATION: Ensure Suggestions category is renamed to Suggestions/Ideas and clean up duplicates
-        conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions' OR id = 6")
-        conn.execute("DELETE FROM forum_categories WHERE name = 'Suggestions/Ideas' AND id != 6")
-        conn.execute("INSERT OR IGNORE INTO forum_categories (name, description) VALUES ('Complaints', 'Voice your feedback, grievances, or criticisms.')")
+        try:
+            conn.execute("UPDATE forum_posts SET category_id = (SELECT id FROM forum_categories WHERE name = 'Suggestions/Ideas' LIMIT 1) WHERE category_id = (SELECT id FROM forum_categories WHERE name = 'Suggestions' LIMIT 1)")
+            conn.execute("DELETE FROM forum_categories WHERE name = 'Suggestions'")
+        except Exception:
+            pass
+        try:
+            conn.execute("UPDATE forum_categories SET name = 'Suggestions/Ideas' WHERE name = 'Suggestions'")
+        except Exception:
+            pass
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_responders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipient_id INTEGER NOT NULL,
+                responder_id INTEGER NOT NULL,
+                post_id INTEGER NOT NULL,
+                comment_id INTEGER,
+                category_id INTEGER NOT NULL,
+                category_name TEXT NOT NULL,
+                post_number INTEGER NOT NULL,
+                recipient_username TEXT NOT NULL,
+                responder_username TEXT NOT NULL,
+                content TEXT NOT NULL,
+                is_clicked INTEGER DEFAULT 0,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(recipient_id) REFERENCES users(id),
+                FOREIGN KEY(responder_id) REFERENCES users(id),
+                FOREIGN KEY(post_id) REFERENCES forum_posts(id)
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_responders_recipient ON forum_responders(recipient_id, timestamp DESC)')
+
+        # MIGRATION: Ensure forum_posts has post_number column
+        try:
+            conn.execute('ALTER TABLE forum_posts ADD COLUMN post_number INTEGER')
+        except Exception:
+            pass
+
+        # Backfill post_number for existing posts per category starting at 1
+        unnum_rows = conn.execute('SELECT id, category_id FROM forum_posts WHERE post_number IS NULL OR post_number <= 0 ORDER BY category_id, id ASC').fetchall()
+        if unnum_rows:
+            cat_counts = {}
+            for r in unnum_rows:
+                cid = r[1]
+                if cid not in cat_counts:
+                    cur_max = conn.execute('SELECT COALESCE(MAX(post_number), 0) FROM forum_posts WHERE category_id = ? AND post_number IS NOT NULL AND post_number > 0', (cid,)).fetchone()[0]
+                    cat_counts[cid] = cur_max
+                cat_counts[cid] += 1
+                conn.execute('UPDATE forum_posts SET post_number = ? WHERE id = ?', (cat_counts[cid], r[0]))
 
         conn.commit()
         print("Migrated DB: Added Forum tables and categories")
@@ -9297,7 +9342,8 @@ def get_forum_post_detail(post_id):
     conn.row_factory = sqlite3.Row
     try:
         post = conn.execute('''
-            SELECT p.*, u.username, u.avatar_url, u.country_flag
+            SELECT p.*, u.username, u.avatar_url, u.country_flag,
+            (SELECT name FROM forum_categories WHERE id = p.category_id) as category_name
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE p.id = ?
@@ -9347,9 +9393,8 @@ def delete_forum_post(post_id):
     
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
-        # Delete associated comments first to maintain referential integrity
+        conn.execute('DELETE FROM forum_responders WHERE post_id = ?', (post_id,))
         conn.execute('DELETE FROM forum_comments WHERE post_id = ?', (post_id,))
-        # Delete the main post
         conn.execute('DELETE FROM forum_posts WHERE id = ?', (post_id,))
         conn.commit()
         return jsonify({'success': True, 'message': 'Post and associated comments deleted.'})
@@ -9366,6 +9411,7 @@ def delete_forum_comment(comment_id):
     
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
+        conn.execute('DELETE FROM forum_responders WHERE comment_id = ?', (comment_id,))
         conn.execute('DELETE FROM forum_comments WHERE id = ?', (comment_id,))
         conn.commit()
         return jsonify({'success': True, 'message': 'Comment deleted.'})
@@ -9429,12 +9475,14 @@ def create_forum_post():
         if cat_row and cat_row[0] == "News" and not is_mod(session['username']):
             return jsonify({'error': 'Only moderators can post in the News category.'}), 403
             
+        # Calculate sequential post_number for this category starting at 1
+        cur_num = conn.execute('SELECT COALESCE(MAX(post_number), 0) + 1 FROM forum_posts WHERE category_id = ?', (category_id,)).fetchone()[0]
         cursor = conn.execute('''
-            INSERT INTO forum_posts (category_id, user_id, title, content, image_url)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (category_id, session['user_id'], title, content, image_url_db))
+            INSERT INTO forum_posts (category_id, user_id, title, content, image_url, post_number)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (category_id, session['user_id'], title, content, image_url_db, cur_num))
         conn.commit()
-        return jsonify({'success': True, 'post_id': cursor.lastrowid})
+        return jsonify({'success': True, 'post_id': cursor.lastrowid, 'post_number': cur_num})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -9485,14 +9533,137 @@ def create_forum_comment():
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
-        conn.execute('''
+        cur_c = conn.execute('''
             INSERT INTO forum_comments (post_id, user_id, content, image_url)
             VALUES (?, ?, ?, ?)
         ''', (post_id, session['user_id'], content, image_url_db))
+        comment_id = cur_c.lastrowid
+
+        # Check for responder mentions: e.g. @username #123 or &username #123
+        p_row = conn.execute('''
+            SELECT p.id, p.category_id, p.post_number, c.name as category_name
+            FROM forum_posts p
+            JOIN forum_categories c ON p.category_id = c.id
+            WHERE p.id = ?
+        ''', (post_id,)).fetchone()
+
+        mentions = re.findall(r'[@&]([A-Za-z0-9_]+)\s*#(\d+)', content)
+        responder_user_id = session['user_id']
+        responder_username = session.get('username') or 'Anonymous'
+
+        if mentions and p_row:
+            cat_name = p_row[3] or "General"
+            p_num = p_row[2] or 1
+            cat_id = p_row[1] or 1
+            seen_recipients = set()
+            for target_uname, tagged_pnum in mentions:
+                u_row = conn.execute('SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)', (target_uname,)).fetchone()
+                if u_row:
+                    recip_id = u_row[0]
+                    recip_name = u_row[1]
+                    if recip_id in seen_recipients or recip_id == responder_user_id:
+                        continue
+                    seen_recipients.add(recip_id)
+                    actual_num = int(tagged_pnum) if tagged_pnum else p_num
+                    conn.execute('''
+                        INSERT INTO forum_responders (
+                            recipient_id, responder_id, post_id, comment_id,
+                            category_id, category_name, post_number,
+                            recipient_username, responder_username, content, is_clicked
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                    ''', (recip_id, responder_user_id, post_id, comment_id, cat_id, cat_name, actual_num, recip_name, responder_username, content))
+
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/forum/responders', methods=['GET'])
+def get_forum_responders():
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'responders': [], 'has_unseen': False, 'unseen_count': 0})
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute('''
+            SELECT r.*, u.avatar_url as responder_avatar, u.country_flag as responder_flag
+            FROM forum_responders r
+            JOIN users u ON r.responder_id = u.id
+            WHERE r.recipient_id = ?
+            ORDER BY r.timestamp DESC
+            LIMIT 100
+        ''', (user_id,)).fetchall()
+
+        cur = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'forum_responders_last_viewed'", (user_id,))
+        last_view_row = cur.fetchone()
+        last_viewed = last_view_row[0] if last_view_row else '1970-01-01 00:00:00'
+
+        unseen_count = conn.execute('''
+            SELECT COUNT(*) FROM forum_responders
+            WHERE recipient_id = ? AND timestamp > ?
+        ''', (user_id, last_viewed)).fetchone()[0]
+
+        return jsonify({
+            'responders': [dict(r) for r in rows],
+            'has_unseen': (unseen_count > 0),
+            'unseen_count': unseen_count
+        })
+    finally:
+        conn.close()
+
+@app.route('/api/forum/responders/status', methods=['GET'])
+def get_forum_responders_status():
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'has_new': False, 'count': 0})
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        cur = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'forum_responders_last_viewed'", (user_id,))
+        row = cur.fetchone()
+        last_viewed = row[0] if row else '1970-01-01 00:00:00'
+
+        cur_unseen = conn.execute('''
+            SELECT COUNT(*) FROM forum_responders
+            WHERE recipient_id = ? AND timestamp > ?
+        ''', (user_id, last_viewed)).fetchone()
+        unseen_count = cur_unseen[0] if cur_unseen else 0
+        return jsonify({'has_new': (unseen_count > 0), 'count': unseen_count})
+    finally:
+        conn.close()
+
+@app.route('/api/forum/responders/view', methods=['POST'])
+def view_forum_responders():
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'success': False}), 403
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        conn.execute('''
+            INSERT INTO user_settings (user_id, setting_key, setting_value)
+            VALUES (?, 'forum_responders_last_viewed', CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id, setting_key) DO UPDATE SET setting_value = CURRENT_TIMESTAMP
+        ''', (user_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    finally:
+        conn.close()
+
+@app.route('/api/forum/responders/click/<int:responder_id>', methods=['POST'])
+def click_forum_responder(responder_id):
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'success': False}), 403
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        conn.execute('''
+            UPDATE forum_responders SET is_clicked = 1
+            WHERE id = ? AND recipient_id = ?
+        ''', (responder_id, user_id))
+        conn.commit()
+        return jsonify({'success': True})
     finally:
         conn.close()
 
