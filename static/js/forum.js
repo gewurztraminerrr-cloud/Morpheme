@@ -1196,14 +1196,17 @@ const Forum = {
                     `;
                 }
 
+                const commentNumBadge = c.post_number ? `<span class="forum-post-number-badge">#${c.post_number}</span>` : '';
+
                 return `
                     <div class="forum-comment">
                         <div class="comment-avatar">${c.username[0].toUpperCase()}</div>
                         <div class="comment-body">
                             <div class="comment-header">
+                                ${commentNumBadge}
                                 <span class="comment-author">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${c.username}</span>
                                 <span class="comment-date">${cDate}</span>
-                                <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
+                                <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                                 ${window.currentUserIsMod ? `
                                     <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 8px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
                                 ` : ''}

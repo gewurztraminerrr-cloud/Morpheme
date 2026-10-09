@@ -2982,23 +2982,37 @@ def init_db():
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_responders_recipient ON forum_responders(recipient_id, timestamp DESC)')
 
-        # MIGRATION: Ensure forum_posts has post_number column
+        # MIGRATION: Ensure forum_posts and forum_comments have post_number column
         try:
             conn.execute('ALTER TABLE forum_posts ADD COLUMN post_number INTEGER')
         except Exception:
             pass
+        try:
+            conn.execute('ALTER TABLE forum_comments ADD COLUMN post_number INTEGER')
+        except Exception:
+            pass
 
-        # Backfill post_number for existing posts per category starting at 1
-        unnum_rows = conn.execute('SELECT id, category_id FROM forum_posts WHERE post_number IS NULL OR post_number <= 0 ORDER BY category_id, id ASC').fetchall()
-        if unnum_rows:
-            cat_counts = {}
-            for r in unnum_rows:
-                cid = r[1]
-                if cid not in cat_counts:
-                    cur_max = conn.execute('SELECT COALESCE(MAX(post_number), 0) FROM forum_posts WHERE category_id = ? AND post_number IS NOT NULL AND post_number > 0', (cid,)).fetchone()[0]
-                    cat_counts[cid] = cur_max
-                cat_counts[cid] += 1
-                conn.execute('UPDATE forum_posts SET post_number = ? WHERE id = ?', (cat_counts[cid], r[0]))
+        # Backfill post_number for existing posts & comments per category starting at 1 in chronological sequence
+        unnum_comments = conn.execute('SELECT COUNT(*) FROM forum_comments WHERE post_number IS NULL OR post_number <= 0').fetchone()[0]
+        unnum_posts = conn.execute('SELECT COUNT(*) FROM forum_posts WHERE post_number IS NULL OR post_number <= 0').fetchone()[0]
+        if unnum_comments > 0 or unnum_posts > 0:
+            # Re-sequence all posts and comments per category in strict chronological order (timestamp ASC, id ASC)
+            cats = conn.execute('SELECT id FROM forum_categories').fetchall()
+            for (cid,) in cats:
+                # Get all items in this category
+                items = conn.execute('''
+                    SELECT 'post' as type, id, timestamp FROM forum_posts WHERE category_id = ?
+                    UNION ALL
+                    SELECT 'comment' as type, c.id, c.timestamp FROM forum_comments c JOIN forum_posts p ON c.post_id = p.id WHERE p.category_id = ?
+                    ORDER BY timestamp ASC, id ASC
+                ''', (cid, cid)).fetchall()
+                seq = 1
+                for itype, i_id, _ in items:
+                    if itype == 'post':
+                        conn.execute('UPDATE forum_posts SET post_number = ? WHERE id = ?', (seq, i_id))
+                    else:
+                        conn.execute('UPDATE forum_comments SET post_number = ? WHERE id = ?', (seq, i_id))
+                    seq += 1
 
         conn.commit()
         print("Migrated DB: Added Forum tables and categories")
@@ -9252,6 +9266,17 @@ def parse_image_urls(val):
         return [u.strip() for u in val_str.split(',') if u.strip()]
     return [val_str] if val_str else []
 
+def get_next_category_post_number(category_id, conn):
+    """Returns the next sequential post number in this category across both threads and comments."""
+    row = conn.execute('''
+        SELECT COALESCE(MAX(num), 0) + 1 FROM (
+            SELECT MAX(post_number) AS num FROM forum_posts WHERE category_id = ?
+            UNION ALL
+            SELECT MAX(c.post_number) AS num FROM forum_comments c JOIN forum_posts p ON c.post_id = p.id WHERE p.category_id = ?
+        )
+    ''', (category_id, category_id)).fetchone()
+    return row[0] if row and row[0] else 1
+
 @app.route('/api/forum/posts/<int:category_id>', methods=['GET'])
 def get_forum_posts(category_id):
     conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -9285,7 +9310,7 @@ def get_forum_user_posts(username):
     try:
         # Fetch posts created by user
         posts_rows = conn.execute('''
-            SELECT 'post' as type, p.id as id, p.id as post_id, p.title, p.content, p.image_url, p.timestamp,
+            SELECT 'post' as type, p.id as id, p.id as post_id, p.title, p.content, p.image_url, p.timestamp, p.post_number,
             (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
             u.username, u.avatar_url, u.country_flag
             FROM forum_posts p
@@ -9295,7 +9320,7 @@ def get_forum_user_posts(username):
 
         # Fetch comments made by user
         comments_rows = conn.execute('''
-            SELECT 'comment' as type, c.id as id, c.post_id as post_id, p.title, c.content, c.image_url, c.timestamp,
+            SELECT 'comment' as type, c.id as id, c.post_id as post_id, p.title, c.content, c.image_url, c.timestamp, c.post_number,
             0 as comment_count,
             u.username, u.avatar_url, u.country_flag
             FROM forum_comments c
@@ -9476,7 +9501,7 @@ def create_forum_post():
             return jsonify({'error': 'Only moderators can post in the News category.'}), 403
             
         # Calculate sequential post_number for this category starting at 1
-        cur_num = conn.execute('SELECT COALESCE(MAX(post_number), 0) + 1 FROM forum_posts WHERE category_id = ?', (category_id,)).fetchone()[0]
+        cur_num = get_next_category_post_number(category_id, conn)
         cursor = conn.execute('''
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url, post_number)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -9533,19 +9558,29 @@ def create_forum_comment():
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
-        cur_c = conn.execute('''
-            INSERT INTO forum_comments (post_id, user_id, content, image_url)
-            VALUES (?, ?, ?, ?)
-        ''', (post_id, session['user_id'], content, image_url_db))
-        comment_id = cur_c.lastrowid
-
-        # Check for responder mentions: e.g. @username #123 or &username #123
+        # Fetch category_id of parent thread to assign category-wide sequential post_number
         p_row = conn.execute('''
             SELECT p.id, p.category_id, p.post_number, c.name as category_name
             FROM forum_posts p
             JOIN forum_categories c ON p.category_id = c.id
             WHERE p.id = ?
         ''', (post_id,)).fetchone()
+        if not p_row:
+            return jsonify({'error': 'Thread not found'}), 404
+
+        cat_id = p_row[1] or 1
+        cat_name = p_row[3] or "General"
+        p_num = p_row[2] or 1
+
+        comment_post_num = get_next_category_post_number(cat_id, conn)
+
+        cur_c = conn.execute('''
+            INSERT INTO forum_comments (post_id, user_id, content, image_url, post_number)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (post_id, session['user_id'], content, image_url_db, comment_post_num))
+        comment_id = cur_c.lastrowid
+
+        # Check for responder mentions: e.g. @username #123 or &username #123
 
         mentions = re.findall(r'[@&]([A-Za-z0-9_]+)\s*#(\d+)', content)
         responder_user_id = session['user_id']
@@ -9574,7 +9609,7 @@ def create_forum_comment():
                     ''', (recip_id, responder_user_id, post_id, comment_id, cat_id, cat_name, actual_num, recip_name, responder_username, content))
 
         conn.commit()
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'comment_id': comment_id, 'post_number': comment_post_num})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
