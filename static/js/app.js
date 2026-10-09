@@ -1620,24 +1620,24 @@ async function checkTournamentTurn() {
 }
 window.checkTournamentTurn = checkTournamentTurn;
 
-// Check initially (500ms) and periodically every 4s for instant turn green button flashing
+// Check initially (500ms) and periodically every 4s for instant turn green button and Forum gold responder notification flashing
 setTimeout(() => {
     checkTournamentTurn();
     checkForumActivity();
 }, 500);
 setInterval(() => {
     checkTournamentTurn();
-}, 4000);
-setInterval(() => {
     checkForumActivity();
-}, 60000);
+}, 4000);
 
 window.addEventListener('focus', () => {
     checkTournamentTurn();
+    checkForumActivity();
 });
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         checkTournamentTurn();
+        checkForumActivity();
     }
 });
 
@@ -1645,19 +1645,27 @@ async function checkForumActivity() {
     if (!currentUser || window.currentUserIsGuest) {
         const btn = document.getElementById('btn-forums');
         if (btn) btn.classList.remove('has-new');
+        const respTab = document.querySelector('.forum-responders-tab');
+        if (respTab) respTab.classList.remove('has-new');
         return;
     }
     try {
-        const res = await fetch('/api/forum/responders/status');
+        const res = await fetch('/api/forum/responders/status', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         const btn = document.getElementById('btn-forums');
-        if (!btn) return;
+        const respTab = document.querySelector('.forum-responders-tab');
 
         if (data.has_new) {
-            btn.classList.add('has-new');
+            if (btn) btn.classList.add('has-new');
+            if (typeof Forum !== 'undefined') Forum.hasNewResponders = true;
+            if (respTab && (typeof Forum === 'undefined' || Forum.currentCategoryId !== 'responders')) {
+                respTab.classList.add('has-new');
+            }
         } else {
-            btn.classList.remove('has-new');
+            if (btn) btn.classList.remove('has-new');
+            if (typeof Forum !== 'undefined') Forum.hasNewResponders = false;
+            if (respTab) respTab.classList.remove('has-new');
         }
     } catch (e) {
         console.warn('[Forum] Responder activity check failed', e);
