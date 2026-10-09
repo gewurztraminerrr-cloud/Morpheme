@@ -10966,11 +10966,49 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
         white-space: nowrap !important;
     }
 
-    #tool-work-on .work-on-badge {
-        font-size: 0.65rem !important;
-        padding: 1px 4px !important;
-        margin-left: 2px !important;
-        margin-right: 0 !important;
+    #tool-work-on .work-on-control-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 0 2px !important;
+    }
+
+    #tool-work-on .work-on-controls-group {
+        display: flex !important;
+        width: 100% !important;
+        gap: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-work-on select#work-on-dict-filter,
+    #tool-work-on .work-on-select {
+        flex: 1 1 0% !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
+        text-align-last: center !important;
+    }
+
+    #tool-work-on button#work-on-clear-btn,
+    #tool-work-on .work-on-clear-button {
+        flex: 1 1 0% !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    #tool-work-on #work-on-total-count,
+    #tool-work-on .work-on-counter {
+        width: 100% !important;
+        text-align: center !important;
+        align-self: center !important;
+        margin: 0 auto !important;
+        display: block !important;
     }
 }
 
@@ -11029,6 +11067,51 @@ body.is-mobile #tool-work-on .work-on-badge {
     padding: 1px 4px !important;
     margin-left: 2px !important;
     margin-right: 0 !important;
+}
+
+body.is-mobile #tool-work-on .work-on-control-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 2px !important;
+}
+
+body.is-mobile #tool-work-on .work-on-controls-group {
+    display: flex !important;
+    width: 100% !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #tool-work-on select#work-on-dict-filter,
+body.is-mobile #tool-work-on .work-on-select {
+    flex: 1 1 0% !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    text-align-last: center !important;
+}
+
+body.is-mobile #tool-work-on button#work-on-clear-btn,
+body.is-mobile #tool-work-on .work-on-clear-button {
+    flex: 1 1 0% !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+}
+
+body.is-mobile #tool-work-on #work-on-total-count,
+body.is-mobile #tool-work-on .work-on-counter {
+    width: 100% !important;
+    text-align: center !important;
+    align-self: center !important;
+    margin: 0 auto !important;
+    display: block !important;
 }
 
 /* Membership Badges - Standard Dark Layouts */
