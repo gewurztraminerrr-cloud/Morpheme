@@ -5044,6 +5044,27 @@ window.openFullListModal = function() {
         return;
     }
 
+    if (selectedType === 'words_to_work_on') {
+        const items = typeof getWordsToWorkOn === 'function' ? getWordsToWorkOn() : [];
+        let words = items.map(it => (typeof it === 'object' && it !== null) ? it.word : it).filter(Boolean).map(w => String(w).toUpperCase().trim());
+        if (selectedLength && selectedLength !== 'all') {
+            const reqLen = parseInt(selectedLength, 10);
+            words = words.filter(w => w.length === reqLen);
+        }
+        if (selectedStart && selectedStart !== 'all') {
+            const reqStart = selectedStart.toUpperCase();
+            words = words.filter(w => w.startsWith(reqStart));
+        }
+        words.sort((a, b) => a.localeCompare(b));
+        _fullListAllWords = words;
+        if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+        window._cachedFullWordLists[currentFilterKey] = words;
+        window.isFullListLoading = false;
+        initFullListVirtualScrollbar();
+        restoreOrRenderFullList(currentFilterKey);
+        return;
+    }
+
     // Only when fetching fresh list data from network do we show loading state
     _fullListRenderedStart = 0;
     _fullListRenderedEnd = 0;
@@ -5466,7 +5487,7 @@ async function fetchListsData(typeOverride) {
         }
 
         const items = typeof getWordsToWorkOn === 'function' ? getWordsToWorkOn() : [];
-        let words = items.map(it => (typeof it === 'object' && it !== null) ? it.word : it);
+        let words = items.map(it => (typeof it === 'object' && it !== null) ? it.word : it).filter(Boolean).map(w => String(w).toUpperCase().trim());
 
         if (lengthSelect && lengthSelect.value !== 'all') {
             const reqLen = parseInt(lengthSelect.value, 10);
@@ -5477,6 +5498,8 @@ async function fetchListsData(typeOverride) {
             words = words.filter(w => w.startsWith(reqStart));
         }
 
+        words.sort((a, b) => a.localeCompare(b));
+
         if (countEl) {
             countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
         }
@@ -5485,6 +5508,10 @@ async function fetchListsData(typeOverride) {
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
         window.listsServerTruncated = false;
+
+        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}`;
+        if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+        window._cachedFullWordLists[currentFilterKey] = words;
 
         if (!words || words.length === 0) {
             if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found in Words to Work on matching these filters.</div>';
@@ -5613,6 +5640,13 @@ function getWordsToWorkOn() {
 function saveWordsToWorkOn(list) {
     try {
         localStorage.setItem(WORDS_TO_WORK_ON_KEY, JSON.stringify(list || []));
+        if (window._cachedFullWordLists) {
+            Object.keys(window._cachedFullWordLists).forEach(k => {
+                if (k.startsWith('words_to_work_on')) {
+                    delete window._cachedFullWordLists[k];
+                }
+            });
+        }
     } catch (e) {
         console.error('[Words to Work on] Error saving localStorage:', e);
     }
