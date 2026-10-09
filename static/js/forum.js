@@ -416,6 +416,16 @@ const Forum = {
             });
         }
 
+        // Refresh thread buttons
+        const threadRefreshBtn = document.getElementById('forum-refresh-thread-btn');
+        if (threadRefreshBtn) {
+            threadRefreshBtn.addEventListener('click', () => this.refreshCurrentThread(threadRefreshBtn));
+        }
+        const commentsRefreshBtn = document.getElementById('forum-refresh-comments-btn');
+        if (commentsRefreshBtn) {
+            commentsRefreshBtn.addEventListener('click', () => this.refreshCurrentThread(commentsRefreshBtn));
+        }
+
         // Back to list button
         const backToListBtn = document.getElementById('forum-back-to-list');
         if (backToListBtn) {
@@ -1076,13 +1086,41 @@ const Forum = {
     loadPostDetail: async function (postId) {
         this.currentPostId = postId;
         try {
-            const response = await fetch(`/api/forum/post/${postId}`);
+            const response = await fetch(`/api/forum/post/${postId}`, { cache: 'no-store' });
             const data = await response.json();
             this.renderPostDetail(data.post, data.comments);
             this.showPostView();
         } catch (err) {
             console.error("[Forum] Failed to load post detail:", err);
         }
+    },
+
+    refreshCurrentThread: async function (btn) {
+        if (!this.currentPostId) return;
+        const icon = btn ? btn.querySelector('.refresh-icon') : null;
+        if (icon) {
+            icon.style.transition = 'transform 0.5s ease-in-out';
+            icon.style.transform = 'rotate(360deg)';
+        }
+        if (btn) btn.style.opacity = '0.7';
+
+        try {
+            const response = await fetch(`/api/forum/post/${this.currentPostId}`, { cache: 'no-store' });
+            if (response.ok) {
+                const data = await response.json();
+                this.renderPostDetail(data.post, data.comments, true);
+            }
+        } catch (err) {
+            console.error("[Forum] Failed to refresh thread:", err);
+        }
+
+        setTimeout(() => {
+            if (icon) {
+                icon.style.transition = 'none';
+                icon.style.transform = '';
+            }
+            if (btn) btn.style.opacity = '1';
+        }, 500);
     },
 
     handlePostDelete: async function (postId) {
@@ -1127,11 +1165,13 @@ const Forum = {
         }
     },
 
-    renderPostDetail: function (post, comments) {
-        const commentInput = document.getElementById('forum-comment-input');
-        if (commentInput) commentInput.value = '';
-        this.selectedCommentFiles = [];
-        this.renderImagePreviews('comment');
+    renderPostDetail: function (post, comments, preserveDraft = false) {
+        if (!preserveDraft) {
+            const commentInput = document.getElementById('forum-comment-input');
+            if (commentInput) commentInput.value = '';
+            this.selectedCommentFiles = [];
+            this.renderImagePreviews('comment');
+        }
 
         const detailEl = document.getElementById('forum-post-detail');
         const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(post.timestamp, true) : post.timestamp;
