@@ -5139,16 +5139,25 @@ body {
             hsla(260, 90%, 40%, 0.5),
             hsla(320, 85%, 45%, 0.5));
     border-color: var(--primary);
-    box-shadow: 0 0 20px hsla(260, 90%, 60%, 0.4);
+    box-shadow: none !important;
     transform: translateY(-2px);
 }
 
 body .nav-btn.active {
     background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
     border-color: var(--primary-light) !important;
-    box-shadow: 0 0 25px hsla(260, 90%, 60%, 0.5) !important;
+    box-shadow: none !important;
     color: #fff !important;
     opacity: 1 !important;
+}
+
+.nav-btn:focus,
+.nav-btn:active,
+.nav-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
 }
 
 .nav-btn:disabled {
@@ -11223,4 +11232,67 @@ body.theme-white #tool-work-on #work-on-scrollbar-thumb.dragging,
 [class*="theme-light-"] #tool-work-on #work-on-scrollbar-thumb.dragging {
     background: linear-gradient(180deg, #4f46e5, #3730a3) !important;
 }
+
+/* Remove glowing effect, focus outline, tap highlight, and text selection around page titles (Tools, Mods, Settings, and hyphenated section titles) */
+.page-title-header,
+.page-title-header *,
+h2.page-title-header,
+#page-tools .page-title-header,
+#page-mods .page-title-header,
+#page-settings .page-title-header,
+.tool-header h2 {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    cursor: default !important;
+}
+
+.page-title-header:hover,
+.page-title-header:active,
+.page-title-header:focus,
+.page-title-header:focus-visible,
+h2.page-title-header:hover,
+h2.page-title-header:active,
+h2.page-title-header:focus,
+h2.page-title-header:focus-visible,
+#page-tools .page-title-header:hover,
+#page-tools .page-title-header:active,
+#page-tools .page-title-header:focus,
+#page-tools .page-title-header:focus-visible,
+#page-mods .page-title-header:hover,
+#page-mods .page-title-header:active,
+#page-mods .page-title-header:focus,
+#page-mods .page-title-header:focus-visible,
+#page-settings .page-title-header:hover,
+#page-settings .page-title-header:active,
+#page-settings .page-title-header:focus,
+#page-settings .page-title-header:focus-visible,
+.tool-header h2:hover,
+.tool-header h2:active,
+.tool-header h2:focus,
+.tool-header h2:focus-visible {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+}
+
+.page-title-header::selection,
+.page-title-header *::selection,
+h2.page-title-header::selection,
+#page-tools .page-title-header::selection,
+#page-mods .page-title-header::selection,
+#page-settings .page-title-header::selection,
+.tool-header h2::selection {
+    background: transparent !important;
+    color: inherit !important;
+    text-shadow: none !important;
+}
+
 
