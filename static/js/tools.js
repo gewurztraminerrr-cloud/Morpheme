@@ -5743,6 +5743,9 @@ function renderWordsToWorkOnTable() {
     const dictFilterEl = document.getElementById('work-on-dict-filter');
     if (!tableBody) return;
 
+    const workOnScroll = document.getElementById('work-on-table-scroll');
+    const prevScrollTop = workOnScroll ? workOnScroll.scrollTop : 0;
+
     const allItems = getWordsToWorkOn();
     if (totalCountEl) {
         totalCountEl.textContent = `Total Words: ${allItems.length.toLocaleString()}`;
@@ -5815,7 +5818,7 @@ function renderWordsToWorkOnTable() {
         const selectedClass = isSelected ? ' selected' : '';
 
         rowsHtml += `
-            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}" data-word="${word}" style="width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
+            <div class="work-on-row${selectedClass}" data-orig-idx="${origIdx}" data-word="${word}" style="width: 100%; height: 44px; min-height: 44px; max-height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between;">
                 <div class="work-on-col-num">
                     ${posNum}
                 </div>
@@ -5832,6 +5835,9 @@ function renderWordsToWorkOnTable() {
     });
 
     tableBody.innerHTML = rowsHtml;
+    if (workOnScroll && prevScrollTop > 0) {
+        workOnScroll.scrollTop = prevScrollTop;
+    }
 
     // Attach row selection click listeners (clicking row toggles highlight/selection)
     tableBody.querySelectorAll('.work-on-row').forEach(row => {

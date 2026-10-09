@@ -174,9 +174,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1791102004" as="style">
+    <link rel="preload" href="/css/style.css?v=1791102005" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791095000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791102004">
+    <link rel="stylesheet" href="/css/style.css?v=1791102005">
     <link rel="stylesheet" href="/css/lobby.css?v=1791095000">
     <link rel="stylesheet" href="/css/play.css?v=1791100001">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
@@ -5037,15 +5037,15 @@
                                 <div class="work-on-col-word" style="flex: 1 1 0px; min-width: 0; text-align: left;">Words</div>
                                 <div class="work-on-col-lists" style="margin-left: auto; flex-shrink: 0; text-align: right; display: flex; justify-content: flex-end; align-items: center; white-space: nowrap;">Word lists valid in</div>
                             </div>
-                            <!-- Scroll Area Container -->
-                            <div class="list-scroll-area-wrapper" style="position: relative; height: 420px; overflow: hidden; width: 100%; box-sizing: border-box;">
-                                <div id="work-on-table-scroll" style="height: 100%; width: 100%; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none;">
+                            <!-- Scroll Area Container (Exposes first 10 words, then scrollable) -->
+                            <div class="list-scroll-area-wrapper" style="position: relative; height: 440px; min-height: 440px; max-height: 440px; overflow: hidden; width: 100%; box-sizing: border-box;">
+                                <div id="work-on-table-scroll" style="height: 440px; max-height: 440px; width: 100%; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none;">
                                     <div id="work-on-table-body" style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
                                         <!-- Injected rows -->
                                     </div>
                                 </div>
-                                <div class="custom-scrollbar-track" id="work-on-scrollbar-track" style="position: absolute; right: 2px; top: 2px; bottom: 2px; width: 6px; background: rgba(var(--text-primary-rgb), 0.08); border-radius: 3px;">
-                                    <div class="custom-scrollbar-thumb" id="work-on-scrollbar-thumb" style="width: 100%; background: rgba(167, 139, 250, 0.6); border-radius: 3px; position: absolute; top: 0; left: 0;"></div>
+                                <div class="custom-scrollbar-track" id="work-on-scrollbar-track" style="position: absolute; right: 4px; top: 6px; bottom: 6px; width: 12px; background: rgba(var(--text-primary-rgb), 0.08); border-radius: 6px; z-index: 50; border: 1px solid rgba(var(--text-primary-rgb), 0.12);">
+                                    <div class="custom-scrollbar-thumb" id="work-on-scrollbar-thumb" style="position: absolute; top: 0; left: 1px; width: 8px; min-height: 36px; background: linear-gradient(180deg, #a78bfa, #7c3aed); border-radius: 5px; cursor: pointer; border: 1px solid rgba(167, 139, 250, 0.85); box-shadow: 0 0 8px rgba(167, 139, 250, 0.45); touch-action: none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -9669,7 +9669,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1791102004"></script>
+    <script src="/js/tools.js?v=1791102005"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>
