@@ -7767,12 +7767,105 @@ function setupUnscrambleTool() {
     [lengthSel, dictSel, mustSel].forEach(sel => {
         if (sel) {
             sel.addEventListener('change', () => {
+                if (sel === dictSel && dictSel.value === 'words_to_work_on') {
+                    const allWords = (typeof getWordsToWorkOn === 'function')
+                        ? getWordsToWorkOn().map(it => (typeof it === 'object' && it !== null) ? it.word : it).filter(Boolean)
+                        : [];
+                    if (allWords.length > 0 && lengthSel) {
+                        const currentLen = parseInt(lengthSel.value, 10);
+                        const hasCurrentLen = allWords.some(w => w.length === currentLen);
+                        if (!hasCurrentLen) {
+                            const firstLen = allWords[0].length;
+                            if (firstLen >= 3 && firstLen <= 21) {
+                                lengthSel.value = String(firstLen);
+                                const display = document.getElementById('unscramble-jumbled');
+                                if (display) window.applyDynamicSequenceStyle(display, firstLen);
+                            }
+                        }
+                    }
+                }
                 unscrambleState.nextData = null;
                 prefetchUnscramble(); 
             });
         }
     });
 }
+
+function generateWordsToWorkOnUnscramble(len, must) {
+    const rawList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+    const words = rawList
+        .map(it => (typeof it === 'object' && it !== null ? it.word : it))
+        .filter(w => typeof w === 'string' && w.trim().length > 0)
+        .map(w => w.trim().toUpperCase());
+
+    const uniqueWords = Array.from(new Set(words));
+
+    if (uniqueWords.length === 0) {
+        return { error: 'Your "Words to Work on" list is empty. Add words to your list first!' };
+    }
+
+    let eligible = uniqueWords.filter(w => w.length === len);
+    if (must) {
+        eligible = eligible.filter(w => w.includes(must));
+    }
+
+    if (eligible.length === 0) {
+        const matchingWithMust = must ? uniqueWords.filter(w => w.includes(must)) : uniqueWords;
+        const availableLens = Array.from(new Set(matchingWithMust.map(w => w.length))).sort((a, b) => a - b);
+        let msg = `No words of length ${len} found in "Words to Work on"`;
+        if (must) msg += ` containing "${must}"`;
+        if (availableLens.length > 0) {
+            msg += `. Available lengths${must ? ' with that letter' : ''}: ${availableLens.join(', ')}.`;
+        } else {
+            msg += `.`;
+        }
+        return { error: msg };
+    }
+
+    // Pick a random target word
+    const targetWord = eligible[Math.floor(Math.random() * eligible.length)];
+
+    // Find anagrams in user's list
+    const getSig = (w) => w.split('').sort().join('');
+    const targetSig = getSig(targetWord);
+    const anagrams = eligible.filter(w => getSig(w) === targetSig);
+
+    // Shuffle targetWord using Fisher-Yates
+    const chars = targetWord.split('');
+    if (chars.length > 1) {
+        let attempts = 0;
+        let shuffled = '';
+        do {
+            for (let i = chars.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [chars[i], chars[j]] = [chars[j], chars[i]];
+            }
+            shuffled = chars.join('');
+            attempts++;
+        } while (shuffled === targetWord && attempts < 10);
+
+        if (shuffled === targetWord && chars.length > 1) {
+            for (let i = 0; i < chars.length; i++) {
+                for (let j = i + 1; j < chars.length; j++) {
+                    if (chars[i] !== chars[j]) {
+                        [chars[i], chars[j]] = [chars[j], chars[i]];
+                        shuffled = chars.join('');
+                        break;
+                    }
+                }
+                if (shuffled !== targetWord) break;
+            }
+        }
+    }
+    const jumbled = chars.join('');
+
+    return {
+        jumbled: jumbled,
+        words: anagrams,
+        count: anagrams.length
+    };
+}
+window.generateWordsToWorkOnUnscramble = generateWordsToWorkOnUnscramble;
 
 async function startNewUnscramble(keepFound = false) {
     if (unscrambleState.isLoading) {
@@ -7845,6 +7938,8 @@ async function startNewUnscramble(keepFound = false) {
             data = unscrambleState.nextData.data;
             unscrambleState.nextData = null;
             console.log("[Unscramble] Using prefetched unscramble data");
+        } else if (dict === 'words_to_work_on') {
+            data = generateWordsToWorkOnUnscramble(parseInt(len, 10) || 7, must);
         } else {
             const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}&must_have=${encodeURIComponent(must)}`);
             data = await resp.json();
@@ -7853,6 +7948,11 @@ async function startNewUnscramble(keepFound = false) {
         if (data.error) {
             alert(data.error);
             if (display) display.innerText = "Error";
+            if (info) info.innerText = '';
+            if (input) {
+                input.placeholder = "Select another length";
+                input.disabled = true;
+            }
             return;
         }
 
@@ -7903,6 +8003,15 @@ async function prefetchUnscramble() {
     const len = lenInput ? lenInput.value : 7;
     const dict = dictInput ? dictInput.value : 'NWL';
     const must = mustInput ? mustInput.value.trim().toUpperCase() : '';
+
+    if (dict === 'words_to_work_on') {
+        const data = generateWordsToWorkOnUnscramble(parseInt(len, 10) || 7, must);
+        if (!data.error) {
+            unscrambleState.nextData = { data, len, dict, must };
+            console.log("[Unscramble] Next Words to Work on unscramble prefetched");
+        }
+        return;
+    }
 
     try {
         const resp = await fetch(`/api/tools/unscramble/random?length=${len}&dictionary=${dict}&must_have=${encodeURIComponent(must)}`);

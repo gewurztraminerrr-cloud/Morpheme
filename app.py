@@ -8594,7 +8594,10 @@ def tools_unscramble_random():
     
     if not length:
         return jsonify({'error': 'Length required'}), 400
-        
+
+    if dict_name == 'words_to_work_on':
+        dict_name = 'ALL'
+
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
