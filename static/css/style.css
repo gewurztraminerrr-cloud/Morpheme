@@ -9475,6 +9475,14 @@ body.theme-white .tool-def-footer-link:hover,
     background: rgba(67, 56, 202, 0.16) !important;
 }
 
+body.theme-white .tool-def-footer-link.is-added,
+[class*="theme-white"] .tool-def-footer-link.is-added,
+[class*="theme-light-"] .tool-def-footer-link.is-added {
+    color: #059669 !important;
+    background: rgba(5, 150, 105, 0.12) !important;
+    border: 1px solid rgba(5, 150, 105, 0.3) !important;
+}
+
 body.theme-white .tool-def-added-badge,
 [class*="theme-white"] .tool-def-added-badge,
 [class*="theme-light-"] .tool-def-added-badge {

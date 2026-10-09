@@ -8933,29 +8933,34 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     const actionRightEl = popover.querySelector('.tool-def-action-right');
 
-    if (addBtn && addedBadge) {
+    if (addBtn) {
         if (isAlreadyOnList) {
             // "If the word is already on their list, then don’t do anything (do not display “ADD”)."
             // Hide the container so CC and FC expand equally across the full width
             if (actionRightEl) actionRightEl.style.display = 'none';
             addBtn.style.display = 'none';
-            addedBadge.style.display = 'none';
+            addBtn.textContent = 'ADD';
+            addBtn.classList.remove('is-added');
+            if (addedBadge) addedBadge.style.display = 'none';
             addBtn.onclick = null;
         } else {
             if (actionRightEl) actionRightEl.style.display = 'flex';
             addBtn.style.display = 'inline-flex';
             addBtn.style.pointerEvents = 'auto';
             addBtn.style.opacity = '1';
-            addedBadge.style.display = 'none';
+            addBtn.textContent = 'ADD';
+            addBtn.classList.remove('is-added');
+            if (addedBadge) addedBadge.style.display = 'none';
             addBtn.onclick = async (e) => {
                 if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
                 if (typeof addWordToWorkOn === 'function') {
                     const ok = await addWordToWorkOn(cleanWord);
                     if (ok) {
-                        // "If the word is successfully added, add a green “ADDED” text next to it to ensure to the user the word was added."
-                        addedBadge.style.display = 'inline-flex';
+                        // Make ADDED text extend across the entire ADD button, removing ADD text
+                        addBtn.textContent = 'ADDED';
+                        addBtn.classList.add('is-added');
                         addBtn.style.pointerEvents = 'none';
-                        addBtn.style.opacity = '0.5';
+                        if (addedBadge) addedBadge.style.display = 'none';
                     }
                 }
             };
