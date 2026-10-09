@@ -728,6 +728,19 @@ function setupLobbyEvents() {
                 window._currentLobbyPanel = 'rooms';
             }, { passive: true });
         });
+
+        const enforceFiveDigitLimit = () => {
+            const clean = ratingFilterInput.value.replace(/\D/g, '').slice(0, 5);
+            if (ratingFilterInput.value !== clean) {
+                ratingFilterInput.value = clean;
+            }
+        };
+
+        ratingFilterInput.addEventListener('input', enforceFiveDigitLimit);
+        ratingFilterInput.addEventListener('paste', () => {
+            setTimeout(enforceFiveDigitLimit, 0);
+        });
+
         let handledByEnter = false;
         ratingFilterInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.keyCode === 13) {
@@ -738,9 +751,32 @@ function setupLobbyEvents() {
                 setTimeout(() => {
                     handledByEnter = false;
                 }, 100);
+                return;
+            }
+
+            // Allow navigation and edit shortcut keys
+            if (e.ctrlKey || e.metaKey || [8, 9, 27, 35, 36, 37, 38, 39, 40, 46].includes(e.keyCode) ||
+                ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'].includes(e.key)) {
+                return;
+            }
+
+            // Prevent non-numeric characters
+            if (!/^[0-9]$/.test(e.key)) {
+                e.preventDefault();
+                return;
+            }
+
+            // Prevent entering more than 5 characters unless text is selected
+            const selStart = ratingFilterInput.selectionStart;
+            const selEnd = ratingFilterInput.selectionEnd;
+            const hasSelection = (selStart !== null && selEnd !== null && selStart !== selEnd);
+            if (ratingFilterInput.value.length >= 5 && !hasSelection) {
+                e.preventDefault();
             }
         });
+
         ratingFilterInput.addEventListener('blur', () => {
+            enforceFiveDigitLimit();
             window._currentLobbyPanel = 'rooms';
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
@@ -772,11 +808,12 @@ function setupLobbyEvents() {
                         activeConfig.boardDimensions,
                         activeConfig.timeLimit
                     );
+                    const cleanRating = (userRating != null) ? String(userRating).replace(/\D/g, '').slice(0, 5) : '';
                     const input = document.getElementById('rating-filter');
                     if (input) {
-                        input.value = userRating;
+                        input.value = cleanRating;
                     }
-                    window.activeRatingFilterValue = userRating;
+                    window.activeRatingFilterValue = cleanRating ? parseInt(cleanRating, 10) : null;
                     console.log('[Lobby] My Rating clicked. Value:', userRating);
                     fetchAndRenderRooms(
                         activeConfig.gameType,
