@@ -5691,13 +5691,35 @@ async function addWordToWorkOn(rawWord) {
 window.addWordToWorkOn = addWordToWorkOn;
 
 function removeSelectedWordToWorkOn() {
-    if (selectedWorkOnIndex === null || selectedWorkOnIndex < 0) return;
+    const input = document.getElementById('work-on-input');
+    const inputWord = (input && input.value) ? input.value.trim().toUpperCase() : '';
     const currentList = getWordsToWorkOn();
-    if (selectedWorkOnIndex >= currentList.length) return;
 
-    currentList.splice(selectedWorkOnIndex, 1);
+    // Check if the typed word in textbox is in the list
+    let removeIdx = -1;
+    if (inputWord) {
+        removeIdx = currentList.findIndex(item => {
+            const w = (typeof item === 'object' && item !== null) ? item.word : item;
+            return (w || '').toUpperCase() === inputWord;
+        });
+    }
+
+    // If not matched by textbox word, fall back to selected table row index
+    if (removeIdx === -1) {
+        if (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < currentList.length) {
+            removeIdx = selectedWorkOnIndex;
+        }
+    }
+
+    if (removeIdx === -1 || removeIdx >= currentList.length) return;
+
+    currentList.splice(removeIdx, 1);
     saveWordsToWorkOn(currentList);
     selectedWorkOnIndex = null;
+
+    if (input && inputWord) {
+        input.value = '';
+    }
 
     renderWordsToWorkOnTable();
 
@@ -5707,6 +5729,44 @@ function removeSelectedWordToWorkOn() {
     }
 }
 window.removeSelectedWordToWorkOn = removeSelectedWordToWorkOn;
+
+function updateWorkOnRemoveBtnState() {
+    const removeBtn = document.getElementById('work-on-remove-btn');
+    if (!removeBtn) return;
+
+    const input = document.getElementById('work-on-input');
+    const inputWord = (input && input.value) ? input.value.trim().toUpperCase() : '';
+    const currentList = getWordsToWorkOn();
+
+    // Check if typed word in textbox is in list
+    let wordInList = false;
+    if (inputWord) {
+        wordInList = currentList.some(item => {
+            const w = (typeof item === 'object' && item !== null) ? item.word : item;
+            return (w || '').toUpperCase() === inputWord;
+        });
+    }
+
+    // Check if table row is selected
+    const hasRowSelected = (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < currentList.length);
+
+    if (wordInList || hasRowSelected) {
+        removeBtn.disabled = false;
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.style.opacity = '1';
+        removeBtn.style.background = '#e11d48';
+        removeBtn.style.color = '#ffffff';
+        removeBtn.style.border = 'none';
+    } else {
+        removeBtn.disabled = true;
+        removeBtn.style.cursor = 'not-allowed';
+        removeBtn.style.opacity = '0.6';
+        removeBtn.style.background = 'rgba(244, 63, 94, 0.2)';
+        removeBtn.style.color = '#f43f5e';
+        removeBtn.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+    }
+}
+window.updateWorkOnRemoveBtnState = updateWorkOnRemoveBtnState;
 
 function clearAllWordsToWorkOn() {
     const doClear = () => {
@@ -5763,24 +5823,8 @@ function renderWordsToWorkOnTable() {
         }
     });
 
-    // Update Remove button state
-    if (removeBtn) {
-        if (selectedWorkOnIndex !== null && selectedWorkOnIndex >= 0 && selectedWorkOnIndex < allItems.length) {
-            removeBtn.disabled = false;
-            removeBtn.style.cursor = 'pointer';
-            removeBtn.style.opacity = '1';
-            removeBtn.style.background = '#e11d48';
-            removeBtn.style.color = '#ffffff';
-            removeBtn.style.border = 'none';
-        } else {
-            removeBtn.disabled = true;
-            removeBtn.style.cursor = 'not-allowed';
-            removeBtn.style.opacity = '0.6';
-            removeBtn.style.background = 'rgba(244, 63, 94, 0.2)';
-            removeBtn.style.color = '#f43f5e';
-            removeBtn.style.border = '1px solid rgba(244, 63, 94, 0.4)';
-        }
-    }
+    // Update Remove button state based on selected row OR textbox content
+    updateWorkOnRemoveBtnState();
 
     if (filteredItems.length === 0) {
         tableBody.innerHTML = `
@@ -5952,6 +5996,30 @@ function setupWordsToWorkOnTool() {
                 handleAdd();
             }
         });
+
+        const syncWithTypedWord = () => {
+            const typed = input.value.trim().toUpperCase();
+            const currentList = getWordsToWorkOn();
+            const matchIdx = typed ? currentList.findIndex(item => {
+                const w = (typeof item === 'object' && item !== null) ? item.word : item;
+                return (w || '').toUpperCase() === typed;
+            }) : -1;
+
+            if (matchIdx !== -1) {
+                if (selectedWorkOnIndex !== matchIdx) {
+                    selectedWorkOnIndex = matchIdx;
+                    renderWordsToWorkOnTable();
+                } else {
+                    updateWorkOnRemoveBtnState();
+                }
+            } else {
+                updateWorkOnRemoveBtnState();
+            }
+        };
+
+        input.addEventListener('input', syncWithTypedWord);
+        input.addEventListener('keyup', syncWithTypedWord);
+        input.addEventListener('change', syncWithTypedWord);
     }
 
     if (removeBtn) {
