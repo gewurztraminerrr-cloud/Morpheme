@@ -712,8 +712,6 @@ const Forum = {
         const listEl = document.getElementById('forum-categories-list');
         if (!listEl) return;
 
-        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
-
         let respondersHtml = '';
         if (window.currentUser && !window.currentUserIsGuest) {
             const isRespActive = (this.currentCategoryId === 'responders');
@@ -727,14 +725,10 @@ const Forum = {
         }
 
         const categoriesHtml = this.categories.map(cat => {
-            const lastContent = cat.last_content_at ? parseUTCTimestamp(cat.last_content_at).getTime() : 0;
-            // Use sessionStartTime as default so that ancient posts do not highlight for new sessions
-            const lastView = Number(lastViewed[cat.id]) || window.sessionStartTime || Date.now();
-            const hasNew = lastContent > lastView;
             const isActive = (this.currentCategoryId === cat.id);
 
             return `
-                <div class="forum-cat-item ${isActive ? 'active' : ''} ${hasNew ? 'has-new' : ''}" data-id="${cat.id}">
+                <div class="forum-cat-item ${isActive ? 'active' : ''}" data-id="${cat.id}">
                     <span class="forum-cat-name">${cat.name}</span>
                     <span class="forum-cat-desc">${cat.description}</span>
                 </div>
@@ -909,15 +903,7 @@ const Forum = {
         document.querySelectorAll('.forum-cat-item').forEach(item => {
             const isThisCat = parseInt(item.getAttribute('data-id')) === catId;
             item.classList.toggle('active', isThisCat);
-            if (isThisCat) {
-                item.classList.remove('has-new');
-            }
         });
-
-        // Update last viewed timestamp in localStorage
-        const lastViewed = JSON.parse(localStorage.getItem('forum_last_viewed') || '{}');
-        lastViewed[catId] = Date.now();
-        localStorage.setItem('forum_last_viewed', JSON.stringify(lastViewed));
 
         // Immediately update global nav button status
         if (typeof window.checkForumActivity === 'function') {
