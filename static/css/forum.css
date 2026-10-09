@@ -526,12 +526,30 @@
     border-bottom: 1px solid var(--input-border);
 }
 
+.comments-header-title-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .comment-badge {
     background: rgba(var(--text-primary-rgb), 0.1);
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 0.8rem;
     color: var(--text-primary);
+}
+
+/* On desktops and laptops, give more room for the number of comments next to the text "Discussion" */
+@media (min-width: 821px) {
+    .comments-header-title-box {
+        gap: 28px;
+    }
+    .comment-badge {
+        padding: 5px 16px;
+        font-size: 0.88rem;
+        letter-spacing: 0.3px;
+    }
 }
 
 .forum-comments-list {

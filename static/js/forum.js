@@ -416,11 +416,7 @@ const Forum = {
             });
         }
 
-        // Refresh thread buttons
-        const threadRefreshBtn = document.getElementById('forum-refresh-thread-btn');
-        if (threadRefreshBtn) {
-            threadRefreshBtn.addEventListener('click', () => this.refreshCurrentThread(threadRefreshBtn));
-        }
+        // Refresh thread comments button
         const commentsRefreshBtn = document.getElementById('forum-refresh-comments-btn');
         if (commentsRefreshBtn) {
             commentsRefreshBtn.addEventListener('click', () => this.refreshCurrentThread(commentsRefreshBtn));
