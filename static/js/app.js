@@ -3981,11 +3981,14 @@ function enforceDefaultInputLimits() {
     const elements = document.querySelectorAll(textSelectors);
     elements.forEach(el => {
         // Exempt elements with explicitly permitted higher limits:
-        // - Forum post content (2000), forum comment (2000), forum title (100)
-        // - Lobby chat (1000)
-        // - In-game room chat (1000)
-        // - Contact message (if long) or custom exempted IDs
-        if (el.id === 'lobby-chat-input' || el.id === 'chat-input' || el.id === 'forum-post-content' || el.id === 'forum-comment-input') {
+        // - Forum post content (2000), forum comment (2000)
+        // - Contact message (2000)
+        // - Lobby chat (1000), In-game room chat (1000)
+        // - Lobby notice (1000), Definition text (1000)
+        // - Timeout and Ban reasons (500)
+        if (el.id === 'lobby-chat-input' || el.id === 'chat-input' || el.id === 'forum-post-content' || el.id === 'forum-comment-input' ||
+            el.id === 'contact-message' || el.id === 'lobby-notice-input' || el.id === 'def-text-input' ||
+            el.id === 'timeout-reason-input' || el.id === 'ban-reason-input' || el.id === 'mod-timeout-modal-reason' || el.id === 'mod-ban-modal-reason') {
             return;
         }
         const currentMax = el.getAttribute('maxlength');
@@ -4000,6 +4003,193 @@ function enforceDefaultInputLimits() {
         }
     });
 }
+
+// Universal helper to detect the effective character limit on an element
+function getElementCharacterLimit(el) {
+    if (!el) return null;
+    if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return null;
+    
+    // Check HTML maxlength attribute or DOM property
+    let max = el.getAttribute ? el.getAttribute('maxlength') : null;
+    if (max !== null && max !== undefined && max !== '') {
+        const parsed = parseInt(max, 10);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    if (typeof el.maxLength === 'number' && el.maxLength > 0 && el.maxLength < 524288) {
+        return el.maxLength;
+    }
+    // Check data-maxlength or data-max-length
+    const dataMax = el.getAttribute ? (el.getAttribute('data-maxlength') || el.getAttribute('data-max-length')) : null;
+    if (dataMax) {
+        const parsed = parseInt(dataMax, 10);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    // Known specific element limits
+    if (el.classList && el.classList.contains('rating-input')) return 5;
+    if (el.id === 'contact-message' || el.id === 'forum-post-content' || el.id === 'forum-comment-input') return 2000;
+    if (el.id === 'lobby-chat-input' || el.id === 'chat-input' || el.id === 'lobby-notice-input' || el.id === 'def-text-input') return 1000;
+    if (el.id === 'timeout-reason-input' || el.id === 'ban-reason-input' || el.id === 'mod-timeout-modal-reason' || el.id === 'mod-ban-modal-reason') return 500;
+    if (el.id === 'mod-donor-name') return 50;
+
+    return null;
+}
+
+// Universal Mobile & Virtual Keyboard Character Limit Enforcement
+(function initCharacterLimitEnforcement() {
+    function getSelectionLength(el) {
+        try {
+            if (typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
+                return Math.abs(el.selectionEnd - el.selectionStart);
+            }
+        } catch (e) {}
+        return 0;
+    }
+
+    // 1. Intercept beforeinput (Supported on modern iOS Safari, Android Chrome, and desktop)
+    // Runs right before characters, suggestions, dictations, or IMEs are committed to the DOM.
+    document.addEventListener('beforeinput', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const limit = getElementCharacterLimit(target);
+        if (!limit) return;
+
+        const inputType = e.inputType || '';
+        
+        // Deletions, backspaces, undos, and redos are always permitted
+        if (inputType.startsWith('delete') || inputType.startsWith('history')) {
+            return;
+        }
+
+        const currentVal = target.value || '';
+        const currentLen = currentVal.length;
+        const selectedLen = getSelectionLength(target);
+        const availableCapacity = limit - (currentLen - selectedLen);
+
+        // When inserting text or replacement
+        if (e.data) {
+            if (availableCapacity <= 0) {
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+            // If incoming string exceeds remaining capacity (e.g. predictive suggestion or dictation chunk)
+            if (e.data.length > availableCapacity) {
+                if (e.cancelable) e.preventDefault();
+                const allowedChunk = e.data.slice(0, availableCapacity);
+                if (allowedChunk.length > 0 && typeof target.setRangeText === 'function') {
+                    try {
+                        const start = target.selectionStart || 0;
+                        const end = target.selectionEnd || 0;
+                        target.setRangeText(allowedChunk, start, end, 'end');
+                        target.dispatchEvent(new Event('input', { bubbles: true }));
+                    } catch (err) {}
+                }
+                return;
+            }
+        } else if (inputType === 'insertLineBreak' || inputType === 'insertParagraph') {
+            // For textareas, inserting a newline counts as 1 char
+            if (target.tagName === 'TEXTAREA' && availableCapacity <= 0) {
+                if (e.cancelable) e.preventDefault();
+            }
+        }
+    }, true);
+
+    // 2. Intercept keydown (Guards hardware keyboards, desktop, and key events)
+    document.addEventListener('keydown', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const limit = getElementCharacterLimit(target);
+        if (!limit) return;
+
+        // Allow navigation, deletion, shortcuts
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab', 'Escape'].includes(e.key)) {
+            return;
+        }
+        // Enter key on single-line inputs is form/action submission, not character insertion
+        if (e.key === 'Enter') {
+            if (target.tagName === 'INPUT') return;
+            // On textarea, Enter inserts a newline
+            const selectedLen = getSelectionLength(target);
+            if ((target.value || '').length - selectedLen >= limit) {
+                e.preventDefault();
+            }
+            return;
+        }
+
+        // Printable characters have length 1
+        if (e.key && e.key.length === 1) {
+            const selectedLen = getSelectionLength(target);
+            if ((target.value || '').length - selectedLen >= limit) {
+                e.preventDefault();
+            }
+        }
+    }, true);
+
+    // 3. Intercept paste
+    document.addEventListener('paste', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const limit = getElementCharacterLimit(target);
+        if (!limit) return;
+
+        const pastedText = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+        if (!pastedText) return;
+
+        const currentVal = target.value || '';
+        const selectedLen = getSelectionLength(target);
+        const availableCapacity = limit - (currentVal.length - selectedLen);
+
+        if (availableCapacity <= 0) {
+            e.preventDefault();
+            return;
+        }
+
+        if (pastedText.length > availableCapacity) {
+            e.preventDefault();
+            const allowedChunk = pastedText.slice(0, availableCapacity);
+            if (allowedChunk.length > 0 && typeof target.setRangeText === 'function') {
+                try {
+                    const start = target.selectionStart || 0;
+                    const end = target.selectionEnd || 0;
+                    target.setRangeText(allowedChunk, start, end, 'end');
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                } catch (err) {}
+            }
+        }
+    }, true);
+
+    // 4. Capture-phase input clamp fallback (Catches autocorrect, Gboard swipe, voice dictation, drag & drop)
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const limit = getElementCharacterLimit(target);
+        if (!limit) return;
+
+        if (target.value && target.value.length > limit) {
+            const start = target.selectionStart;
+            const end = target.selectionEnd;
+            target.value = target.value.slice(0, limit);
+            if (typeof start === 'number' && typeof end === 'number') {
+                const newPos = Math.min(start, limit);
+                try {
+                    target.setSelectionRange(newPos, newPos);
+                } catch (err) {}
+            }
+        }
+    }, true);
+
+    // 5. IME compositionend clamp fallback
+    document.addEventListener('compositionend', function(e) {
+        const target = e.target;
+        if (!target) return;
+        const limit = getElementCharacterLimit(target);
+        if (!limit) return;
+
+        if (target.value && target.value.length > limit) {
+            target.value = target.value.slice(0, limit);
+        }
+    }, true);
+})();
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', enforceDefaultInputLimits);
@@ -4027,3 +4217,4 @@ if (typeof MutationObserver !== 'undefined') {
 }
 
 console.log('app.js fully loaded - version with UI optimizations');
+
