@@ -5835,8 +5835,11 @@ function renderWordsToWorkOnTable() {
     });
 
     tableBody.innerHTML = rowsHtml;
-    if (workOnScroll && prevScrollTop > 0) {
-        workOnScroll.scrollTop = prevScrollTop;
+    const targetRestore = prevScrollTop > 0
+        ? prevScrollTop
+        : ((typeof window._savedWorkOnScrollTop === 'number' && window._savedWorkOnScrollTop > 0) ? window._savedWorkOnScrollTop : 0);
+    if (workOnScroll && targetRestore > 0) {
+        workOnScroll.scrollTop = targetRestore;
     }
 
     // Attach row selection click listeners (clicking row toggles highlight/selection)
@@ -5866,33 +5869,40 @@ function restoreWordsToWorkOnPosition() {
     const tableBody = document.getElementById('work-on-table-body');
     if (!workOnScroll || !tableBody) return;
 
-    const wordToCenter = window._savedWorkOnWord || null;
+    const wordToHighlight = window._savedWorkOnWord || null;
     const savedScrollTop = typeof window._savedWorkOnScrollTop === 'number' ? window._savedWorkOnScrollTop : null;
 
-    if (!wordToCenter && savedScrollTop === null) return;
+    if (!wordToHighlight && savedScrollTop === null) return;
+
+    let targetRow = null;
+    if (wordToHighlight) {
+        try {
+            targetRow = tableBody.querySelector(`.work-on-row[data-word="${CSS.escape(wordToHighlight)}"]`);
+        } catch (_) {}
+    }
+
+    // Determine target scrollTop ONCE so subsequent ticks never get corrupted by scrolling offsets
+    let targetScroll = null;
+    if (savedScrollTop !== null && savedScrollTop >= 0) {
+        targetScroll = savedScrollTop;
+    } else if (targetRow) {
+        const rowHeight = targetRow.offsetHeight || targetRow.clientHeight || 44;
+        const containerHeight = workOnScroll.clientHeight || 440;
+        const rowOffset = (targetRow.getBoundingClientRect().top - workOnScroll.getBoundingClientRect().top) + workOnScroll.scrollTop;
+        targetScroll = Math.max(0, rowOffset - (containerHeight / 2) + (rowHeight / 2));
+    }
+
+    if (targetRow) {
+        targetRow.classList.add('jump-target-pulse');
+        setTimeout(() => {
+            targetRow.classList.remove('jump-target-pulse');
+        }, 2500);
+    }
+
+    if (targetScroll === null) return;
 
     const performScroll = () => {
-        let targetRow = null;
-        if (wordToCenter) {
-            try {
-                targetRow = tableBody.querySelector(`.work-on-row[data-word="${CSS.escape(wordToCenter)}"]`);
-            } catch (_) {}
-        }
-
-        if (targetRow) {
-            const rowTop = targetRow.offsetTop;
-            const rowHeight = targetRow.offsetHeight || targetRow.clientHeight;
-            const containerHeight = workOnScroll.clientHeight;
-            const targetScroll = Math.max(0, rowTop - (containerHeight / 2) + (rowHeight / 2));
-            workOnScroll.scrollTop = targetScroll;
-            targetRow.classList.add('jump-target-pulse');
-            setTimeout(() => {
-                targetRow.classList.remove('jump-target-pulse');
-            }, 2500);
-        } else if (savedScrollTop !== null) {
-            workOnScroll.scrollTop = savedScrollTop;
-        }
-
+        workOnScroll.scrollTop = targetScroll;
         if (typeof workOnScroll._updateCustomScrollbar === 'function') {
             workOnScroll._updateCustomScrollbar();
         } else if (typeof initCustomScrollbarForElement === 'function') {
@@ -5900,17 +5910,19 @@ function restoreWordsToWorkOnPosition() {
         }
     };
 
-    // Run across multiple animation frames and layout settling ticks
+    // Apply immediately and across multiple animation frames / layout settling ticks
+    performScroll();
     requestAnimationFrame(performScroll);
     setTimeout(performScroll, 40);
-    setTimeout(performScroll, 150);
-    setTimeout(performScroll, 360);
-    setTimeout(performScroll, 500);
+    setTimeout(performScroll, 120);
+    setTimeout(performScroll, 250);
+    setTimeout(performScroll, 400);
+    setTimeout(performScroll, 600);
 
-    if (wordToCenter) {
+    if (wordToHighlight) {
         setTimeout(() => {
             window._savedWorkOnWord = null;
-        }, 700);
+        }, 800);
     }
 }
 window.restoreWordsToWorkOnPosition = restoreWordsToWorkOnPosition;
@@ -5958,6 +5970,16 @@ function setupWordsToWorkOnTool() {
         dictFilter.addEventListener('change', () => {
             renderWordsToWorkOnTable();
         });
+    }
+
+    const workOnScroll = document.getElementById('work-on-table-scroll');
+    if (workOnScroll && !workOnScroll._scrollTrackingBound) {
+        workOnScroll._scrollTrackingBound = true;
+        workOnScroll.addEventListener('scroll', () => {
+            if (workOnScroll.scrollTop > 0) {
+                window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            }
+        }, { passive: true });
     }
 }
 window.setupWordsToWorkOnTool = setupWordsToWorkOnTool;
@@ -8514,7 +8536,10 @@ window.saveCurrentToolsPosition = function (wordClicked = null) {
         window._wasFullListModalOpen = true;
     }
 
-    const currentActivePane = document.querySelector('.tool-pane.active');
+    const currentActivePane = document.querySelector('#page-tools .tool-pane.active') || document.querySelector('.tool-pane.active');
+    const workOnPane = document.getElementById('tool-work-on');
+    const isWorkOnActive = (currentActivePane && currentActivePane.id === 'tool-work-on') || (workOnPane && workOnPane.classList.contains('active'));
+
     if (currentActivePane) {
         const curId = currentActivePane.id.replace('tool-', '');
         window._savedOriginToolId = curId;
@@ -8524,25 +8549,22 @@ window.saveCurrentToolsPosition = function (wordClicked = null) {
         if (curId === 'lists') {
             const listScrollArea = document.getElementById('main-list-results');
             if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
-        } else if (curId === 'work-on') {
-            const workOnScroll = document.getElementById('work-on-table-scroll');
-            if (workOnScroll) {
-                window._savedWorkOnScrollTop = workOnScroll.scrollTop;
-            }
-            if (wordClicked) {
-                window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
-            }
         } else if (curId === 'combo') {
             const comboScroll = document.getElementById('combo-scroll-container');
             if (comboScroll) window._savedComboScrollTop = comboScroll.scrollTop;
         }
-    } else {
-        const workOnPane = document.getElementById('tool-work-on');
-        if (workOnPane && (workOnPane.classList.contains('active') || window._savedOriginToolId === 'work-on')) {
-            const workOnScroll = document.getElementById('work-on-table-scroll');
-            if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
-            if (wordClicked) window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
+    }
+
+    if (isWorkOnActive) {
+        const workOnScroll = document.getElementById('work-on-table-scroll');
+        if (workOnScroll && workOnScroll.scrollTop > 0) {
+            window._savedWorkOnScrollTop = workOnScroll.scrollTop;
         }
+        if (wordClicked) {
+            window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
+        }
+    } else if (wordClicked && !window._savedWorkOnWord) {
+        window._savedWorkOnWord = String(wordClicked).trim().toUpperCase();
     }
 };
 
@@ -8820,6 +8842,15 @@ window.showWordDefinitionPopup = async function (word, event) {
 window.lookupWord = function (word, event) {
     if (event && typeof event.stopPropagation === 'function') {
         event.stopPropagation();
+    }
+    const evt = event || window.event;
+    const target = evt ? (evt.target || evt.currentTarget) : null;
+    if (target && target.closest && target.closest('#tool-work-on')) {
+        const workOnScroll = document.getElementById('work-on-table-scroll');
+        if (workOnScroll) {
+            window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+            window._savedWorkOnWord = String(word).trim().toUpperCase();
+        }
     }
     window.showWordDefinitionPopup(word, event);
 };

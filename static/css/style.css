@@ -10772,6 +10772,7 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 }
 
 #tool-work-on #work-on-table-scroll {
+    position: relative !important;
     height: 440px !important;
     min-height: 440px !important;
     max-height: 440px !important;
@@ -10790,6 +10791,7 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 }
 
 #tool-work-on #work-on-table-body {
+    position: relative !important;
     width: 100% !important;
     box-sizing: border-box !important;
 }
