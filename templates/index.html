@@ -3029,6 +3029,20 @@
                         background: transparent !important;
                         background-image: none !important;
                     }
+                    /* Restore the bordered box around "Play Solo or With Friends" */
+                    body #page-lobby #mobile-panel-main #mobile-panel-solo {
+                        border: 1px solid var(--input-border) !important;
+                        background: var(--bg-panel) !important;
+                    }
+                    body[class*="theme-light-"] #page-lobby #mobile-panel-main #mobile-panel-solo {
+                        border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+                        background: var(--bg-primary) !important;
+                        background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+                    }
+                    body[class*="theme-white"] #page-lobby #mobile-panel-main #mobile-panel-solo {
+                        border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+                        background: var(--bg-panel, rgba(0, 0, 0, 0.05)) !important;
+                    }
                 }
             </style>
 
