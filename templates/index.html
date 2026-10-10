@@ -3010,6 +3010,26 @@
                         left: 0px !important;
                     }
                 }
+
+                /* Desktop/Laptop: no grey band behind the guide button / room-entry panel */
+                @media (min-width: 901px) {
+                    body #page-lobby #mobile-panel-main .lobby-journey-sticky-header,
+                    body[class*="theme-white"] #page-lobby #mobile-panel-main .lobby-journey-sticky-header,
+                    body.theme-white #page-lobby #mobile-panel-main .lobby-journey-sticky-header,
+                    [class*="theme-white"] #page-lobby #mobile-panel-main .lobby-journey-sticky-header,
+                    [class*="theme-light-"] #page-lobby #mobile-panel-main .lobby-journey-sticky-header {
+                        background: var(--bg-primary, #ffffff) !important;
+                        background-color: var(--bg-primary, #ffffff) !important;
+                        background-image: none !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                    }
+                    body[class*="theme-white"] #page-lobby #mobile-panel-main,
+                    body[class*="theme-white"] #page-lobby #mobile-panel-solo {
+                        background: transparent !important;
+                        background-image: none !important;
+                    }
+                }
             </style>
 
             <div class="lobby-grid">
