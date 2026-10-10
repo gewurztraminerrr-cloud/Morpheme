@@ -309,7 +309,7 @@
 .forum-posts-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 24px;
 }
 
 .forum-post-card {
@@ -724,7 +724,7 @@
 .forum-comments-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
     margin-bottom: 30px;
 }
 
