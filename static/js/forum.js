@@ -1224,7 +1224,7 @@ const Forum = {
                         <strong>${this.escapeHtml(c.username)}</strong>
                         <span class="forum-responses-popup-date">${cDate}</span>
                     </div>
-                    <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet)}</div>
+                    <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet).replace(/((?:@|&amp;)[A-Za-z0-9_]+\s*#\d+(?:\s*\(Thread\))?)/g, '<span class="forum-mention-tag">$1</span>')}</div>
                 </div>`;
         }).join('');
 

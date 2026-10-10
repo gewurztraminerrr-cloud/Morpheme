@@ -658,19 +658,26 @@
     }
 }
 
-/* Post Number Mention Links */
+/* Post Number Mention Links — blue so they read as clickable */
 .forum-post-link {
-    color: #fbbf24 !important;
+    color: #60a5fa !important;
     font-weight: 700;
     text-decoration: underline;
-    text-decoration-style: dotted;
+    text-decoration-style: solid;
     text-underline-offset: 3px;
     cursor: pointer;
     transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 .forum-post-link:hover {
-    color: #f59e0b !important;
-    text-decoration-style: solid;
+    color: #93c5fd !important;
+}
+[class*="theme-white"] .forum-post-link,
+[class*="theme-light-"] .forum-post-link {
+    color: #1d4ed8 !important;
+}
+[class*="theme-white"] .forum-post-link:hover,
+[class*="theme-light-"] .forum-post-link:hover {
+    color: #1e40af !important;
 }
 
 /* Highlighted "@user #N" reference — same gold family as the jump-to-response highlight */
@@ -689,54 +696,6 @@
 [class*="theme-light-"] .forum-mention-tag {
     color: #92400e;
     background: rgba(245, 158, 11, 0.2);
-    border-color: rgba(217, 119, 6, 0.55);
-}
-[class*="theme-white"] .forum-mention-tag .forum-post-link,
-[class*="theme-light-"] .forum-mention-tag .forum-post-link {
-    color: #92400e !important;
-}
-[class*="theme-white"] .forum-mention-tag .forum-post-link:hover,
-[class*="theme-light-"] .forum-mention-tag .forum-post-link:hover {
-    color: #78350f !important;
-}
-
-/* Responses popup entries use the same gold hue */
-.forum-responses-popup-item {
-    border-left: 4px solid #fbbf24 !important;
-    background: rgba(251, 191, 36, 0.1) !important;
-}
-.forum-responses-popup-item:hover,
-.forum-responses-popup-item:focus-visible {
-    background: rgba(251, 191, 36, 0.22) !important;
-    border-color: #f59e0b !important;
-}
-.forum-responses-popup-item-head strong,
-.forum-responses-popup-snippet {
-    color: #fcd34d;
-}
-.forum-responses-popup-item .forum-post-number-badge {
-    color: #fcd34d;
-    background: rgba(251, 191, 36, 0.18);
-    border-color: rgba(251, 191, 36, 0.5);
-}
-[class*="theme-white"] .forum-responses-popup-item,
-[class*="theme-light-"] .forum-responses-popup-item {
-    background: rgba(245, 158, 11, 0.14) !important;
-}
-[class*="theme-white"] .forum-responses-popup-item:hover,
-[class*="theme-light-"] .forum-responses-popup-item:hover {
-    background: rgba(245, 158, 11, 0.26) !important;
-}
-[class*="theme-white"] .forum-responses-popup-item-head strong,
-[class*="theme-white"] .forum-responses-popup-snippet,
-[class*="theme-light-"] .forum-responses-popup-item-head strong,
-[class*="theme-light-"] .forum-responses-popup-snippet {
-    color: #92400e;
-}
-[class*="theme-white"] .forum-responses-popup-item .forum-post-number-badge,
-[class*="theme-light-"] .forum-responses-popup-item .forum-post-number-badge {
-    color: #92400e;
-    background: rgba(245, 158, 11, 0.22);
     border-color: rgba(217, 119, 6, 0.55);
 }
 
