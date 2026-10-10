@@ -1194,6 +1194,73 @@ const Forum = {
         }
     },
 
+    closeResponsesPopup: function () {
+        const existing = document.getElementById('forum-responses-popup');
+        if (existing) existing.remove();
+        if (this._responsesEscHandler) {
+            document.removeEventListener('keydown', this._responsesEscHandler);
+            this._responsesEscHandler = null;
+        }
+    },
+
+    showResponsesPopup: function (postNumber) {
+        this.closeResponsesPopup();
+        const resps = [...((this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [])]
+            .sort((a, b) => parseUTCTimestamp(b.timestamp) - parseUTCTimestamp(a.timestamp));
+        if (resps.length === 0) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'forum-responses-popup';
+        overlay.className = 'forum-responses-popup-overlay';
+
+        const items = resps.map(c => {
+            const cDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(c.timestamp, true) : c.timestamp;
+            const snippetRaw = (c.content || '').replace(/\s+/g, ' ').trim();
+            const snippet = snippetRaw.length > 110 ? snippetRaw.slice(0, 110) + '…' : snippetRaw;
+            return `
+                <div class="forum-responses-popup-item" data-comment-id="${c.id}" data-post-number="${c.post_number || ''}" role="button" tabindex="0">
+                    <div class="forum-responses-popup-item-head">
+                        <span class="forum-post-number-badge">#${c.post_number || '?'}</span>
+                        <strong>${this.escapeHtml(c.username)}</strong>
+                        <span class="forum-responses-popup-date">${cDate}</span>
+                    </div>
+                    <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet)}</div>
+                </div>`;
+        }).join('');
+
+        overlay.innerHTML = `
+            <div class="forum-responses-popup" role="dialog" aria-label="Responses to #${postNumber}">
+                <div class="forum-responses-popup-header">
+                    <span>Responses to #${postNumber} (${resps.length})</span>
+                    <button type="button" class="forum-responses-popup-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="forum-responses-popup-list">${items}</div>
+            </div>`;
+        document.body.appendChild(overlay);
+
+        const close = () => this.closeResponsesPopup();
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        overlay.querySelector('.forum-responses-popup-close').addEventListener('click', close);
+        this._responsesEscHandler = (e) => { if (e.key === 'Escape') close(); };
+        document.addEventListener('keydown', this._responsesEscHandler);
+
+        overlay.querySelectorAll('.forum-responses-popup-item').forEach(item => {
+            const go = () => {
+                const commentId = parseInt(item.getAttribute('data-comment-id'), 10);
+                const pnum = parseInt(item.getAttribute('data-post-number'), 10);
+                close();
+                this.highlightTargetPost({
+                    highlightCommentId: commentId,
+                    highlightPostNumber: isNaN(pnum) ? null : pnum
+                });
+            };
+            item.addEventListener('click', go);
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+            });
+        });
+    },
+
     refreshCurrentThread: async function (btn) {
         if (!this.currentPostId) return;
         const icon = btn ? btn.querySelector('.refresh-icon') : null;
@@ -1309,7 +1376,28 @@ const Forum = {
             `;
         }
 
-        const postNumBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
+        // Map each post number -> comments that respond to it (via "@user #N" references)
+        this.currentResponsesMap = {};
+        const respRegex = /[@&][A-Za-z0-9_]+\s*#(\d+)/g;
+        comments.forEach(c => {
+            const seen = new Set();
+            let m;
+            respRegex.lastIndex = 0;
+            while ((m = respRegex.exec(c.content || '')) !== null) {
+                const n = parseInt(m[1], 10);
+                if (seen.has(n) || n === c.post_number) continue;
+                seen.add(n);
+                (this.currentResponsesMap[n] = this.currentResponsesMap[n] || []).push(c);
+            }
+        });
+        const buildNumBadge = (num) => {
+            if (!num) return '';
+            const resps = this.currentResponsesMap[num] || [];
+            if (resps.length === 0) return `<span class="forum-post-number-badge">#${num}</span>`;
+            return `<span class="forum-post-number-badge has-responses" data-resp-num="${num}" role="button" tabindex="0" title="View ${resps.length} ${resps.length === 1 ? 'response' : 'responses'} to #${num}">#${num} <span class="forum-resp-count">💬 ${resps.length}</span></span>`;
+        };
+
+        const postNumBadge = buildNumBadge(post.post_number);
         const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
 
         detailEl.innerHTML = `
@@ -1387,7 +1475,7 @@ const Forum = {
                         `;
                     }
 
-                    const commentNumBadge = c.post_number ? `<span class="forum-post-number-badge">#${c.post_number}</span>` : '';
+                    const commentNumBadge = buildNumBadge(c.post_number);
 
                     return `
                         <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
@@ -1444,6 +1532,20 @@ const Forum = {
                 const pnum = btn.getAttribute('data-post-number');
                 const isThread = btn.classList.contains('forum-post-reply-btn');
                 this.handleReplyToUser(uname, pnum, isThread);
+            });
+        });
+
+        // Clicking a post number that has responses opens a popup listing them (newest first)
+        [...detailEl.querySelectorAll('.forum-post-number-badge.has-responses'),
+         ...commentsListEl.querySelectorAll('.forum-post-number-badge.has-responses')].forEach(badge => {
+            const open = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.showResponsesPopup(parseInt(badge.getAttribute('data-resp-num'), 10));
+            };
+            badge.addEventListener('click', open);
+            badge.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') open(e);
             });
         });
 
