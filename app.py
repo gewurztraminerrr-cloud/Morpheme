@@ -9397,10 +9397,60 @@ def get_forum_post_detail(post_id):
             cd['image_urls'] = c_urls
             cd['image_url'] = c_urls[0] if c_urls else None
             comments_list.append(cd)
-        
+
+        # Build post_lookup for all @username #NUM references in post and comments
+        cat_id = post_dict.get('category_id')
+        all_contents = [post_dict.get('content', '') or ''] + [(c.get('content', '') or '') for c in comments_list]
+        mentioned_nums = set()
+        for txt in all_contents:
+            if txt:
+                for match in re.finditer(r'[@&][A-Za-z0-9_]+\s*#(\d+)', txt):
+                    try:
+                        mentioned_nums.add(int(match.group(1)))
+                    except (ValueError, TypeError):
+                        pass
+
+        post_lookup = {}
+        if mentioned_nums and cat_id:
+            placeholders = ','.join('?' for _ in mentioned_nums)
+            num_list = list(mentioned_nums)
+            p_rows = conn.execute(f'''
+                SELECT id, category_id, post_number, title
+                FROM forum_posts
+                WHERE category_id = ? AND post_number IN ({placeholders})
+            ''', [cat_id] + num_list).fetchall()
+            for r in p_rows:
+                key = f"#{r['post_number']}"
+                post_lookup[key] = {
+                    'type': 'post',
+                    'item_id': r['id'],
+                    'thread_id': r['id'],
+                    'category_id': r['category_id'],
+                    'post_number': r['post_number'],
+                    'title': r['title']
+                }
+
+            c_rows = conn.execute(f'''
+                SELECT c.id, c.post_id, c.post_number, p.category_id, p.title
+                FROM forum_comments c
+                JOIN forum_posts p ON c.post_id = p.id
+                WHERE p.category_id = ? AND c.post_number IN ({placeholders})
+            ''', [cat_id] + num_list).fetchall()
+            for r in c_rows:
+                key = f"#{r['post_number']}"
+                post_lookup[key] = {
+                    'type': 'comment',
+                    'item_id': r['id'],
+                    'thread_id': r['post_id'],
+                    'category_id': r['category_id'],
+                    'post_number': r['post_number'],
+                    'title': r['title']
+                }
+
         response_data = {
             'post': post_dict,
             'comments': comments_list,
+            'post_lookup': post_lookup,
             'sorting': 'newest_first'
         }
         res = jsonify(response_data)
@@ -9408,6 +9458,46 @@ def get_forum_post_detail(post_id):
         res.headers["Pragma"] = "no-cache"
         res.headers["Expires"] = "0"
         return res
+    finally:
+        conn.close()
+
+@app.route('/api/forum/locate_post', methods=['GET'])
+def locate_forum_post():
+    cat_id = request.args.get('category_id', type=int)
+    p_num = request.args.get('post_number', type=int)
+    if not cat_id or not p_num:
+        return jsonify({'found': False, 'error': 'Missing parameters'}), 400
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        p_row = conn.execute('SELECT id, category_id, post_number, title FROM forum_posts WHERE category_id = ? AND post_number = ?', (cat_id, p_num)).fetchone()
+        if p_row:
+            return jsonify({
+                'found': True,
+                'type': 'post',
+                'item_id': p_row['id'],
+                'thread_id': p_row['id'],
+                'category_id': p_row['category_id'],
+                'post_number': p_row['post_number'],
+                'title': p_row['title']
+            })
+        c_row = conn.execute('''
+            SELECT c.id, c.post_id, c.post_number, p.category_id, p.title
+            FROM forum_comments c
+            JOIN forum_posts p ON c.post_id = p.id
+            WHERE p.category_id = ? AND c.post_number = ?
+        ''', (cat_id, p_num)).fetchone()
+        if c_row:
+            return jsonify({
+                'found': True,
+                'type': 'comment',
+                'item_id': c_row['id'],
+                'thread_id': c_row['post_id'],
+                'category_id': c_row['category_id'],
+                'post_number': c_row['post_number'],
+                'title': c_row['title']
+            })
+        return jsonify({'found': False})
     finally:
         conn.close()
 

@@ -725,7 +725,7 @@ const Forum = {
             const hasNewResp = this.hasNewResponders && !isRespActive;
             respondersHtml = `
                 <div class="forum-cat-item forum-responders-tab ${isRespActive ? 'active' : ''} ${hasNewResp ? 'has-new' : ''}" data-id="responders">
-                    <span class="forum-cat-name">View Responders</span>
+                    <span class="forum-cat-name">View Responses</span>
                     <span class="forum-cat-desc">Recent replies to you across the forum</span>
                 </div>
             `;
@@ -770,7 +770,7 @@ const Forum = {
             }
         });
 
-        // Clear gold state from top menu Forum button and "View Responders" tab
+        // Clear gold state from top menu Forum button and "View Responses" tab
         this.hasNewResponders = false;
         const btnForums = document.getElementById('btn-forums');
         if (btnForums) {
@@ -785,7 +785,7 @@ const Forum = {
         }
 
         const titleEl = document.getElementById('forum-category-title');
-        if (titleEl) titleEl.textContent = 'View Responders';
+        if (titleEl) titleEl.textContent = 'View Responses';
 
         const descEl = document.getElementById('forum-category-desc');
         if (descEl) {
@@ -808,11 +808,36 @@ const Forum = {
         }
     },
 
+    formatDateGroupHeader: function (dateObj) {
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const isSameDay = (d1, d2) => (
+            d1.getFullYear() === d2.getFullYear() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getDate() === d2.getDate()
+        );
+
+        if (isSameDay(dateObj, today)) {
+            return 'Today';
+        } else if (isSameDay(dateObj, yesterday)) {
+            return 'Yesterday';
+        } else {
+            return dateObj.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+    },
+
     loadRespondersFeed: async function () {
         const postsList = document.getElementById('forum-posts-list');
         if (!postsList) return;
 
-        postsList.innerHTML = '<div class="forum-cat-loading" style="padding: 24px; text-align: center;">Loading responders...</div>';
+        postsList.innerHTML = '<div class="forum-cat-loading" style="padding: 24px; text-align: center;">Loading responses...</div>';
 
         try {
             const res = await fetch('/api/forum/responders');
@@ -831,25 +856,57 @@ const Forum = {
                 return;
             }
 
-            postsList.innerHTML = responders.map(r => {
-                const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(r.timestamp, true) : r.timestamp;
-                const flagHtml = window.getFlagHtml ? window.getFlagHtml(r.responder_flag) : (r.responder_flag || '');
-                const isUnclicked = (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked);
+            // Group responses by calendar date
+            const groups = [];
+            let currentGroupKey = null;
+            let currentGroup = null;
+
+            responders.forEach(r => {
+                const parsedDate = parseUTCTimestamp(r.timestamp);
+                const groupKey = `${parsedDate.getFullYear()}-${parsedDate.getMonth()}-${parsedDate.getDate()}`;
+                if (groupKey !== currentGroupKey) {
+                    currentGroupKey = groupKey;
+                    currentGroup = {
+                        title: this.formatDateGroupHeader(parsedDate),
+                        items: []
+                    };
+                    groups.push(currentGroup);
+                }
+                currentGroup.items.push(r);
+            });
+
+            postsList.innerHTML = groups.map(group => {
+                const cardsHtml = group.items.map(r => {
+                    const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(r.timestamp, true) : r.timestamp;
+                    const flagHtml = window.getFlagHtml ? window.getFlagHtml(r.responder_flag) : (r.responder_flag || '');
+                    const isUnclicked = (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked);
+
+                    return `
+                        <div class="forum-post-card responder-card ${isUnclicked ? 'responder-card-gold' : ''}" data-responder-id="${r.id}" data-post-id="${r.post_id}" data-comment-id="${r.comment_id || ''}" data-post-number="${r.post_number}">
+                            <div class="post-card-header">
+                                <span class="post-card-title responder-title">
+                                    ${this.escapeHtml(r.category_name)} 
+                                    <span class="forum-user-clickable" data-username="${this.escapeHtml(r.recipient_username)}" title="View ${this.escapeHtml(r.recipient_username)}'s Profile">@${this.escapeHtml(r.recipient_username)}</span>
+                                    #${r.post_number} by 
+                                    <span class="forum-user-clickable" data-username="${this.escapeHtml(r.responder_username)}" title="View ${this.escapeHtml(r.responder_username)}'s Profile">${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong></span>
+                                </span>
+                                <span class="post-card-meta">
+                                    <span>${dateStr}</span>
+                                </span>
+                            </div>
+                            <div class="post-card-excerpt">${this.escapeHtml(r.content)}</div>
+                        </div>
+                    `;
+                }).join('');
 
                 return `
-                    <div class="forum-post-card responder-card ${isUnclicked ? 'responder-card-gold' : ''}" data-responder-id="${r.id}" data-post-id="${r.post_id}">
-                        <div class="post-card-header">
-                            <span class="post-card-title responder-title">
-                                ${this.escapeHtml(r.category_name)} 
-                                <span class="forum-user-clickable" data-username="${this.escapeHtml(r.recipient_username)}" title="View ${this.escapeHtml(r.recipient_username)}'s Profile">@${this.escapeHtml(r.recipient_username)}</span>
-                                #${r.post_number} by 
-                                <span class="forum-user-clickable" data-username="${this.escapeHtml(r.responder_username)}" title="View ${this.escapeHtml(r.responder_username)}'s Profile">${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong></span>
-                            </span>
-                            <span class="post-card-meta">
-                                <span>${dateStr}</span>
-                            </span>
+                    <div class="forum-responses-date-group">
+                        <div class="forum-responses-date-header">
+                            <span>${this.escapeHtml(group.title)}</span>
                         </div>
-                        <div class="post-card-excerpt">${this.escapeHtml(r.content)}</div>
+                        <div class="forum-responses-date-cards">
+                            ${cardsHtml}
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -872,6 +929,8 @@ const Forum = {
 
                     const responderId = card.getAttribute('data-responder-id');
                     const postId = parseInt(card.getAttribute('data-post-id'), 10);
+                    const commentId = card.getAttribute('data-comment-id') ? parseInt(card.getAttribute('data-comment-id'), 10) : null;
+                    const postNumber = parseInt(card.getAttribute('data-post-number'), 10);
 
                     if (card.classList.contains('responder-card-gold')) {
                         card.classList.remove('responder-card-gold');
@@ -883,17 +942,20 @@ const Forum = {
                     }
 
                     if (postId) {
-                        await this.loadPostDetail(postId);
+                        await this.loadPostDetail(postId, {
+                            highlightCommentId: commentId,
+                            highlightPostNumber: postNumber
+                        });
                     }
                 });
             });
 
         } catch (err) {
-            console.error("[Forum] Failed to load responders feed:", err);
+            console.error("[Forum] Failed to load responses feed:", err);
             postsList.innerHTML = `
                 <div class="forum-placeholder">
                     <div class="placeholder-icon">⚠️</div>
-                    <h3>Failed to load responders</h3>
+                    <h3>Failed to load responses</h3>
                     <p>Please try refreshing the page.</p>
                 </div>
             `;
@@ -1079,15 +1141,43 @@ const Forum = {
         });
     },
 
-    loadPostDetail: async function (postId) {
+    loadPostDetail: async function (postId, options = null) {
         this.currentPostId = postId;
         try {
             const response = await fetch(`/api/forum/post/${postId}`, { cache: 'no-store' });
             const data = await response.json();
+            this.currentPostLookup = data.post_lookup || {};
             this.renderPostDetail(data.post, data.comments);
             this.showPostView();
+
+            if (options && (options.highlightCommentId || options.highlightPostNumber)) {
+                setTimeout(() => {
+                    this.highlightTargetPost(options);
+                }, 150);
+            }
         } catch (err) {
             console.error("[Forum] Failed to load post detail:", err);
+        }
+    },
+
+    highlightTargetPost: function (options) {
+        let targetEl = null;
+
+        if (options.highlightCommentId) {
+            targetEl = document.getElementById(`forum-comment-${options.highlightCommentId}`);
+        }
+        if (!targetEl && options.highlightPostNumber) {
+            targetEl = document.querySelector(`[data-post-number="${options.highlightPostNumber}"]`);
+        }
+
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.classList.remove('forum-item-highlight-gold');
+            void targetEl.offsetWidth; // Force reflow
+            targetEl.classList.add('forum-item-highlight-gold');
+            setTimeout(() => {
+                targetEl.classList.remove('forum-item-highlight-gold');
+            }, 3600);
         }
     },
 
@@ -1104,6 +1194,7 @@ const Forum = {
             const response = await fetch(`/api/forum/post/${this.currentPostId}`, { cache: 'no-store' });
             if (response.ok) {
                 const data = await response.json();
+                this.currentPostLookup = data.post_lookup || {};
                 this.renderPostDetail(data.post, data.comments, true);
             }
         } catch (err) {
@@ -1170,6 +1261,7 @@ const Forum = {
         }
 
         const detailEl = document.getElementById('forum-post-detail');
+        const commentsListEl = document.getElementById('forum-comments-list');
         const dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(post.timestamp, true) : post.timestamp;
 
         const postUrls = post.image_urls || (post.image_url ? [post.image_url] : []);
@@ -1189,19 +1281,21 @@ const Forum = {
         const postNumBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
 
         detailEl.innerHTML = `
-            <div class="post-detail-header">
-                <h1 class="post-detail-title">${postNumBadge}${this.escapeHtml(post.title)}</h1>
-                <div class="post-author-box">
-                    <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
-                    <div class="author-info">
-                        <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
-                        <span class="post-date">${dateStr}</span>
+            <div id="forum-post-root" data-post-number="${post.post_number || 1}">
+                <div class="post-detail-header">
+                    <h1 class="post-detail-title">${postNumBadge}${this.escapeHtml(post.title)}</h1>
+                    <div class="post-author-box">
+                        <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
+                        <div class="author-info">
+                            <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
+                            <span class="post-date">${dateStr}</span>
+                        </div>
+                        <button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                     </div>
-                    <button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
                 </div>
+                <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
+                ${postImagesHtml}
             </div>
-            <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
-            ${postImagesHtml}
         `;
 
         // Static Delete Post button in HTML — show for mods, hide for others
@@ -1220,58 +1314,62 @@ const Forum = {
             });
         }
 
-        const commentsListEl = document.getElementById('forum-comments-list');
-        document.getElementById('forum-comment-count').textContent = `${comments.length} comments`;
+        const countEl = document.getElementById('forum-comment-count');
+        if (countEl) {
+            countEl.textContent = `${comments.length} ${comments.length === 1 ? 'comment' : 'comments'}`;
+        }
 
         const sortedComments = [...comments].sort((a, b) => parseUTCTimestamp(b.timestamp) - parseUTCTimestamp(a.timestamp));
 
-        if (sortedComments.length === 0) {
-            commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
-        } else {
-            commentsListEl.innerHTML = sortedComments.map(c => {
-                const cDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(c.timestamp, true) : c.timestamp;
-                const cUrls = c.image_urls || (c.image_url ? [c.image_url] : []);
-                let cImagesHtml = '';
-                if (cUrls.length > 0) {
-                    cImagesHtml = `
-                        <div class="comment-images-grid grid-count-${cUrls.length}">
-                            ${cUrls.map((url, idx) => `
-                                <div class="comment-image-item">
-                                    <img src="${url}" class="forum-lightbox-trigger" data-url="${url}" data-caption="Reply by ${this.escapeHtml(c.username)} (${idx+1}/${cUrls.length})" alt="Comment attachment ${idx+1}" style="cursor: pointer;">
+        if (commentsListEl) {
+            if (sortedComments.length === 0) {
+                commentsListEl.innerHTML = '<p class="forum-placeholder">No comments yet. Start the discussion!</p>';
+            } else {
+                commentsListEl.innerHTML = sortedComments.map(c => {
+                    const cDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(c.timestamp, true) : c.timestamp;
+                    const cUrls = c.image_urls || (c.image_url ? [c.image_url] : []);
+                    let cImagesHtml = '';
+                    if (cUrls.length > 0) {
+                        cImagesHtml = `
+                            <div class="comment-images-grid grid-count-${cUrls.length}">
+                                ${cUrls.map((url, idx) => `
+                                    <div class="comment-image-item">
+                                        <img src="${url}" class="forum-lightbox-trigger" data-url="${url}" data-caption="Reply by ${this.escapeHtml(c.username)} (${idx+1}/${cUrls.length})" alt="Comment attachment ${idx+1}" style="cursor: pointer;">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    const commentNumBadge = c.post_number ? `<span class="forum-post-number-badge">#${c.post_number}</span>` : '';
+
+                    return `
+                        <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
+                            <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
+                            <div class="comment-body">
+                                <div class="comment-header">
+                                    ${commentNumBadge}
+                                    <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
+                                    <span class="comment-date">${cDate}</span>
+                                    <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
+                                    ${window.currentUserIsMod ? `
+                                        <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 8px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
+                                    ` : ''}
                                 </div>
-                            `).join('')}
+                                <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
+                                ${cImagesHtml}
+                            </div>
                         </div>
                     `;
-                }
+                }).join('');
 
-                const commentNumBadge = c.post_number ? `<span class="forum-post-number-badge">#${c.post_number}</span>` : '';
-
-                return `
-                    <div class="forum-comment">
-                        <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
-                        <div class="comment-body">
-                            <div class="comment-header">
-                                ${commentNumBadge}
-                                <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
-                                <span class="comment-date">${cDate}</span>
-                                <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
-                                ${window.currentUserIsMod ? `
-                                    <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 8px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
-                                ` : ''}
-                            </div>
-                            <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
-                            ${cImagesHtml}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            commentsListEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const commentId = parseInt(btn.getAttribute('data-id'));
-                    this.handleCommentDelete(commentId);
+                commentsListEl.querySelectorAll('.forum-comment-delete-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const commentId = parseInt(btn.getAttribute('data-id'));
+                        this.handleCommentDelete(commentId);
+                    });
                 });
-            });
+            }
         }
 
         // Attach listeners for user-clickable links in post detail & comments
@@ -1645,9 +1743,66 @@ const Forum = {
         const escaped = this.escapeHtml(text);
         // Regex to auto-link URLs (YouTube, HTTP, HTTPS)
         const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/gi;
-        return escaped.replace(urlRegex, function (match) {
+        let processed = escaped.replace(urlRegex, function (match) {
             return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="forum-clickable-link" onclick="event.stopPropagation();">${match}</a>`;
         });
+
+        // Regex for @username #NUM or &username #NUM
+        // Only convert #NUM to a link if that post number exists in this.currentPostLookup
+        const mentionRegex = /([@&][A-Za-z0-9_]+)\s*#(\d+)/g;
+        processed = processed.replace(mentionRegex, (match, tag, numStr) => {
+            const lookupKey = `#${numStr}`;
+            if (this.currentPostLookup && this.currentPostLookup[lookupKey]) {
+                return `${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>`;
+            }
+            return `${tag} #${numStr}`;
+        });
+
+        return processed;
+    },
+
+    navigateToPostNumber: function (postNumber) {
+        const lookupKey = `#${postNumber}`;
+        const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
+
+        if (!target) {
+            alert(`Post #${postNumber} no longer exists or could not be found.`);
+            return;
+        }
+
+        // Check if the target is within the same thread currently loaded
+        if (target.thread_id === this.currentPostId) {
+            this.highlightTargetPost({
+                highlightCommentId: target.type === 'comment' ? target.item_id : null,
+                highlightPostNumber: target.post_number
+            });
+            return;
+        }
+
+        // The target is in a different thread within the same category
+        const threadTitle = target.title || 'Another thread';
+        const modalMsg = `This link leads to an external post in "${threadTitle}" within the same category.\n\nContinue?`;
+
+        const proceed = () => {
+            this.loadPostDetail(target.thread_id, {
+                highlightCommentId: target.type === 'comment' ? target.item_id : null,
+                highlightPostNumber: target.post_number
+            });
+        };
+
+        if (typeof window.showConfirmModal === 'function') {
+            window.showConfirmModal(
+                "External Post",
+                modalMsg,
+                proceed,
+                "Continue",
+                "Cancel"
+            );
+        } else {
+            if (confirm(modalMsg)) {
+                proceed();
+            }
+        }
     },
 
     openMiniProfile: function (username, evt) {
