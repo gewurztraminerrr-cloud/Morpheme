@@ -2991,6 +2991,11 @@ def init_db():
             conn.execute('ALTER TABLE forum_comments ADD COLUMN post_number INTEGER')
         except Exception:
             pass
+        try:
+            conn.execute('ALTER TABLE forum_posts ADD COLUMN is_pinned INTEGER DEFAULT 0')
+        except Exception:
+            pass
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_pinned ON forum_posts(category_id, is_pinned DESC)')
 
         # Backfill post_number for existing posts & comments per category starting at 1 in chronological sequence
         unnum_comments = conn.execute('SELECT COUNT(*) FROM forum_comments WHERE post_number IS NULL OR post_number <= 0').fetchone()[0]
@@ -9289,12 +9294,13 @@ def get_forum_posts(category_id):
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE p.category_id = ?
-            ORDER BY last_activity DESC
+            ORDER BY COALESCE(p.is_pinned, 0) DESC, last_activity DESC
             LIMIT 200
         ''', (category_id,)).fetchall()
         posts = []
         for r in rows:
             d = dict(r)
+            d['is_pinned'] = bool(d.get('is_pinned', 0))
             urls = parse_image_urls(d.get('image_url'))
             d['image_urls'] = urls
             d['image_url'] = urls[0] if urls else None
@@ -9386,6 +9392,7 @@ def get_forum_post_detail(post_id):
         ''', (post_id,)).fetchall()
 
         post_dict = dict(post)
+        post_dict['is_pinned'] = bool(post_dict.get('is_pinned', 0))
         p_urls = parse_image_urls(post_dict.get('image_url'))
         post_dict['image_urls'] = p_urls
         post_dict['image_url'] = p_urls[0] if p_urls else None
@@ -9535,6 +9542,29 @@ def delete_forum_comment(comment_id):
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/api/forum/post/pin/<int:post_id>', methods=['POST'])
+def pin_forum_post(post_id):
+    if not session.get('username') or not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        cur = conn.execute('SELECT is_pinned FROM forum_posts WHERE id = ?', (post_id,))
+        row = cur.fetchone()
+        if not row:
+            return jsonify({'error': 'Post not found'}), 404
+        current_pinned = row[0] or 0
+        new_pinned = 0 if current_pinned == 1 else 1
+        conn.execute('UPDATE forum_posts SET is_pinned = ? WHERE id = ?', (new_pinned, post_id))
+        conn.commit()
+        return jsonify({'success': True, 'is_pinned': bool(new_pinned)})
+    except Exception as e:
+        print(f"Error toggling forum post pin: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
 
 @app.route('/api/forum/posts', methods=['POST'])
 def create_forum_post():

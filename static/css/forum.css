@@ -430,6 +430,44 @@
     padding: 5px 14px !important;
 }
 
+.forum-pin-post-btn-style {
+    display: inline-flex !important;
+    width: auto !important;
+    background: #334155 !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(251, 191, 36, 0.4) !important;
+    font-size: 0.8rem !important;
+    padding: 5px 14px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.forum-pin-post-btn-style:hover {
+    background: #475569 !important;
+    border-color: #fbbf24 !important;
+}
+
+.forum-pinned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: 4px;
+    margin-right: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.forum-post-card.is-pinned {
+    border-left: 3.5px solid #fbbf24 !important;
+    background: rgba(251, 191, 36, 0.04);
+}
+
 .post-author-box {
     display: flex;
     align-items: center;

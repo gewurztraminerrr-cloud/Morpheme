@@ -180,7 +180,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=1791095000">
     <link rel="stylesheet" href="/css/play.css?v=1791102010">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
-    <link rel="stylesheet" href="/css/forum.css?v=1791102100">
+    <link rel="stylesheet" href="/css/forum.css?v=1791102110">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
@@ -3799,7 +3799,8 @@
                     <!-- Single Post View -->
                     <div id="forum-view-post" class="forum-view">
                         <div class="forum-view-scroll-body">
-                            <div id="forum-delete-post-container" style="display:none; margin-bottom: 10px;">
+                            <div id="forum-delete-post-container" style="display:none; margin-bottom: 10px; display: flex; gap: 8px; align-items: center;">
+                                <button id="forum-pin-post-btn" class="forum-action-btn secondary forum-pin-post-btn-style">📌 Pin Thread</button>
                                 <button id="forum-delete-post-btn" class="forum-action-btn remove forum-delete-post-btn-style">Delete Post</button>
                             </div>
                             <div id="forum-post-detail">
@@ -9667,7 +9668,7 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791095000"></script>
-    <script src="/js/forum.js?v=1791102100"></script>
+    <script src="/js/forum.js?v=1791102110"></script>
     <script src="/js/app.js?v=1791102021"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
     <script src="/js/play.js?v=1791100013"></script>

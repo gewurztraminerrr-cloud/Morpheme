@@ -1101,11 +1101,12 @@ const Forum = {
             const postId = post.post_id || post.id;
             const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
             const numBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
+            const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
             
             return `
-                <div class="forum-post-card" data-id="${postId}">
+                <div class="forum-post-card ${post.is_pinned ? 'is-pinned' : ''}" data-id="${postId}">
                     <div class="post-card-header">
-                        <span class="post-card-title">${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
+                        <span class="post-card-title">${pinnedBadge}${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
                             <span>${isComment ? 'Replied' : 'Posted'} by <strong class="forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</strong></span>
                             <span>${dateStr}</span>
@@ -1233,6 +1234,24 @@ const Forum = {
         }
     },
 
+    handlePostPin: async function (postId) {
+        try {
+            const response = await fetch(`/api/forum/post/pin/${postId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Refresh post detail view to reflect new pinned status
+                await this.loadPostDetail(postId);
+            } else {
+                alert(data.error || "Failed to update thread pin status.");
+            }
+        } catch (err) {
+            console.error("[Forum] Post pin error:", err);
+            alert("Failed to update thread pin status.");
+        }
+    },
+
     handleCommentDelete: async function (commentId) {
         if (!confirm("Delete this comment permanently?")) return;
 
@@ -1279,11 +1298,12 @@ const Forum = {
         }
 
         const postNumBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
+        const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
 
         detailEl.innerHTML = `
             <div id="forum-post-root" data-post-number="${post.post_number || 1}">
                 <div class="post-detail-header">
-                    <h1 class="post-detail-title">${postNumBadge}${this.escapeHtml(post.title)}</h1>
+                    <h1 class="post-detail-title">${pinnedBadge}${postNumBadge}${this.escapeHtml(post.title)}</h1>
                     <div class="post-author-box">
                         <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
                         <div class="author-info">
@@ -1298,12 +1318,26 @@ const Forum = {
             </div>
         `;
 
-        // Static Delete Post button in HTML — show for mods, hide for others
-        const deleteContainer = document.getElementById('forum-delete-post-container');
+        // Static Moderator Action buttons in HTML — show for mods, hide for others
+        const modContainer = document.getElementById('forum-delete-post-container');
         const deleteBtn = document.getElementById('forum-delete-post-btn');
-        if (deleteContainer) {
-            deleteContainer.style.display = window.currentUserIsMod ? 'block' : 'none';
+        const pinBtn = document.getElementById('forum-pin-post-btn');
+
+        if (modContainer) {
+            modContainer.style.display = window.currentUserIsMod ? 'flex' : 'none';
         }
+
+        if (pinBtn) {
+            const isPinned = Boolean(post.is_pinned);
+            pinBtn.textContent = isPinned ? '📍 Unpin Thread' : '📌 Pin Thread';
+            const newPinBtn = pinBtn.cloneNode(true);
+            pinBtn.parentNode.replaceChild(newPinBtn, pinBtn);
+            newPinBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handlePostPin(post.id);
+            });
+        }
+
         if (deleteBtn) {
             // Remove old listeners by cloning
             const newBtn = deleteBtn.cloneNode(true);
