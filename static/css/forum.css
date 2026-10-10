@@ -721,7 +721,8 @@
     gap: 12px;
 }
 
-.forum-comments-list {
+.forum-comments-list,
+#forum-comments-list {
     display: flex;
     flex-direction: column;
     gap: 28px;
