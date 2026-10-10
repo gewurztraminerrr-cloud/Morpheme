@@ -3200,6 +3200,18 @@ button.lobby-journey-message.lobby-new-user-btn,
     box-shadow: none !important;
     -webkit-appearance: none !important;
     appearance: none !important;
+    background: linear-gradient(180deg, #2a2a38 0%, #12121e 40%, #0a0a12 100%) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+#lobby-new-user-guide-btn:focus,
+#lobby-new-user-guide-btn:focus-visible,
+#lobby-new-user-guide-btn:active {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 #lobby-new-user-guide-btn::after {
