@@ -4487,6 +4487,13 @@ body.theme-light-gray #close-integrated-replay:hover {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
     border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     object-fit: contain;
+    touch-action: none;
+    cursor: zoom-in;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transform-origin: center center;
+    will-change: transform;
 }
 
 .image-lightbox-close {

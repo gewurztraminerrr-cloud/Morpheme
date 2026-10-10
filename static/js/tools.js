@@ -3606,6 +3606,90 @@ function renderRatingsGrid(configRatings, user = null) {
     }
 }
 
+function setupImageLightboxZoom(modal, img) {
+    if (!modal || !img || img._zoomInit) return;
+    img._zoomInit = true;
+
+    const MIN_SCALE = 1;
+    const MAX_SCALE = 6;
+    let scale = 1, tx = 0, ty = 0;
+    const pointers = new Map();
+    let pinchStartDist = 0, pinchStartScale = 1;
+
+    const apply = () => {
+        img.style.transform = (scale === 1 && tx === 0 && ty === 0) ? '' : `translate(${tx}px, ${ty}px) scale(${scale})`;
+        img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+    };
+    img._resetZoom = () => {
+        scale = 1; tx = 0; ty = 0;
+        pointers.clear();
+        apply();
+    };
+
+    // Zoom keeping the point under (clientX, clientY) fixed
+    const zoomAt = (newScale, clientX, clientY) => {
+        newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
+        const rect = img.getBoundingClientRect();
+        const cx = clientX - (rect.left + rect.width / 2 - tx);
+        const cy = clientY - (rect.top + rect.height / 2 - ty);
+        const ratio = newScale / scale;
+        tx = cx - (cx - tx) * ratio;
+        ty = cy - (cy - ty) * ratio;
+        scale = newScale;
+        if (scale === 1) { tx = 0; ty = 0; }
+        apply();
+    };
+
+    // Mouse wheel / trackpad pinch
+    modal.addEventListener('wheel', (e) => {
+        if (modal.classList.contains('hidden')) return;
+        e.preventDefault();
+        zoomAt(scale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY);
+    }, { passive: false });
+
+    // Double-click / double-tap toggles zoom
+    img.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        if (scale > 1) img._resetZoom();
+        else zoomAt(2.5, e.clientX, e.clientY);
+    });
+
+    // Drag to pan, two-finger pinch to zoom
+    img.addEventListener('pointerdown', (e) => {
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        try { img.setPointerCapture(e.pointerId); } catch (err) {}
+        if (pointers.size === 2) {
+            const [a, b] = [...pointers.values()];
+            pinchStartDist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+            pinchStartScale = scale;
+        }
+        if (scale > 1) img.style.cursor = 'grabbing';
+    });
+    img.addEventListener('pointermove', (e) => {
+        const prev = pointers.get(e.pointerId);
+        if (!prev) return;
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 2) {
+            const [a, b] = [...pointers.values()];
+            const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+            zoomAt(pinchStartScale * dist / pinchStartDist, (a.x + b.x) / 2, (a.y + b.y) / 2);
+        } else if (pointers.size === 1 && scale > 1) {
+            tx += e.clientX - prev.x;
+            ty += e.clientY - prev.y;
+            apply();
+        }
+    });
+    const endPointer = (e) => {
+        pointers.delete(e.pointerId);
+        if (scale > 1) img.style.cursor = 'grab';
+    };
+    img.addEventListener('pointerup', endPointer);
+    img.addEventListener('pointercancel', endPointer);
+
+    apply();
+}
+window.setupImageLightboxZoom = setupImageLightboxZoom;
+
 function setupImageLightbox() {
     const modal = document.getElementById('image-lightbox-modal');
     const closeBtn = document.getElementById('image-lightbox-close');
@@ -3613,9 +3697,11 @@ function setupImageLightbox() {
     const captionEl = document.getElementById('image-lightbox-caption');
 
     if (modal) {
+        setupImageLightboxZoom(modal, img);
         const closeModal = () => {
             modal.classList.add('hidden');
             modal.classList.remove('forced-show');
+            if (img && typeof img._resetZoom === 'function') img._resetZoom();
             if (img) img.src = '';
         };
         if (closeBtn) {
@@ -4116,6 +4202,8 @@ function showImageLightbox(url, caption = "") {
 
     if (!modal || !img) return;
 
+    if (typeof setupImageLightboxZoom === 'function') setupImageLightboxZoom(modal, img);
+    if (typeof img._resetZoom === 'function') img._resetZoom();
     img.src = url;
     if (captionEl) captionEl.innerText = caption;
 
