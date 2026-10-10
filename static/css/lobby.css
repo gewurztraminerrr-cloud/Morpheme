@@ -3191,3 +3191,17 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
         border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
     }
 }
+
+/* "For New Users" guide button: no light grey outline/bevel/glow around it */
+button.lobby-journey-message.lobby-new-user-btn,
+#lobby-new-user-guide-btn {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+#lobby-new-user-guide-btn::after {
+    display: none !important;
+}
