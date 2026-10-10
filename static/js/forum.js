@@ -1442,7 +1442,8 @@ const Forum = {
                 e.stopPropagation();
                 const uname = btn.getAttribute('data-username');
                 const pnum = btn.getAttribute('data-post-number');
-                this.handleReplyToUser(uname, pnum);
+                const isThread = btn.classList.contains('forum-post-reply-btn');
+                this.handleReplyToUser(uname, pnum, isThread);
             });
         });
 
@@ -1461,7 +1462,7 @@ const Forum = {
         document.getElementById('forum-comment-form-container').classList.toggle('hidden', isGuest);
     },
 
-    handleReplyToUser: function (username, postNumber) {
+    handleReplyToUser: function (username, postNumber, isThread) {
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
         if (isGuest) {
             if (window.showAuthModal) {
@@ -1480,7 +1481,7 @@ const Forum = {
         const input = document.getElementById('forum-comment-input');
         if (!input) return;
 
-        const tag = `@${username} #${postNumber}\n`;
+        const tag = `@${username} #${postNumber}${isThread ? ' (Thread)' : ''}\n`;
         const currentVal = input.value;
         if (!currentVal.trim()) {
             input.value = tag;
@@ -1795,13 +1796,16 @@ const Forum = {
 
         // Regex for @username #NUM or &username #NUM
         // Only convert #NUM to a link if that post number exists in this.currentPostLookup
-        const mentionRegex = /([@&][A-Za-z0-9_]+)\s*#(\d+)/g;
-        processed = processed.replace(mentionRegex, (match, tag, numStr) => {
+        const mentionRegex = /([@&][A-Za-z0-9_]+)\s*#(\d+)(\s*\(Thread\))?/g;
+        processed = processed.replace(mentionRegex, (match, tag, numStr, threadSuffix) => {
             const lookupKey = `#${numStr}`;
-            if (this.currentPostLookup && this.currentPostLookup[lookupKey]) {
-                return `${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>`;
+            const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
+            if (target) {
+                // References to the thread's opening message are labelled "(Thread)"
+                const label = target.type === 'post' ? ' (Thread)' : '';
+                return `${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}`;
             }
-            return `${tag} #${numStr}`;
+            return `${tag} #${numStr}${threadSuffix || ''}`;
         });
 
         return processed;
