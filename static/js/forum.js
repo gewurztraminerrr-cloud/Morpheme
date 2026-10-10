@@ -1905,9 +1905,9 @@ const Forum = {
             if (target) {
                 // References to the thread's opening message are labelled "(Thread)"
                 const label = target.type === 'post' ? ' (Thread)' : '';
-                return `${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}`;
+                return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}</span>`;
             }
-            return `${tag} #${numStr}${threadSuffix || ''}`;
+            return `<span class="forum-mention-tag">${tag} #${numStr}${threadSuffix || ''}</span>`;
         });
 
         return processed;
