@@ -1852,3 +1852,18 @@ body.theme-white #page-forums .forum-bottom-bar {
     transform: scale(1.04);
 }
 
+/* Replies in a thread: bordered cards, matching the thread cards in each category */
+.forum-comment {
+    background: rgba(var(--text-primary-rgb), 0.05);
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+}
+[class*="theme-white"] .forum-comment {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: var(--card-border, rgba(0, 0, 0, 0.15));
+}
+[class*="theme-light-"] .forum-comment {
+    background: var(--bg-primary);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04));
+    border-color: var(--card-border, rgba(0, 0, 0, 0.15));
+}
