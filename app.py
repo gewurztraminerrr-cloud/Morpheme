@@ -9207,10 +9207,24 @@ def get_friends_list():
 
 @app.route('/api/forum/categories', methods=['GET'])
 def get_forum_categories():
+    since_param = request.args.get('since')
+    cutoff_dt_str = None
+    if since_param:
+        try:
+            clean_since = since_param.replace('Z', '+00:00')
+            dt = datetime.datetime.fromisoformat(clean_since)
+            cutoff_dt_str = dt.astimezone(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        except Exception:
+            cutoff_dt_str = None
+
+    if not cutoff_dt_str:
+        # Default to 12:00 AM UTC today
+        cutoff_dt_str = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d 00:00:00')
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        # Include last_content_at by checking latest post OR latest comment in each category
+        # Include last_content_at and posts_today_count since 12:00 AM
         query = '''
             SELECT c.*, 
                    (SELECT MAX(ts) FROM (
@@ -9219,13 +9233,24 @@ def get_forum_categories():
                        SELECT MAX(fc.timestamp) as ts FROM forum_comments fc 
                        JOIN forum_posts fp2 ON fc.post_id = fp2.id 
                        WHERE fp2.category_id = c.id
-                   )) as last_content_at
+                   )) as last_content_at,
+                   (
+                       SELECT COUNT(*) FROM (
+                           SELECT id, timestamp FROM forum_posts fp WHERE fp.category_id = c.id
+                           UNION ALL
+                           SELECT fc.id, fc.timestamp FROM forum_comments fc 
+                           JOIN forum_posts fp2 ON fc.post_id = fp2.id 
+                           WHERE fp2.category_id = c.id
+                       )
+                       WHERE timestamp >= ?
+                   ) as posts_today_count
             FROM forum_categories c
         '''
-        rows = conn.execute(query).fetchall()
+        rows = conn.execute(query, (cutoff_dt_str,)).fetchall()
         categories = []
         for row in rows:
             d = dict(row)
+            d['posts_today_count'] = int(d.get('posts_today_count') or 0)
             if d['last_content_at']:
                 # Ensure it has Z for UTC parsing
                 if ' ' in d['last_content_at'] and 'Z' not in d['last_content_at']:

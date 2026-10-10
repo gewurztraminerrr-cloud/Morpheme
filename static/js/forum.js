@@ -693,8 +693,13 @@ const Forum = {
 
     loadCategories: async function () {
         try {
+            // Calculate 12:00 AM (midnight) of today in the user's local/profile time
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const sinceIso = midnight.toISOString();
+
             const promises = [
-                fetch('/api/forum/categories').then(r => r.json())
+                fetch(`/api/forum/categories?since=${encodeURIComponent(sinceIso)}`).then(r => r.json())
             ];
             if (window.currentUser && !window.currentUserIsGuest) {
                 promises.push(
@@ -725,7 +730,9 @@ const Forum = {
             const hasNewResp = this.hasNewResponders && !isRespActive;
             respondersHtml = `
                 <div class="forum-cat-item forum-responders-tab ${isRespActive ? 'active' : ''} ${hasNewResp ? 'has-new' : ''}" data-id="responders">
-                    <span class="forum-cat-name">View Responses</span>
+                    <span class="forum-cat-name">
+                        <span class="forum-cat-name-text">View Responses</span>
+                    </span>
                     <span class="forum-cat-desc">Recent replies to you across the forum</span>
                 </div>
             `;
@@ -733,10 +740,15 @@ const Forum = {
 
         const categoriesHtml = this.categories.map(cat => {
             const isActive = (this.currentCategoryId === cat.id);
+            const count = parseInt(cat.posts_today_count || 0, 10);
+            const countLabel = count === 1 ? '1 post today' : `${count} posts today`;
 
             return `
                 <div class="forum-cat-item ${isActive ? 'active' : ''}" data-id="${cat.id}">
-                    <span class="forum-cat-name">${cat.name}</span>
+                    <span class="forum-cat-name">
+                        <span class="forum-cat-name-text">${cat.name}</span>
+                        <span class="forum-cat-today-badge ${count > 0 ? 'has-posts' : ''}" title="${countLabel} since 12AM">${countLabel}</span>
+                    </span>
                     <span class="forum-cat-desc">${cat.description}</span>
                 </div>
             `;
