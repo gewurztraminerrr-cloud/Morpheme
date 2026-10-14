@@ -5984,10 +5984,6 @@ function renderWordsToWorkOnTable() {
     const prevScrollTop = workOnScroll ? workOnScroll.scrollTop : 0;
 
     const allItems = getWordsToWorkOn();
-    if (totalCountEl) {
-        totalCountEl.textContent = `Total Words: ${allItems.length.toLocaleString()}`;
-    }
-
     const filterVal = dictFilterEl ? dictFilterEl.value : 'all';
 
     // Filter items according to dropdown
@@ -5999,6 +5995,14 @@ function renderWordsToWorkOnTable() {
             filteredItems.push({ item: itemObj, origIdx: origIdx });
         }
     });
+
+    if (totalCountEl) {
+        if (filterVal === 'all') {
+            totalCountEl.textContent = `Total Words: ${allItems.length.toLocaleString()}`;
+        } else {
+            totalCountEl.textContent = `Total Words: ${filteredItems.length.toLocaleString()} / ${allItems.length.toLocaleString()}`;
+        }
+    }
 
     // Update Remove button state based on selected row OR textbox content
     updateWorkOnRemoveBtnState();
