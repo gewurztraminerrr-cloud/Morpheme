@@ -179,7 +179,7 @@
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130080">
     <link rel="stylesheet" href="/css/play.css?v=1791130091">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130145">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
     <style id="mobile-back-nav-theme-override">
@@ -6758,6 +6758,7 @@
                         <button class="faq-nav-link" data-target="faq-slide-neighboring-windows">It's difficult to slide over to neighboring windows in game rooms. Is there an easier way to do this?</button>
                         <button class="faq-nav-link" data-target="faq-date-format">How are the dates formatted throughout the app?</button>
                         <button class="faq-nav-link" data-target="faq-report-cheating">I think somebody is cheating! Where to I go to report it?</button>
+                        <button class="faq-nav-link" data-target="faq-forum-guide">How does the Forum work and what are all of its features?</button>
                     </div>
                 </div>
 
@@ -7750,6 +7751,82 @@
                         <div class="faq-question">I think somebody is cheating! Where to I go to report it?</div>
                         <div class="faq-answer">
                             <p>Morpheme agrees, cheating sucks. In Forum, drop a complaint in Complaints category, with their username and the specific round played in the post. A moderator will analyze their play and determine if it is worth a ban.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" id="faq-forum-guide">
+                        <div class="faq-question">How does the Forum work and what are all of its features?</div>
+                        <div class="faq-answer">
+                            <p>The <strong>Morpheme Forum</strong> is an integrated, real-time discussion hub built for competitive word analysis, community dialogue, strategy guides, bug reports, and feedback. Here is an exhaustive guide explaining every feature, tool, and detail in the Forum:</p>
+
+                            <p><strong>1. Access, Member Permissions &amp; Guest Mode:</strong></p>
+                            <ul>
+                                <li><strong>Guest Access:</strong> Unregistered players can browse all public categories, read threads and comments, view author profiles, and open image attachments in the Lightbox.</li>
+                                <li><strong>Member Actions:</strong> Creating new threads, posting replies, using mentions (<code>@friend</code>), uploading attachments, editing/deleting posts, and saving bookmarks requires a registered member account. Clicking reply or create post while in guest mode will prompt you to log in or register.</li>
+                            </ul>
+
+                            <p><strong>2. Categories, Real-Time Presence &amp; Mobile Navigation:</strong></p>
+                            <ul>
+                                <li><strong>Discussion Channels:</strong> The sidebar divides conversations into focused categories (e.g., <em>General</em>, <em>Word Discussion</em>, <em>Feedback</em>, <em>Bug Reports</em>, <em>Complaints</em>). Each channel displays thread counts, post counts, and glowing activity markers.</li>
+                                <li><strong>Live Presence Indicator (Active Viewers):</strong> A real-time viewer badge displays the exact number of players currently browsing that category. The system uses a 20-second background heartbeat, browser tab visibility listeners, and instant unload beacons (<code>navigator.sendBeacon</code>) on exit to keep counts accurate. Categories also auto-refresh every 30 seconds to reflect new discussions without requiring a manual reload.</li>
+                                <li><strong>Mobile Drawer &amp; Gestures:</strong> On mobile devices, the category sidebar functions as a slide-out drawer. Selecting a category glides smoothly into the thread list. You can swipe right anywhere on the thread list or tap the "Categories" back button to slide back to the channel menu.</li>
+                            </ul>
+
+                            <p><strong>3. Thread Lists, Badges &amp; Instant Search:</strong></p>
+                            <ul>
+                                <li><strong>Thread Card Metadata:</strong> Every thread card displays the author's avatar initial, country flag, thread title, creation date, view counter (👁️), reply counter (💬), and the username and timestamp of the latest reply.</li>
+                                <li><strong>Pinned Threads (📌):</strong> Official announcements and critical community guides remain pinned at the very top of the category.</li>
+                                <li><strong>Locked Threads (🔒):</strong> Concluded or moderated discussions are locked, preserving full readability while preventing new comments.</li>
+                                <li><strong>Unread Activity Glow:</strong> Threads with new replies since your last visit are marked with glowing gold indicators so you never lose track of active conversations.</li>
+                                <li><strong>Instant Search Filter:</strong> The search bar filters threads instantaneously by title or author name as you type, without page reloads.</li>
+                            </ul>
+
+                            <p><strong>4. Creating Threads &amp; Rich Formatting:</strong></p>
+                            <ul>
+                                <li><strong>Composer Limits:</strong> Thread titles accommodate up to 100 characters, and post content supports up to 2,000 characters, both equipped with real-time character counters.</li>
+                                <li><strong>Formatting Toolbar:</strong> Includes one-click buttons for <strong>Bold</strong> (<code>**text**</code>), <em>Italic</em> (<code>*text*</code>), <del>Strikethrough</del> (<code>~~text~~</code>), <code>Inline Code</code> (<code>`text`</code>), Blockquotes (<code>&gt; text</code>), and Spoiler tags (<code>||text||</code>).</li>
+                                <li><strong>Smart Mentions Autocomplete (<code>@</code>):</strong> Typing <code>@</code> opens an interactive autocomplete popup of your Friends and active players. Use the Up/Down arrow keys or touch to navigate, press Enter or Tab to select, and filter candidates dynamically as you type.</li>
+                            </ul>
+
+                            <p><strong>5. Image Attachments &amp; Lightbox:</strong></p>
+                            <ul>
+                                <li><strong>Multiple Uploads:</strong> You can attach multiple images to any post or comment via drag-and-drop or the file picker (PNG, JPEG, WebP, GIF).</li>
+                                <li><strong>Client-Side Smart Compression:</strong> Non-GIF images are automatically resized and compressed client-side (max 1200px, 0.8 quality) prior to transmission. This ensures rapid uploads without mobile bandwidth delays. Animated GIFs are preserved up to 2MB.</li>
+                                <li><strong>Thumbnail Tray:</strong> Uploaded images appear as preview thumbnails with an "×" button to remove files prior to submitting.</li>
+                                <li><strong>Full-Resolution Lightbox:</strong> Clicking any image attachment in a post opens a high-resolution, centered Lightbox overlay with a darkened backdrop and smooth zoom. Clicking anywhere outside the image closes it.</li>
+                            </ul>
+
+                            <p><strong>6. Thread View, Bookmarks &amp; Fast Navigation:</strong></p>
+                            <ul>
+                                <li><strong>Authoritative Post Numbering:</strong> The opening post is designated <strong>#1</strong>, and every subsequent comment receives an exact sequential number (e.g., <strong>#2</strong>, <strong>#3</strong>, <strong>#14</strong>).</li>
+                                <li><strong>Personal Bookmarks (🔖):</strong> Click the bookmark icon in the thread header to bookmark a post. For registered members, bookmarks synchronize with your account; guests retain local session bookmarks.</li>
+                                <li><strong>Jump to Bookmark:</strong> In long threads, click "Jump to Bookmark" to glide straight to your saved location.</li>
+                                <li><strong>Scroll to Bottom:</strong> The fast-navigation "Scroll to Bottom" button takes you directly to the latest reply and response textbox.</li>
+                            </ul>
+
+                            <p><strong>7. Dual Reply Interfaces (Docked Textbox &amp; Popup Window):</strong></p>
+                            <ul>
+                                <li><strong>Stationary Bottom Textbox:</strong> Docked permanently at the bottom of every thread with its own formatting toolbar, character counter (2,000 max), image uploader, and submit button.</li>
+                                <li><strong>Floating Reply Popup Window:</strong> Clicking the "Reply" button on any post or comment opens a sleek, movable popup dialog pre-filled with <code>@Username #NUM</code>. It includes its own formatting toolbar, attachment upload tray, minimize (<code>—</code>), and close (<code>&times;</code>) buttons. Both interfaces coexist seamlessly—you can reply using whichever you prefer!</li>
+                                <li><strong>Mobile Reply Stability:</strong> On mobile devices, clicking "Reply" opens this popup cleanly without disrupting your screen layout or keyboard focus.</li>
+                            </ul>
+
+                            <p><strong>8. Interactive Reply Links, Desktop Hover Previews &amp; Mobile "Take Me There":</strong></p>
+                            <ul>
+                                <li><strong>Interactive Post Links:</strong> Typing <code>#NUM</code> or <code>@Username #NUM</code> automatically transforms the post number into a clickable, styled link (e.g., <code>#14</code>).</li>
+                                <li><strong>Desktop Hover Post Preview:</strong> On laptops and desktops, hovering your cursor over any <code>#NUM</code> reply link displays a floating glassmorphic preview card showing the author's avatar, country flag, username, formatted timestamp, post number badge (<code>#14</code>), content preview, and image attachments. Moving your mouse outside the link or card dismisses the preview cleanly.</li>
+                                <li><strong>Unique User Response Counter:</strong> Located right next to the post number badge in the preview card, an indicator shows how many unique users replied to that specific post (e.g., <code>💬 3 users responded</code> or <code>💬 1 user responded</code>).</li>
+                                <li><strong>Mobile Tap &amp; "Take Me There" Modal:</strong> On mobile phones and touchscreens, tapping <code>#NUM</code> opens a dedicated bottom modal preview card with post details, full content, and responder count, featuring a prominent <strong>"Take Me There →"</strong> button. Tapping it dismisses the modal, smoothly scrolls the viewport straight to the target post, and illuminates it with a glowing gold highlight pulse (<code>forum-item-highlight-gold</code>).</li>
+                                <li><strong>Responder Tags:</strong> Posts that have received replies display interactive tags listing who responded; clicking a responder tag highlights their replies within the thread.</li>
+                                <li><strong>Cross-Thread Linking:</strong> Reply citations referencing other threads within the category automatically navigate to that thread and highlight the corresponding post.</li>
+                            </ul>
+
+                            <p><strong>9. Moderation, Reporting &amp; Fullscreen Invariant:</strong></p>
+                            <ul>
+                                <li><strong>Content Editing &amp; Deletion:</strong> Authors can edit or delete their own posts and comments. Moderators and Admins have elevated controls to delete inappropriate content, lock threads, or pin critical announcements.</li>
+                                <li><strong>Reporting Misconduct:</strong> To report suspected cheating or toxic behavior, post in the dedicated <strong>Complaints</strong> category with the player's username and the specific round played. Moderators will review their game logs and determine if action is warranted.</li>
+                                <li><strong>Mobile Continuous Fullscreen Compliant:</strong> The Forum strictly adheres to Morpheme's permanent fullscreen architecture. Browsing channels, viewing threads, opening modals, typing in textboxes, and switching tabs never exits mobile fullscreen.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
