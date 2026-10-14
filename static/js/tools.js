@@ -365,6 +365,8 @@ window.showTool = function(toolId) {
 };
 
 window.resetToolsTab = function(immediate = false) {
+    window._navigatedFromDefPopup = false;
+    window._defPopupOriginTool = null;
     if (window._toolsSlideTimeout) {
         clearTimeout(window._toolsSlideTimeout);
         window._toolsSlideTimeout = null;
@@ -402,6 +404,58 @@ window.resetToolsTab = function(immediate = false) {
     }, 320);
 };
 
+window.toolsGoBack = function() {
+    if (window._navigatedFromDefPopup && window._defPopupOriginTool) {
+        const originTool = window._defPopupOriginTool;
+        const wasFullList = !!window._wasFullListModalOpen;
+
+        window._navigatedFromDefPopup = false;
+        window._defPopupOriginTool = null;
+        window._wasFullListModalOpen = false;
+
+        if (typeof window.showTool === 'function') {
+            window.showTool(originTool);
+        }
+
+        if (originTool === 'lists') {
+            if (wasFullList && typeof window.openFullListModal === 'function') {
+                window.openFullListModal();
+            } else {
+                const listScrollArea = document.getElementById('main-list-results');
+                if (listScrollArea && typeof window._savedListsScrollTop === 'number') {
+                    listScrollArea.scrollTop = window._savedListsScrollTop;
+                }
+            }
+        } else if (originTool === 'work-on') {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll && typeof window._savedWorkOnScrollTop === 'number') {
+                workOnScroll.scrollTop = window._savedWorkOnScrollTop;
+            }
+        }
+        return;
+    }
+
+    const currentActivePane = document.querySelector('#page-tools .tool-pane.active');
+    if (currentActivePane) {
+        const curId = currentActivePane.id.replace('tool-', '');
+        if (curId === 'work-on') {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+        } else if (curId === 'lists') {
+            const listScrollArea = document.getElementById('main-list-results');
+            if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
+        }
+    }
+    if (typeof window.resetToolsTab === 'function') {
+        window.resetToolsTab(false);
+    } else {
+        const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+        if (layoutEl) {
+            layoutEl.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    }
+};
+
 function setupToolsNavigation() {
     const sidebar = document.querySelector('#page-tools .tools-sidebar');
     if (!sidebar) return;
@@ -409,6 +463,9 @@ function setupToolsNavigation() {
     sidebar.addEventListener('click', (e) => {
         const btn = e.target.closest('.tool-nav-btn');
         if (!btn) return;
+
+        window._navigatedFromDefPopup = false;
+        window._defPopupOriginTool = null;
 
         const toolId = btn.dataset.tool;
         if (toolId) {
@@ -420,18 +477,9 @@ function setupToolsNavigation() {
     const toolsBackBtn = document.getElementById('tools-mobile-back-btn');
     if (toolsBackBtn) {
         toolsBackBtn.addEventListener('click', () => {
-            const currentActivePane = document.querySelector('#page-tools .tool-pane.active');
-            if (currentActivePane) {
-                const curId = currentActivePane.id.replace('tool-', '');
-                if (curId === 'work-on') {
-                    const workOnScroll = document.getElementById('work-on-table-scroll');
-                    if (workOnScroll) window._savedWorkOnScrollTop = workOnScroll.scrollTop;
-                } else if (curId === 'lists') {
-                    const listScrollArea = document.getElementById('main-list-results');
-                    if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
-                }
-            }
-            if (typeof window.resetToolsTab === 'function') {
+            if (typeof window.toolsGoBack === 'function') {
+                window.toolsGoBack();
+            } else if (typeof window.resetToolsTab === 'function') {
                 window.resetToolsTab(false);
             } else {
                 const layoutEl = document.querySelector('#page-tools .tools-split-layout');
@@ -486,7 +534,9 @@ function setupToolsNavigation() {
             
             // If swiped right (diffX > 80) and horizontal movement was dominant
             if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                if (typeof window.resetToolsTab === 'function') {
+                if (typeof window.toolsGoBack === 'function') {
+                    window.toolsGoBack();
+                } else if (typeof window.resetToolsTab === 'function') {
                     window.resetToolsTab(false);
                 } else {
                     const layoutEl = document.querySelector('#page-tools .tools-split-layout');
@@ -8906,6 +8956,8 @@ window.saveCurrentToolsPosition = function (wordClicked = null) {
         window._savedFullListWord = wordClicked;
         window._savedFullListFilterKey = window._lastFullListFilterKey;
         window._wasFullListModalOpen = true;
+    } else {
+        window._wasFullListModalOpen = false;
     }
 
     const currentActivePane = document.querySelector('#page-tools .tool-pane.active') || document.querySelector('.tool-pane.active');
@@ -8952,6 +9004,58 @@ window.hideWordDefinitionPopup = function () {
     }
 };
 
+function getActiveToolsWordList(targetEl) {
+    const fullListModal = document.getElementById('full-list-modal');
+    const isInsideFullList = fullListModal && (!fullListModal.classList.contains('hidden') || (targetEl && targetEl.closest && targetEl.closest('#full-list-modal')));
+    const listsPane = document.getElementById('tool-lists');
+    const isInsideLists = isInsideFullList || (targetEl && targetEl.closest && targetEl.closest('#tool-lists')) || (listsPane && listsPane.classList.contains('active'));
+
+    if (isInsideLists) {
+        const typeSelect = document.getElementById('list-type-filter');
+        const selectedType = (typeof currentWordsType !== 'undefined' && currentWordsType) ? currentWordsType : (typeSelect ? typeSelect.value : 'nwl');
+        const val = String(selectedType || '').toLowerCase();
+        if (val === 'nwl' || val === 'nwl_likelihood' || val === 'likelihood') return 'NWL';
+        if (val === 'csw' || val === 'csw_likelihood') return 'CSW';
+        if (val === 'added' || val === 'added_likelihood' || val === 'added_words') return 'added_words';
+        if (val === 'all_words' || val === 'all_likelihood' || val === 'all') return 'ALL';
+        if (val === 'csw_only' || val === 'csw_only_likelihood') return 'csw_only';
+        if (val === 'uniques') return 'uniqueNWL';
+        if (val === 'new_added') return 'new_added';
+        if (val === 'new_nwl') return 'new_nwl';
+        if (val === 'new_csw') return 'new_csw';
+        if (val === 'all_new') return 'all_new';
+        if (val === 'words_to_work_on') {
+            const woSelect = document.getElementById('work-on-dict-filter');
+            const woVal = woSelect ? woSelect.value : '';
+            if (woVal === 'AW') return 'added_words';
+            if (woVal === 'CSW') return 'CSW';
+            if (woVal === 'NWL') return 'NWL';
+            return 'ALL';
+        }
+        return 'NWL';
+    }
+
+    const workOnPane = document.getElementById('tool-work-on');
+    if ((targetEl && targetEl.closest && targetEl.closest('#tool-work-on')) || (workOnPane && workOnPane.classList.contains('active'))) {
+        const woSelect = document.getElementById('work-on-dict-filter');
+        const woVal = woSelect ? woSelect.value : '';
+        if (woVal === 'AW') return 'added_words';
+        if (woVal === 'CSW') return 'CSW';
+        if (woVal === 'NWL') return 'NWL';
+        return 'ALL';
+    }
+
+    const activePane = document.querySelector('#page-tools .tool-pane.active');
+    if (activePane) {
+        const dictSelect = activePane.querySelector('select[id$="-dict"], select[id$="-dict-select"]');
+        if (dictSelect && dictSelect.value) {
+            return dictSelect.value;
+        }
+    }
+
+    return null;
+}
+
 window.showWordDefinitionPopup = async function (word, event) {
     if (!word) return;
     if (event && typeof event.stopPropagation === 'function') {
@@ -8959,6 +9063,10 @@ window.showWordDefinitionPopup = async function (word, event) {
     }
     const cleanWord = String(typeof word === 'object' ? (word.word || word) : word).trim().toUpperCase();
     if (!cleanWord) return;
+
+    const evt = event || window.event;
+    const target = evt ? (evt.currentTarget || evt.target) : null;
+    window._defPopupSourceList = getActiveToolsWordList(target);
 
     let popover = document.getElementById('tool-word-def-popover');
     if (!popover) {
@@ -8971,6 +9079,7 @@ window.showWordDefinitionPopup = async function (word, event) {
                     <div class="tool-def-word-title">
                         <span id="tool-def-word-text"></span>
                         <span id="tool-def-len-badge" class="tool-def-len-badge"></span>
+                        <span id="tool-def-lists-container" class="tool-def-lists-container" style="display: inline-flex; gap: 4px; align-items: center; vertical-align: middle;"></span>
                     </div>
                     <div id="tool-def-pronunciation" class="tool-def-pronunciation" style="display: none; margin-bottom: 0;"></div>
                 </div>
@@ -9040,6 +9149,19 @@ window.showWordDefinitionPopup = async function (word, event) {
     const addBtn = document.getElementById('tool-def-add-btn');
     const addedBadge = document.getElementById('tool-def-added-badge');
 
+    let listsContainerEl = document.getElementById('tool-def-lists-container');
+    if (!listsContainerEl) {
+        const lenBadge = document.getElementById('tool-def-len-badge');
+        if (lenBadge && lenBadge.parentNode) {
+            listsContainerEl = document.createElement('span');
+            listsContainerEl.id = 'tool-def-lists-container';
+            listsContainerEl.className = 'tool-def-lists-container';
+            listsContainerEl.style.cssText = 'display: inline-flex; gap: 4px; align-items: center; vertical-align: middle;';
+            lenBadge.insertAdjacentElement('afterend', listsContainerEl);
+        }
+    }
+    if (listsContainerEl) listsContainerEl.innerHTML = '';
+
     if (wordTextEl) {
         wordTextEl.textContent = cleanWord;
         if (cleanWord.length > 18) {
@@ -9057,6 +9179,12 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (ccBtn) {
         ccBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
+            const activePane = document.querySelector('#page-tools .tool-pane.active');
+            const curId = activePane ? activePane.id.replace('tool-', '') : 'lists';
+            window._navigatedFromDefPopup = true;
+            window._defPopupOriginTool = curId;
+
             if (typeof window.saveCurrentToolsPosition === 'function') {
                 window.saveCurrentToolsPosition(cleanWord);
             }
@@ -9067,6 +9195,20 @@ window.showWordDefinitionPopup = async function (word, event) {
             if (typeof window.showTool === 'function') {
                 window.showTool('combo');
             }
+
+            // Sync Combo Checker word list to the originating list
+            const targetDict = window._defPopupSourceList;
+            if (targetDict) {
+                const comboDict = document.getElementById('combo-dict');
+                if (comboDict) {
+                    const optExists = Array.from(comboDict.options).some(opt => opt.value === targetDict);
+                    if (optExists) {
+                        comboDict.value = targetDict;
+                        try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
+                    }
+                }
+            }
+
             const comboInput = document.getElementById('combo-input');
             if (comboInput) {
                 comboInput.value = cleanWord;
@@ -9081,6 +9223,12 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (fcBtn) {
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
+            const activePane = document.querySelector('#page-tools .tool-pane.active');
+            const curId = activePane ? activePane.id.replace('tool-', '') : 'lists';
+            window._navigatedFromDefPopup = true;
+            window._defPopupOriginTool = curId;
+
             if (typeof window.saveCurrentToolsPosition === 'function') {
                 window.saveCurrentToolsPosition(cleanWord);
             }
@@ -9145,8 +9293,6 @@ window.showWordDefinitionPopup = async function (word, event) {
     }
 
     // Smart Positioning
-    const evt = event || window.event;
-    const target = evt ? (evt.currentTarget || evt.target) : null;
     popover.style.display = 'flex';
     popover.style.setProperty('z-index', '2147483647', 'important');
 
@@ -9182,6 +9328,19 @@ window.showWordDefinitionPopup = async function (word, event) {
     popover.classList.add('active');
 
     function renderDefData(data) {
+        if (listsContainerEl) {
+            listsContainerEl.innerHTML = '';
+            const lists = Array.isArray(data && data.lists) ? data.lists : [];
+            ['NWL', 'CSW', 'AW'].forEach(dictName => {
+                if (lists.includes(dictName)) {
+                    const badge = document.createElement('span');
+                    badge.className = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
+                    badge.textContent = dictName;
+                    listsContainerEl.appendChild(badge);
+                }
+            });
+        }
+
         if (data && data.pronunciation && pronEl) {
             pronEl.textContent = data.pronunciation;
             pronEl.style.display = 'block';
@@ -9201,8 +9360,11 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (!window._wordDefCache) window._wordDefCache = new Map();
 
     if (window._wordDefCache.has(cleanWord)) {
-        renderDefData(window._wordDefCache.get(cleanWord));
-        return;
+        const cached = window._wordDefCache.get(cleanWord);
+        if (cached && Array.isArray(cached.lists)) {
+            renderDefData(cached);
+            return;
+        }
     }
 
     if (contentEl) contentEl.innerHTML = '<span style="opacity: 0.6;">Loading definition...</span>';

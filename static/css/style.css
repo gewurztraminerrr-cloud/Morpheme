@@ -11346,24 +11346,33 @@ body.theme-white #tool-work-on .work-on-word-link,
 }
 
 body.theme-white #tool-work-on .work-on-badge-nwl,
+body.theme-white .tool-def-lists-container .work-on-badge-nwl,
 [class*="theme-white"] #tool-work-on .work-on-badge-nwl,
-[class*="theme-light-"] #tool-work-on .work-on-badge-nwl {
+[class*="theme-white"] .tool-def-lists-container .work-on-badge-nwl,
+[class*="theme-light-"] #tool-work-on .work-on-badge-nwl,
+[class*="theme-light-"] .tool-def-lists-container .work-on-badge-nwl {
     background: #dbeafe !important;
     color: #1e40af !important;
     border-color: #93c5fd !important;
 }
 
 body.theme-white #tool-work-on .work-on-badge-csw,
+body.theme-white .tool-def-lists-container .work-on-badge-csw,
 [class*="theme-white"] #tool-work-on .work-on-badge-csw,
-[class*="theme-light-"] #tool-work-on .work-on-badge-csw {
+[class*="theme-white"] .tool-def-lists-container .work-on-badge-csw,
+[class*="theme-light-"] #tool-work-on .work-on-badge-csw,
+[class*="theme-light-"] .tool-def-lists-container .work-on-badge-csw {
     background: #d1fae5 !important;
     color: #065f46 !important;
     border-color: #6ee7b7 !important;
 }
 
 body.theme-white #tool-work-on .work-on-badge-aw,
+body.theme-white .tool-def-lists-container .work-on-badge-aw,
 [class*="theme-white"] #tool-work-on .work-on-badge-aw,
-[class*="theme-light-"] #tool-work-on .work-on-badge-aw {
+[class*="theme-white"] .tool-def-lists-container .work-on-badge-aw,
+[class*="theme-light-"] #tool-work-on .work-on-badge-aw,
+[class*="theme-light-"] .tool-def-lists-container .work-on-badge-aw {
     background: #fef3c7 !important;
     color: #92400e !important;
     border-color: #fcd34d !important;

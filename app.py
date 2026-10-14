@@ -8725,12 +8725,26 @@ def tools_validate_word():
             definition = "No definition available for this word."
         image_url = lookup_definition_image(word)
         
+    # Check dictionary membership across NWL, CSW, and Added Words
+    word_validator.ensure_csw_loaded()
+    in_nwl = word in getattr(word_validator, 'nwl_words', set()) or word in getattr(word_validator, 'long_words', set())
+    in_csw = word in getattr(word_validator, 'csw_words', set()) or word in getattr(word_validator, 'long_words', set())
+    in_aw = word in getattr(word_validator, 'added_words', set())
+    lists = []
+    if in_nwl:
+        lists.append('NWL')
+    if in_csw:
+        lists.append('CSW')
+    if in_aw:
+        lists.append('AW')
+
     return jsonify({
         'word': word,
         'is_valid': is_valid,
         'definition': definition,
         'pronunciation': pronunciation,
-        'image_url': image_url
+        'image_url': image_url,
+        'lists': lists
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
