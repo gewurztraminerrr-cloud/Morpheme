@@ -1428,15 +1428,12 @@ const Forum = {
                     <div class="post-author-box">
                         <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
                         <div class="author-info">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                ${postNumBadge}
-                                <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
-                            </div>
+                            <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
                             <span class="post-date">${dateStr}</span>
                         </div>
                         ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>` : ''}
                     </div>
-                    <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${this.escapeHtml(post.title)}</h1>
+                    <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${postNumBadge}${this.escapeHtml(post.title)}</h1>
                 </div>
                 <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
                 ${postImagesHtml}
