@@ -2182,7 +2182,8 @@
 
                 <form id="signup-form" class="auth-form">
                     <input type="text" id="signup-username"
-                        placeholder="Username (max 16 characters)" maxlength="16" required>
+                        placeholder="Username (max 16 characters)" maxlength="16" required autocomplete="off"
+                        oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'').slice(0,16)">
                     <div id="signup-username-error" class="field-error-msg"></div>
                     
                     <input type="email" id="signup-email" placeholder="Email" required>
@@ -9762,7 +9763,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791130010"></script>
     <script src="/js/forum.js?v=1791130060"></script>
-    <script src="/js/app.js?v=1791130080"></script>
+    <script src="/js/app.js?v=1791130100"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
     <script src="/js/play.js?v=1791100013"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>

@@ -3251,12 +3251,29 @@ function setupAuth() {
         });
     }
 
-    // Clear registration field error messages on interaction
+    // Filter registration username to only allow letters, numbers, and underscores
     const signupUsernameInput = document.getElementById('signup-username');
     if (signupUsernameInput) {
+        const filterUsername = () => {
+            const orig = signupUsernameInput.value;
+            const clean = orig.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 16);
+            if (orig !== clean) {
+                const cursor = signupUsernameInput.selectionStart;
+                signupUsernameInput.value = clean;
+                if (cursor != null) {
+                    const diff = orig.length - clean.length;
+                    const newPos = Math.max(0, cursor - diff);
+                    signupUsernameInput.setSelectionRange(newPos, newPos);
+                }
+            }
+        };
         signupUsernameInput.addEventListener('input', () => {
+            filterUsername();
             const el = document.getElementById('signup-username-error');
             if (el) el.textContent = '';
+        });
+        signupUsernameInput.addEventListener('paste', () => {
+            setTimeout(filterUsername, 0);
         });
     }
     const signupEmailInput = document.getElementById('signup-email');
