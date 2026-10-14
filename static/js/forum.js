@@ -1517,11 +1517,14 @@ const Forum = {
             category.name.toLowerCase().includes('suggestion') ||
             category.id === 6
         ));
-        const suggestionsDesc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future.";
-        descEl.textContent = isSuggestions ? suggestionsDesc : (category.header_description || category.description);
-        descEl.classList.toggle('forum-desc-scrolling-box', isSuggestions);
-        if (isSuggestions) {
-            descEl.scrollTop = 0;
+        const descEl = document.getElementById('forum-category-desc');
+        const longSuggestionsDesc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future.";
+        if (descEl) {
+            descEl.textContent = isSuggestions ? longSuggestionsDesc : (category.header_description || category.description);
+            descEl.classList.toggle('forum-desc-scrolling-box', isSuggestions);
+            if (isSuggestions) {
+                descEl.scrollTop = 0;
+            }
         }
 
         // Show/hide New Post button based on guest status

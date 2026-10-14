@@ -9394,10 +9394,11 @@ def get_forum_categories():
             else:
                 # Fallback to a very old date so new users don't see unread indicators for empty cats
                 d['last_content_at'] = '2000-01-01T00:00:00Z'
-            suggestions_desc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future."
+            short_desc = "Share your ideas for improving Morpheme."
+            long_desc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future."
             if str(d.get('name', '')).strip().lower() in ('suggestions', 'suggestions/ideas') or d.get('id') == 6:
-                d['header_description'] = suggestions_desc
-                d['description'] = suggestions_desc
+                d['description'] = short_desc
+                d['header_description'] = long_desc
             else:
                 d['header_description'] = d.get('description', '')
             categories.append(d)
