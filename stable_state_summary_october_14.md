@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-9cbfdd2c1f73752e505cead10aee79b90eb11c6c
+db8a8067c04369c72290365d9b1b80f66f21fd10
 ```
 
 ## Start Over Point Tag
@@ -93,18 +93,42 @@ START_OVER_POINT_OCTOBER_14
 - Enforced a 500-post limit per thread with a notification banner when closed.
 - Added Scroll to Bottom button and icon-based thread refresh button.
 
+### 9. Word Definition Popup: Dictionary Badges & Color Coding
+- Added colored word list badges directly adjacent to the word length tag (e.g., `7L`) in the word definition popup header.
+- Displays `NWL` in blue, `CSW` in green, and `AW` in amber, precisely matching the badge appearance and color coding used in **Words to Work on**.
+- Bound `.tool-def-lists-container` to high-contrast theme overrides for accessibility across dark, light, and white UI themes.
+
+### 10. Combo Checker: Automatic Dictionary Synchronization
+- When a user clicks **"CC"** inside a word definition popup, the Combo Checker dictionary dropdown (`#combo-dict`) automatically switches to the list they were using when that word was encountered:
+  - Lists in Tools:
+    - `"added"` / `"new_added"` / `"added_likelihood"` $\rightarrow$ **`AW`** (`added_words`)
+    - `"csw"` $\rightarrow$ **`CSW`**
+    - `"csw_only"` / `"csw_only_likelihood"` $\rightarrow$ **`CSW Only`**
+    - `"all_words"` / `"all_likelihood"` $\rightarrow$ **`ALL`**
+    - `"nwl"` / `"nwl_likelihood"` / `"uniques"` (NWL Uniques) $\rightarrow$ **`NWL`**
+  - Populates the word into Combo Checker and executes the search simultaneously.
+
+### 11. Tools: Contextual Back Navigation from CC & FC
+- Preserves originating context whenever navigating into Combo Checker (`CC`) or Find Count (`FC`) from a definition popup.
+- Clicking the mobile "Back" button or swiping right seamlessly returns the user directly back to their originating list (reopening `#full-list-modal` if open and restoring exact scroll position).
+- If the user navigated directly to CC or FC from the main Tools sidebar menu, clicking "Back" returns to the Tools menu as normal.
+
+### 12. Gameplay Rules & FAQ: Dictionary Awareness
+- Added explicit strategic guidance in **How to Play** (Card 1) and the **FAQ** (`#faq-dictionaries` & `#faq-strategies`):
+  > *"Understanding which word belongs to which dictionary prevents the waste of time of entering a word that is not in the dictionary being played."*
+
+### 13. Tools: Full List Modal Loading & Caching Optimization
+- Resolved timeout issue where selecting **"All"** (`all_words`) in Lists and opening "View Full List" displayed *"Unable to load words. Please check your connection and try again."*
+- Extended client fetch timeout from **12 seconds** to **120 seconds** (`120000ms`) in `openFullListModal`.
+- Enhanced backend `tools_get_lists()` in `app.py` to cache pre-serialized JSON for `no_limit=true` queries, reducing subsequent responses for the 800k+ word list from 7+ seconds to **~1 ms**.
+- Added helpful loading indicator: *"Loading full word list… This may take a moment for large lists"*.
+
 ---
 
 ## Deployment & Verification Log
-- **Git Commit**: `9cbfdd2c1f73752e505cead10aee79b90eb11c6c`
+- **Git Commit**: `db8a8067c04369c72290365d9b1b80f66f21fd10`
 - **GitHub Tags**: `START_OVER_POINT_OCTOBER_14`, `stable-2026-10-14`
-- **Remote Production Host**: `132.148.72.249`
-- **PM2 Service**: `morpheme` online (status online, memory healthy)
-- **HTTP Health**: `HTTP/2 200 OK` on `https://morpheme.games/`
-- **Cache Busters**:
-  - `forum.css?v=1791130140`
-  - `forum.js?v=1791130130`
-  - `app.js?v=1791130100`
-  - `play.css?v=1791130090`
-  - `settings.js?v=1791130010`
-  - `lobby.css?v=1791130080`
+- **Deploy Command**: `python3 scratch/sync_production.py`
+- **Live URL**: `https://morpheme.games/`
+- **PM2 Service Status**: Online (PID 2526030, port 5001, 0% CPU, HTTP 200 OK)
+- **Cache Buster**: `v=1791130007` on `/js/tools.js`
