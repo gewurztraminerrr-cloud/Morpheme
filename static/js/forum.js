@@ -511,10 +511,56 @@ const Forum = {
             commentInput.addEventListener('input', () => updateCounter(commentInput, commentCounter, 2000));
         }
 
-        // Comment form
+        // Comment form controls
         const submitCommentBtn = document.getElementById('forum-submit-comment');
         if (submitCommentBtn) {
             submitCommentBtn.addEventListener('click', () => this.handleCommentSubmit());
+        }
+
+        const closeCommentBtn = document.getElementById('forum-comment-form-close');
+        if (closeCommentBtn) {
+            closeCommentBtn.addEventListener('click', () => {
+                const formContainer = document.getElementById('forum-comment-form-container');
+                if (formContainer) {
+                    formContainer.classList.add('hidden');
+                    formContainer.classList.remove('minimized');
+                }
+            });
+        }
+
+        const minCommentBtn = document.getElementById('forum-comment-form-minimize');
+        if (minCommentBtn) {
+            minCommentBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const formContainer = document.getElementById('forum-comment-form-container');
+                if (formContainer) {
+                    const isMin = formContainer.classList.toggle('minimized');
+                    minCommentBtn.textContent = isMin ? '▢' : '—';
+                }
+            });
+        }
+
+        const cancelCommentBtn = document.getElementById('forum-cancel-comment');
+        if (cancelCommentBtn) {
+            cancelCommentBtn.addEventListener('click', () => {
+                const formContainer = document.getElementById('forum-comment-form-container');
+                if (formContainer) {
+                    formContainer.classList.add('hidden');
+                    formContainer.classList.remove('minimized');
+                }
+            });
+        }
+
+        const commentFormHeader = document.getElementById('forum-comment-form-header');
+        if (commentFormHeader) {
+            commentFormHeader.addEventListener('click', (e) => {
+                if (e.target.closest('.forum-window-btn')) return;
+                const formContainer = document.getElementById('forum-comment-form-container');
+                if (formContainer && formContainer.classList.contains('minimized')) {
+                    formContainer.classList.remove('minimized');
+                    if (minCommentBtn) minCommentBtn.textContent = '—';
+                }
+            });
         }
 
         // Image wrappers and inputs
@@ -2431,22 +2477,35 @@ const Forum = {
         const formContainer = document.getElementById('forum-comment-form-container');
         if (formContainer) {
             formContainer.classList.remove('hidden');
+            formContainer.classList.remove('minimized');
+            const minBtn = document.getElementById('forum-comment-form-minimize');
+            if (minBtn) minBtn.textContent = '—';
         }
 
         const input = document.getElementById('forum-comment-input');
         if (!input) return;
 
-        const tag = `@${username} #${postNumber}${isThread ? ' (Thread)' : ''}\n`;
+        const tag = `@${username} #${postNumber}\n`;
         const currentVal = input.value;
+        const cleanTag = tag.trim();
+
         if (!currentVal.trim()) {
             input.value = tag;
         } else {
-            input.value = currentVal.trim() + '\n\n' + tag;
+            // Check if input already ends with this exact mention tag to avoid duplicate insertion on rapid clicks
+            if (!currentVal.trim().endsWith(cleanTag)) {
+                input.value = currentVal.trim() + '\n\n' + tag;
+            }
         }
 
-        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
+        input.scrollTop = input.scrollHeight;
         input.dispatchEvent(new Event('input', { bubbles: true }));
     },
 
@@ -2579,6 +2638,12 @@ const Forum = {
                 this.selectedCommentFiles = [];
                 this.renderImagePreviews('comment');
 
+                const formContainer = document.getElementById('forum-comment-form-container');
+                if (formContainer) {
+                    formContainer.classList.add('hidden');
+                    formContainer.classList.remove('minimized');
+                }
+
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
             } else {
@@ -2677,6 +2742,13 @@ const Forum = {
         const activeScroll = document.querySelector('#forum-view-list .forum-view-scroll-body');
         if (activeScroll) activeScroll.scrollTop = 0;
 
+        // Hide comment form when leaving post view
+        const formContainer = document.getElementById('forum-comment-form-container');
+        if (formContainer) {
+            formContainer.classList.add('hidden');
+            formContainer.classList.remove('minimized');
+        }
+
         // Hide static Delete Post button when leaving post view
         const deleteContainer = document.getElementById('forum-delete-post-container');
         if (deleteContainer) deleteContainer.style.display = 'none';
@@ -2715,6 +2787,12 @@ const Forum = {
 
         const activeScroll = document.querySelector('#forum-view-create .forum-view-scroll-body');
         if (activeScroll) activeScroll.scrollTop = 0;
+
+        const formContainer = document.getElementById('forum-comment-form-container');
+        if (formContainer) {
+            formContainer.classList.add('hidden');
+            formContainer.classList.remove('minimized');
+        }
 
         // User Request Update: Allow all posts in every topic to attach an image
         document.getElementById('forum-image-upload-section').classList.remove('hidden');
