@@ -174,9 +174,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1791120001" as="style">
+    <link rel="preload" href="/css/style.css?v=1791130080" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791130070" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791120001">
+    <link rel="stylesheet" href="/css/style.css?v=1791130080">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130070">
     <link rel="stylesheet" href="/css/play.css?v=1791130010">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
@@ -2183,13 +2183,16 @@
                 <form id="signup-form" class="auth-form">
                     <input type="text" id="signup-username"
                         placeholder="Username (max 16 characters)" maxlength="16" required>
+                    <div id="signup-username-error" class="field-error-msg"></div>
                     
                     <input type="email" id="signup-email" placeholder="Email" required>
+                    <div id="signup-email-error" class="field-error-msg"></div>
                     
                     <!-- Country Flag Dropdown -->
                     <select id="signup-flag" required>
                         <option value="" disabled selected>Select where you live...</option>
                     </select>
+                    <div id="signup-flag-error" class="field-error-msg"></div>
                     
                     <!-- Send Email Button -->
                     <button type="button" id="signup-send-email-btn" style="background: linear-gradient(135deg, #ff007f, #b30059); border: none; font-weight: 700; cursor: pointer; border-radius: 8px; height: 42px; margin-bottom: 15px; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; display: block; width: 100%;">Send Email</button>
@@ -9759,7 +9762,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791130010"></script>
     <script src="/js/forum.js?v=1791130060"></script>
-    <script src="/js/app.js?v=1791130020"></script>
+    <script src="/js/app.js?v=1791130080"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
     <script src="/js/play.js?v=1791100013"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>

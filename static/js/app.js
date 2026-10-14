@@ -2514,6 +2514,12 @@ function switchAuthTab(tab) {
     // Clear errors & states
     document.getElementById('signin-error').textContent = '';
     document.getElementById('signup-error').textContent = '';
+    const uErr = document.getElementById('signup-username-error');
+    if (uErr) uErr.textContent = '';
+    const eErr = document.getElementById('signup-email-error');
+    if (eErr) eErr.textContent = '';
+    const fErr = document.getElementById('signup-flag-error');
+    if (fErr) fErr.textContent = '';
     
     const signupStatus = document.getElementById('signup-email-status');
     if (signupStatus) signupStatus.textContent = '';
@@ -2628,15 +2634,31 @@ async function handleSignUp() {
     const captcha_id = window._signupCaptchaId || '';
     const flag = document.getElementById('signup-flag').value;
     const errorEl = document.getElementById('signup-error');
+    const usernameErrorEl = document.getElementById('signup-username-error');
+    const emailErrorEl = document.getElementById('signup-email-error');
+    const flagErrorEl = document.getElementById('signup-flag-error');
+
+    if (usernameErrorEl) usernameErrorEl.textContent = '';
+    if (emailErrorEl) emailErrorEl.textContent = '';
+    if (flagErrorEl) flagErrorEl.textContent = '';
+    errorEl.textContent = '';
 
     // Validation
     if (!username) {
-        errorEl.textContent = 'Please enter a username';
+        if (usernameErrorEl) usernameErrorEl.textContent = 'Please enter a username';
+        else errorEl.textContent = 'Please enter a username';
         return;
     }
 
     if (username.length > 16) {
-        errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+        if (usernameErrorEl) usernameErrorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+        else errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+        return;
+    }
+
+    if (!email) {
+        if (emailErrorEl) emailErrorEl.textContent = 'Please enter an email';
+        else errorEl.textContent = 'Please enter an email';
         return;
     }
 
@@ -2651,7 +2673,8 @@ async function handleSignUp() {
     }
 
     if (!flag) {
-        errorEl.textContent = 'Please select a flag representing where you live';
+        if (flagErrorEl) flagErrorEl.textContent = 'Please select a flag representing where you live';
+        else errorEl.textContent = 'Please select a flag representing where you live';
         return;
     }
 
@@ -3132,29 +3155,39 @@ function setupAuth() {
             const username = document.getElementById('signup-username').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const errorEl = document.getElementById('signup-error');
+            const usernameErrorEl = document.getElementById('signup-username-error');
+            const emailErrorEl = document.getElementById('signup-email-error');
+            const flagErrorEl = document.getElementById('signup-flag-error');
             const statusEl = document.getElementById('signup-email-status');
             const verificationBox = document.getElementById('signup-verification-box');
             const signupSubmitBtn = document.getElementById('signup-submit-btn');
 
+            if (usernameErrorEl) usernameErrorEl.textContent = '';
+            if (emailErrorEl) emailErrorEl.textContent = '';
+            if (flagErrorEl) flagErrorEl.textContent = '';
             errorEl.textContent = '';
             statusEl.textContent = '';
             statusEl.style.color = '#c5c6c7';
 
             if (!username) {
-                errorEl.textContent = 'Please enter a username first';
+                if (usernameErrorEl) usernameErrorEl.textContent = 'Please enter a username first';
+                else errorEl.textContent = 'Please enter a username first';
                 return;
             }
             if (username.length > 16) {
-                errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+                if (usernameErrorEl) usernameErrorEl.textContent = 'A maximum of 16 characters are allowed for a username';
+                else errorEl.textContent = 'A maximum of 16 characters are allowed for a username';
                 return;
             }
             if (!email) {
-                errorEl.textContent = 'Please enter an email first';
+                if (emailErrorEl) emailErrorEl.textContent = 'Please enter an email first';
+                else errorEl.textContent = 'Please enter an email first';
                 return;
             }
             const flag = document.getElementById('signup-flag').value;
             if (!flag) {
-                errorEl.textContent = 'Please select a flag representing where you live first';
+                if (flagErrorEl) flagErrorEl.textContent = 'Please select a flag representing where you live first';
+                else errorEl.textContent = 'Please select a flag representing where you live first';
                 return;
             }
 
@@ -3195,7 +3228,17 @@ function setupAuth() {
                         codeInput.focus();
                     }
                 } else {
-                    errorEl.textContent = data.error || 'Failed to send verification code.';
+                    const errMsg = data.error || 'Failed to send verification code.';
+                    const lower = errMsg.toLowerCase();
+                    if (lower.includes('username') && usernameErrorEl) {
+                        usernameErrorEl.textContent = errMsg;
+                    } else if (lower.includes('email') && emailErrorEl) {
+                        emailErrorEl.textContent = errMsg;
+                    } else if (lower.includes('flag') && flagErrorEl) {
+                        flagErrorEl.textContent = errMsg;
+                    } else {
+                        errorEl.textContent = errMsg;
+                    }
                     sendEmailBtn.textContent = 'Send Email';
                 }
             } catch (err) {
@@ -3205,6 +3248,29 @@ function setupAuth() {
             } finally {
                 sendEmailBtn.disabled = false;
             }
+        });
+    }
+
+    // Clear registration field error messages on interaction
+    const signupUsernameInput = document.getElementById('signup-username');
+    if (signupUsernameInput) {
+        signupUsernameInput.addEventListener('input', () => {
+            const el = document.getElementById('signup-username-error');
+            if (el) el.textContent = '';
+        });
+    }
+    const signupEmailInput = document.getElementById('signup-email');
+    if (signupEmailInput) {
+        signupEmailInput.addEventListener('input', () => {
+            const el = document.getElementById('signup-email-error');
+            if (el) el.textContent = '';
+        });
+    }
+    const signupFlagSelect = document.getElementById('signup-flag');
+    if (signupFlagSelect) {
+        signupFlagSelect.addEventListener('change', () => {
+            const el = document.getElementById('signup-flag-error');
+            if (el) el.textContent = '';
         });
     }
 }
