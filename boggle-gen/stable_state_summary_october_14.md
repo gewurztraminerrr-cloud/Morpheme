@@ -1,8 +1,8 @@
-# Stable State Summary — October 14, 2026 (End of Day)
+# Stable State Summary — October 14, 2026 (End of Day / Start Over Point)
 
-## Latest Feature Commit ID
+## Latest Commit ID
 ```
-db8a8067c04369c72290365d9b1b80f66f21fd10
+ff1fcecbd9c026ca012714a2ff7b0febe4acb7f2
 ```
 
 ## Start Over Point Tag
@@ -24,111 +24,82 @@ START_OVER_POINT_OCTOBER_14
 
 ## Session Features & Enhancements (October 14, 2026)
 
-### 1. Forum: Post Likes & Dislikes Across All Categories
+### 1. Forum: Dual Reply Interfaces (Stationary Textbox & Floating Reply Popup)
+- **Coexisting Stationary & Floating Modes**:
+  - Preserved the fixed, docked comment textbox at the bottom of every thread for continuous desktop and mobile typing.
+  - Clicking the "Reply" button on any post or comment opens a dedicated, movable floating reply popup window pre-filled with `@Username #NUM`.
+  - Both composers feature independent rich-text formatting toolbars, live 2,000-character counters, image attachment pickers, and posting spinners.
+- **Mobile Reply Continuity**:
+  - On mobile devices and touchscreens, tapping "Reply" opens the floating popup cleanly without viewport jumping, ensuring full compliance with the Mobile Fullscreen & Virtual Keyboard Invariant Rules.
+
+### 2. Sequence Tool: Scroll Position & Target Word Restoration on "Back" Navigation
+- **Live Scroll Tracking**:
+  - Added continuous scroll tracking on `#seq-list-results` and `.tools-content` so navigation preserves exact scroll offsets.
+- **Exact Selection Anchor**:
+  - Clicking any word in the Sequence tool records the selected word and scroll offsets before opening the definition popover or navigating to Combo Checker ("CC") / Find Count ("FC").
+- **Multi-Frame Restoration**:
+  - Pressing "Back" (`toolsGoBack` or switching back to Sequence) restores scroll position across multiple rendering frames (`requestAnimationFrame`, 30ms, 100ms, 250ms, 450ms).
+  - Automatically scrolls the selected word into view (`block: 'center'`) and triggers the glowing target animation (`jumpTargetGlow` / `.jump-target-pulse`).
+
+### 3. Forum: Desktop Reply Link Hover Post Previews & Unique Responder Counts
+- **Floating Hover Preview Card**:
+  - Hovering over any post link (e.g., `#14` or `@User #14`) on desktop/laptop displays a floating glassmorphic preview card.
+  - Displays author avatar initial, country flag, username, formatted timestamp, post number badge (`#14`), full post content, and attachment thumbnails.
+  - Smoothly fades and dismisses when the mouse cursor leaves the link or preview card.
+- **Unique User Response Counter**:
+  - Positioned directly adjacent to the post number badge in the preview card, displays how many unique users replied to that specific post (e.g., `💬 3 users responded` or `💬 1 user responded`).
+
+### 4. Forum: Mobile Dedicated Preview Modal & "Take Me There" Navigation
+- **Dedicated Bottom Modal Preview**:
+  - On mobile devices and touchscreens, tapping `#NUM` opens an overlay card (`#forum-reply-mobile-overlay`) displaying the replied-to post, author metadata, full content, and responder count.
+- **"Take Me There" Interactive Navigation**:
+  - Features a prominent **"Take Me There →"** button.
+  - Tapping it dismisses the modal, smoothly scrolls the viewport straight to the target post in the thread, and illuminates it with a glowing gold highlight pulse (`forum-item-highlight-gold`).
+  - Preserves continuous mobile fullscreen without unwanted exit triggers.
+
+### 5. How to Play & FAQ: Comprehensive Forum Features & Tools Guide
+- **Quick Navigation Link**:
+  - Added a direct button: **"How does the Forum work and what are all of its features?"** to the Quick Navigate FAQ grid with smooth scrolling and highlight pulse.
+- **Exhaustive Documentation (`#faq-forum-guide`)**:
+  - **Access & Permissions**: Guest read-only access vs. registered member actions (creating threads, replies, mentions, uploads, bookmarks).
+  - **Categories & Real-Time Presence**: Channel categories, live active viewers counter with 20s heartbeats and exit beacons (`navigator.sendBeacon`), 30s auto-refresh, and mobile drawer touch swipe gestures.
+  - **Thread Lists & Status Badges**: Thread cards with author avatars, flags, view counts (👁️), reply counts (💬), last responder info, Pinned 📌 threads, Locked 🔒 threads, gold unread glow, and instant title/author search.
+  - **Creating Threads & Rich Formatting**: 100-character titles, 2,000-character content with live counters, formatting bar (bold, italic, strikethrough, code, quote, spoiler), and smart `@` autocomplete for Friends and players.
+  - **Image Attachments & Lightbox**: Multi-image uploads, client-side auto-compression (max 1200px, 0.8 quality) for zero-lag transmission, 2MB GIF support, removable preview thumbnails, and full-resolution edge-to-edge Lightbox modals.
+  - **Thread View & Bookmarks**: Authoritative post numbering (`#1`, `#2`, `#14`), personal bookmarking (🔖), "Jump to Bookmark", and "Scroll to Bottom".
+  - **Dual Reply Interfaces**: Docked stationary textbox vs. floating popup window.
+  - **Interactive Reply Links & Previews**: Hover previews on desktop, mobile tap modal with "Take Me There →", responder tags, and cross-thread references.
+  - **Moderation & Fullscreen Invariant**: Post editing/deletion, moderator controls, reporting in Complaints, and 100% adherence to mobile continuous fullscreen.
+
+### 6. Forum: Post Likes & Dislikes Across All Categories
 - **Thumbs Up / Thumbs Down Voting**:
-  - Implemented interactive Likes (👍) and Dislikes (👎) on thread opening posts and reply comments across all forum categories.
-  - Positioned directly to the left of the Bookmark button on post toolbars.
-  - Backed by `forum_reactions` table in SQLite (`morpheme.db`) with `(user_id, post_id, comment_id)` constraints and fast indexed lookups.
-  - Interactive backend endpoint `/api/forum/post/<id>/react` supporting instant toggling and switching reactions.
+  - Interactive Likes (👍) and Dislikes (👎) on thread opening posts and comments across all categories.
+  - Backed by SQLite table `forum_reactions` with `(user_id, post_id, comment_id)` constraints and fast indexed lookups.
+  - Endpoint `/api/forum/post/<id>/react` supporting instant toggling and switching.
 - **Suggestions/Ideas Category Focus**:
-  - Emphasized voting functionality in the Suggestions/Ideas header description to highlight how community favorability informs developer and moderator prioritization.
-  - Maintained the clean short description in the sidebar tab while expanding the detailed voting explanation in the category header banner.
+  - Emphasized voting in the Suggestions/Ideas header banner to reflect community prioritization.
 
-### 2. Forum: Mobile Layout & Centered Action Toolbar
+### 7. Forum: Mobile Layout & Centered Action Toolbar
 - **Full-Width Text Below Avatar & Actions**:
-  - Restructured post detail and reply comment cards so that post text begins full-width beneath the user's thumbnail avatar and action buttons.
-  - Eliminated the wide mobile left-indentation that previously trapped text beside the avatar thumbnail.
+  - Restructured post cards so text begins full-width beneath the user's thumbnail avatar and action buttons, eliminating left-indentation on mobile.
 - **Centered Action Row**:
-  - On mobile devices, structured the action buttons row (`👍`, `👎`, `🔖 Bookmark`, `↩ Reply`) into a full-width container (`width: 100%`) centered horizontally (`justify-content: center`).
-  - Enforced `flex-wrap: nowrap` and `white-space: nowrap` across all action buttons, ensuring the Reply button stays on the same row without awkward wrapping on narrow screens.
+  - Structured action buttons (`👍`, `👎`, `🔖 Bookmark`, `↩ Reply`) into a centered full-width row with `flex-wrap: nowrap` and `white-space: nowrap`.
 
-### 3. Forum: Real-Time Viewers Count & UI Refinements
-- **Real-Time Active Viewers Badge**:
-  - Added a live badge beside the Forum title indicating active users viewing the forums (e.g., `1 viewing`).
-  - Matched the styling, sizing, typography, and pill treatment of the `[number] posts today` badge.
-  - Powered by real-time presence tracking and heartbeat polling.
-- **Header Metadata Placement**:
-  - In Forum thread headers, placed the post number badge and responses count directly to the right of the username.
-  - Tab divider lines added between tabs in Tools, Settings, Mods, and Forum on desktop and laptop displays.
+### 8. Forum: Real-Time Viewers Count & Autocomplete Mentions (`@username`)
+- **Active Viewers Badge**: Live badge beside Forum title indicating active users viewing forums (e.g., `1 viewing`).
+- **Autocomplete Mentions**: Typing `@` opens an interactive popup filtering Friends and active players with arrow/touch selection and virtual keyboard awareness via `window.visualViewport`.
 
-### 4. Forum: Autocomplete Mentions (`@username`) & Virtual Keyboard Integration
-- Supported tagging users with `@username` without requiring a post number.
-- Added an interactive autocomplete popup window that activates upon typing `"@"` in thread titles, details, or reply comments.
-- Dynamically filters the list to friends matching the query starting character, with keyboard selection (`ArrowUp`/`ArrowDown`/`Enter`/`Tab`) and touch-safe scrolling.
-- Automatically hides the popup once no matching friends remain, allowing the user to tag anyone not on their friends list.
-- Comprehensive mobile virtual keyboard integration:
-  - Hoisted the popup element directly to `document.body` to prevent container clipping from `#page-forums` on mobile viewports.
-  - Integrated `window.visualViewport` to dynamically position the popup above the on-screen keyboard when lower screen space is constrained.
-  - Added async session recovery so friends load reliably regardless of mobile connection speed.
+### 9. Profile & Mini-Profile Enhancements
+- **Field Character Limits**: Name restricted to 50 chars, Age to 3 chars, Gender to 25 chars.
+- **Lifetime Forum Post Count**: Added `💬 Forum Posts: [number]` to profiles and mini-profiles backed by `users.total_forum_posts`, with click-to-search integration.
 
-### 5. Profile & Mini-Profile Enhancements
-- **Character Limits**:
-  - **Name**: 50 characters (reduced from 100).
-  - **Age**: 3 characters (reduced from 100).
-  - **Gender**: 25 characters (reduced from 100).
-  - Coordinated across frontend input attributes and backend API validation.
-- **Lifetime Forum Post Count**:
-  - Added `💬 Forum Posts: [number]` to the profile metadata row immediately to the left of **Proof** on desktop/laptop, and directly above Proof on mobile.
-  - Added matching `💬 Forum Posts: [number]` to **Mini-Profiles** directly above Proof.
-  - Backed by permanent lifetime counter `users.total_forum_posts`.
-  - Clicking the Forum Posts chip opens Forum search for that user's posts.
+### 10. Appearance Settings & Game Contrast
+- Added **Black** (`#000000`) and three shades of grey (**Light Grey** `#d4d4d4`, **Medium Grey** `#888888`, **Dark Grey** `#4a4a4a`) for Highlight as you Type / Mouse/Swipe with automatic letter contrast inversion.
 
-### 6. Appearance Settings & Game Contrast
-- Added **Black** (`#000000`) and three shades of grey (**Light Grey** `#d4d4d4`, **Medium Grey** `#888888`, **Dark Grey** `#4a4a4a`) in place of the single White option for:
-  - **Highlight as you Type**
-  - **Highlight as you Mouse/Swipe**
-- Implemented automatic contrast text color inversion: when black or dark grey highlights are active, tile letters invert to white (`#ffffff`) for readability.
-- Capitalized "Type" in "Highlight as you Type".
+### 11. Word Definition Popup: Dictionary Badges & Color Coding
+- Added colored dictionary badges (`NWL` in blue, `CSW` in green, `AW` in amber) adjacent to the word length tag in the definition popup header, consistent with Words to Work on.
 
-### 7. Lobby & Registration Improvements
-- Changed Lobby chatbox placeholder from `"Type a message to the lobby..."` to **`"Type Lobby message..."`**.
-- Fixed clickability on Lobby Journey banner and added 3D popping effect to lobby black messages.
-- Polished lobby button styling: removed outer glow while preserving 3D extrusion and diamond shimmer.
-- Prominent 3D obsidian depth: upgraded the top gradient highlight (`#383a48`), specular inset top edge, and physical extruded side bevels for both the Lobby Journey banner and the New User Guide button.
-- Active rooms border: added black border on desktop for white layouts, thicker 2px borders for default layout.
-- Registration validation: restricted username input to letters, numbers, and underscores, and relocated validation notices immediately below their respective containers.
-
-### 8. Forum Thread Bookmarks & 500-Post Limit Lock
-- Added thread bookmarking to save and jump to the user's last-read reply.
-- Enforced a 500-post limit per thread with a notification banner when closed.
-- Added Scroll to Bottom button and icon-based thread refresh button.
-
-### 9. Word Definition Popup: Dictionary Badges & Color Coding
-- Added colored word list badges directly adjacent to the word length tag (e.g., `7L`) in the word definition popup header.
-- Displays `NWL` in blue, `CSW` in green, and `AW` in amber, precisely matching the badge appearance and color coding used in **Words to Work on**.
-- Bound `.tool-def-lists-container` to high-contrast theme overrides for accessibility across dark, light, and white UI themes.
-
-### 10. Combo Checker: Automatic Dictionary Synchronization
-- When a user clicks **"CC"** inside a word definition popup, the Combo Checker dictionary dropdown (`#combo-dict`) automatically switches to the list they were using when that word was encountered:
-  - Lists in Tools:
-    - `"added"` / `"new_added"` / `"added_likelihood"` $\rightarrow$ **`AW`** (`added_words`)
-    - `"csw"` $\rightarrow$ **`CSW`**
-    - `"csw_only"` / `"csw_only_likelihood"` $\rightarrow$ **`CSW Only`**
-    - `"all_words"` / `"all_likelihood"` $\rightarrow$ **`ALL`**
-    - `"nwl"` / `"nwl_likelihood"` / `"uniques"` (NWL Uniques) $\rightarrow$ **`NWL`**
-  - Populates the word into Combo Checker and executes the search simultaneously.
-
-### 11. Tools: Contextual Back Navigation from CC & FC
-- Preserves originating context whenever navigating into Combo Checker (`CC`) or Find Count (`FC`) from a definition popup.
-- Clicking the mobile "Back" button or swiping right seamlessly returns the user directly back to their originating list (reopening `#full-list-modal` if open and restoring exact scroll position).
-- If the user navigated directly to CC or FC from the main Tools sidebar menu, clicking "Back" returns to the Tools menu as normal.
-
-### 12. Gameplay Rules & FAQ: Dictionary Awareness
-- Added explicit strategic guidance in **How to Play** (Card 1) and the **FAQ** (`#faq-dictionaries` & `#faq-strategies`):
-  > *"Understanding which word belongs to which dictionary prevents the waste of time of entering a word that is not in the dictionary being played."*
-
-### 13. Tools: Full List Modal Loading & Caching Optimization
-- Resolved timeout issue where selecting **"All"** (`all_words`) in Lists and opening "View Full List" displayed *"Unable to load words. Please check your connection and try again."*
-- Extended client fetch timeout from **12 seconds** to **120 seconds** (`120000ms`) in `openFullListModal`.
-- Enhanced backend `tools_get_lists()` in `app.py` to cache pre-serialized JSON for `no_limit=true` queries, reducing subsequent responses for the 800k+ word list from 7+ seconds to **~1 ms**.
-- Added helpful loading indicator: *"Loading full word list… This may take a moment for large lists"*.
-
----
-
-## Deployment & Verification Log
-- **Git Commit**: `db8a8067c04369c72290365d9b1b80f66f21fd10`
-- **GitHub Tags**: `START_OVER_POINT_OCTOBER_14`, `stable-2026-10-14`
-- **Deploy Command**: `python3 scratch/sync_production.py`
-- **Live URL**: `https://morpheme.games/`
-- **PM2 Service Status**: Online (PID 2526030, port 5001, 0% CPU, HTTP 200 OK)
-- **Cache Buster**: `v=1791130007` on `/js/tools.js`
+### 12. Lobby Polish & Registration Validation
+- Changed Lobby chatbox placeholder to **`"Type Lobby message..."`**.
+- Upgraded 3D obsidian depth on Lobby Journey and New User Guide buttons.
+- Restricted username registration to letters, numbers, and underscores with clear inline validation notices.
