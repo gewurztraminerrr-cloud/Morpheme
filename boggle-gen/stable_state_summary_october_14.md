@@ -2,7 +2,7 @@
 
 ## Latest Feature Commit ID
 ```
-3ecf626877045f2a97c7fcad242d54fdc1c7486f
+9cbfdd2c1f73752e505cead10aee79b90eb11c6c
 ```
 
 ## Start Over Point Tag
@@ -84,6 +84,7 @@ START_OVER_POINT_OCTOBER_14
 - Changed Lobby chatbox placeholder from `"Type a message to the lobby..."` to **`"Type Lobby message..."`**.
 - Fixed clickability on Lobby Journey banner and added 3D popping effect to lobby black messages.
 - Polished lobby button styling: removed outer glow while preserving 3D extrusion and diamond shimmer.
+- Prominent 3D obsidian depth: upgraded the top gradient highlight (`#383a48`), specular inset top edge, and physical extruded side bevels for both the Lobby Journey banner and the New User Guide button.
 - Active rooms border: added black border on desktop for white layouts, thicker 2px borders for default layout.
 - Registration validation: restricted username input to letters, numbers, and underscores, and relocated validation notices immediately below their respective containers.
 
@@ -95,7 +96,7 @@ START_OVER_POINT_OCTOBER_14
 ---
 
 ## Deployment & Verification Log
-- **Git Commit**: `3ecf626877045f2a97c7fcad242d54fdc1c7486f`
+- **Git Commit**: `9cbfdd2c1f73752e505cead10aee79b90eb11c6c`
 - **GitHub Tags**: `START_OVER_POINT_OCTOBER_14`, `stable-2026-10-14`
 - **Remote Production Host**: `132.148.72.249`
 - **PM2 Service**: `morpheme` online (status online, memory healthy)
@@ -106,4 +107,4 @@ START_OVER_POINT_OCTOBER_14
   - `app.js?v=1791130100`
   - `play.css?v=1791130090`
   - `settings.js?v=1791130010`
-  - `lobby.css?v=1791130070`
+  - `lobby.css?v=1791130080`
