@@ -103,3 +103,12 @@ START_OVER_POINT_OCTOBER_14
 - Changed Lobby chatbox placeholder to **`"Type Lobby message..."`**.
 - Upgraded 3D obsidian depth on Lobby Journey and New User Guide buttons.
 - Restricted username registration to letters, numbers, and underscores with clear inline validation notices.
+
+### 13. Added Words & Lexicographical Engine: Strict Proper Noun & Fandom Filtering (ANGELITE / ANGELITES Fix)
+- **Proper Noun & Fandom Filtering (`_AW_DISALLOWED_PROPER_NOUN_REGEX`)**:
+  - Implemented strict filtering across `get_word_definitions_for_aw_check`, `lookup_raw_definition_online`, `format_resolved_definition`, and `lookup_web_search_definition` to reject proper nouns, television/film fandom terms (e.g. "fan of the television series..."), eponyms, and media titles.
+  - Resolved the singular/plural discrepancy where capitalized Wiktionary titles cataloged fandoms as "Noun", ensuring only authentic common noun lexicographical definitions are accepted.
+- **Authoritative Definitions for ANGELITE and ANGELITES**:
+  - **ANGELITE**: `A sky-blue or lilac-blue semiprecious variety of anhydrite (anhydrous calcium sulfate), used as an ornamental gemstone.`
+  - **ANGELITES**: `plural of angelite (A sky-blue or lilac-blue semiprecious variety of anhydrite (anhydrous calcium sulfate), used as an ornamental gemstone.)`
+  - Propagated to `wiktionary_definitions` table in SQLite (`morpheme.db`) and all dictionary files (`Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, `wikdefs_aw_duplicate.txt`).
