@@ -9019,7 +9019,7 @@ function getActiveToolsWordList(targetEl) {
         if (val === 'added' || val === 'added_likelihood' || val === 'added_words') return 'added_words';
         if (val === 'all_words' || val === 'all_likelihood' || val === 'all') return 'ALL';
         if (val === 'csw_only' || val === 'csw_only_likelihood') return 'csw_only';
-        if (val === 'uniques') return 'uniqueNWL';
+        if (val === 'uniques') return 'NWL';
         if (val === 'new_added') return 'new_added';
         if (val === 'new_nwl') return 'new_nwl';
         if (val === 'new_csw') return 'new_csw';
