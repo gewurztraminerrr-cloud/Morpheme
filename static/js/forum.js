@@ -2040,3 +2040,55 @@ window.resetForumTab = function (immediate = false) {
     }
 };
 
+window.navigateToForumUserPosts = async function (username) {
+    if (!username) return;
+
+    // 1. Close mini profile modal if open
+    const miniModal = document.getElementById('mini-profile-modal');
+    if (miniModal) {
+        miniModal.classList.add('hidden');
+        miniModal.classList.remove('forced-show');
+        miniModal.style.display = 'none';
+    }
+
+    // 2. Ensure user is logged in
+    if (!window.currentUser) {
+        if (typeof window.navigateToPage === 'function') {
+            window.navigateToPage('login');
+        } else {
+            const btnLogin = document.getElementById('nav-login-btn');
+            if (btnLogin) btnLogin.click();
+        }
+        return;
+    }
+
+    // 3. Switch to Forum page
+    if (typeof window.navigateToPage === 'function') {
+        window.navigateToPage('forums');
+    } else {
+        const btnForums = document.getElementById('btn-forums');
+        if (btnForums) btnForums.click();
+    }
+
+    // 4. Ensure Forum module is initialized
+    if (typeof Forum !== 'undefined') {
+        if (!Forum.initialized && typeof Forum.init === 'function') {
+            await Forum.init();
+        }
+    }
+
+    // 5. Populate search input and trigger user search
+    const executeSearch = () => {
+        const searchInput = document.getElementById('forum-user-search-input');
+        if (searchInput) {
+            searchInput.value = username;
+        }
+        if (typeof Forum !== 'undefined' && typeof Forum.handleUserSearch === 'function') {
+            Forum.handleUserSearch();
+        }
+    };
+
+    setTimeout(executeSearch, 150);
+};
+
+

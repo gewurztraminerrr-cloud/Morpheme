@@ -2935,6 +2935,8 @@ def init_db():
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_category ON forum_posts(category_id)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_comments_post ON forum_comments(post_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_user ON forum_posts(user_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_comments_user ON forum_comments(user_id)')
         
         # Initialize categories if they don't exist
         categories = [
@@ -4438,6 +4440,19 @@ def get_public_profile(username):
 
     user_id = user[0]
 
+    # Forum Posts Count (total threads + comments across the forum)
+    forum_posts_count = 0
+    try:
+        cursor_fp = conn.execute('''
+            SELECT (SELECT COUNT(*) FROM forum_posts WHERE user_id = ?) +
+                   (SELECT COUNT(*) FROM forum_comments WHERE user_id = ?)
+        ''', (user_id, user_id))
+        fp_row = cursor_fp.fetchone()
+        forum_posts_count = fp_row[0] if fp_row and fp_row[0] is not None else 0
+    except Exception as e:
+        print(f"[Profile] Error fetching forum posts count for user {user_id}: {e}")
+        forum_posts_count = 0
+
     # Query allow_pm setting for target user
     pm_setting_row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'allow_pm'", (user_id,)).fetchone()
     allow_pm = True
@@ -4675,6 +4690,7 @@ def get_public_profile(username):
         'last_visited': user[18] or user[17],
         'timezone': user[19] or 'auto',
         'allow_pm': allow_pm,
+        'forum_posts_count': forum_posts_count,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'config_ratings': config_stats,

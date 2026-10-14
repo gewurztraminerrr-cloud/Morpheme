@@ -1164,6 +1164,29 @@ window.showMiniProfile = async function (username) {
             countryNameEl.title = countryNameEl.innerText;
         }
 
+        // Forum Posts
+        const miniForumPostsContainer = document.getElementById('mini-meta-forum-posts');
+        const miniForumPostsVal = document.getElementById('mini-profile-forum-posts');
+        const miniFpCount = (data.forum_posts_count !== undefined && data.forum_posts_count !== null) ? data.forum_posts_count : 0;
+        if (miniForumPostsVal) {
+            miniForumPostsVal.innerText = `Forum Posts: ${Number(miniFpCount).toLocaleString()}`;
+        }
+        if (miniForumPostsContainer) {
+            miniForumPostsContainer.title = `View all forum posts by ${data.username} (${Number(miniFpCount).toLocaleString()})`;
+            miniForumPostsContainer.onclick = (e) => {
+                e.preventDefault();
+                if (typeof window.navigateToForumUserPosts === 'function') {
+                    window.navigateToForumUserPosts(data.username);
+                }
+            };
+            miniForumPostsContainer.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    miniForumPostsContainer.click();
+                }
+            };
+        }
+
         // Proof
         const proofEl = document.getElementById('mini-profile-proof');
         if (proofEl) {
@@ -2167,6 +2190,29 @@ async function renderProfile(user) {
         const isOnline = user.status && user.status.is_online;
         const lvStr = formatLastVisited(user.last_visited, isOnline);
         lastVisitedValEl.innerText = `Last Visited: ${lvStr}`;
+    }
+
+    // Forum Posts Count Rendering
+    const forumPostsContainer = document.getElementById('profile-forum-posts-container');
+    const forumPostsValEl = document.getElementById('profile-forum-posts-val');
+    const fpCount = (user.forum_posts_count !== undefined && user.forum_posts_count !== null) ? user.forum_posts_count : 0;
+    if (forumPostsValEl) {
+        forumPostsValEl.innerText = `Forum Posts: ${Number(fpCount).toLocaleString()}`;
+    }
+    if (forumPostsContainer) {
+        forumPostsContainer.title = `View all forum posts by ${user.username} (${Number(fpCount).toLocaleString()})`;
+        forumPostsContainer.onclick = (e) => {
+            e.preventDefault();
+            if (typeof window.navigateToForumUserPosts === 'function') {
+                window.navigateToForumUserPosts(user.username);
+            }
+        };
+        forumPostsContainer.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                forumPostsContainer.click();
+            }
+        };
     }
 
     // Proof of Legitimacy Rendering
