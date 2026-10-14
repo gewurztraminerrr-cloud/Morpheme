@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791098000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791120001">
     <link rel="stylesheet" href="/css/lobby.css?v=1791098000">
-    <link rel="stylesheet" href="/css/play.css?v=1791102010">
+    <link rel="stylesheet" href="/css/play.css?v=1791130010">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
     <link rel="stylesheet" href="/css/forum.css?v=1791130007">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -1231,11 +1231,13 @@
             background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
             box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
             animation: none !important;
+            color: var(--highlight-mouse-text-color, #000) !important;
         }
         .board-cell.typing-highlight.bonus-highlight {
             background: var(--highlight-typing-color, #ffcc00) !important;
             box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00) !important;
             animation: none !important;
+            color: var(--highlight-typing-text-color, #000) !important;
         }
         .board-cell.review-highlight.bonus-highlight {
             background: #ffd700 !important;
@@ -6025,7 +6027,7 @@
                             <div class="setting-panel">
                                 <label for="setting-highlight-typing" class="setting-header" style="cursor: pointer;">
                                     <div>
-                                        <div class="setting-title">Highlight as you type</div>
+                                        <div class="setting-title">Highlight as you Type</div>
                                         <div class="setting-desc">Highlight letters on the board as you type in the input box.</div>
                                     </div>
                                     <span class="toggle-switch">
@@ -6059,8 +6061,14 @@
                                             title="Mint"></button>
                                         <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
                                             title="Gold"></button>
-                                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
-                                            title="White"></button>
+                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;"
+                                            title="Light Grey"></button>
+                                        <button class="color-dot" data-color="#888888" style="background: #888888;"
+                                            title="Medium Grey"></button>
+                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;"
+                                            title="Dark Grey"></button>
+                                        <button class="color-dot" data-color="#000000" style="background: #000000;"
+                                            title="Black"></button>
                                     </div>
                                 </div>
                             </div>
@@ -6103,8 +6111,14 @@
                                             title="Mint"></button>
                                         <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
                                             title="Gold"></button>
-                                        <button class="color-dot" data-color="#ffffff" style="background: #ffffff;"
-                                            title="White"></button>
+                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;"
+                                            title="Light Grey"></button>
+                                        <button class="color-dot" data-color="#888888" style="background: #888888;"
+                                            title="Medium Grey"></button>
+                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;"
+                                            title="Dark Grey"></button>
+                                        <button class="color-dot" data-color="#000000" style="background: #000000;"
+                                            title="Black"></button>
                                     </div>
                                 </div>
                                 <style>
@@ -6115,6 +6129,11 @@
                                         cursor: pointer;
                                         border: 2px solid rgba(0, 0, 0, 0.3);
                                         transition: transform 0.2s, box-shadow 0.2s;
+                                    }
+
+                                    .color-dot[data-color="#000000"],
+                                    .color-dot[data-color="#4a4a4a"] {
+                                        border-color: rgba(255, 255, 255, 0.35);
                                     }
 
                                     .color-dot:hover {
@@ -7220,7 +7239,7 @@
                         <div class="faq-question">When I mouse over or swipe letters, other letters are being selected on the
                             board.</div>
                         <div class="faq-answer">
-                            <p>In Settings, toggle off <strong>"Highlight as you type"</strong>, and make sure <strong>"Highlight as you Mouse/Swipe"</strong> is toggled on.</p>
+                            <p>In Settings, toggle off <strong>"Highlight as you Type"</strong>, and make sure <strong>"Highlight as you Mouse/Swipe"</strong> is toggled on.</p>
                         </div>
                     </div>
 
@@ -9723,7 +9742,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1791095000"></script>
+    <script src="/js/settings.js?v=1791130010"></script>
     <script src="/js/forum.js?v=1791130008"></script>
     <script src="/js/app.js?v=1791130008"></script>
     <script src="/js/lobby.js?v=1791100007"></script>

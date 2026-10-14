@@ -1302,6 +1302,10 @@ body.is-subanagrams .spinner-set-label:active {
     /* Approx 0.8rem */
     --def-font-size: 15px;
     /* Approx 0.95rem */
+    --highlight-typing-color: #ffcc00;
+    --highlight-typing-text-color: #000000;
+    --highlight-mouse-color: #409cff;
+    --highlight-mouse-text-color: #000000;
 }
 
 .board-cell {
@@ -1535,8 +1539,13 @@ body.is-subanagrams .spinner-set-label:active {
     box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
     transform: scale(1.05);
     z-index: 10;
-    color: #000 !important;
+    color: var(--highlight-mouse-text-color, #000) !important;
     transition: none !important;
+}
+
+.board-cell.selected[data-letter],
+.board-cell.current[data-letter] {
+    color: var(--highlight-mouse-text-color, #000) !important;
 }
 
 /* Intermission tile click filter indicator style */
@@ -1578,12 +1587,14 @@ body.is-subanagrams .spinner-set-label:active {
     background: var(--highlight-mouse-color, rgba(64, 156, 255, 0.5)) !important;
     box-shadow: 0 0 15px var(--highlight-mouse-color, rgba(64, 156, 255, 0.6)) !important;
     animation: none !important;
+    color: var(--highlight-mouse-text-color, #000) !important;
 }
 
 .board-cell.typing-highlight.bonus-highlight {
     background: var(--highlight-typing-color, #ffcc00) !important;
     box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00) !important;
     animation: none !important;
+    color: var(--highlight-typing-text-color, #000) !important;
 }
 
 .board-cell.review-highlight.bonus-highlight {
@@ -4314,12 +4325,16 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 .board-cell.typing-highlight {
     background: var(--highlight-typing-color, #ffcc00) !important;
     /* User selected highlight for typing */
-    color: #000 !important;
+    color: var(--highlight-typing-text-color, #000) !important;
     transform: scale(1.1);
     box-shadow: 0 0 20px var(--highlight-typing-color, #ffcc00);
     z-index: 3;
     transition: all 0.1s ease;
     border-color: #fff !important;
+}
+
+.board-cell.typing-highlight[data-letter] {
+    color: var(--highlight-typing-text-color, #000) !important;
 }
 
 .board-cell.review-highlight {
@@ -6207,7 +6222,7 @@ input[type=range]::-moz-range-track {
 .cube-face .board-cell.typing-highlight,
 .cube-cell.typing-highlight {
     background: var(--highlight-typing-color, #ffcc00) !important;
-    color: #000 !important;
+    color: var(--highlight-typing-text-color, #000) !important;
     filter: brightness(1.05);
     box-shadow: none !important;   /* box-shadows bleed through 3D faces */
     transform: none !important;    /* no scale — keeps face geometry intact */

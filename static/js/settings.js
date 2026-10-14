@@ -42,6 +42,16 @@ function debounce(func, wait) {
     }
     window.getDefaultSettings = getDefaultSettings;
 
+    function getHighlightTextColor(color) {
+        if (!color) return '#000000';
+        const c = color.toLowerCase().trim();
+        if (c === '#000000' || c === '#000' || c === 'black' || c === '#4a4a4a') {
+            return '#ffffff';
+        }
+        return '#000000';
+    }
+    window.getHighlightTextColor = getHighlightTextColor;
+
     // Get strictly namespaced localStorage key per user to guarantee zero cross-user data bleeding
     function getSettingsStorageKey() {
         const username = (window.currentUser || (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('morpheme_username') || '').trim();
@@ -312,10 +322,11 @@ function debounce(func, wait) {
         }
 
 
-        // Highlight typing color
+        // Highlight as you Type color
         if (settings.highlight_typing_color) {
             const color = settings.highlight_typing_color;
             document.documentElement.style.setProperty('--highlight-typing-color', color);
+            document.documentElement.style.setProperty('--highlight-typing-text-color', getHighlightTextColor(color));
 
             const dots = document.querySelectorAll('#highlight-color-picker .color-dot');
             dots.forEach(dot => {
@@ -324,7 +335,7 @@ function debounce(func, wait) {
             });
         }
 
-        // Highlight as you mouse
+        // Highlight as you Mouse/Swipe
         if (settings.highlight_mouse !== undefined) {
             let val = settings.highlight_mouse;
             if (val === 'true' || val === 'True' || val === true) val = true;
@@ -341,6 +352,7 @@ function debounce(func, wait) {
         if (settings.highlight_mouse_color) {
             const color = settings.highlight_mouse_color;
             document.documentElement.style.setProperty('--highlight-mouse-color', color);
+            document.documentElement.style.setProperty('--highlight-mouse-text-color', getHighlightTextColor(color));
 
             const dots = document.querySelectorAll('#highlight-mouse-color-picker .color-dot');
             dots.forEach(dot => {
@@ -793,6 +805,7 @@ function debounce(func, wait) {
         dot.addEventListener('click', () => {
             const color = dot.getAttribute('data-color');
             document.documentElement.style.setProperty('--highlight-typing-color', color);
+            document.documentElement.style.setProperty('--highlight-typing-text-color', getHighlightTextColor(color));
             window.userSettings.highlight_typing_color = color;
             typingColorDots.forEach(d => d.classList.remove('active'));
             dot.classList.add('active');
@@ -814,6 +827,7 @@ function debounce(func, wait) {
         dot.addEventListener('click', () => {
             const color = dot.getAttribute('data-color');
             document.documentElement.style.setProperty('--highlight-mouse-color', color);
+            document.documentElement.style.setProperty('--highlight-mouse-text-color', getHighlightTextColor(color));
             window.userSettings.highlight_mouse_color = color;
             mouseColorDots.forEach(d => d.classList.remove('active'));
             dot.classList.add('active');
