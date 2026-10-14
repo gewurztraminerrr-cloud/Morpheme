@@ -310,6 +310,35 @@ const Forum = {
             }
         }, 30000);
 
+        // Periodic heartbeat every 20s while viewing forums
+        setInterval(() => {
+            this.sendHeartbeat();
+        }, 20000);
+
+        // Immediate heartbeat when returning from background tab
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                const forumPage = document.getElementById('page-forums');
+                if (forumPage && forumPage.classList.contains('active')) {
+                    this.sendHeartbeat();
+                }
+            }
+        });
+
+        // Leave beacon on page unload
+        window.addEventListener('pagehide', () => {
+            const forumPage = document.getElementById('page-forums');
+            if (forumPage && forumPage.classList.contains('active')) {
+                this.onLeave();
+            }
+        });
+        window.addEventListener('beforeunload', () => {
+            const forumPage = document.getElementById('page-forums');
+            if (forumPage && forumPage.classList.contains('active')) {
+                this.onLeave();
+            }
+        });
+
         // Mobile Layout snapping on navigation
         const forumPage = document.getElementById('page-forums');
         if (forumPage) {
@@ -703,15 +732,71 @@ const Forum = {
         });
     },
 
+    getViewerId: function () {
+        if (!this._viewerId) {
+            let vid = null;
+            try { vid = sessionStorage.getItem('morpheme_fvid'); } catch (e) {}
+            if (!vid) {
+                vid = 'fv_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+                try { sessionStorage.setItem('morpheme_fvid', vid); } catch (e) {}
+            }
+            this._viewerId = vid;
+        }
+        return this._viewerId;
+    },
+
+    updateViewersBadge: function (count) {
+        const badge = document.getElementById('forum-viewers-badge');
+        if (!badge) return;
+        const c = (count !== undefined && count !== null) ? parseInt(count, 10) : 1;
+        const displayCount = (isNaN(c) || c < 1) ? 1 : c;
+        badge.textContent = `${displayCount} viewing`;
+        badge.title = `${displayCount} ${displayCount === 1 ? 'person' : 'people'} viewing the Forums`;
+        if (displayCount > 0) {
+            badge.classList.add('has-posts');
+        } else {
+            badge.classList.remove('has-posts');
+        }
+    },
+
+    sendHeartbeat: async function () {
+        const forumPage = document.getElementById('page-forums');
+        if (!forumPage || !forumPage.classList.contains('active') || document.hidden) return;
+        try {
+            const vid = this.getViewerId();
+            const res = await fetch(`/api/forum/heartbeat?viewer_id=${encodeURIComponent(vid)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.viewers_count !== undefined) {
+                    this.updateViewersBadge(data.viewers_count);
+                }
+            }
+        } catch (err) {
+            // Heartbeat failure is non-fatal
+        }
+    },
+
+    onLeave: function () {
+        try {
+            const vid = this.getViewerId();
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(`/api/forum/leave?viewer_id=${encodeURIComponent(vid)}`);
+            } else {
+                fetch(`/api/forum/leave?viewer_id=${encodeURIComponent(vid)}`, { method: 'POST', keepalive: true });
+            }
+        } catch (e) {}
+    },
+
     loadCategories: async function () {
         try {
             // Calculate 12:00 AM (midnight) of today in the user's local/profile time
             const now = new Date();
             const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
             const sinceIso = midnight.toISOString();
+            const vid = this.getViewerId();
 
             const promises = [
-                fetch(`/api/forum/categories?since=${encodeURIComponent(sinceIso)}`).then(r => r.json())
+                fetch(`/api/forum/categories?since=${encodeURIComponent(sinceIso)}&viewer_id=${encodeURIComponent(vid)}`).then(r => r.json())
             ];
             if (window.currentUser && !window.currentUserIsGuest) {
                 promises.push(
@@ -726,6 +811,9 @@ const Forum = {
             const [catData, respData] = await Promise.all(promises);
             this.categories = catData.categories;
             this.hasNewResponders = respData && respData.has_new;
+            if (catData && catData.viewers_count !== undefined) {
+                this.updateViewersBadge(catData.viewers_count);
+            }
             this.renderCategories();
         } catch (err) {
             console.error("[Forum] Failed to load categories:", err);

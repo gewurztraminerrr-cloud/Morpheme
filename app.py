@@ -9259,8 +9259,59 @@ def get_friends_list():
 
 # --- FORUM ENDPOINTS ---
 
+forum_viewers_lock = threading.Lock()
+forum_viewers = {}  # {viewer_key: timestamp}
+
+def get_current_forum_viewer_id():
+    uid = session.get('user_id')
+    if uid:
+        return f"user_{uid}"
+    vid = request.args.get('viewer_id') or request.form.get('viewer_id')
+    if vid:
+        return f"vid_{vid}"
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or 'unknown').split(',')[0].strip()
+    return f"ip_{ip}"
+
+def record_forum_viewer(viewer_id=None):
+    if not viewer_id:
+        viewer_id = get_current_forum_viewer_id()
+    if viewer_id:
+        with forum_viewers_lock:
+            forum_viewers[str(viewer_id)] = time.time()
+
+def remove_forum_viewer(viewer_id=None):
+    if not viewer_id:
+        viewer_id = get_current_forum_viewer_id()
+    if viewer_id:
+        with forum_viewers_lock:
+            forum_viewers.pop(str(viewer_id), None)
+
+def get_forum_viewers_count():
+    with forum_viewers_lock:
+        now = time.time()
+        stale = [k for k, ts in forum_viewers.items() if (now - ts) >= 45]
+        for k in stale:
+            del forum_viewers[k]
+        return len(forum_viewers)
+
+@app.route('/api/forum/heartbeat', methods=['GET', 'POST'])
+def forum_heartbeat():
+    record_forum_viewer()
+    return jsonify({
+        'viewers_count': max(1, get_forum_viewers_count())
+    })
+
+@app.route('/api/forum/leave', methods=['GET', 'POST'])
+def forum_leave():
+    remove_forum_viewer()
+    return jsonify({
+        'ok': True,
+        'viewers_count': get_forum_viewers_count()
+    })
+
 @app.route('/api/forum/categories', methods=['GET'])
 def get_forum_categories():
+    record_forum_viewer()
     since_param = request.args.get('since')
     cutoff_dt_str = None
     if since_param:
@@ -9331,7 +9382,10 @@ def get_forum_categories():
             'bugs/errors': 8,
         }
         categories.sort(key=lambda c: ORDER_MAP.get(str(c.get('name', '')).strip().lower(), 99))
-        return jsonify({'categories': categories})
+        return jsonify({
+            'categories': categories,
+            'viewers_count': max(1, get_forum_viewers_count())
+        })
     finally:
         conn.close()
 

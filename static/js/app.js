@@ -2201,6 +2201,9 @@ window.showPage = showPage;
                 window.resetSettingsTab(true);
             } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
                 window.resetForumTab(true);
+                if (typeof Forum !== 'undefined' && typeof Forum.onLeave === 'function') {
+                    Forum.onLeave();
+                }
             }
         }
     });
@@ -2416,6 +2419,9 @@ window.showPage = showPage;
         }
         if (typeof window.resetForumTab === 'function') {
             window.resetForumTab(true);
+        }
+        if (typeof Forum !== 'undefined' && typeof Forum.sendHeartbeat === 'function') {
+            Forum.sendHeartbeat();
         }
     } else if (pageId === 'page-tournaments') {
         if (typeof window.initTournamentsPage === 'function') {
