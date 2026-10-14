@@ -2013,7 +2013,8 @@ body.theme-white #page-forums .forum-bottom-bar {
 }
 
 .forum-post-number-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     padding: 2px 7px;
     font-size: 0.8rem;
     font-weight: 800;
@@ -2021,9 +2022,10 @@ body.theme-white #page-forums .forum-bottom-bar {
     background: rgba(167, 139, 250, 0.15);
     border: 1px solid rgba(167, 139, 250, 0.35);
     border-radius: 4px;
-    margin-right: 6px;
+    margin: 0 4px;
     vertical-align: middle;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .forum-post-number-badge.has-responses {

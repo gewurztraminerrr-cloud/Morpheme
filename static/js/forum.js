@@ -1745,8 +1745,8 @@ const Forum = {
             return `
                 <div class="forum-responses-popup-item" data-comment-id="${c.id}" data-post-number="${c.post_number || ''}" role="button" tabindex="0">
                     <div class="forum-responses-popup-item-head">
-                        <span class="forum-post-number-badge">#${c.post_number || '?'}</span>
                         <strong>${this.escapeHtml(c.username)}</strong>
+                        <span class="forum-post-number-badge">#${c.post_number || '?'}</span>
                         <span class="forum-responses-popup-date">${cDate}</span>
                     </div>
                     <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet).replace(/((?:@|&amp;)[A-Za-z0-9_]+\s*#\d+(?:\s*\(Thread\))?)/g, '<span class="forum-mention-tag">$1</span>')}</div>
@@ -1939,12 +1939,15 @@ const Forum = {
                     <div class="post-author-box">
                         <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
                         <div class="author-info">
-                            <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
+                                ${postNumBadge}
+                            </div>
                             <span class="post-date">${dateStr}</span>
                         </div>
                         ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>` : ''}
                     </div>
-                    <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${postNumBadge}${this.escapeHtml(post.title)}</h1>
+                    <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${this.escapeHtml(post.title)}</h1>
                 </div>
                 <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
                 ${postImagesHtml}
@@ -2021,8 +2024,8 @@ const Forum = {
                             <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
                             <div class="comment-body">
                                 <div class="comment-header">
-                                    ${commentNumBadge}
                                     <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
+                                    ${commentNumBadge}
                                     <span class="comment-date">${cDate}</span>
                                     <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
                                         <button type="button" class="forum-bookmark-post-btn ${isCommentBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}" title="${isCommentBookmarked ? 'Remove bookmark' : 'Bookmark this reply'}">🔖 <span class="bm-label">${isCommentBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
