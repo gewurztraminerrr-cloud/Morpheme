@@ -1539,6 +1539,10 @@ async function checkSession() {
             window.currentUserRating = data.rating;
             updateAuthUI(data.rating); // Update UI for logged in state
 
+            if (typeof Forum !== 'undefined' && typeof Forum.loadFriends === 'function') {
+                Forum.loadFriends(true);
+            }
+
             // Check and sync timeout state immediately
             if (typeof window.syncLobbyTimeoutState === 'function') {
                 window.syncLobbyTimeoutState().catch(function() {});
@@ -2417,6 +2421,9 @@ window.showPage = showPage;
         if (typeof window.initForum === 'function') {
             window.initForum();
         }
+        if (typeof Forum !== 'undefined' && typeof Forum.loadFriends === 'function') {
+            Forum.loadFriends();
+        }
         if (typeof window.resetForumTab === 'function') {
             window.resetForumTab(true);
         }
@@ -2574,6 +2581,9 @@ async function handleSignIn() {
                 try { localStorage.setItem('morpheme_user_id', String(data.user_id)); } catch (e) {}
             }
             setCurrentUser(data.username, data.email, false, data.is_mod || false, data.rating);
+            if (typeof Forum !== 'undefined' && typeof Forum.loadFriends === 'function') {
+                Forum.loadFriends(true);
+            }
             
             // Critical: Re-check mod status immediately after successful login
             if (typeof checkModStatus === 'function') {

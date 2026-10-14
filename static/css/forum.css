@@ -867,7 +867,7 @@
 /* --- Forum Mention Autocomplete Popup --- */
 .forum-mention-popup {
     position: fixed;
-    z-index: 10050;
+    z-index: 2147483640 !important;
     max-height: 240px;
     background: #182030;
     border: 1px solid rgba(251, 191, 36, 0.4);
@@ -880,10 +880,20 @@
     box-sizing: border-box;
     width: 280px;
     max-width: 90vw;
+    -webkit-overflow-scrolling: touch;
 }
 
 .forum-mention-popup.hidden {
     display: none !important;
+}
+
+.forum-mention-empty {
+    padding: 12px 14px;
+    font-size: 0.82rem;
+    color: var(--text-secondary, #94a3b8);
+    font-style: italic;
+    text-align: center;
+    line-height: 1.4;
 }
 
 .forum-mention-header {
@@ -983,6 +993,11 @@
 [class*="theme-light-"] .forum-mention-header {
     color: #b45309;
     border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[class*="theme-white"] .forum-mention-empty,
+[class*="theme-light-"] .forum-mention-empty {
+    color: #64748b;
 }
 
 [class*="theme-white"] .forum-mention-item,

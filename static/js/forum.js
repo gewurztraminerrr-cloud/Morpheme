@@ -794,25 +794,37 @@ const Forum = {
         } catch (e) {}
     },
 
-    loadFriends: async function () {
-        if (!window.currentUser || window.currentUserIsGuest) {
-            this.friends = [];
-            this.friendsLoaded = true;
-            return [];
+    loadFriends: async function (force = false) {
+        if (this.friendsLoaded && !force && this.friends && this.friends.length > 0) {
+            return this.friends;
         }
-        try {
-            const res = await fetch('/api/friends/list');
-            if (res.ok) {
-                const data = await res.json();
-                this.friends = data.friends || [];
-                this.friendsLoaded = true;
-                return this.friends;
+        if (this._loadingFriendsPromise) {
+            return this._loadingFriendsPromise;
+        }
+
+        this._loadingFriendsPromise = (async () => {
+            try {
+                const res = await fetch('/api/friends/list');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.friends = data.friends || [];
+                    this.friendsLoaded = true;
+                    return this.friends;
+                } else if (res.status === 401) {
+                    // Not authenticated yet
+                    this.friends = [];
+                    this.friendsLoaded = false;
+                    return [];
+                }
+            } catch (e) {
+                console.warn('[Forum] Failed to load friends for autocomplete:', e);
+            } finally {
+                this._loadingFriendsPromise = null;
             }
-        } catch (e) {
-            console.warn('[Forum] Failed to load friends for autocomplete:', e);
-        }
-        this.friendsLoaded = true;
-        return [];
+            return this.friends || [];
+        })();
+
+        return this._loadingFriendsPromise;
     },
 
     initMentionAutocomplete: function () {
@@ -822,30 +834,49 @@ const Forum = {
             if (!el) return;
 
             el.addEventListener('input', () => this.handleMentionInput(el));
+            el.addEventListener('keyup', (e) => {
+                if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter' && e.key !== 'Escape') {
+                    this.handleMentionInput(el);
+                }
+            });
             el.addEventListener('keydown', (e) => this.handleMentionKeydown(e, el));
             el.addEventListener('click', () => this.handleMentionInput(el));
+            el.addEventListener('touchend', () => {
+                setTimeout(() => this.handleMentionInput(el), 60);
+            });
         });
 
-        // Close mention popup when clicking outside
-        document.addEventListener('click', (e) => {
+        // Track cursor/selection changes on mobile virtual keyboards
+        document.addEventListener('selectionchange', () => {
+            const active = document.activeElement;
+            if (active && targetIds.includes(active.id)) {
+                this.handleMentionInput(active);
+            }
+        });
+
+        // Close mention popup when clicking or tapping outside
+        const handleOutside = (e) => {
             const popup = document.getElementById('forum-mention-popup');
             if (!popup || popup.classList.contains('hidden')) return;
-            if (e.target.closest('#forum-mention-popup')) return;
-            if (targetIds.some(id => e.target.closest(`#${id}`))) return;
+            if (e.target && e.target.closest && e.target.closest('#forum-mention-popup')) return;
+            if (targetIds.some(id => e.target && e.target.closest && e.target.closest(`#${id}`))) return;
             this.hideMentionPopup();
-        });
+        };
+        document.addEventListener('click', handleOutside);
+        document.addEventListener('touchstart', handleOutside, { passive: true });
 
-        // Reposition on window resize or scroll
-        window.addEventListener('resize', () => {
+        // Reposition on window resize, scroll, or visualViewport change
+        const reposition = () => {
             if (this.activeMentionState && this.activeMentionState.inputEl) {
                 this.positionMentionPopup(this.activeMentionState.inputEl);
             }
-        });
-        window.addEventListener('scroll', () => {
-            if (this.activeMentionState && this.activeMentionState.inputEl) {
-                this.positionMentionPopup(this.activeMentionState.inputEl);
-            }
-        }, true);
+        };
+        window.addEventListener('resize', reposition);
+        window.addEventListener('scroll', reposition, true);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', reposition);
+            window.visualViewport.addEventListener('scroll', reposition);
+        }
     },
 
     handleMentionInput: function (inputEl) {
@@ -859,7 +890,8 @@ const Forum = {
 
         const textBefore = val.slice(0, cursor);
         // Match @ followed by username characters immediately before the cursor
-        const match = textBefore.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+        // Supports typing @ at start of input, after whitespace, or punctuation
+        const match = textBefore.match(/(?:^|[\s(<\'"([{])@([a-zA-Z0-9_]*)$/);
         if (!match) {
             this.hideMentionPopup();
             return;
@@ -870,17 +902,16 @@ const Forum = {
         const atRelativePos = matchFull.indexOf('@');
         const atIndex = (textBefore.length - matchFull.length) + atRelativePos;
 
-        if (!this.friendsLoaded) {
-            this.loadFriends().then(() => {
-                this.handleMentionInput(inputEl);
+        // If friends not loaded yet, or empty and we haven't checked recently, fetch from server
+        if (!this.friendsLoaded || !this.friends || this.friends.length === 0) {
+            this.loadFriends(true).then((friends) => {
+                if (document.activeElement === inputEl) {
+                    this.handleMentionInput(inputEl);
+                }
             });
-            this.hideMentionPopup();
-            return;
-        }
-
-        if (!this.friends || this.friends.length === 0) {
-            this.hideMentionPopup();
-            return;
+            if (!this.friends || this.friends.length === 0) {
+                return;
+            }
         }
 
         const queryLower = query.toLowerCase();
@@ -890,12 +921,42 @@ const Forum = {
         });
 
         if (matches.length === 0) {
-            // No matching friends left: hide popup so user is messaging someone not on their friends list
-            this.hideMentionPopup();
+            // When query is non-empty and no friends match, hide popup so user can tag someone not on their friend list
+            if (query.length > 0) {
+                this.hideMentionPopup();
+                return;
+            }
+            // If user just typed "@" and has 0 friends on their list, show friendly empty notice
+            this.renderMentionEmpty(inputEl, atIndex, query);
             return;
         }
 
         this.renderMentionPopup(matches, inputEl, atIndex, query);
+    },
+
+    renderMentionEmpty: function (inputEl, atIndex, query) {
+        const popup = document.getElementById('forum-mention-popup');
+        if (!popup) return;
+
+        this.activeMentionState = {
+            inputEl: inputEl,
+            atIndex: atIndex,
+            query: query,
+            matches: [],
+            selectedIndex: -1
+        };
+
+        popup.innerHTML = `
+            <div class="forum-mention-header">
+                <span>Friends (0)</span>
+            </div>
+            <div class="forum-mention-empty">
+                No friends found on your list.<br>Type username to mention anyone.
+            </div>
+        `;
+
+        this.positionMentionPopup(inputEl);
+        popup.classList.remove('hidden');
     },
 
     handleMentionKeydown: function (e, inputEl) {
@@ -913,11 +974,13 @@ const Forum = {
             e.stopPropagation();
             this.updateMentionSelection(this.activeMentionState.selectedIndex - 1);
         } else if (e.key === 'Enter' || e.key === 'Tab') {
-            e.preventDefault();
-            e.stopPropagation();
-            const selected = this.activeMentionState.matches[this.activeMentionState.selectedIndex];
-            if (selected) {
-                this.selectMentionFriend(selected);
+            if (this.activeMentionState.matches && this.activeMentionState.matches.length > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+                const selected = this.activeMentionState.matches[this.activeMentionState.selectedIndex];
+                if (selected) {
+                    this.selectMentionFriend(selected);
+                }
             }
         } else if (e.key === 'Escape') {
             e.preventDefault();
@@ -969,15 +1032,39 @@ const Forum = {
             </div>
         `;
 
+        let touchStartY = 0;
+        let isTouchScroll = false;
+
         const itemEls = popup.querySelectorAll('.forum-mention-item');
         itemEls.forEach((el, idx) => {
-            const onSelect = (e) => {
+            el.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches[0]) {
+                    touchStartY = e.touches[0].clientY;
+                    isTouchScroll = false;
+                }
+            }, { passive: true });
+
+            el.addEventListener('touchmove', (e) => {
+                if (e.touches && e.touches[0]) {
+                    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+                        isTouchScroll = true;
+                    }
+                }
+            }, { passive: true });
+
+            el.addEventListener('touchend', (e) => {
+                if (isTouchScroll) return;
                 e.preventDefault();
                 e.stopPropagation();
                 this.selectMentionFriend(matches[idx]);
-            };
-            el.addEventListener('mousedown', onSelect);
-            el.addEventListener('touchstart', onSelect, { passive: false });
+            });
+
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectMentionFriend(matches[idx]);
+            });
+
             el.addEventListener('mouseenter', () => {
                 this.activeMentionState.selectedIndex = idx;
                 itemEls.forEach((it, i) => it.classList.toggle('active', i === idx));
@@ -989,9 +1076,8 @@ const Forum = {
     },
 
     updateMentionSelection: function (newIndex) {
-        if (!this.activeMentionState) return;
+        if (!this.activeMentionState || !this.activeMentionState.matches || this.activeMentionState.matches.length === 0) return;
         const count = this.activeMentionState.matches.length;
-        if (count === 0) return;
         const validIndex = ((newIndex % count) + count) % count;
         this.activeMentionState.selectedIndex = validIndex;
 
@@ -1036,25 +1122,60 @@ const Forum = {
         const popup = document.getElementById('forum-mention-popup');
         if (!popup || !inputEl) return;
 
+        // Guarantee popup is a direct child of document.body so it isn't clipped by any ancestor overflow
+        if (popup.parentElement !== document.body) {
+            document.body.appendChild(popup);
+        }
+
         const rect = inputEl.getBoundingClientRect();
-        const popupHeight = 220;
+        const vv = window.visualViewport;
+        const vHeight = vv ? vv.height : window.innerHeight;
+        const vWidth = vv ? vv.width : window.innerWidth;
+        const vTop = vv ? vv.offsetTop : 0;
+        const vLeft = vv ? vv.offsetLeft : 0;
+
         const margin = 6;
+        const desiredHeight = 220;
 
-        let top = rect.bottom + margin;
-        if (top + popupHeight > window.innerHeight && rect.top > popupHeight + margin) {
-            top = rect.top - popupHeight - margin;
+        // Calculate visible space inside visual viewport (above and below virtual keyboard)
+        const spaceBelow = (vTop + vHeight) - rect.bottom - margin;
+        const spaceAbove = rect.top - vTop - margin;
+
+        let top;
+        let maxHeight;
+
+        if (spaceBelow >= 150) {
+            top = rect.bottom + margin;
+            maxHeight = Math.min(desiredHeight, spaceBelow);
+        } else if (spaceAbove >= 110) {
+            maxHeight = Math.min(desiredHeight, spaceAbove);
+            top = rect.top - margin - maxHeight;
+        } else {
+            // Very tight screen height
+            if (spaceBelow >= spaceAbove) {
+                top = rect.bottom + margin;
+                maxHeight = Math.max(90, spaceBelow);
+            } else {
+                maxHeight = Math.max(90, spaceAbove);
+                top = Math.max(vTop + 6, rect.top - margin - maxHeight);
+            }
         }
 
-        const popupWidth = Math.min(280, window.innerWidth - 20);
+        const popupWidth = Math.min(280, vWidth - 20);
         let left = rect.left;
-        if (left + popupWidth > window.innerWidth - 10) {
-            left = window.innerWidth - popupWidth - 10;
+        if (left + popupWidth > vLeft + vWidth - 10) {
+            left = vLeft + vWidth - popupWidth - 10;
         }
-        if (left < 10) left = 10;
+        if (left < vLeft + 10) {
+            left = vLeft + 10;
+        }
 
-        popup.style.top = `${Math.max(10, top)}px`;
-        popup.style.left = `${left}px`;
+        popup.style.position = 'fixed';
+        popup.style.top = `${Math.round(top)}px`;
+        popup.style.left = `${Math.round(left)}px`;
         popup.style.width = `${popupWidth}px`;
+        popup.style.maxHeight = `${Math.round(maxHeight)}px`;
+        popup.style.zIndex = '2147483640';
     },
 
     hideMentionPopup: function () {
@@ -2667,6 +2788,9 @@ const Forum = {
 
 window.initForum = function () {
     Forum.init();
+    if (typeof Forum.loadFriends === 'function') {
+        Forum.loadFriends();
+    }
 };
 
 window.resetForumTab = function (immediate = false) {
