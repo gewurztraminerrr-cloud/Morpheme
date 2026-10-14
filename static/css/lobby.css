@@ -3184,15 +3184,53 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
         -webkit-backdrop-filter: none !important;
     }
 
-    body #mobile-panel-rooms,
-    body .active-rooms-panel {
-        border: 1px solid var(--input-border) !important;
+    /* White layouts on laptops and desktops: black border surrounding the ACTIVE ROOMS content */
+    [class*="theme-white"] body #mobile-panel-rooms,
+    [class*="theme-white"] body .active-rooms-panel,
+    [class*="theme-white"] #mobile-panel-rooms,
+    [class*="theme-white"] .active-rooms-panel,
+    body.theme-white #mobile-panel-rooms,
+    body.theme-white .active-rooms-panel,
+    body[class*="theme-white"] #mobile-panel-rooms,
+    body[class*="theme-white"] .active-rooms-panel,
+    [class*="theme-light-"] body #mobile-panel-rooms,
+    [class*="theme-light-"] body .active-rooms-panel,
+    [class*="theme-light-"] #mobile-panel-rooms,
+    [class*="theme-light-"] .active-rooms-panel,
+    body[class*="theme-light-"] #mobile-panel-rooms,
+    body[class*="theme-light-"] .active-rooms-panel {
+        border: 2px solid #000000 !important;
     }
 
-    [class*="theme-light-"] #mobile-panel-rooms,
-    [class*="theme-light-"] .active-rooms-panel {
-        border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
+    /* Default color layout: thicker border surrounding ACTIVE ROOMS matching the contents under ACTIVE ROOMS */
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel {
+        border: 2px solid rgba(var(--text-primary-rgb), 0.55) !important;
     }
+}
+
+/* Default color layout: thicker 2px border around each element under ACTIVE ROOMS like the contents under ACTIVE ROOMS have */
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .rating-input,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .rating-input,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #rating-filter,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #rating-filter,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .room-tab-btn:not(.active),
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .room-tab-btn:not(.active),
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #my-rating-btn,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #my-rating-btn,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #lobby-refresh-btn,
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #lobby-refresh-btn {
+    border: 2px solid rgba(var(--text-primary-rgb), 0.55) !important;
+}
+
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .room-tab-btn.active[data-filter="open"],
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .room-tab-btn.active[data-filter="open"] {
+    border: 2px solid #34d399 !important;
+}
+
+body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .room-tab-btn.active[data-filter="closed"],
+body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .room-tab-btn.active[data-filter="closed"] {
+    border: 2px solid #f87171 !important;
 }
 
 /* "For New Users" guide button: 3D popping button (Zero Outer Glow) */
