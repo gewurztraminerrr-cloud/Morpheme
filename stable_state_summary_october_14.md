@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-ff1fcecbd9c026ca012714a2ff7b0febe4acb7f2
+1c864ad8b2cc6a13d1a9434780d9794652d52321
 ```
 
 ## Start Over Point Tag
@@ -112,3 +112,6 @@ START_OVER_POINT_OCTOBER_14
   - **ANGELITE**: `A sky-blue or lilac-blue semiprecious variety of anhydrite (anhydrous calcium sulfate), used as an ornamental gemstone.`
   - **ANGELITES**: `plural of angelite (A sky-blue or lilac-blue semiprecious variety of anhydrite (anhydrous calcium sulfate), used as an ornamental gemstone.)`
   - Propagated to `wiktionary_definitions` table in SQLite (`morpheme.db`) and all dictionary files (`Definitions.txt`, `wikdefs.txt`, `wikdefs_duplicate.txt`, `wikdefs_aw_duplicate.txt`).
+- **New AW Words & Added Words Restoration**:
+  - Added `ANGELITE` and `ANGELITES` to `added_words.txt`, `added_words_duplicate.txt`, and `added_words_dates.txt` with their submission date (`10/10/2026`).
+  - Restored them to the top of **New AW Words** in the Tools tab, appearing above previously added words from `30/09/2026`.
