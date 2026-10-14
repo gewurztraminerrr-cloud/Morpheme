@@ -1422,12 +1422,6 @@ const Forum = {
         this.currentThreadBookmark = (userBookmark !== undefined && userBookmark !== null)
             ? userBookmark
             : (this.getGuestBookmark(post.id) || null);
-        const isRootBookmarked = Boolean(
-            this.currentThreadBookmark &&
-            !this.currentThreadBookmark.target_comment_id &&
-            (this.currentThreadBookmark.target_post_number === (post.post_number || 1))
-        );
-
         detailEl.innerHTML = `
             <div id="forum-post-root" data-post-number="${post.post_number || 1}">
                 <div class="post-detail-header">
@@ -1438,10 +1432,7 @@ const Forum = {
                             <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
                             <span class="post-date">${dateStr}</span>
                         </div>
-                        <div class="post-author-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-                            <button type="button" class="forum-bookmark-post-btn ${isRootBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-post-number="${post.post_number || 1}" title="${isRootBookmarked ? 'Remove bookmark' : 'Bookmark this post'}">🔖 <span class="bm-label">${isRootBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
-                            ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}">↩ Reply</button>` : ''}
-                        </div>
+                        ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>` : ''}
                     </div>
                 </div>
                 <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
