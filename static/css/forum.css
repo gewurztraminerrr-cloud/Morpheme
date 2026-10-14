@@ -2053,6 +2053,7 @@ body.theme-white #page-forums .forum-bottom-bar {
         align-items: center !important;
         gap: 8px !important;
         min-width: 0 !important;
+        width: 100% !important;
     }
     .author-info,
     .comment-author-info {
@@ -2063,10 +2064,12 @@ body.theme-white #page-forums .forum-bottom-bar {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
+        justify-content: center !important;
         flex-wrap: nowrap !important;
         white-space: nowrap !important;
-        gap: 5px !important;
-        margin-left: auto !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin: 4px auto !important;
         flex-shrink: 0 !important;
     }
     .forum-reaction-group {
