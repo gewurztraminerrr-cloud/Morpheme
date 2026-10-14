@@ -2999,6 +2999,26 @@ def init_db():
             pass
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_pinned ON forum_posts(category_id, is_pinned DESC)')
 
+        # MIGRATION: Ensure users table has total_forum_posts column for permanent lifetime count
+        try:
+            conn.execute('ALTER TABLE users ADD COLUMN total_forum_posts INTEGER DEFAULT 0')
+        except Exception:
+            pass
+        try:
+            conn.execute('''
+                UPDATE users 
+                SET total_forum_posts = (
+                    SELECT (SELECT COUNT(*) FROM forum_posts WHERE user_id = users.id) +
+                           (SELECT COUNT(*) FROM forum_comments WHERE user_id = users.id)
+                )
+                WHERE total_forum_posts IS NULL OR total_forum_posts < (
+                    SELECT (SELECT COUNT(*) FROM forum_posts WHERE user_id = users.id) +
+                           (SELECT COUNT(*) FROM forum_comments WHERE user_id = users.id)
+                )
+            ''')
+        except Exception as e:
+            print(f"[init_db] Error backfilling total_forum_posts: {e}")
+
         # Backfill post_number for existing posts & comments per category starting at 1 in chronological sequence
         unnum_comments = conn.execute('SELECT COUNT(*) FROM forum_comments WHERE post_number IS NULL OR post_number <= 0').fetchone()[0]
         unnum_posts = conn.execute('SELECT COUNT(*) FROM forum_posts WHERE post_number IS NULL OR post_number <= 0').fetchone()[0]
@@ -4440,13 +4460,17 @@ def get_public_profile(username):
 
     user_id = user[0]
 
-    # Forum Posts Count (total threads + comments across the forum)
+    # Forum Posts Count (permanent lifetime count that never decreases when threads fall out of the conveyor belt)
     forum_posts_count = 0
     try:
         cursor_fp = conn.execute('''
-            SELECT (SELECT COUNT(*) FROM forum_posts WHERE user_id = ?) +
-                   (SELECT COUNT(*) FROM forum_comments WHERE user_id = ?)
-        ''', (user_id, user_id))
+            SELECT MAX(
+                COALESCE(u.total_forum_posts, 0),
+                (SELECT COUNT(*) FROM forum_posts WHERE user_id = u.id) +
+                (SELECT COUNT(*) FROM forum_comments WHERE user_id = u.id)
+            )
+            FROM users u WHERE u.id = ?
+        ''', (user_id,))
         fp_row = cursor_fp.fetchone()
         forum_posts_count = fp_row[0] if fp_row and fp_row[0] is not None else 0
     except Exception as e:
@@ -9397,7 +9421,7 @@ def get_forum_user_posts(username):
         # Combine and sort by timestamp DESC
         all_items = posts + comments
         all_items.sort(key=lambda x: x['timestamp'] or '', reverse=True)
-        all_items = all_items[:100]
+        all_items = all_items[:500]
         
         res = jsonify({'posts': all_items})
         res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -9667,6 +9691,9 @@ def create_forum_post():
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url, post_number)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (category_id, session['user_id'], title, content, image_url_db, cur_num))
+        conn.execute('''
+            UPDATE users SET total_forum_posts = COALESCE(total_forum_posts, 0) + 1 WHERE id = ?
+        ''', (session['user_id'],))
         conn.commit()
         return jsonify({'success': True, 'post_id': cursor.lastrowid, 'post_number': cur_num})
     except Exception as e:
@@ -9740,6 +9767,9 @@ def create_forum_comment():
             VALUES (?, ?, ?, ?, ?)
         ''', (post_id, session['user_id'], content, image_url_db, comment_post_num))
         comment_id = cur_c.lastrowid
+        conn.execute('''
+            UPDATE users SET total_forum_posts = COALESCE(total_forum_posts, 0) + 1 WHERE id = ?
+        ''', (session['user_id'],))
 
         # Check for responder mentions: e.g. @username #123 or &username #123
 
