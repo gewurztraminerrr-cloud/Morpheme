@@ -1174,7 +1174,7 @@ const Forum = {
             const response = await fetch(`/api/forum/post/${postId}`, { cache: 'no-store' });
             const data = await response.json();
             this.currentPostLookup = data.post_lookup || {};
-            this.renderPostDetail(data.post, data.comments);
+            this.renderPostDetail(data.post, data.comments, false, data.user_bookmark);
             this.showPostView();
 
             if (options && (options.highlightCommentId || options.highlightPostNumber)) {
@@ -1289,7 +1289,7 @@ const Forum = {
             if (response.ok) {
                 const data = await response.json();
                 this.currentPostLookup = data.post_lookup || {};
-                this.renderPostDetail(data.post, data.comments, true);
+                this.renderPostDetail(data.post, data.comments, true, data.user_bookmark);
             }
         } catch (err) {
             console.error("[Forum] Failed to refresh thread:", err);
@@ -1364,7 +1364,10 @@ const Forum = {
         }
     },
 
-    renderPostDetail: function (post, comments, preserveDraft = false) {
+    renderPostDetail: function (post, comments, preserveDraft = false, userBookmark = null) {
+        if (!post) return;
+        comments = comments || [];
+
         if (!preserveDraft) {
             const commentInput = document.getElementById('forum-comment-input');
             if (commentInput) commentInput.value = '';
@@ -1411,12 +1414,14 @@ const Forum = {
             return `<span class="forum-post-number-badge has-responses" data-resp-num="${num}" role="button" tabindex="0" title="View ${resps.length} ${resps.length === 1 ? 'response' : 'responses'} to #${num}">#${num} <span class="forum-resp-count">💬 ${resps.length}</span></span>`;
         };
 
-        const isClosed = Boolean(data.is_closed || (1 + comments.length) >= 500);
+        const isClosed = Boolean((post && post.is_closed) || (1 + comments.length) >= 500);
         const closedBadge = isClosed ? `<span class="forum-closed-badge">🔒 CLOSED</span>` : '';
         const postNumBadge = buildNumBadge(post.post_number);
         const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
 
-        this.currentThreadBookmark = data.user_bookmark || this.getGuestBookmark(post.id) || null;
+        this.currentThreadBookmark = (userBookmark !== undefined && userBookmark !== null)
+            ? userBookmark
+            : (this.getGuestBookmark(post.id) || null);
         const isRootBookmarked = Boolean(
             this.currentThreadBookmark &&
             !this.currentThreadBookmark.target_comment_id &&
