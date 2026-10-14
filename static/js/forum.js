@@ -2207,9 +2207,9 @@ const Forum = {
             }
         } else {
             if (closedBanner) closedBanner.style.display = 'none';
-            const isGuest = window.currentUserIsGuest || (window.currentUser === null);
             if (commentFormContainer) {
-                commentFormContainer.classList.toggle('hidden', isGuest);
+                // Response panel only appears when user explicitly presses "Reply"
+                commentFormContainer.classList.add('hidden');
             }
         }
 
