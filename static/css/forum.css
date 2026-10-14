@@ -1956,6 +1956,9 @@ body.theme-white #page-forums .forum-bottom-bar {
         border-radius: 12px !important;
         box-sizing: border-box !important;
     }
+    .forum-nav-list .forum-cat-item:not(:last-child) {
+        border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+    }
 }
 
 @media (max-width: 900px) {

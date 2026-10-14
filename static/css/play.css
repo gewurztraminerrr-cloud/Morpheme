@@ -2762,11 +2762,12 @@ body.theme-white #page-settings .mobile-bottom-nav {
         min-width: 280px !important;
         max-width: 280px !important;
         padding: 8px 6px !important;
-        gap: 4px !important;
+        gap: 6px !important;
         overflow-y: auto !important;
         height: 100% !important;
     }
     .tool-nav-btn {
+        position: relative !important;
         height: auto !important;
         padding: 10px 14px !important;
         border-radius: 8px !important;
@@ -2777,6 +2778,16 @@ body.theme-white #page-settings .mobile-bottom-nav {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 2px !important;
+    }
+    .tools-sidebar .tool-nav-btn:not(:last-child)::after {
+        content: '' !important;
+        position: absolute !important;
+        bottom: -4px !important;
+        left: 8px !important;
+        right: 8px !important;
+        height: 1px !important;
+        background: rgba(var(--text-primary-rgb), 0.12) !important;
+        pointer-events: none !important;
     }
     .tool-nav-btn:hover {
         background: var(--input-bg) !important;
