@@ -517,6 +517,26 @@ const Forum = {
             submitCommentBtn.addEventListener('click', () => this.handleCommentSubmit());
         }
 
+        const updateMobileCommentKeyboardPosition = () => {
+            const formContainer = document.getElementById('forum-comment-form-container');
+            const input = document.getElementById('forum-comment-input');
+            if (!formContainer || formContainer.classList.contains('hidden') || formContainer.classList.contains('minimized')) return;
+            const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) {
+                formContainer.style.bottom = '';
+                return;
+            }
+            const vv = window.visualViewport;
+            if (!vv) return;
+            const isInputFocused = document.activeElement === input;
+            const kbHeight = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
+            if (isInputFocused && kbHeight > 60) {
+                formContainer.style.bottom = (kbHeight + 10) + 'px';
+            } else if (!isInputFocused) {
+                formContainer.style.bottom = '';
+            }
+        };
+
         const closeCommentBtn = document.getElementById('forum-comment-form-close');
         if (closeCommentBtn) {
             closeCommentBtn.addEventListener('click', () => {
@@ -524,6 +544,9 @@ const Forum = {
                 if (formContainer) {
                     formContainer.classList.add('hidden');
                     formContainer.classList.remove('minimized');
+                    formContainer.style.bottom = '';
+                    const input = document.getElementById('forum-comment-input');
+                    if (input && document.activeElement === input) input.blur();
                 }
             });
         }
@@ -536,6 +559,13 @@ const Forum = {
                 if (formContainer) {
                     const isMin = formContainer.classList.toggle('minimized');
                     minCommentBtn.textContent = isMin ? '▢' : '—';
+                    if (isMin) {
+                        formContainer.style.bottom = '';
+                        const input = document.getElementById('forum-comment-input');
+                        if (input && document.activeElement === input) input.blur();
+                    } else {
+                        setTimeout(updateMobileCommentKeyboardPosition, 50);
+                    }
                 }
             });
         }
@@ -547,6 +577,9 @@ const Forum = {
                 if (formContainer) {
                     formContainer.classList.add('hidden');
                     formContainer.classList.remove('minimized');
+                    formContainer.style.bottom = '';
+                    const input = document.getElementById('forum-comment-input');
+                    if (input && document.activeElement === input) input.blur();
                 }
             });
         }
@@ -559,8 +592,27 @@ const Forum = {
                 if (formContainer && formContainer.classList.contains('minimized')) {
                     formContainer.classList.remove('minimized');
                     if (minCommentBtn) minCommentBtn.textContent = '—';
+                    setTimeout(updateMobileCommentKeyboardPosition, 50);
                 }
             });
+        }
+
+        if (commentInput) {
+            commentInput.addEventListener('focus', () => {
+                updateMobileCommentKeyboardPosition();
+                setTimeout(updateMobileCommentKeyboardPosition, 60);
+                setTimeout(updateMobileCommentKeyboardPosition, 180);
+                setTimeout(updateMobileCommentKeyboardPosition, 350);
+            });
+            commentInput.addEventListener('blur', () => {
+                setTimeout(updateMobileCommentKeyboardPosition, 80);
+            });
+        }
+
+        window.addEventListener('resize', updateMobileCommentKeyboardPosition);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateMobileCommentKeyboardPosition);
+            window.visualViewport.addEventListener('scroll', updateMobileCommentKeyboardPosition);
         }
 
         // Image wrappers and inputs
@@ -2478,6 +2530,7 @@ const Forum = {
         if (formContainer) {
             formContainer.classList.remove('hidden');
             formContainer.classList.remove('minimized');
+            formContainer.style.bottom = '';
             const minBtn = document.getElementById('forum-comment-form-minimize');
             if (minBtn) minBtn.textContent = '—';
         }
@@ -2498,12 +2551,11 @@ const Forum = {
             }
         }
 
-        const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile) {
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        try {
+            input.focus({ preventScroll: true });
+        } catch (e) {
+            input.focus();
         }
-
-        input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
         input.scrollTop = input.scrollHeight;
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2642,6 +2694,7 @@ const Forum = {
                 if (formContainer) {
                     formContainer.classList.add('hidden');
                     formContainer.classList.remove('minimized');
+                    formContainer.style.bottom = '';
                 }
 
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
