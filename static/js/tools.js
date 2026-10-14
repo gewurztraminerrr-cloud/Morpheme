@@ -4297,9 +4297,9 @@ function setupProfileEditing(isOwner) {
     }
 
     const editableFields = [
-        { id: 'profile-full-name', key: 'full_name', placeholder: 'Full Name', max: 100 },
-        { id: 'profile-age-val', key: 'age', placeholder: 'Age', max: 100 },
-        { id: 'profile-gender-val', key: 'gender', placeholder: 'Gender', max: 100 },
+        { id: 'profile-full-name', key: 'full_name', placeholder: 'Full Name', max: 50 },
+        { id: 'profile-age-val', key: 'age', placeholder: 'Age', max: 3 },
+        { id: 'profile-gender-val', key: 'gender', placeholder: 'Gender', max: 25 },
         { id: 'profile-location-val', key: 'location', placeholder: 'Location', max: 100 },
         { id: 'profile-quote-val', key: 'quote', placeholder: 'Enter a personal quote', max: 150 },
         { id: 'profile-description-val', key: 'description', placeholder: 'Add a detailed description about yourself...', max: 10000 }
@@ -4377,7 +4377,12 @@ function setupProfileEditing(isOwner) {
 }
 
 async function saveProfileField(key, value) {
-    const maxLen = (key === 'quote') ? 150 : (key === 'description' ? 10000 : 100);
+    let maxLen = 100;
+    if (key === 'full_name') maxLen = 50;
+    else if (key === 'age') maxLen = 3;
+    else if (key === 'gender') maxLen = 25;
+    else if (key === 'quote') maxLen = 150;
+    else if (key === 'description') maxLen = 10000;
     const safeVal = (typeof value === 'string') ? value.slice(0, maxLen) : value;
     try {
         const response = await fetch('/api/profile/update', {

@@ -4415,7 +4415,13 @@ def update_profile():
         updates['quote'] = str(updates['quote'])[:150]
     if 'description' in updates:
         updates['description'] = str(updates['description'])[:10000]
-    for k in ['full_name', 'age', 'gender', 'location', 'proof_url', 'timezone']:
+    if 'full_name' in updates:
+        updates['full_name'] = str(updates['full_name'])[:50]
+    if 'age' in updates:
+        updates['age'] = str(updates['age'])[:3]
+    if 'gender' in updates:
+        updates['gender'] = str(updates['gender'])[:25]
+    for k in ['location', 'proof_url', 'timezone']:
         if k in updates:
             updates[k] = str(updates[k])[:100]
         
