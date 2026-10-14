@@ -1944,13 +1944,15 @@ const Forum = {
             <div id="forum-post-root" data-post-number="${post.post_number || 1}">
                 <div class="post-detail-header">
                     <div class="post-author-box">
-                        <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
-                        <div class="author-info">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
-                                ${postNumBadge}
+                        <div class="post-author-meta" style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                            <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
+                            <div class="author-info">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
+                                    ${postNumBadge}
+                                </div>
+                                <span class="post-date">${dateStr}</span>
                             </div>
-                            <span class="post-date">${dateStr}</span>
                         </div>
                         <div class="post-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
                             <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="0">
@@ -2041,33 +2043,37 @@ const Forum = {
 
                     return `
                         <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
-                            <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
-                            <div class="comment-body">
-                                <div class="comment-header">
-                                    <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
-                                    ${commentNumBadge}
-                                    <span class="comment-date">${cDate}</span>
-                                    <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-                                        <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}">
-                                            <button type="button" class="forum-reaction-btn forum-like-btn ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
-                                                <span class="reaction-icon">👍</span>
-                                                <span class="reaction-count">${c.likes || 0}</span>
-                                            </button>
-                                            <button type="button" class="forum-reaction-btn forum-dislike-btn ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
-                                                <span class="reaction-icon">👎</span>
-                                                <span class="reaction-count">${c.dislikes || 0}</span>
-                                            </button>
+                            <div class="comment-header">
+                                <div class="comment-author-box">
+                                    <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
+                                    <div class="comment-author-info">
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
+                                            ${commentNumBadge}
                                         </div>
-                                        <button type="button" class="forum-bookmark-post-btn ${isCommentBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}" title="${isCommentBookmarked ? 'Remove bookmark' : 'Bookmark this reply'}">🔖 <span class="bm-label">${isCommentBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
-                                        ${!isClosed ? `<button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}">↩ Reply</button>` : ''}
-                                        ${window.currentUserIsMod ? `
-                                            <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 4px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
-                                        ` : ''}
+                                        <span class="comment-date">${cDate}</span>
                                     </div>
                                 </div>
-                                <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
-                                ${cImagesHtml}
+                                <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                                    <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}">
+                                        <button type="button" class="forum-reaction-btn forum-like-btn ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
+                                            <span class="reaction-icon">👍</span>
+                                            <span class="reaction-count">${c.likes || 0}</span>
+                                        </button>
+                                        <button type="button" class="forum-reaction-btn forum-dislike-btn ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
+                                            <span class="reaction-icon">👎</span>
+                                            <span class="reaction-count">${c.dislikes || 0}</span>
+                                        </button>
+                                    </div>
+                                    <button type="button" class="forum-bookmark-post-btn ${isCommentBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}" title="${isCommentBookmarked ? 'Remove bookmark' : 'Bookmark this reply'}">🔖 <span class="bm-label">${isCommentBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
+                                    ${!isClosed ? `<button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}">↩ Reply</button>` : ''}
+                                    ${window.currentUserIsMod ? `
+                                        <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 4px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
+                                    ` : ''}
+                                </div>
                             </div>
+                            <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
+                            ${cImagesHtml}
                         </div>
                     `;
                 }).join('');
