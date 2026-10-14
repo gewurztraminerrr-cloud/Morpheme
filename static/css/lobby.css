@@ -3202,14 +3202,25 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
         border: 2px solid #000000 !important;
     }
 
-    /* Default color layout: thicker border surrounding ACTIVE ROOMS matching the contents under ACTIVE ROOMS */
+    /* Default color layout on laptops/desktops: slightly thinner (1.5px) border around the content under ACTIVE ROOMS */
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel {
-        border: 2px solid rgba(var(--text-primary-rgb), 0.55) !important;
+        border: 1.5px solid rgba(var(--text-primary-rgb), 0.38) !important;
+    }
+
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #selected-game-info,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #selected-game-info,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .create-room-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .create-room-panel,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .rating-filter-container,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .rating-filter-container,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #rooms-list,
+    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #rooms-list {
+        border: 1.5px solid rgba(var(--text-primary-rgb), 0.38) !important;
     }
 }
 
-/* Default color layout: thicker 2px border around each element under ACTIVE ROOMS like the contents under ACTIVE ROOMS have */
+/* Default color layout: slightly thinner 1.5px border around each element under ACTIVE ROOMS */
 body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .rating-input,
 body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .rating-input,
 body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #rating-filter,
@@ -3220,17 +3231,17 @@ body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-pane
 body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #my-rating-btn,
 body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #lobby-refresh-btn,
 body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #lobby-refresh-btn {
-    border: 2px solid rgba(var(--text-primary-rgb), 0.55) !important;
+    border: 1.5px solid rgba(var(--text-primary-rgb), 0.38) !important;
 }
 
 body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .room-tab-btn.active[data-filter="open"],
 body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .room-tab-btn.active[data-filter="open"] {
-    border: 2px solid #34d399 !important;
+    border: 1.5px solid #34d399 !important;
 }
 
 body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .room-tab-btn.active[data-filter="closed"],
 body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .room-tab-btn.active[data-filter="closed"] {
-    border: 2px solid #f87171 !important;
+    border: 1.5px solid #f87171 !important;
 }
 
 /* "For New Users" guide button: 3D popping button (Zero Outer Glow) */
