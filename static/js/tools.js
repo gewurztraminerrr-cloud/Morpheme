@@ -5257,7 +5257,7 @@ window.openFullListModal = function() {
     // Only when fetching fresh list data from network do we show loading state
     _fullListRenderedStart = 0;
     _fullListRenderedEnd = 0;
-    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
+    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span><span style="font-size: 0.85rem; opacity: 0.75; font-weight: 500; margin-top: -4px;">This may take a moment for large lists</span></div>';
     results.scrollTop = 0;
     window.isFullListLoading = true;
 
@@ -5271,15 +5271,15 @@ window.openFullListModal = function() {
     url += `&t=${Date.now()}`;
 
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+    const fetchTimeout = setTimeout(() => controller.abort(), 120000);
 
     fetch(url, { signal: controller.signal })
         .then(r => {
-            clearTimeout(fetchTimeout);
             if (!r.ok) throw new Error(`HTTP error ${r.status}`);
             return r.json();
         })
         .then(data => {
+            clearTimeout(fetchTimeout);
             if (window._lastFullListFilterKey !== currentFilterKey) return;
             const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || data['all_new'] || [];
             _fullListAllWords = rawWords;

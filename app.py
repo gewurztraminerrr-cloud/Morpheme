@@ -1,6 +1,6 @@
 print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_04:00 (Tally Hardened)")
 
-from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response
+from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response, Response
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
@@ -8202,10 +8202,13 @@ def tools_get_lists():
         list_type = request.args.get('list_type', 'all').lower()
         no_limit = request.args.get('no_limit', 'false').lower() == 'true'
 
-        # Check cache first (only for capped/normal requests)
-        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}"
-        if not no_limit and cache_key in LISTS_CACHE:
-            return jsonify(LISTS_CACHE[cache_key])
+        # Check cache first
+        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}_{no_limit}"
+        if cache_key in LISTS_CACHE:
+            cached_val = LISTS_CACHE[cache_key]
+            if isinstance(cached_val, (str, bytes)):
+                return Response(cached_val, mimetype='application/json')
+            return jsonify(cached_val)
         
         # Convert length to int if provided and not "all"
         target_len = None
@@ -8458,11 +8461,14 @@ def tools_get_lists():
                 return (0, 0, 0)
             new_all_items.sort(key=parse_date_key, reverse=True)
             response['all_new'] = cap_list(new_all_items)
-        # Cache response (only for capped/normal requests to avoid polluting cache)
-        if not no_limit:
+        # Cache response
+        if no_limit:
+            cached_json = json.dumps(response)
+            LISTS_CACHE[cache_key] = cached_json
+            return Response(cached_json, mimetype='application/json')
+        else:
             LISTS_CACHE[cache_key] = response
-
-        return jsonify(response)
+            return jsonify(response)
 
     except Exception as e:
         print(f"Error fetching lists: {e}")
