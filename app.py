@@ -1908,6 +1908,8 @@ def ban_user_api():
         # ID-based deletions
         conn.execute("DELETE FROM forum_comments WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM forum_posts WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM forum_reactions WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM forum_thread_bookmarks WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM friends WHERE user_id = ? OR friend_id = ?", (user_id, user_id))
         conn.execute("DELETE FROM match_invites WHERE sender_id = ?", (user_id,))
         conn.execute("DELETE FROM private_match_players WHERE user_id = ?", (user_id,))
@@ -2951,20 +2953,41 @@ def init_db():
             )
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_bookmarks_user ON forum_thread_bookmarks(user_id)')
+
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_reactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                post_id INTEGER NOT NULL,
+                comment_id INTEGER DEFAULT 0,
+                reaction_type TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (user_id, post_id, comment_id),
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(post_id) REFERENCES forum_posts(id) ON DELETE CASCADE
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_reactions_post ON forum_reactions(post_id, comment_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_reactions_user ON forum_reactions(user_id)')
         
         # Initialize categories if they don't exist
+        suggestions_desc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future."
         categories = [
             ("General", "General discussion about Morpheme."),
             ("Tips, Tricks, and Strategies", "Share your best gameplay advice."),
             ("Screenshots", "Show off your high scores and cool boards."),
             ("Introduce Yourself", "New here? Say hello!"),
             ("News", "Official news and updates from the developers."),
-            ("Suggestions/Ideas", "Share your ideas for improving Morpheme."),
+            ("Suggestions/Ideas", suggestions_desc),
             ("Complaints", "Voice your feedback, grievances, or criticisms."),
             ("Bugs/Errors", "Report bugs or technical issues encountered.")
         ]
         for name, desc in categories:
             conn.execute('INSERT OR IGNORE INTO forum_categories (name, description) VALUES (?, ?)', (name, desc))
+        try:
+            conn.execute("UPDATE forum_categories SET description = ? WHERE name = 'Suggestions/Ideas'", (suggestions_desc,))
+        except Exception:
+            pass
         
         # MIGRATION: Ensure Suggestions category is renamed to Suggestions/Ideas and clean up duplicates
         try:
@@ -4140,6 +4163,8 @@ def purge_guest_user(user_id, username):
             tournament_manager.handle_user_banned(user_id, conn=conn)
             conn.execute("DELETE FROM forum_comments WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM forum_posts WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM forum_reactions WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM forum_thread_bookmarks WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM donations WHERE user_id = ?", (user_id,))
             
             # Name-based string deletions
@@ -9369,8 +9394,10 @@ def get_forum_categories():
             else:
                 # Fallback to a very old date so new users don't see unread indicators for empty cats
                 d['last_content_at'] = '2000-01-01T00:00:00Z'
+            suggestions_desc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future."
             if str(d.get('name', '')).strip().lower() in ('suggestions', 'suggestions/ideas') or d.get('id') == 6:
-                d['header_description'] = "Share your ideas for improving Morpheme. A user’s agreement in a user’s thread counts as a vote, and likewise for a disagreement. A decision of the mods will be made based on the level of its popularity, and the feature may be added in the future."
+                d['header_description'] = suggestions_desc
+                d['description'] = suggestions_desc
             else:
                 d['header_description'] = d.get('description', '')
             categories.append(d)
@@ -9429,7 +9456,9 @@ def get_forum_posts(category_id):
         rows = conn.execute('''
             SELECT p.*, u.username, u.avatar_url, u.country_flag,
             (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
-            COALESCE((SELECT MAX(timestamp) FROM forum_comments WHERE post_id = p.id), p.timestamp) as last_activity
+            COALESCE((SELECT MAX(timestamp) FROM forum_comments WHERE post_id = p.id), p.timestamp) as last_activity,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = p.id AND comment_id = 0 AND reaction_type = 'like') as likes,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = p.id AND comment_id = 0 AND reaction_type = 'dislike') as dislikes
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
             WHERE p.category_id = ?
@@ -9441,6 +9470,8 @@ def get_forum_posts(category_id):
             d = dict(r)
             d['is_pinned'] = bool(d.get('is_pinned', 0))
             d['is_closed'] = (d.get('comment_count', 0) >= 499)
+            d['likes'] = d.get('likes') or 0
+            d['dislikes'] = d.get('dislikes') or 0
             urls = parse_image_urls(d.get('image_url'))
             d['image_urls'] = urls
             d['image_url'] = urls[0] if urls else None
@@ -9458,6 +9489,8 @@ def get_forum_user_posts(username):
         posts_rows = conn.execute('''
             SELECT 'post' as type, p.id as id, p.id as post_id, p.title, p.content, p.image_url, p.timestamp, p.post_number,
             (SELECT COUNT(*) FROM forum_comments WHERE post_id = p.id) as comment_count,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = p.id AND comment_id = 0 AND reaction_type = 'like') as likes,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = p.id AND comment_id = 0 AND reaction_type = 'dislike') as dislikes,
             u.username, u.avatar_url, u.country_flag
             FROM forum_posts p
             JOIN users u ON p.user_id = u.id
@@ -9468,6 +9501,8 @@ def get_forum_user_posts(username):
         comments_rows = conn.execute('''
             SELECT 'comment' as type, c.id as id, c.post_id as post_id, p.title, c.content, c.image_url, c.timestamp, c.post_number,
             0 as comment_count,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = c.post_id AND comment_id = c.id AND reaction_type = 'like') as likes,
+            (SELECT COUNT(*) FROM forum_reactions WHERE post_id = c.post_id AND comment_id = c.id AND reaction_type = 'dislike') as dislikes,
             u.username, u.avatar_url, u.country_flag
             FROM forum_comments c
             JOIN forum_posts p ON c.post_id = p.id
@@ -9478,6 +9513,8 @@ def get_forum_user_posts(username):
         posts = []
         for row in posts_rows:
             d = dict(row)
+            d['likes'] = d.get('likes') or 0
+            d['dislikes'] = d.get('dislikes') or 0
             urls = parse_image_urls(d.get('image_url'))
             d['image_urls'] = urls
             d['image_url'] = urls[0] if urls else None
@@ -9486,6 +9523,8 @@ def get_forum_user_posts(username):
         comments = []
         for row in comments_rows:
             d = dict(row)
+            d['likes'] = d.get('likes') or 0
+            d['dislikes'] = d.get('dislikes') or 0
             urls = parse_image_urls(d.get('image_url'))
             d['image_urls'] = urls
             d['image_url'] = urls[0] if urls else None
@@ -9611,6 +9650,44 @@ def get_forum_post_detail(post_id):
         post_dict['is_closed'] = is_closed
         post_dict['total_posts'] = 1 + len(comments_list)
 
+        # Fetch reaction counts for thread post (comment_id=0) and all comments
+        try:
+            reaction_counts = conn.execute('''
+                SELECT comment_id,
+                       SUM(CASE WHEN reaction_type = 'like' THEN 1 ELSE 0 END) AS likes,
+                       SUM(CASE WHEN reaction_type = 'dislike' THEN 1 ELSE 0 END) AS dislikes
+                FROM forum_reactions
+                WHERE post_id = ?
+                GROUP BY comment_id
+            ''', (post_id,)).fetchall()
+            counts_map = {r['comment_id']: {'likes': r['likes'] or 0, 'dislikes': r['dislikes'] or 0} for r in reaction_counts}
+        except Exception as e:
+            print(f"[Forum] Error fetching reaction counts: {e}")
+            counts_map = {}
+
+        user_reactions_map = {}
+        if 'user_id' in session and not session.get('is_guest'):
+            try:
+                u_reactions = conn.execute('''
+                    SELECT comment_id, reaction_type
+                    FROM forum_reactions
+                    WHERE post_id = ? AND user_id = ?
+                ''', (post_id, session['user_id'])).fetchall()
+                user_reactions_map = {r['comment_id']: r['reaction_type'] for r in u_reactions}
+            except Exception as e:
+                print(f"[Forum] Error fetching user reactions: {e}")
+                user_reactions_map = {}
+
+        post_dict['likes'] = counts_map.get(0, {}).get('likes', 0)
+        post_dict['dislikes'] = counts_map.get(0, {}).get('dislikes', 0)
+        post_dict['user_reaction'] = user_reactions_map.get(0)
+
+        for cd in comments_list:
+            c_id = cd['id']
+            cd['likes'] = counts_map.get(c_id, {}).get('likes', 0)
+            cd['dislikes'] = counts_map.get(c_id, {}).get('dislikes', 0)
+            cd['user_reaction'] = user_reactions_map.get(c_id)
+
         response_data = {
             'post': post_dict,
             'comments': comments_list,
@@ -9675,6 +9752,8 @@ def delete_forum_post(post_id):
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('DELETE FROM forum_responders WHERE post_id = ?', (post_id,))
+        conn.execute('DELETE FROM forum_reactions WHERE post_id = ?', (post_id,))
+        conn.execute('DELETE FROM forum_thread_bookmarks WHERE post_id = ?', (post_id,))
         conn.execute('DELETE FROM forum_comments WHERE post_id = ?', (post_id,))
         conn.execute('DELETE FROM forum_posts WHERE id = ?', (post_id,))
         conn.commit()
@@ -9693,6 +9772,8 @@ def delete_forum_comment(comment_id):
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         conn.execute('DELETE FROM forum_responders WHERE comment_id = ?', (comment_id,))
+        conn.execute('DELETE FROM forum_reactions WHERE comment_id = ?', (comment_id,))
+        conn.execute('DELETE FROM forum_thread_bookmarks WHERE target_comment_id = ?', (comment_id,))
         conn.execute('DELETE FROM forum_comments WHERE id = ?', (comment_id,))
         conn.commit()
         return jsonify({'success': True, 'message': 'Comment deleted.'})
@@ -9778,6 +9859,89 @@ def toggle_forum_bookmark(post_id):
             })
     except Exception as e:
         print(f"Error saving forum thread bookmark: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/forum/post/<int:post_id>/react', methods=['POST'])
+def toggle_forum_reaction(post_id):
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'error': 'Registered users only'}), 403
+
+    user_id = session['user_id']
+    data = request.get_json(silent=True) or request.form or {}
+    reaction = (data.get('reaction') or '').strip().lower()
+    if reaction not in ('like', 'dislike'):
+        return jsonify({'error': 'Invalid reaction type'}), 400
+
+    raw_comment_id = data.get('comment_id')
+    try:
+        comment_id = int(raw_comment_id) if raw_comment_id is not None and str(raw_comment_id).strip() != '' else 0
+    except (ValueError, TypeError):
+        comment_id = 0
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        # Verify thread exists
+        thread = conn.execute('SELECT id FROM forum_posts WHERE id = ?', (post_id,)).fetchone()
+        if not thread:
+            return jsonify({'error': 'Thread not found'}), 404
+
+        # If comment_id > 0, verify comment exists and belongs to post
+        if comment_id > 0:
+            comment = conn.execute('SELECT id FROM forum_comments WHERE id = ? AND post_id = ?', (comment_id, post_id)).fetchone()
+            if not comment:
+                return jsonify({'error': 'Comment not found'}), 404
+
+        # Check existing reaction
+        existing = conn.execute('''
+            SELECT reaction_type FROM forum_reactions
+            WHERE user_id = ? AND post_id = ? AND comment_id = ?
+        ''', (user_id, post_id, comment_id)).fetchone()
+
+        if existing and existing['reaction_type'] == reaction:
+            # Clicking the same reaction again removes it (toggle off)
+            conn.execute('''
+                DELETE FROM forum_reactions
+                WHERE user_id = ? AND post_id = ? AND comment_id = ?
+            ''', (user_id, post_id, comment_id))
+            user_reaction = None
+        else:
+            # Upsert new reaction (or switch from like to dislike / vice versa)
+            conn.execute('''
+                INSERT INTO forum_reactions (user_id, post_id, comment_id, reaction_type, created_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id, post_id, comment_id) DO UPDATE SET
+                    reaction_type = excluded.reaction_type,
+                    created_at = CURRENT_TIMESTAMP
+            ''', (user_id, post_id, comment_id, reaction))
+            user_reaction = reaction
+
+        conn.commit()
+
+        # Query updated counts
+        counts = conn.execute('''
+            SELECT
+                SUM(CASE WHEN reaction_type = 'like' THEN 1 ELSE 0 END) AS likes,
+                SUM(CASE WHEN reaction_type = 'dislike' THEN 1 ELSE 0 END) AS dislikes
+            FROM forum_reactions
+            WHERE post_id = ? AND comment_id = ?
+        ''', (post_id, comment_id)).fetchone()
+
+        likes = (counts['likes'] or 0) if counts else 0
+        dislikes = (counts['dislikes'] or 0) if counts else 0
+
+        return jsonify({
+            'success': True,
+            'post_id': post_id,
+            'comment_id': comment_id,
+            'user_reaction': user_reaction,
+            'likes': likes,
+            'dislikes': dislikes
+        })
+    except Exception as e:
+        print(f"Error toggling forum reaction: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()

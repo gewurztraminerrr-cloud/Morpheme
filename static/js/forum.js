@@ -1517,12 +1517,8 @@ const Forum = {
             category.name.toLowerCase().includes('suggestion') ||
             category.id === 6
         ));
-        const descEl = document.getElementById('forum-category-desc');
-        descEl.textContent = category.header_description || (
-            isSuggestions
-                ? "Share your ideas for improving Morpheme. A user’s agreement in a user’s thread counts as a vote, and likewise for a disagreement. A decision of the mods will be made based on the level of its popularity, and the feature may be added in the future."
-                : category.description
-        );
+        const suggestionsDesc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future.";
+        descEl.textContent = isSuggestions ? suggestionsDesc : (category.header_description || category.description);
         descEl.classList.toggle('forum-desc-scrolling-box', isSuggestions);
         if (isSuggestions) {
             descEl.scrollTop = 0;
@@ -1652,6 +1648,8 @@ const Forum = {
                     <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
                     <div class="post-stats">
                         ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
+                        <div class="stat-item stat-reaction-item" title="${post.likes || 0} likes">👍 ${post.likes || 0}</div>
+                        <div class="stat-item stat-reaction-item" title="${post.dislikes || 0} dislikes">👎 ${post.dislikes || 0}</div>
                         ${hasImages ? '<div class="stat-item">🖼️ Includes images</div>' : ''}
                     </div>
                 </div>
@@ -1930,6 +1928,12 @@ const Forum = {
         const postNumBadge = buildNumBadge(post.post_number);
         const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
 
+        const isPostBookmarked = Boolean(
+            this.currentThreadBookmark &&
+            (!this.currentThreadBookmark.target_comment_id) &&
+            (this.currentThreadBookmark.target_post_number === (post.post_number || 1))
+        );
+
         this.currentThreadBookmark = (userBookmark !== undefined && userBookmark !== null)
             ? userBookmark
             : (this.getGuestBookmark(post.id) || null);
@@ -1945,7 +1949,20 @@ const Forum = {
                             </div>
                             <span class="post-date">${dateStr}</span>
                         </div>
-                        ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>` : ''}
+                        <div class="post-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                            <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="0">
+                                <button type="button" class="forum-reaction-btn forum-like-btn ${post.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
+                                    <span class="reaction-icon">👍</span>
+                                    <span class="reaction-count">${post.likes || 0}</span>
+                                </button>
+                                <button type="button" class="forum-reaction-btn forum-dislike-btn ${post.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
+                                    <span class="reaction-icon">👎</span>
+                                    <span class="reaction-count">${post.dislikes || 0}</span>
+                                </button>
+                            </div>
+                            <button type="button" class="forum-bookmark-post-btn ${isPostBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="" data-post-number="${post.post_number || 1}" title="${isPostBookmarked ? 'Remove bookmark' : 'Bookmark this post'}">🔖 <span class="bm-label">${isPostBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
+                            ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}">↩ Reply</button>` : ''}
+                        </div>
                     </div>
                     <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${this.escapeHtml(post.title)}</h1>
                 </div>
@@ -2028,6 +2045,16 @@ const Forum = {
                                     ${commentNumBadge}
                                     <span class="comment-date">${cDate}</span>
                                     <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                                        <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}">
+                                            <button type="button" class="forum-reaction-btn forum-like-btn ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
+                                                <span class="reaction-icon">👍</span>
+                                                <span class="reaction-count">${c.likes || 0}</span>
+                                            </button>
+                                            <button type="button" class="forum-reaction-btn forum-dislike-btn ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
+                                                <span class="reaction-icon">👎</span>
+                                                <span class="reaction-count">${c.dislikes || 0}</span>
+                                            </button>
+                                        </div>
                                         <button type="button" class="forum-bookmark-post-btn ${isCommentBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}" title="${isCommentBookmarked ? 'Remove bookmark' : 'Bookmark this reply'}">🔖 <span class="bm-label">${isCommentBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
                                         ${!isClosed ? `<button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}">↩ Reply</button>` : ''}
                                         ${window.currentUserIsMod ? `
@@ -2146,6 +2173,69 @@ const Forum = {
                 this.handleBookmarkClick(pId, pNum, cId);
             });
         });
+
+        // Attach listeners for reaction buttons (likes / dislikes)
+        const allReactionBtns = [
+            ...detailEl.querySelectorAll('.forum-reaction-btn'),
+            ...commentsListEl.querySelectorAll('.forum-reaction-btn')
+        ];
+        allReactionBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const group = btn.closest('.forum-reaction-group');
+                if (!group) return;
+                const pId = parseInt(group.getAttribute('data-post-id'), 10);
+                const cId = parseInt(group.getAttribute('data-comment-id') || '0', 10);
+                const reactionType = btn.getAttribute('data-reaction');
+                this.handleReactionClick(pId, cId, reactionType, group);
+            });
+        });
+    },
+
+    handleReactionClick: async function (postId, commentId, reactionType, groupEl) {
+        const isGuest = window.currentUserIsGuest || (window.currentUser === null);
+        if (isGuest) {
+            this.showToast('Please log in or register to like or dislike posts.');
+            return;
+        }
+
+        if (groupEl && groupEl._reacting) return;
+        if (groupEl) groupEl._reacting = true;
+
+        try {
+            const res = await fetch(`/api/forum/post/${postId}/react`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    comment_id: commentId || 0,
+                    reaction: reactionType
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (groupEl) {
+                    const likeBtn = groupEl.querySelector('.forum-like-btn');
+                    const dislikeBtn = groupEl.querySelector('.forum-dislike-btn');
+                    if (likeBtn) {
+                        likeBtn.classList.toggle('active', data.user_reaction === 'like');
+                        const countEl = likeBtn.querySelector('.reaction-count');
+                        if (countEl) countEl.textContent = data.likes || 0;
+                    }
+                    if (dislikeBtn) {
+                        dislikeBtn.classList.toggle('active', data.user_reaction === 'dislike');
+                        const countEl = dislikeBtn.querySelector('.reaction-count');
+                        if (countEl) countEl.textContent = data.dislikes || 0;
+                    }
+                }
+            } else {
+                this.showToast(data.error || 'Failed to update reaction');
+            }
+        } catch (e) {
+            console.error('Error updating reaction:', e);
+            this.showToast('Failed to update reaction');
+        } finally {
+            if (groupEl) groupEl._reacting = false;
+        }
     },
 
     getGuestBookmark: function (postId) {

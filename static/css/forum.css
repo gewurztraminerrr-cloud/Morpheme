@@ -729,6 +729,109 @@
     box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
 }
 
+/* Forum Reactions (Likes & Dislikes) */
+.forum-reaction-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.forum-reaction-btn {
+    height: 24px;
+    padding: 2px 7px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary, #cbd5e1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.forum-reaction-btn .reaction-icon {
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.forum-reaction-btn .reaction-count {
+    font-size: 0.72rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.forum-reaction-btn:hover {
+    transform: translateY(-1px);
+}
+
+.forum-like-btn:hover {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #22c55e;
+}
+
+.forum-like-btn.active {
+    background: rgba(34, 197, 94, 0.22) !important;
+    border-color: #22c55e !important;
+    color: #22c55e !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
+}
+
+.forum-dislike-btn:hover {
+    background: rgba(244, 63, 94, 0.15);
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #f43f5e;
+}
+
+.forum-dislike-btn.active {
+    background: rgba(244, 63, 94, 0.22) !important;
+    border-color: #f43f5e !important;
+    color: #f43f5e !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+}
+
+/* Light / White theme overrides for reaction buttons */
+[class*="theme-white"] .forum-reaction-btn,
+[class*="theme-light-"] .forum-reaction-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #475569;
+}
+
+[class*="theme-white"] .forum-reaction-btn:hover,
+[class*="theme-light-"] .forum-reaction-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+[class*="theme-white"] .forum-like-btn.active,
+[class*="theme-light-"] .forum-like-btn.active {
+    background: rgba(22, 163, 74, 0.15) !important;
+    border-color: #16a34a !important;
+    color: #15803d !important;
+}
+
+[class*="theme-white"] .forum-dislike-btn.active,
+[class*="theme-light-"] .forum-dislike-btn.active {
+    background: rgba(225, 29, 72, 0.15) !important;
+    border-color: #e11d48 !important;
+    color: #be123c !important;
+}
+
+/* Reaction counter on post cards */
+.stat-reaction-item {
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
 /* Pulse animation when jumping to bookmark */
 .forum-highlight-pulse {
     animation: forumBookmarkPulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
@@ -1907,6 +2010,15 @@ body.theme-white #page-forums .forum-bottom-bar {
         min-width: 0 !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
+    }
+    .post-author-box {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .post-header-actions,
+    .comment-header-actions {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
     }
     .comment-header {
         flex-wrap: wrap !important;
