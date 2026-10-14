@@ -827,6 +827,43 @@ _AW_DISALLOWED_MISSPELLED_REGEX = re.compile(
     r')'
 )
 
+_AW_DISALLOWED_PROPER_NOUN_REGEX = re.compile(
+    r'(?i)(?:'
+    r'^\s*\((?:proper\s+noun|proper\s+name)\)|'
+    r'\b(?:is a|is an)\s+(?:port\s+|coastal\s+)?city\b|'
+    r'\b(?:is a|is an)\s+municipality\b|'
+    r'\b(?:is a|is an)\s+capital\b|'
+    r'\b(?:is a|is an)\s+commune\b|'
+    r'\b(?:is a|is an)\s+town\b|'
+    r'\b(?:is a|is an)\s+village\b|'
+    r'\b(?:is a|is an)\s+province\b|'
+    r'\b(?:is a|is an)\s+district\b|'
+    r'\b(?:is a|is an)\s+river\b|'
+    r'\b(?:is a|is an)\s+island\b|'
+    r'\b(?:is a|is an)\s+county\b|'
+    r'\b(?:is a|is an)\s+(?:Catalan|Spanish|French|German|English|Italian|Arabic|Hebrew|Russian|Japanese|Chinese|given|first|family|sur)?name\b|'
+    r'\bcapital of\b|'
+    r'\blocated in\b|'
+    r'\bsituate(?:d)? in\b|'
+    r'\bfirst name\b|'
+    r'\bsurname\b|'
+    r'\bborn \d{4}\b|'
+    r'\bballet dancer\b|'
+    r'\bpolitician\b|'
+    r'\bfootballer\b|'
+    r'\balbum by\b|'
+    r'\bband\b|'
+    r'\b(?:a\s+)?fan\s+of\s+(?:the\s+)?(?:television|tv|web|radio)?\s*(?:series|show|film|movie|franchise|book|novel|comic|band|singer|musician|actor|actress|celebrity|podcast)\b|'
+    r'\b(?:a\s+)?follower\s+(?:or\s+supporter\s+)?of\s+[A-Z]|'
+    r'\b(?:an?\s+)?enthusiast\s+(?:or\s+fan\s+)?of\s+(?:the\s+)?(?:television|tv|film|movie|show)\b|'
+    r'\btelevision\s+series\b|'
+    r'\bTV\s+series\b|'
+    r'\bcharacter\s+(?:in|from)\s+(?:the\s+)?(?:television|tv|film|movie|book|novel|comic|video\s+game)\b|'
+    r'\bfictional\s+(?:character|creature|planet|place|universe|species)\b|'
+    r'\beponym(?:ous)?\b'
+    r')'
+)
+
 _AW_POINTER_PATTERN = re.compile(
     r'(?i)\b((?:'
     r'(?:plural|present participle|past participle|simple past|past tense|past|'
@@ -876,6 +913,14 @@ def lookup_web_search_definition(word_upper):
         r'\bfootballer\b',
         r'\balbum by\b',
         r'\bband\b',
+        r'\b(?:a\s+)?fan\s+of\s+(?:the\s+)?(?:television|tv|web|radio)?\s*(?:series|show|film|movie|franchise|book|novel|comic|band|singer|musician|actor|actress|celebrity|podcast)\b',
+        r'\b(?:a\s+)?follower\s+(?:or\s+supporter\s+)?of\s+[A-Z]',
+        r'\b(?:an?\s+)?enthusiast\s+(?:or\s+fan\s+)?of\s+(?:the\s+)?(?:television|tv|film|movie|show)\b',
+        r'\btelevision\s+series\b',
+        r'\bTV\s+series\b',
+        r'\bcharacter\s+(?:in|from)\s+(?:the\s+)?(?:television|tv|film|movie|book|novel|comic|video\s+game)\b',
+        r'\bfictional\s+(?:character|creature|planet|place|universe|species)\b',
+        r'\beponym(?:ous)?\b',
     ]
 
     junk_pats = [
@@ -899,6 +944,10 @@ def lookup_web_search_definition(word_upper):
         r'Factsheet',
         r'There is one meaning in',
         r'There are \w+ meanings',
+        r'\bchakras?\b',
+        r'\bthird eye\b',
+        r'\bvibrational stone\b',
+        r'\bcrystal healing\b',
     ]
 
     # 1. Phrontistery Rare English Words (Scholarly / Historical Dictionary)
@@ -1064,7 +1113,7 @@ def get_word_definitions_for_aw_check(word, allow_online=True):
         pass
 
     # 3. If no full definition or if only proper noun, fetch online Wiktionary definitions (fast bounded lookup)
-    needs_online = allow_online and ((not defs) or all(d.startswith('(Proper noun)') for d in defs))
+    needs_online = allow_online and ((not defs) or all(d.startswith('(Proper noun)') or _AW_DISALLOWED_PROPER_NOUN_REGEX.search(d) for d in defs))
     if needs_online:
         import urllib.request, urllib.parse, json, html
         # Try lowercase first (most common) then title-cased if needed
@@ -1083,34 +1132,39 @@ def get_word_definitions_for_aw_check(word, allow_online=True):
                     if isinstance(api_data, dict) and "en" in api_data:
                         for item in api_data["en"]:
                             pos = item.get("partOfSpeech", "")
+                            if pos.lower() == 'proper noun':
+                                continue
                             for d in item.get("definitions", []):
                                 raw = d.get("definition", "")
                                 text = re.sub(r"<[^>]+>", "", raw)
                                 text = re.sub(r"\s+", " ", text).strip()
                                 text = html.unescape(text)
-                                if text and text not in seen:
-                                    seen.add(text)
-                                    defs.append(f"({pos}) {text}" if pos else text)
+                                if text:
+                                    if _AW_DISALLOWED_PROPER_NOUN_REGEX.search(text):
+                                        continue
+                                    if text not in seen:
+                                        seen.add(text)
+                                        defs.append(f"({pos}) {text}" if pos else text)
                         if defs:
                             break
             except Exception:
                 pass
 
         # Check morphological suffix derivation from known dictionary words (e.g. plurals -S/-ES/-IES, conjugations -ED/-ING)
-        if (not defs) or all(d.startswith('(Proper noun)') for d in defs):
+        if (not defs) or all(d.startswith('(Proper noun)') or _AW_DISALLOWED_PROPER_NOUN_REGEX.search(d) for d in defs):
             try:
                 morph_def = format_resolved_definition(w_upper)
-                if morph_def and morph_def not in seen:
+                if morph_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(morph_def) and morph_def not in seen:
                     defs.append(morph_def)
                     seen.add(morph_def)
             except Exception:
                 pass
 
         # If Wiktionary API & morphology returned no definitions or only proper nouns, search web sources
-        if allow_online and ((not defs) or all(d.startswith('(Proper noun)') for d in defs)):
+        if allow_online and ((not defs) or all(d.startswith('(Proper noun)') or _AW_DISALLOWED_PROPER_NOUN_REGEX.search(d) for d in defs)):
             try:
                 web_def = lookup_web_search_definition(w_upper)
-                if web_def and web_def not in seen:
+                if web_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(web_def) and web_def not in seen:
                     defs.append(web_def)
                     seen.add(web_def)
             except Exception:
@@ -1141,6 +1195,9 @@ def check_disallowed_direct_def(defn):
     m = _AW_DISALLOWED_OB_REGEX.search(defn)
     if m:
         return ('an obsolete word', defn)
+    m = _AW_DISALLOWED_PROPER_NOUN_REGEX.search(defn)
+    if m:
+        return ('a proper noun', defn)
     return None
 
 def check_word_disallowed_with_reason(word, visited=None, depth=0, allow_online=True):
@@ -6673,12 +6730,16 @@ def lookup_raw_definition_online(word_upper):
                         def_parts = []
                         for item in entries:
                             part_of_speech = item.get("partOfSpeech", "")
+                            if part_of_speech.lower() == 'proper noun':
+                                continue
                             for d in item.get("definitions", []):
                                 text = d.get("definition", "")
                                 text = re.sub(r"<[^>]+>", "", text)
                                 text = re.sub(r"\s+", " ", text).strip()
                                 text = html.unescape(text)
                                 if text:
+                                    if _AW_DISALLOWED_PROPER_NOUN_REGEX.search(text):
+                                        continue
                                     if part_of_speech.lower() == 'noun':
                                         def_parts.append(text)
                                     else:
@@ -6689,7 +6750,9 @@ def lookup_raw_definition_online(word_upper):
 
         result = _fetch_wiktionary_term(word_upper.lower())
         if not result and word_upper.lower() != word_upper.capitalize():
-            result = _fetch_wiktionary_term(word_upper.capitalize())
+            cap_res = _fetch_wiktionary_term(word_upper.capitalize())
+            if cap_res and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(cap_res):
+                result = cap_res
 
         # If definition is a trivial letter-case pointer (e.g. "Alternative letter-case form of Malayophobia"),
         # resolve it immediately to the target's elaborate definition!
@@ -7047,6 +7110,13 @@ def format_resolved_definition(word_upper, visited=None):
     raw = get_definition_cached_or_online_with_guess(word_upper)
     if not raw:
         return None
+
+    if _AW_DISALLOWED_PROPER_NOUN_REGEX.search(raw):
+        web_def = lookup_web_search_definition(word_upper)
+        if web_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(web_def):
+            raw = web_def
+        else:
+            return None
 
     # Strip any leading (noun) from raw and deduplicate
     raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
