@@ -11298,7 +11298,8 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
     }
 }
 
-.full-list-item.jump-target-pulse {
+.full-list-item.jump-target-pulse,
+.seq-word-row.jump-target-pulse td {
     animation: jumpTargetGlow 2.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 4px;
     position: relative;

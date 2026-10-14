@@ -281,6 +281,11 @@ window.showTool = function(toolId) {
             }, 30);
         }
     }
+    if (toolId === 'sequence') {
+        if (typeof window.restoreSequencePosition === 'function') {
+            window.restoreSequencePosition();
+        }
+    }
     if (window._savedToolScrollPositions && typeof window._savedToolScrollPositions[toolId] === 'number') {
         const targetPaneEl = document.getElementById(`tool-${toolId}`);
         if (targetPaneEl) {
@@ -431,6 +436,10 @@ window.toolsGoBack = function() {
             if (workOnScroll && typeof window._savedWorkOnScrollTop === 'number') {
                 workOnScroll.scrollTop = window._savedWorkOnScrollTop;
             }
+        } else if (originTool === 'sequence') {
+            if (typeof window.restoreSequencePosition === 'function') {
+                window.restoreSequencePosition();
+            }
         }
         return;
     }
@@ -444,6 +453,11 @@ window.toolsGoBack = function() {
         } else if (curId === 'lists') {
             const listScrollArea = document.getElementById('main-list-results');
             if (listScrollArea) window._savedListsScrollTop = listScrollArea.scrollTop;
+        } else if (curId === 'sequence') {
+            const seqScroll = document.getElementById('seq-list-results');
+            if (seqScroll) window._savedSequenceScrollTop = seqScroll.scrollTop;
+            const toolsContent = document.querySelector('#page-tools .tools-content');
+            if (toolsContent) window._savedSequenceToolsContentScrollTop = toolsContent.scrollTop;
         }
     }
     if (typeof window.resetToolsTab === 'function') {
@@ -6312,6 +6326,17 @@ function setupSequenceTool() {
             if (e.key === 'Enter') runSequenceSearch();
         });
     }
+
+    const toolsContent = document.querySelector('#page-tools .tools-content');
+    if (toolsContent && !toolsContent._seqScrollBound) {
+        toolsContent._seqScrollBound = true;
+        toolsContent.addEventListener('scroll', () => {
+            const activePane = document.querySelector('#page-tools .tool-pane.active');
+            if (activePane && activePane.id === 'tool-sequence' && toolsContent.scrollTop > 0) {
+                window._savedSequenceToolsContentScrollTop = toolsContent.scrollTop;
+            }
+        }, { passive: true });
+    }
 }
 
 async function runSequenceSearch() {
@@ -6373,7 +6398,7 @@ async function runSequenceSearch() {
 
         // Clickable words for Sequence search
         html += words.map(w => `
-            <tr><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <tr class="seq-word-row" data-word="${w}"><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace;">${w}</span>
             </td></tr>
         `).join('');
@@ -6391,11 +6416,106 @@ async function runSequenceSearch() {
         resultsContainer.innerHTML = html;
         initCustomScrollbarForElement('seq-list-results', 'seq-scrollbar-track', 'seq-scrollbar-thumb');
 
+        const seqScrollArea = document.getElementById('seq-list-results');
+        if (seqScrollArea) {
+            seqScrollArea.addEventListener('scroll', () => {
+                if (seqScrollArea.scrollTop > 0) {
+                    window._savedSequenceScrollTop = seqScrollArea.scrollTop;
+                }
+            }, { passive: true });
+        }
+
     } catch (err) {
         console.error("Sequence search failed:", err);
         resultsContainer.innerHTML = '<div style="padding:20px; color:#f43f5e;">Search failed.</div>';
     }
 }
+
+function restoreSequencePosition() {
+    const seqScroll = document.getElementById('seq-list-results');
+    const toolsContent = document.querySelector('#page-tools .tools-content');
+    const seqPane = document.getElementById('tool-sequence');
+
+    const wordToHighlight = window._savedSequenceWord || null;
+    const savedScrollTop = (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : null;
+    const savedToolsContentScrollTop = (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : null;
+
+    if (!wordToHighlight && savedScrollTop === null && savedToolsContentScrollTop === null) return;
+
+    let targetRow = null;
+    if (wordToHighlight && seqScroll) {
+        try {
+            targetRow = seqScroll.querySelector(`.seq-word-row[data-word="${CSS.escape(wordToHighlight)}"]`) ||
+                        seqScroll.querySelector(`[data-word="${CSS.escape(wordToHighlight)}"]`);
+            if (!targetRow) {
+                const links = seqScroll.querySelectorAll('.clickable-word-link');
+                for (const link of links) {
+                    if (link.textContent.trim().toUpperCase() === wordToHighlight) {
+                        targetRow = link.closest('tr') || link;
+                        break;
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    let targetScroll = null;
+    if (savedScrollTop !== null && savedScrollTop >= 0) {
+        targetScroll = savedScrollTop;
+    } else if (targetRow && seqScroll) {
+        const rowHeight = targetRow.offsetHeight || targetRow.clientHeight || 28;
+        const containerHeight = seqScroll.clientHeight || 400;
+        const rowOffset = (targetRow.getBoundingClientRect().top - seqScroll.getBoundingClientRect().top) + seqScroll.scrollTop;
+        targetScroll = Math.max(0, rowOffset - (containerHeight / 2) + (rowHeight / 2));
+    }
+
+    if (targetRow) {
+        targetRow.classList.add('jump-target-pulse');
+        setTimeout(() => {
+            targetRow.classList.remove('jump-target-pulse');
+        }, 2500);
+    }
+
+    const performScroll = () => {
+        if (seqScroll && targetScroll !== null) {
+            seqScroll.scrollTop = targetScroll;
+            if (typeof seqScroll._updateCustomScrollbar === 'function') {
+                seqScroll._updateCustomScrollbar();
+            } else if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('seq-list-results', 'seq-scrollbar-track', 'seq-scrollbar-thumb');
+            }
+        }
+        if (toolsContent && savedToolsContentScrollTop !== null && savedToolsContentScrollTop >= 0) {
+            toolsContent.scrollTop = savedToolsContentScrollTop;
+        }
+        if (seqPane && window._savedToolScrollPositions && typeof window._savedToolScrollPositions['sequence'] === 'number') {
+            seqPane.scrollTop = window._savedToolScrollPositions['sequence'];
+        }
+
+        if (targetRow) {
+            const rect = targetRow.getBoundingClientRect();
+            const isInView = (rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight));
+            if (!isInView && typeof targetRow.scrollIntoView === 'function') {
+                targetRow.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
+        }
+    };
+
+    performScroll();
+    requestAnimationFrame(performScroll);
+    setTimeout(performScroll, 30);
+    setTimeout(performScroll, 100);
+    setTimeout(performScroll, 250);
+    setTimeout(performScroll, 450);
+
+    if (wordToHighlight) {
+        setTimeout(() => {
+            window._savedSequenceWord = null;
+        }, 1200);
+    }
+}
+window.restoreSequencePosition = restoreSequencePosition;
+
 
 // --- Manual Tool Logic ---
 
@@ -8976,6 +9096,12 @@ window.saveCurrentToolsPosition = function (wordClicked = null) {
         } else if (curId === 'combo') {
             const comboScroll = document.getElementById('combo-scroll-container');
             if (comboScroll) window._savedComboScrollTop = comboScroll.scrollTop;
+        } else if (curId === 'sequence') {
+            const seqScroll = document.getElementById('seq-list-results');
+            if (seqScroll && seqScroll.scrollTop > 0) window._savedSequenceScrollTop = seqScroll.scrollTop;
+            const toolsContent = document.querySelector('#page-tools .tools-content');
+            if (toolsContent && toolsContent.scrollTop > 0) window._savedSequenceToolsContentScrollTop = toolsContent.scrollTop;
+            if (wordClicked) window._savedSequenceWord = String(wordClicked).trim().toUpperCase();
         }
     }
 
@@ -9389,11 +9515,23 @@ window.lookupWord = function (word, event) {
     }
     const evt = event || window.event;
     const target = evt ? (evt.target || evt.currentTarget) : null;
-    if (target && target.closest && target.closest('#tool-work-on')) {
-        const workOnScroll = document.getElementById('work-on-table-scroll');
-        if (workOnScroll) {
-            window._savedWorkOnScrollTop = workOnScroll.scrollTop;
-            window._savedWorkOnWord = String(word).trim().toUpperCase();
+    if (target && target.closest) {
+        if (target.closest('#tool-work-on')) {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll) {
+                window._savedWorkOnScrollTop = workOnScroll.scrollTop;
+                window._savedWorkOnWord = String(word).trim().toUpperCase();
+            }
+        } else if (target.closest('#tool-sequence')) {
+            const seqScroll = document.getElementById('seq-list-results');
+            if (seqScroll) {
+                window._savedSequenceScrollTop = seqScroll.scrollTop;
+            }
+            const toolsContent = document.querySelector('#page-tools .tools-content');
+            if (toolsContent) {
+                window._savedSequenceToolsContentScrollTop = toolsContent.scrollTop;
+            }
+            window._savedSequenceWord = String(word).trim().toUpperCase();
         }
     }
     window.showWordDefinitionPopup(word, event);
