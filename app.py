@@ -2938,6 +2938,20 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_posts_user ON forum_posts(user_id)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_comments_user ON forum_comments(user_id)')
         
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS forum_thread_bookmarks (
+                user_id INTEGER NOT NULL,
+                post_id INTEGER NOT NULL,
+                target_post_number INTEGER NOT NULL,
+                target_comment_id INTEGER,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, post_id),
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(post_id) REFERENCES forum_posts(id) ON DELETE CASCADE
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forum_bookmarks_user ON forum_thread_bookmarks(user_id)')
+        
         # Initialize categories if they don't exist
         categories = [
             ("General", "General discussion about Morpheme."),
@@ -9366,6 +9380,7 @@ def get_forum_posts(category_id):
         for r in rows:
             d = dict(r)
             d['is_pinned'] = bool(d.get('is_pinned', 0))
+            d['is_closed'] = (d.get('comment_count', 0) >= 499)
             urls = parse_image_urls(d.get('image_url'))
             d['image_urls'] = urls
             d['image_url'] = urls[0] if urls else None
@@ -9519,11 +9534,30 @@ def get_forum_post_detail(post_id):
                     'title': r['title']
                 }
 
+        user_bookmark = None
+        if 'user_id' in session and not session.get('is_guest'):
+            bm_row = conn.execute('''
+                SELECT target_post_number, target_comment_id
+                FROM forum_thread_bookmarks
+                WHERE user_id = ? AND post_id = ?
+            ''', (session['user_id'], post_id)).fetchone()
+            if bm_row:
+                user_bookmark = {
+                    'target_post_number': bm_row['target_post_number'],
+                    'target_comment_id': bm_row['target_comment_id']
+                }
+
+        is_closed = (len(comments_list) >= 499)
+        post_dict['is_closed'] = is_closed
+        post_dict['total_posts'] = 1 + len(comments_list)
+
         response_data = {
             'post': post_dict,
             'comments': comments_list,
             'post_lookup': post_lookup,
-            'sorting': 'newest_first'
+            'sorting': 'newest_first',
+            'user_bookmark': user_bookmark,
+            'is_closed': is_closed
         }
         res = jsonify(response_data)
         res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -9626,6 +9660,64 @@ def pin_forum_post(post_id):
         return jsonify({'success': True, 'is_pinned': bool(new_pinned)})
     except Exception as e:
         print(f"Error toggling forum post pin: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/forum/post/<int:post_id>/bookmark', methods=['POST'])
+def toggle_forum_bookmark(post_id):
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'error': 'Registered users only'}), 403
+
+    user_id = session['user_id']
+    data = request.get_json(silent=True) or request.form or {}
+    try:
+        target_post_number = int(data.get('target_post_number', 1))
+    except (ValueError, TypeError):
+        target_post_number = 1
+
+    target_comment_id = data.get('target_comment_id')
+    try:
+        target_comment_id = int(target_comment_id) if target_comment_id is not None and str(target_comment_id).strip() != '' else None
+    except (ValueError, TypeError):
+        target_comment_id = None
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        # Check if thread exists
+        thread = conn.execute('SELECT id FROM forum_posts WHERE id = ?', (post_id,)).fetchone()
+        if not thread:
+            return jsonify({'error': 'Thread not found'}), 404
+
+        # Check existing bookmark
+        existing = conn.execute('''
+            SELECT target_post_number, target_comment_id
+            FROM forum_thread_bookmarks
+            WHERE user_id = ? AND post_id = ?
+        ''', (user_id, post_id)).fetchone()
+
+        if existing and existing['target_post_number'] == target_post_number and existing['target_comment_id'] == target_comment_id:
+            # Clicking the already-bookmarked post removes the bookmark
+            conn.execute('DELETE FROM forum_thread_bookmarks WHERE user_id = ? AND post_id = ?', (user_id, post_id))
+            conn.commit()
+            return jsonify({'success': True, 'bookmarked': False, 'message': 'Bookmark removed'})
+        else:
+            # Set or update bookmark
+            conn.execute('''
+                INSERT OR REPLACE INTO forum_thread_bookmarks (user_id, post_id, target_post_number, target_comment_id, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (user_id, post_id, target_post_number, target_comment_id))
+            conn.commit()
+            return jsonify({
+                'success': True,
+                'bookmarked': True,
+                'target_post_number': target_post_number,
+                'target_comment_id': target_comment_id,
+                'message': 'Bookmark saved'
+            })
+    except Exception as e:
+        print(f"Error saving forum thread bookmark: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
@@ -9755,6 +9847,11 @@ def create_forum_comment():
         ''', (post_id,)).fetchone()
         if not p_row:
             return jsonify({'error': 'Thread not found'}), 404
+
+        # Enforce 500-post thread limit: 1 root post + 499 comments = 500 total posts
+        comment_count = conn.execute('SELECT COUNT(*) FROM forum_comments WHERE post_id = ?', (post_id,)).fetchone()[0]
+        if comment_count >= 499:
+            return jsonify({'error': 'This thread has reached the maximum limit of 500 posts and is closed to further replies.'}), 400
 
         cat_id = p_row[1] or 1
         cat_name = p_row[3] or "General"

@@ -422,6 +422,18 @@ const Forum = {
             commentsRefreshBtn.addEventListener('click', () => this.refreshCurrentThread(commentsRefreshBtn));
         }
 
+        // Jump to Bookmark button
+        const jumpBookmarkBtn = document.getElementById('forum-jump-bookmark-btn');
+        if (jumpBookmarkBtn) {
+            jumpBookmarkBtn.addEventListener('click', () => this.jumpToBookmark());
+        }
+
+        // Scroll to Bottom button
+        const scrollBottomBtn = document.getElementById('forum-scroll-bottom-btn');
+        if (scrollBottomBtn) {
+            scrollBottomBtn.addEventListener('click', () => this.scrollToBottom());
+        }
+
         // Back to list button
         const backToListBtn = document.getElementById('forum-back-to-list');
         if (backToListBtn) {
@@ -1114,11 +1126,13 @@ const Forum = {
             const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
             const numBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
             const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
+            const isClosed = Boolean(post.is_closed || (!isComment && (1 + (post.comment_count || 0)) >= 500));
+            const closedBadge = isClosed ? `<span class="forum-closed-badge">🔒 CLOSED</span>` : '';
             
             return `
                 <div class="forum-post-card ${post.is_pinned ? 'is-pinned' : ''}" data-id="${postId}">
                     <div class="post-card-header">
-                        <span class="post-card-title">${pinnedBadge}${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
+                        <span class="post-card-title">${pinnedBadge}${closedBadge}${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
                             <span>${isComment ? 'Replied' : 'Posted'} by <strong class="forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</strong></span>
                             <span>${dateStr}</span>
@@ -1397,20 +1411,32 @@ const Forum = {
             return `<span class="forum-post-number-badge has-responses" data-resp-num="${num}" role="button" tabindex="0" title="View ${resps.length} ${resps.length === 1 ? 'response' : 'responses'} to #${num}">#${num} <span class="forum-resp-count">💬 ${resps.length}</span></span>`;
         };
 
+        const isClosed = Boolean(data.is_closed || (1 + comments.length) >= 500);
+        const closedBadge = isClosed ? `<span class="forum-closed-badge">🔒 CLOSED</span>` : '';
         const postNumBadge = buildNumBadge(post.post_number);
         const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
+
+        this.currentThreadBookmark = data.user_bookmark || this.getGuestBookmark(post.id) || null;
+        const isRootBookmarked = Boolean(
+            this.currentThreadBookmark &&
+            !this.currentThreadBookmark.target_comment_id &&
+            (this.currentThreadBookmark.target_post_number === (post.post_number || 1))
+        );
 
         detailEl.innerHTML = `
             <div id="forum-post-root" data-post-number="${post.post_number || 1}">
                 <div class="post-detail-header">
-                    <h1 class="post-detail-title">${pinnedBadge}${postNumBadge}${this.escapeHtml(post.title)}</h1>
+                    <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${postNumBadge}${this.escapeHtml(post.title)}</h1>
                     <div class="post-author-box">
                         <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
                         <div class="author-info">
                             <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
                             <span class="post-date">${dateStr}</span>
                         </div>
-                        <button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
+                        <div class="post-author-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="forum-bookmark-post-btn ${isRootBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-post-number="${post.post_number || 1}" title="${isRootBookmarked ? 'Remove bookmark' : 'Bookmark this post'}">🔖 <span class="bm-label">${isRootBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
+                            ${!isClosed ? `<button class="forum-reply-btn forum-post-reply-btn" data-username="${this.escapeHtml(post.username)}" data-post-number="${post.post_number || 1}">↩ Reply</button>` : ''}
+                        </div>
                     </div>
                 </div>
                 <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
@@ -1477,6 +1503,12 @@ const Forum = {
 
                     const commentNumBadge = buildNumBadge(c.post_number);
 
+                    const isCommentBookmarked = Boolean(
+                        this.currentThreadBookmark &&
+                        (this.currentThreadBookmark.target_comment_id === c.id ||
+                         (!this.currentThreadBookmark.target_comment_id && this.currentThreadBookmark.target_post_number === c.post_number))
+                    );
+
                     return `
                         <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
                             <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
@@ -1485,10 +1517,13 @@ const Forum = {
                                     ${commentNumBadge}
                                     <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
                                     <span class="comment-date">${cDate}</span>
-                                    <button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}" style="margin-left: auto;">↩ Reply</button>
-                                    ${window.currentUserIsMod ? `
-                                        <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 8px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
-                                    ` : ''}
+                                    <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                                        <button type="button" class="forum-bookmark-post-btn ${isCommentBookmarked ? 'active' : ''}" data-post-id="${post.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}" title="${isCommentBookmarked ? 'Remove bookmark' : 'Bookmark this reply'}">🔖 <span class="bm-label">${isCommentBookmarked ? 'Bookmarked' : 'Bookmark'}</span></button>
+                                        ${!isClosed ? `<button class="forum-reply-btn forum-comment-reply-btn" data-username="${this.escapeHtml(c.username)}" data-post-number="${c.post_number || post.post_number || 1}">↩ Reply</button>` : ''}
+                                        ${window.currentUserIsMod ? `
+                                            <button class="forum-comment-delete-btn" data-id="${c.id}" style="margin-left: 4px; background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.75rem; opacity: 0.6;">Delete</button>
+                                        ` : ''}
+                                    </div>
                                 </div>
                                 <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
                                 ${cImagesHtml}
@@ -1560,8 +1595,216 @@ const Forum = {
             });
         });
 
-        const isGuest = window.currentUserIsGuest || (window.currentUser === null);
-        document.getElementById('forum-comment-form-container').classList.toggle('hidden', isGuest);
+        // Closed thread banner & comment form visibility
+        const commentFormContainer = document.getElementById('forum-comment-form-container');
+        let closedBanner = document.getElementById('forum-thread-closed-banner');
+        if (isClosed) {
+            if (commentFormContainer) commentFormContainer.classList.add('hidden');
+            if (!closedBanner) {
+                closedBanner = document.createElement('div');
+                closedBanner.id = 'forum-thread-closed-banner';
+                closedBanner.className = 'forum-thread-closed-banner';
+                closedBanner.innerHTML = '🔒 This thread has reached the maximum of 500 posts and is closed to further replies.';
+                const commentsSec = document.querySelector('.forum-comments-section');
+                if (commentsSec) {
+                    commentsSec.insertBefore(closedBanner, document.querySelector('.comments-header'));
+                }
+            } else {
+                closedBanner.style.display = 'flex';
+            }
+        } else {
+            if (closedBanner) closedBanner.style.display = 'none';
+            const isGuest = window.currentUserIsGuest || (window.currentUser === null);
+            if (commentFormContainer) {
+                commentFormContainer.classList.toggle('hidden', isGuest);
+            }
+        }
+
+        // Attach listeners for bookmark buttons
+        const allBmBtns = [
+            ...detailEl.querySelectorAll('.forum-bookmark-post-btn'),
+            ...commentsListEl.querySelectorAll('.forum-bookmark-post-btn')
+        ];
+        allBmBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pId = parseInt(btn.getAttribute('data-post-id'), 10);
+                const pNum = parseInt(btn.getAttribute('data-post-number'), 10);
+                const cIdRaw = btn.getAttribute('data-comment-id');
+                const cId = cIdRaw ? parseInt(cIdRaw, 10) : null;
+                this.handleBookmarkClick(pId, pNum, cId);
+            });
+        });
+    },
+
+    getGuestBookmark: function (postId) {
+        try {
+            const raw = localStorage.getItem('morpheme_bm_' + postId);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    setGuestBookmark: function (postId, bm) {
+        try {
+            if (bm) {
+                localStorage.setItem('morpheme_bm_' + postId, JSON.stringify(bm));
+            } else {
+                localStorage.removeItem('morpheme_bm_' + postId);
+            }
+        } catch (e) {}
+    },
+
+    handleBookmarkClick: async function (postId, postNumber, commentId) {
+        const isCurrent = Boolean(
+            this.currentThreadBookmark &&
+            this.currentThreadBookmark.target_post_number === postNumber &&
+            ((this.currentThreadBookmark.target_comment_id || null) === (commentId || null))
+        );
+
+        if (!window.currentUserId || window.isGuestUser) {
+            // Guest mode via localStorage
+            if (isCurrent) {
+                this.currentThreadBookmark = null;
+                this.setGuestBookmark(postId, null);
+                this.updateBookmarkButtonStates();
+                this.showToast('Bookmark removed');
+            } else {
+                this.currentThreadBookmark = { target_post_number: postNumber, target_comment_id: commentId || null };
+                this.setGuestBookmark(postId, this.currentThreadBookmark);
+                this.updateBookmarkButtonStates();
+                this.showToast('Bookmark saved');
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/forum/post/${postId}/bookmark`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    target_post_number: postNumber,
+                    target_comment_id: commentId || null
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (data.bookmarked) {
+                    this.currentThreadBookmark = {
+                        target_post_number: data.target_post_number,
+                        target_comment_id: data.target_comment_id || null
+                    };
+                    this.showToast('Bookmark saved');
+                } else {
+                    this.currentThreadBookmark = null;
+                    this.showToast('Bookmark removed');
+                }
+                this.updateBookmarkButtonStates();
+            } else {
+                this.showToast(data.error || 'Failed to update bookmark');
+            }
+        } catch (e) {
+            console.error('Error updating bookmark:', e);
+            this.showToast('Failed to update bookmark');
+        }
+    },
+
+    updateBookmarkButtonStates: function () {
+        const bm = this.currentThreadBookmark;
+        document.querySelectorAll('.forum-bookmark-post-btn').forEach(btn => {
+            const pnum = parseInt(btn.getAttribute('data-post-number'), 10);
+            const cidRaw = btn.getAttribute('data-comment-id');
+            const cid = cidRaw ? parseInt(cidRaw, 10) : null;
+
+            let isActive = false;
+            if (bm) {
+                if (bm.target_comment_id && cid) {
+                    isActive = (bm.target_comment_id === cid);
+                } else if (!bm.target_comment_id && !cid) {
+                    isActive = (bm.target_post_number === pnum);
+                } else if (!bm.target_comment_id && bm.target_post_number === pnum) {
+                    isActive = true;
+                }
+            }
+
+            if (isActive) {
+                btn.classList.add('active');
+                const label = btn.querySelector('.bm-label');
+                if (label) label.textContent = 'Bookmarked';
+                btn.title = 'Remove bookmark';
+            } else {
+                btn.classList.remove('active');
+                const label = btn.querySelector('.bm-label');
+                if (label) label.textContent = 'Bookmark';
+                btn.title = cid ? 'Bookmark this reply' : 'Bookmark this post';
+            }
+        });
+    },
+
+    jumpToBookmark: function () {
+        const bm = this.currentThreadBookmark;
+        if (!bm) {
+            this.showToast('No bookmark saved for this thread yet. Click 🔖 Bookmark on any post to save your spot.');
+            return;
+        }
+
+        let targetEl = null;
+        if (bm.target_comment_id) {
+            targetEl = document.getElementById('forum-comment-' + bm.target_comment_id);
+        }
+        if (!targetEl && bm.target_post_number) {
+            targetEl = document.querySelector(`.forum-comment[data-post-number="${bm.target_post_number}"]`);
+            if (!targetEl) {
+                const root = document.getElementById('forum-post-root');
+                if (root && parseInt(root.getAttribute('data-post-number'), 10) === bm.target_post_number) {
+                    targetEl = root;
+                }
+            }
+        }
+        if (!targetEl && !bm.target_comment_id) {
+            targetEl = document.getElementById('forum-post-root');
+        }
+
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.classList.remove('forum-highlight-pulse');
+            void targetEl.offsetWidth; // Force reflow
+            targetEl.classList.add('forum-highlight-pulse');
+            setTimeout(() => {
+                targetEl.classList.remove('forum-highlight-pulse');
+            }, 2500);
+        } else {
+            this.showToast('Bookmarked post not found in thread.');
+        }
+    },
+
+    scrollToBottom: function () {
+        const scrollBody = document.querySelector('#forum-view-post .forum-view-scroll-body') || document.querySelector('.forum-view-scroll-body');
+        const commentsList = document.getElementById('forum-comments-list');
+        if (commentsList && commentsList.lastElementChild) {
+            commentsList.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else if (scrollBody) {
+            scrollBody.scrollTo({ top: scrollBody.scrollHeight, behavior: 'smooth' });
+        }
+    },
+
+    showToast: function (msg) {
+        let toast = document.getElementById('forum-toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'forum-toast-notification';
+            toast.style.cssText = 'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.95); color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 0.86rem; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); z-index: 10000; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; opacity: 0;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        clearTimeout(this._toastTimeout);
+        this._toastTimeout = setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(10px)';
+        }, 2400);
     },
 
     handleReplyToUser: function (username, postNumber, isThread) {

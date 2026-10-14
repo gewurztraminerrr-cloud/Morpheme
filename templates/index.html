@@ -180,7 +180,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=1791098000">
     <link rel="stylesheet" href="/css/play.css?v=1791102010">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
-    <link rel="stylesheet" href="/css/forum.css?v=1791110000">
+    <link rel="stylesheet" href="/css/forum.css?v=1791130000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
@@ -3874,8 +3874,16 @@
                                     <div class="comments-header-title-box">
                                         <h3 style="margin: 0;">Discussion</h3>
                                         <span id="forum-comment-count" class="comment-badge">0 comments</span>
-                                        <button id="forum-refresh-comments-btn" class="forum-action-btn secondary">
-                                            <span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span> Refresh
+                                        <button id="forum-refresh-comments-btn" class="forum-action-btn secondary forum-icon-btn" title="Refresh comments" type="button">
+                                            <span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span>
+                                        </button>
+                                    </div>
+                                    <div class="comments-header-actions-box">
+                                        <button id="forum-jump-bookmark-btn" class="forum-action-btn secondary forum-thread-header-btn" title="Jump to bookmarked post" type="button">
+                                            🔖 Bookmark
+                                        </button>
+                                        <button id="forum-scroll-bottom-btn" class="forum-action-btn secondary forum-thread-header-btn" title="Scroll to bottom of discussion" type="button">
+                                            ⬇ Scroll to Bottom
                                         </button>
                                     </div>
                                 </div>
@@ -9711,7 +9719,7 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791095000"></script>
-    <script src="/js/forum.js?v=1791120001"></script>
+    <script src="/js/forum.js?v=1791130000"></script>
     <script src="/js/app.js?v=1791102021"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
     <script src="/js/play.js?v=1791100013"></script>
