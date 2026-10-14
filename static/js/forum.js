@@ -294,11 +294,15 @@ const Forum = {
     selectedPostFiles: [],
     selectedCommentFiles: [],
     initialized: false,
+    friends: [],
+    friendsLoaded: false,
+    activeMentionState: null,
 
     init: async function () {
         if (this.initialized) return;
         console.log("[Forum] Initializing forum module...");
         this.setupEventListeners();
+        this.loadFriends();
         await this.loadCategories();
         this.resetToEmptyState();
         this.initialized = true;
@@ -597,6 +601,9 @@ const Forum = {
                 if (e.key === 'Enter') this.handleUserSearch();
             });
         }
+
+        // Setup mention autocomplete
+        this.initMentionAutocomplete();
     },
 
     addFiles: function (type, files) {
@@ -787,6 +794,277 @@ const Forum = {
         } catch (e) {}
     },
 
+    loadFriends: async function () {
+        if (!window.currentUser || window.currentUserIsGuest) {
+            this.friends = [];
+            this.friendsLoaded = true;
+            return [];
+        }
+        try {
+            const res = await fetch('/api/friends/list');
+            if (res.ok) {
+                const data = await res.json();
+                this.friends = data.friends || [];
+                this.friendsLoaded = true;
+                return this.friends;
+            }
+        } catch (e) {
+            console.warn('[Forum] Failed to load friends for autocomplete:', e);
+        }
+        this.friendsLoaded = true;
+        return [];
+    },
+
+    initMentionAutocomplete: function () {
+        const targetIds = ['forum-post-content', 'forum-comment-input', 'forum-post-title'];
+        targetIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            el.addEventListener('input', () => this.handleMentionInput(el));
+            el.addEventListener('keydown', (e) => this.handleMentionKeydown(e, el));
+            el.addEventListener('click', () => this.handleMentionInput(el));
+        });
+
+        // Close mention popup when clicking outside
+        document.addEventListener('click', (e) => {
+            const popup = document.getElementById('forum-mention-popup');
+            if (!popup || popup.classList.contains('hidden')) return;
+            if (e.target.closest('#forum-mention-popup')) return;
+            if (targetIds.some(id => e.target.closest(`#${id}`))) return;
+            this.hideMentionPopup();
+        });
+
+        // Reposition on window resize or scroll
+        window.addEventListener('resize', () => {
+            if (this.activeMentionState && this.activeMentionState.inputEl) {
+                this.positionMentionPopup(this.activeMentionState.inputEl);
+            }
+        });
+        window.addEventListener('scroll', () => {
+            if (this.activeMentionState && this.activeMentionState.inputEl) {
+                this.positionMentionPopup(this.activeMentionState.inputEl);
+            }
+        }, true);
+    },
+
+    handleMentionInput: function (inputEl) {
+        if (!inputEl) return;
+        const val = inputEl.value;
+        const cursor = inputEl.selectionStart;
+        if (cursor === undefined || cursor === null) {
+            this.hideMentionPopup();
+            return;
+        }
+
+        const textBefore = val.slice(0, cursor);
+        // Match @ followed by username characters immediately before the cursor
+        const match = textBefore.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+        if (!match) {
+            this.hideMentionPopup();
+            return;
+        }
+
+        const query = match[1] || '';
+        const matchFull = match[0];
+        const atRelativePos = matchFull.indexOf('@');
+        const atIndex = (textBefore.length - matchFull.length) + atRelativePos;
+
+        if (!this.friendsLoaded) {
+            this.loadFriends().then(() => {
+                this.handleMentionInput(inputEl);
+            });
+            this.hideMentionPopup();
+            return;
+        }
+
+        if (!this.friends || this.friends.length === 0) {
+            this.hideMentionPopup();
+            return;
+        }
+
+        const queryLower = query.toLowerCase();
+        const matches = this.friends.filter(f => {
+            const u = (f.username || '').toLowerCase();
+            return u.startsWith(queryLower);
+        });
+
+        if (matches.length === 0) {
+            // No matching friends left: hide popup so user is messaging someone not on their friends list
+            this.hideMentionPopup();
+            return;
+        }
+
+        this.renderMentionPopup(matches, inputEl, atIndex, query);
+    },
+
+    handleMentionKeydown: function (e, inputEl) {
+        const popup = document.getElementById('forum-mention-popup');
+        if (!popup || popup.classList.contains('hidden') || !this.activeMentionState) {
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.updateMentionSelection(this.activeMentionState.selectedIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.updateMentionSelection(this.activeMentionState.selectedIndex - 1);
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            e.stopPropagation();
+            const selected = this.activeMentionState.matches[this.activeMentionState.selectedIndex];
+            if (selected) {
+                this.selectMentionFriend(selected);
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.hideMentionPopup();
+        }
+    },
+
+    renderMentionPopup: function (matches, inputEl, atIndex, query) {
+        const popup = document.getElementById('forum-mention-popup');
+        if (!popup) return;
+
+        this.activeMentionState = {
+            inputEl: inputEl,
+            atIndex: atIndex,
+            query: query,
+            matches: matches,
+            selectedIndex: 0
+        };
+
+        const itemsHtml = matches.map((friend, idx) => {
+            const uname = friend.username || '';
+            const queryLen = query.length;
+            const matchedPart = uname.slice(0, queryLen);
+            const remainingPart = uname.slice(queryLen);
+            const nameHtml = `<strong>${this.escapeHtml(matchedPart)}</strong>${this.escapeHtml(remainingPart)}`;
+
+            const initial = uname ? uname[0].toUpperCase() : '?';
+            const avatarStyle = friend.avatar_url ? `style="background-image: url('${friend.avatar_url}');"` : '';
+            const flagHtml = window.getFlagHtml ? window.getFlagHtml(friend.country_flag) : (friend.country_flag || '');
+            const onlineDot = friend.is_online ? '<span class="forum-mention-status-dot" title="Online"></span>' : '';
+
+            return `
+                <div class="forum-mention-item ${idx === 0 ? 'active' : ''}" data-index="${idx}" role="option">
+                    <div class="forum-mention-avatar" ${avatarStyle}>${friend.avatar_url ? '' : initial}</div>
+                    ${flagHtml ? `<span class="forum-mention-flag">${flagHtml}</span>` : ''}
+                    <span class="forum-mention-name">${nameHtml}</span>
+                    ${onlineDot}
+                </div>
+            `;
+        }).join('');
+
+        popup.innerHTML = `
+            <div class="forum-mention-header">
+                <span>Friends (${matches.length})</span>
+            </div>
+            <div class="forum-mention-list">
+                ${itemsHtml}
+            </div>
+        `;
+
+        const itemEls = popup.querySelectorAll('.forum-mention-item');
+        itemEls.forEach((el, idx) => {
+            const onSelect = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectMentionFriend(matches[idx]);
+            };
+            el.addEventListener('mousedown', onSelect);
+            el.addEventListener('touchstart', onSelect, { passive: false });
+            el.addEventListener('mouseenter', () => {
+                this.activeMentionState.selectedIndex = idx;
+                itemEls.forEach((it, i) => it.classList.toggle('active', i === idx));
+            });
+        });
+
+        this.positionMentionPopup(inputEl);
+        popup.classList.remove('hidden');
+    },
+
+    updateMentionSelection: function (newIndex) {
+        if (!this.activeMentionState) return;
+        const count = this.activeMentionState.matches.length;
+        if (count === 0) return;
+        const validIndex = ((newIndex % count) + count) % count;
+        this.activeMentionState.selectedIndex = validIndex;
+
+        const popup = document.getElementById('forum-mention-popup');
+        if (!popup) return;
+        const items = popup.querySelectorAll('.forum-mention-item');
+        items.forEach((item, idx) => {
+            const isActive = (idx === validIndex);
+            item.classList.toggle('active', isActive);
+            if (isActive) {
+                item.scrollIntoView({ block: 'nearest' });
+            }
+        });
+    },
+
+    selectMentionFriend: function (friend) {
+        if (!this.activeMentionState || !friend) return;
+        const { inputEl, atIndex, query } = this.activeMentionState;
+        const val = inputEl.value || '';
+        const cur = (inputEl.selectionStart !== undefined && inputEl.selectionStart !== null) 
+            ? inputEl.selectionStart 
+            : (atIndex + 1 + query.length);
+
+        const beforeAt = val.slice(0, atIndex);
+        const afterToken = val.slice(cur);
+        const insertion = `@${friend.username} `;
+
+        inputEl.value = beforeAt + insertion + afterToken;
+        const newCursorPos = beforeAt.length + insertion.length;
+        if (typeof inputEl.setSelectionRange === 'function') {
+            inputEl.setSelectionRange(newCursorPos, newCursorPos);
+        }
+        inputEl.focus();
+
+        // Trigger input event to update character counters
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+        this.hideMentionPopup();
+    },
+
+    positionMentionPopup: function (inputEl) {
+        const popup = document.getElementById('forum-mention-popup');
+        if (!popup || !inputEl) return;
+
+        const rect = inputEl.getBoundingClientRect();
+        const popupHeight = 220;
+        const margin = 6;
+
+        let top = rect.bottom + margin;
+        if (top + popupHeight > window.innerHeight && rect.top > popupHeight + margin) {
+            top = rect.top - popupHeight - margin;
+        }
+
+        const popupWidth = Math.min(280, window.innerWidth - 20);
+        let left = rect.left;
+        if (left + popupWidth > window.innerWidth - 10) {
+            left = window.innerWidth - popupWidth - 10;
+        }
+        if (left < 10) left = 10;
+
+        popup.style.top = `${Math.max(10, top)}px`;
+        popup.style.left = `${left}px`;
+        popup.style.width = `${popupWidth}px`;
+    },
+
+    hideMentionPopup: function () {
+        const popup = document.getElementById('forum-mention-popup');
+        if (popup) {
+            popup.classList.add('hidden');
+        }
+        this.activeMentionState = null;
+    },
+
     loadCategories: async function () {
         try {
             // Calculate 12:00 AM (midnight) of today in the user's local/profile time
@@ -827,7 +1105,7 @@ const Forum = {
         let respondersHtml = '';
         if (window.currentUser && !window.currentUserIsGuest) {
             const isRespActive = (this.currentCategoryId === 'responders');
-            const hasNewResp = this.hasNewResponders && !isRespActive;
+            const hasNewResp = this.hasNewResponders;
             respondersHtml = `
                 <div class="forum-cat-item forum-responders-tab ${isRespActive ? 'active' : ''} ${hasNewResp ? 'has-new' : ''}" data-id="responders">
                     <span class="forum-cat-name">
@@ -889,17 +1167,7 @@ const Forum = {
         document.querySelectorAll('.forum-cat-item').forEach(item => {
             const isThis = item.getAttribute('data-id') === 'responders';
             item.classList.toggle('active', isThis);
-            if (isThis) {
-                item.classList.remove('has-new');
-            }
         });
-
-        // Clear gold state from top menu Forum button and "View Responses" tab
-        this.hasNewResponders = false;
-        const btnForums = document.getElementById('btn-forums');
-        if (btnForums) {
-            btnForums.classList.remove('has-new');
-        }
 
         // Notify server that user viewed responders
         try {
@@ -968,6 +1236,19 @@ const Forum = {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const responders = data.responders || [];
+
+            const hasUnclicked = responders.some(r => (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked));
+            this.hasNewResponders = hasUnclicked;
+            const respTab = document.querySelector('.forum-responders-tab');
+            if (respTab) {
+                if (hasUnclicked) respTab.classList.add('has-new');
+                else respTab.classList.remove('has-new');
+            }
+            const btnForums = document.getElementById('btn-forums');
+            if (btnForums) {
+                if (hasUnclicked) btnForums.classList.add('has-new');
+                else btnForums.classList.remove('has-new');
+            }
 
             if (responders.length === 0) {
                 postsList.innerHTML = `
@@ -1063,6 +1344,15 @@ const Forum = {
                         } catch (e) {
                             console.error('[Forum] Click responder error:', e);
                         }
+                    }
+
+                    const remainingGoldCards = postsList.querySelectorAll('.responder-card-gold').length;
+                    if (remainingGoldCards === 0) {
+                        this.hasNewResponders = false;
+                        const respTab = document.querySelector('.forum-responders-tab');
+                        if (respTab) respTab.classList.remove('has-new');
+                        const btnForums = document.getElementById('btn-forums');
+                        if (btnForums) btnForums.classList.remove('has-new');
                     }
 
                     if (postId) {
@@ -1640,6 +1930,7 @@ const Forum = {
         // Attach listeners for user-clickable links in post detail & comments
         const detailUserClickables = [
             ...detailEl.querySelectorAll('.post-author-box .forum-user-clickable'),
+            ...detailEl.querySelectorAll('.post-content .forum-user-clickable'),
             ...commentsListEl.querySelectorAll('.forum-user-clickable')
         ];
         detailUserClickables.forEach(el => {
@@ -2235,18 +2526,23 @@ const Forum = {
             return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="forum-clickable-link" onclick="event.stopPropagation();">${match}</a>`;
         });
 
-        // Regex for @username #NUM or &username #NUM
-        // Only convert #NUM to a link if that post number exists in this.currentPostLookup
-        const mentionRegex = /([@&][A-Za-z0-9_]+)\s*#(\d+)(\s*\(Thread\))?/g;
+        // Regex for @username (#NUM)? or &username (#NUM)?
+        // Match @username or &username with optional #NUM
+        const mentionRegex = /(?<![\w.])([@&][A-Za-z0-9_]+)(?:\s*#(\d+)(\s*\(Thread\))?)?/g;
         processed = processed.replace(mentionRegex, (match, tag, numStr, threadSuffix) => {
-            const lookupKey = `#${numStr}`;
-            const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
-            if (target) {
-                // References to the thread's opening message are labelled "(Thread)"
-                const label = target.type === 'post' ? ' (Thread)' : '';
-                return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}</span>`;
+            if (numStr) {
+                const lookupKey = `#${numStr}`;
+                const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
+                if (target) {
+                    // References to the thread's opening message are labelled "(Thread)"
+                    const label = target.type === 'post' ? ' (Thread)' : '';
+                    return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}</span>`;
+                }
+                return `<span class="forum-mention-tag">${tag} #${numStr}${threadSuffix || ''}</span>`;
             }
-            return `<span class="forum-mention-tag">${tag} #${numStr}${threadSuffix || ''}</span>`;
+            // Standalone @username or &username
+            const uname = tag.slice(1);
+            return `<span class="forum-mention-tag forum-user-clickable" data-username="${this.escapeHtml(uname)}" title="View ${this.escapeHtml(uname)}'s Profile">${tag}</span>`;
         });
 
         return processed;

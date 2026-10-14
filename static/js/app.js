@@ -1659,7 +1659,7 @@ async function checkForumActivity() {
         if (data.has_new) {
             if (btn) btn.classList.add('has-new');
             if (typeof Forum !== 'undefined') Forum.hasNewResponders = true;
-            if (respTab && (typeof Forum === 'undefined' || Forum.currentCategoryId !== 'responders')) {
+            if (respTab) {
                 respTab.classList.add('has-new');
             }
         } else {

@@ -9776,6 +9776,45 @@ def toggle_forum_bookmark(post_id):
     finally:
         conn.close()
 
+def extract_forum_mentions(text):
+    """
+    Extracts all (@username, post_number_or_none) mentions from text.
+    Matches:
+      @username #123
+      @username
+    Avoids matching email addresses (e.g. foo@bar.com).
+    """
+    if not text:
+        return []
+    pattern = re.compile(r'(?<![\w.])[@&]([A-Za-z0-9_]+)(?:\s*#(\d+))?')
+    matches = []
+    for m in pattern.finditer(text):
+        uname = m.group(1)
+        pnum = int(m.group(2)) if m.group(2) else None
+        matches.append((uname, pnum))
+    return matches
+
+def process_forum_mentions(conn, text, post_id, comment_id, cat_id, cat_name, fallback_post_num, responder_user_id, responder_username):
+    mentions = extract_forum_mentions(text)
+    if not mentions:
+        return
+    seen_recipients = set()
+    for target_uname, tagged_pnum in mentions:
+        u_row = conn.execute('SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)', (target_uname,)).fetchone()
+        if u_row:
+            recip_id = u_row[0]
+            recip_name = u_row[1]
+            if recip_id in seen_recipients or recip_id == responder_user_id:
+                continue
+            seen_recipients.add(recip_id)
+            actual_num = int(tagged_pnum) if tagged_pnum else fallback_post_num
+            conn.execute('''
+                INSERT INTO forum_responders (
+                    recipient_id, responder_id, post_id, comment_id,
+                    category_id, category_name, post_number,
+                    recipient_username, responder_username, content, is_clicked
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ''', (recip_id, responder_user_id, post_id, comment_id, cat_id, cat_name, actual_num, recip_name, responder_username, text))
 
 @app.route('/api/forum/posts', methods=['POST'])
 def create_forum_post():
@@ -9837,11 +9876,27 @@ def create_forum_post():
             INSERT INTO forum_posts (category_id, user_id, title, content, image_url, post_number)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (category_id, session['user_id'], title, content, image_url_db, cur_num))
+        new_post_id = cursor.lastrowid
         conn.execute('''
             UPDATE users SET total_forum_posts = COALESCE(total_forum_posts, 0) + 1 WHERE id = ?
         ''', (session['user_id'],))
+
+        # Tagging: Process any @mentions in new thread content
+        cat_name = cat_row[0] if cat_row else "General"
+        process_forum_mentions(
+            conn=conn,
+            text=content,
+            post_id=new_post_id,
+            comment_id=None,
+            cat_id=category_id,
+            cat_name=cat_name,
+            fallback_post_num=cur_num,
+            responder_user_id=session['user_id'],
+            responder_username=session.get('username') or 'Anonymous'
+        )
+
         conn.commit()
-        return jsonify({'success': True, 'post_id': cursor.lastrowid, 'post_number': cur_num})
+        return jsonify({'success': True, 'post_id': new_post_id, 'post_number': cur_num})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -9922,33 +9977,18 @@ def create_forum_comment():
             UPDATE users SET total_forum_posts = COALESCE(total_forum_posts, 0) + 1 WHERE id = ?
         ''', (session['user_id'],))
 
-        # Check for responder mentions: e.g. @username #123 or &username #123
-
-        mentions = re.findall(r'[@&]([A-Za-z0-9_]+)\s*#(\d+)', content)
-        responder_user_id = session['user_id']
-        responder_username = session.get('username') or 'Anonymous'
-
-        if mentions and p_row:
-            cat_name = p_row[3] or "General"
-            p_num = p_row[2] or 1
-            cat_id = p_row[1] or 1
-            seen_recipients = set()
-            for target_uname, tagged_pnum in mentions:
-                u_row = conn.execute('SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)', (target_uname,)).fetchone()
-                if u_row:
-                    recip_id = u_row[0]
-                    recip_name = u_row[1]
-                    if recip_id in seen_recipients or recip_id == responder_user_id:
-                        continue
-                    seen_recipients.add(recip_id)
-                    actual_num = int(tagged_pnum) if tagged_pnum else p_num
-                    conn.execute('''
-                        INSERT INTO forum_responders (
-                            recipient_id, responder_id, post_id, comment_id,
-                            category_id, category_name, post_number,
-                            recipient_username, responder_username, content, is_clicked
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-                    ''', (recip_id, responder_user_id, post_id, comment_id, cat_id, cat_name, actual_num, recip_name, responder_username, content))
+        # Check for responder mentions: e.g. @username or @username #123
+        process_forum_mentions(
+            conn=conn,
+            text=content,
+            post_id=post_id,
+            comment_id=comment_id,
+            cat_id=cat_id,
+            cat_name=cat_name,
+            fallback_post_num=comment_post_num,
+            responder_user_id=session['user_id'],
+            responder_username=session.get('username') or 'Anonymous'
+        )
 
         conn.commit()
         return jsonify({'success': True, 'comment_id': comment_id, 'post_number': comment_post_num})
@@ -9980,7 +10020,7 @@ def get_forum_responders():
 
         unseen_count = conn.execute('''
             SELECT COUNT(*) FROM forum_responders
-            WHERE recipient_id = ? AND timestamp > ?
+            WHERE recipient_id = ? AND (timestamp > ? OR is_clicked = 0)
         ''', (user_id, last_viewed)).fetchone()[0]
 
         return jsonify({
@@ -10004,7 +10044,7 @@ def get_forum_responders_status():
 
         cur_unseen = conn.execute('''
             SELECT COUNT(*) FROM forum_responders
-            WHERE recipient_id = ? AND timestamp > ?
+            WHERE recipient_id = ? AND (timestamp > ? OR is_clicked = 0)
         ''', (user_id, last_viewed)).fetchone()
         unseen_count = cur_unseen[0] if cur_unseen else 0
         return jsonify({'has_new': (unseen_count > 0), 'count': unseen_count})
