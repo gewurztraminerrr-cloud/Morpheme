@@ -175,9 +175,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1791120001" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1791098000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1791130030" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791120001">
-    <link rel="stylesheet" href="/css/lobby.css?v=1791098000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1791130030">
     <link rel="stylesheet" href="/css/play.css?v=1791130010">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791082000">
     <link rel="stylesheet" href="/css/forum.css?v=1791130020">
@@ -2315,7 +2315,7 @@
                     -webkit-backdrop-filter: none !important;
                 }
 
-                /* Premium Obsidian-Diamond Glass Journey Banner */
+                /* 3D Popping Obsidian-Diamond Glass Journey Banner */
                 .lobby-journey-message {
                     flex: 0 0 auto !important;
                     text-align: center;
@@ -2334,15 +2334,32 @@
                     box-sizing: border-box;
                     position: relative;
                     overflow: hidden;
-                    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 30, 0.78) 40%, rgba(10, 10, 18, 0.88) 100%);
-                    border: 1px solid rgba(255, 255, 255, 0.16);
-                    border-radius: 12px;
-                    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.5);
+                    background: radial-gradient(140% 120% at 50% 0%, #2a2c3a 0%, #151622 35%, #0a0b12 70%, #040407 100%) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.32) !important;
+                    border-bottom: 2px solid rgba(0, 0, 0, 0.95) !important;
+                    border-radius: 12px !important;
+                    box-shadow:
+                        inset 0 1px 1px rgba(255, 255, 255, 0.35),
+                        inset 1px 0 1px rgba(255, 255, 255, 0.08),
+                        inset -1px 0 1px rgba(255, 255, 255, 0.08),
+                        inset 0 -2px 3px rgba(0, 0, 0, 0.85),
+                        0 2px 0 #12131c,
+                        0 3.5px 0 #07070b,
+                        0 4.5px 0 #000000,
+                        0 6px 12px rgba(0, 0, 0, 0.75),
+                        0 14px 28px -2px rgba(0, 0, 0, 0.85),
+                        0 20px 40px -4px rgba(0, 0, 0, 0.6) !important;
                     backdrop-filter: blur(12px);
                     -webkit-backdrop-filter: blur(12px);
                     user-select: none;
                     -webkit-user-select: none;
                     z-index: 10;
+                }
+
+                #lobby-journey-banner {
+                    cursor: default !important;
+                    pointer-events: none !important;
                 }
 
                 /* Crisp specular top-edge bevel */
@@ -2402,15 +2419,15 @@
                     }
                 }
 
-                /* Pure luminous pearl-white typography (No glowing halo) */
+                /* 3D Popping Typography */
                 .lobby-journey-message span {
                     position: relative;
                     z-index: 3;
-                    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
+                    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 45%, #cbd5e1 80%, #94a3b8 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     color: #ffffff;
-                    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+                    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
                     font-weight: 800;
                     letter-spacing: 1.8px;
                     text-transform: uppercase;
@@ -2482,21 +2499,38 @@
 
                 button.lobby-journey-message {
                     font-family: inherit;
-                    cursor: pointer;
+                    cursor: pointer !important;
                     outline: none;
                     -webkit-tap-highlight-color: transparent;
-                    transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
                 }
                 button.lobby-journey-message:hover {
-                    border-color: rgba(167, 139, 250, 0.45);
-                    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 0 16px rgba(167, 139, 250, 0.25);
+                    transform: translateY(-1.5px) !important;
+                    border-color: rgba(167, 139, 250, 0.45) !important;
+                    border-top-color: rgba(255, 255, 255, 0.45) !important;
+                    box-shadow:
+                        inset 0 1px 1px rgba(255, 255, 255, 0.45),
+                        inset 1px 0 1px rgba(255, 255, 255, 0.12),
+                        inset -1px 0 1px rgba(255, 255, 255, 0.12),
+                        inset 0 -2px 3px rgba(0, 0, 0, 0.85),
+                        0 3px 0 #181926,
+                        0 5px 0 #09090f,
+                        0 6px 0 #000000,
+                        0 8px 16px rgba(0, 0, 0, 0.8),
+                        0 18px 34px -2px rgba(0, 0, 0, 0.9),
+                        0 26px 48px -4px rgba(0, 0, 0, 0.65) !important;
                 }
                 button.lobby-journey-message:active {
-                    transform: scale(0.99);
+                    transform: translateY(2px) !important;
+                    box-shadow:
+                        inset 0 1px 2px rgba(0, 0, 0, 0.9),
+                        inset 0 0 1px rgba(255, 255, 255, 0.15),
+                        0 1px 0 #050508,
+                        0 2px 6px rgba(0, 0, 0, 0.7) !important;
                 }
                 [class*="theme-white"] button.lobby-journey-message,
                 body.theme-white button.lobby-journey-message {
-                    border-color: rgba(124, 58, 237, 0.35);
+                    border-color: rgba(124, 58, 237, 0.35) !important;
                 }
 
                 /* --- Lobby Guide Modal ("Welcome to Morpheme!") --- */
@@ -3215,7 +3249,7 @@
                     <!-- Global Filters/Settings -->
 
                     <div class="lobby-journey-sticky-header">
-                        <div class="lobby-journey-message" id="lobby-journey-banner" onclick="window.openLobbyGuideModal()" title="Click to view Lobby Guide (“What am I looking at?”)" style="display: none; cursor: pointer;">
+                        <div class="lobby-journey-message" id="lobby-journey-banner" style="display: none;">
                             <span>Enter a room to continue your journey</span>
                         </div>
                         <button type="button" class="lobby-journey-message lobby-new-user-btn" id="lobby-new-user-guide-btn" onclick="window.openLobbyGuideModal()" title="For New Users Asking: “What am I looking at?”" style="display: flex;">
