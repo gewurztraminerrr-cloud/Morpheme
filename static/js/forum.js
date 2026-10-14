@@ -766,7 +766,19 @@ const Forum = {
             `;
         }).join('');
 
-        listEl.innerHTML = respondersHtml + categoriesHtml;
+        const respContainer = document.getElementById('forum-responders-container');
+        if (respContainer) {
+            respContainer.innerHTML = respondersHtml;
+            const respItem = respContainer.querySelector('.forum-cat-item');
+            if (respItem) {
+                respItem.addEventListener('click', () => {
+                    this.selectRespondersCategory();
+                });
+            }
+            listEl.innerHTML = categoriesHtml;
+        } else {
+            listEl.innerHTML = respondersHtml + categoriesHtml;
+        }
 
         // Attach listeners
         listEl.querySelectorAll('.forum-cat-item').forEach(item => {
