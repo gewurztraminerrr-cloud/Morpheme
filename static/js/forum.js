@@ -511,57 +511,51 @@ const Forum = {
             commentInput.addEventListener('input', () => updateCounter(commentInput, commentCounter, 2000));
         }
 
-        // Comment form controls
+        // Stationary comment form controls
         const submitCommentBtn = document.getElementById('forum-submit-comment');
         if (submitCommentBtn) {
             submitCommentBtn.addEventListener('click', () => this.handleCommentSubmit());
         }
 
-        const updateMobileCommentKeyboardPosition = () => {
-            const formContainer = document.getElementById('forum-comment-form-container');
-            const input = document.getElementById('forum-comment-input');
-            if (!formContainer || formContainer.classList.contains('hidden') || formContainer.classList.contains('minimized')) return;
-            const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (!isMobile) {
-                formContainer.style.bottom = '';
-                return;
-            }
-            const vv = window.visualViewport;
-            if (!vv) return;
-            const isInputFocused = document.activeElement === input;
-            const kbHeight = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
-            if (isInputFocused && kbHeight > 60) {
-                formContainer.style.bottom = (kbHeight + 10) + 'px';
-            } else if (!isInputFocused) {
-                formContainer.style.bottom = '';
-            }
-        };
+        // Floating response popup controls
+        this.selectedReplyPopupFiles = [];
+        const replyPopupInput = document.getElementById('forum-reply-popup-input');
+        const replyPopupCounter = document.getElementById('forum-reply-popup-counter');
+        if (replyPopupInput && replyPopupCounter) {
+            replyPopupInput.addEventListener('input', () => updateCounter(replyPopupInput, replyPopupCounter, 2000));
+        }
 
-        const closeCommentBtn = document.getElementById('forum-comment-form-close');
-        if (closeCommentBtn) {
-            closeCommentBtn.addEventListener('click', () => {
-                const formContainer = document.getElementById('forum-comment-form-container');
-                if (formContainer) {
-                    formContainer.classList.add('hidden');
-                    formContainer.classList.remove('minimized');
-                    formContainer.style.bottom = '';
-                    const input = document.getElementById('forum-comment-input');
+        const submitReplyPopupBtn = document.getElementById('forum-reply-popup-submit');
+        if (submitReplyPopupBtn) {
+            submitReplyPopupBtn.addEventListener('click', () => this.handleReplyPopupSubmit());
+        }
+
+        const closeReplyPopupBtn = document.getElementById('forum-reply-popup-close');
+        if (closeReplyPopupBtn) {
+            closeReplyPopupBtn.addEventListener('click', () => {
+                const popup = document.getElementById('forum-reply-popup-container');
+                if (popup) {
+                    popup.classList.add('hidden');
+                    popup.classList.remove('minimized');
+                    popup.style.bottom = '';
+                    this._replyPopupOpen = false;
+                    const input = document.getElementById('forum-reply-popup-input');
                     if (input && document.activeElement === input) input.blur();
                 }
             });
         }
 
-        const minCommentBtn = document.getElementById('forum-comment-form-minimize');
-        if (minCommentBtn) {
-            minCommentBtn.addEventListener('click', (e) => {
+        const minReplyPopupBtn = document.getElementById('forum-reply-popup-minimize');
+        if (minReplyPopupBtn) {
+            minReplyPopupBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const formContainer = document.getElementById('forum-comment-form-container');
-                if (formContainer) {
-                    const isMin = formContainer.classList.toggle('minimized');
-                    minCommentBtn.textContent = isMin ? '▢' : '—';
+                const popup = document.getElementById('forum-reply-popup-container');
+                if (popup) {
+                    const isMin = popup.classList.toggle('minimized');
+                    minReplyPopupBtn.textContent = isMin ? '▢' : '—';
                     if (isMin) {
-                        formContainer.style.bottom = '';
-                        const input = document.getElementById('forum-comment-input');
+                        popup.style.bottom = '';
+                        const input = document.getElementById('forum-reply-popup-input');
                         if (input && document.activeElement === input) input.blur();
                     } else {
                         setTimeout(updateMobileCommentKeyboardPosition, 50);
@@ -570,41 +564,62 @@ const Forum = {
             });
         }
 
-        const cancelCommentBtn = document.getElementById('forum-cancel-comment');
-        if (cancelCommentBtn) {
-            cancelCommentBtn.addEventListener('click', () => {
-                const formContainer = document.getElementById('forum-comment-form-container');
-                if (formContainer) {
-                    formContainer.classList.add('hidden');
-                    formContainer.classList.remove('minimized');
-                    formContainer.style.bottom = '';
-                    const input = document.getElementById('forum-comment-input');
+        const cancelReplyPopupBtn = document.getElementById('forum-reply-popup-cancel');
+        if (cancelReplyPopupBtn) {
+            cancelReplyPopupBtn.addEventListener('click', () => {
+                const popup = document.getElementById('forum-reply-popup-container');
+                if (popup) {
+                    popup.classList.add('hidden');
+                    popup.classList.remove('minimized');
+                    popup.style.bottom = '';
+                    this._replyPopupOpen = false;
+                    const input = document.getElementById('forum-reply-popup-input');
                     if (input && document.activeElement === input) input.blur();
                 }
             });
         }
 
-        const commentFormHeader = document.getElementById('forum-comment-form-header');
-        if (commentFormHeader) {
-            commentFormHeader.addEventListener('click', (e) => {
+        const replyPopupHeader = document.getElementById('forum-reply-popup-header');
+        if (replyPopupHeader) {
+            replyPopupHeader.addEventListener('click', (e) => {
                 if (e.target.closest('.forum-window-btn')) return;
-                const formContainer = document.getElementById('forum-comment-form-container');
-                if (formContainer && formContainer.classList.contains('minimized')) {
-                    formContainer.classList.remove('minimized');
-                    if (minCommentBtn) minCommentBtn.textContent = '—';
+                const popup = document.getElementById('forum-reply-popup-container');
+                if (popup && popup.classList.contains('minimized')) {
+                    popup.classList.remove('minimized');
+                    if (minReplyPopupBtn) minReplyPopupBtn.textContent = '—';
                     setTimeout(updateMobileCommentKeyboardPosition, 50);
                 }
             });
         }
 
-        if (commentInput) {
-            commentInput.addEventListener('focus', () => {
+        const updateMobileCommentKeyboardPosition = () => {
+            const popup = document.getElementById('forum-reply-popup-container');
+            const input = document.getElementById('forum-reply-popup-input');
+            if (!popup || popup.classList.contains('hidden') || popup.classList.contains('minimized')) return;
+            const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) {
+                popup.style.bottom = '';
+                return;
+            }
+            const vv = window.visualViewport;
+            if (!vv) return;
+            const isInputFocused = document.activeElement === input;
+            const kbHeight = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
+            if (isInputFocused && kbHeight > 60) {
+                popup.style.bottom = (kbHeight + 10) + 'px';
+            } else if (!isInputFocused) {
+                popup.style.bottom = '';
+            }
+        };
+
+        if (replyPopupInput) {
+            replyPopupInput.addEventListener('focus', () => {
                 updateMobileCommentKeyboardPosition();
                 setTimeout(updateMobileCommentKeyboardPosition, 60);
                 setTimeout(updateMobileCommentKeyboardPosition, 180);
                 setTimeout(updateMobileCommentKeyboardPosition, 350);
             });
-            commentInput.addEventListener('blur', () => {
+            replyPopupInput.addEventListener('blur', () => {
                 setTimeout(updateMobileCommentKeyboardPosition, 80);
             });
         }
@@ -690,6 +705,43 @@ const Forum = {
             });
         }
 
+        const popupImageInput = document.getElementById('forum-reply-popup-image');
+        const popupImageWrapper = document.getElementById('forum-reply-popup-image-wrapper');
+        if (popupImageInput) {
+            popupImageInput.addEventListener('click', () => {
+                try { popupImageInput.value = ''; } catch (e) { }
+            });
+            popupImageInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    this.addFiles('popup', Array.from(e.target.files));
+                }
+            });
+        }
+        if (popupImageWrapper && popupImageInput) {
+            popupImageWrapper.addEventListener('click', (e) => {
+                if (e.target !== popupImageInput && !e.target.closest('label[for="forum-reply-popup-image"]')) {
+                    popupImageInput.click();
+                }
+            });
+            popupImageWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const box = popupImageWrapper.querySelector('.file-upload-box') || popupImageWrapper.querySelector('label') || popupImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--accent-color)'; box.style.background = 'rgba(0,0,0,0.4)'; }
+            });
+            popupImageWrapper.addEventListener('dragleave', () => {
+                const box = popupImageWrapper.querySelector('.file-upload-box') || popupImageWrapper.querySelector('label') || popupImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
+            });
+            popupImageWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const box = popupImageWrapper.querySelector('.file-upload-box') || popupImageWrapper.querySelector('label') || popupImageWrapper.firstElementChild;
+                if (box) { box.style.borderColor = 'var(--input-border)'; box.style.background = 'rgba(0,0,0,0.2)'; }
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    this.addFiles('popup', Array.from(e.dataTransfer.files));
+                }
+            });
+        }
+
         // User search
         const searchBtn = document.getElementById('forum-user-search-btn');
         const searchInput = document.getElementById('forum-user-search-input');
@@ -705,7 +757,11 @@ const Forum = {
     },
 
     addFiles: function (type, files) {
-        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
+        let targetArray;
+        if (type === 'post') targetArray = this.selectedPostFiles;
+        else if (type === 'popup') targetArray = this.selectedReplyPopupFiles;
+        else targetArray = this.selectedCommentFiles;
+
         let addedAny = false;
         const fileList = Array.from(files || []);
         for (let i = 0; i < fileList.length; i++) {
@@ -728,7 +784,11 @@ const Forum = {
     },
 
     removeFile: function (type, index) {
-        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
+        let targetArray;
+        if (type === 'post') targetArray = this.selectedPostFiles;
+        else if (type === 'popup') targetArray = this.selectedReplyPopupFiles;
+        else targetArray = this.selectedCommentFiles;
+
         if (index >= 0 && index < targetArray.length) {
             targetArray.splice(index, 1);
         }
@@ -736,9 +796,20 @@ const Forum = {
     },
 
     renderImagePreviews: function (type) {
-        const targetArray = type === 'post' ? this.selectedPostFiles : this.selectedCommentFiles;
-        const previewEl = document.getElementById(type === 'post' ? 'forum-image-preview' : 'forum-comment-image-preview');
-        const wrapperEl = document.getElementById(type === 'post' ? 'forum-post-image-wrapper' : 'forum-comment-image-wrapper');
+        let targetArray, previewEl, wrapperEl;
+        if (type === 'post') {
+            targetArray = this.selectedPostFiles;
+            previewEl = document.getElementById('forum-image-preview');
+            wrapperEl = document.getElementById('forum-post-image-wrapper');
+        } else if (type === 'popup') {
+            targetArray = this.selectedReplyPopupFiles;
+            previewEl = document.getElementById('forum-reply-popup-image-preview');
+            wrapperEl = document.getElementById('forum-reply-popup-image-wrapper');
+        } else {
+            targetArray = this.selectedCommentFiles;
+            previewEl = document.getElementById('forum-comment-image-preview');
+            wrapperEl = document.getElementById('forum-comment-image-wrapper');
+        }
         
         if (wrapperEl) {
             const textSpan = wrapperEl.querySelector('.file-text');
@@ -2259,10 +2330,18 @@ const Forum = {
             }
         } else {
             if (closedBanner) closedBanner.style.display = 'none';
+            const isGuest = window.currentUserIsGuest || (window.currentUser === null);
             if (commentFormContainer) {
-                // Response panel only appears when user explicitly presses "Reply"
-                commentFormContainer.classList.add('hidden');
+                // Stationary comment box remains visible for registered users
+                commentFormContainer.classList.toggle('hidden', isGuest);
             }
+        }
+
+        const replyPopup = document.getElementById('forum-reply-popup-container');
+        if (replyPopup && !this._replyPopupOpen) {
+            replyPopup.classList.add('hidden');
+            replyPopup.classList.remove('minimized');
+            replyPopup.style.bottom = '';
         }
 
         // Attach listeners for bookmark buttons
@@ -2526,16 +2605,17 @@ const Forum = {
             return;
         }
 
-        const formContainer = document.getElementById('forum-comment-form-container');
-        if (formContainer) {
-            formContainer.classList.remove('hidden');
-            formContainer.classList.remove('minimized');
-            formContainer.style.bottom = '';
-            const minBtn = document.getElementById('forum-comment-form-minimize');
+        const popup = document.getElementById('forum-reply-popup-container');
+        if (popup) {
+            popup.classList.remove('hidden');
+            popup.classList.remove('minimized');
+            popup.style.bottom = '';
+            const minBtn = document.getElementById('forum-reply-popup-minimize');
             if (minBtn) minBtn.textContent = '—';
+            this._replyPopupOpen = true;
         }
 
-        const input = document.getElementById('forum-comment-input');
+        const input = document.getElementById('forum-reply-popup-input');
         if (!input) return;
 
         const tag = `@${username} #${postNumber}\n`;
@@ -2690,13 +2770,6 @@ const Forum = {
                 this.selectedCommentFiles = [];
                 this.renderImagePreviews('comment');
 
-                const formContainer = document.getElementById('forum-comment-form-container');
-                if (formContainer) {
-                    formContainer.classList.add('hidden');
-                    formContainer.classList.remove('minimized');
-                    formContainer.style.bottom = '';
-                }
-
                 await this.loadCategories(); // Refresh side buttons (to clear/update gold)
                 await this.loadPostDetail(this.currentPostId);
             } else {
@@ -2709,6 +2782,83 @@ const Forum = {
             if (submitCommentBtn) {
                 submitCommentBtn.disabled = false;
                 submitCommentBtn.textContent = originalBtnText;
+            }
+        }
+    },
+
+    handleReplyPopupSubmit: async function () {
+        const rawContent = document.getElementById('forum-reply-popup-input').value;
+        const content = (rawContent || '').trim().slice(0, 2000);
+
+        if (!content) return;
+
+        const submitBtn = document.getElementById('forum-reply-popup-submit');
+        const originalBtnText = submitBtn ? submitBtn.textContent : 'Post Reply';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Posting...';
+        }
+
+        const formData = new FormData();
+        formData.append('post_id', this.currentPostId);
+        formData.append('content', content);
+
+        for (let imageFile of this.selectedReplyPopupFiles) {
+            if (imageFile.type === 'image/gif') {
+                if (imageFile.size > 2 * 1024 * 1024) {
+                    alert(`GIF file "${imageFile.name}" must be under 2MB.`);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                    return;
+                }
+                formData.append('images', imageFile);
+            } else {
+                try {
+                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    formData.append('images', compressed);
+                } catch (err) {
+                    console.error("[Forum] Compression failed, uploading original:", err);
+                    formData.append('images', imageFile);
+                }
+            }
+        }
+
+        try {
+            const response = await fetch('/api/forum/comments', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('forum-reply-popup-input').value = '';
+                if (this.updateCounter) {
+                    this.updateCounter(document.getElementById('forum-reply-popup-input'), document.getElementById('forum-reply-popup-counter'), 2000);
+                }
+                this.selectedReplyPopupFiles = [];
+                this.renderImagePreviews('popup');
+
+                const popup = document.getElementById('forum-reply-popup-container');
+                if (popup) {
+                    popup.classList.add('hidden');
+                    popup.classList.remove('minimized');
+                    popup.style.bottom = '';
+                    this._replyPopupOpen = false;
+                }
+
+                await this.loadCategories();
+                await this.loadPostDetail(this.currentPostId);
+            } else {
+                alert(data.error || "Failed to post comment.");
+            }
+        } catch (err) {
+            console.error("[Forum] Reply popup submit error:", err);
+            alert("Failed to post comment.");
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
         }
     },
@@ -2799,7 +2949,13 @@ const Forum = {
         const formContainer = document.getElementById('forum-comment-form-container');
         if (formContainer) {
             formContainer.classList.add('hidden');
-            formContainer.classList.remove('minimized');
+        }
+        const replyPopup = document.getElementById('forum-reply-popup-container');
+        if (replyPopup) {
+            replyPopup.classList.add('hidden');
+            replyPopup.classList.remove('minimized');
+            replyPopup.style.bottom = '';
+            this._replyPopupOpen = false;
         }
 
         // Hide static Delete Post button when leaving post view
@@ -2844,7 +3000,13 @@ const Forum = {
         const formContainer = document.getElementById('forum-comment-form-container');
         if (formContainer) {
             formContainer.classList.add('hidden');
-            formContainer.classList.remove('minimized');
+        }
+        const replyPopupCreate = document.getElementById('forum-reply-popup-container');
+        if (replyPopupCreate) {
+            replyPopupCreate.classList.add('hidden');
+            replyPopupCreate.classList.remove('minimized');
+            replyPopupCreate.style.bottom = '';
+            this._replyPopupOpen = false;
         }
 
         // User Request Update: Allow all posts in every topic to attach an image
