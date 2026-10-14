@@ -2074,9 +2074,20 @@ const Forum = {
             `;
         }
 
-        // Map each post number -> comments that respond to it (via "@user #N" references)
+        // Index all posts in current thread by post_number for fast lookup
+        this.currentPostsByNumber = new Map();
+        if (post) {
+            this.currentPostsByNumber.set(post.post_number || 1, { ...post, isOpeningPost: true });
+        }
+        comments.forEach(c => {
+            if (c.post_number) {
+                this.currentPostsByNumber.set(c.post_number, c);
+            }
+        });
+
+        // Map each post number -> comments that respond to it (via "@user #N" or standalone "#N" references)
         this.currentResponsesMap = {};
-        const respRegex = /[@&][A-Za-z0-9_]+\s*#(\d+)/g;
+        const respRegex = /(?:[@&][A-Za-z0-9_]+\s*#|#)(\d+)\b/g;
         comments.forEach(c => {
             const seen = new Set();
             let m;
@@ -2308,6 +2319,26 @@ const Forum = {
                 if (typeof window.showImageLightbox === 'function') {
                     window.showImageLightbox(url, caption);
                 }
+            });
+        });
+
+        // Attach hover preview listeners for reply links (#NUM) on desktop/laptop
+        const allPostLinks = [
+            ...detailEl.querySelectorAll('.forum-post-link'),
+            ...commentsListEl.querySelectorAll('.forum-post-link')
+        ];
+        allPostLinks.forEach(link => {
+            const pnum = parseInt(link.getAttribute('data-post-number'), 10);
+            if (isNaN(pnum)) return;
+
+            link.addEventListener('mouseenter', () => {
+                const isTouch = ('ontouchstart' in window) && window.innerWidth <= 820;
+                if (!isTouch) {
+                    this.showReplyHoverPreview(pnum, link);
+                }
+            });
+            link.addEventListener('mouseleave', () => {
+                this.scheduleHideReplyHoverPreview();
             });
         });
 
@@ -2945,6 +2976,9 @@ const Forum = {
         const activeScroll = document.querySelector('#forum-view-list .forum-view-scroll-body');
         if (activeScroll) activeScroll.scrollTop = 0;
 
+        this.hideReplyHoverPreview(true);
+        this.closeReplyMobileModal();
+
         // Hide comment form when leaving post view
         const formContainer = document.getElementById('forum-comment-form-container');
         if (formContainer) {
@@ -2978,6 +3012,9 @@ const Forum = {
         const activeScroll = document.querySelector('#forum-view-post .forum-view-scroll-body');
         if (activeScroll) activeScroll.scrollTop = 0;
 
+        this.hideReplyHoverPreview(true);
+        this.closeReplyMobileModal();
+
         // On mobile devices, scroll down so they see the post details
         if (window.innerWidth <= 820) {
             const postViewEl = document.getElementById('forum-view-post');
@@ -2996,6 +3033,9 @@ const Forum = {
 
         const activeScroll = document.querySelector('#forum-view-create .forum-view-scroll-body');
         if (activeScroll) activeScroll.scrollTop = 0;
+
+        this.hideReplyHoverPreview(true);
+        this.closeReplyMobileModal();
 
         const formContainer = document.getElementById('forum-comment-form-container');
         if (formContainer) {
@@ -3043,30 +3083,295 @@ const Forum = {
         });
 
         // Regex for @username (#NUM)? or &username (#NUM)?
-        // Match @username or &username with optional #NUM
         const mentionRegex = /(?<![\w.])([@&][A-Za-z0-9_]+)(?:\s*#(\d+)(\s*\(Thread\))?)?/g;
         processed = processed.replace(mentionRegex, (match, tag, numStr, threadSuffix) => {
             if (numStr) {
                 const lookupKey = `#${numStr}`;
-                const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
-                if (target) {
-                    // References to the thread's opening message are labelled "(Thread)"
-                    const label = target.type === 'post' ? ' (Thread)' : '';
-                    return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.navigateToPostNumber(${numStr});">#${numStr}</a>${label}</span>`;
-                }
-                return `<span class="forum-mention-tag">${tag} #${numStr}${threadSuffix || ''}</span>`;
+                const hasTarget = (this.currentPostsByNumber && this.currentPostsByNumber.has(parseInt(numStr, 10))) ||
+                                  (this.currentPostLookup && this.currentPostLookup[lookupKey]);
+                const isOpening = (this.currentPostsByNumber && this.currentPostsByNumber.get(parseInt(numStr, 10))?.isOpeningPost) ||
+                                  (this.currentPostLookup && this.currentPostLookup[lookupKey]?.type === 'post');
+                const label = isOpening ? ' (Thread)' : (threadSuffix || '');
+                return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">#${numStr}</a>${label}</span>`;
             }
             // Standalone @username or &username
             const uname = tag.slice(1);
             return `<span class="forum-mention-tag forum-user-clickable" data-username="${this.escapeHtml(uname)}" title="View ${this.escapeHtml(uname)}'s Profile">${tag}</span>`;
         });
 
+        // Match standalone #NUM (e.g. "#14") not already wrapped in a link or tag
+        const standaloneNumRegex = /(?<![&\w#@/])#(\d+)\b(?![^<]*>)/g;
+        processed = processed.replace(standaloneNumRegex, (match, numStr) => {
+            return `<a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">#${numStr}</a>`;
+        });
+
         return processed;
     },
 
+    getPostDataByNumber: function (postNumber) {
+        if (!postNumber) return null;
+        const num = parseInt(postNumber, 10);
+        if (this.currentPostsByNumber && this.currentPostsByNumber.has(num)) {
+            return this.currentPostsByNumber.get(num);
+        }
+        const key = `#${num}`;
+        if (this.currentPostLookup && this.currentPostLookup[key]) {
+            return this.currentPostLookup[key];
+        }
+        return null;
+    },
+
+    getResponseUserCount: function (postNumber) {
+        if (!postNumber) return 0;
+        const resps = (this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [];
+        const uniqueUsers = new Set();
+        resps.forEach(r => {
+            const u = (r.username || '').trim().toLowerCase();
+            if (u) uniqueUsers.add(u);
+        });
+        return uniqueUsers.size;
+    },
+
+    showReplyHoverPreview: function (postNumber, anchorEl) {
+        this.cancelHideReplyHoverPreview();
+        const postData = this.getPostDataByNumber(postNumber);
+        if (!postData) return;
+
+        let card = document.getElementById('forum-reply-hover-card');
+        if (!card) {
+            card = document.createElement('div');
+            card.id = 'forum-reply-hover-card';
+            card.className = 'forum-reply-hover-card';
+            document.body.appendChild(card);
+
+            card.addEventListener('mouseenter', () => {
+                this.cancelHideReplyHoverPreview();
+            });
+            card.addEventListener('mouseleave', () => {
+                this.scheduleHideReplyHoverPreview();
+            });
+        }
+
+        const author = postData.username || 'User';
+        const avatarInitial = (author[0] || 'U').toUpperCase();
+        const flagHtml = postData.country_flag ? (window.getFlagHtml ? window.getFlagHtml(postData.country_flag) : postData.country_flag) : '';
+        const dateStr = postData.timestamp ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(postData.timestamp, true) : postData.timestamp) : '';
+        const userCount = this.getResponseUserCount(postNumber);
+        const userLabel = `${userCount} ${userCount === 1 ? 'user' : 'users'} responded`;
+
+        const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
+        const formattedContent = this.escapeHtml(rawContent).replace(/\n/g, '<br>');
+        const imageUrls = postData.image_urls || (postData.image_url ? [postData.image_url] : []);
+        let imagesHtml = '';
+        if (imageUrls.length > 0) {
+            imagesHtml = `
+                <div class="reply-preview-images">
+                    ${imageUrls.slice(0, 3).map(url => `
+                        <img src="${url}" class="reply-preview-thumb" alt="attachment">
+                    `).join('')}
+                    ${imageUrls.length > 3 ? `<span class="reply-preview-more-images">+${imageUrls.length - 3}</span>` : ''}
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="reply-preview-header">
+                <div class="reply-preview-author-box">
+                    <div class="reply-preview-avatar">${avatarInitial}</div>
+                    <div class="reply-preview-author-info">
+                        <span class="reply-preview-author-name">${flagHtml}${this.escapeHtml(author)}</span>
+                        <span class="reply-preview-date">${dateStr}</span>
+                    </div>
+                </div>
+                <div class="reply-preview-meta">
+                    <span class="reply-preview-badge">#${postNumber}</span>
+                    <span class="reply-preview-resp-count">💬 ${userLabel}</span>
+                </div>
+            </div>
+            <div class="reply-preview-body">
+                <div class="reply-preview-content">${formattedContent}</div>
+                ${imagesHtml}
+            </div>
+        `;
+
+        card.style.display = 'block';
+        card.style.visibility = 'hidden';
+
+        // Calculate position near anchorEl
+        const rect = anchorEl.getBoundingClientRect();
+        const cardWidth = Math.min(380, window.innerWidth - 24);
+        card.style.width = `${cardWidth}px`;
+        const cardHeight = card.offsetHeight || 220;
+
+        let left = rect.left;
+        if (left + cardWidth > window.innerWidth - 12) {
+            left = window.innerWidth - cardWidth - 12;
+        }
+        if (left < 12) left = 12;
+
+        let top;
+        if (rect.top >= cardHeight + 12) {
+            top = rect.top - cardHeight - 8;
+        } else {
+            top = rect.bottom + 8;
+        }
+
+        if (top < 10) top = 10;
+        if (top + cardHeight > window.innerHeight - 10) {
+            top = Math.max(10, window.innerHeight - cardHeight - 10);
+        }
+
+        card.style.left = `${left}px`;
+        card.style.top = `${top}px`;
+        card.style.visibility = 'visible';
+        card.classList.add('visible');
+    },
+
+    scheduleHideReplyHoverPreview: function () {
+        this.cancelHideReplyHoverPreview();
+        this._replyHoverTimeout = setTimeout(() => {
+            this.hideReplyHoverPreview();
+        }, 180);
+    },
+
+    cancelHideReplyHoverPreview: function () {
+        if (this._replyHoverTimeout) {
+            clearTimeout(this._replyHoverTimeout);
+            this._replyHoverTimeout = null;
+        }
+    },
+
+    hideReplyHoverPreview: function (immediate = false) {
+        this.cancelHideReplyHoverPreview();
+        const card = document.getElementById('forum-reply-hover-card');
+        if (card) {
+            if (immediate) {
+                card.classList.remove('visible');
+                card.style.display = 'none';
+            } else {
+                card.classList.remove('visible');
+                setTimeout(() => {
+                    if (!card.classList.contains('visible')) {
+                        card.style.display = 'none';
+                    }
+                }, 140);
+            }
+        }
+    },
+
+    showReplyMobileModal: function (postNumber) {
+        this.closeReplyMobileModal();
+        const postData = this.getPostDataByNumber(postNumber);
+        if (!postData) {
+            this.navigateToPostNumber(postNumber);
+            return;
+        }
+
+        const author = postData.username || 'User';
+        const avatarInitial = (author[0] || 'U').toUpperCase();
+        const flagHtml = postData.country_flag ? (window.getFlagHtml ? window.getFlagHtml(postData.country_flag) : postData.country_flag) : '';
+        const dateStr = postData.timestamp ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(postData.timestamp, true) : postData.timestamp) : '';
+        const userCount = this.getResponseUserCount(postNumber);
+        const userLabel = `${userCount} ${userCount === 1 ? 'user' : 'users'} responded`;
+
+        const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
+        const formattedContent = this.escapeHtml(rawContent).replace(/\n/g, '<br>');
+        const imageUrls = postData.image_urls || (postData.image_url ? [postData.image_url] : []);
+        let imagesHtml = '';
+        if (imageUrls.length > 0) {
+            imagesHtml = `
+                <div class="reply-preview-images mobile-grid">
+                    ${imageUrls.map(url => `
+                        <img src="${url}" class="reply-preview-thumb forum-lightbox-trigger" data-url="${url}" alt="attachment" style="cursor: pointer;">
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'forum-reply-mobile-overlay';
+        overlay.className = 'forum-reply-mobile-overlay';
+        overlay.innerHTML = `
+            <div class="forum-reply-mobile-card" role="dialog" aria-label="Post #${postNumber} Preview">
+                <div class="reply-mobile-header">
+                    <div class="reply-mobile-author-box">
+                        <div class="reply-preview-avatar">${avatarInitial}</div>
+                        <div class="reply-mobile-author-info">
+                            <span class="reply-mobile-author-name">${flagHtml}${this.escapeHtml(author)}</span>
+                            <span class="reply-mobile-date">${dateStr}</span>
+                        </div>
+                    </div>
+                    <div class="reply-mobile-header-right">
+                        <div class="reply-mobile-badges">
+                            <span class="reply-preview-badge">#${postNumber}</span>
+                            <span class="reply-preview-resp-count">💬 ${userLabel}</span>
+                        </div>
+                        <button type="button" class="reply-mobile-close-btn" aria-label="Close">&times;</button>
+                    </div>
+                </div>
+                <div class="reply-mobile-body">
+                    <div class="reply-preview-content">${formattedContent}</div>
+                    ${imagesHtml}
+                </div>
+                <div class="reply-mobile-footer">
+                    <button type="button" class="reply-mobile-navigate-btn" id="reply-mobile-take-me-there">
+                        <span>Take Me There</span>
+                        <span class="navigate-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => this.closeReplyMobileModal();
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+        const closeBtn = overlay.querySelector('.reply-mobile-close-btn');
+        if (closeBtn) closeBtn.addEventListener('click', close);
+
+        const takeMeThereBtn = overlay.querySelector('#reply-mobile-take-me-there');
+        if (takeMeThereBtn) {
+            takeMeThereBtn.addEventListener('click', () => {
+                close();
+                this.navigateToPostNumber(postNumber);
+            });
+        }
+    },
+
+    closeReplyMobileModal: function () {
+        const overlay = document.getElementById('forum-reply-mobile-overlay');
+        if (overlay) overlay.remove();
+    },
+
+    handleReplyLinkClick: function (postNumber, event) {
+        if (event && typeof event.preventDefault === 'function') event.preventDefault();
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+
+        const isMobile = (window.innerWidth <= 820) || ('ontouchstart' in window) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            this.hideReplyHoverPreview(true);
+            this.showReplyMobileModal(postNumber);
+        } else {
+            this.hideReplyHoverPreview(true);
+            this.navigateToPostNumber(postNumber);
+        }
+    },
+
     navigateToPostNumber: function (postNumber) {
-        const lookupKey = `#${postNumber}`;
+        const num = parseInt(postNumber, 10);
+        const lookupKey = `#${num}`;
         const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
+
+        // If target is in current thread or found in currentPostsByNumber
+        if (this.currentPostsByNumber && this.currentPostsByNumber.has(num)) {
+            const p = this.currentPostsByNumber.get(num);
+            this.highlightTargetPost({
+                highlightCommentId: p.isOpeningPost ? null : p.id,
+                highlightPostNumber: num
+            });
+            return;
+        }
 
         if (!target) {
             alert(`Post #${postNumber} no longer exists or could not be found.`);

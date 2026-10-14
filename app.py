@@ -9605,13 +9605,13 @@ def get_forum_post_detail(post_id):
             cd['image_url'] = c_urls[0] if c_urls else None
             comments_list.append(cd)
 
-        # Build post_lookup for all @username #NUM references in post and comments
+        # Build post_lookup for all @username #NUM or #NUM references in post and comments
         cat_id = post_dict.get('category_id')
         all_contents = [post_dict.get('content', '') or ''] + [(c.get('content', '') or '') for c in comments_list]
         mentioned_nums = set()
         for txt in all_contents:
             if txt:
-                for match in re.finditer(r'[@&][A-Za-z0-9_]+\s*#(\d+)', txt):
+                for match in re.finditer(r'(?:[@&][A-Za-z0-9_]+\s*#|#)(\d+)\b', txt):
                     try:
                         mentioned_nums.add(int(match.group(1)))
                     except (ValueError, TypeError):
@@ -9622,36 +9622,56 @@ def get_forum_post_detail(post_id):
             placeholders = ','.join('?' for _ in mentioned_nums)
             num_list = list(mentioned_nums)
             p_rows = conn.execute(f'''
-                SELECT id, category_id, post_number, title
-                FROM forum_posts
-                WHERE category_id = ? AND post_number IN ({placeholders})
+                SELECT p.id, p.category_id, p.post_number, p.title, p.content, p.timestamp, p.image_url,
+                       u.username, u.avatar_url, u.country_flag
+                FROM forum_posts p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.category_id = ? AND p.post_number IN ({placeholders})
             ''', [cat_id] + num_list).fetchall()
             for r in p_rows:
                 key = f"#{r['post_number']}"
+                r_urls = parse_image_urls(r['image_url'])
                 post_lookup[key] = {
                     'type': 'post',
                     'item_id': r['id'],
                     'thread_id': r['id'],
                     'category_id': r['category_id'],
                     'post_number': r['post_number'],
-                    'title': r['title']
+                    'title': r['title'],
+                    'content': r['content'],
+                    'username': r['username'],
+                    'avatar_url': r['avatar_url'],
+                    'country_flag': r['country_flag'],
+                    'timestamp': r['timestamp'],
+                    'image_urls': r_urls,
+                    'image_url': r_urls[0] if r_urls else None
                 }
 
             c_rows = conn.execute(f'''
-                SELECT c.id, c.post_id, c.post_number, p.category_id, p.title
+                SELECT c.id, c.post_id, c.post_number, p.category_id, p.title, c.content, c.timestamp, c.image_url,
+                       u.username, u.avatar_url, u.country_flag
                 FROM forum_comments c
                 JOIN forum_posts p ON c.post_id = p.id
+                JOIN users u ON c.user_id = u.id
                 WHERE p.category_id = ? AND c.post_number IN ({placeholders})
             ''', [cat_id] + num_list).fetchall()
             for r in c_rows:
                 key = f"#{r['post_number']}"
+                r_urls = parse_image_urls(r['image_url'])
                 post_lookup[key] = {
                     'type': 'comment',
                     'item_id': r['id'],
                     'thread_id': r['post_id'],
                     'category_id': r['category_id'],
                     'post_number': r['post_number'],
-                    'title': r['title']
+                    'title': r['title'],
+                    'content': r['content'],
+                    'username': r['username'],
+                    'avatar_url': r['avatar_url'],
+                    'country_flag': r['country_flag'],
+                    'timestamp': r['timestamp'],
+                    'image_urls': r_urls,
+                    'image_url': r_urls[0] if r_urls else None
                 }
 
         user_bookmark = None
