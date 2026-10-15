@@ -257,10 +257,17 @@ def generate_subanagrams_board_and_words(params):
 
     # Graceful fallback: If no sequence matches all parameters within attempt limit, default gracefully
     if not best_candidate or not best_results or len(best_results) < 50:
-        # Guaranteed rich sequences
-        rich_pool = ["EDUCATION", "REACTIONS", "STREAMING", "ORCHESTRA", "RELATIONS"]
-        best_candidate = random.choice(rich_pool)[:seq_len]
-        best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+        if mode == 'word' and candidates_by_len:
+            chosen_word = random.choice(candidates_by_len)
+            letters = list(chosen_word)
+            random.shuffle(letters)
+            best_candidate = "".join(letters)
+            best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+        else:
+            # Guaranteed rich sequences
+            rich_pool = ["EDUCATION", "REACTIONS", "STREAMING", "ORCHESTRA", "RELATIONS"]
+            best_candidate = random.choice(rich_pool)[:seq_len]
+            best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
 
     # Resolve bonus word: chosen at random from the solved subanagrams
     if best_results:
@@ -268,9 +275,17 @@ def generate_subanagrams_board_and_words(params):
     else:
         bonus_word = best_candidate
 
+    seq_len_actual = len(best_candidate)
+    has_full_length_word = any(len(w) == seq_len_actual for w in (best_results or []))
+    if not has_full_length_word:
+        mode = 'random'
+        board_format = 'Totally Random'
+    else:
+        board_format = 'Word Guaranteed' if mode == 'word' else 'Totally Random'
+
     final_params = dict(params)
     final_params['min_word_length'] = min_len
-    final_params['sequence_length'] = len(best_candidate)
+    final_params['sequence_length'] = seq_len_actual
     final_params['bonus_word'] = bonus_word
     final_params['bonus_word_length'] = len(bonus_word)
     # Update word count range to reflect actual candidate
@@ -278,7 +293,7 @@ def generate_subanagrams_board_and_words(params):
     final_params['word_count_range'] = actual_range
     final_params['sequence'] = best_candidate
     final_params['mode'] = mode
-    final_params['board_format'] = 'Word Guaranteed' if mode == 'word' else 'Totally Random'
+    final_params['board_format'] = board_format
 
     # Board representation as 1-row 2D list: [['S', 'E', 'Q', ...]]
     board = [list(best_candidate)]

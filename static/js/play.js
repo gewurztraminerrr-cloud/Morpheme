@@ -5211,10 +5211,15 @@ function updateParameters(state) {
     // Otherwise before 0:45, we display the completed round's parameters.
     const useSp = (isRevealed || !isIntermission) && sp && Object.keys(sp).length > 0;
 
+    const isSubanagrams = state.game_type === 'subanagrams';
     const factBoardDims = useSp ? (sp.board_dimensions || state.board_dimensions || '4x4') : (state.board_dimensions || '4x4');
     const factTimeLimit = useSp ? (sp.time_limit || state.time_limit || 60) : (state.time_limit || 60);
 
-    const factFmt = useSp ? (sp.board_format || state.current_board_format || 'Normal') : (state.current_board_format || 'Normal');
+    const defaultFmt = isSubanagrams ? 'Totally Random' : 'Normal';
+    let factFmt = useSp ? (sp.board_format || state.current_board_format || defaultFmt) : (state.current_board_format || defaultFmt);
+    if (isSubanagrams && (!factFmt || factFmt === 'Normal')) {
+        factFmt = 'Totally Random';
+    }
     const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
     const factBonus = useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0);
     const factMinLen = useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3);
@@ -5238,8 +5243,6 @@ function updateParameters(state) {
     } else if (state.current_uniqueness !== undefined && state.current_uniqueness !== null) {
         factUniq = state.current_uniqueness;
     }
-
-    const isSubanagrams = state.game_type === 'subanagrams';
     let factSeqLen = 7;
     if (isSubanagrams) {
         let actualLetters = null;

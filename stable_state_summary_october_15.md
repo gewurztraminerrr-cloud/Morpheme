@@ -89,6 +89,15 @@ START_OVER_POINT_OCTOBER_15
   - In `templates/index.html`, updated all upload input labels and prompts for new threads, inline comment boxes, and floating reply popups to reference 6 images instead of 4.
   - Bumped `forum.js` cache buster version in `templates/index.html` to `v=1791130138`.
 
+### 10. Subanagrams "Word Guaranteed" vs "Totally Random" Invariant Enforcement
+- **Root Cause**: In Subanagrams mode, boards generated from the letter bag without a full-length word (such as `FLENONUVE` of length 9) could retain or default to the `"Word Guaranteed"` format label if `mode: 'word'` was requested or defaulted, or if intermission parameters had staged `"Word Guaranteed"` before candidate solving finished.
+- **Strict Invariant**: Enforced that a board is labeled `"Word Guaranteed"` **if and only if** there is genuinely at least one valid dictionary word of maximum sequence length (`len(w) == seq_len`) formed by those letters; otherwise it is strictly categorized as `"Totally Random"`.
+- **Backend Generator & Promotion Updates**:
+  - In `subanagrams_generator.py`, verified that `best_results` contains a word where `len(w) == len(best_candidate)`. If no full-length word exists, `board_format` and `mode` are strictly forced to `'Totally Random'` and `'random'`. Added fallback word recovery from `candidates_by_len` when `mode == 'word'` is requested.
+  - In `game_room.py`, added authoritative full-length word verification across all board generation and promotion hooks (`subanagrams_search_worker`, `generate_spinner_params`, `start_next_round` rollover and promotion, and kickstart methods).
+  - In `app.py`, added full-length word check during public singleton hub reconstruction.
+  - In `static/js/play.js`, ensured Subanagrams format strictly falls back to `'Totally Random'` and never displays `'Normal'`. Bumped `play.js` cache buster in `templates/index.html` to `v=1791130400`.
+
 ---
 
 ## Verification & Health Check

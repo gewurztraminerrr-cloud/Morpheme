@@ -5955,7 +5955,12 @@ def get_room_state(room_id):
                                         room.next_round_words = nw
                                         room.next_round_bonus_cell = None
                                         room.next_round_bonus = nbw
-                                        room.next_round_format = nparams.get('board_format', 'Word Guaranteed')
+                                        seq_len_actual = len(nb[0]) if (nb and len(nb) > 0 and isinstance(nb[0], list)) else len(nb)
+                                        has_full = any(len(w) == seq_len_actual for w in nw)
+                                        final_fmt = 'Word Guaranteed' if (has_full and nparams.get('mode') == 'word') else 'Totally Random'
+                                        nparams['board_format'] = final_fmt
+                                        nparams['mode'] = 'word' if final_fmt == 'Word Guaranteed' else 'random'
+                                        room.next_round_format = final_fmt
                                         room.next_round_word_paths = {w: [] for w in nw}
                                         room.next_round_uniqueness = 0.0
                                         room.next_round_spinner_params = nparams
