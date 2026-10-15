@@ -1815,7 +1815,7 @@ async function updateGameState(incomingState = null) {
         document.body.classList.toggle('is-subanagrams', isSub);
         const submitBtn = document.getElementById('submit-word-btn');
         if (submitBtn) {
-            submitBtn.textContent = isSub ? 'Enter' : 'Submit';
+            submitBtn.textContent = 'Enter';
         }
         const colorBar = document.getElementById('game-color-bar');
         if (colorBar) {
@@ -6016,7 +6016,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     const submitBtn = document.getElementById('submit-word-btn');
     if (submitBtn) {
-        submitBtn.textContent = isSubanagrams ? 'Enter' : 'Submit';
+        submitBtn.textContent = 'Enter';
     }
 
     const rotateBtn = document.getElementById('rotate-board-btn');
@@ -9212,7 +9212,7 @@ async function leaveCurrentRoom() {
     window._displayedParams = null;
     document.body.classList.remove('is-subanagrams');
     const submitBtn = document.getElementById('submit-word-btn');
-    if (submitBtn) submitBtn.textContent = 'Submit';
+    if (submitBtn) submitBtn.textContent = 'Enter';
     const colorBar = document.getElementById('game-color-bar');
     if (colorBar && !window.isTournamentPlay && !document.body.classList.contains('is-tournament-round')) {
         colorBar.style.removeProperty('display');
