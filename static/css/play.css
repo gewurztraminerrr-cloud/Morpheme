@@ -14317,17 +14317,37 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Desktop and Laptop Full-Width Stretch for MP Word Explorer */
+/* Desktop and Laptop Full-Width Stretch for Combo Checker Sections (MP, LIC, and MP Word Explorer) */
 @media (min-width: 641px) {
+    #tool-combo .combo-results-container,
+    .combo-results-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-combo .result-section,
+    .combo-results-container .result-section,
     #combo-explorer-section {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
+
+    #tool-combo .horizontal-scroll-container,
+    .combo-results-container .horizontal-scroll-container,
+    #tool-combo #mp-container,
+    #tool-combo #lic-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     .combo-explorer-grid {
         width: 100% !important;
         grid-template-columns: minmax(220px, 320px) 1fr !important;
     }
+
     #combo-explorer-input-card,
     #combo-explorer-response-card {
         width: 100% !important;
