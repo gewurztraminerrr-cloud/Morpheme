@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-58e55728c0624c0111319f2a722007ade676d286
+2d57bc9f8722955f1f3a2c53aee2e72d6ff31a67
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, synchronized with origin/main |
+| localhost      | ✅ Synchronized | Commit `2d57bc9f`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -24,7 +24,18 @@ START_OVER_POINT_OCTOBER_14
 
 ## Session Features & Enhancements (October 14, 2026)
 
-### 1. Forum: Dual Reply Interfaces (Stationary Textbox & Floating Reply Popup)
+### 1. Forum: Top Menu Visibility & Zero-Shift Mobile Parity
+- **Elimination of Window Vertical Auto-Scroll**:
+  - Replaced destructive `element.scrollIntoView({ block: 'start' })` calls in `static/js/forum.js` (`showListView`, `showPostView`, `showCreateView`) with container horizontal scrolling (`container.scrollTo({ left: ..., behavior: 'smooth' })`).
+  - Purged window-scrolling `sidebar.scrollIntoView(...)` calls in favor of direct `.forum-container` scrolling.
+  - Guarantees the top menu bar (**MORPHEME**, **MORE-FEEM**, and all navigation buttons) remains 100% visible and accessible at the top of the screen on mobile devices at all times.
+- **Top Menu Dimensions & Layout Parity with Lobby**:
+  - Removed duplicate `.top-menu-bar` padding and redundant `.header`, `.logo`, `.nav`, and `.nav-btn` selector overrides from `static/css/forum.css`.
+  - Let base `static/css/style.css` rules govern header sizing, fonts, padding, and alignments uniformly across Lobby and Forum.
+  - Eliminated the content shift when navigating between Lobby and Forum on mobile devices.
+  - Unlocked `.forum-container` by removing errant `overflow-x: hidden !important;` override so smooth horizontal swipe gestures work seamlessly.
+
+### 2. Forum: Dual Reply Interfaces (Stationary Textbox & Floating Reply Popup)
 - **Coexisting Stationary & Floating Modes**:
   - Preserved the fixed, docked comment textbox at the bottom of every thread for continuous desktop and mobile typing.
   - Clicking the "Reply" button on any post or comment opens a dedicated, movable floating reply popup window pre-filled with `@Username #NUM`.
@@ -32,7 +43,7 @@ START_OVER_POINT_OCTOBER_14
 - **Mobile Reply Continuity**:
   - On mobile devices and touchscreens, tapping "Reply" opens the floating popup cleanly without viewport jumping, ensuring full compliance with the Mobile Fullscreen & Virtual Keyboard Invariant Rules.
 
-### 2. Sequence Tool: Scroll Position & Target Word Restoration on "Back" Navigation
+### 3. Sequence Tool: Scroll Position & Target Word Restoration on "Back" Navigation
 - **Live Scroll Tracking**:
   - Added continuous scroll tracking on `#seq-list-results` and `.tools-content` so navigation preserves exact scroll offsets.
 - **Exact Selection Anchor**:
@@ -41,7 +52,7 @@ START_OVER_POINT_OCTOBER_14
   - Pressing "Back" (`toolsGoBack` or switching back to Sequence) restores scroll position across multiple rendering frames (`requestAnimationFrame`, 30ms, 100ms, 250ms, 450ms).
   - Automatically scrolls the selected word into view (`block: 'center'`) and triggers the glowing target animation (`jumpTargetGlow` / `.jump-target-pulse`).
 
-### 3. Forum: Desktop Reply Link Hover Post Previews & Unique Responder Counts
+### 4. Forum: Desktop Reply Link Hover Post Previews & Unique Responder Counts
 - **Floating Hover Preview Card**:
   - Hovering over any post link (e.g., `#14` or `@User #14`) on desktop/laptop displays a floating glassmorphic preview card.
   - Displays author avatar initial, country flag, username, formatted timestamp, post number badge (`#14`), full post content, and attachment thumbnails.
@@ -49,7 +60,7 @@ START_OVER_POINT_OCTOBER_14
 - **Unique User Response Counter**:
   - Positioned directly adjacent to the post number badge in the preview card, displays how many unique users replied to that specific post (e.g., `💬 3 users responded` or `💬 1 user responded`).
 
-### 4. Forum: Mobile Dedicated Preview Modal & "Take Me There" Navigation
+### 5. Forum: Mobile Dedicated Preview Modal & "Take Me There" Navigation
 - **Dedicated Bottom Modal Preview**:
   - On mobile devices and touchscreens, tapping `#NUM` opens an overlay card (`#forum-reply-mobile-overlay`) displaying the replied-to post, author metadata, full content, and responder count.
 - **"Take Me There" Interactive Navigation**:
@@ -57,7 +68,7 @@ START_OVER_POINT_OCTOBER_14
   - Tapping it dismisses the modal, smoothly scrolls the viewport straight to the target post in the thread, and illuminates it with a glowing gold highlight pulse (`forum-item-highlight-gold`).
   - Preserves continuous mobile fullscreen without unwanted exit triggers.
 
-### 5. How to Play & FAQ: Comprehensive Forum Features & Tools Guide
+### 6. How to Play & FAQ: Comprehensive Forum Features & Tools Guide
 - **Quick Navigation Link**:
   - Added a direct button: **"How does the Forum work and what are all of its features?"** to the Quick Navigate FAQ grid with smooth scrolling and highlight pulse.
 - **Exhaustive Documentation (`#faq-forum-guide`)**:
@@ -71,7 +82,7 @@ START_OVER_POINT_OCTOBER_14
   - **Interactive Reply Links & Previews**: Hover previews on desktop, mobile tap modal with "Take Me There →", responder tags, and cross-thread references.
   - **Moderation & Fullscreen Invariant**: Post editing/deletion, moderator controls, reporting in Complaints, and 100% adherence to mobile continuous fullscreen.
 
-### 6. Forum: Post Likes & Dislikes Across All Categories
+### 7. Forum: Post Likes & Dislikes Across All Categories
 - **Thumbs Up / Thumbs Down Voting**:
   - Interactive Likes (👍) and Dislikes (👎) on thread opening posts and comments across all categories.
   - Backed by SQLite table `forum_reactions` with `(user_id, post_id, comment_id)` constraints and fast indexed lookups.
@@ -79,36 +90,36 @@ START_OVER_POINT_OCTOBER_14
 - **Suggestions/Ideas Category Focus**:
   - Emphasized voting in the Suggestions/Ideas header banner to reflect community prioritization.
 
-### 7. Forum: Mobile Layout & Centered Action Toolbar
+### 8. Forum: Mobile Layout & Centered Action Toolbar
 - **Full-Width Text Below Avatar & Actions**:
   - Restructured post cards so text begins full-width beneath the user's thumbnail avatar and action buttons, eliminating left-indentation on mobile.
 - **Centered Action Row**:
   - Structured action buttons (`👍`, `👎`, `🔖 Bookmark`, `↩ Reply`) into a centered full-width row with `flex-wrap: nowrap` and `white-space: nowrap`.
 
-### 8. Forum: Real-Time Viewers Count & Autocomplete Mentions (`@username`)
+### 9. Forum: Real-Time Viewers Count & Autocomplete Mentions (`@username`)
 - **Active Viewers Badge**: Live badge beside Forum title indicating active users viewing forums (e.g., `1 viewing`).
 - **Autocomplete Mentions**: Typing `@` opens an interactive popup filtering Friends and active players with arrow/touch selection and virtual keyboard awareness via `window.visualViewport`.
 
-### 9. Profile & Mini-Profile Enhancements
+### 10. Profile & Mini-Profile Enhancements
 - **Field Character Limits**: Name restricted to 50 chars, Age to 3 chars, Gender to 25 chars.
 - **Lifetime Forum Post Count**: Added `💬 Forum Posts: [number]` to profiles and mini-profiles backed by `users.total_forum_posts`, with click-to-search integration.
 
-### 10. Appearance Settings & Game Contrast
+### 11. Appearance Settings & Game Contrast
 - Added **Black** (`#000000`) and three shades of grey (**Light Grey** `#d4d4d4`, **Medium Grey** `#888888`, **Dark Grey** `#4a4a4a`) for Highlight as you Type / Mouse/Swipe with automatic letter contrast inversion.
 
-### 11. Word Definition Popup & Words to Work on: Word Lists Color Coding
+### 12. Word Definition Popup & Words to Work on: Word Lists Color Coding
 - **Adhering to All Words in Game Rooms**:
   - **NWL**: Blue (`#409cff` border, `rgba(64, 156, 255, 0.22)` background, `#93c5fd` text in dark mode; `#1e40af` text, `#dbeafe` background, `#3b82f6` border in light mode).
   - **CSW**: Solid Gold (`#ffd700` border, `rgba(255, 215, 0, 0.22)` background, `#ffd700` text in dark mode; `#713f12` text, `rgba(255, 215, 0, 0.35)` background, `#eab308` border in light mode).
   - **AW**: Royal Purple (`#9333ea` border, `rgba(147, 51, 234, 0.25)` background, `#d8b4fe` text in dark mode; `#3b0764` text, `#f3e8ff` background, `#9333ea` border in light mode).
   - Displayed consistently across definition popups (`#tool-word-def-popover`) adjacent to the word length badge, and across every word row under "Word lists valid in" in the Words to Work on tool.
 
-### 12. Lobby Polish & Registration Validation
+### 13. Lobby Polish & Registration Validation
 - Changed Lobby chatbox placeholder to **`"Type Lobby message..."`**.
 - Upgraded 3D obsidian depth on Lobby Journey and New User Guide buttons.
 - Restricted username registration to letters, numbers, and underscores with clear inline validation notices.
 
-### 13. Added Words & Lexicographical Engine: Strict Proper Noun & Fandom Filtering (ANGELITE / ANGELITES Fix)
+### 14. Added Words & Lexicographical Engine: Strict Proper Noun & Fandom Filtering (ANGELITE / ANGELITES Fix)
 - **Proper Noun & Fandom Filtering (`_AW_DISALLOWED_PROPER_NOUN_REGEX`)**:
   - Implemented strict filtering across `get_word_definitions_for_aw_check`, `lookup_raw_definition_online`, `format_resolved_definition`, and `lookup_web_search_definition` to reject proper nouns, television/film fandom terms (e.g. "fan of the television series..."), eponyms, and media titles.
   - Resolved the singular/plural discrepancy where capitalized Wiktionary titles cataloged fandoms as "Noun", ensuring only authentic common noun lexicographical definitions are accepted.
@@ -119,3 +130,12 @@ START_OVER_POINT_OCTOBER_14
 - **New AW Words & Added Words Restoration**:
   - Added `ANGELITE` and `ANGELITES` to `added_words.txt`, `added_words_duplicate.txt`, and `added_words_dates.txt` with their submission date (`10/10/2026`).
   - Restored them to the top of **New AW Words** in the Tools tab, appearing above previously added words from `30/09/2026`.
+
+---
+
+## Verification & Health Check
+
+- **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK`.
+- **Static Assets Sync**: `forum.css`, `style.css`, and `forum.js` verified live on production.
+- **PM2 Process**: `morpheme` process (ID 0) online with memory ~845MB after building CSW tries and merging dictionaries.
+- **Mobile Fullscreen Rules**: Fullscreen invariant strictly maintained across all navigation, modals, and tabs.
