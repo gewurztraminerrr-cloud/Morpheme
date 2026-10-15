@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-a4745065e94f1ff5b23d9a33bb58be0c3d9a3044
+91934dd61bcfe23315a0cbb0b5d92df972412705
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `a4745065`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `91934dd6`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -155,6 +155,14 @@ START_OVER_POINT_OCTOBER_14
 - **Layout Enhancement**: In the Forum category thread list (`renderPosts`), like and dislike counts and icons (`👍 [N]` and `👎 [N]`) are now grouped into `.post-stats-right` with `margin-left: auto;`, positioning them firmly at the bottom right corner of each thread card.
 - **Left Meta Preserved**: Thread comments count (`💬 [N] comments`) and attachment indicator (`🖼️ Includes images`) remain neatly aligned on the bottom left in `.post-stats-left`.
 - **Thread Detail Integrity**: Strictly isolated to thread cards in category/search listings; nothing inside the thread detail view (`renderPostDetail` / thread comments / discussion reaction buttons) was touched or altered.
+
+### 17. Forum: Thread Discussion Header — Refresh Button on Same Row as Bookmark & Scroll to Bottom on Mobile
+- **Issue**: On mobile viewports, the comments header (`.comments-header`) wraps into two lines. The Refresh button (`🔄`) previously sat on line 1 beside "Discussion" and the comment count badge, while "Bookmark" and "Scroll to Bottom" occupied line 2.
+- **Enhancement**:
+  - Moved `#forum-refresh-comments-btn` into `.comments-header-actions-box` in `templates/index.html`.
+  - On mobile (`@media (max-width: 820px)` and `body.is-mobile`), `.comments-header-actions-box` forms a single, unified row with `[ 🔄 ]` (`flex: 0 0 32px`), `[ 🔖 Bookmark ]` (`flex: 1 1 0`), and `[ ⬇ Scroll to Bottom ]` (`flex: 1 1 0`).
+  - Matches the 27px height and border-radius across all three controls for a balanced, space-efficient mobile header with no tap-target truncation or text wrapping.
+  - On desktop (`min-width: 821px`), preserves seamless single-line horizontal alignment alongside "Discussion" and comment count.
 
 ---
 
