@@ -275,12 +275,6 @@
     align-items: stretch;
 }
 
-@media (max-width: 900px) {
-    .matrix-subanagrams {
-        display: none !important;
-    }
-}
-
 .corner-cell {
     width: 60px;
     height: 35px;

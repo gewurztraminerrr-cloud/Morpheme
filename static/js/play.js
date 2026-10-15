@@ -1810,6 +1810,10 @@ async function updateGameState(incomingState = null) {
         window.lastGameState = state;  // Store for optimistic updates
         const isSub = state.game_type === 'subanagrams';
         document.body.classList.toggle('is-subanagrams', isSub);
+        const submitBtn = document.getElementById('submit-word-btn');
+        if (submitBtn) {
+            submitBtn.textContent = isSub ? 'Enter' : 'Submit';
+        }
         const colorBar = document.getElementById('game-color-bar');
         if (colorBar) {
             if (isSub) {
@@ -5954,6 +5958,11 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
     boardEl.classList.toggle('is-subanagrams-board', !!isSubanagrams);
 
+    const submitBtn = document.getElementById('submit-word-btn');
+    if (submitBtn) {
+        submitBtn.textContent = isSubanagrams ? 'Enter' : 'Submit';
+    }
+
     const rotateBtn = document.getElementById('rotate-board-btn');
     const transposeBtn = document.getElementById('transpose-board-btn');
     if (rotateBtn) {
@@ -7927,9 +7936,34 @@ function initWordSubmission() {
 
     if (submitBtn) {
         submitBtn.onclick = () => {
-            const val = wordInputEl.value;
-            console.log('[play.js] submission triggered via button click:', val);
-            submitWord(val);
+            const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+            if (isSub && typeof mouseState !== 'undefined' && mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+                const path = mouseState.selectedPath;
+                const word = path.map((p, i) => getLetterFromPathIndex(path, i, false)).join('');
+                const serverPath = path.map(p => {
+                    if (p.face !== null && p.face !== undefined) {
+                        return [p.face, p.row, p.col];
+                    }
+                    return [p.row, p.col];
+                });
+                console.log('[play.js] Subanagrams Enter clicked:', word, serverPath);
+                submitWord(word, serverPath);
+            } else {
+                const val = wordInputEl.value;
+                console.log('[play.js] submission triggered via button click:', val);
+                submitWord(val);
+            }
+        };
+    }
+
+    const clearBtn = document.getElementById('clear-word-btn');
+    if (clearBtn) {
+        clearBtn.onclick = (e) => {
+            e.preventDefault();
+            console.log('[play.js] Clear button pressed');
+            if (typeof clearWordInputAndSelection === 'function') {
+                clearWordInputAndSelection();
+            }
         };
     }
 
@@ -8278,6 +8312,17 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         input.dispatchEvent(new Event('input'));
         window.isProgrammaticClear = false;
     }
+
+    // Reset selection path and visual highlights on submission
+    if (typeof mouseState !== 'undefined' && mouseState) {
+        mouseState.selectedPath = [];
+        mouseState.visitedCells = new Set();
+        mouseState.isDown = false;
+    }
+    document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('selected', 'current', 'typing-highlight');
+        if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+    });
 
     console.log('[play.js] submitWord entering:', word, 'Room:', roomId);
     if (!word) {
@@ -9096,6 +9141,8 @@ async function leaveCurrentRoom() {
     window._lastParamString = null;
     window._displayedParams = null;
     document.body.classList.remove('is-subanagrams');
+    const submitBtn = document.getElementById('submit-word-btn');
+    if (submitBtn) submitBtn.textContent = 'Submit';
     const colorBar = document.getElementById('game-color-bar');
     if (colorBar && !window.isTournamentPlay && !document.body.classList.contains('is-tournament-round')) {
         colorBar.style.removeProperty('display');
@@ -9540,6 +9587,90 @@ function createSpectatorPanel() {
     return panel;
 }
 
+// ─────────── Subanagrams Board Interaction & Backtrack Logic ───────────
+
+function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
+    if (!mouseState.selectedPath) mouseState.selectedPath = [];
+    if (!mouseState.visitedCells) mouseState.visitedCells = new Set();
+    const pathLen = mouseState.selectedPath.length;
+
+    // Check if clicking the MOST RECENT letter entered in the sequence
+    if (pathLen > 0) {
+        const lastCell = mouseState.selectedPath[pathLen - 1];
+        const lastKey = (lastCell.face !== null && lastCell.face !== undefined)
+            ? `${lastCell.face},${lastCell.row},${lastCell.col}`
+            : `${lastCell.row},${lastCell.col}`;
+
+        if (lastKey === key) {
+            // BACKTRACK / UNDO: Remove the most recent letter
+            mouseState.selectedPath.pop();
+            mouseState.visitedCells.delete(key);
+            cell.classList.remove('selected', 'current');
+            applyDensityToCell(cell);
+
+            // Mark the new last letter in sequence as 'current'
+            if (mouseState.selectedPath.length > 0) {
+                const newLast = mouseState.selectedPath[mouseState.selectedPath.length - 1];
+                let newLastSelector = `.board-cell[data-r="${newLast.row}"][data-c="${newLast.col}"]`;
+                if (newLast.face !== null && newLast.face !== undefined) {
+                    newLastSelector = `.board-cell[data-f="${newLast.face}"][data-r="${newLast.row}"][data-c="${newLast.col}"]`;
+                }
+                const newLastEl = document.querySelector(newLastSelector);
+                if (newLastEl) {
+                    newLastEl.classList.add('current');
+                    applyDensityToCell(newLastEl);
+                }
+            }
+
+            updateWordInputFromPath();
+            BoardAudio.playTileSound(mouseState.selectedPath.length);
+            return;
+        }
+    }
+
+    // If cell was already selected earlier in the current sequence, ignore (cannot duplicate tile)
+    if (mouseState.visitedCells.has(key)) {
+        return;
+    }
+
+    // Otherwise, append this letter to sequence!
+    mouseState.visitedCells.add(key);
+    mouseState.selectedPath.push({ row: r, col: c, letter, face: f });
+
+    // Remove 'current' from the previous tile
+    document.querySelectorAll('.board-cell.current').forEach(cEl => {
+        cEl.classList.remove('current');
+        applyDensityToCell(cEl);
+    });
+
+    // Mark newly clicked cell as selected and current
+    cell.classList.add('selected', 'current');
+    applyDensityToCell(cell);
+
+    updateWordInputFromPath();
+    BoardAudio.playTileSound(mouseState.selectedPath.length);
+}
+
+function clearWordInputAndSelection() {
+    const input = document.getElementById('word-input');
+    if (input) {
+        window.isProgrammaticClear = true;
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        window.isProgrammaticClear = false;
+    }
+    if (typeof mouseState !== 'undefined' && mouseState) {
+        mouseState.selectedPath = [];
+        mouseState.visitedCells = new Set();
+        mouseState.isDown = false;
+    }
+    document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('selected', 'current', 'typing-highlight');
+        if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+    });
+}
+window.clearWordInputAndSelection = clearWordInputAndSelection;
+
 // ─────────── Mouse & Touch Board Interaction ───────────
 
 function selectCell(row, col, letter, cellEl, face = null) {
@@ -9754,6 +9885,12 @@ function handleCellMouseDown(e) {
     const letter = getLetterFromCellAndEvent(cell, e);
     const key = f !== null ? `${f},${r},${c}` : `${r},${c}`;
 
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) {
+        handleSubanagramsTileClick(cell, r, c, f, letter, key);
+        return;
+    }
+
     // If we already have an active path started (e.g. trackpad relaxed pressure momentarily)
     if (mouseState.selectedPath.length > 0) {
         const lastCell = mouseState.selectedPath[mouseState.selectedPath.length - 1];
@@ -9802,6 +9939,8 @@ function handleCellMouseOver(e) {
     if (isCubeBoard()) return; // Cube: typing-only
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) return;
 
     const cell = e.target.closest('.board-cell');
     if (!cell || cell.classList.contains('grayed')) return;
@@ -9817,6 +9956,8 @@ function handleCellMouseMove(e) {
     if (isCubeBoard()) return; // Cube: typing-only
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) return;
 
     const target = document.elementFromPoint(e.clientX, e.clientY);
     const cell = target && target.closest('.board-cell');
@@ -9871,6 +10012,19 @@ function handleCellTouchStart(e) {
 
     if (window.isSpectatorMode) return;
 
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) {
+        if (cell && !cell.classList.contains('grayed')) {
+            const f = cell.dataset.f !== undefined ? parseInt(cell.dataset.f) : null;
+            const r = parseInt(cell.dataset.r || cell.dataset.row);
+            const c = parseInt(cell.dataset.c || cell.dataset.col);
+            const letter = getLetterFromCellAndEvent(cell, e);
+            const key = f !== null ? `${f},${r},${c}` : `${r},${c}`;
+            handleSubanagramsTileClick(cell, r, c, f, letter, key);
+        }
+        return;
+    }
+
     if (mouseState.isDown) return; // Prevent double touch/accidental brushes from erasing path
 
     lastTouchX = touch.clientX;
@@ -9901,6 +10055,8 @@ function handleCellTouchMove(e) {
     }
 
     if (isCubeBoard()) return; // Cube: typing-only, no touch tile selection
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) return;
     if (!mouseState.isDown) return;
     if (window.isSpectatorMode) return;
 
@@ -9931,6 +10087,11 @@ function handleCellTouchMove(e) {
 }
 
 function finishDragSelection(e) {
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (isSubanagrams) {
+        mouseState.isDown = false;
+        return;
+    }
     if (!mouseState.isDown) return;
     
     // If this was triggered by a touchend/touchcancel but the user's swiping touch has not ended yet, do NOT terminate the swipe!

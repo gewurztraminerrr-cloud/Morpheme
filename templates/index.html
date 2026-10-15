@@ -175,10 +175,10 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1791130081" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1791130080" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1791130200" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
-    <link rel="stylesheet" href="/css/lobby.css?v=1791130080">
-    <link rel="stylesheet" href="/css/play.css?v=1791130092">
+    <link rel="stylesheet" href="/css/lobby.css?v=1791130200">
+    <link rel="stylesheet" href="/css/play.css?v=1791130200">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130146">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -3628,6 +3628,7 @@
                     <div class="word-input-section">
                         <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
                         <button id="submit-word-btn">Submit</button>
+                        <button id="clear-word-btn" class="clear-btn timer-btn" type="button">Clear</button>
                         <div class="timer-controls-group" id="timer-controls-group">
                             <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
                             <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
@@ -5967,35 +5968,6 @@
                                 </div>
                             </div>
 
-                            <!-- Subanagrams Tile Size (Desktops & Laptops Only) -->
-                            <div class="setting-panel desktop-only-setting" id="setting-panel-subanagrams-tile-size">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Subanagrams Tile Size</div>
-                                        <div class="setting-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds (desktops and laptops only).</div>
-                                    </div>
-                                    <div id="val-subanagrams-tile-size" class="preview-value">64px</div>
-                                </div>
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
-                                        <span>Small (44px)</span>
-                                        <span>Large (96px)</span>
-                                    </div>
-                                    <input type="range" id="setting-subanagrams-tile-size" min="44" max="96" value="64" style="width: 100%;">
-                                </div>
-                                <div class="settings-preview-box" style="margin-top: 15px; padding: 20px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px; overflow-x: auto;">
-                                    <div class="subanagrams-preview-board" id="subanagrams-preview-board" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                                        <div class="board-cell subanagrams-preview-cell">S</div>
-                                        <div class="board-cell subanagrams-preview-cell">U</div>
-                                        <div class="board-cell subanagrams-preview-cell">B</div>
-                                        <div class="board-cell subanagrams-preview-cell">W</div>
-                                        <div class="board-cell subanagrams-preview-cell">O</div>
-                                        <div class="board-cell subanagrams-preview-cell">R</div>
-                                        <div class="board-cell subanagrams-preview-cell">D</div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- 3D Cube Scale (Desktops & Laptops Only) -->
                             <div class="setting-panel desktop-only-setting" id="setting-panel-cube-scale">
                                 <div class="setting-header">
@@ -6030,6 +6002,35 @@
                                             to { transform: rotateX(-20deg) rotateY(360deg); }
                                         }
                                      </style>
+                                </div>
+                            </div>
+
+                            <!-- Subanagrams Tile Size -->
+                            <div class="setting-panel" id="setting-panel-subanagrams-tile-size">
+                                <div class="setting-header">
+                                    <div>
+                                        <div class="setting-title">Subanagrams Tile Size</div>
+                                        <div class="setting-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds.</div>
+                                    </div>
+                                    <div id="val-subanagrams-tile-size" class="preview-value">64px</div>
+                                </div>
+                                <div class="setting-slider-container">
+                                    <div class="slider-label-row">
+                                        <span>Small (44px)</span>
+                                        <span>Large (96px)</span>
+                                    </div>
+                                    <input type="range" id="setting-subanagrams-tile-size" min="44" max="96" value="64" style="width: 100%;">
+                                </div>
+                                <div class="settings-preview-box" style="margin-top: 15px; padding: 20px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px; overflow-x: auto;">
+                                    <div class="subanagrams-preview-board" id="subanagrams-preview-board" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                        <div class="board-cell subanagrams-preview-cell">S</div>
+                                        <div class="board-cell subanagrams-preview-cell">U</div>
+                                        <div class="board-cell subanagrams-preview-cell">B</div>
+                                        <div class="board-cell subanagrams-preview-cell">W</div>
+                                        <div class="board-cell subanagrams-preview-cell">O</div>
+                                        <div class="board-cell subanagrams-preview-cell">R</div>
+                                        <div class="board-cell subanagrams-preview-cell">D</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -9932,9 +9933,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791130010"></script>
     <script src="/js/forum.js?v=1791130137"></script>
-    <script src="/js/app.js?v=1791130100"></script>
+    <script src="/js/app.js?v=1791130200"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
-    <script src="/js/play.js?v=1791100013"></script>
+    <script src="/js/play.js?v=1791130200"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>

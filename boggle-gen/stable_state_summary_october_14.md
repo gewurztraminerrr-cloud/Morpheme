@@ -173,15 +173,30 @@ START_OVER_POINT_OCTOBER_14
 - **CSS Transformation & Elevation Dynamics**:
   - Configured `transition: all 0.2s ease, transform 0.1s ease !important;` on all forum back buttons.
   - On active / pressed (`:active`, `.active`), applied `transform: translateX(-4px) scale(0.98) !important;` and reduced `box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;` across dark, light, and white themes.
-  - Included `#forum-cancel-create` in all CSS theme selectors alongside `#forum-back-to-list` and `#forum-category-back-btn`.
 - **Mobile Touch Animation Window**:
   - In `static/js/forum.js`, added a 120ms animation window on mobile devices for `backToListBtn` and `cancelCreateBtn`, allowing the physical 3D flattening and sliding animation to complete visibly before switching views back to the list.
+
+### 20. Multiplayer Subanagrams Mobile Support, Single-Letter Tap Construction, Backtrack Undo, Enter Submission, Clear Button & Appearance Slider
+- **Mobile Access**:
+  - Removed mobile User-Agent HTTP 403 rejections in `create_room` and `join_room` in `app.py`.
+  - Removed mobile display hiding of `.matrix-subanagrams` in `static/css/lobby.css` and `static/js/app.js` (`filterCubeOnMobile`), allowing full visibility and room creation/joining on mobile.
+- **Letter Submission & Board Interaction**:
+  - Drag/swipe auto-submission disabled in Subanagrams (`finishDragSelection`, `handleCellMouseOver`, `handleCellMouseMove`, `handleCellTouchMove`).
+  - Individual letter press/tap constructs words in `#word-input` (`handleSubanagramsTileClick`).
+  - **Backtracking Undo**: Pressing the most recent letter entered removes it from the sequence, unhighlights it, and marks the preceding letter as `current`. Pressing that letter removes it as well, repeating down the stack.
+  - **Enter Submission**: Submission occurs via the "Enter" button (`#submit-word-btn` renamed to "Enter" in Subanagrams) or physical Enter key.
+  - **Clear Button**: Added `#clear-word-btn` to `.word-input-section` (`templates/index.html`) to wipe the textbox and reset all selected tile states and highlights.
+- **Appearance Settings**:
+  - Moved `#setting-panel-subanagrams-tile-size` directly below `#setting-panel-cube-scale` in Tools -> Appearance (`templates/index.html`).
+  - Removed `desktop-only-setting` class and updated description, enabling tile sizing controls on mobile.
+  - Updated `body.is-mobile .game-board.is-subanagrams-board .board-cell` in `static/css/play.css` to use `var(--subanagrams-cell-size, 64px)` dynamically.
 
 ---
 
 ## Verification & Health Check
 
 - **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK`.
-- **Static Assets Sync**: `forum.css`, `style.css`, `play.css`, and `forum.js` verified live on production.
+- **Static Assets Sync**: `lobby.css`, `play.css`, `app.js`, and `play.js` verified live on production.
 - **PM2 Process**: `morpheme` process online with dictionaries fully loaded.
 - **Mobile Fullscreen Rules**: Fullscreen invariant strictly maintained across all navigation, modals, and tabs.
+

@@ -1053,10 +1053,10 @@ body[class*="theme-light-"] .board-panel.low-time-warning {
 }
 
 body.is-mobile .game-board.is-subanagrams-board .board-cell {
-    width: 64px !important;
-    height: 64px !important;
-    font-size: 2.1rem !important;
-    border-radius: 10px !important;
+    width: var(--subanagrams-cell-size, 64px) !important;
+    height: var(--subanagrams-cell-size, 64px) !important;
+    font-size: calc(var(--subanagrams-cell-size, 64px) * 0.52) !important;
+    border-radius: calc(var(--subanagrams-cell-size, 64px) * 0.15) !important;
 }
 
 body.is-subanagrams #words-tabs-container,
@@ -1094,6 +1094,41 @@ body.is-subanagrams .game-params:active,
 body.is-subanagrams .header-title-group:active,
 body.is-subanagrams .spinner-set-label:active {
     transform: none !important;
+}
+
+/* Subanagrams Word Input Controls: Enter and Clear */
+body.is-subanagrams #submit-word-btn,
+body.is-subanagrams.is-mobile #submit-word-btn,
+body.is-subanagrams.is-desktop #submit-word-btn,
+body.is-subanagrams .word-input-section #submit-word-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.is-subanagrams #clear-word-btn,
+body.is-subanagrams.is-mobile #clear-word-btn,
+body.is-subanagrams.is-desktop #clear-word-btn,
+body.is-subanagrams .word-input-section #clear-word-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.is-subanagrams .word-input-section #rotate-board-btn,
+body.is-subanagrams .word-input-section #transpose-board-btn {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    body.is-subanagrams .word-input-section {
+        gap: 6px !important;
+    }
+    body.is-subanagrams .word-input-section #submit-word-btn,
+    body.is-subanagrams .word-input-section #clear-word-btn {
+        padding: 10px 14px !important;
+        font-size: 0.95rem !important;
+    }
 }
 
 /* Loading state: fill the board area and center the loading card */
@@ -1707,6 +1742,31 @@ body.is-subanagrams .spinner-set-label:active {
 }
 
 #submit-word-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#clear-word-btn {
+    display: none;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+}
+
+#clear-word-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+#clear-word-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

@@ -5340,12 +5340,6 @@ def create_room():
         except (TypeError, ValueError):
             max_rating = 9999
         
-        # Reject mobile devices from Subanagrams mode
-        if str(game_type).lower() == 'subanagrams':
-            ua = request.headers.get('User-Agent', '')
-            if re.search(r'Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini', ua, re.I):
-                return jsonify({'error': 'Subanagrams is not supported on mobile devices.'}), 403
-
         # Guest Restriction: Guests cannot create custom/limited rooms
         if session.get('is_guest', False):
             if min_rating > 0 or max_rating < 9999:
@@ -5482,12 +5476,6 @@ def join_room(room_id):
         
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
-
-    # Reject mobile devices from Subanagrams mode
-    if getattr(room, 'game_type', '') == 'subanagrams':
-        ua = request.headers.get('User-Agent', '')
-        if re.search(r'Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini', ua, re.I):
-            return jsonify({'error': 'Subanagrams is not supported on mobile devices.'}), 403
 
     # Check for spectator request
     data = request.get_json() or {}
