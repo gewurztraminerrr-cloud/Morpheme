@@ -1810,6 +1810,9 @@ const Forum = {
             const isClosed = Boolean(post.is_closed || (!isComment && (1 + (post.comment_count || 0)) >= 500));
             const closedBadge = isClosed ? `<span class="forum-closed-badge">🔒 CLOSED</span>` : '';
             
+            const rawContent = (post.content || '');
+            const excerpt = rawContent.length > 100 ? (rawContent.slice(0, 100).trimEnd() + '...') : rawContent;
+            
             return `
                 <div class="forum-post-card ${post.is_pinned ? 'is-pinned' : ''}" data-id="${postId}">
                     <div class="post-card-header">
@@ -1819,7 +1822,7 @@ const Forum = {
                             <span>${dateStr}</span>
                         </span>
                     </div>
-                    <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
+                    <div class="post-card-excerpt">${this.escapeHtml(excerpt)}</div>
                     <div class="post-stats">
                         <div class="post-stats-left">
                             ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
