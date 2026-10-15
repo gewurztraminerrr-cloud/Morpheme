@@ -1757,6 +1757,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
 }
 
 #submit-word-btn {
+    display: none;
     padding: 12px 16px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
@@ -10552,15 +10553,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         width: 100% !important;
     }
     .word-input-section #submit-word-btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        height: 44px !important;
-        padding: 6px 14px !important;
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        white-space: nowrap !important;
-        box-sizing: border-box !important;
+        display: none !important;
     }
     .word-input-section #word-input {
         flex: 1 1 auto !important;
@@ -12560,11 +12553,25 @@ body.is-desktop .word-input-section {
     justify-content: center !important;
     gap: 8px !important;
     width: 100% !important;
-    max-width: 620px !important;
+    max-width: 500px !important;
     margin: 0 auto !important;
 }
 
 body.is-desktop .word-input-section #submit-word-btn {
+    display: none !important;
+}
+
+/* Multiplayer Subanagrams: Enter button on desktop and widen container */
+body.is-desktop.is-subanagrams .word-input-section,
+body.is-subanagrams .word-input-section {
+    max-width: 620px !important;
+}
+
+body.is-subanagrams #submit-word-btn,
+body.is-subanagrams.is-mobile #submit-word-btn,
+body.is-subanagrams.is-desktop #submit-word-btn,
+body.is-subanagrams .word-input-section #submit-word-btn,
+body.is-subanagrams.is-desktop .word-input-section #submit-word-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -12574,6 +12581,11 @@ body.is-desktop .word-input-section #submit-word-btn {
     font-weight: 700 !important;
     white-space: nowrap !important;
     box-sizing: border-box !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
 }
 
 body.is-desktop .word-input-section #word-input {
