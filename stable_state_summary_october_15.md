@@ -69,6 +69,18 @@ START_OVER_POINT_OCTOBER_15
   - **`ACHYROPHANITE`** / **`ACHYROPHANITES`** (`15/10/2026`)
 - Sourced and placed definitions across all dictionary files and local/remote SQLite databases.
 
+### 7. Equalized Forum Vertical Spacing Above General & Category Tabs
+- **Sidebar Spacing Symmetry**:
+  - In `static/css/forum.css`, changed `.forum-nav-list` padding from `padding: 6px 0;` to `padding: 0;` (and `padding: 0 !important;` on mobile).
+  - Eliminated the asymmetrical `6px` top gap above **General**, ensuring identical `15px` padding above and below each category item and making item active/hover highlights fit flush between the top and bottom divider lines.
+- **Category Heading Vertical Margins**:
+  - Added `margin-top: 5px;` to `.header-titles h2` (and `margin-top: 4px !important;` on mobile `#forum-category-title`) to eliminate the browser default `0.83em` (~24px) margin-top, giving equal top and bottom spacing around category titles in the main forum view.
+
+### 8. Category Divider Lines on Mobile in Forum
+- In `static/css/forum.css`, added `.forum-nav-list .forum-cat-item:not(:last-child)` with `border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;` to the global base rules and the mobile `@media (max-width: 900px)` media query.
+- Categories on mobile devices now feature the same clean, subtle horizontal divider lines as on desktop and laptop displays.
+- Incremented `forum.css` version in `templates/index.html` to `v=1791130148` for immediate cache busting across client browsers.
+
 ---
 
 ## Verification & Health Check
@@ -78,5 +90,5 @@ START_OVER_POINT_OCTOBER_15
   - `WANGYANITE` & `WANGYANITES`: `is_valid: true`, `lists: ["AW"]`
   - `ABELLOEMRINGERITE` & `ABELLOEMRINGERITES`: `is_valid: true`, `lists: ["AW"]`
   - `TESTTEST` & `TESTTESTS`: `is_valid: false`
-- **PM2 Process**: `morpheme` online (fork mode, pid 0, memory stable ~800MB–1.1GB fully warmed up).
+- **PM2 Process**: `morpheme` online (fork mode, memory stable ~800MB–1.4GB fully warmed up).
 - **Mobile Fullscreen Invariant**: Preserved continuously across all pages, navigation, modals, and tabs.
