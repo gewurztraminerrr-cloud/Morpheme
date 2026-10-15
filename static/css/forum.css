@@ -120,6 +120,10 @@
     border-left: 3px solid transparent;
 }
 
+.forum-nav-list .forum-cat-item:not(:last-child) {
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+}
+
 .forum-cat-item:hover {
     background: rgba(var(--text-primary-rgb), 0.05);
 }
@@ -2305,6 +2309,9 @@ body.theme-white #page-forums .forum-bottom-bar {
         overflow-y: auto !important;
         padding: 0 !important;
         -webkit-overflow-scrolling: touch !important;
+    }
+    .forum-nav-list .forum-cat-item:not(:last-child) {
+        border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
     }
     .forum-sidebar-header h3 {
         margin-top: 0 !important;
