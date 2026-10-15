@@ -8068,6 +8068,58 @@ def calculate_morpheme_metric(source, target, limit=3):
     return calculate_morpheme_metric_py(source, target, limit)
 
 
+def is_plural_or_inflection(w1, w2):
+    """
+    Returns True if w1 and w2 are grammatical inflections or plurals of each other.
+    E.g. WASTRIE and WASTRIES (+S), WALK and WALKED (+ED), WALK and WALKING (+ING),
+    FAST and FASTER (+ER), FAST and FASTEST (+EST), BERRY and BERRIES (Y -> IES).
+    """
+    if not w1 or not w2 or w1 == w2:
+        return False
+    a, b = (w1, w2) if len(w1) <= len(w2) else (w2, w1)
+    len_diff = len(b) - len(a)
+    
+    # 1. Direct suffix additions
+    if len_diff == 1 and b == a + 'S':
+        return True
+    if len_diff == 1 and b == a + 'D' and a.endswith('E'):
+        return True
+    if len_diff == 1 and b == a + 'R' and a.endswith('E'):
+        return True
+    if len_diff == 2 and b == a + 'ES':
+        return True
+    if len_diff == 2 and b == a + 'ED':
+        return True
+    if len_diff == 2 and b == a + 'ER':
+        return True
+    if len_diff == 2 and b == a + 'ST' and a.endswith('E'):
+        return True
+    if len_diff == 3 and b == a + 'EST':
+        return True
+    if len_diff == 3 and b == a + 'ING':
+        return True
+        
+    # 2. Vowel elision before suffixes (drop final E)
+    if a.endswith('E'):
+        root = a[:-1]
+        if b in (root + 'ING', root + 'ED', root + 'ER', root + 'EST'):
+            return True
+            
+    # 3. Y to IES / IED / IER / IEST
+    if a.endswith('Y'):
+        root = a[:-1]
+        if b in (root + 'IES', root + 'IED', root + 'IER', root + 'IEST'):
+            return True
+            
+    # 4. Consonant doubling before -ED, -ING, -ER, -EST
+    if len(a) >= 3 and a[-1] not in 'AEIOU':
+        c = a[-1]
+        if b in (a + c + 'ED', a + c + 'ING', a + c + 'ER', a + c + 'EST'):
+            return True
+            
+    return False
+
+
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies filtering logic for Morpheme Procedure combinations."""
     # mp_groups is a dict of sets
@@ -8114,27 +8166,18 @@ def check_and_add_lic(lic_groups, count, target_len, word):
         lic_groups[count].add(word)
 
 COMBO_QUERY_CACHE = {} # LRU cache of search results for instant return
+COMBO_EXPLORER_CACHE = {} # (dict_name, length, target_mp) -> list of verified words
 
-@app.route('/api/tools/combo', methods=['POST'])
-def tools_combo_check():
-    data = request.json
-    search_term = data.get('search_term', '').upper().strip()
-    dict_name = data.get('dictionary', 'NWL')
-    
+
+def get_combo_payload_for_word(search_term, dict_name):
     # Check server cache for instant response (< 1ms)
     cache_key = (search_term, dict_name)
     if cache_key in COMBO_QUERY_CACHE:
-        return jsonify(COMBO_QUERY_CACHE[cache_key])
+        return COMBO_QUERY_CACHE[cache_key], 200
     
-    # Relaxed validation for 3/4 letter words
-    if not search_term or len(search_term) < 3 or len(search_term) > 10:
-        if not search_term:
-             return jsonify({'error': 'No search term provided'}), 400
-        pass 
-        
     dict_data = load_tools_dictionary(dict_name)
     if not dict_data:
-        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+        return {'error': f'Dictionary {dict_name} not found'}, 404
 
     import numpy as np
     word_list = dict_data['words']
@@ -8156,8 +8199,6 @@ def tools_combo_check():
     
     # 1. BITMASK FILTER (Extremely Fast Vectorized Bit Count)
     mask_intersection = dict_masks & s_mask
-    
-    # Vectorized Population Count (NumPy native)
     m = mask_intersection.astype(np.uint32)
     m = (m & 0x55555555) + ((m >> 1) & 0x55555555)
     m = (m & 0x33333333) + ((m >> 2) & 0x33333333)
@@ -8170,11 +8211,7 @@ def tools_combo_check():
     shared_counts = np.minimum(dict_matrix, s_vec).sum(axis=1)
     dict_lens_int = dict_lens.astype(np.int16)
     
-    # Capping max_mp at 3 globally to prevent large-MP candidate explosions and focus search on relevant game combinations.
     max_mp = 3
-    
-    # MP Candidates: absolute length diff <= 3, and shared >= T - max_mp, and unique shared >= 3
-    # Check minimum candidate length rules based on specifications
     if source_len >= 8:
         mp_len_mask = (dict_lens_int >= 5)
     elif source_len >= 5:
@@ -8189,7 +8226,6 @@ def tools_combo_check():
         mp_len_mask
     )[0]
     
-    # LIC Candidates: target_len <= source_len + 4, and shared >= T - 4, and shared_counts >= min_lic_shared
     min_lic_shared = 3 if source_len <= 5 else (4 if source_len <= 6 else 5)
     candidates_lic = np.where(
         (dict_lens_int <= source_len + 4) & 
@@ -8198,8 +8234,6 @@ def tools_combo_check():
     )[0]
     
     candidates = np.union1d(candidates_mp, candidates_lic)
-    
-    # Sort candidates by lower bound MP cost (ascending), then shared count (descending), then length difference (ascending)
     candidate_shared = shared_counts[candidates]
     candidate_lens = dict_lens_int[candidates]
     candidate_len_diff = np.abs(candidate_lens - source_len)
@@ -8207,57 +8241,50 @@ def tools_combo_check():
     sort_order = np.lexsort((candidate_len_diff, -candidate_shared, lower_bound))
     sorted_candidates = candidates[sort_order]
     
-    # Initialize Groups (Using sets to prevent O(N^2) search bottleneck)
-    mp_groups = {i: set() for i in range(max_mp + 1)} # 0MP to max_mp
+    mp_groups = {i: set() for i in range(max_mp + 1)}
     lic_groups = {}
     
-    # 0. Guaranteed Substring Check for 0MP: Any valid dictionary word of length >= 4 (or >= 3)
-    # contained within search_term or search_term_rev is 0MP by definition
     min_sub_len = 4 if source_len >= 5 else 3
     for l in range(min_sub_len, source_len + 1):
         for start in range(source_len - l + 1):
             sub1 = search_term[start:start+l]
-            if sub1 in dict_data['set']:
+            if sub1 != search_term and sub1 in dict_data['set'] and not is_plural_or_inflection(search_term, sub1):
                 mp_groups[0].add(sub1)
             sub2 = search_term_rev[start:start+l]
-            if sub2 in dict_data['set']:
+            if sub2 != search_term and sub2 in dict_data['set'] and not is_plural_or_inflection(search_term, sub2):
                 mp_groups[0].add(sub2)
     
-    # Native C-accelerated evaluation or optimized Python fallback
     c_engine = _init_c_morpheme_metric()
     s_bytes = search_term.encode('ascii') if c_engine else None
 
-    # --- OPTIMIZED SINGLE-THREADED LOOP ---
     for idx in sorted_candidates:
         word = word_list[idx]
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
             
-        # 1. MP Logic
         if np.abs(target_len - source_len) <= 3 and shared_count >= target_len - max_mp:
-            if c_engine:
-                w_bytes = word.encode('ascii')
-                best_mp = c_engine.c_calculate_morpheme_metric(s_bytes, w_bytes, max_mp)
-                if best_mp > 1:
-                    w_rev_bytes = word[::-1].encode('ascii')
-                    m2 = c_engine.c_calculate_morpheme_metric(s_bytes, w_rev_bytes, best_mp - 1)
-                    if m2 < best_mp:
-                        best_mp = m2
-            else:
-                best_mp, _ = calculate_morpheme_metric_py(search_term, word, limit=max_mp)
-                if best_mp > 1:
-                    m2, _ = calculate_morpheme_metric_py(search_term, word[::-1], limit=best_mp - 1)
-                    if m2 < best_mp:
-                        best_mp = m2
+            if not is_plural_or_inflection(search_term, word):
+                if c_engine:
+                    w_bytes = word.encode('ascii')
+                    best_mp = c_engine.c_calculate_morpheme_metric(s_bytes, w_bytes, max_mp)
+                    if best_mp > 1:
+                        w_rev_bytes = word[::-1].encode('ascii')
+                        m2 = c_engine.c_calculate_morpheme_metric(s_bytes, w_rev_bytes, best_mp - 1)
+                        if m2 < best_mp:
+                            best_mp = m2
+                else:
+                    best_mp, _ = calculate_morpheme_metric_py(search_term, word, limit=max_mp)
+                    if best_mp > 1:
+                        m2, _ = calculate_morpheme_metric_py(search_term, word[::-1], limit=best_mp - 1)
+                        if m2 < best_mp:
+                            best_mp = m2
 
-            if best_mp <= max_mp:
-                check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
+                if best_mp <= max_mp:
+                    check_and_add_mp(mp_groups, source_len, target_len, best_mp, word)
             
-        # 2. LIC Logic
         if target_len <= source_len + 4 and shared_count >= target_len - 4 and shared_count >= min_lic_shared:
             check_and_add_lic(lic_groups, shared_count, target_len, word)
 
-    # Sort groups by length and alphabetically without arbitrary truncation
     for k in mp_groups:
         mp_groups[k] = sorted(list(mp_groups[k]), key=lambda x: (-len(x), x))
         
@@ -8269,12 +8296,167 @@ def tools_combo_check():
         'lic_groups': lic_groups
     }
 
-    # Store in query cache (prune if exceeds 4096 entries)
     if len(COMBO_QUERY_CACHE) >= 4096:
         COMBO_QUERY_CACHE.clear()
     COMBO_QUERY_CACHE[cache_key] = result_payload
 
+    return result_payload, 200
+
+
+def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+    """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp."""
+    source_len = len(w)
+    dict_set = dict_data['set']
+    
+    if target_mp == 0:
+        min_sub_len = 4 if source_len >= 5 else 3
+        for l in range(min_sub_len, source_len + 1):
+            for start in range(source_len - l + 1):
+                sub1 = w[start:start+l]
+                if sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
+                    return True
+                sub2 = w[::-1][start:start+l]
+                if sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
+                    return True
+        return False
+
+    if target_mp == 1:
+        # Fast path 1: drop extremity letter
+        d1 = w[1:]
+        if d1 in dict_set and not is_plural_or_inflection(w, d1):
+            return True
+        d2 = w[:-1]
+        if d2 in dict_set and not is_plural_or_inflection(w, d2):
+            return True
+        # Fast path 2: add or insert letter anywhere
+        common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
+        for i in range(len(w) + 1):
+            for char in common_chars:
+                ins = w[:i] + char + w[i:]
+                if ins in dict_set and not is_plural_or_inflection(w, ins):
+                    return True
+        # Fast path 3: adjacent transposition
+        for i in range(len(w) - 1):
+            if w[i] != w[i+1]:
+                trans = w[:i] + w[i+1] + w[i] + w[i+2:]
+                if trans in dict_set and not is_plural_or_inflection(w, trans):
+                    return True
+        # Fast path 4: interior deletion
+        for i in range(1, len(w) - 1):
+            sub = w[:i] + w[i+1:]
+            if sub in dict_set and not is_plural_or_inflection(w, sub):
+                return True
+        # Fast path 5: single letter substitution
+        for i in range(len(w)):
+            orig = w[i]
+            for c in common_chars:
+                if c != orig:
+                    sub = w[:i] + c + w[i+1:]
+                    if sub in dict_set and not is_plural_or_inflection(w, sub):
+                        return True
+
+        return False
+
+    if target_mp >= 2:
+        # Any word with 0MP or 1MP connections also has 2MP and 3MP connections
+        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+            return True
+        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+            return True
+
+    return False
+
+
+@app.route('/api/tools/combo', methods=['POST'])
+def tools_combo_check():
+    data = request.json or {}
+    search_term = data.get('search_term', '').upper().strip()
+    dict_name = data.get('dictionary', 'NWL')
+    
+    if not search_term or len(search_term) < 3 or len(search_term) > 10:
+        if not search_term:
+             return jsonify({'error': 'No search term provided'}), 400
+        pass 
+        
+    result_payload, status_code = get_combo_payload_for_word(search_term, dict_name)
+    if status_code != 200:
+        return jsonify(result_payload), status_code
     return jsonify(result_payload)
+
+
+@app.route('/api/tools/combo/explorer', methods=['POST'])
+def tools_combo_explorer():
+    data = request.json or {}
+    dict_name = data.get('dictionary', 'CSW')
+    try:
+        length = int(data.get('length', 7))
+    except (ValueError, TypeError):
+        length = 7
+    try:
+        target_mp = int(data.get('mp', 1))
+    except (ValueError, TypeError):
+        target_mp = 1
+    random_order = bool(data.get('random', False))
+    selected_word = data.get('word', '').upper().strip()
+
+    dict_data = load_tools_dictionary(dict_name)
+    if not dict_data:
+        return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
+
+    # 1. If a word is selected, return its matching words at target_mp
+    if selected_word:
+        combo_res, status_code = get_combo_payload_for_word(selected_word, dict_name)
+        if status_code != 200:
+            return jsonify(combo_res), status_code
+        mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
+        matches_list = list(mp_matches)
+        if random_order:
+            import random
+            random.shuffle(matches_list)
+        return jsonify({
+            'word': selected_word,
+            'length': len(selected_word),
+            'mp': target_mp,
+            'dictionary': dict_name,
+            'matches': matches_list,
+            'count': len(matches_list)
+        })
+
+    # 2. Return list of input words of that length that actually have >= 1 match at target_mp
+    cache_key = (dict_name, length, target_mp)
+    if cache_key in COMBO_EXPLORER_CACHE:
+        input_words = COMBO_EXPLORER_CACHE[cache_key]
+    else:
+        import numpy as np
+        words_of_len = [w for w in dict_data['words'] if len(w) == length]
+        verified_words = []
+        c_engine = _init_c_morpheme_metric()
+        word_list = dict_data['words']
+        dict_matrix = dict_data['matrix']
+        dict_lens = dict_data['lens']
+        dict_masks = dict_data['masks']
+        dict_lens_int = dict_lens.astype(np.int16)
+
+        for w in words_of_len:
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+                verified_words.append(w)
+                
+        COMBO_EXPLORER_CACHE[cache_key] = verified_words
+        input_words = verified_words
+
+    res_words = list(input_words)
+    if random_order:
+        import random
+        random.shuffle(res_words)
+
+    return jsonify({
+        'length': length,
+        'mp': target_mp,
+        'dictionary': dict_name,
+        'words': res_words,
+        'count': len(res_words)
+    })
+
 
 LISTS_CACHE = {}
 
