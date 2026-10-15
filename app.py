@@ -7795,8 +7795,8 @@ def load_tools_dictionary(dict_name):
         for d in ['NWL', 'CSW', 'new_NWL', 'new_CSW', 'custom_nwl', 'custom_csw']:
             p = os.path.join(dict_dir, f'{d}.txt')
             if os.path.exists(p):
-                with open(p, 'r') as f:
-                    words.update(line.strip().upper() for line in f if line.strip())
+                with open(p, 'r', encoding='utf-8', errors='ignore') as f:
+                    words.update(line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#'))
         # Add manually added words for ALL
         if word_validator and getattr(word_validator, 'added_words', None):
             words.update(word_validator.added_words)
