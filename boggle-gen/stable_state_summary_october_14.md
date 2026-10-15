@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-2d57bc9f8722955f1f3a2c53aee2e72d6ff31a67
+bd1fc3cf36f2ecdd0fb498c09a807d8d2128e4fb
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `2d57bc9f`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `bd1fc3cf`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -24,16 +24,23 @@ START_OVER_POINT_OCTOBER_14
 
 ## Session Features & Enhancements (October 14, 2026)
 
-### 1. Forum: Top Menu Visibility & Zero-Shift Mobile Parity
-- **Elimination of Window Vertical Auto-Scroll**:
-  - Replaced destructive `element.scrollIntoView({ block: 'start' })` calls in `static/js/forum.js` (`showListView`, `showPostView`, `showCreateView`) with container horizontal scrolling (`container.scrollTo({ left: ..., behavior: 'smooth' })`).
-  - Purged window-scrolling `sidebar.scrollIntoView(...)` calls in favor of direct `.forum-container` scrolling.
-  - Guarantees the top menu bar (**MORPHEME**, **MORE-FEEM**, and all navigation buttons) remains 100% visible and accessible at the top of the screen on mobile devices at all times.
-- **Top Menu Dimensions & Layout Parity with Lobby**:
-  - Removed duplicate `.top-menu-bar` padding and redundant `.header`, `.logo`, `.nav`, and `.nav-btn` selector overrides from `static/css/forum.css`.
-  - Let base `static/css/style.css` rules govern header sizing, fonts, padding, and alignments uniformly across Lobby and Forum.
-  - Eliminated the content shift when navigating between Lobby and Forum on mobile devices.
-  - Unlocked `.forum-container` by removing errant `overflow-x: hidden !important;` override so smooth horizontal swipe gestures work seamlessly.
+### 1. Forum: Continuous Top Menu & Restored Bottom Action Bar (Back, Return to Category, Cancel)
+- **Top Menu Bar Continuous Visibility**:
+  - Replaced destructive `element.scrollIntoView({ block: 'start' })` window scrolling calls with horizontal container scrolling (`container.scrollTo({ left: ..., behavior: 'smooth' })`).
+  - Purged duplicate header padding and selector overrides from `static/css/forum.css` so that the base `static/css/style.css` rules govern header sizing, fonts, padding, and alignments uniformly across Lobby and Forum with zero content shift.
+- **Restoration of Forum Bottom Bar & Navigation Buttons (`← Back`, `← Back to category`, `← Cancel`)**:
+  - **Root Cause**: The mobile viewport lock had targeted a non-existent `#app` element for flex column layout, leaving `body` in default block display. Consequently, `.pages` expanded to 100% of body height below the ~120px top menu bar, pushing the bottom 120px of the forum container (which holds `.forum-bottom-bar`) completely off the bottom edge of the screen and clipping it under `overflow: hidden`.
+  - **Fix Applied**:
+    - Applied `display: flex !important; flex-direction: column !important; box-sizing: border-box !important;` directly to `html:has(#page-forums.active), body:has(#page-forums.active), body.forums-active`.
+    - Made `.top-menu-bar` and `.separator` strictly non-shrinking (`flex: 0 0 auto !important; flex-shrink: 0 !important;`).
+    - Configured `.pages` to fill the exact remainder of the viewport (`flex: 1 1 0% !important; min-height: 0 !important; height: auto !important;`).
+    - Configured `.forum-view-scroll-body` to flex and scroll internally (`flex: 1 1 0px !important; min-height: 0 !important; overflow-y: auto !important;`).
+    - Locked `.forum-bottom-bar` firmly at the bottom of the viewport (`flex: 0 0 auto !important; flex-shrink: 0 !important; z-index: 50 !important;`) with iPhone safe-area padding (`padding: 8px 14px max(8px, env(safe-area-inset-bottom)) 14px !important;`).
+    - Removed conflicting height and overflow overrides on `#page-forums` in `static/css/play.css`.
+  - **Result**:
+    - `← Back` (`#forum-category-back-btn`) is 100% visible and anchored at the bottom of the thread list view on mobile.
+    - `← Back to category` / Return to Category (`#forum-back-to-list`) is 100% visible and anchored at the bottom of the single thread view.
+    - `← Cancel` (`#forum-cancel-create`) is 100% visible and anchored at the bottom of the create post view.
 
 ### 2. Forum: Dual Reply Interfaces (Stationary Textbox & Floating Reply Popup)
 - **Coexisting Stationary & Floating Modes**:
@@ -136,6 +143,6 @@ START_OVER_POINT_OCTOBER_14
 ## Verification & Health Check
 
 - **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK`.
-- **Static Assets Sync**: `forum.css`, `style.css`, and `forum.js` verified live on production.
-- **PM2 Process**: `morpheme` process (ID 0) online with memory ~845MB after building CSW tries and merging dictionaries.
+- **Static Assets Sync**: `forum.css`, `style.css`, `play.css`, and `forum.js` verified live on production.
+- **PM2 Process**: `morpheme` process online with dictionaries fully loaded.
 - **Mobile Fullscreen Rules**: Fullscreen invariant strictly maintained across all navigation, modals, and tabs.
