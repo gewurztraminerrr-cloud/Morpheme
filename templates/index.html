@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791130490" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130490">
-    <link rel="stylesheet" href="/css/play.css?v=1791136000">
+    <link rel="stylesheet" href="/css/play.css?v=1791137000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4766,7 +4766,7 @@
                                 </div>
 
                                 <!-- MP Explorer Section: Filtered by Word Length & MP Value -->
-                                <div class="result-section" id="combo-explorer-section" style="width: 100%; box-sizing: border-box; margin-top: 14px; margin-bottom: 14px; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+                                <div class="result-section" id="combo-explorer-section" style="width: 100%; box-sizing: border-box; margin: 0; padding: 10px 14px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(var(--text-primary-rgb), 0.05); border-radius: 10px;">
                                     <div class="combo-explorer-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
                                         <div>
                                             <h3 style="color: #60a5fa; margin: 0 0 2px 0; font-size: 1.15rem;">MP Word Explorer</h3>
@@ -4867,16 +4867,13 @@
                                 <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
                                 <div class="result-section">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                        <h3 style="margin: 0;">LIC (Letters In Common)</h3>
+                                        <h3 style="color: #60a5fa; margin: 0;">LIC (Letters In Common)</h3>
                                         <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
                                             <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
                                             <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
                                         </div>
                                     </div>
-                                    <div class="chart-desc">The letters are there, but are they
-                                        arranged in such a way
-                                        so as
-                                        to have both be present?</div>
+                                    <div class="chart-desc" id="lic-chart-desc">The letters are there, but are they arranged in such a way so as to have both be present?</div>
                                     <div class="horizontal-scroll-container" id="lic-container">
                                         <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
                                     </div>

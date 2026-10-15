@@ -14317,7 +14317,19 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Desktop and Laptop Full-Width Stretch for Combo Checker Sections (MP, LIC, and MP Word Explorer) */
+/* Reduce excess gray space below LIC description */
+#lic-chart-desc,
+#tool-combo #lic-chart-desc,
+.combo-results-container #lic-chart-desc,
+#tool-combo .result-section:has(#lic-container) .chart-desc {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 6px 14px !important;
+    margin-bottom: 4px !important;
+}
+
+/* Desktop and Laptop Full-Width Stretch & Uniform Look for Combo Checker Sections (MP, MP Word Explorer, LIC) */
 @media (min-width: 641px) {
     #tool-combo .combo-results-container,
     .combo-results-container {
@@ -14332,6 +14344,11 @@ body.is-mobile .page *::-webkit-scrollbar {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.05) !important;
     }
 
     #tool-combo .horizontal-scroll-container,
@@ -14354,3 +14371,4 @@ body.is-mobile .page *::-webkit-scrollbar {
         box-sizing: border-box !important;
     }
 }
+
