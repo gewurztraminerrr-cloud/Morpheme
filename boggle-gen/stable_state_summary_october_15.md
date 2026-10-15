@@ -98,6 +98,24 @@ START_OVER_POINT_OCTOBER_15
   - In `app.py`, added full-length word check during public singleton hub reconstruction.
   - In `static/js/play.js`, ensured Subanagrams format strictly falls back to `'Totally Random'` and never displays `'Normal'`. Bumped `play.js` cache buster in `templates/index.html` to `v=1791130400`.
 
+### 11. Multiplayer Subanagrams Board "Shuffle" Button
+- **User Request**: Add a button next to the textbox in multiplayer Subanagrams that rearranges the letters in random order reading "Shuffle", completely separate and different from Rotate and Transpose in grid rooms.
+- **HTML Layout**:
+  - In `templates/index.html`, added `<button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button">Shuffle</button>` inside `.word-input-section` directly alongside `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear).
+- **CSS Styling & Responsiveness**:
+  - In `static/css/play.css`, styled `#shuffle-board-btn` with a vivid blue gradient (`linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)`), bold white font, rounded corners (`border-radius: 8px`), and interactive hover shadow.
+  - Hidden by default in standard grid rooms (`display: none !important;`) and only displayed when `body.is-subanagrams` is active (`display: inline-flex !important;`).
+  - Added responsive sizing and 42px touch target height in mobile and desktop media queries, widening the Subanagrams input container to `680px`.
+- **Client Randomization & State Preservation**:
+  - In `static/js/play.js`, implemented `window.shuffleSubanagramsBoard()`:
+    - Extracts letters and runs a Fisher-Yates shuffle with a guarantee of producing a distinct permutation whenever at least two distinct letters exist.
+    - Saves the custom arrangement in `window.subanagramsCustomBoard` alongside the sorted multiset key `window.subanagramsBoardKey`.
+    - Updates `window.lastGameState.board = [shuffled]` and triggers `renderBoard([shuffled])` immediately without layout shifts or fullscreen interruptions.
+    - Preserves the shuffled order across background server countdown ticks/heartbeats during the round.
+    - Automatically remaps `mouseState.selectedPath` and `mouseState.visitedCells` to the new tile coordinates if letters were already entered in `#word-input`, re-triggering highlight pathfinding.
+    - Resets cleanly when a new round starts, on round intermission, or upon room exit.
+  - Bumped `play.css` cache buster to `v=1791130450` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
+
 ---
 
 ## Verification & Health Check

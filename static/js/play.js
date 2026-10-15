@@ -1867,6 +1867,8 @@ async function updateGameState(incomingState = null) {
 
         // Detect transition to intermission (round end)
         if (previousState && previousState.state === 'active' && state.state === 'intermission') {
+            window.subanagramsCustomBoard = null;
+            window.subanagramsBoardKey = null;
             stopRotatingLetters();
             const wordInput = document.getElementById('word-input');
             const chatInput = document.getElementById('chat-input');
@@ -2406,6 +2408,15 @@ async function updateGameState(incomingState = null) {
                     transposeBtnEl.style.display = '';
                 }
             }
+            const shuffleBtnEl = document.getElementById('shuffle-board-btn');
+            if (shuffleBtnEl) {
+                if (state.game_type === 'subanagrams') {
+                    shuffleBtnEl.style.display = '';
+                    shuffleBtnEl.disabled = !isActive;
+                } else {
+                    shuffleBtnEl.style.display = 'none';
+                }
+            }
 
             if (inputEl && inputEl.disabled !== !isActive) {
                 inputEl.disabled = !isActive;
@@ -2461,6 +2472,8 @@ async function updateGameState(incomingState = null) {
         const isNewRound = (state.state === 'active' && (lastStateStr !== 'active' || roomChanged || (previousState && state.current_round !== previousState.current_round)));
         if (lastStateStr !== state.state || isNewRound) {
             if (isNewRound) {
+                window.subanagramsCustomBoard = null;
+                window.subanagramsBoardKey = null;
                 wrongGuessesOnBoardCount = 0;
                 window._localSubmittedWords = new Set();
                 window._localSubmittedWordsList = [];
@@ -5973,6 +5986,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 letters = board;
             }
         }
+        const lettersKey = [...letters].sort().join('');
+        if (window.subanagramsCustomBoard && window.subanagramsBoardKey === lettersKey) {
+            letters = window.subanagramsCustomBoard;
+        }
         board = [letters];
     }
 
@@ -8040,6 +8057,17 @@ function initWordSubmission() {
         };
     }
 
+    const shuffleBtn = document.getElementById('shuffle-board-btn');
+    if (shuffleBtn) {
+        shuffleBtn.onclick = (e) => {
+            e.preventDefault();
+            console.log('[play.js] Shuffle button pressed');
+            if (typeof window.shuffleSubanagramsBoard === 'function') {
+                window.shuffleSubanagramsBoard();
+            }
+        };
+    }
+
 // DELEGATED GLOBAL LISTENER for Enter-key submission
 // This ensures it works even if the input element is re-created or swapped.
 document.addEventListener('keydown', (e) => {
@@ -9213,6 +9241,8 @@ async function leaveCurrentRoom() {
     window.lastRawGameState = null;
     window._lastParamString = null;
     window._displayedParams = null;
+    window.subanagramsCustomBoard = null;
+    window.subanagramsBoardKey = null;
     document.body.classList.remove('is-subanagrams');
     const submitBtn = document.getElementById('submit-word-btn');
     if (submitBtn) submitBtn.textContent = 'Enter';
@@ -9280,7 +9310,86 @@ if (returnBtnEl) {
 
 window.isUserBoardTransposed = false;
 
+window.shuffleSubanagramsBoard = function() {
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    if (!isSubanagrams) return;
+
+    let currentLetters = null;
+    if (window.lastGameState && window.lastGameState.board && Array.isArray(window.lastGameState.board[0])) {
+        currentLetters = [...window.lastGameState.board[0]];
+    } else {
+        const cells = document.querySelectorAll('#game-board .board-cell');
+        if (cells.length > 0) {
+            currentLetters = Array.from(cells).map(cell => cell.dataset.letter || (cell.textContent || '').trim());
+        }
+    }
+
+    if (!currentLetters || currentLetters.length <= 1) return;
+
+    const shuffleArray = (arr) => {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = copy[i];
+            copy[i] = copy[j];
+            copy[j] = tmp;
+        }
+        return copy;
+    };
+
+    const hasDistinct = currentLetters.some(l => l !== currentLetters[0]);
+    let shuffled = shuffleArray(currentLetters);
+    if (hasDistinct && currentLetters.length > 1) {
+        let attempts = 0;
+        while (attempts < 10 && shuffled.every((l, idx) => l === currentLetters[idx])) {
+            shuffled = shuffleArray(currentLetters);
+            attempts++;
+        }
+    }
+
+    const lettersKey = [...currentLetters].sort().join('');
+    window.subanagramsCustomBoard = [...shuffled];
+    window.subanagramsBoardKey = lettersKey;
+
+    if (window.lastGameState) {
+        window.lastGameState.board = [shuffled];
+    }
+
+    // Force re-render of board
+    lastRenderedBoardJSON = null;
+    renderBoard([shuffled], false, false, window.lastGameState);
+
+    // If word-input has a typed/selected word, remap mouseState to new tile coordinates
+    const wordInputEl = document.getElementById('word-input');
+    const word = wordInputEl ? wordInputEl.value.trim().toUpperCase() : '';
+    if (word && typeof findWordPathOnBoard === 'function') {
+        const path = findWordPathOnBoard(word, [shuffled]);
+        if (path && typeof mouseState !== 'undefined' && mouseState) {
+            mouseState.selectedPath = path.map(p => ({
+                row: p.r,
+                col: p.c,
+                letter: shuffled[p.c],
+                face: null
+            }));
+            mouseState.visitedCells = new Set(path.map(p => `${p.r},${p.c}`));
+        }
+    }
+
+    if (typeof reapplyBoardHighlights === 'function') {
+        reapplyBoardHighlights();
+    }
+};
+
 document.addEventListener('click', (e) => {
+    const shuffleBtn = e.target ? e.target.closest('#shuffle-board-btn') : null;
+    if (shuffleBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[play.js] Shuffle clicked!');
+        window.shuffleSubanagramsBoard();
+        return;
+    }
+
     const transposeBtn = e.target ? e.target.closest('#transpose-board-btn') : null;
     if (transposeBtn) {
         e.preventDefault();
