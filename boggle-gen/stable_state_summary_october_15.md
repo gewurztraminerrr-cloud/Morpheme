@@ -8,14 +8,14 @@ START_OVER_POINT_OCTOBER_15
 
 ## Latest Commit ID
 ```
-a9298c76a86c375ad524b254974ea1894ef8704f
+791817d4b321188c19fd34b05d82f068754421c9
 ```
 
 ## Synchronization Status
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| **localhost**      | ✅ Synchronized | Commit `a9298c76`, working tree clean, synced with origin/main |
+| **localhost**      | ✅ Synchronized | Commit `791817d4`, working tree clean, synced with origin/main |
 | **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, verified live HTTP/2 200 OK) |
 | **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -156,6 +156,20 @@ a9298c76a86c375ad524b254974ea1894ef8704f
     - Added an interactive click listener on the preview response badge so tapping it immediately opens the responses list modal (`showResponsesPopup(postNumber)`).
     - Updated desktop hover preview `showReplyHoverPreview` to use the same `💬 ${respCount}` badge.
   - Bumped `forum.js` cache buster in `templates/index.html` to `v=1791130520`.
+
+### 14. Fix for Temporary Duplicate Word Row Under Words on Submission
+- **Bug / Symptoms**:
+  - Upon entering a valid word, two identical rows of that word briefly appeared under the "Words" panel.
+  - One of them (the unstyled duplicate inserted without checkmarks or click handlers) would disappear a few moments later on the subsequent state poll/refresh, leaving only the single correct find with its checkmark and score breakdown.
+- **Root Cause**:
+  - In `static/js/play.js` inside `submitWord()`, instant local validation optimistically appended the word to `window._localSubmittedWordsList` and called `updateGameState()`, which immediately rendered the word into `#submitted-words-list` with full formatting (`✓ WORD`, points, click listener).
+  - When the HTTP submission network response (`POST /room/${roomId}/submit_word`) subsequently completed, the success handler pushed the word into `window._localSubmittedWordsList` a second time, and unconditionally ran `listEl.insertAdjacentHTML('afterbegin', html)` to insert another row at the top of `#submitted-words-list`.
+  - This resulted in two simultaneous rows for the same word. The next state poll or density update re-rendered `#submitted-words-list` from the deduplicated list, causing the duplicate top row to abruptly vanish.
+- **Resolution**:
+  - **Deduplication in Local State**: In `submitWord()`, checked `window._localSubmittedWordsList` before pushing; if the word already exists from the optimistic check, its points and score details are updated in place with authoritative server values rather than appending a duplicate entry.
+  - **DOM Check Prior to Insertion**: In both standard/accumulative/split and FCFS modes, verified whether `#submitted-words-list` already contains a `.word-item` or `.feed-item` for that word. If already rendered by the optimistic check, DOM re-insertion is skipped and points are updated in place on the existing element. If not yet in DOM, prepends with full formatting (`✓` checkmark, definition click handler).
+  - Updated `currentState.players` submission list in place to ensure instant local state consistency.
+  - Bumped `play.js` cache buster in `templates/index.html` to `v=1791130540`.
 
 ---
 

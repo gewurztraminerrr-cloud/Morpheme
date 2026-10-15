@@ -8817,12 +8817,26 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             window._localSubmittedWords = window._localSubmittedWords || new Set();
             window._localSubmittedWords.add(word);
             window._localSubmittedWordsList = window._localSubmittedWordsList || [];
-            window._localSubmittedWordsList.push({
-                word: data.word || word,
-                points: data.points || 0,
-                score_details: data.score_details || {},
-                time: Date.now() / 1000
-            });
+            
+            const cleanWord = (data.word || word).toUpperCase();
+            const existingLocalIdx = window._localSubmittedWordsList.findIndex(item =>
+                (typeof item === 'string' ? item : (item && item.word) || '').toUpperCase() === cleanWord
+            );
+            if (existingLocalIdx >= 0) {
+                window._localSubmittedWordsList[existingLocalIdx] = {
+                    word: data.word || word,
+                    points: data.points || 0,
+                    score_details: data.score_details || {},
+                    time: window._localSubmittedWordsList[existingLocalIdx].time || (Date.now() / 1000)
+                };
+            } else {
+                window._localSubmittedWordsList.push({
+                    word: data.word || word,
+                    points: data.points || 0,
+                    score_details: data.score_details || {},
+                    time: Date.now() / 1000
+                });
+            }
             recordGuessResult(true, true, isSpecialSkip);
         } else {
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
@@ -8841,7 +8855,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 const listEl = document.getElementById('submitted-words-list');
                 const wordsStats = document.getElementById('words-stats');
 
-                // Local UI Update: Add word immediately to the list for instant feedback
+                // Local UI Update: Add word immediately to the list for instant feedback if not already rendered
                 const isFcfs = (currentState.game_type === 'fcfs');
                 
                 if (!isFcfs) {
@@ -8850,18 +8864,61 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         const placeholder = listEl.querySelector('.placeholder');
                         if (placeholder) placeholder.remove();
 
-                        const isBonus = data.word === currentState.bonus_word;
-                        let className = 'word-item player-word' + (isBonus ? ' bonus-word' : '') + (data.points < 0 ? ' penalty-word' : '');
-                        const html = `<div class="${className}" style="display:flex; justify-content:space-between; animation: slideIn 0.3s ease;">
-                            <span>${data.word}</span>
-                            <span style="opacity:0.8">${data.points}</span>
-                        </div>`;
-                        listEl.insertAdjacentHTML('afterbegin', html);
+                        const cleanWord = (data.word || word).toUpperCase();
+                        // Prevent duplicate row: Check if word is already in DOM (e.g. from optimistic instant render)
+                        const existingWordItem = Array.from(listEl.querySelectorAll('.word-item')).find(item => {
+                            const w = (item.dataset.word || item.querySelector('span')?.textContent || '').toUpperCase().trim();
+                            return w === cleanWord || w.endsWith(cleanWord);
+                        });
+
+                        if (!existingWordItem) {
+                            const isBonus = data.word === currentState.bonus_word;
+                            let className = 'word-item player-word' + (isBonus ? ' bonus-word' : '') + (data.points < 0 ? ' penalty-word' : '');
+                            const newDiv = document.createElement('div');
+                            newDiv.className = className;
+                            newDiv.dataset.word = data.word;
+                            newDiv.style.cssText = 'display:flex; justify-content:space-between; animation: slideIn 0.3s ease; cursor:pointer;';
+                            newDiv.innerHTML = `<span><span class="found-indicator present">✓</span>${data.word}</span><span style="opacity:0.8">${data.points}</span>`;
+                            newDiv.onclick = () => {
+                                const w = (newDiv.dataset.word || data.word).toUpperCase();
+                                highlightedFoundWord = (highlightedFoundWord === w) ? null : w;
+                                updateGameState();
+                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(data.word);
+                            };
+                            listEl.prepend(newDiv);
+                        } else {
+                            // Already in DOM: update the points display with the server-verified points
+                            const ptsSpan = existingWordItem.querySelector('span:last-child');
+                            if (ptsSpan && data.points !== undefined) {
+                                ptsSpan.textContent = data.points;
+                            }
+                        }
                     }
 
-                    const me = currentState.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase().trim());
+                    const me = currentState.players && currentState.players.find(p => 
+                        (p.username && p.username.toLowerCase().trim() === (currentUser || "").toLowerCase().trim()) ||
+                        (p.user_id && String(p.user_id) === String(window.currentUserId || ''))
+                    );
                     if (me) {
                         me.score = Math.max(0, data.new_score);
+                        me.submitted_words = me.submitted_words || [];
+                        const wordUpper = (data.word || word).toUpperCase();
+                        const existingWordIdx = me.submitted_words.findIndex(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase() === wordUpper);
+                        if (existingWordIdx >= 0) {
+                            me.submitted_words[existingWordIdx] = {
+                                word: data.word || word,
+                                points: data.points || 0,
+                                score_details: data.score_details || {},
+                                time: me.submitted_words[existingWordIdx].time || (Date.now() / 1000)
+                            };
+                        } else {
+                            me.submitted_words.push({
+                                word: data.word || word,
+                                points: data.points || 0,
+                                score_details: data.score_details || {},
+                                time: Date.now() / 1000
+                            });
+                        }
                         renderPlayers(currentState.players, currentUser, currentState);
                     }
 
@@ -8891,14 +8948,19 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         if (placeholder) placeholder.remove();
 
                         const itemId = `feed-${currentUser}-${data.word}`.replace(/\s+/g, '');
-                        const html = `<div id="${itemId}" class="feed-item myself" style="animation: slideInRight 0.3s ease;">
-                            <span class="feed-word">${data.word}</span>
-                            <span class="feed-info">${currentUser} • ${data.points}pts</span>
-                        </div>`;
-                        listEl.insertAdjacentHTML('afterbegin', html);
-                        
-                        const panelEl = listEl.parentElement;
-                        requestAnimationFrame(() => { if (panelEl) panelEl.scrollTop = 0; });
+                        const cleanWord = (data.word || word).toUpperCase();
+                        const existingFeedItem = document.getElementById(itemId) || Array.from(listEl.querySelectorAll('.feed-word')).find(span => span.textContent.trim().toUpperCase() === cleanWord);
+
+                        if (!existingFeedItem) {
+                            const html = `<div id="${itemId}" class="feed-item myself" style="animation: slideInRight 0.3s ease;">
+                                <span class="feed-word">${data.word}</span>
+                                <span class="feed-info">${currentUser} • ${data.points}pts</span>
+                            </div>`;
+                            listEl.insertAdjacentHTML('afterbegin', html);
+                            
+                            const panelEl = listEl.parentElement;
+                            requestAnimationFrame(() => { if (panelEl) panelEl.scrollTop = 0; });
+                        }
                     }
 
                     if (wordsStats) {
