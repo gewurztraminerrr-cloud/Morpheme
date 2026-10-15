@@ -4829,7 +4829,7 @@
                                     <!-- Dual Table Layout -->
                                     <div class="combo-explorer-grid" style="display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 14px; margin-top: 12px;">
                                         <!-- Input Words Table -->
-                                        <div class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px;">
+                                        <div id="combo-explorer-input-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px; position: relative;">
                                             <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.85rem; color: #93c5fd; display: flex; justify-content: space-between; align-items: center;">
                                                 <span id="combo-explorer-input-title">Input Words</span>
                                                 <span id="combo-explorer-input-count" style="font-size: 0.75rem; opacity: 0.8; background: rgba(59, 130, 246, 0.2); padding: 2px 6px; border-radius: 4px;">0</span>
@@ -4837,21 +4837,27 @@
                                             <div style="padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2);">
                                                 <input id="combo-explorer-filter" type="text" placeholder="Filter input words..." autocomplete="off" spellcheck="false" style="width: 100%; box-sizing: border-box; padding: 4px 8px; font-size: 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; text-transform: uppercase;">
                                             </div>
-                                            <div id="combo-explorer-input-list" style="flex: 1; overflow-y: auto; padding: 4px 6px;">
+                                            <div id="combo-explorer-input-list" style="flex: 1; overflow-y: auto; padding: 4px 6px; padding-right: 18px;">
                                                 <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading words...</div>
+                                            </div>
+                                            <div class="custom-scrollbar-track" id="combo-explorer-input-track">
+                                                <div class="custom-scrollbar-thumb" id="combo-explorer-input-thumb"></div>
                                             </div>
                                         </div>
 
                                         <!-- Response Table -->
-                                        <div class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px;">
+                                        <div id="combo-explorer-response-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px; position: relative;">
                                             <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.85rem; color: #34d399; display: flex; justify-content: space-between; align-items: center;">
                                                 <span id="combo-explorer-response-title">MP Connections</span>
                                                 <span id="combo-explorer-response-count" style="font-size: 0.75rem; opacity: 0.8; background: rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px;">0</span>
                                             </div>
-                                            <div id="combo-explorer-response-list" style="flex: 1; overflow-y: auto; padding: 4px 6px;">
+                                            <div id="combo-explorer-response-list" style="flex: 1; overflow-y: auto; padding: 4px 6px; padding-right: 18px;">
                                                 <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic;">
                                                     Select an input word on the left to display its matching MP words.
                                                 </div>
+                                            </div>
+                                            <div class="custom-scrollbar-track" id="combo-explorer-response-track">
+                                                <div class="custom-scrollbar-thumb" id="combo-explorer-response-thumb"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -10070,7 +10076,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1791131000"></script>
+    <script src="/js/tools.js?v=1791132000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>

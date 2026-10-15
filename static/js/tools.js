@@ -236,6 +236,18 @@ window.showTool = function(toolId) {
         } else if (typeof initCustomScrollbarForElement === 'function') {
             initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
         }
+        const expInput = document.getElementById('combo-explorer-input-list');
+        if (expInput && typeof expInput._updateCustomScrollbar === 'function') {
+            expInput._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('combo-explorer-input-list', 'combo-explorer-input-track', 'combo-explorer-input-thumb');
+        }
+        const expResp = document.getElementById('combo-explorer-response-list');
+        if (expResp && typeof expResp._updateCustomScrollbar === 'function') {
+            expResp._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('combo-explorer-response-list', 'combo-explorer-response-track', 'combo-explorer-response-thumb');
+        }
     }
     if (toolId === 'profile') {
         if (typeof refreshProfileTool === 'function') refreshProfileTool();
@@ -917,6 +929,11 @@ function setupComboExplorer() {
         });
     }
 
+    if (typeof initCustomScrollbarForElement === 'function') {
+        initCustomScrollbarForElement('combo-explorer-input-list', 'combo-explorer-input-track', 'combo-explorer-input-thumb');
+        initCustomScrollbarForElement('combo-explorer-response-list', 'combo-explorer-response-track', 'combo-explorer-response-thumb');
+    }
+
     loadComboExplorerWords(false);
 }
 
@@ -1064,6 +1081,9 @@ function renderComboExplorerInputWords(reset = true) {
     if (reset) {
         listEl.scrollTop = 0;
     }
+    if (typeof listEl._updateCustomScrollbar === 'function') {
+        listEl._updateCustomScrollbar();
+    }
 }
 
 window.selectComboExplorerWord = async function(word) {
@@ -1146,6 +1166,9 @@ function renderComboExplorerMatches() {
                 ${_comboExplorerSelectedWord ? `No non-plural, non-inflection ${mp}MP words found for ${_comboExplorerSelectedWord}.` : 'Select an input word on the left to display its matching MP words.'}
             </div>`;
         if (countBadge) countBadge.textContent = '0';
+        if (typeof listEl._updateCustomScrollbar === 'function') {
+            listEl._updateCustomScrollbar();
+        }
         return;
     }
 
@@ -1160,6 +1183,9 @@ function renderComboExplorerMatches() {
             `).join('')}
         </div>
     `;
+    if (typeof listEl._updateCustomScrollbar === 'function') {
+        listEl._updateCustomScrollbar();
+    }
 }
 
 window.scrollContainerLeft = function(containerId) {

@@ -14243,3 +14243,52 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
 }
 
+
+/* Custom scrollbar for Combo Explorer cards */
+.combo-explorer-card {
+    position: relative !important;
+}
+
+#combo-explorer-input-card .custom-scrollbar-track,
+#combo-explorer-response-card .custom-scrollbar-track {
+    top: 40px !important;
+    bottom: 6px !important;
+    right: 3px !important;
+    width: 14px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 7px !important;
+}
+
+#combo-explorer-input-card .custom-scrollbar-thumb,
+#combo-explorer-response-card .custom-scrollbar-thumb {
+    width: 10px !important;
+    left: 1px !important;
+    background: linear-gradient(180deg, #60a5fa, #2563eb) !important;
+    border: 1px solid rgba(147, 197, 253, 0.6) !important;
+    border-radius: 5px !important;
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.5) !important;
+}
+
+#combo-explorer-input-card .custom-scrollbar-thumb:hover,
+#combo-explorer-input-card .custom-scrollbar-thumb:active,
+#combo-explorer-input-card .custom-scrollbar-thumb.dragging,
+#combo-explorer-response-card .custom-scrollbar-thumb:hover,
+#combo-explorer-response-card .custom-scrollbar-thumb:active,
+#combo-explorer-response-card .custom-scrollbar-thumb.dragging {
+    background: linear-gradient(180deg, #93c5fd, #3b82f6) !important;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.8) !important;
+}
+
+/* Hide native scrollbars on the list containers so only custom thumb is visible */
+#combo-explorer-input-list,
+#combo-explorer-response-list {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+#combo-explorer-input-list::-webkit-scrollbar,
+#combo-explorer-response-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
