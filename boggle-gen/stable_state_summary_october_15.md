@@ -8,16 +8,16 @@ START_OVER_POINT_OCTOBER_15
 
 ## Latest Commit ID
 ```
-7067c07be7e3845c478e19e735d5a7147db6a2c9
+6a63a5a62d3ede042a4de1e2a0c3f6f24e58276c
 ```
 
 ## Synchronization Status
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| **localhost**      | ✅ Synchronized | Commit `7067c07b`, working tree clean, synced with origin/main |
-| **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub (`7067c07b`) |
-| **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (Commit `7067c07b`, PM2 online, verified live HTTP/2 200 OK) |
+| **localhost**      | ✅ Synchronized | Commit `6a63a5a6`, working tree clean, synced with origin/main |
+| **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub (`6a63a5a6`) |
+| **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (Commit `6a63a5a6`, PM2 online, verified live HTTP/2 200 OK) |
 | **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
 
 ---
@@ -102,6 +102,20 @@ START_OVER_POINT_OCTOBER_15
   - **Response Table**: Displays all non-plural, non-inflection words at that MP value away from the selected input word.
   - **Definition Lookup**: Each matching word in the response table is an interactive link that invokes `window.lookupWord(word, event)` for instant lexicographical definition popups.
   - **Mobile Fullscreen Invariant**: Preserved continuously across all dropdown selections, filters, and word selections without triggering fullscreen exits.
+
+### 9. Explorer Length Sorting, Title Grey Background Removal, and Mobile Input Visibility
+- **Length-Strict Sorting (e.g. `SCHWAS` vs `WAGES` for `SCHWAGS`)**:
+  - In `static/js/tools.js` and `app.py`, created `_sortMatchesByLength(matches, isRandom)` ensuring words are categorized and sorted by length descending (`b.length - a.length`) as the absolute primary sorting tier.
+  - 6-letter words (such as `SCHWAS`) always appear before 5-letter words (`WAGES`, `SWAGS`, `WANGS`) regardless of alphabetical order or randomized order. When Random mode is enabled, randomization shuffles strictly within identical length tiers.
+  - Fixed button ID listener binding in `static/js/tools.js` to ensure the A–Z toggle button reliably resets sorting across all platforms.
+- **Root Backdrop Black Flash Prevention**:
+  - In `static/css/play.css`, set `html, html:fullscreen, html:-webkit-full-screen, body, ::backdrop { background: var(--bg-primary, #0f172a) !important; }`.
+  - Enforced `font-size: 16px !important;` on `#combo-input` and `#combo-explorer-filter` on mobile viewports (`max-width: 900px`) to eliminate iOS/Android auto-zoom window viewport repainting flashes.
+- **Mobile Keyboard Visibility & Smooth Scroll**:
+  - In `static/js/tools.js` and `static/css/play.css`, bound focus handlers to `#combo-input` and `#combo-explorer-filter` to dynamically append `.keyboard-open` with `padding-bottom: 350px !important;` to the scrollable container.
+  - Automatically invokes smooth scroll centering (`scrollIntoView({ behavior: 'smooth', block: 'center' })`) on focus and visualViewport resize, keeping input boxes visible directly above the software keyboard while strictly adhering to the continuous fullscreen invariant.
+- **Removal of Light Grey Rectangular Backgrounds Around Combo Checker Titles**:
+  - In `static/css/play.css`, removed the background styling on `.result-section h3` and explicitly enforced `#tool-combo .result-section h3, .combo-results-container .result-section h3, #combo-explorer-section h3 { background: transparent !important; }` across all desktop, laptop, tablet, and mobile platforms.
 
 ---
 
