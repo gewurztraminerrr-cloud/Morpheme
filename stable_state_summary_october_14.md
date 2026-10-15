@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-a388e33d29a593457a40cfa9cb1d48c8df638933
+f7b8964c45d0316e2a8261d0c62642f5cfcccdf4
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `a388e33d`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `f7b8964c`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -173,15 +173,48 @@ START_OVER_POINT_OCTOBER_14
 - **CSS Transformation & Elevation Dynamics**:
   - Configured `transition: all 0.2s ease, transform 0.1s ease !important;` on all forum back buttons.
   - On active / pressed (`:active`, `.active`), applied `transform: translateX(-4px) scale(0.98) !important;` and reduced `box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;` across dark, light, and white themes.
-  - Included `#forum-cancel-create` in all CSS theme selectors alongside `#forum-back-to-list` and `#forum-category-back-btn`.
 - **Mobile Touch Animation Window**:
   - In `static/js/forum.js`, added a 120ms animation window on mobile devices for `backToListBtn` and `cancelCreateBtn`, allowing the physical 3D flattening and sliding animation to complete visibly before switching views back to the list.
+
+### 20. Multiplayer Subanagrams Mobile Support, Single-Letter Tap Construction, Backtrack Undo, Enter Submission, Clear Button & Appearance Slider
+- **Mobile Access**:
+  - Removed mobile User-Agent HTTP 403 rejections in `create_room` and `join_room` in `app.py`.
+  - Removed mobile display hiding of `.matrix-subanagrams` in `static/css/lobby.css` and `static/js/app.js` (`filterCubeOnMobile`), allowing full visibility and room creation/joining on mobile.
+- **Letter Submission & Board Interaction**:
+  - Drag/swipe auto-submission disabled in Subanagrams (`finishDragSelection`, `handleCellMouseOver`, `handleCellMouseMove`, `handleCellTouchMove`).
+  - Individual letter press/tap constructs words in `#word-input` (`handleSubanagramsTileClick`).
+  - **Backtracking Undo**: Pressing the most recent letter entered removes it from the sequence, unhighlights it, and marks the preceding letter as `current`. Pressing that letter removes it as well, repeating down the stack.
+  - **Enter Submission**: Submission occurs via the "Enter" button (`#submit-word-btn` renamed to "Enter" in Subanagrams) or physical Enter key.
+  - **Clear Button**: Added `#clear-word-btn` to `.word-input-section` (`templates/index.html`) to wipe the textbox and reset all selected tile states and highlights.
+- **Appearance Settings**:
+  - Moved `#setting-panel-subanagrams-tile-size` directly below `#setting-panel-cube-scale` in Tools -> Appearance (`templates/index.html`).
+  - Removed `desktop-only-setting` class and updated description, enabling tile sizing controls on mobile.
+  - Updated `body.is-mobile .game-board.is-subanagrams-board .board-cell` in `static/css/play.css` to use `var(--subanagrams-cell-size, 64px)` dynamically.
+
+### 21. Multiplayer Subanagrams Lobby Layout, Restricting Enter Button to Subanagrams, Mobile Textbox & Instant Loading Feedback
+- **Subanagrams Lobby Button Horizontal Stretch on Mobile**:
+  - In `static/css/lobby.css`, added a targeted mobile override for `.matrix-subanagrams .matrix-header` and `.matrix-subanagrams .matrix-row` (`grid-template-columns: 45px 1fr !important;`).
+  - The multiplayer Subanagrams **Start** button and its header row now expand across the entire available screen width next to the 45px "2m" indicator instead of being restricted to a quarter-width column.
+- **Lobby Header Title & Column Header Update**:
+  - In `templates/index.html`, updated the Lobby title from **`Subanagrams (Practice)`** to **`Subanagrams`** across all platforms. Synchronized the Lobby Guide modal entry to reflect **`Subanagrams`**.
+  - Updated the column header text directly above the Start button from **`Practice`** to **`Practice / Warmup`**.
+- **Restricting Enter Button Strictly to Multiplayer Subanagrams**:
+  - In `static/css/play.css`, hidden `#submit-word-btn` by default across all standard game rooms (4x4, 5x5, 6x8, 3D, tournament, private, 24h) on desktop, laptop, mobile, and tablet (`display: none !important;`).
+  - Restored `body.is-desktop .word-input-section` max-width back to `500px !important;` for standard rooms, keeping the word input box, Rotate, and Transpose buttons centered with original spacing.
+  - In multiplayer Subanagrams (`body.is-subanagrams`), displayed the emerald/green **Enter** button (`#submit-word-btn`) and red **Clear** button (`#clear-word-btn`) with `display: inline-flex !important;` on both desktop and mobile.
+- **Mobile Subanagrams Input Textbox, Clear, and Enter Buttons Restored**:
+  - Overrode the mobile hiding rule inside `@media (max-width: 992px)` for Subanagrams (`body.is-subanagrams .word-input-section`), displaying `#word-input` with centered uppercase letters (`font-size: 1.1rem; letter-spacing: 2px;`) to display letters in real time as tiles are tapped on mobile devices, with the Enter and Clear buttons alongside.
+- **Instant Synchronous Loading Notice on Button Press**:
+  - In `templates/index.html` and `static/js/lobby.js`, eliminated the 2–3 second delay when entering a room from the lobby.
+  - `window.showLoadingOverlay('Loading...')` is now invoked **synchronously on the first line** of click handlers before any network requests (`checkAccountTimeoutAndAlert`), with forced DOM reflow (`void overlay.offsetHeight;`) ensuring the loading spinner and message render in the exact frame the button is clicked.
+  - Avoided dropping clicks during the gateway transition cooldown (`_lobbyEnterCooldown`), immediately showing the loading overlay and proceeding seamlessly into the room.
 
 ---
 
 ## Verification & Health Check
 
-- **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK`.
-- **Static Assets Sync**: `forum.css`, `style.css`, `play.css`, and `forum.js` verified live on production.
+- **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK` / `HTTP/2 200`.
+- **Static Assets Sync**: `lobby.css`, `play.css`, `app.js`, and `play.js` verified live on production.
 - **PM2 Process**: `morpheme` process online with dictionaries fully loaded.
 - **Mobile Fullscreen Rules**: Fullscreen invariant strictly maintained across all navigation, modals, and tabs.
+
