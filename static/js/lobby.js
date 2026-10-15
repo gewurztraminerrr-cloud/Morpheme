@@ -58,18 +58,18 @@ function showLobbyToast(message, type = 'info') {
 window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
-    if (window._lobbyEnterCooldown) {
-        console.log('[Lobby] enterLobbyRoom blocked during gateway transition cooldown');
-        return;
-    }
+    if (!rawBtn) return;
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (window._isEnteringRoom) {
         console.warn('[Lobby] enterLobbyRoom already in progress, ignoring duplicate call');
         return;
     }
-    if (!rawBtn) return;
+    if (window._lobbyEnterCooldown) {
+        await new Promise(r => setTimeout(r, 100));
+        window._lobbyEnterCooldown = false;
+    }
     window._isEnteringRoom = true;
     window._userLeftRoom = false;
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
     if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
         window._isEnteringRoom = false;
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
@@ -198,7 +198,11 @@ async function enterLobbyRoom(rawBtn) {
 }
 
 async function handleAccumulativeClick(accBtn) {
-    if (window._lobbyEnterCooldown) return;
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+    if (window._lobbyEnterCooldown) {
+        await new Promise(r => setTimeout(r, 100));
+        window._lobbyEnterCooldown = false;
+    }
     return enterLobbyRoom(accBtn);
 }
 window.handleAccumulativeClick = handleAccumulativeClick;
@@ -216,18 +220,25 @@ async function handleLobbyButtonClickCore(btn, evt) {
     if (evt && typeof evt.stopPropagation === 'function') {
         try { evt.stopPropagation(); } catch (e) {}
     }
-    if (window._lobbyEnterCooldown) {
-        if (evt && typeof evt.preventDefault === 'function') {
-            try { evt.preventDefault(); } catch (e) {}
-        }
-        console.log('[Lobby] handleLobbyButtonClickCore blocked during gateway transition cooldown');
-        return;
-    }
     if (!btn) return;
     const realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
     const gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
-    if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
+
+    // Show loading notice IMMEDIATELY the instant the button is pressed
+    if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
+        if (typeof window.showLoadingOverlay === 'function') {
+            window.showLoadingOverlay('Loading...');
+        }
+    }
+
+    if (window._lobbyEnterCooldown) {
+        await new Promise(r => setTimeout(r, 100));
+        window._lobbyEnterCooldown = false;
+    }
+
+    if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
         if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
+            if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
             return;
         }
         enterLobbyRoom(realBtn);

@@ -420,6 +420,10 @@
             }
             overlay.classList.remove('hidden');
             overlay.style.setProperty('display', 'flex', 'important');
+            overlay.style.setProperty('opacity', '1', 'important');
+            overlay.style.setProperty('visibility', 'visible', 'important');
+            overlay.style.setProperty('pointer-events', 'auto', 'important');
+            void overlay.offsetHeight;
             if (window._loadingOverlayTimeout) {
                 clearTimeout(window._loadingOverlayTimeout);
                 window._loadingOverlayTimeout = null;
@@ -477,17 +481,17 @@
         };
 
         async function enterLobbyRoomInline(rawBtn) {
+            if (!rawBtn) return;
+            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
             if (window._isEnteringRoom) {
                 console.log('[Lobby] enterLobbyRoomInline blocked: already entering room');
                 return;
             }
             if (window._lobbyEnterCooldown) {
-                console.log('[Lobby] enterLobbyRoomInline blocked during gateway cooldown');
-                return;
+                await new Promise(function(r) { setTimeout(r, 100); });
+                window._lobbyEnterCooldown = false;
             }
-            if (!rawBtn) return;
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
-            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
 
             if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
                 if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
@@ -1142,22 +1146,32 @@
         };
 
         window.handleLobbyButtonClick = async function(btn, evt) {
-            if (window._lobbyEnterCooldown) {
-                if (evt && typeof evt.preventDefault === 'function') {
-                    try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
-                }
-                console.log('[Lobby] handleLobbyButtonClick blocked during gateway cooldown');
-                return;
-            }
             if (evt && typeof evt.preventDefault === 'function') {
                 try { evt.preventDefault(); evt.stopPropagation(); } catch (e) {}
             }
-            var realBtn = (btn && typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
+            if (!btn) return;
+            var realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
             var gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
 
-            if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative')) {
-                if (await window.checkAccountTimeoutAndAlert()) {
-                    return;
+            // Show loading notice IMMEDIATELY the instant the button is pressed
+            if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
+                if (typeof window.showLoadingOverlay === 'function') {
+                    window.showLoadingOverlay('Loading...');
+                }
+            }
+
+            if (window._lobbyEnterCooldown) {
+                await new Promise(function(r) { setTimeout(r, 100); });
+                window._lobbyEnterCooldown = false;
+            }
+
+            if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
+                if (typeof window.checkAccountTimeoutAndAlert === 'function') {
+                    var isTimedOut = await window.checkAccountTimeoutAndAlert();
+                    if (isTimedOut) {
+                        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+                        return;
+                    }
                 }
                 enterLobbyRoomInline(realBtn);
             } else {
@@ -9933,8 +9947,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791130010"></script>
     <script src="/js/forum.js?v=1791130137"></script>
-    <script src="/js/app.js?v=1791130200"></script>
-    <script src="/js/lobby.js?v=1791100007"></script>
+    <script src="/js/app.js?v=1791130210"></script>
+    <script src="/js/lobby.js?v=1791100010"></script>
     <script src="/js/play.js?v=1791130320"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>

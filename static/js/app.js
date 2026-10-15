@@ -3935,6 +3935,10 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
     }
     overlay.classList.remove('hidden');
     overlay.style.setProperty('display', 'flex', 'important');
+    overlay.style.setProperty('opacity', '1', 'important');
+    overlay.style.setProperty('visibility', 'visible', 'important');
+    overlay.style.setProperty('pointer-events', 'auto', 'important');
+    void overlay.offsetHeight;
     if (window._loadingOverlayTimeout) {
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
