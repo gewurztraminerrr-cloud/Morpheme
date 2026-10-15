@@ -351,8 +351,8 @@ const Forum = {
                     const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     if (isMobile) {
                         setTimeout(() => {
-                            const sidebar = document.querySelector('.forum-sidebar');
-                            if (sidebar) sidebar.scrollIntoView({ behavior: 'auto', inline: 'start' });
+                            const container = document.querySelector('#page-forums .forum-container');
+                            if (container) container.scrollTo({ left: 0, top: 0, behavior: 'auto' });
                         }, 100);
                     }
                 }
@@ -382,7 +382,8 @@ const Forum = {
                 
                 // If swiped right (diffX > 80) and horizontal movement was dominant
                 if (diffX > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                    forumSidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                    const container = document.querySelector('#page-forums .forum-container');
+                    if (container) container.scrollTo({ left: 0, behavior: 'smooth' });
                 }
             }, { passive: true });
         }
@@ -393,8 +394,8 @@ const Forum = {
         const mobileBackBtn = document.getElementById('forum-mobile-back-btn');
         if (mobileBackBtn) {
             mobileBackBtn.addEventListener('click', () => {
-                const sidebar = document.querySelector('.forum-sidebar');
-                if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                const container = document.querySelector('#page-forums .forum-container');
+                if (container) container.scrollTo({ left: 0, behavior: 'smooth' });
             });
         }
 
@@ -406,8 +407,6 @@ const Forum = {
                 if (container) {
                     container.scrollTo({ left: 0, behavior: 'smooth' });
                 }
-                const sidebar = document.querySelector('.forum-sidebar');
-                if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', inline: 'start' });
             });
         }
 
@@ -1483,9 +1482,10 @@ const Forum = {
 
         const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
+            const container = document.querySelector('#page-forums .forum-container');
             const forumMain = document.querySelector('.forum-main');
-            if (forumMain) {
-                forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            if (container && forumMain) {
+                container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
             }
         }
     },
@@ -1713,9 +1713,10 @@ const Forum = {
 
         const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
+            const container = document.querySelector('#page-forums .forum-container');
             const forumMain = document.querySelector('.forum-main');
-            if (forumMain) {
-                forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+            if (container && forumMain) {
+                container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
             }
         }
     },
@@ -1773,9 +1774,10 @@ const Forum = {
 
             const isMobile = (window.innerWidth <= 820) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
+                const container = document.querySelector('#page-forums .forum-container');
                 const forumMain = document.querySelector('.forum-main');
-                if (forumMain) {
-                    forumMain.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                if (container && forumMain) {
+                    container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
                 }
             }
         } catch (err) {
@@ -2996,11 +2998,12 @@ const Forum = {
         const deleteContainer = document.getElementById('forum-delete-post-container');
         if (deleteContainer) deleteContainer.style.display = 'none';
 
-        // On mobile devices, scroll down so they see the category title and threads
+        // On mobile devices, ensure forumMain is in view horizontally
         if (!noMobileScroll && window.innerWidth <= 820) {
-            const titleEl = document.getElementById('forum-category-title');
-            if (titleEl) {
-                titleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const container = document.querySelector('#page-forums .forum-container');
+            const forumMain = document.querySelector('.forum-main');
+            if (container && forumMain) {
+                container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
             }
         }
     },
@@ -3015,11 +3018,12 @@ const Forum = {
         this.hideReplyHoverPreview(true);
         this.closeReplyMobileModal();
 
-        // On mobile devices, scroll down so they see the post details
+        // On mobile devices, ensure forumMain is in view horizontally
         if (window.innerWidth <= 820) {
-            const postViewEl = document.getElementById('forum-view-post');
-            if (postViewEl) {
-                postViewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const container = document.querySelector('#page-forums .forum-container');
+            const forumMain = document.querySelector('.forum-main');
+            if (container && forumMain) {
+                container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
             }
         }
     },
@@ -3052,11 +3056,12 @@ const Forum = {
         // User Request Update: Allow all posts in every topic to attach an image
         document.getElementById('forum-image-upload-section').classList.remove('hidden');
 
-        // On mobile devices, scroll down so they see the create post form
+        // On mobile devices, ensure forumMain is in view horizontally
         if (window.innerWidth <= 820) {
-            const createEl = document.getElementById('forum-view-create');
-            if (createEl) {
-                createEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const container = document.querySelector('#page-forums .forum-container');
+            const forumMain = document.querySelector('.forum-main');
+            if (container && forumMain) {
+                container.scrollTo({ left: forumMain.offsetLeft, behavior: 'smooth' });
             }
         }
     },
@@ -3477,7 +3482,6 @@ const Forum = {
         const sidebar = document.querySelector('.forum-sidebar');
         if (sidebar) {
             sidebar.classList.remove('hidden-mobile');
-            sidebar.scrollIntoView({ behavior: 'auto', inline: 'start' });
         }
         const main = document.querySelector('.forum-main');
         if (main) {

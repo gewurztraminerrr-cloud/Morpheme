@@ -2077,38 +2077,22 @@ body.theme-white #page-forums .forum-bottom-bar {
     body:has(#page-forums.active) .top-menu-bar,
     body.forums-active .top-menu-bar,
     body:has(#page-forums.active) .header,
-    body.forums-active .header,
-    body.is-mobile.forums-active .top-menu-bar,
-    body.is-mobile.forums-active .header {
+    body.forums-active .header {
         flex-shrink: 0 !important;
-        position: relative !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        overflow-x: hidden !important;
-        padding: 22px 12px 8px 12px !important;
-        gap: 10px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
     }
 
     body:has(#page-forums.active) .separator,
-    body.forums-active .separator,
-    body.is-mobile.forums-active .separator {
+    body.forums-active .separator {
         flex-shrink: 0 !important;
     }
 
     body:has(#page-forums.active) .top-menu-spacer,
-    body.forums-active .top-menu-spacer,
-    body.is-mobile.forums-active .top-menu-spacer {
+    body.forums-active .top-menu-spacer {
         display: none !important;
     }
 
     body:has(#page-forums.active) .pages,
-    body.forums-active .pages,
-    body.is-mobile.forums-active .pages {
+    body.forums-active .pages {
         flex: 1 1 0% !important;
         min-height: 0 !important;
         height: 100% !important;
@@ -2119,76 +2103,6 @@ body.theme-white #page-forums .forum-bottom-bar {
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
-    }
-
-    body:has(#page-forums.active) .logo,
-    body.forums-active .logo,
-    body.is-mobile.forums-active .logo {
-        min-width: auto !important;
-        width: 100% !important;
-        flex-shrink: 0 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        flex-wrap: nowrap !important;
-        gap: 6px !important;
-        box-sizing: border-box !important;
-        position: relative !important;
-        margin-top: 0 !important;
-    }
-
-    body:has(#page-forums.active) .logo-icon,
-    body.forums-active .logo-icon,
-    body.is-mobile.forums-active .logo-icon {
-        height: 24px !important;
-        width: 24px !important;
-        flex-shrink: 0 !important;
-    }
-
-    body:has(#page-forums.active) .logo-text,
-    body.forums-active .logo-text,
-    body.is-mobile.forums-active .logo-text {
-        font-size: 1.2rem !important;
-        flex-shrink: 0 !important;
-    }
-
-    body:has(#page-forums.active) .logo .pronunciation,
-    body.forums-active .logo .pronunciation,
-    body.is-mobile.forums-active .logo .pronunciation {
-        font-size: 0.65rem !important;
-        display: inline-block !important;
-        margin-right: 0 !important;
-        margin-bottom: 0 !important;
-        flex-shrink: 0 !important;
-    }
-
-    body:has(#page-forums.active) .nav,
-    body.forums-active .nav,
-    body.is-mobile.forums-active .nav {
-        min-width: auto !important;
-        width: 100% !important;
-        flex-shrink: 1 !important;
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        gap: 10px !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        padding: 8px 5px 12px 5px !important;
-        box-sizing: border-box !important;
-        position: relative !important;
-        z-index: 2 !important;
-    }
-
-    body:has(#page-forums.active) .nav-btn,
-    body.forums-active .nav-btn,
-    body.is-mobile.forums-active .nav-btn {
-        padding: 6px 12px !important;
-        font-size: 0.8rem !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
     }
 
     #page-forums {
@@ -2463,12 +2377,6 @@ body.theme-white #page-forums .forum-bottom-bar {
 
 /* Mobile Forum Layout & Thread Response Container Fixes */
 @media (max-width: 900px) {
-    .forum-container {
-        width: 100% !important;
-        max-width: 100vw !important;
-        box-sizing: border-box !important;
-        overflow-x: hidden !important;
-    }
     .forum-sidebar,
     .forum-main,
     .forum-view,
