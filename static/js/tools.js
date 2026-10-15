@@ -868,6 +868,7 @@ function setupComboExplorer() {
     const randomBtn = document.getElementById('combo-explorer-random-btn');
     const azBtn = document.getElementById('combo-explorer-az-btn');
     const expDictSelect = document.getElementById('combo-explorer-dict');
+    const filterInput = document.getElementById('combo-explorer-filter');
     const inputList = document.getElementById('combo-explorer-input-list');
 
     if (!lengthSelect || !mpSelect) return;
