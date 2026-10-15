@@ -442,6 +442,7 @@
 
 #forum-back-to-list,
 #forum-category-back-btn,
+#forum-cancel-create,
 .forum-back-btn {
     background: var(--bg-primary) !important;
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
@@ -461,7 +462,7 @@
     align-items: center;
     gap: 8px;
     box-sizing: border-box !important;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.1s ease !important;
     min-height: 42px;
 }
 
@@ -469,6 +470,8 @@
 #forum-back-to-list:focus,
 #forum-category-back-btn:hover,
 #forum-category-back-btn:focus,
+#forum-cancel-create:hover,
+#forum-cancel-create:focus,
 .forum-back-btn:hover,
 .forum-back-btn:focus {
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(0, 0, 0, 0.2) 100%) !important;
@@ -479,10 +482,15 @@
 }
 
 #forum-back-to-list:active,
+#forum-back-to-list.active,
 #forum-category-back-btn:active,
-.forum-back-btn:active {
+#forum-category-back-btn.active,
+#forum-cancel-create:active,
+#forum-cancel-create.active,
+.forum-back-btn:active,
+.forum-back-btn.active {
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.35) 100%) !important;
-    transform: translateY(1px) scale(0.99) !important;
+    transform: translateX(-4px) scale(0.98) !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -2051,30 +2059,49 @@ body.theme-white #page-forums .forum-bottom-bar {
 
 [class*="theme-white"] #forum-back-to-list,
 [class*="theme-white"] #forum-category-back-btn,
+[class*="theme-white"] #forum-cancel-create,
 [class*="theme-white"] .forum-back-btn {
     border: 1.5px solid #cbd5e1 !important;
     background: #ffffff !important;
     color: #0f172a !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     font-weight: 700 !important;
+    transition: all 0.2s ease, transform 0.1s ease !important;
 }
 
 [class*="theme-white"] #forum-back-to-list:hover,
-[class*="theme-white"] #forum-back-to-list:active,
 [class*="theme-white"] #forum-back-to-list:focus,
 [class*="theme-white"] #forum-category-back-btn:hover,
-[class*="theme-white"] #forum-category-back-btn:active,
 [class*="theme-white"] #forum-category-back-btn:focus,
+[class*="theme-white"] #forum-cancel-create:hover,
+[class*="theme-white"] #forum-cancel-create:focus,
 [class*="theme-white"] .forum-back-btn:hover,
-[class*="theme-white"] .forum-back-btn:active,
 [class*="theme-white"] .forum-back-btn:focus {
     background: #f1f5f9 !important;
     border-color: #94a3b8 !important;
     color: #0f172a !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-1px);
+}
+
+[class*="theme-white"] #forum-back-to-list:active,
+[class*="theme-white"] #forum-back-to-list.active,
+[class*="theme-white"] #forum-category-back-btn:active,
+[class*="theme-white"] #forum-category-back-btn.active,
+[class*="theme-white"] #forum-cancel-create:active,
+[class*="theme-white"] #forum-cancel-create.active,
+[class*="theme-white"] .forum-back-btn:active,
+[class*="theme-white"] .forum-back-btn.active {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    transform: translateX(-4px) scale(0.98) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 [class*="theme-light-"] #forum-back-to-list,
 [class*="theme-light-"] #forum-category-back-btn,
+[class*="theme-light-"] #forum-cancel-create,
 [class*="theme-light-"] .forum-back-btn {
     background: var(--bg-primary) !important;
     background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.12) 100%) !important;
@@ -2082,21 +2109,37 @@ body.theme-white #page-forums .forum-bottom-bar {
     color: var(--text-primary) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     font-weight: 700 !important;
+    transition: all 0.2s ease, transform 0.1s ease !important;
 }
 
 [class*="theme-light-"] #forum-back-to-list:hover,
-[class*="theme-light-"] #forum-back-to-list:active,
 [class*="theme-light-"] #forum-back-to-list:focus,
 [class*="theme-light-"] #forum-category-back-btn:hover,
-[class*="theme-light-"] #forum-category-back-btn:active,
 [class*="theme-light-"] #forum-category-back-btn:focus,
+[class*="theme-light-"] #forum-cancel-create:hover,
+[class*="theme-light-"] #forum-cancel-create:focus,
 [class*="theme-light-"] .forum-back-btn:hover,
-[class*="theme-light-"] .forum-back-btn:active,
 [class*="theme-light-"] .forum-back-btn:focus {
     background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 100%) !important;
     border-color: var(--card-border) !important;
     color: var(--text-primary) !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+[class*="theme-light-"] #forum-back-to-list:active,
+[class*="theme-light-"] #forum-back-to-list.active,
+[class*="theme-light-"] #forum-category-back-btn:active,
+[class*="theme-light-"] #forum-category-back-btn.active,
+[class*="theme-light-"] #forum-cancel-create:active,
+[class*="theme-light-"] #forum-cancel-create.active,
+[class*="theme-light-"] .forum-back-btn:active,
+[class*="theme-light-"] .forum-back-btn.active {
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 100%) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-primary) !important;
+    transform: translateX(-4px) scale(0.98) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Tablet & Smaller Mac Device Scaling for Forums Page */
@@ -2304,11 +2347,26 @@ body.theme-white #page-forums .forum-bottom-bar {
     .mobile-only-bottom-bar {
         display: flex !important;
     }
-    .forum-back-btn {
+    .forum-back-btn,
+    #forum-back-to-list,
+    #forum-category-back-btn,
+    #forum-cancel-create {
         width: 100% !important;
         padding: 10px 14px !important;
         font-size: 0.9rem !important;
         margin: 0 !important;
+        transition: all 0.2s ease, transform 0.1s ease !important;
+    }
+    .forum-back-btn:active,
+    .forum-back-btn.active,
+    #forum-back-to-list:active,
+    #forum-back-to-list.active,
+    #forum-category-back-btn:active,
+    #forum-category-back-btn.active,
+    #forum-cancel-create:active,
+    #forum-cancel-create.active {
+        transform: translateX(-4px) scale(0.98) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
     }
     .mobile-back-btn {
         display: inline-block !important;

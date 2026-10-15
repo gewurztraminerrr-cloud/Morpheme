@@ -469,13 +469,35 @@ const Forum = {
         // Back to list button
         const backToListBtn = document.getElementById('forum-back-to-list');
         if (backToListBtn) {
-            backToListBtn.addEventListener('click', () => this.showListView());
+            backToListBtn.addEventListener('click', () => {
+                const isMobile = (window.innerWidth <= 820) || ('ontouchstart' in window) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    backToListBtn.classList.add('active');
+                    setTimeout(() => {
+                        backToListBtn.classList.remove('active');
+                        this.showListView();
+                    }, 120);
+                } else {
+                    this.showListView();
+                }
+            });
         }
 
         // Cancel create button
         const cancelCreateBtn = document.getElementById('forum-cancel-create');
         if (cancelCreateBtn) {
-            cancelCreateBtn.addEventListener('click', () => this.showListView());
+            cancelCreateBtn.addEventListener('click', () => {
+                const isMobile = (window.innerWidth <= 820) || ('ontouchstart' in window) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
+                    cancelCreateBtn.classList.add('active');
+                    setTimeout(() => {
+                        cancelCreateBtn.classList.remove('active');
+                        this.showListView();
+                    }, 120);
+                } else {
+                    this.showListView();
+                }
+            });
         }
 
         // Post create form

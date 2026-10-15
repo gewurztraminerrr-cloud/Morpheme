@@ -178,9 +178,9 @@
     <link rel="preload" href="/css/lobby.css?v=1791130080" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130080">
-    <link rel="stylesheet" href="/css/play.css?v=1791130091">
+    <link rel="stylesheet" href="/css/play.css?v=1791130092">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
-    <link rel="stylesheet" href="/css/forum.css?v=1791130145">
+    <link rel="stylesheet" href="/css/forum.css?v=1791130146">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
@@ -279,26 +279,54 @@
         body.is-mobile.theme-white .forum-back-btn,
         body[class*="theme-white"] .forum-back-btn,
         body.theme-white .forum-back-btn,
-        [class*="theme-white"] .forum-back-btn {
+        [class*="theme-white"] .forum-back-btn,
+        [class*="theme-white"] #forum-category-back-btn,
+        [class*="theme-white"] #forum-back-to-list,
+        [class*="theme-white"] #forum-cancel-create {
             background: #ffffff !important;
             border: 1.5px solid #cbd5e1 !important;
             color: #0f172a !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
             font-weight: 700 !important;
+            transition: all 0.2s ease, transform 0.1s ease !important;
         }
 
         body.is-mobile[class*="theme-white"] .bottom-back-btn:hover,
-        body.is-mobile[class*="theme-white"] .bottom-back-btn:active,
         body.is-mobile[class*="theme-white"] .bottom-back-btn:focus,
         [class*="theme-white"] .bottom-back-btn:hover,
-        [class*="theme-white"] .bottom-back-btn:active,
         [class*="theme-white"] .bottom-back-btn:focus,
         [class*="theme-white"] .forum-back-btn:hover,
-        [class*="theme-white"] .forum-back-btn:active,
-        [class*="theme-white"] .forum-back-btn:focus {
+        [class*="theme-white"] .forum-back-btn:focus,
+        [class*="theme-white"] #forum-category-back-btn:hover,
+        [class*="theme-white"] #forum-category-back-btn:focus,
+        [class*="theme-white"] #forum-back-to-list:hover,
+        [class*="theme-white"] #forum-back-to-list:focus,
+        [class*="theme-white"] #forum-cancel-create:hover,
+        [class*="theme-white"] #forum-cancel-create:focus {
             background: #f1f5f9 !important;
             border-color: #94a3b8 !important;
             color: #0f172a !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+            transform: translateY(-1px);
+        }
+
+        body.is-mobile[class*="theme-white"] .bottom-back-btn:active,
+        body.is-mobile[class*="theme-white"] .bottom-back-btn.active,
+        [class*="theme-white"] .bottom-back-btn:active,
+        [class*="theme-white"] .bottom-back-btn.active,
+        [class*="theme-white"] .forum-back-btn:active,
+        [class*="theme-white"] .forum-back-btn.active,
+        [class*="theme-white"] #forum-category-back-btn:active,
+        [class*="theme-white"] #forum-category-back-btn.active,
+        [class*="theme-white"] #forum-back-to-list:active,
+        [class*="theme-white"] #forum-back-to-list.active,
+        [class*="theme-white"] #forum-cancel-create:active,
+        [class*="theme-white"] #forum-cancel-create.active {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+            transform: translateX(-4px) scale(0.98) !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
         }
 
         body.is-mobile[class*="theme-light-"] .bottom-back-btn,
@@ -313,21 +341,45 @@
             color: var(--text-primary) !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
             font-weight: 700 !important;
+            transition: all 0.2s ease, transform 0.1s ease !important;
         }
 
         body.is-mobile[class*="theme-light-"] .bottom-back-btn:hover,
-        body.is-mobile[class*="theme-light-"] .bottom-back-btn:active,
         body.is-mobile[class*="theme-light-"] .bottom-back-btn:focus,
         [class*="theme-light-"] .bottom-back-btn:hover,
-        [class*="theme-light-"] .bottom-back-btn:active,
         [class*="theme-light-"] .bottom-back-btn:focus,
         [class*="theme-light-"] .forum-back-btn:hover,
-        [class*="theme-light-"] .forum-back-btn:active,
-        [class*="theme-light-"] .forum-back-btn:focus {
+        [class*="theme-light-"] .forum-back-btn:focus,
+        [class*="theme-light-"] #forum-category-back-btn:hover,
+        [class*="theme-light-"] #forum-category-back-btn:focus,
+        [class*="theme-light-"] #forum-back-to-list:hover,
+        [class*="theme-light-"] #forum-back-to-list:focus,
+        [class*="theme-light-"] #forum-cancel-create:hover,
+        [class*="theme-light-"] #forum-cancel-create:focus {
             background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 100%) !important;
             border-color: var(--card-border) !important;
             color: var(--text-primary) !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+            transform: translateY(-1px);
+        }
+
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn:active,
+        body.is-mobile[class*="theme-light-"] .bottom-back-btn.active,
+        [class*="theme-light-"] .bottom-back-btn:active,
+        [class*="theme-light-"] .bottom-back-btn.active,
+        [class*="theme-light-"] .forum-back-btn:active,
+        [class*="theme-light-"] .forum-back-btn.active,
+        [class*="theme-light-"] #forum-category-back-btn:active,
+        [class*="theme-light-"] #forum-category-back-btn.active,
+        [class*="theme-light-"] #forum-back-to-list:active,
+        [class*="theme-light-"] #forum-back-to-list.active,
+        [class*="theme-light-"] #forum-cancel-create:active,
+        [class*="theme-light-"] #forum-cancel-create.active {
+            background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 100%) !important;
+            border-color: var(--card-border) !important;
+            color: var(--text-primary) !important;
+            transform: translateX(-4px) scale(0.98) !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
         }
     </style>
     <script>
@@ -9879,7 +9931,7 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1791130010"></script>
-    <script src="/js/forum.js?v=1791130136"></script>
+    <script src="/js/forum.js?v=1791130137"></script>
     <script src="/js/app.js?v=1791130100"></script>
     <script src="/js/lobby.js?v=1791100007"></script>
     <script src="/js/play.js?v=1791100013"></script>
