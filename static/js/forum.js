@@ -790,8 +790,8 @@ const Forum = {
             const isImage = (file.type && file.type.startsWith('image/')) ||
                 /\.(jpe?g|png|gif|webp|bmp|svg|heic|heif|avif|ico|tiff?)$/i.test(file.name || '');
             if (!isImage) continue;
-            if (targetArray.length >= 4) {
-                alert("You can attach a maximum of 4 images per post.");
+            if (targetArray.length >= 6) {
+                alert("You can attach a maximum of 6 images per post.");
                 break;
             }
             if (!targetArray.some(f => f.name === file.name && f.size === file.size)) {
@@ -837,12 +837,12 @@ const Forum = {
             if (textSpan) {
                 if (targetArray.length === 0) {
                     textSpan.textContent = type === 'post' 
-                        ? 'Click to choose images (up to 4) or drag and drop' 
-                        : '📎 Attach images (up to 4)';
-                } else if (targetArray.length < 4) {
-                    textSpan.textContent = `📎 Attached ${targetArray.length}/4 images (Click to add more)`;
+                        ? 'Click to choose images (up to 6) or drag and drop' 
+                        : '📎 Attach images (up to 6)';
+                } else if (targetArray.length < 6) {
+                    textSpan.textContent = `📎 Attached ${targetArray.length}/6 images (Click to add more)`;
                 } else {
-                    textSpan.textContent = `📎 Maximum 4 images selected`;
+                    textSpan.textContent = `📎 Maximum 6 images selected`;
                 }
             }
         }

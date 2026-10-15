@@ -81,6 +81,14 @@ START_OVER_POINT_OCTOBER_15
 - Categories on mobile devices now feature the same clean, subtle horizontal divider lines as on desktop and laptop displays.
 - Incremented `forum.css` version in `templates/index.html` to `v=1791130148` for immediate cache busting across client browsers.
 
+### 9. Forum Maximum Image Attachment Limit Increased to 6
+- **Backend Enforced Limits**: In `app.py`, updated `create_forum_post` (`POST /api/forum/posts`) and `create_forum_comment` (`POST /api/forum/comments`) from `upload_files[:4]` to `upload_files[:6]`.
+- **Client Frontend Validation & UI**:
+  - In `static/js/forum.js`, updated `addFiles` target array limit check and alert message from 4 to 6 ("You can attach a maximum of 6 images per post.").
+  - Updated `renderImagePreviews` file counter and indicator texts (`(up to 6)`, `${targetArray.length}/6 images`, `Maximum 6 images selected`).
+  - In `templates/index.html`, updated all upload input labels and prompts for new threads, inline comment boxes, and floating reply popups to reference 6 images instead of 4.
+  - Bumped `forum.js` cache buster version in `templates/index.html` to `v=1791130138`.
+
 ---
 
 ## Verification & Health Check
