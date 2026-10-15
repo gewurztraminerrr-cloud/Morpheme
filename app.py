@@ -8331,43 +8331,44 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
         return False
 
     if target_mp == 1:
-        # Fast path 1: drop extremity letter
-        if source_len > 5:
-            d1 = w[1:]
-            if len(d1) != 4 and d1 in dict_set and not is_plural_or_inflection(w, d1):
-                return True
-            d2 = w[:-1]
-            if len(d2) != 4 and d2 in dict_set and not is_plural_or_inflection(w, d2):
-                return True
-        # Fast path 2: add or insert letter anywhere
         common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-        for i in range(len(w) + 1):
-            for char in common_chars:
-                ins = w[:i] + char + w[i:]
-                if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
+        for s in (w, w[::-1]):
+            # Fast path 1: drop extremity letter
+            if source_len > 5:
+                d1 = s[1:]
+                if len(d1) != 4 and d1 in dict_set and not is_plural_or_inflection(w, d1):
                     return True
-        # Fast path 3: adjacent transposition
-        if source_len != 4:
-            for i in range(len(w) - 1):
-                if w[i] != w[i+1]:
-                    trans = w[:i] + w[i+1] + w[i] + w[i+2:]
-                    if len(trans) != 4 and trans in dict_set and not is_plural_or_inflection(w, trans):
+                d2 = s[:-1]
+                if len(d2) != 4 and d2 in dict_set and not is_plural_or_inflection(w, d2):
+                    return True
+            # Fast path 2: add or insert letter anywhere
+            for i in range(len(s) + 1):
+                for char in common_chars:
+                    ins = s[:i] + char + s[i:]
+                    if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
                         return True
-        # Fast path 4: interior deletion
-        if source_len > 5:
-            for i in range(1, len(w) - 1):
-                sub = w[:i] + w[i+1:]
-                if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
-                    return True
-        # Fast path 5: single letter substitution
-        if source_len != 4:
-            for i in range(len(w)):
-                orig = w[i]
-                for c in common_chars:
-                    if c != orig:
-                        sub = w[:i] + c + w[i+1:]
-                        if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+            # Fast path 3: adjacent transposition
+            if source_len != 4:
+                for i in range(len(s) - 1):
+                    if s[i] != s[i+1]:
+                        trans = s[:i] + s[i+1] + s[i] + s[i+2:]
+                        if len(trans) != 4 and trans in dict_set and not is_plural_or_inflection(w, trans):
                             return True
+            # Fast path 4: interior deletion
+            if source_len > 5:
+                for i in range(1, len(s) - 1):
+                    sub = s[:i] + s[i+1:]
+                    if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+                        return True
+            # Fast path 5: single letter substitution
+            if source_len != 4:
+                for i in range(len(s)):
+                    orig = s[i]
+                    for c in common_chars:
+                        if c != orig:
+                            sub = s[:i] + c + s[i+1:]
+                            if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+                                return True
 
         return False
 
