@@ -761139,7 +761139,7 @@ UTOPISTIC	Utopianistic.
 UTOPISTS	plural of utopist
 UTOPOGRAPHER	One who describes a utopia.
 UTOPOGRAPHERS	plural of utopographer
-UTRAQUISM	
+UTRAQUISM
 UTRAQUISMS	plural of utraquism
 UTRAQUISTIC	Of or relating to Utraquism.
 UTRICLE	(biology) A small cell, sac, or bladder-like protuberance in an animal or plant:
@@ -773636,6 +773636,8 @@ WANGTOOTH	(now chiefly dialectal) A molar.
 WANGTOOTHS	plural of wangtooth ((now chiefly dialectal) A molar.)
 WANGUN	Alternative form of wangan.
 WANGUNS	plural of wangun
+WANGYANITE	A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).
+WANGYANITES	plural of wangyanite (A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).)
 WANHOPE	(UK dialectal or archaic) Lack of hope; hopelessness; despair.
 WANHOPES	plural of wanhope
 WANHORN	galangal

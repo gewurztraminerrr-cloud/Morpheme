@@ -793963,7 +793963,7 @@ UTOPISTIC - of or like a utopist, a believer in Utopia [adj]
 UTOPISTS - UTOPIST, one who believes in utopism, the establishment of a utopia, also UTOPIAN, UTOPIAST [n]
 UTOPOGRAPHER - One who describes a utopia.
 UTOPOGRAPHERS - plural of utopographer
-UTRAQUISM - 
+UTRAQUISM -
 UTRAQUISMS - plural of utraquism
 UTRAQUISTIC - Of or relating to Utraquism.
 UTRICLE - a saclike cavity in the inner ear, also UTRICULUS [n -S]
@@ -807069,6 +807069,8 @@ WANGTOOTH - (now chiefly dialectal) A molar.
 WANGTOOTHS - plural of wangtooth ((now chiefly dialectal) A molar.)
 WANGUN - (Native American) in a lumber camp, a chest for supplies, or the pay office, also WANGAN, WANIGAN, WANNIGAN [n -S]
 WANGUNS - WANGUN, (Native American) in a lumber camp, a chest for supplies, or the pay office, also WANGAN, WANIGAN, WANNIGAN [n]
+WANGYANITE - A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).
+WANGYANITES - plural of wangyanite (A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).)
 WANHOPE - (obsolete) despair [n -S]
 WANHOPES - WANHOPE, (obsolete) despair [n]
 WANHORN - galangal

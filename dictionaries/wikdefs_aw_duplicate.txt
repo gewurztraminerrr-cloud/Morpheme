@@ -529267,6 +529267,8 @@ WANGSTY	Prone to wangst; anxious in a self-indulgent way.
 WANGTEETH	plural of wangtooth
 WANGTOOTH	(now chiefly dialectal) A molar.
 WANGTOOTHS	plural of wangtooth ((now chiefly dialectal) A molar.)
+WANGYANITE	A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).
+WANGYANITES	plural of wangyanite (A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).)
 WANHORN	galangal
 WANHORNS	plural of wanhorn (galangal)
 WANINGLY	While waning or diminishing.
