@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-f7b8964c45d0316e2a8261d0c62642f5cfcccdf4
+55c9664fee0605cd5164a3c92aaea56c9490196c
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `f7b8964c`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `55c9664f`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -209,11 +209,31 @@ START_OVER_POINT_OCTOBER_14
   - `window.showLoadingOverlay('Loading...')` is now invoked **synchronously on the first line** of click handlers before any network requests (`checkAccountTimeoutAndAlert`), with forced DOM reflow (`void overlay.offsetHeight;`) ensuring the loading spinner and message render in the exact frame the button is clicked.
   - Avoided dropping clicks during the gateway transition cooldown (`_lobbyEnterCooldown`), immediately showing the loading overlay and proceeding seamlessly into the room.
 
+### 22. Permanent Restoration of WANGYANITE & WANGYANITES and Deployment Safety Guard
+- **Root Cause Identified**:
+  - `WANGYANITE` and `WANGYANITES` were originally added via the Mods interface at `22:50` on the production server.
+  - When the subsequent deployment script ran `git reset --hard origin/main`, it checked out git-tracked dictionary files (`added_words.txt`, `added_words_dates.txt`, `Definitions.txt`, `wikdefs.txt`), clobbering any uncommitted additions made directly on production.
+- **Permanent Lexicographical Restoration (Strict `AGENTS.md` Rule Compliance)**:
+  - Definition for **`WANGYANITE`**:
+    `A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).`
+  - Definition for **`WANGYANITES`**:
+    `plural of wangyanite (A rare sulfide mineral with the chemical formula palladium nickel octasulfide (PdNi8S8).)`
+  - Added into `dictionaries/added_words.txt`, `dictionaries/added_words_duplicate.txt`, `dictionaries/added_words_dates.txt` (date: `14/10/2026`).
+  - Added into `dictionaries/Definitions.txt`, `dictionaries/wikdefs.txt`, `dictionaries/wikdefs_duplicate.txt`, `dictionaries/wikdefs_aw_duplicate.txt`.
+  - Added into SQLite database `morpheme.db` (`wiktionary_definitions` table) on both local and production environments.
+- **Deployment Safety Guard (`scratch/pull_latest.py`)**:
+  - Upgraded deployment workflow with a pre-reset safety guard that scans `added_words.txt` and `added_words_dates.txt` on remote for uncommitted additions before performing `git reset --hard`.
+  - Any words added on production that do not yet exist in `origin/main` are automatically backed up, preserved across the git reset, and seamlessly re-injected so user-added words will never be lost on future deploys.
+
 ---
 
 ## Verification & Health Check
 
 - **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK` / `HTTP/2 200`.
+- **Validation Endpoints Verified Live**:
+  - `/api/tools/validate` with `{"word": "WANGYANITE", "dictionary": "ALL"}` -> `is_valid: true`, `lists: ["AW"]`
+  - `/api/tools/validate` with `{"word": "WANGYANITES", "dictionary": "all_new"}` -> `is_valid: true`, `lists: ["AW"]`
+  - `/api/definition?word=WANGYANITE` and `/api/definition?word=WANGYANITES` return the authentic mineral definition and AGENTS.md-compliant plural definition.
 - **Static Assets Sync**: `lobby.css`, `play.css`, `app.js`, and `play.js` verified live on production.
 - **PM2 Process**: `morpheme` process online with dictionaries fully loaded.
 - **Mobile Fullscreen Rules**: Fullscreen invariant strictly maintained across all navigation, modals, and tabs.
