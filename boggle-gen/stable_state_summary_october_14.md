@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-dc4f86fa2e3c0ee0db3f6b4d36ef55fcb5146c98
+a388e33d29a593457a40cfa9cb1d48c8df638933
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `dc4f86fa`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `a388e33d`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -167,6 +167,15 @@ START_OVER_POINT_OCTOBER_14
 ### 18. Forum: Category Threads List — 100 Character Content Limit
 - **Excerpts Clamped**: In `renderPosts` ([forum.js](file:///Users/jeffbabiak/static/js/forum.js)), thread cards displayed when viewing threads for a Category now slice and limit `post.content` to the first 100 characters (`post.content.slice(0, 100).trimEnd() + '...'`).
 - **Full Thread Content Preserved**: The full content text is displayed without restriction when clicking into and viewing the thread (`renderPostDetail`).
+
+### 19. Mobile Tactile Flattening for 'Cancel' and 'Return to Category' Buttons
+- **Equalized Tactile Press & Slide**: Gave `#forum-cancel-create` (`← Cancel`) and `#forum-back-to-list` (`← Back to category` / Return to Category) the exact tactile slide and flattening effect previously on the mobile "Back" buttons (`#forum-category-back-btn`, `#tools-mobile-back-btn`, `#mods-mobile-back-btn`, `#settings-mobile-back-btn`).
+- **CSS Transformation & Elevation Dynamics**:
+  - Configured `transition: all 0.2s ease, transform 0.1s ease !important;` on all forum back buttons.
+  - On active / pressed (`:active`, `.active`), applied `transform: translateX(-4px) scale(0.98) !important;` and reduced `box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;` across dark, light, and white themes.
+  - Included `#forum-cancel-create` in all CSS theme selectors alongside `#forum-back-to-list` and `#forum-category-back-btn`.
+- **Mobile Touch Animation Window**:
+  - In `static/js/forum.js`, added a 120ms animation window on mobile devices for `backToListBtn` and `cancelCreateBtn`, allowing the physical 3D flattening and sliding animation to complete visibly before switching views back to the list.
 
 ---
 
