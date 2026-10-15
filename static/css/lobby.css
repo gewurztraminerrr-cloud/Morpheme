@@ -1549,6 +1549,21 @@ body[class*="theme-light-"] .field-hint {
         align-items: stretch !important;
     }
 
+    .matrix-3d .matrix-header,
+    .matrix-3d .matrix-row,
+    .matrix-subanagrams .matrix-header,
+    .matrix-subanagrams .matrix-row {
+        grid-template-columns: 45px 1fr !important;
+        gap: 4px !important;
+        align-items: stretch !important;
+    }
+
+    .matrix-subanagrams .game-btn,
+    .matrix-subanagrams .dim-label {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
     .matrix-header .corner-cell {
         height: auto !important;
         min-height: 0 !important;
