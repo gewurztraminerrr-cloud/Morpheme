@@ -1175,10 +1175,17 @@ body.is-subanagrams .timer-display #transpose-board-btn {
 @media (max-width: 600px) {
     body.is-subanagrams .word-input-section {
         gap: 6px !important;
+        flex-wrap: wrap !important;
     }
     body.is-subanagrams .word-input-section #submit-word-btn,
-    body.is-subanagrams .word-input-section #clear-word-btn,
+    body.is-subanagrams .word-input-section #clear-word-btn {
+        padding: 10px 14px !important;
+        font-size: 0.95rem !important;
+        flex: 0 0 auto !important;
+    }
     body.is-subanagrams .word-input-section #shuffle-board-btn {
+        width: 100% !important;
+        flex: 1 1 100% !important;
         padding: 10px 14px !important;
         font-size: 0.95rem !important;
     }
@@ -6947,6 +6954,7 @@ input[type=range]::-moz-range-track {
     body.is-subanagrams.is-mobile .word-input-section {
         display: flex !important;
         flex-direction: row !important;
+        flex-wrap: wrap !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 6px !important;
@@ -6974,6 +6982,7 @@ input[type=range]::-moz-range-track {
     body.is-subanagrams .word-input-section #submit-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #submit-word-btn {
         display: inline-flex !important;
+        flex: 0 0 auto !important;
         align-items: center !important;
         justify-content: center !important;
         height: 42px !important;
@@ -6991,6 +7000,7 @@ input[type=range]::-moz-range-track {
     body.is-subanagrams .word-input-section #clear-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #clear-word-btn {
         display: inline-flex !important;
+        flex: 0 0 auto !important;
         align-items: center !important;
         justify-content: center !important;
         height: 42px !important;
@@ -7010,6 +7020,8 @@ input[type=range]::-moz-range-track {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        width: 100% !important;
+        flex: 1 1 100% !important;
         height: 42px !important;
         padding: 0 14px !important;
         font-size: 0.95rem !important;
@@ -12629,9 +12641,14 @@ body.is-desktop .word-input-section #submit-word-btn {
 }
 
 /* Multiplayer Subanagrams: Enter, Clear, and Shuffle buttons on desktop and widen container */
-body.is-desktop.is-subanagrams .word-input-section,
-body.is-subanagrams .word-input-section {
+body.is-desktop.is-subanagrams .word-input-section {
     max-width: 680px !important;
+    flex-wrap: nowrap !important;
+}
+
+body.is-desktop.is-subanagrams .word-input-section #shuffle-board-btn {
+    width: auto !important;
+    flex: 0 0 auto !important;
 }
 
 body.is-subanagrams #submit-word-btn,

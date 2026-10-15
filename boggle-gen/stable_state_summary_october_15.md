@@ -105,7 +105,8 @@ START_OVER_POINT_OCTOBER_15
 - **CSS Styling & Responsiveness**:
   - In `static/css/play.css`, styled `#shuffle-board-btn` with a vivid blue gradient (`linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)`), bold white font, rounded corners (`border-radius: 8px`), and interactive hover shadow.
   - Hidden by default in standard grid rooms (`display: none !important;`) and only displayed when `body.is-subanagrams` is active (`display: inline-flex !important;`).
-  - Added responsive sizing and 42px touch target height in mobile and desktop media queries, widening the Subanagrams input container to `680px`.
+  - **Desktop Layout**: Widened the Subanagrams input row container to `680px`, keeping `#word-input`, `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) side-by-side in a single row (`flex-wrap: nowrap !important;`).
+  - **Mobile Layout**: Configured `flex-wrap: wrap !important;` on `.word-input-section` with `#word-input`, Enter, and Clear on the top row, and relocated `#shuffle-board-btn` to its own dedicated row directly beneath them, stretching horizontally across the full width (`width: 100% !important; flex: 1 1 100% !important;`) matching the combined width of the textbox and the two action buttons.
 - **Client Randomization & State Preservation**:
   - In `static/js/play.js`, implemented `window.shuffleSubanagramsBoard()`:
     - Extracts letters and runs a Fisher-Yates shuffle with a guarantee of producing a distinct permutation whenever at least two distinct letters exist.
@@ -114,7 +115,7 @@ START_OVER_POINT_OCTOBER_15
     - Preserves the shuffled order across background server countdown ticks/heartbeats during the round.
     - Automatically remaps `mouseState.selectedPath` and `mouseState.visitedCells` to the new tile coordinates if letters were already entered in `#word-input`, re-triggering highlight pathfinding.
     - Resets cleanly when a new round starts, on round intermission, or upon room exit.
-  - Bumped `play.css` cache buster to `v=1791130450` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
+  - Bumped `play.css` cache buster to `v=1791130460` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
 
 ---
 
