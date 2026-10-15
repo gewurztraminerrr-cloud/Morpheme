@@ -90,6 +90,9 @@ function adjustPlayHeaderForDevice() {
     if (colorBar && isSubanagrams) {
         colorBar.style.display = 'none';
     }
+    if (timerControlsGroup && isSubanagrams) {
+        timerControlsGroup.style.display = 'none';
+    }
 }
 window.checkIsDesktop = checkIsDesktop;
 window.adjustPlayHeaderForDevice = adjustPlayHeaderForDevice;
@@ -5238,18 +5241,47 @@ function updateParameters(state) {
 
     const isSubanagrams = state.game_type === 'subanagrams';
     let factSeqLen = 7;
-    if (!isIntermission && state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 0) {
-        factSeqLen = state.board[0].length;
-    } else if (isIntermission && !isRevealed && state.previous_board && state.previous_board[0] && Array.isArray(state.previous_board[0])) {
-        factSeqLen = state.previous_board[0].length;
-    } else if (useSp && sp.sequence_length) {
-        factSeqLen = sp.sequence_length;
-    } else if (state.sequence_length) {
-        factSeqLen = state.sequence_length;
-    } else if (state.board && state.board[0]) {
-        factSeqLen = state.board[0].length;
-    } else if (sp && sp.sequence_length) {
-        factSeqLen = sp.sequence_length;
+    if (isSubanagrams) {
+        let actualLetters = null;
+        const b = (!isIntermission && state.board) ? state.board : (state.previous_board || state.board);
+        if (b && Array.isArray(b) && b.length > 0) {
+            if (b.length === 1 && Array.isArray(b[0])) {
+                actualLetters = b[0];
+            } else if (typeof b[0] === 'string' && b.length > 1) {
+                actualLetters = b;
+            } else if (Array.isArray(b[0]) && b.length > 1 && b[0].length === 1) {
+                actualLetters = b.map(r => Array.isArray(r) ? r[0] : r);
+            } else if (Array.isArray(b[0])) {
+                actualLetters = b.flat();
+            }
+        }
+        if (actualLetters && actualLetters.length > 1) {
+            factSeqLen = actualLetters.length;
+        } else if (state.sequence_length && state.sequence_length > 1) {
+            factSeqLen = state.sequence_length;
+        } else if (useSp && sp && sp.sequence_length && sp.sequence_length > 1) {
+            factSeqLen = sp.sequence_length;
+        } else if (sp && sp.sequence_length && sp.sequence_length > 1) {
+            factSeqLen = sp.sequence_length;
+        } else if (state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 1) {
+            factSeqLen = state.board[0].length;
+        } else if (state.board && Array.isArray(state.board) && state.board.length > 1) {
+            factSeqLen = state.board.length;
+        }
+    } else {
+        if (!isIntermission && state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 0) {
+            factSeqLen = state.board[0].length;
+        } else if (isIntermission && !isRevealed && state.previous_board && state.previous_board[0] && Array.isArray(state.previous_board[0])) {
+            factSeqLen = state.previous_board[0].length;
+        } else if (useSp && sp && sp.sequence_length) {
+            factSeqLen = sp.sequence_length;
+        } else if (state.sequence_length) {
+            factSeqLen = state.sequence_length;
+        } else if (state.board && state.board[0]) {
+            factSeqLen = state.board[0].length;
+        } else if (sp && sp.sequence_length) {
+            factSeqLen = sp.sequence_length;
+        }
     }
 
     // UPDATE POLICY:
@@ -5921,15 +5953,40 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
 
+    const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+
+    if (isSubanagrams && board && board.length > 0) {
+        let letters = [];
+        if (Array.isArray(board)) {
+            if (board.length === 1 && Array.isArray(board[0])) {
+                letters = board[0];
+            } else if (typeof board[0] === 'string' && board.length > 1) {
+                letters = board;
+            } else if (board.length > 1 && Array.isArray(board[0]) && board[0].length === 1) {
+                letters = board.map(r => Array.isArray(r) ? r[0] : r);
+            } else if (Array.isArray(board[0])) {
+                letters = board.flat();
+            } else {
+                letters = board;
+            }
+        }
+        board = [letters];
+    }
+
     // Determine dimensions early
     let rows = 0;
     let cols = 0;
     if (hasLetters && board && board.length > 0) {
-        rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
-        cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
+        if (isSubanagrams) {
+            rows = 1;
+            cols = (Array.isArray(board[0])) ? board[0].length : board.length;
+        } else {
+            rows = (is3D && Array.isArray(board[0])) ? board[0].length : board.length;
+            cols = (is3D && Array.isArray(board[0])) ? board[0][0].length : (board[0] ? board[0].length : 0);
+        }
     }
 
-    if (hasLetters && cols > 0 && rows > 0) {
+    if (hasLetters && cols > 0 && rows > 0 && !isSubanagrams) {
         boardEl.style.setProperty('--board-cols', cols);
         boardEl.style.setProperty('--board-rows', rows);
     } else {
@@ -5955,7 +6012,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         else rotateHint.classList.add('hidden');
     }
 
-    const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
     boardEl.classList.toggle('is-subanagrams-board', !!isSubanagrams);
 
     const submitBtn = document.getElementById('submit-word-btn');
@@ -6089,18 +6145,25 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     lastRenderedRotation = isBoardRotated;
     lastRenderedUserTranspose = isUserTransposed;
 
-    boardEl.className = 'game-board';
-    boardEl.style.display = '';
-
-
-    
-    // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
-    if (!is3D && cols > 0 && rows > 0) {
-        boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
-        boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
-    } else {
+    boardEl.className = isSubanagrams ? 'game-board is-subanagrams-board' : 'game-board';
+    if (isSubanagrams) {
+        boardEl.style.display = 'flex';
+        boardEl.style.flexDirection = 'row';
+        boardEl.style.flexWrap = 'wrap';
+        boardEl.style.justifyContent = 'center';
+        boardEl.style.alignItems = 'center';
         boardEl.style.gridTemplateColumns = '';
         boardEl.style.gridTemplateRows = '';
+    } else {
+        boardEl.style.display = '';
+        // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
+        if (!is3D && cols > 0 && rows > 0) {
+            boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
+            boardEl.style.gridTemplateRows = `repeat(${rows}, var(--cell-size, 60px))`;
+        } else {
+            boardEl.style.gridTemplateColumns = '';
+            boardEl.style.gridTemplateRows = '';
+        }
     }
     
     if (is3D) {
@@ -6259,8 +6322,15 @@ function checkBoardOverflow() {
     const boardEl = document.getElementById('game-board');
     if (!boardPanel || !boardEl) return;
 
-    if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
+    if ((window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams')) {
         boardEl.classList.add('is-subanagrams-board');
+        boardEl.style.display = 'flex';
+        boardEl.style.flexDirection = 'row';
+        boardEl.style.flexWrap = 'wrap';
+        boardEl.style.justifyContent = 'center';
+        boardEl.style.alignItems = 'center';
+        boardEl.style.gridTemplateColumns = '';
+        boardEl.style.gridTemplateRows = '';
         return;
     }
 

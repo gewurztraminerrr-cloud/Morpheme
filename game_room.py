@@ -7272,6 +7272,34 @@ class RoomManager:
             if has_letters and room.state == 'active':
                 return room
 
+            # Handle subanagrams mode
+            if room.game_type == 'subanagrams':
+                from subanagrams_generator import generate_subanagrams_board_and_words
+                sp = SpinnerSet.generate_subanagrams_params()
+                res = generate_subanagrams_board_and_words(sp)
+                if res:
+                    b_board, b_words, b_bonus, fparams = res
+                    room.board = b_board
+                    room.sequence_length = fparams.get('sequence_length', len(b_board[0]))
+                    room.all_words = set(b_words)
+                    room.all_words_paths = {w: [] for w in b_words}
+                    room.bonus_word = b_bonus
+                    room.current_board_format = fparams.get('board_format', 'Word Guaranteed')
+                    room.current_min_length = fparams.get('min_word_length', 3)
+                    room.current_dictionary = fparams.get('dictionary', 'CSW')
+                    room.use_added_words = fparams.get('use_added_words', False)
+                    room.spinner_params = dict(fparams)
+                    room.spinner_params_generated = True
+                    from scoring import calculate_word_score
+                    room.solved_words_with_scores = {
+                        w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
+                        for w in b_words
+                    }
+                    room.total_words_count = len(b_words)
+                    room.recalculate_total_points()
+                    room.state = 'active'
+                    return room
+
             # Pop from cached board pool or emergency fallback
             pre = pop_any_cached_board(room.board_dimensions)
             if not pre:

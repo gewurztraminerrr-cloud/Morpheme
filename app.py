@@ -6267,6 +6267,33 @@ def get_room_state(room_id):
             raw_fmt = getattr(room, 'current_board_format', 'Normal')
             is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower())
 
+            # Normalize subanagrams board representation and calculate sequence length
+            board_to_send = (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board
+            calc_seq_len = None
+            if room.game_type == 'subanagrams':
+                if board_to_send and len(board_to_send) > 0:
+                    if isinstance(board_to_send[0], list) and len(board_to_send) == 1:
+                        calc_seq_len = len(board_to_send[0])
+                    elif isinstance(board_to_send[0], list) and len(board_to_send) > 1 and len(board_to_send[0]) == 1:
+                        calc_seq_len = len(board_to_send)
+                        board_to_send = [[r[0] if isinstance(r, list) else r for r in board_to_send]]
+                    elif isinstance(board_to_send, list) and not isinstance(board_to_send[0], list):
+                        calc_seq_len = len(board_to_send)
+                        board_to_send = [list(board_to_send)]
+                if not calc_seq_len or calc_seq_len <= 1:
+                    calc_seq_len = getattr(room, 'previous_sequence_length', None) if is_intermission else getattr(room, 'sequence_length', None)
+                if not calc_seq_len or calc_seq_len <= 1:
+                    sp_obj = getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
+                    calc_seq_len = sp_obj.get('sequence_length') if isinstance(sp_obj, dict) else None
+                if not calc_seq_len or calc_seq_len <= 1:
+                    calc_seq_len = 7
+            else:
+                calc_seq_len = (
+                    getattr(room, 'previous_sequence_length', None) or (len(room.previous_board[0]) if (getattr(room, 'previous_board', None) and len(room.previous_board) > 0 and isinstance(room.previous_board[0], list)) else None)
+                ) if is_intermission else (
+                    (len(room.board[0]) if (getattr(room, 'board', None) and len(room.board) > 0 and isinstance(room.board[0], list)) else getattr(room, 'sequence_length', None))
+                )
+
             # Build snapshot dict under lock (all room.xxx reads happen here)
             snapshot = {
                 'room_id': room.room_id,
@@ -6281,7 +6308,7 @@ def get_room_state(room_id):
                 'server_time': time.time(),
                 'your_username': session.get('username'),
                 'your_rating': user_rating_for_snapshot,
-                'board': (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board,
+                'board': board_to_send,
                 'board_dimensions': room.board_dimensions,
                 'bonus_word': (getattr(room, 'previous_bonus_word', None) or room.bonus_word) if is_intermission else room.bonus_word,
                 'bonus_cell': (getattr(room, 'previous_bonus_cell', None) if is_intermission else room.bonus_cell),
@@ -6320,11 +6347,7 @@ def get_room_state(room_id):
                 'current_word_count_range': getattr(room, 'current_word_count_range', 'Random'),
                 'current_difficulty': getattr(room, 'current_difficulty', None) or 'Medium',
                 'current_uniqueness': getattr(room, 'current_uniqueness', None) or 0.0,
-                'sequence_length': (
-                    getattr(room, 'previous_sequence_length', None) or (len(room.previous_board[0]) if (getattr(room, 'previous_board', None) and len(room.previous_board) > 0 and isinstance(room.previous_board[0], list)) else None)
-                ) if is_intermission else (
-                    (len(room.board[0]) if (getattr(room, 'board', None) and len(room.board) > 0 and isinstance(room.board[0], list)) else getattr(room, 'sequence_length', None))
-                ),
+                'sequence_length': calc_seq_len,
                 'spinner_params_revealed': is_revealed,
                 'players': [
                     {
