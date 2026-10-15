@@ -729019,8 +729019,6 @@ TESTRIONICSES - plural of testrionics (histrionic displays, especially of machis
 TESTRUN - Alternative form of test run (An initial trial of a device or system to test its basic function.)
 TESTRUNS - plural of testrun (Alternative form of test run (An initial trial of a device or system to test its basic function.))
 TESTS - TEST, to examine critically [v]
-TESTTEST - In a testy way; in the manner of someone who is testy. [a]
-TESTTESTS - In a testy way; in the manner of someone who is testy. [a]
 TESTUDIAN - Any tortoise of the genus Testudo.
 TESTUDIANS - plural of testudian
 TESTUDINAL - like a tortoiseshell or testudo, also TESTUDINARY, TESTUDINEOUS [adj]
