@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-58e55728c0624c0111319f2a722007ade676d286
+bba986d894a9d1a5ad16062e98c25e069f44ab34
 ```
 
 ## Start Over Point Tag
@@ -119,3 +119,10 @@ START_OVER_POINT_OCTOBER_14
 - **New AW Words & Added Words Restoration**:
   - Added `ANGELITE` and `ANGELITES` to `added_words.txt`, `added_words_duplicate.txt`, and `added_words_dates.txt` with their submission date (`10/10/2026`).
   - Restored them to the top of **New AW Words** in the Tools tab, appearing above previously added words from `30/09/2026`.
+
+### 14. Mobile Top Menu & Layout Harmonization (Lobby & Forum Alignment)
+- **Zero-Shift Top Menu & Page Container**:
+  - Harmonized top menu layout (`.top-menu-bar`, `.header`, `.logo`, `.logo-icon`, `.logo-text`, `.pronunciation`, `.nav`, `.nav-btn`) between Lobby and Forum on mobile viewports (`<= 900px` and `body.is-mobile`).
+  - Enforced continuous viewport locking (`position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; max-width: 100% !important; height: 100dvh !important; overflow: hidden !important;`) across both Lobby and Forum on mobile, preventing viewport jumps, address bar shifting, and scrollbar toggling.
+  - Aligned page container horizontal padding (`.pages`) to an exact 6px on each side (`padding: 4px 6px 4px 6px !important`), eliminating the 4px horizontal content jump when switching between Lobby and Forum.
+  - Locked `.top-menu-bar`, `.header`, and `.separator` with `flex-shrink: 0 !important;` and hidden spacer (`.top-menu-spacer { display: none !important; }`), ensuring `#page-forums` seamlessly fills the remaining viewport area via `flex: 1 1 0% !important; height: 100% !important;` without fractional layout shifts.
