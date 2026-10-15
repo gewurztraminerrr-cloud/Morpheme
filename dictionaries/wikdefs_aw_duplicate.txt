@@ -376,6 +376,8 @@ ABELISAURS	plural of abelisaur
 ABELISAURUS	An abelisaurid theropod dinosaur, of genus Abelisaurus, from the Late Cretaceous Period (Campanian) of what is now South America.
 ABELLAITE	(mineralogy) A hydrous carbonate mineral whose ideal chemical formula is NaPb₂(CO₃)₂(OH).
 ABELLAITES	plural of abellaite ((mineralogy) A hydrous carbonate mineral whose ideal chemical formula is NaPb₂(CO₃)₂(OH).)
+ABELLOEMRINGERITE	(Noun) A very rare mineral with chemical formula Cu2Pb2MnMn 3O11(OH)(H2O)2 · H2OPb, found in reniform aggregates.
+ABELLOEMRINGERITES	plural of abelloemringerite (A very rare mineral with chemical formula Cu2Pb2MnMn 3O11(OH)(H2O)2 · H2OPb, found in reniform aggregates)
 ABELSONITE	A mineral, NiC₃₁H₃₂N₄, forming soft reddish-brown triclinic crystals.
 ABELSONITES	plural of abelsonite (A mineral, NiC₃₁H₃₂N₄, forming soft reddish-brown triclinic crystals.)
 ABELTREE	A Eurasian tree, Populus alba, that is widely cultivated in North America.
@@ -2847,6 +2849,8 @@ ACHATOURS	plural of achatour
 ACHATRIES	(archaic, poetic) A trusty comrade [n -S]
 ACHATRY	
 ACHATTER	chattering
+ACHAVALITE	(Noun) Rare, selenium-rich mineral with distinctive hexagonal crystallography and metallic luster.
+ACHAVALITES	plural of achavalite (Rare, selenium-rich mineral with distinctive hexagonal crystallography and metallic luster)
 ACHEE	Alternative spelling of ackee.
 ACHEES	plural of achee
 ACHEFUL	full of aches; aching
@@ -3056,6 +3060,8 @@ ACHYRANTHE	Any plant of the genus Achyranthes of chaff flowers.
 ACHYRANTHES	plural of achyranthe
 ACHYRANTHOID	Any amaranth of the clade Achyranthoids
 ACHYRANTHOIDS	plural of achyranthoid
+ACHYROPHANITE	(Noun) Useful mineral for understanding fluid-rock interaction, Mn-silicate stability, and regional metamorphic conditions in manganese-rich terranes.
+ACHYROPHANITES	plural of achyrophanite (Useful mineral for understanding fluid-rock interaction, Mn-silicate stability, and regional metamorphic conditions in manganese-rich terranes)
 ACIBENZOLAR	A particular fungicide.
 ACIBENZOLARS	plural of acibenzolar (A particular fungicide.)
 ACICLE	Synonym of acicula.

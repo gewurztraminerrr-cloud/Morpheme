@@ -578,6 +578,8 @@ ABELISAURS - plural of abelisaur
 ABELISAURUS - An abelisaurid theropod dinosaur, of genus Abelisaurus, from the Late Cretaceous Period (Campanian) of what is now South America.
 ABELLAITE - (mineralogy) A hydrous carbonate mineral whose ideal chemical formula is NaPb₂(CO₃)₂(OH).
 ABELLAITES - plural of abellaite ((mineralogy) A hydrous carbonate mineral whose ideal chemical formula is NaPb₂(CO₃)₂(OH).)
+ABELLOEMRINGERITE - (Noun) A very rare mineral with chemical formula Cu2Pb2MnMn 3O11(OH)(H2O)2 · H2OPb, found in reniform aggregates.
+ABELLOEMRINGERITES - plural of abelloemringerite (A very rare mineral with chemical formula Cu2Pb2MnMn 3O11(OH)(H2O)2 · H2OPb, found in reniform aggregates)
 ABELMOSK - an evergreen shrub of the East and West Indies, whose musky seeds are used in perfumery and to flavor coffee [n -S]
 ABELMOSKS - ABELMOSK, an evergreen shrub of the East and West Indies, whose musky seeds are used in perfumery and to flavor coffee [n]
 ABELSONITE - A mineral, NiC₃₁H₃₂N₄, forming soft reddish-brown triclinic crystals.
@@ -4438,6 +4440,8 @@ ACHATOUR - (historical) A purveyor of provisions; a provedore. [14th–18th c.]
 ACHATOURS - plural of achatour
 ACHATRIES - (archaic, poetic) A trusty comrade [n -S]
 ACHATTER - chattering
+ACHAVALITE - (Noun) Rare, selenium-rich mineral with distinctive hexagonal crystallography and metallic luster.
+ACHAVALITES - plural of achavalite (Rare, selenium-rich mineral with distinctive hexagonal crystallography and metallic luster)
 ACHE - to endure a dull lasting pain, also AKE [v ACHED, ACHING, ACHES]
 ACHED - ACHE, to endure a dull lasting pain, also AKE [v]
 ACHEE - Alternative spelling of ackee.
@@ -4717,6 +4721,8 @@ ACHYRANTHE - Any plant of the genus Achyranthes of chaff flowers.
 ACHYRANTHES - plural of achyranthe
 ACHYRANTHOID - Any amaranth of the clade Achyranthoids
 ACHYRANTHOIDS - plural of achyranthoid
+ACHYROPHANITE - (Noun) Useful mineral for understanding fluid-rock interaction, Mn-silicate stability, and regional metamorphic conditions in manganese-rich terranes.
+ACHYROPHANITES - plural of achyrophanite (Useful mineral for understanding fluid-rock interaction, Mn-silicate stability, and regional metamorphic conditions in manganese-rich terranes)
 ACIBENZOLAR - A particular fungicide.
 ACIBENZOLARS - plural of acibenzolar (A particular fungicide.)
 ACICLE - Synonym of acicula.
