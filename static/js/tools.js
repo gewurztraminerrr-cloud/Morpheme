@@ -957,7 +957,10 @@ function applyComboExplorerOrdering() {
     } else {
         _comboExplorerDisplayWords = [...base].sort();
         if (_comboExplorerMatches && _comboExplorerMatches.length > 0) {
-            _comboExplorerDisplayMatches = [..._comboExplorerMatches].sort();
+            _comboExplorerDisplayMatches = [..._comboExplorerMatches].sort((a, b) => {
+                if (b.length !== a.length) return b.length - a.length;
+                return a.localeCompare(b);
+            });
         }
     }
 
@@ -1126,11 +1129,14 @@ window.selectComboExplorerWord = async function(word) {
         }
     }
 
-    _comboExplorerMatches = matches;
+    _comboExplorerMatches = (matches || []).filter(m => m.length !== 4);
     if (_comboExplorerIsRandom) {
-        _comboExplorerDisplayMatches = _comboExplorerShuffle(matches);
+        _comboExplorerDisplayMatches = _comboExplorerShuffle(_comboExplorerMatches);
     } else {
-        _comboExplorerDisplayMatches = [...matches].sort();
+        _comboExplorerDisplayMatches = [..._comboExplorerMatches].sort((a, b) => {
+            if (b.length !== a.length) return b.length - a.length;
+            return a.localeCompare(b);
+        });
     }
 
     renderComboExplorerMatches();

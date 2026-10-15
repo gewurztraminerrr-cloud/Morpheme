@@ -8122,25 +8122,21 @@ def is_plural_or_inflection(w1, w2):
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies filtering logic for Morpheme Procedure combinations."""
-    # mp_groups is a dict of sets
+    # User rule: do not include 4-letter words in results
+    if target_len == 4:
+        return
     added = False
     
     if source_len == 3:
         if target_len >= 3: added = True
     elif source_len == 4:
-        if target_len >= 4: added = True
+        if target_len >= 5: added = True
     elif source_len == 5:
-        if target_len >= 4 and mp <= 3:
-            if mp >= 3:
-                if target_len >= 5: added = True
-            else:
-                added = True
+        if target_len >= 5 and mp <= 3:
+            added = True
     elif source_len == 6:
-        if target_len >= 4 and mp <= 3:
-            if mp >= 3:
-                if target_len >= 5: added = True
-            else:
-                added = True
+        if target_len >= 5 and mp <= 3:
+            added = True
     elif source_len == 7:
         if target_len >= 5 and mp <= 4:
             if mp >= 4:
@@ -8212,12 +8208,10 @@ def get_combo_payload_for_word(search_term, dict_name):
     dict_lens_int = dict_lens.astype(np.int16)
     
     max_mp = 3
-    if source_len >= 8:
+    if source_len >= 5:
         mp_len_mask = (dict_lens_int >= 5)
-    elif source_len >= 5:
-        mp_len_mask = (dict_lens_int >= 4)
     else:
-        mp_len_mask = (dict_lens_int >= 3)
+        mp_len_mask = (dict_lens_int >= 3) & (dict_lens_int != 4)
 
     candidates_mp = np.where(
         passed_mask & 
@@ -8244,14 +8238,16 @@ def get_combo_payload_for_word(search_term, dict_name):
     mp_groups = {i: set() for i in range(max_mp + 1)}
     lic_groups = {}
     
-    min_sub_len = 4 if source_len >= 5 else 3
+    min_sub_len = 5 if source_len >= 5 else 3
     for l in range(min_sub_len, source_len + 1):
+        if l == 4:
+            continue
         for start in range(source_len - l + 1):
             sub1 = search_term[start:start+l]
-            if sub1 != search_term and sub1 in dict_data['set'] and not is_plural_or_inflection(search_term, sub1):
+            if len(sub1) != 4 and sub1 != search_term and sub1 in dict_data['set'] and not is_plural_or_inflection(search_term, sub1):
                 mp_groups[0].add(sub1)
             sub2 = search_term_rev[start:start+l]
-            if sub2 != search_term and sub2 in dict_data['set'] and not is_plural_or_inflection(search_term, sub2):
+            if len(sub2) != 4 and sub2 != search_term and sub2 in dict_data['set'] and not is_plural_or_inflection(search_term, sub2):
                 mp_groups[0].add(sub2)
     
     c_engine = _init_c_morpheme_metric()
@@ -8259,6 +8255,8 @@ def get_combo_payload_for_word(search_term, dict_name):
 
     for idx in sorted_candidates:
         word = word_list[idx]
+        if word == search_term:
+            continue
         target_len = int(dict_lens[idx])
         shared_count = int(shared_counts[idx])
             
@@ -8309,51 +8307,57 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
     dict_set = dict_data['set']
     
     if target_mp == 0:
-        min_sub_len = 4 if source_len >= 5 else 3
+        min_sub_len = 5 if source_len >= 5 else 3
         for l in range(min_sub_len, source_len + 1):
+            if l == 4:
+                continue
             for start in range(source_len - l + 1):
                 sub1 = w[start:start+l]
-                if sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
+                if len(sub1) != 4 and sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
                     return True
                 sub2 = w[::-1][start:start+l]
-                if sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
+                if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
                     return True
         return False
 
     if target_mp == 1:
         # Fast path 1: drop extremity letter
-        d1 = w[1:]
-        if d1 in dict_set and not is_plural_or_inflection(w, d1):
-            return True
-        d2 = w[:-1]
-        if d2 in dict_set and not is_plural_or_inflection(w, d2):
-            return True
+        if source_len > 5:
+            d1 = w[1:]
+            if len(d1) != 4 and d1 in dict_set and not is_plural_or_inflection(w, d1):
+                return True
+            d2 = w[:-1]
+            if len(d2) != 4 and d2 in dict_set and not is_plural_or_inflection(w, d2):
+                return True
         # Fast path 2: add or insert letter anywhere
         common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
         for i in range(len(w) + 1):
             for char in common_chars:
                 ins = w[:i] + char + w[i:]
-                if ins in dict_set and not is_plural_or_inflection(w, ins):
+                if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
                     return True
         # Fast path 3: adjacent transposition
-        for i in range(len(w) - 1):
-            if w[i] != w[i+1]:
-                trans = w[:i] + w[i+1] + w[i] + w[i+2:]
-                if trans in dict_set and not is_plural_or_inflection(w, trans):
-                    return True
-        # Fast path 4: interior deletion
-        for i in range(1, len(w) - 1):
-            sub = w[:i] + w[i+1:]
-            if sub in dict_set and not is_plural_or_inflection(w, sub):
-                return True
-        # Fast path 5: single letter substitution
-        for i in range(len(w)):
-            orig = w[i]
-            for c in common_chars:
-                if c != orig:
-                    sub = w[:i] + c + w[i+1:]
-                    if sub in dict_set and not is_plural_or_inflection(w, sub):
+        if source_len != 4:
+            for i in range(len(w) - 1):
+                if w[i] != w[i+1]:
+                    trans = w[:i] + w[i+1] + w[i] + w[i+2:]
+                    if len(trans) != 4 and trans in dict_set and not is_plural_or_inflection(w, trans):
                         return True
+        # Fast path 4: interior deletion
+        if source_len > 5:
+            for i in range(1, len(w) - 1):
+                sub = w[:i] + w[i+1:]
+                if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+                    return True
+        # Fast path 5: single letter substitution
+        if source_len != 4:
+            for i in range(len(w)):
+                orig = w[i]
+                for c in common_chars:
+                    if c != orig:
+                        sub = w[:i] + c + w[i+1:]
+                        if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+                            return True
 
         return False
 
@@ -8409,8 +8413,10 @@ def tools_combo_explorer():
         if status_code != 200:
             return jsonify(combo_res), status_code
         mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
-        matches_list = list(mp_matches)
-        if random_order:
+        matches_list = [m for m in mp_matches if len(m) != 4]
+        if not random_order:
+            matches_list.sort(key=lambda w: (-len(w), w))
+        else:
             import random
             random.shuffle(matches_list)
         return jsonify({
