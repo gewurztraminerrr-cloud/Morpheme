@@ -11214,21 +11214,21 @@ body.is-mobile #tool-work-on .work-on-counter {
 }
 
 .work-on-badge-nwl {
-    background: rgba(59, 130, 246, 0.22);
+    background: rgba(64, 156, 255, 0.22);
     color: #93c5fd;
-    border: 1px solid rgba(59, 130, 246, 0.45);
+    border: 1px solid #409cff;
 }
 
 .work-on-badge-csw {
-    background: rgba(16, 185, 129, 0.22);
-    color: #6ee7b7;
-    border: 1px solid rgba(16, 185, 129, 0.45);
+    background: rgba(255, 215, 0, 0.22);
+    color: #ffd700;
+    border: 1px solid #ffd700;
 }
 
 .work-on-badge-aw {
-    background: rgba(245, 158, 11, 0.22);
-    color: #fcd34d;
-    border: 1px solid rgba(245, 158, 11, 0.45);
+    background: rgba(147, 51, 234, 0.25);
+    color: #d8b4fe;
+    border: 1px solid #9333ea;
 }
 
 /* Light / White Theme Overrides for Perfect Legibility */
@@ -11353,7 +11353,7 @@ body.theme-white .tool-def-lists-container .work-on-badge-nwl,
 [class*="theme-light-"] .tool-def-lists-container .work-on-badge-nwl {
     background: #dbeafe !important;
     color: #1e40af !important;
-    border-color: #93c5fd !important;
+    border: 1px solid #3b82f6 !important;
 }
 
 body.theme-white #tool-work-on .work-on-badge-csw,
@@ -11362,9 +11362,9 @@ body.theme-white .tool-def-lists-container .work-on-badge-csw,
 [class*="theme-white"] .tool-def-lists-container .work-on-badge-csw,
 [class*="theme-light-"] #tool-work-on .work-on-badge-csw,
 [class*="theme-light-"] .tool-def-lists-container .work-on-badge-csw {
-    background: #d1fae5 !important;
-    color: #065f46 !important;
-    border-color: #6ee7b7 !important;
+    background: rgba(255, 215, 0, 0.35) !important;
+    color: #713f12 !important;
+    border: 1px solid #eab308 !important;
 }
 
 body.theme-white #tool-work-on .work-on-badge-aw,
@@ -11373,9 +11373,9 @@ body.theme-white .tool-def-lists-container .work-on-badge-aw,
 [class*="theme-white"] .tool-def-lists-container .work-on-badge-aw,
 [class*="theme-light-"] #tool-work-on .work-on-badge-aw,
 [class*="theme-light-"] .tool-def-lists-container .work-on-badge-aw {
-    background: #fef3c7 !important;
-    color: #92400e !important;
-    border-color: #fcd34d !important;
+    background: #f3e8ff !important;
+    color: #3b0764 !important;
+    border: 1px solid #9333ea !important;
 }
 
 body.theme-white #tool-work-on #work-on-scrollbar-track,

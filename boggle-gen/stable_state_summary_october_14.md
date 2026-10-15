@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-1c864ad8b2cc6a13d1a9434780d9794652d52321
+58e55728c0624c0111319f2a722007ade676d286
 ```
 
 ## Start Over Point Tag
@@ -96,8 +96,12 @@ START_OVER_POINT_OCTOBER_14
 ### 10. Appearance Settings & Game Contrast
 - Added **Black** (`#000000`) and three shades of grey (**Light Grey** `#d4d4d4`, **Medium Grey** `#888888`, **Dark Grey** `#4a4a4a`) for Highlight as you Type / Mouse/Swipe with automatic letter contrast inversion.
 
-### 11. Word Definition Popup: Dictionary Badges & Color Coding
-- Added colored dictionary badges (`NWL` in blue, `CSW` in green, `AW` in amber) adjacent to the word length tag in the definition popup header, consistent with Words to Work on.
+### 11. Word Definition Popup & Words to Work on: Word Lists Color Coding
+- **Adhering to All Words in Game Rooms**:
+  - **NWL**: Blue (`#409cff` border, `rgba(64, 156, 255, 0.22)` background, `#93c5fd` text in dark mode; `#1e40af` text, `#dbeafe` background, `#3b82f6` border in light mode).
+  - **CSW**: Solid Gold (`#ffd700` border, `rgba(255, 215, 0, 0.22)` background, `#ffd700` text in dark mode; `#713f12` text, `rgba(255, 215, 0, 0.35)` background, `#eab308` border in light mode).
+  - **AW**: Royal Purple (`#9333ea` border, `rgba(147, 51, 234, 0.25)` background, `#d8b4fe` text in dark mode; `#3b0764` text, `#f3e8ff` background, `#9333ea` border in light mode).
+  - Displayed consistently across definition popups (`#tool-word-def-popover`) adjacent to the word length badge, and across every word row under "Word lists valid in" in the Words to Work on tool.
 
 ### 12. Lobby Polish & Registration Validation
 - Changed Lobby chatbox placeholder to **`"Type Lobby message..."`**.
