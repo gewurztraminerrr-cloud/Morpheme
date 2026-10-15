@@ -947,11 +947,45 @@
     }
     .comments-header-actions-box {
         width: 100%;
-        gap: 10px;
+        gap: 8px;
+        display: flex;
+        align-items: center;
+    }
+    #forum-refresh-comments-btn {
+        flex: 0 0 32px !important;
+        width: 32px !important;
+        min-width: 32px !important;
     }
     .forum-thread-header-btn {
         flex: 1 1 0;
+        min-width: 0;
     }
+}
+
+body.is-mobile .comments-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+}
+body.is-mobile .comments-header-title-box {
+    width: 100%;
+    gap: 12px;
+}
+body.is-mobile .comments-header-actions-box {
+    width: 100%;
+    gap: 8px;
+    display: flex;
+    align-items: center;
+}
+body.is-mobile #forum-refresh-comments-btn {
+    flex: 0 0 32px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+}
+body.is-mobile .forum-thread-header-btn {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 /* Post Number Mention Links — blue so they read as clickable */
