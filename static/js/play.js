@@ -5954,21 +5954,6 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
             existingFilterBtn.remove();
         }
     }
-    // Handle Empty/Loading State
-    // Check if board has any actual letter content
-    let hasLetters = false;
-    if (is3D) {
-        if (Array.isArray(board) && board.length > 0) {
-            hasLetters = board.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
-        }
-    } else {
-        if (Array.isArray(board) && board.length > 0) {
-            hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
-        }
-    }
-
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-
     const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
 
     if (isSubanagrams && board && board.length > 0) {
@@ -5992,6 +5977,21 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
         board = [letters];
     }
+
+    // Handle Empty/Loading State
+    // Check if board has any actual letter content
+    let hasLetters = false;
+    if (is3D) {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
+        }
+    } else {
+        if (Array.isArray(board) && board.length > 0) {
+            hasLetters = board.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
+        }
+    }
+
+    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
 
     // Determine dimensions early
     let rows = 0;
@@ -8059,13 +8059,22 @@ function initWordSubmission() {
 
     const shuffleBtn = document.getElementById('shuffle-board-btn');
     if (shuffleBtn) {
-        shuffleBtn.onclick = (e) => {
-            e.preventDefault();
-            console.log('[play.js] Shuffle button pressed');
+        const handleShuffle = (e) => {
+            if (e) {
+                if (typeof e.preventDefault === 'function' && e.cancelable !== false) {
+                    e.preventDefault();
+                }
+                if (typeof e.stopPropagation === 'function') {
+                    e.stopPropagation();
+                }
+            }
+            console.log('[play.js] Shuffle button triggered');
             if (typeof window.shuffleSubanagramsBoard === 'function') {
-                window.shuffleSubanagramsBoard();
+                window.shuffleSubanagramsBoard(e);
             }
         };
+        shuffleBtn.onclick = handleShuffle;
+        shuffleBtn.ontouchend = handleShuffle;
     }
 
 // DELEGATED GLOBAL LISTENER for Enter-key submission
@@ -9310,17 +9319,41 @@ if (returnBtnEl) {
 
 window.isUserBoardTransposed = false;
 
-window.shuffleSubanagramsBoard = function() {
+window.shuffleSubanagramsBoard = function(e) {
+    if (e) {
+        if (typeof e.preventDefault === 'function' && e.cancelable !== false) {
+            e.preventDefault();
+        }
+        if (typeof e.stopPropagation === 'function') {
+            e.stopPropagation();
+        }
+    }
+    const now = Date.now();
+    if (window._lastShuffleBoardTime && (now - window._lastShuffleBoardTime < 250)) {
+        return;
+    }
+    window._lastShuffleBoardTime = now;
+
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     if (!isSubanagrams) return;
 
     let currentLetters = null;
-    if (window.lastGameState && window.lastGameState.board && Array.isArray(window.lastGameState.board[0])) {
-        currentLetters = [...window.lastGameState.board[0]];
-    } else {
+    if (window.lastGameState && window.lastGameState.board) {
+        const b = window.lastGameState.board;
+        if (Array.isArray(b) && b.length > 0) {
+            if (Array.isArray(b[0])) {
+                currentLetters = b.flat().filter(ch => ch && typeof ch === 'string' && ch.trim() !== '');
+            } else if (typeof b[0] === 'string') {
+                currentLetters = b.filter(ch => ch && typeof ch === 'string' && ch.trim() !== '');
+            }
+        }
+    }
+    if (!currentLetters || currentLetters.length === 0) {
         const cells = document.querySelectorAll('#game-board .board-cell');
         if (cells.length > 0) {
-            currentLetters = Array.from(cells).map(cell => cell.dataset.letter || (cell.textContent || '').trim());
+            currentLetters = Array.from(cells)
+                .map(cell => cell.dataset.letter || (cell.textContent || '').trim())
+                .filter(ch => ch && ch.length > 0);
         }
     }
 
@@ -9341,7 +9374,7 @@ window.shuffleSubanagramsBoard = function() {
     let shuffled = shuffleArray(currentLetters);
     if (hasDistinct && currentLetters.length > 1) {
         let attempts = 0;
-        while (attempts < 10 && shuffled.every((l, idx) => l === currentLetters[idx])) {
+        while (attempts < 15 && shuffled.every((l, idx) => l === currentLetters[idx])) {
             shuffled = shuffleArray(currentLetters);
             attempts++;
         }
@@ -9355,8 +9388,13 @@ window.shuffleSubanagramsBoard = function() {
         window.lastGameState.board = [shuffled];
     }
 
+    if (typeof mouseState !== 'undefined' && mouseState) {
+        mouseState.isDown = false;
+    }
+
     // Force re-render of board
     lastRenderedBoardJSON = null;
+    window.lastRenderedBoardJSON = null;
     renderBoard([shuffled], false, false, window.lastGameState);
 
     // If word-input has a typed/selected word, remap mouseState to new tile coordinates
@@ -9378,15 +9416,30 @@ window.shuffleSubanagramsBoard = function() {
     if (typeof reapplyBoardHighlights === 'function') {
         reapplyBoardHighlights();
     }
+
+    if (typeof BoardAudio !== 'undefined' && BoardAudio.playTileSound) {
+        BoardAudio.playTileSound(1);
+    }
 };
+
+document.addEventListener('touchend', (e) => {
+    const shuffleBtn = e.target ? e.target.closest('#shuffle-board-btn') : null;
+    if (shuffleBtn) {
+        if (e.cancelable !== false) e.preventDefault();
+        e.stopPropagation();
+        console.log('[play.js] Shuffle touchend!');
+        window.shuffleSubanagramsBoard(e);
+        return;
+    }
+}, { passive: false });
 
 document.addEventListener('click', (e) => {
     const shuffleBtn = e.target ? e.target.closest('#shuffle-board-btn') : null;
     if (shuffleBtn) {
-        e.preventDefault();
+        if (e.cancelable !== false) e.preventDefault();
         e.stopPropagation();
         console.log('[play.js] Shuffle clicked!');
-        window.shuffleSubanagramsBoard();
+        window.shuffleSubanagramsBoard(e);
         return;
     }
 

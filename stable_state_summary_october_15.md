@@ -117,6 +117,40 @@ START_OVER_POINT_OCTOBER_15
     - Resets cleanly when a new round starts, on round intermission, or upon room exit.
   - Bumped `play.css` cache buster to `v=1791130460` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
 
+### 12. Subanagrams Mobile Shuffle Touch Event & Locked Clear Button Layout
+- **User Requests**:
+  1. Fix the Shuffle button in multiplayer Subanagrams so it reliably works on mobile touchscreens.
+  2. Put the Clear button back to the right of the Enter button (it had dropped below the textbox and Enter button on mobile).
+  3. Keep the Shuffle button below the textbox and Enter and Clear buttons, stretching horizontally across their combined full width.
+- **Root Cause Analysis**:
+  1. **Clear Button Wrapping**: `.word-input-section` had `flex-wrap: wrap`. When screen width was narrow (~360px–390px), `#word-input` + Enter + Clear exceeded the row width, causing Clear to wrap onto a second line, and Shuffle onto a third line.
+  2. **Mobile Shuffle Not Working**:
+     - `renderBoard` checked `hasLetters` using `row.some(...)` before normalizing 1D Subanagrams arrays (`['A', 'B', ...]`), causing `hasLetters` to evaluate to `false` and aborting board rendering.
+     - Mobile Safari/Chrome touch taps on `#shuffle-board-btn` could have synthetic click events suppressed or delayed if the virtual keyboard was focused or touch gesture intercepted.
+     - Letter extraction only checked 2D `Array.isArray(board[0])`, falling through if `board` was 1D.
+- **Architectural Solution**:
+  - **DOM Structure (`templates/index.html`)**:
+    - Wrapped `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear) inside `<div class="word-input-row" id="word-input-row">`.
+    - Placed `#shuffle-board-btn` directly beneath `.word-input-row`.
+    - Added inline event handlers `onclick` and `ontouchend` on `#shuffle-board-btn`.
+  - **CSS Layout (`static/css/play.css`)**:
+    - **Mobile (`@media (max-width: 992px)`, `body.is-mobile`)**:
+      - `.word-input-section`: `display: flex !important; flex-direction: column !important; width: calc(100% - 24px) !important; max-width: 480px !important; margin: 6px auto 0 auto !important; gap: 6px !important;`
+      - `.word-input-row`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important; gap: 6px !important;`
+      - `#word-input`: `flex: 1 1 auto !important; min-width: 0 !important; height: 42px !important;`
+      - `#submit-word-btn`, `#clear-word-btn`: `flex: 0 0 auto !important; white-space: nowrap !important; height: 42px !important;` — guaranteeing Clear is strictly to the right of Enter and can never wrap!
+      - `#shuffle-board-btn`: `display: inline-flex !important; width: 100% !important; flex: 1 1 100% !important; height: 42px !important; touch-action: manipulation !important; user-select: none !important; -webkit-tap-highlight-color: transparent !important;` — stretches across the full width of the row above it.
+    - **Desktop (`body.is-desktop.is-subanagrams`)**:
+      - `.word-input-section`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; max-width: 680px !important; gap: 8px !important;`
+      - `.word-input-row`: `display: contents !important;` — unwraps children so `#word-input`, Enter, Clear, and Shuffle align seamlessly on a single horizontal row.
+  - **JS Logic & Touch Responsiveness (`static/js/play.js`)**:
+    - Reordered `renderBoard()` to normalize Subanagrams board format before computing `hasLetters`.
+    - In `window.shuffleSubanagramsBoard(e)`, added `e.preventDefault()`, `e.stopPropagation()`, 250ms debouncing, robust extraction for both 1D and 2D board arrays, and reset `mouseState.isDown = false`.
+    - Added acoustic tile audio / micro-haptic sensation on shuffle via `BoardAudio.playTileSound(1)`.
+    - Attached dedicated `touchend` and `click` listeners on `#shuffle-board-btn` and delegator on `document`.
+  - Bumped `play.css` and `play.js` cache busters in `templates/index.html` to `v=1791130470`.
+
+---
 ---
 
 ## Verification & Health Check

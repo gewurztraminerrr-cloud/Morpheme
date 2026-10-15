@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791130310" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130310">
-    <link rel="stylesheet" href="/css/play.css?v=1791130460">
+    <link rel="stylesheet" href="/css/play.css?v=1791130470">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -3640,10 +3640,12 @@
                     <div id="game-board" class="game-board"></div>
                     <div id="word-validation-status" class="validation-status"></div>
                     <div class="word-input-section">
-                        <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
-                        <button id="submit-word-btn">Enter</button>
-                        <button id="clear-word-btn" class="clear-btn timer-btn" type="button">Clear</button>
-                        <button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button">Shuffle</button>
+                        <div class="word-input-row" id="word-input-row">
+                            <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
+                            <button id="submit-word-btn">Enter</button>
+                            <button id="clear-word-btn" class="clear-btn timer-btn" type="button">Clear</button>
+                        </div>
+                        <button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button" onclick="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);" ontouchend="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);">Shuffle</button>
                         <div class="timer-controls-group" id="timer-controls-group">
                             <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
                             <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
@@ -9950,7 +9952,7 @@
     <script src="/js/forum.js?v=1791130138"></script>
     <script src="/js/app.js?v=1791130210"></script>
     <script src="/js/lobby.js?v=1791100010"></script>
-    <script src="/js/play.js?v=1791130450"></script>
+    <script src="/js/play.js?v=1791130470"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>

@@ -1097,6 +1097,16 @@ body.is-subanagrams .spinner-set-label:active {
 }
 
 /* Subanagrams Word Input Controls: Enter and Clear */
+.word-input-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
 body.is-subanagrams .word-input-section {
     display: flex !important;
 }
@@ -1175,19 +1185,30 @@ body.is-subanagrams .timer-display #transpose-board-btn {
 @media (max-width: 600px) {
     body.is-subanagrams .word-input-section {
         gap: 6px !important;
-        flex-wrap: wrap !important;
+        flex-direction: column !important;
+    }
+    body.is-subanagrams .word-input-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        gap: 6px !important;
     }
     body.is-subanagrams .word-input-section #submit-word-btn,
     body.is-subanagrams .word-input-section #clear-word-btn {
         padding: 10px 14px !important;
         font-size: 0.95rem !important;
         flex: 0 0 auto !important;
+        white-space: nowrap !important;
     }
     body.is-subanagrams .word-input-section #shuffle-board-btn {
         width: 100% !important;
         flex: 1 1 100% !important;
         padding: 10px 14px !important;
         font-size: 0.95rem !important;
+        touch-action: manipulation !important;
     }
 }
 
@@ -6953,8 +6974,7 @@ input[type=range]::-moz-range-track {
     body.is-subanagrams .word-input-section,
     body.is-subanagrams.is-mobile .word-input-section {
         display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
+        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 6px !important;
@@ -6964,11 +6984,23 @@ input[type=range]::-moz-range-track {
         box-sizing: border-box !important;
     }
 
+    body.is-subanagrams .word-input-row,
+    body.is-subanagrams.is-mobile .word-input-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+        box-sizing: border-box !important;
+    }
+
     body.is-subanagrams .word-input-section #word-input,
     body.is-subanagrams.is-mobile .word-input-section #word-input {
         display: block !important;
         flex: 1 1 auto !important;
-        min-width: 60px !important;
+        min-width: 0 !important;
         height: 42px !important;
         padding: 8px 10px !important;
         font-size: 1.1rem !important;
@@ -7032,6 +7064,10 @@ input[type=range]::-moz-range-track {
         color: #ffffff !important;
         border: none !important;
         border-radius: 8px !important;
+        touch-action: manipulation !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
     body.is-subanagrams .word-input-section .timer-controls-group,
@@ -12643,7 +12679,13 @@ body.is-desktop .word-input-section #submit-word-btn {
 /* Multiplayer Subanagrams: Enter, Clear, and Shuffle buttons on desktop and widen container */
 body.is-desktop.is-subanagrams .word-input-section {
     max-width: 680px !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
+    gap: 8px !important;
+}
+
+body.is-desktop .word-input-row {
+    display: contents !important;
 }
 
 body.is-desktop.is-subanagrams .word-input-section #shuffle-board-btn {
