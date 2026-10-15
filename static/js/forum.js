@@ -3201,8 +3201,11 @@ const Forum = {
         const avatarInitial = (author[0] || 'U').toUpperCase();
         const flagHtml = postData.country_flag ? (window.getFlagHtml ? window.getFlagHtml(postData.country_flag) : postData.country_flag) : '';
         const dateStr = postData.timestamp ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(postData.timestamp, true) : postData.timestamp) : '';
-        const userCount = this.getResponseUserCount(postNumber);
-        const userLabel = `${userCount} ${userCount === 1 ? 'user' : 'users'} responded`;
+        const resps = (this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [];
+        const respCount = resps.length;
+        const respBadgeHtml = respCount > 0
+            ? `<span class="reply-preview-resp-count" title="${respCount} ${respCount === 1 ? 'response' : 'responses'} to #${postNumber}">💬 ${respCount}</span>`
+            : '';
 
         const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
         const formattedContent = this.escapeHtml(rawContent).replace(/\n/g, '<br>');
@@ -3234,7 +3237,7 @@ const Forum = {
                 </div>
                 <div class="reply-preview-meta">
                     <span class="reply-preview-badge">#${postNumber}</span>
-                    <span class="reply-preview-resp-count">💬 ${userLabel}</span>
+                    ${respBadgeHtml}
                 </div>
             </div>
             <div class="reply-preview-body">
@@ -3320,8 +3323,11 @@ const Forum = {
         const avatarInitial = (author[0] || 'U').toUpperCase();
         const flagHtml = postData.country_flag ? (window.getFlagHtml ? window.getFlagHtml(postData.country_flag) : postData.country_flag) : '';
         const dateStr = postData.timestamp ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(postData.timestamp, true) : postData.timestamp) : '';
-        const userCount = this.getResponseUserCount(postNumber);
-        const userLabel = `${userCount} ${userCount === 1 ? 'user' : 'users'} responded`;
+        const resps = (this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [];
+        const respCount = resps.length;
+        const respBadgeHtml = respCount > 0
+            ? `<span class="reply-preview-resp-count" role="button" tabindex="0" title="View ${respCount} ${respCount === 1 ? 'response' : 'responses'} to #${postNumber}">💬 ${respCount}</span>`
+            : '';
 
         const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
         const formattedContent = this.escapeHtml(rawContent).replace(/\n/g, '<br>');
@@ -3357,7 +3363,7 @@ const Forum = {
                     <div class="reply-mobile-header-right">
                         <div class="reply-mobile-badges">
                             <span class="reply-preview-badge">#${postNumber}</span>
-                            <span class="reply-preview-resp-count">💬 ${userLabel}</span>
+                            ${respBadgeHtml}
                         </div>
                         <button type="button" class="reply-mobile-close-btn" aria-label="Close">&times;</button>
                     </div>
@@ -3382,6 +3388,16 @@ const Forum = {
         });
         const closeBtn = overlay.querySelector('.reply-mobile-close-btn');
         if (closeBtn) closeBtn.addEventListener('click', close);
+
+        const respCountEl = overlay.querySelector('.reply-preview-resp-count');
+        if (respCountEl) {
+            respCountEl.style.cursor = 'pointer';
+            respCountEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                close();
+                this.showResponsesPopup(postNumber);
+            });
+        }
 
         const takeMeThereBtn = overlay.querySelector('#reply-mobile-take-me-there');
         if (takeMeThereBtn) {

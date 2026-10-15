@@ -136,6 +136,22 @@ START_OVER_POINT_OCTOBER_15
     - Highlights the mobile device rule: **users must individually tap each letter tile** to form words, submit via Enter, reset via Clear, and utilize the full-width blue Shuffle button.
     - Clarifies the direct entry `Start [N]` button action into live synchronized multiplayer rounds.
 
+### 13. Subanagrams Warm-Up Intention & Forum Mobile Original Post Response Badge
+- **User Requests**:
+  1. *If a mobile device selects a responding post number to see the original post, reword "2 users responded" to "[speech bubble icon] [number of responses]" in the original message in the same way as you have done from the viewpoint of being in the thread.*
+  2. *In all places where you explain multiplayer subanagram ("WHAT AM I LOOKING AT", and FAQ), also include that the intention of it is to warm up for rated play.*
+- **Subanagrams Warm-Up Intention (`templates/index.html`)**:
+  - In `#faq-strategies`, noted that Subanagrams' intention is to serve as an ideal warm-up for rated play, sharpening anagram agility, pattern recognition, and vocabulary breadth through quick permutations without affecting your rating.
+  - In `#faq-subanagrams`, stated that the primary intention of multiplayer Subanagrams is to warm up for rated play, providing a focused, rapid arena to exercise vocabulary recall and anagramming speed before jumping into competitive ladder matches. Added a dedicated rule bullet for "Warm-Up for Rated Play".
+  - In the Lobby Guide Modal (`#lobby-guide-modal`), updated the Multiplayer Subanagrams card description and availability note to highlight that its specific intention is serving as a fast-paced warm-up for rated play.
+- **Forum Mobile Original Post Response Badge (`static/js/forum.js`)**:
+  - In `showReplyMobileModal(postNumber)`:
+    - Replaced the text-based user count label (`${userCount} users responded`) with the thread-consistent badge: `💬 ${respCount}` where `respCount = resps.length`.
+    - If `respCount > 0`, renders `<span class="reply-preview-resp-count" role="button" tabindex="0">💬 ${respCount}</span>`. If 0, omits the badge, matching the thread view.
+    - Added an interactive click listener on the preview response badge so tapping it immediately opens the responses list modal (`showResponsesPopup(postNumber)`).
+    - Updated desktop hover preview `showReplyHoverPreview` to use the same `💬 ${respCount}` badge.
+  - Bumped `forum.js` cache buster in `templates/index.html` to `v=1791130520`.
+
 ---
 
 ## Verification & Health Check
