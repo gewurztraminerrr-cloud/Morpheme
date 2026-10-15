@@ -8122,21 +8122,25 @@ def is_plural_or_inflection(w1, w2):
 
 def check_and_add_mp(mp_groups, source_len, target_len, mp, word):
     """Applies filtering logic for Morpheme Procedure combinations."""
-    # User rule: do not include 4-letter words in results
-    if target_len == 4:
-        return
+    # mp_groups is a dict of sets
     added = False
     
     if source_len == 3:
         if target_len >= 3: added = True
     elif source_len == 4:
-        if target_len >= 5: added = True
+        if target_len >= 4: added = True
     elif source_len == 5:
-        if target_len >= 5 and mp <= 3:
-            added = True
+        if target_len >= 4 and mp <= 3:
+            if mp >= 3:
+                if target_len >= 5: added = True
+            else:
+                added = True
     elif source_len == 6:
-        if target_len >= 5 and mp <= 3:
-            added = True
+        if target_len >= 4 and mp <= 3:
+            if mp >= 3:
+                if target_len >= 5: added = True
+            else:
+                added = True
     elif source_len == 7:
         if target_len >= 5 and mp <= 4:
             if mp >= 4:
@@ -8208,10 +8212,12 @@ def get_combo_payload_for_word(search_term, dict_name):
     dict_lens_int = dict_lens.astype(np.int16)
     
     max_mp = 3
-    if source_len >= 5:
+    if source_len >= 8:
         mp_len_mask = (dict_lens_int >= 5)
+    elif source_len >= 5:
+        mp_len_mask = (dict_lens_int >= 4)
     else:
-        mp_len_mask = (dict_lens_int >= 3) & (dict_lens_int != 4)
+        mp_len_mask = (dict_lens_int >= 3)
 
     candidates_mp = np.where(
         passed_mask & 
@@ -8238,16 +8244,14 @@ def get_combo_payload_for_word(search_term, dict_name):
     mp_groups = {i: set() for i in range(max_mp + 1)}
     lic_groups = {}
     
-    min_sub_len = 5 if source_len >= 5 else 3
+    min_sub_len = 4 if source_len >= 5 else 3
     for l in range(min_sub_len, source_len + 1):
-        if l == 4:
-            continue
         for start in range(source_len - l + 1):
             sub1 = search_term[start:start+l]
-            if len(sub1) != 4 and sub1 != search_term and sub1 in dict_data['set'] and not is_plural_or_inflection(search_term, sub1):
+            if sub1 != search_term and sub1 in dict_data['set'] and not is_plural_or_inflection(search_term, sub1):
                 mp_groups[0].add(sub1)
             sub2 = search_term_rev[start:start+l]
-            if len(sub2) != 4 and sub2 != search_term and sub2 in dict_data['set'] and not is_plural_or_inflection(search_term, sub2):
+            if sub2 != search_term and sub2 in dict_data['set'] and not is_plural_or_inflection(search_term, sub2):
                 mp_groups[0].add(sub2)
     
     c_engine = _init_c_morpheme_metric()
