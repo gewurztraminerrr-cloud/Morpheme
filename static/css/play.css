@@ -14316,3 +14316,21 @@ body.is-mobile .page *::-webkit-scrollbar {
     flex: 0 0 auto !important;
     overflow: visible !important;
 }
+
+/* Desktop and Laptop Full-Width Stretch for MP Word Explorer */
+@media (min-width: 641px) {
+    #combo-explorer-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .combo-explorer-grid {
+        width: 100% !important;
+        grid-template-columns: minmax(220px, 320px) 1fr !important;
+    }
+    #combo-explorer-input-card,
+    #combo-explorer-response-card {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
