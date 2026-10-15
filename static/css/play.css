@@ -14240,6 +14240,21 @@ body.is-mobile .page *::-webkit-scrollbar {
 @media (max-width: 640px) {
     .combo-explorer-grid {
         grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .combo-explorer-controls {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+    .combo-explorer-order-group {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .combo-explorer-card {
+        height: 250px !important;
     }
 }
 
@@ -14291,4 +14306,13 @@ body.is-mobile .page *::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
+}
+
+/* Explicit override to prevent .result-section min-height from stretching MP Word Explorer on desktop/laptop */
+#tool-combo #combo-explorer-section,
+.combo-results-container #combo-explorer-section {
+    min-height: 0 !important;
+    height: auto !important;
+    flex: 0 0 auto !important;
+    overflow: visible !important;
 }

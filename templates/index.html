@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791130490" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791130081">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130490">
-    <link rel="stylesheet" href="/css/play.css?v=1791130500">
+    <link rel="stylesheet" href="/css/play.css?v=1791134000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4766,15 +4766,15 @@
                                 </div>
 
                                 <!-- MP Explorer Section: Filtered by Word Length & MP Value -->
-                                <div class="result-section" id="combo-explorer-section" style="margin-top: 24px; margin-bottom: 24px; padding: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                                <div class="result-section" id="combo-explorer-section" style="margin-top: 14px; margin-bottom: 14px; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+                                    <div class="combo-explorer-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
                                         <div>
-                                            <h3 style="color: #60a5fa; margin: 0 0 4px 0; font-size: 1.2rem;">MP Word Explorer</h3>
-                                            <div style="font-size: 0.85rem; color: #94a3b8;">
+                                            <h3 style="color: #60a5fa; margin: 0 0 2px 0; font-size: 1.15rem;">MP Word Explorer</h3>
+                                            <div style="font-size: 0.8rem; color: #94a3b8;">
                                                 Explore words with non-plural and non-inflection MP connections.
                                             </div>
                                         </div>
-                                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                        <div class="combo-explorer-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                             <!-- Dictionary Dropdown -->
                                             <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
                                                 <span>Dictionary:</span>
@@ -4815,21 +4815,22 @@
                                                     <option value="3">3 MP</option>
                                                 </select>
                                             </label>
-                                            <!-- Random Button -->
-                                            <button id="combo-explorer-random-btn" type="button" class="table-scroll-btn" style="padding: 5px 14px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in random order rather than alphabetical order">
-                                                Random
-                                            </button>
-                                            <!-- A-Z Button -->
-                                            <button id="combo-explorer-az-btn" type="button" class="table-scroll-btn active" style="padding: 5px 14px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in alphabetical order">
-                                                A–Z
-                                            </button>
+                                            <!-- Ordering Buttons (Always paired together) -->
+                                            <div class="combo-explorer-order-group" style="display: inline-flex; gap: 6px; align-items: center;">
+                                                <button id="combo-explorer-random-btn" type="button" class="table-scroll-btn" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in random order rather than alphabetical order">
+                                                    Random
+                                                </button>
+                                                <button id="combo-explorer-az-btn" type="button" class="table-scroll-btn active" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in alphabetical order">
+                                                    A–Z
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Dual Table Layout -->
-                                    <div class="combo-explorer-grid" style="display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 14px; margin-top: 12px;">
+                                    <div class="combo-explorer-grid" style="display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 12px; margin-top: 8px;">
                                         <!-- Input Words Table -->
-                                        <div id="combo-explorer-input-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px; position: relative;">
+                                        <div id="combo-explorer-input-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 280px; position: relative;">
                                             <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.85rem; color: #93c5fd; display: flex; justify-content: space-between; align-items: center;">
                                                 <span id="combo-explorer-input-title">Input Words</span>
                                                 <span id="combo-explorer-input-count" style="font-size: 0.75rem; opacity: 0.8; background: rgba(59, 130, 246, 0.2); padding: 2px 6px; border-radius: 4px;">0</span>
@@ -4846,7 +4847,7 @@
                                         </div>
 
                                         <!-- Response Table -->
-                                        <div id="combo-explorer-response-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 360px; position: relative;">
+                                        <div id="combo-explorer-response-card" class="combo-explorer-card" style="display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; overflow: hidden; height: 280px; position: relative;">
                                             <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.85rem; color: #34d399; display: flex; justify-content: space-between; align-items: center;">
                                                 <span id="combo-explorer-response-title">MP Connections</span>
                                                 <span id="combo-explorer-response-count" style="font-size: 0.75rem; opacity: 0.8; background: rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px;">0</span>
