@@ -789,9 +789,57 @@ function setupComboChecker() {
         searchBtn.addEventListener('click', runComboSearch);
     }
 
+    function _handleComboInputFocus(el) {
+        const pane = document.getElementById('tool-combo');
+        if (pane) pane.classList.add('keyboard-open');
+        const scrollBox = document.getElementById('combo-scroll-container');
+        if (scrollBox) scrollBox.classList.add('keyboard-open');
+        setTimeout(() => {
+            if (typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 120);
+        setTimeout(() => {
+            if (document.activeElement === el && typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 350);
+    }
+
+    function _handleComboInputBlur() {
+        setTimeout(() => {
+            const active = document.activeElement;
+            if (!active || (active.id !== 'combo-input' && active.id !== 'combo-explorer-filter')) {
+                const pane = document.getElementById('tool-combo');
+                if (pane) pane.classList.remove('keyboard-open');
+                const scrollBox = document.getElementById('combo-scroll-container');
+                if (scrollBox) scrollBox.classList.remove('keyboard-open');
+            }
+        }, 120);
+    }
+
+    window._handleComboInputFocus = _handleComboInputFocus;
+    window._handleComboInputBlur = _handleComboInputBlur;
+
     if (input) {
+        input.addEventListener('focus', () => _handleComboInputFocus(input));
+        input.addEventListener('blur', _handleComboInputBlur);
+        input.addEventListener('input', () => {
+            if (window.innerWidth <= 900) {
+                input.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+            }
+        });
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
+        });
+    }
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const active = document.activeElement;
+            if (active && (active.id === 'combo-input' || active.id === 'combo-explorer-filter')) {
+                active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
     }
 
@@ -874,11 +922,32 @@ function _comboExplorerShuffle(arr) {
     return a;
 }
 
+function _sortMatchesByLength(matches, isRandom) {
+    if (!matches || matches.length === 0) return [];
+    if (!isRandom) {
+        return [...matches].sort((a, b) => {
+            if (b.length !== a.length) return b.length - a.length;
+            return a.localeCompare(b);
+        });
+    }
+    const byLen = new Map();
+    matches.forEach(m => {
+        if (!byLen.has(m.length)) byLen.set(m.length, []);
+        byLen.get(m.length).push(m);
+    });
+    const sortedLens = Array.from(byLen.keys()).sort((a, b) => b - a);
+    const result = [];
+    sortedLens.forEach(l => {
+        result.push(..._comboExplorerShuffle(byLen.get(l)));
+    });
+    return result;
+}
+
 function setupComboExplorer() {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
     const randomBtn = document.getElementById('combo-explorer-random-btn');
-    const azBtn = document.getElementById('combo-explorer-az-btn');
+    const azBtn = document.getElementById('combo-explorer-az-btn') || document.getElementById('combo-explorer-sort-btn');
     const expDictSelect = document.getElementById('combo-explorer-dict');
     const filterInput = document.getElementById('combo-explorer-filter');
     const inputList = document.getElementById('combo-explorer-input-list');
@@ -915,7 +984,14 @@ function setupComboExplorer() {
     }
 
     if (filterInput) {
+        if (typeof window._handleComboInputFocus === 'function') {
+            filterInput.addEventListener('focus', () => window._handleComboInputFocus(filterInput));
+            filterInput.addEventListener('blur', window._handleComboInputBlur);
+        }
         filterInput.addEventListener('input', () => {
+            if (window.innerWidth <= 900) {
+                filterInput.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+            }
             applyComboExplorerFilter();
         });
     }
@@ -968,17 +1044,11 @@ function applyComboExplorerOrdering() {
 
     if (_comboExplorerIsRandom) {
         _comboExplorerDisplayWords = _comboExplorerShuffle(base);
-        if (_comboExplorerMatches && _comboExplorerMatches.length > 0) {
-            _comboExplorerDisplayMatches = _comboExplorerShuffle(_comboExplorerMatches);
-        }
     } else {
         _comboExplorerDisplayWords = [...base].sort();
-        if (_comboExplorerMatches && _comboExplorerMatches.length > 0) {
-            _comboExplorerDisplayMatches = [..._comboExplorerMatches].sort((a, b) => {
-                if (b.length !== a.length) return b.length - a.length;
-                return a.localeCompare(b);
-            });
-        }
+    }
+    if (_comboExplorerMatches && _comboExplorerMatches.length > 0) {
+        _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom);
     }
 
     renderComboExplorerInputWords(true);
@@ -1140,14 +1210,7 @@ window.selectComboExplorerWord = async function(word) {
     }
 
     _comboExplorerMatches = (matches || []).filter(m => m.length !== 4);
-    if (_comboExplorerIsRandom) {
-        _comboExplorerDisplayMatches = _comboExplorerShuffle(_comboExplorerMatches);
-    } else {
-        _comboExplorerDisplayMatches = [..._comboExplorerMatches].sort((a, b) => {
-            if (b.length !== a.length) return b.length - a.length;
-            return a.localeCompare(b);
-        });
-    }
+    _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom);
 
     renderComboExplorerMatches();
 };

@@ -8429,7 +8429,18 @@ def tools_combo_explorer():
             matches_list.sort(key=lambda w: (-len(w), w))
         else:
             import random
-            random.shuffle(matches_list)
+            from itertools import groupby
+            # Group by length descending, and shuffle words within the same length group
+            by_len = {}
+            for m in matches_list:
+                by_len.setdefault(len(m), []).append(m)
+            sorted_lens = sorted(by_len.keys(), reverse=True)
+            new_matches = []
+            for l in sorted_lens:
+                sub = by_len[l]
+                random.shuffle(sub)
+                new_matches.extend(sub)
+            matches_list = new_matches
         return jsonify({
             'word': selected_word,
             'length': len(selected_word),

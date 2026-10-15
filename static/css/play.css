@@ -3819,7 +3819,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     padding: 10px 15px 5px;
     font-size: 1rem;
     color: var(--text-primary);
-    background: rgba(var(--text-primary-rgb), 0.05);
+    background: transparent !important;
 }
 
 .chart-desc {
@@ -14369,6 +14369,40 @@ body.is-mobile .page *::-webkit-scrollbar {
     #combo-explorer-response-card {
         width: 100% !important;
         box-sizing: border-box !important;
+    }
+}
+
+/* Prevent Fullscreen Root Backdrop Blackout on Keyboard Launch */
+html,
+html:fullscreen,
+html:-webkit-full-screen,
+body,
+::backdrop,
+:fullscreen::backdrop {
+    background: var(--bg-primary, #0f172a) !important;
+    background-color: var(--bg-primary, #0f172a) !important;
+}
+
+/* Remove Light Grey Rectangular Background from all Combo Checker Section Titles on All Platforms */
+#tool-combo .result-section h3,
+.combo-results-container .result-section h3,
+#combo-explorer-section h3 {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Mobile Textbox Visibility and Auto-Zoom/Blackout Prevention */
+@media (max-width: 900px) {
+    #combo-input,
+    #combo-input:focus,
+    #combo-explorer-filter,
+    #combo-explorer-filter:focus {
+        font-size: 16px !important; /* Prevents iOS Safari & Android Chrome auto-zoom and screen flash */
+    }
+
+    #tool-combo.keyboard-open #combo-scroll-container,
+    .combo-scroll-container.keyboard-open {
+        padding-bottom: 350px !important;
     }
 }
 
