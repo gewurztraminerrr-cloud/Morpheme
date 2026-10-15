@@ -908,12 +908,12 @@ function setupComboExplorer() {
     }
 
     if (inputList) {
-        inputList.addEventListener('scroll', () => {
-            if (_comboExplorerRenderedCount < _comboExplorerDisplayWords.length &&
-                inputList.scrollTop + inputList.clientHeight >= inputList.scrollHeight - 250) {
-                renderComboExplorerInputWords(false);
+        inputList.addEventListener('click', (e) => {
+            const item = e.target.closest('.combo-explorer-word-item');
+            if (item && item.dataset.word) {
+                window.selectComboExplorerWord(item.dataset.word);
             }
-        }, { passive: true });
+        });
     }
 
     loadComboExplorerWords(false);
@@ -1043,12 +1043,6 @@ function renderComboExplorerInputWords(reset = true) {
     const countBadge = document.getElementById('combo-explorer-input-count');
     if (!listEl) return;
 
-    if (reset) {
-        listEl.innerHTML = '';
-        _comboExplorerRenderedCount = 0;
-        listEl.scrollTop = 0;
-    }
-
     if (countBadge) {
         countBadge.textContent = _comboExplorerDisplayWords.length.toLocaleString();
     }
@@ -1058,20 +1052,17 @@ function renderComboExplorerInputWords(reset = true) {
         return;
     }
 
-    const CHUNK_SIZE = 150;
-    const slice = _comboExplorerDisplayWords.slice(_comboExplorerRenderedCount, _comboExplorerRenderedCount + CHUNK_SIZE);
-    _comboExplorerRenderedCount += slice.length;
-
-    const frag = document.createDocumentFragment();
-    slice.forEach(w => {
-        const item = document.createElement('div');
-        item.className = 'combo-explorer-word-item' + (w === _comboExplorerSelectedWord ? ' selected' : '');
-        item.dataset.word = w;
-        item.textContent = w;
-        item.onclick = () => window.selectComboExplorerWord(w);
-        frag.appendChild(item);
-    });
-    listEl.appendChild(frag);
+    let html = '';
+    const sel = _comboExplorerSelectedWord;
+    const len = _comboExplorerDisplayWords.length;
+    for (let i = 0; i < len; i++) {
+        const w = _comboExplorerDisplayWords[i];
+        html += `<div class="combo-explorer-word-item${w === sel ? ' selected' : ''}" data-word="${w}">${w}</div>`;
+    }
+    listEl.innerHTML = html;
+    if (reset) {
+        listEl.scrollTop = 0;
+    }
 }
 
 window.selectComboExplorerWord = async function(word) {
@@ -1080,10 +1071,9 @@ window.selectComboExplorerWord = async function(word) {
 
     const listEl = document.getElementById('combo-explorer-input-list');
     if (listEl) {
-        listEl.querySelectorAll('.combo-explorer-word-item').forEach(el => {
-            if (el.dataset.word === word) el.classList.add('selected');
-            else el.classList.remove('selected');
-        });
+        listEl.querySelectorAll('.combo-explorer-word-item.selected').forEach(el => el.classList.remove('selected'));
+        const newSelected = listEl.querySelector(`.combo-explorer-word-item[data-word="${word}"]`);
+        if (newSelected) newSelected.classList.add('selected');
     }
 
     const lengthSelect = document.getElementById('combo-explorer-length');
