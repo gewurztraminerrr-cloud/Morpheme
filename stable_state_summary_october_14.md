@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-51212e036f01da5e83ec9044bb77519ff8e734ad
+a4745065e94f1ff5b23d9a33bb58be0c3d9a3044
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `51212e03`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `a4745065`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -150,6 +150,11 @@ START_OVER_POINT_OCTOBER_14
     - Desktop reply hover preview cards (`.reply-preview-avatar`)
     - Mobile reply preview dialogs (`.reply-preview-avatar`)
   - Added `.has-avatar` styling in `static/css/forum.css` ensuring crisp cropping and alignment with zero layout shift.
+
+### 16. Forum: Thread Cards Like & Dislike Info Positioned at Bottom Right Corner
+- **Layout Enhancement**: In the Forum category thread list (`renderPosts`), like and dislike counts and icons (`👍 [N]` and `👎 [N]`) are now grouped into `.post-stats-right` with `margin-left: auto;`, positioning them firmly at the bottom right corner of each thread card.
+- **Left Meta Preserved**: Thread comments count (`💬 [N] comments`) and attachment indicator (`🖼️ Includes images`) remain neatly aligned on the bottom left in `.post-stats-left`.
+- **Thread Detail Integrity**: Strictly isolated to thread cards in category/search listings; nothing inside the thread detail view (`renderPostDetail` / thread comments / discussion reaction buttons) was touched or altered.
 
 ---
 
