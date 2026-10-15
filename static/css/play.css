@@ -11369,8 +11369,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         }
         #page-tools,
         #page-mods,
-        #page-settings,
-        #page-forums {
+        #page-settings {
             height: calc(100dvh - 120px) !important;
         }
     }
@@ -11640,8 +11639,7 @@ body.is-mobile #page-forums * {
 }
 body.is-mobile #page-tools,
 body.is-mobile #page-mods,
-body.is-mobile #page-settings,
-body.is-mobile #page-forums {
+body.is-mobile #page-settings {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -11655,15 +11653,13 @@ body.is-mobile #page-forums {
 @supports (height: 100dvh) {
     body.is-mobile #page-tools,
     body.is-mobile #page-mods,
-    body.is-mobile #page-settings,
-    body.is-mobile #page-forums {
+    body.is-mobile #page-settings {
         height: calc(100dvh - 120px) !important;
     }
 }
 body.is-mobile #page-tools.active,
 body.is-mobile #page-mods.active,
-body.is-mobile #page-settings.active,
-body.is-mobile #page-forums.active {
+body.is-mobile #page-settings.active {
     display: flex !important;
 }
 body.is-mobile #page-tools .tools-split-layout,

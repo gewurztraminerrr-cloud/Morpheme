@@ -1234,7 +1234,7 @@ body {
 
 @media (min-width: 901px) {
     /* Keep the top menu (and MORPHEME MORE-FEEM) fixed in position when scrolling down after selecting a tab */
-    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-bar {
+    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)):not(.is-mobile) .top-menu-bar {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -1244,7 +1244,7 @@ body {
         background: var(--bg-primary) !important;
     }
 
-    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+    body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)):not(.is-mobile) .top-menu-spacer {
         display: block !important;
         height: var(--top-menu-height, 58px) !important;
         width: 100% !important;
@@ -10301,7 +10301,7 @@ body.is-tournament-round #show-everyone-btn {
         padding: 5px 11px !important;
         font-size: 0.78rem !important;
     }
-    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
         height: var(--top-menu-height, 62px) !important;
     }
 }
@@ -10355,7 +10355,7 @@ body.is-tournament-round #show-everyone-btn {
         padding: 4px 9px !important;
         font-size: 0.75rem !important;
     }
-    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
         height: var(--top-menu-height, 50px) !important;
     }
 }
@@ -10408,7 +10408,7 @@ body.is-tournament-round #show-everyone-btn {
         padding: 4px 7px !important;
         font-size: 0.72rem !important;
     }
-    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+    html.is-firefox-desktop body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
         height: var(--top-menu-height, 46px) !important;
     }
 }
@@ -10463,7 +10463,7 @@ body.is-tournament-round #show-everyone-btn {
             padding: 5px 11px !important;
             font-size: 0.78rem !important;
         }
-        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
             height: var(--top-menu-height, 62px) !important;
         }
     }
@@ -10516,7 +10516,7 @@ body.is-tournament-round #show-everyone-btn {
             padding: 4px 9px !important;
             font-size: 0.75rem !important;
         }
-        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
             height: var(--top-menu-height, 50px) !important;
         }
     }
@@ -10568,7 +10568,7 @@ body.is-tournament-round #show-everyone-btn {
             padding: 4px 7px !important;
             font-size: 0.72rem !important;
         }
-        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-spacer {
+        body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)):not(.forums-active):not(:has(#page-forums.active)) .top-menu-spacer {
             height: var(--top-menu-height, 46px) !important;
         }
     }
