@@ -110,7 +110,7 @@
 .forum-nav-list {
     flex: 1;
     overflow-y: auto;
-    padding: 6px 0;
+    padding: 0;
 }
 
 .forum-cat-item {
@@ -246,6 +246,7 @@
 
 .header-titles h2 {
     font-size: 1.8rem;
+    margin-top: 5px;
     margin-bottom: 5px;
     color: var(--text-primary);
 }
@@ -2302,6 +2303,7 @@ body.theme-white #page-forums .forum-bottom-bar {
         flex: 1 1 0px !important;
         min-height: 0 !important;
         overflow-y: auto !important;
+        padding: 0 !important;
         -webkit-overflow-scrolling: touch !important;
     }
     .forum-sidebar-header h3 {
@@ -2405,6 +2407,7 @@ body.theme-white #page-forums .forum-bottom-bar {
     }
     #forum-category-title {
         font-size: 1.4rem !important;
+        margin-top: 4px !important;
         margin-bottom: 4px !important;
     }
     #forum-category-desc {
