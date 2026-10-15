@@ -148,7 +148,10 @@ START_OVER_POINT_OCTOBER_15
     - In `window.shuffleSubanagramsBoard(e)`, added `e.preventDefault()`, `e.stopPropagation()`, 250ms debouncing, robust extraction for both 1D and 2D board arrays, and reset `mouseState.isDown = false`.
     - Added acoustic tile audio / micro-haptic sensation on shuffle via `BoardAudio.playTileSound(1)`.
     - Attached dedicated `touchend` and `click` listeners on `#shuffle-board-btn` and delegator on `document`.
-  - Bumped `play.css` and `play.js` cache busters in `templates/index.html` to `v=1791130470`.
+  - Bumped `play.css` cache buster to `v=1791130480` and `play.js` cache buster to `v=1791130470` in `templates/index.html`.
+- **Vertical Length (Height) Synchronization on Mobile**:
+  - Enforced exact vertical length matching across `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) on mobile devices (`height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 42px !important; box-sizing: border-box !important; padding: 0 14px !important;`).
+  - Scoped desktop 44px sizing strictly to `body.is-desktop.is-subanagrams`, preventing desktop heights from overriding mobile buttons.
 
 ---
 ---
