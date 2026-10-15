@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-bd1fc3cf36f2ecdd0fb498c09a807d8d2128e4fb
+91934dd61bcfe23315a0cbb0b5d92df972412705
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `bd1fc3cf`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `91934dd6`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -137,6 +137,32 @@ START_OVER_POINT_OCTOBER_14
 - **New AW Words & Added Words Restoration**:
   - Added `ANGELITE` and `ANGELITES` to `added_words.txt`, `added_words_duplicate.txt`, and `added_words_dates.txt` with their submission date (`10/10/2026`).
   - Restored them to the top of **New AW Words** in the Tools tab, appearing above previously added words from `30/09/2026`.
+
+### 15. Forum: User Profile Avatar Image Thumbnail Display
+- **Issue Resolved**: When users (such as `jeffles`) with an uploaded/selected profile image posted threads or comments in the Forum, the circular avatar space displayed only a fallback text initial (e.g. "J") instead of their chosen profile picture, even though the thumbnail rendered correctly in the mini-profile.
+- **Implementation**:
+  - Implemented `buildAvatarHtml(username, avatarUrl, className)` in `static/js/forum.js` to inspect `avatar_url`.
+  - When `avatar_url` is present, renders a circular thumbnail with `background-image: url(...)`, `background-size: cover`, `background-position: center`, and `flex-shrink: 0`, leaving the inner text empty.
+  - When `avatar_url` is absent, cleanly falls back to the uppercase initial letter (e.g., `"J"`).
+  - Integrated across:
+    - Thread opening post header (`.author-avatar`)
+    - Comment replies list (`.comment-avatar`)
+    - Desktop reply hover preview cards (`.reply-preview-avatar`)
+    - Mobile reply preview dialogs (`.reply-preview-avatar`)
+  - Added `.has-avatar` styling in `static/css/forum.css` ensuring crisp cropping and alignment with zero layout shift.
+
+### 16. Forum: Thread Cards Like & Dislike Info Positioned at Bottom Right Corner
+- **Layout Enhancement**: In the Forum category thread list (`renderPosts`), like and dislike counts and icons (`👍 [N]` and `👎 [N]`) are now grouped into `.post-stats-right` with `margin-left: auto;`, positioning them firmly at the bottom right corner of each thread card.
+- **Left Meta Preserved**: Thread comments count (`💬 [N] comments`) and attachment indicator (`🖼️ Includes images`) remain neatly aligned on the bottom left in `.post-stats-left`.
+- **Thread Detail Integrity**: Strictly isolated to thread cards in category/search listings; nothing inside the thread detail view (`renderPostDetail` / thread comments / discussion reaction buttons) was touched or altered.
+
+### 17. Forum: Thread Discussion Header — Refresh Button on Same Row as Bookmark & Scroll to Bottom on Mobile
+- **Issue**: On mobile viewports, the comments header (`.comments-header`) wraps into two lines. The Refresh button (`🔄`) previously sat on line 1 beside "Discussion" and the comment count badge, while "Bookmark" and "Scroll to Bottom" occupied line 2.
+- **Enhancement**:
+  - Moved `#forum-refresh-comments-btn` into `.comments-header-actions-box` in `templates/index.html`.
+  - On mobile (`@media (max-width: 820px)` and `body.is-mobile`), `.comments-header-actions-box` forms a single, unified row with `[ 🔄 ]` (`flex: 0 0 32px`), `[ 🔖 Bookmark ]` (`flex: 1 1 0`), and `[ ⬇ Scroll to Bottom ]` (`flex: 1 1 0`).
+  - Matches the 27px height and border-radius across all three controls for a balanced, space-efficient mobile header with no tap-target truncation or text wrapping.
+  - On desktop (`min-width: 821px`), preserves seamless single-line horizontal alignment alongside "Discussion" and comment count.
 
 ---
 
