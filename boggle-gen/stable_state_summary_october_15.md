@@ -117,6 +117,25 @@ START_OVER_POINT_OCTOBER_15
     - Resets cleanly when a new round starts, on round intermission, or upon room exit.
   - Bumped `play.css` cache buster to `v=1791130460` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
 
+### 12. Subanagrams Concept & Mobile Tile Tapping Documentation (FAQ & Lobby Guide Modal)
+- **User Request**:
+  - In FAQ, state where applicable that for mobile devices, users must individually tap on each letter to form words in multiplayer Subanagrams.
+  - Explain the concept of Subanagrams in the same place.
+  - Explain multiplayer Subanagrams in the "WHAT AM I LOOKING AT" popup that explains the lobby features.
+- **FAQ Updates (`templates/index.html`)**:
+  - In `#faq-strategies`, expanded the list of game arenas from three to four by adding **Subanagrams** with its tactical focus on anagram agility, rack permutation, and vocabulary breadth under a 2-minute timer.
+  - Added a dedicated FAQ question `#faq-subanagrams`: *"What is Subanagrams, what is the concept behind it, and how do I enter words on mobile devices?"*:
+    - Clearly defined the concept: dealing a single horizontal row of 7, 8, or 9 letters where players race to find all valid dictionary sub-words (subanagrams) ranging from 3 letters up to the full rack length.
+    - Highlighted core mechanics: non-adjacent positional freedom (letters can be selected from anywhere on the rack in any order), tile frequency limit (each tile can only be used as many times as dealt), and real-time multiplayer competition on the identical rack.
+    - Detailed mobile input: on mobile devices, **users must individually tap each letter tile** to spell out words in the `#word-input` textbox (swiping across tiles is not applicable), followed by tapping the emerald **Enter** button to submit, red **Clear** to reset, and using the blue **Shuffle** button directly beneath to permute the rack.
+    - Detailed desktop input: physical keyboard typing (<kbd>Enter</kbd> to submit) or mouse clicking.
+  - In `#faq-icons-flags`, updated the mobile device indicator to reflect both swiping on 2D grid boards and individually tapping letter tiles in Subanagrams.
+- **Lobby Guide Modal ("WHAT AM I LOOKING AT", `#lobby-guide-modal`)**:
+  - Expanded the Subanagrams card to **Multiplayer Subanagrams**:
+    - Explains the multiplayer competition, 2-minute round duration, 7–9 letter rack length, and anagram discovery mechanics without grid adjacency constraints.
+    - Highlights the mobile device rule: **users must individually tap each letter tile** to form words, submit via Enter, reset via Clear, and utilize the full-width blue Shuffle button.
+    - Clarifies the direct entry `Start [N]` button action into live synchronized multiplayer rounds.
+
 ---
 
 ## Verification & Health Check
