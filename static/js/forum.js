@@ -1821,10 +1821,14 @@ const Forum = {
                     </div>
                     <div class="post-card-excerpt">${this.escapeHtml(post.content)}</div>
                     <div class="post-stats">
-                        ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
-                        <div class="stat-item stat-reaction-item" title="${post.likes || 0} likes">👍 ${post.likes || 0}</div>
-                        <div class="stat-item stat-reaction-item" title="${post.dislikes || 0} dislikes">👎 ${post.dislikes || 0}</div>
-                        ${hasImages ? '<div class="stat-item">🖼️ Includes images</div>' : ''}
+                        <div class="post-stats-left">
+                            ${isComment ? '' : `<div class="stat-item">💬 ${post.comment_count} comments</div>`}
+                            ${hasImages ? '<div class="stat-item">🖼️ Includes images</div>' : ''}
+                        </div>
+                        <div class="post-stats-right">
+                            <div class="stat-item stat-reaction-item" title="${post.likes || 0} likes">👍 ${post.likes || 0}</div>
+                            <div class="stat-item stat-reaction-item" title="${post.dislikes || 0} dislikes">👎 ${post.dislikes || 0}</div>
+                        </div>
                     </div>
                 </div>
             `;

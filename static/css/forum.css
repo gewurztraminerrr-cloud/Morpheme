@@ -385,11 +385,28 @@
 
 .post-stats {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 15px;
     margin-top: 15px;
     font-size: 0.85rem;
     color: var(--text-primary);
     opacity: 0.6;
+}
+
+.post-stats-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.post-stats-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .stat-item {
