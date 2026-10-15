@@ -8814,8 +8814,10 @@ def tools_validate_word():
         
     # Check dictionary membership across NWL, CSW, and Added Words
     word_validator.ensure_csw_loaded()
-    in_nwl = word in getattr(word_validator, 'nwl_words', set()) or word in getattr(word_validator, 'long_words', set())
-    in_csw = word in getattr(word_validator, 'csw_words', set()) or word in getattr(word_validator, 'long_words', set())
+    nwl_dict = load_tools_dictionary('NWL')
+    csw_dict = load_tools_dictionary('CSW')
+    in_nwl = word in getattr(word_validator, 'nwl_words', set()) or word in getattr(word_validator, 'long_words', set()) or (nwl_dict and word in nwl_dict.get('set', set()))
+    in_csw = word in getattr(word_validator, 'csw_words', set()) or word in getattr(word_validator, 'long_words', set()) or (csw_dict and word in csw_dict.get('set', set()))
     in_aw = word in getattr(word_validator, 'added_words', set())
     lists = []
     if in_nwl:
