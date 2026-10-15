@@ -2,7 +2,7 @@
 
 ## Latest Commit ID
 ```
-91934dd61bcfe23315a0cbb0b5d92df972412705
+e4bfb22238479e0a13d7064c5ee49bf68e82ef42
 ```
 
 ## Start Over Point Tag
@@ -15,7 +15,7 @@ START_OVER_POINT_OCTOBER_14
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Commit `91934dd6`, working tree clean, synced with origin/main |
+| localhost      | ✅ Synchronized | Commit `e4bfb222`, working tree clean, synced with origin/main |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
@@ -163,6 +163,10 @@ START_OVER_POINT_OCTOBER_14
   - On mobile (`@media (max-width: 820px)` and `body.is-mobile`), `.comments-header-actions-box` forms a single, unified row with `[ 🔄 ]` (`flex: 0 0 32px`), `[ 🔖 Bookmark ]` (`flex: 1 1 0`), and `[ ⬇ Scroll to Bottom ]` (`flex: 1 1 0`).
   - Matches the 27px height and border-radius across all three controls for a balanced, space-efficient mobile header with no tap-target truncation or text wrapping.
   - On desktop (`min-width: 821px`), preserves seamless single-line horizontal alignment alongside "Discussion" and comment count.
+
+### 18. Forum: Category Threads List — 100 Character Content Limit
+- **Excerpts Clamped**: In `renderPosts` ([forum.js](file:///Users/jeffbabiak/static/js/forum.js)), thread cards displayed when viewing threads for a Category now slice and limit `post.content` to the first 100 characters (`post.content.slice(0, 100).trimEnd() + '...'`).
+- **Full Thread Content Preserved**: The full content text is displayed without restriction when clicking into and viewing the thread (`renderPostDetail`).
 
 ---
 
