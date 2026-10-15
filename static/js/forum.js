@@ -2047,6 +2047,17 @@ const Forum = {
         }
     },
 
+    buildAvatarHtml: function (username, avatarUrl, className = 'author-avatar') {
+        const uname = username || 'User';
+        const escapedUser = this.escapeHtml(uname);
+        const initial = (uname[0] || 'U').toUpperCase();
+        if (avatarUrl) {
+            const escapedUrl = this.escapeHtml(avatarUrl);
+            return `<div class="${className} forum-user-clickable has-avatar" data-username="${escapedUser}" title="View ${escapedUser}'s Profile" style="background-image: url('${escapedUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>`;
+        }
+        return `<div class="${className} forum-user-clickable" data-username="${escapedUser}" title="View ${escapedUser}'s Profile">${initial}</div>`;
+    },
+
     renderPostDetail: function (post, comments, preserveDraft = false, userBookmark = null) {
         if (!post) return;
         comments = comments || [];
@@ -2127,7 +2138,7 @@ const Forum = {
                 <div class="post-detail-header">
                     <div class="post-author-box">
                         <div class="post-author-meta" style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                            <div class="author-avatar forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${post.username[0].toUpperCase()}</div>
+                            ${this.buildAvatarHtml(post.username, post.avatar_url, 'author-avatar')}
                             <div class="author-info">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <span class="author-name forum-user-clickable" data-username="${this.escapeHtml(post.username)}" title="View ${this.escapeHtml(post.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(post.country_flag) : (post.country_flag || '')}${this.escapeHtml(post.username)}</span>
@@ -2227,7 +2238,7 @@ const Forum = {
                         <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
                             <div class="comment-header">
                                 <div class="comment-author-box">
-                                    <div class="comment-avatar forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${c.username[0].toUpperCase()}</div>
+                                    ${this.buildAvatarHtml(c.username, c.avatar_url, 'comment-avatar')}
                                     <div class="comment-author-info">
                                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                             <span class="comment-author forum-user-clickable" data-username="${this.escapeHtml(c.username)}" title="View ${this.escapeHtml(c.username)}'s Profile">${window.getFlagHtml ? window.getFlagHtml(c.country_flag) : (c.country_flag || '')}${this.escapeHtml(c.username)}</span>
@@ -3179,10 +3190,14 @@ const Forum = {
             `;
         }
 
+        const avatarHtml = postData.avatar_url
+            ? `<div class="reply-preview-avatar has-avatar" style="background-image: url('${this.escapeHtml(postData.avatar_url)}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>`
+            : `<div class="reply-preview-avatar">${avatarInitial}</div>`;
+
         card.innerHTML = `
             <div class="reply-preview-header">
                 <div class="reply-preview-author-box">
-                    <div class="reply-preview-avatar">${avatarInitial}</div>
+                    ${avatarHtml}
                     <div class="reply-preview-author-info">
                         <span class="reply-preview-author-name">${flagHtml}${this.escapeHtml(author)}</span>
                         <span class="reply-preview-date">${dateStr}</span>
@@ -3293,6 +3308,10 @@ const Forum = {
             `;
         }
 
+        const avatarHtml = postData.avatar_url
+            ? `<div class="reply-preview-avatar has-avatar" style="background-image: url('${this.escapeHtml(postData.avatar_url)}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>`
+            : `<div class="reply-preview-avatar">${avatarInitial}</div>`;
+
         const overlay = document.createElement('div');
         overlay.id = 'forum-reply-mobile-overlay';
         overlay.className = 'forum-reply-mobile-overlay';
@@ -3300,7 +3319,7 @@ const Forum = {
             <div class="forum-reply-mobile-card" role="dialog" aria-label="Post #${postNumber} Preview">
                 <div class="reply-mobile-header">
                     <div class="reply-mobile-author-box">
-                        <div class="reply-preview-avatar">${avatarInitial}</div>
+                        ${avatarHtml}
                         <div class="reply-mobile-author-info">
                             <span class="reply-mobile-author-name">${flagHtml}${this.escapeHtml(author)}</span>
                             <span class="reply-mobile-date">${dateStr}</span>

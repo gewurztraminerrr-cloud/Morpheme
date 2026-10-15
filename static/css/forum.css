@@ -555,6 +555,17 @@
     font-size: 1.1rem;
     overflow: hidden;
     color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.author-avatar.has-avatar,
+.comment-avatar.has-avatar,
+.reply-preview-avatar.has-avatar {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: transparent;
 }
 
 .author-avatar img {
