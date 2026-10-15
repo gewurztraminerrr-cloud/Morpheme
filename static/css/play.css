@@ -7821,11 +7821,10 @@ input[type=range]::-moz-range-track {
     }
 
 
-    /* Mobile overrides for page-tools, page-settings, page-mods, and page-forums */
+    /* Mobile overrides for page-tools, page-settings, and page-mods */
     #page-tools,
     #page-mods,
-    #page-settings,
-    #page-forums {
+    #page-settings {
         display: none;
         width: 100% !important;
         max-width: 100% !important;
@@ -7840,8 +7839,7 @@ input[type=range]::-moz-range-track {
 
     #page-tools.active,
     #page-settings.active,
-    #page-mods.active,
-    #page-forums.active {
+    #page-mods.active {
         display: flex !important;
     }
 
@@ -7863,12 +7861,6 @@ input[type=range]::-moz-range-track {
         min-height: 0 !important;
         max-height: 100% !important;
         overflow-y: hidden !important;
-    }
-
-    #page-forums .forum-container {
-        flex: 1 !important;
-        min-height: 0 !important;
-        height: auto !important;
     }
 
     /* Keep header locked on mobile for Profile, Donate, Leaderboards, and Tournaments */

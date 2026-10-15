@@ -2061,28 +2061,22 @@ body.theme-white #page-forums .forum-bottom-bar {
         max-width: 100% !important;
         top: 0 !important;
         left: 0 !important;
-    }
-
-    body:has(#page-forums.active) #app,
-    body.forums-active #app {
         display: flex !important;
         flex-direction: column !important;
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
-        overflow-y: hidden !important;
-        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     body:has(#page-forums.active) .top-menu-bar,
     body.forums-active .top-menu-bar,
     body:has(#page-forums.active) .header,
     body.forums-active .header {
+        flex: 0 0 auto !important;
         flex-shrink: 0 !important;
     }
 
     body:has(#page-forums.active) .separator,
     body.forums-active .separator {
+        flex: 0 0 auto !important;
         flex-shrink: 0 !important;
     }
 
@@ -2095,7 +2089,7 @@ body.theme-white #page-forums .forum-bottom-bar {
     body.forums-active .pages {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        height: 100% !important;
+        height: auto !important;
         max-height: 100% !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
@@ -2227,12 +2221,23 @@ body.theme-white #page-forums .forum-bottom-bar {
     }
     .forum-view-scroll-body {
         padding: 15px !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
     }
     .forum-bottom-bar {
         margin: 0 !important;
-        padding: 8px 14px !important;
+        padding: 8px 14px max(8px, env(safe-area-inset-bottom)) 14px !important;
         flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
         width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 50 !important;
     }
     .mobile-only-bottom-bar {
         display: flex !important;
