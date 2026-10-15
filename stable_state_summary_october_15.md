@@ -148,7 +148,10 @@ START_OVER_POINT_OCTOBER_15
     - In `window.shuffleSubanagramsBoard(e)`, added `e.preventDefault()`, `e.stopPropagation()`, 250ms debouncing, robust extraction for both 1D and 2D board arrays, and reset `mouseState.isDown = false`.
     - Added acoustic tile audio / micro-haptic sensation on shuffle via `BoardAudio.playTileSound(1)`.
     - Attached dedicated `touchend` and `click` listeners on `#shuffle-board-btn` and delegator on `document`.
-  - Bumped `play.css` cache buster to `v=1791130480` and `play.js` cache buster to `v=1791130470` in `templates/index.html`.
+  - Bumped `play.css` cache buster to `v=1791130480`, `play.js` cache buster to `v=1791130470`, and `lobby.css` cache buster to `v=1791130490` in `templates/index.html`.
+- **Lobby Subanagrams Title Spacing Equalization**:
+  - Removed legacy `.split-points-section` from the 14px last-child margin rules in `static/css/lobby.css`.
+  - Enforced `margin-bottom: 22px !important;` on `.split-points-section`, making the visual space above the Subanagrams title from the Split Points buttons exactly 22px, perfectly identical to the 22px distance between the Split Points title and the FCFS buttons.
 - **Vertical Length (Height) Synchronization on Mobile**:
   - Enforced exact vertical length matching across `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) on mobile devices (`height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 42px !important; box-sizing: border-box !important; padding: 0 14px !important;`).
   - Scoped desktop 44px sizing strictly to `body.is-desktop.is-subanagrams`, preventing desktop heights from overriding mobile buttons.

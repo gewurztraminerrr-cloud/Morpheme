@@ -170,7 +170,6 @@
 
     .game-types-panel .game-section:last-of-type,
     .game-types-panel .game-section:last-child,
-    .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
         margin-bottom: 14px !important;
         padding-bottom: 0 !important;
@@ -1465,7 +1464,6 @@ body[class*="theme-light-"] .field-hint {
 
     .game-types-panel .game-section:last-of-type,
     .game-types-panel .game-section:last-child,
-    .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
         margin-bottom: 14px !important;
         padding-bottom: 0 !important;
@@ -2810,7 +2808,6 @@ body.theme-white .lobby-journey-sticky-header {
 
     .game-types-panel .game-section:last-of-type,
     .game-types-panel .game-section:last-child,
-    .game-types-panel .split-points-section,
     .solo-friends-panel .solo-friends-section:last-child {
         margin-bottom: 14px !important;
         padding-bottom: 0 !important;
@@ -3304,4 +3301,9 @@ button.lobby-journey-message.lobby-new-user-btn,
         inset 0 -1px 0 rgba(255, 255, 255, 0.08),
         0 1px 0 #000000,
         0 2px 5px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Spacing: Ensure distance above Subanagrams title from Split Points buttons is identical to distance between Split Points title and FCFS buttons (22px) */
+.game-types-panel .split-points-section {
+    margin-bottom: 22px !important;
 }
