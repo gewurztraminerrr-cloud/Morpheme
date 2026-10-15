@@ -7786,8 +7786,14 @@ def load_tools_dictionary(dict_name):
 
     # Normalize aliases
     norm_dict = dict_name
-    if norm_dict == 'All': norm_dict = 'ALL'
-    elif norm_dict == 'AW': norm_dict = 'added_words'
+    if norm_dict in ('All', 'ALL'): norm_dict = 'ALL'
+    elif norm_dict in ('AW', 'added_words', 'Added Words'): norm_dict = 'added_words'
+    elif norm_dict in ('CSW Only', 'csw_only'): norm_dict = 'csw_only'
+    elif norm_dict in ('NWL Uniques', 'uniqueNWL'): norm_dict = 'uniqueNWL'
+    elif norm_dict in ('New NWL Words', 'new_nwl'): norm_dict = 'new_nwl'
+    elif norm_dict in ('New CSW Words', 'new_csw'): norm_dict = 'new_csw'
+    elif norm_dict in ('New AW Words', 'new_added'): norm_dict = 'new_added'
+    elif norm_dict in ('New All Words', 'All New Words', 'all_new'): norm_dict = 'all_new'
 
     cache_key = norm_dict
     if cache_key in TOOLS_DICT_CACHE:

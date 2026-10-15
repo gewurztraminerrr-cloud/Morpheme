@@ -867,8 +867,7 @@ function setupComboExplorer() {
     const mpSelect = document.getElementById('combo-explorer-mp');
     const randomBtn = document.getElementById('combo-explorer-random-btn');
     const azBtn = document.getElementById('combo-explorer-az-btn');
-    const filterInput = document.getElementById('combo-explorer-filter');
-    const dictSelect = document.getElementById('combo-dict');
+    const expDictSelect = document.getElementById('combo-explorer-dict');
     const inputList = document.getElementById('combo-explorer-input-list');
 
     if (!lengthSelect || !mpSelect) return;
@@ -876,8 +875,8 @@ function setupComboExplorer() {
     lengthSelect.addEventListener('change', () => loadComboExplorerWords(true));
     mpSelect.addEventListener('change', () => loadComboExplorerWords(true));
 
-    if (dictSelect) {
-        dictSelect.addEventListener('change', () => {
+    if (expDictSelect) {
+        expDictSelect.addEventListener('change', () => {
             _comboExplorerWordsCache.clear();
             _comboExplorerMatchesCache.clear();
             loadComboExplorerWords(true);
@@ -971,7 +970,7 @@ function applyComboExplorerOrdering() {
 async function loadComboExplorerWords(forceReset = false) {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
-    const dictSelect = document.getElementById('combo-dict');
+    const expDictSelect = document.getElementById('combo-explorer-dict') || document.getElementById('combo-dict');
     const inputList = document.getElementById('combo-explorer-input-list');
     const inputCount = document.getElementById('combo-explorer-input-count');
     const inputTitle = document.getElementById('combo-explorer-input-title');
@@ -984,7 +983,7 @@ async function loadComboExplorerWords(forceReset = false) {
 
     const length = parseInt(lengthSelect.value, 10) || 7;
     const mp = parseInt(mpSelect.value, 10);
-    const dictionary = dictSelect ? dictSelect.value : 'CSW';
+    const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
 
     if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP)`;
     if (inputCount) inputCount.textContent = '...';
@@ -1089,14 +1088,14 @@ window.selectComboExplorerWord = async function(word) {
 
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
-    const dictSelect = document.getElementById('combo-dict');
+    const expDictSelect = document.getElementById('combo-explorer-dict') || document.getElementById('combo-dict');
     const respTitle = document.getElementById('combo-explorer-response-title');
     const respList = document.getElementById('combo-explorer-response-list');
     const respCount = document.getElementById('combo-explorer-response-count');
 
     const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
     const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
-    const dictionary = dictSelect ? dictSelect.value : 'CSW';
+    const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
 
     if (respTitle) respTitle.textContent = `${mp}MP from ${word}`;
     if (respCount) respCount.textContent = '...';
