@@ -388,12 +388,7 @@ window.showTool = function(toolId) {
 };
 
 window.setDefBackNavVisibility = function(visible) {
-    const pageTools = document.getElementById('page-tools');
     const bottomNav = document.querySelector('#page-tools .tools-bottom-nav');
-    if (pageTools) {
-        if (visible) pageTools.classList.add('has-def-back');
-        else pageTools.classList.remove('has-def-back');
-    }
     if (bottomNav) {
         if (visible) bottomNav.classList.add('show-def-back');
         else bottomNav.classList.remove('show-def-back');
@@ -647,12 +642,15 @@ function setupToolsNavigation() {
     // Layout snapping and tab reset on navigation to Tools page (immediate reset on all devices)
     const toolsPage = document.getElementById('page-tools');
     if (toolsPage) {
+        let wasActive = toolsPage.classList.contains('active');
         const observer = new MutationObserver(() => {
-            if (toolsPage.classList.contains('active')) {
+            const isActive = toolsPage.classList.contains('active');
+            if (isActive && !wasActive) {
                 if (typeof window.resetToolsTab === 'function') {
                     window.resetToolsTab(true);
                 }
             }
+            wasActive = isActive;
         });
         observer.observe(toolsPage, {
             attributes: true,
