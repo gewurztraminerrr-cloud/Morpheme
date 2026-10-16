@@ -3869,6 +3869,47 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         padding: 4px 18px 40px 4px !important;
     }
 
+    /* Unified Visible Panel enclosing both "ENTER LETTERS TO CHECK..." and MP/LIC Tabs */
+    #tool-combo .combo-unified-panel,
+    .combo-unified-panel {
+        background: rgba(0, 0, 0, 0.22) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 14px !important;
+        padding: 16px 18px !important;
+        margin-bottom: 20px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel,
+    .combo-unified-panel .combo-control-panel {
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
+        border-radius: 10px !important;
+        padding: 14px 16px !important;
+        margin-bottom: 16px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-tabs-section,
+    .combo-unified-panel .combo-tabs-section {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-tab-pane .result-section,
+    .combo-unified-panel .combo-tab-pane .result-section {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.06) !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        box-sizing: border-box !important;
+    }
+
     /* Combo Checker Tabs */
     .combo-tabs-section {
         width: 100% !important;
@@ -14510,6 +14551,64 @@ body.is-mobile .page *::-webkit-scrollbar {
     #combo-explorer-filter,
     #combo-explorer-filter:focus {
         font-size: 16px !important; /* Prevents iOS Safari & Android Chrome auto-zoom and screen flash */
+    }
+
+    /* Mobile Unified Panel enclosing "ENTER LETTERS TO CHECK..." and MP/LIC Tabs */
+    #tool-combo .combo-unified-panel,
+    .combo-unified-panel {
+        background: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
+        border-radius: 14px !important;
+        padding: 10px 10px 14px 10px !important;
+        margin: 0 0 16px 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel,
+    .combo-unified-panel .combo-control-panel {
+        padding: 8px 10px !important;
+        margin-bottom: 12px !important;
+        border-radius: 8px !important;
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel .input-row,
+    .combo-unified-panel .combo-control-panel .input-row {
+        gap: 6px !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel #combo-input,
+    .combo-unified-panel .combo-control-panel #combo-input {
+        font-size: 16px !important; /* Preserves iOS Safari & Android Chrome auto-zoom and screen flash prevention */
+        padding: 7px 10px !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel #combo-dict,
+    .combo-unified-panel .combo-control-panel #combo-dict {
+        padding: 7px 8px !important;
+        font-size: 0.85rem !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-control-panel #combo-search-btn,
+    .combo-unified-panel .combo-control-panel #combo-search-btn {
+        padding: 7px 16px !important;
+        font-size: 0.88rem !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-tab-pane .result-section,
+    .combo-unified-panel .combo-tab-pane .result-section {
+        padding: 8px 8px !important;
+        border-radius: 8px !important;
+        background: rgba(0, 0, 0, 0.16) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.06) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     /* Aesthetic Mobile Segmented Tabs for MP and LIC */

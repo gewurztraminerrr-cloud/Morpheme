@@ -807,6 +807,38 @@ select option {
     box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2) !important;
 }
 
+[class*="theme-white"] .combo-unified-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-white"] .combo-unified-panel .combo-control-panel {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-white"] .combo-unified-panel .combo-tab-pane .result-section {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+[class*="theme-light-"] .combo-unified-panel {
+    background: var(--bg-panel, #ffffff) !important;
+    border: 1px solid var(--card-border, #cbd5e1) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-light-"] .combo-unified-panel .combo-tab-pane .result-section {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-color: var(--card-border, #cbd5e1) !important;
+}
+
 [class*="theme-white"] .wotd-definition,
 [class*="theme-white"] #wotd-definition,
 [class*="theme-white"] .random-word-definition,
