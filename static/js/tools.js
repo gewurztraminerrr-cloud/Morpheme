@@ -9723,6 +9723,21 @@ window.showWordDefinitionPopup = async function (word, event) {
             if (typeof window.closeFullListModal === 'function') {
                 window.closeFullListModal();
             }
+
+            // Ensure we navigate to the Tools page if coming from Play, Lobby, etc.
+            if (typeof window.showPage === 'function') {
+                const toolsPage = document.getElementById('page-tools');
+                if (!toolsPage || !toolsPage.classList.contains('active')) {
+                    window.showPage('page-tools');
+                }
+            }
+
+            // Reset saved scroll positions so we land at the top of Combo Checker
+            window._savedComboScrollTop = 0;
+            if (window._savedToolScrollPositions) {
+                window._savedToolScrollPositions['combo'] = 0;
+            }
+
             if (typeof window.showTool === 'function') {
                 window.showTool('combo');
             }
@@ -9747,6 +9762,39 @@ window.showWordDefinitionPopup = async function (word, event) {
                     runComboSearch();
                 }
             }
+
+            // Scroll cleanly to the very top of Combo Checker across all platforms and scrollers
+            const scrollComboToTop = () => {
+                const toolsContent = document.querySelector('#page-tools .tools-content');
+                if (toolsContent) toolsContent.scrollTop = 0;
+
+                const comboScroll = document.getElementById('combo-scroll-container');
+                if (comboScroll) {
+                    comboScroll.scrollTop = 0;
+                    if (typeof comboScroll._updateCustomScrollbar === 'function') {
+                        comboScroll._updateCustomScrollbar();
+                    }
+                }
+
+                const toolCombo = document.getElementById('tool-combo');
+                if (toolCombo) toolCombo.scrollTop = 0;
+
+                const mpContainer = document.getElementById('mp-container');
+                if (mpContainer) mpContainer.scrollLeft = 0;
+
+                const licContainer = document.getElementById('lic-container');
+                if (licContainer) licContainer.scrollLeft = 0;
+
+                const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+                if (layoutEl && ((window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+                    layoutEl.scrollLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
+                }
+            };
+
+            scrollComboToTop();
+            setTimeout(scrollComboToTop, 40);
+            setTimeout(scrollComboToTop, 120);
+            setTimeout(scrollComboToTop, 300);
         };
     }
 
@@ -9766,6 +9814,12 @@ window.showWordDefinitionPopup = async function (word, event) {
             window.hideWordDefinitionPopup();
             if (typeof window.closeFullListModal === 'function') {
                 window.closeFullListModal();
+            }
+            if (typeof window.showPage === 'function') {
+                const toolsPage = document.getElementById('page-tools');
+                if (!toolsPage || !toolsPage.classList.contains('active')) {
+                    window.showPage('page-tools');
+                }
             }
             if (typeof window.showTool === 'function') {
                 window.showTool('find-count');
