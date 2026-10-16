@@ -3040,6 +3040,45 @@ body.theme-white #page-settings .mobile-bottom-nav {
     .mobile-bottom-nav {
         display: none !important;
     }
+    #page-tools.has-def-back .tools-content-column > .mobile-bottom-nav,
+    #page-tools.has-def-back .tools-bottom-nav,
+    .tools-bottom-nav.show-def-back {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        z-index: 10 !important;
+        background: linear-gradient(180deg, #1b2230 0%, #121722 100%) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border-top: 1.5px solid rgba(var(--text-primary-rgb), 0.22) !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding: 8px 16px !important;
+        box-sizing: border-box !important;
+        align-items: center !important;
+    }
+    #page-tools.has-def-back .tools-content-column > .tools-content,
+    #page-tools.has-def-back .tools-content {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    [class*="theme-white"] #page-tools.has-def-back .tools-bottom-nav,
+    [class*="theme-white"] .tools-bottom-nav.show-def-back,
+    body.theme-white #page-tools.has-def-back .tools-bottom-nav,
+    body.theme-white .tools-bottom-nav.show-def-back {
+        background: #ffffff !important;
+        border-top: 1.5px solid #cbd5e1 !important;
+        border-left: 1px solid #cbd5e1 !important;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
+    }
+    [class*="theme-light-"] #page-tools.has-def-back .tools-bottom-nav,
+    [class*="theme-light-"] .tools-bottom-nav.show-def-back {
+        background: var(--bg-primary) !important;
+        background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
+        border-top: 1.5px solid var(--card-border, rgba(0, 0, 0, 0.16)) !important;
+        border-left: 1px solid var(--card-border, rgba(0, 0, 0, 0.16)) !important;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+    }
     .tool-pane {
         width: 100% !important;
         max-width: 100% !important;

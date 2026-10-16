@@ -387,9 +387,29 @@ window.showTool = function(toolId) {
     }
 };
 
+window.setDefBackNavVisibility = function(visible) {
+    const pageTools = document.getElementById('page-tools');
+    const bottomNav = document.querySelector('#page-tools .tools-bottom-nav');
+    if (pageTools) {
+        if (visible) pageTools.classList.add('has-def-back');
+        else pageTools.classList.remove('has-def-back');
+    }
+    if (bottomNav) {
+        if (visible) bottomNav.classList.add('show-def-back');
+        else bottomNav.classList.remove('show-def-back');
+    }
+};
+
 window.resetToolsTab = function(immediate = false) {
-    window._navigatedFromDefPopup = false;
-    window._defPopupOriginTool = null;
+    if (!window._navigatingViaDefPopup) {
+        window._defPopupNavStack = [];
+        window._navigatedFromDefPopup = false;
+        window._defPopupOriginTool = null;
+        window._defPopupOriginPage = null;
+        if (typeof window.setDefBackNavVisibility === 'function') {
+            window.setDefBackNavVisibility(false);
+        }
+    }
     if (window._toolsSlideTimeout) {
         clearTimeout(window._toolsSlideTimeout);
         window._toolsSlideTimeout = null;
@@ -428,15 +448,109 @@ window.resetToolsTab = function(immediate = false) {
 };
 
 window.toolsGoBack = function() {
-    if (window._navigatedFromDefPopup && window._defPopupOriginTool) {
+    if (window._defPopupNavStack && window._defPopupNavStack.length > 0) {
+        const navEntry = window._defPopupNavStack.pop();
+
+        if (window._defPopupNavStack.length === 0) {
+            window._navigatedFromDefPopup = false;
+            window._defPopupOriginTool = null;
+            window._defPopupOriginPage = null;
+            window._wasFullListModalOpen = false;
+            if (typeof window.setDefBackNavVisibility === 'function') {
+                window.setDefBackNavVisibility(false);
+            }
+        } else {
+            window._navigatedFromDefPopup = true;
+            const topEntry = window._defPopupNavStack[window._defPopupNavStack.length - 1];
+            window._defPopupOriginTool = topEntry.originTool;
+            window._defPopupOriginPage = topEntry.originPage;
+            window._wasFullListModalOpen = !!topEntry.wasFullListModalOpen;
+            if (typeof window.setDefBackNavVisibility === 'function') {
+                window.setDefBackNavVisibility(true);
+            }
+        }
+
+        // Return to originating page outside Tools (Play, Lobby, Forum, Profile, etc.)
+        if (navEntry.originPage && navEntry.originPage !== 'page-tools') {
+            if (typeof window.showPage === 'function') {
+                window.showPage(navEntry.originPage);
+            }
+            return;
+        }
+
+        // Return to originating tool within Tools page
+        const originTool = navEntry.originTool || 'lists';
+        if (typeof window.showTool === 'function') {
+            window.showTool(originTool);
+        }
+
+        if (originTool === 'combo' && navEntry.comboWord) {
+            const comboInput = document.getElementById('combo-input');
+            if (comboInput) {
+                comboInput.value = navEntry.comboWord;
+                if (typeof runComboSearch === 'function') runComboSearch();
+            }
+            if (navEntry.comboSubtab && typeof window.switchComboTab === 'function') {
+                window.switchComboTab(navEntry.comboSubtab);
+            }
+        } else if (originTool === 'find-count' && navEntry.findCountWord) {
+            const fcInput = document.getElementById('find-count-input');
+            if (fcInput) {
+                fcInput.value = navEntry.findCountWord;
+                if (typeof runFindCountSearch === 'function') runFindCountSearch();
+            }
+        } else if (originTool === 'lists') {
+            if (navEntry.wasFullListModalOpen && typeof window.openFullListModal === 'function') {
+                window.openFullListModal();
+            } else {
+                const listScrollArea = document.getElementById('main-list-results');
+                if (listScrollArea && typeof navEntry.savedListsScrollTop === 'number') {
+                    listScrollArea.scrollTop = navEntry.savedListsScrollTop;
+                }
+            }
+        } else if (originTool === 'work-on') {
+            const workOnScroll = document.getElementById('work-on-table-scroll');
+            if (workOnScroll && typeof navEntry.savedWorkOnScrollTop === 'number') {
+                workOnScroll.scrollTop = navEntry.savedWorkOnScrollTop;
+            }
+        } else if (originTool === 'sequence') {
+            if (typeof window.restoreSequencePosition === 'function') {
+                window.restoreSequencePosition();
+            } else {
+                const seqScroll = document.getElementById('seq-list-results');
+                if (seqScroll && typeof navEntry.savedSequenceScrollTop === 'number') {
+                    seqScroll.scrollTop = navEntry.savedSequenceScrollTop;
+                }
+                const toolsContent = document.querySelector('#page-tools .tools-content');
+                if (toolsContent && typeof navEntry.savedSequenceToolsContentScrollTop === 'number') {
+                    toolsContent.scrollTop = navEntry.savedSequenceToolsContentScrollTop;
+                }
+            }
+        }
+        return;
+    }
+
+    if (window._navigatedFromDefPopup && (window._defPopupOriginTool || window._defPopupOriginPage)) {
         const originTool = window._defPopupOriginTool;
+        const originPage = window._defPopupOriginPage;
         const wasFullList = !!window._wasFullListModalOpen;
 
         window._navigatedFromDefPopup = false;
         window._defPopupOriginTool = null;
+        window._defPopupOriginPage = null;
         window._wasFullListModalOpen = false;
+        if (typeof window.setDefBackNavVisibility === 'function') {
+            window.setDefBackNavVisibility(false);
+        }
 
-        if (typeof window.showTool === 'function') {
+        if (originPage && originPage !== 'page-tools') {
+            if (typeof window.showPage === 'function') {
+                window.showPage(originPage);
+            }
+            return;
+        }
+
+        if (typeof window.showTool === 'function' && originTool) {
             window.showTool(originTool);
         }
 
@@ -462,6 +576,9 @@ window.toolsGoBack = function() {
         return;
     }
 
+    if (typeof window.setDefBackNavVisibility === 'function') {
+        window.setDefBackNavVisibility(false);
+    }
     const currentActivePane = document.querySelector('#page-tools .tool-pane.active');
     if (currentActivePane) {
         const curId = currentActivePane.id.replace('tool-', '');
@@ -496,8 +613,13 @@ function setupToolsNavigation() {
         const btn = e.target.closest('.tool-nav-btn');
         if (!btn) return;
 
+        window._defPopupNavStack = [];
         window._navigatedFromDefPopup = false;
         window._defPopupOriginTool = null;
+        window._defPopupOriginPage = null;
+        if (typeof window.setDefBackNavVisibility === 'function') {
+            window.setDefBackNavVisibility(false);
+        }
 
         const toolId = btn.dataset.tool;
         if (toolId) {
@@ -9860,14 +9982,41 @@ window.showWordDefinitionPopup = async function (word, event) {
         ccBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
-            const activePane = document.querySelector('#page-tools .tool-pane.active');
-            const curId = activePane ? activePane.id.replace('tool-', '') : 'lists';
-            window._navigatedFromDefPopup = true;
-            window._defPopupOriginTool = curId;
+            window._navigatingViaDefPopup = true;
 
             if (typeof window.saveCurrentToolsPosition === 'function') {
                 window.saveCurrentToolsPosition(cleanWord);
             }
+
+            const activePage = document.querySelector('.page.active');
+            const originPageId = (activePage && activePage.id) ? activePage.id : 'page-tools';
+            const activePane = document.querySelector('#page-tools .tool-pane.active');
+            const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
+
+            if (!Array.isArray(window._defPopupNavStack)) {
+                window._defPopupNavStack = [];
+            }
+            window._defPopupNavStack.push({
+                originPage: originPageId,
+                originTool: curId,
+                wasFullListModalOpen: !!window._wasFullListModalOpen,
+                savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
+                savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
+                savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
+                savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
+                comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
+                comboSubtab: window._activeComboTab || 'mp',
+                findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
+            });
+
+            window._navigatedFromDefPopup = true;
+            window._defPopupOriginTool = curId;
+            window._defPopupOriginPage = originPageId;
+
+            if (typeof window.setDefBackNavVisibility === 'function') {
+                window.setDefBackNavVisibility(true);
+            }
+
             window.hideWordDefinitionPopup();
             if (typeof window.closeFullListModal === 'function') {
                 window.closeFullListModal();
@@ -9880,6 +10029,10 @@ window.showWordDefinitionPopup = async function (word, event) {
                     window.showPage('page-tools');
                 }
             }
+
+            setTimeout(() => {
+                window._navigatingViaDefPopup = false;
+            }, 150);
 
             // Reset saved scroll positions so we land at the top of Combo Checker
             window._savedComboScrollTop = 0;
@@ -9956,24 +10109,57 @@ window.showWordDefinitionPopup = async function (word, event) {
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
 
-            const activePane = document.querySelector('#page-tools .tool-pane.active');
-            const curId = activePane ? activePane.id.replace('tool-', '') : 'lists';
-            window._navigatedFromDefPopup = true;
-            window._defPopupOriginTool = curId;
+            window._navigatingViaDefPopup = true;
 
             if (typeof window.saveCurrentToolsPosition === 'function') {
                 window.saveCurrentToolsPosition(cleanWord);
             }
+
+            const activePage = document.querySelector('.page.active');
+            const originPageId = (activePage && activePage.id) ? activePage.id : 'page-tools';
+            const activePane = document.querySelector('#page-tools .tool-pane.active');
+            const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
+
+            if (!Array.isArray(window._defPopupNavStack)) {
+                window._defPopupNavStack = [];
+            }
+            window._defPopupNavStack.push({
+                originPage: originPageId,
+                originTool: curId,
+                wasFullListModalOpen: !!window._wasFullListModalOpen,
+                savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
+                savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
+                savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
+                savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
+                comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
+                comboSubtab: window._activeComboTab || 'mp',
+                findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
+            });
+
+            window._navigatedFromDefPopup = true;
+            window._defPopupOriginTool = curId;
+            window._defPopupOriginPage = originPageId;
+
+            if (typeof window.setDefBackNavVisibility === 'function') {
+                window.setDefBackNavVisibility(true);
+            }
+
             window.hideWordDefinitionPopup();
             if (typeof window.closeFullListModal === 'function') {
                 window.closeFullListModal();
             }
+
             if (typeof window.showPage === 'function') {
                 const toolsPage = document.getElementById('page-tools');
                 if (!toolsPage || !toolsPage.classList.contains('active')) {
                     window.showPage('page-tools');
                 }
             }
+
+            setTimeout(() => {
+                window._navigatingViaDefPopup = false;
+            }, 150);
+
             if (window._savedToolScrollPositions) {
                 delete window._savedToolScrollPositions['find-count'];
             }
