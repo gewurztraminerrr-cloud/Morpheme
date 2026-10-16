@@ -2162,6 +2162,14 @@ const Forum = {
         this.currentThreadBookmark = (userBookmark !== undefined && userBookmark !== null)
             ? userBookmark
             : (this.getGuestBookmark(post.id) || null);
+
+        const myUname = (window.currentUser || '').toLowerCase();
+        const myUid = window.currentUserId ? Number(window.currentUserId) : null;
+        const isOwnPost = Boolean(
+            (myUname && post.username && myUname === post.username.toLowerCase()) ||
+            (myUid && post.user_id && myUid === Number(post.user_id))
+        );
+
         detailEl.innerHTML = `
             <div id="forum-post-root" data-post-number="${post.post_number || 1}">
                 <div class="post-detail-header">
@@ -2177,12 +2185,12 @@ const Forum = {
                             </div>
                         </div>
                         <div class="post-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-                            <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="0">
-                                <button type="button" class="forum-reaction-btn forum-like-btn ${post.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
+                            <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="0" ${isOwnPost ? 'data-is-own="true"' : ''}>
+                                <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${post.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Like'}">
                                     <span class="reaction-icon">👍</span>
                                     <span class="reaction-count">${post.likes || 0}</span>
                                 </button>
-                                <button type="button" class="forum-reaction-btn forum-dislike-btn ${post.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
+                                <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${post.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Dislike'}">
                                     <span class="reaction-icon">👎</span>
                                     <span class="reaction-count">${post.dislikes || 0}</span>
                                 </button>
@@ -2263,6 +2271,11 @@ const Forum = {
                          (!this.currentThreadBookmark.target_comment_id && this.currentThreadBookmark.target_post_number === c.post_number))
                     );
 
+                    const isOwnComment = Boolean(
+                        (myUname && c.username && myUname === c.username.toLowerCase()) ||
+                        (myUid && c.user_id && myUid === Number(c.user_id))
+                    );
+
                     return `
                         <div class="forum-comment" id="forum-comment-${c.id}" data-comment-id="${c.id}" data-post-number="${c.post_number}">
                             <div class="comment-header">
@@ -2277,12 +2290,12 @@ const Forum = {
                                     </div>
                                 </div>
                                 <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-                                    <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}">
-                                        <button type="button" class="forum-reaction-btn forum-like-btn ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="Like">
+                                    <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}" ${isOwnComment ? 'data-is-own="true"' : ''}>
+                                        <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Like'}">
                                             <span class="reaction-icon">👍</span>
                                             <span class="reaction-count">${c.likes || 0}</span>
                                         </button>
-                                        <button type="button" class="forum-reaction-btn forum-dislike-btn ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="Dislike">
+                                        <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Dislike'}">
                                             <span class="reaction-icon">👎</span>
                                             <span class="reaction-count">${c.dislikes || 0}</span>
                                         </button>
@@ -2455,6 +2468,11 @@ const Forum = {
         const isGuest = window.currentUserIsGuest || (window.currentUser === null);
         if (isGuest) {
             this.showToast('Please log in or register to like or dislike posts.');
+            return;
+        }
+
+        if (groupEl && groupEl.getAttribute('data-is-own') === 'true') {
+            this.showToast('You cannot like or dislike your own post.');
             return;
         }
 

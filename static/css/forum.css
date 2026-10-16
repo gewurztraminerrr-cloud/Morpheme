@@ -914,6 +914,20 @@ body[class*="theme-light-"] .forum-view-whole-msg-btn:hover,
     box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
 }
 
+.forum-reaction-btn.own-post-reaction,
+.forum-reaction-btn.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.55 !important;
+}
+
+.forum-reaction-btn.own-post-reaction:hover,
+.forum-reaction-btn.disabled:hover {
+    transform: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: var(--text-secondary, #cbd5e1) !important;
+}
+
 /* Light / White theme overrides for reaction buttons */
 [class*="theme-white"] .forum-reaction-btn,
 [class*="theme-light-"] .forum-reaction-btn {

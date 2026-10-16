@@ -3140,6 +3140,22 @@ def init_db():
     except Exception as e:
         print(f"Migration Error (Forum tables): {e}")
 
+    # Remove any legacy self-reactions on forum posts and comments
+    try:
+        conn.execute('''
+            DELETE FROM forum_reactions
+            WHERE comment_id = 0
+              AND user_id IN (SELECT user_id FROM forum_posts WHERE forum_posts.id = forum_reactions.post_id)
+        ''')
+        conn.execute('''
+            DELETE FROM forum_reactions
+            WHERE comment_id > 0
+              AND user_id IN (SELECT user_id FROM forum_comments WHERE forum_comments.id = forum_reactions.comment_id)
+        ''')
+        conn.commit()
+    except Exception as e:
+        pass
+
     # MIGRATION: Add wpm and total_words_avail to round_history
     try:
         conn.execute('ALTER TABLE round_history ADD COLUMN wpm REAL DEFAULT 0.0')
@@ -10260,15 +10276,20 @@ def toggle_forum_reaction(post_id):
     conn.row_factory = sqlite3.Row
     try:
         # Verify thread exists
-        thread = conn.execute('SELECT id FROM forum_posts WHERE id = ?', (post_id,)).fetchone()
+        thread = conn.execute('SELECT id, user_id FROM forum_posts WHERE id = ?', (post_id,)).fetchone()
         if not thread:
             return jsonify({'error': 'Thread not found'}), 404
 
         # If comment_id > 0, verify comment exists and belongs to post
         if comment_id > 0:
-            comment = conn.execute('SELECT id FROM forum_comments WHERE id = ? AND post_id = ?', (comment_id, post_id)).fetchone()
+            comment = conn.execute('SELECT id, user_id FROM forum_comments WHERE id = ? AND post_id = ?', (comment_id, post_id)).fetchone()
             if not comment:
                 return jsonify({'error': 'Comment not found'}), 404
+            if comment['user_id'] == user_id:
+                return jsonify({'error': 'You cannot like or dislike your own post.'}), 400
+        else:
+            if thread['user_id'] == user_id:
+                return jsonify({'error': 'You cannot like or dislike your own post.'}), 400
 
         # Check existing reaction
         existing = conn.execute('''
