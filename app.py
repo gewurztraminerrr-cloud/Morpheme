@@ -2277,8 +2277,6 @@ def check_user_timeout(user_id_or_name, client_ip=None):
 
     if not user_id_or_name and not client_ip:
         return False, 0, "", None, 0, None
-    if user_id_or_name and str(user_id_or_name).strip().lower() in ('jeffb', 'jeffbabiak'):
-        return False, 0, "", None, 0, None
 
     now_utc = datetime.datetime.now(datetime.timezone.utc)
 
