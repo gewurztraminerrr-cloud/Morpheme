@@ -3450,47 +3450,68 @@ window.showPermanentBanModal = function(banReason) {
 };
 
 window.lockAllGameRoomsUI = function(timeoutData) {
+    const isBanned = Boolean(timeoutData && (timeoutData.banned || timeoutData.is_banned));
+    if (isBanned) {
+        window._userIsBanned = true;
+    }
     window._userIsTimedOut = true;
     window._userTimeoutInfo = timeoutData || { timed_out: true };
-    const durStr = (timeoutData && (timeoutData.remaining || timeoutData.duration_str)) ? ` (${timeoutData.remaining || timeoutData.duration_str} remaining)` : '';
-    const tooltip = `Account Timed Out: Game rooms locked${durStr}`;
+    
+    const reason = (timeoutData && (timeoutData.ban_reason || timeoutData.timeout_reason || timeoutData.reason)) || 'Violation of community rules';
+    const durStr = isBanned ? ' (Permanent Ban)' : ((timeoutData && (timeoutData.remaining || timeoutData.duration_str)) ? ` (${timeoutData.remaining || timeoutData.duration_str} remaining)` : '');
+    const tooltip = isBanned ? `Account Permanently Banned: ${reason} (Click for details)` : `Account Timed Out: Game rooms locked${durStr} (Click for details)`;
 
     // Target all room cards, buttons, inputs, and play navigation
     const targets = document.querySelectorAll(
-        '.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn'
+        '.game-btn, .acc-btn, .fcfs-btn, .split-btn, .confirm-create-room-btn, #create-room-btn, .join-room-btn, .spectate-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn, #quick-play-btn'
     );
     targets.forEach(el => {
         el.classList.add('timeout-locked');
-        el.setAttribute('disabled', 'true');
-        el.style.pointerEvents = 'none';
+        // Do NOT set HTML disabled attribute, which suppresses mouse click events in browsers.
+        // Instead, keeping pointer-events: auto ensures user clicks fire and open the popup modal explaining why.
+        el.removeAttribute('disabled');
+        el.style.pointerEvents = 'auto';
         el.style.cursor = 'not-allowed';
         el.title = tooltip;
     });
 
-    // Also attach a prominent warning banner inside #dynamic-rooms-container or #rooms-list
-    const container = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+    // Also attach a prominent warning banner inside #dynamic-rooms-container or #rooms-list or .main-lobby
+    const container = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list') || document.querySelector('.main-lobby') || document.querySelector('.lobby-header');
     if (container && !document.getElementById('timeout-lobby-banner')) {
         const banner = document.createElement('div');
         banner.id = 'timeout-lobby-banner';
         banner.className = 'timeout-lobby-banner';
-        banner.style.cssText = 'background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin: 8px 0 12px 0; text-align: center; color: #fca5a5; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);';
-        banner.innerHTML = `<i class="fa fa-ban" style="color: #ef4444; font-size: 1.1rem;"></i> Account Restricted: Game rooms are un-pressable while on active timeout${durStr}.`;
+        banner.style.cssText = 'background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin: 8px 0 12px 0; text-align: center; color: #fca5a5; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); cursor: pointer;';
+        if (isBanned) {
+            banner.innerHTML = `<i class="fa fa-ban" style="color: #ef4444; font-size: 1.1rem;"></i> Account Permanently Banned: ${reason} <span style="text-decoration: underline; font-size: 0.85rem; margin-left: 6px;">(Click for details)</span>`;
+        } else {
+            banner.innerHTML = `<i class="fa fa-ban" style="color: #ef4444; font-size: 1.1rem;"></i> Account Restricted: Game rooms are locked while on active timeout${durStr}. <span style="text-decoration: underline; font-size: 0.85rem; margin-left: 6px;">(Click for details)</span>`;
+        }
+        banner.onclick = () => {
+            if (isBanned) {
+                if (typeof window.showPermanentBanModal === 'function') window.showPermanentBanModal(reason);
+                else if (typeof window.showAlertModal === 'function') window.showAlertModal('Account Permanently Banned', `Your account has been permanently banned.<br><br><strong>Reason:</strong> ${reason}`, true);
+            } else if (typeof window.showTimeoutBanModal === 'function') {
+                window.showTimeoutBanModal(window._userTimeoutInfo);
+            }
+        };
         container.prepend(banner);
     }
 };
 
 window.clearTimeoutLockUI = function() {
     window._userIsTimedOut = false;
+    window._userIsBanned = false;
     window._userTimeoutInfo = null;
     const targets = document.querySelectorAll(
-        '.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn'
+        '.game-btn, .acc-btn, .fcfs-btn, .split-btn, .confirm-create-room-btn, #create-room-btn, .join-room-btn, .spectate-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn, #quick-play-btn'
     );
     targets.forEach(el => {
         el.classList.remove('timeout-locked');
         el.removeAttribute('disabled');
         el.style.pointerEvents = '';
         el.style.cursor = '';
-        if (el.title && el.title.startsWith("Account Timed Out")) {
+        if (el.title && (el.title.startsWith("Account Timed Out") || el.title.startsWith("Account Permanently Banned") || el.title.startsWith("Account Locked"))) {
             el.title = "";
         }
     });
@@ -3506,14 +3527,21 @@ window.handleImmediateTimeout = function(timeoutData) {
     if (window.currentPageId === 'page-play' || window.currentRoomId) {
         if (typeof window.ejectToLobby === 'function') {
             const dur = timeoutData.remaining || timeoutData.duration_str || '10 minutes';
-            const r = timeoutData.timeout_reason || timeoutData.reason || timeoutData.error || 'Community rules violation';
+            const r = timeoutData.ban_reason || timeoutData.timeout_reason || timeoutData.reason || timeoutData.error || 'Community rules violation';
             window.ejectToLobby(`timeout:${dur}|${r}`);
         } else if (typeof window.showPage === 'function') {
             window.showPage('page-lobby');
         }
     }
     
-    if (typeof window.showTimeoutBanModal === 'function') {
+    if (timeoutData.banned || timeoutData.is_banned) {
+        const rText = timeoutData.ban_reason || timeoutData.reason || 'Violation of community rules';
+        if (typeof window.showPermanentBanModal === 'function') {
+            window.showPermanentBanModal(rText);
+        } else if (typeof window.showAlertModal === 'function') {
+            window.showAlertModal('Account Permanently Banned', `Your account has been permanently banned.<br><br><strong>Reason:</strong> ${rText}`, true);
+        }
+    } else if (typeof window.showTimeoutBanModal === 'function') {
         window.showTimeoutBanModal(timeoutData);
     }
 };
@@ -3522,37 +3550,73 @@ window.checkAccountTimeoutAndAlert = async function() {
     try {
         const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
         const toData = await toResp.json();
-        const isTimedOut = !!(toData && toData.timed_out);
         
+        if (toData && (toData.banned || toData.is_banned)) {
+            window._userIsBanned = true;
+            window._userIsTimedOut = true;
+            window._userTimeoutInfo = toData;
+            window.lockAllGameRoomsUI(toData);
+            const rText = toData.ban_reason || toData.reason || 'Violation of community rules';
+            if (typeof window.showPermanentBanModal === 'function') {
+                window.showPermanentBanModal(rText);
+            } else if (typeof window.showAlertModal === 'function') {
+                window.showAlertModal('Account Permanently Banned', `Your account has been permanently banned.<br><br><strong>Reason:</strong> ${rText}`, true);
+            }
+            return true;
+        }
+
+        const isTimedOut = !!(toData && toData.timed_out);
         if (isTimedOut) {
             window.lockAllGameRoomsUI(toData);
             if (typeof window.showTimeoutBanModal === 'function') {
                 window.showTimeoutBanModal(toData);
             }
             return true;
-        } else if (window._userIsTimedOut) {
+        } else if (window._userIsTimedOut || window._userIsBanned) {
             window.clearTimeoutLockUI();
         }
     } catch(e) {}
     return false;
 };
 
-// Capture-phase global click interceptor for all game entry buttons while on active timeout
+// Capture-phase global click interceptor for all game entry buttons while on active timeout or ban
 document.addEventListener('click', async (e) => {
     const rawTarget = e.target;
     if (!rawTarget) return;
     const target = rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
     if (!target || typeof target.closest !== 'function') return;
 
-    const lockedBtn = target.closest('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
+    const lockedBtn = target.closest(
+        '.game-btn, .acc-btn, .fcfs-btn, .split-btn, .confirm-create-room-btn, #create-room-btn, .join-room-btn, .spectate-btn, .nav-btn[data-page="play"], #play-btn, #quick-play-btn, .room-card, .room-item, .timeout-locked'
+    );
     if (!lockedBtn) return;
 
-    if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+    const isBanned = Boolean(window._userIsBanned || (window._userTimeoutInfo && (window._userTimeoutInfo.banned || window._userTimeoutInfo.is_banned)));
+    const isTimedOut = Boolean(window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out));
+
+    if (isBanned || isTimedOut) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        // Re-verify immediately with server on click so expiration is recognized instantaneously without app reload
+        if (isBanned) {
+            const rText = (window._userTimeoutInfo && (window._userTimeoutInfo.ban_reason || window._userTimeoutInfo.reason)) || 'Violation of community rules';
+            if (typeof window.showPermanentBanModal === 'function') {
+                window.showPermanentBanModal(rText);
+            } else if (typeof window.showAlertModal === 'function') {
+                window.showAlertModal('Account Permanently Banned', `Your account has been permanently banned.<br><br><strong>Reason:</strong> ${rText}`, true);
+            } else {
+                alert(`Account Permanently Banned\n\nReason: ${rText}`);
+            }
+            return false;
+        }
+
+        // Show timeout modal immediately explaining why and time remaining
+        if (typeof window.showTimeoutBanModal === 'function') {
+            window.showTimeoutBanModal(window._userTimeoutInfo);
+        }
+
+        // Re-verify with server in background so expiration is recognized instantaneously
         const isStillTimedOut = await window.checkAccountTimeoutAndAlert();
         if (!isStillTimedOut) {
             // Timeout expired! Simulate click to trigger original button action smoothly

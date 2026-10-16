@@ -651,14 +651,19 @@ def check_ip_ban():
         return
 
     client_ip = get_client_ip()
-    if client_ip and client_ip in BANNED_IPS_CACHE:
-        ban_reason = BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
+    u_lower = (session.get('username') or '').strip().lower()
+    is_banned = bool((client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS))
+    if is_banned:
+        ban_reason = (u_lower and BANNED_USERNAMES_REASONS.get(u_lower)) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
         if request.path.startswith('/api/'):
             return jsonify({
                 'error': f'Your account / IP address has been permanently banned.\nReason: {ban_reason}',
                 'banned': True,
                 'is_banned': True,
-                'ban_reason': ban_reason
+                'ban_reason': ban_reason,
+                'timed_out': True,
+                'remaining': 'Permanent Ban',
+                'reason': ban_reason
             }), 403
         return (
             "<!DOCTYPE html><html><head><title>Access Restricted</title>"
@@ -2630,16 +2635,36 @@ def timeout_user_api():
 @app.route('/api/user/my_timeout_status', methods=['GET'])
 def get_my_timeout_status():
     user_id = session.get('user_id') or session.get('username')
-    if not user_id:
-        return jsonify({'timed_out': False, 'remaining': '', 'remaining_seconds': 0, 'reason': ''})
-    is_to, diff_sec, rem_str, to_until, count, reason_val = check_user_timeout(user_id)
+    client_ip = get_client_ip(request)
+    u_lower = (session.get('username') or '').strip().lower()
+
+    # Check permanent ban first
+    if (client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS):
+        ban_reason = (u_lower and BANNED_USERNAMES_REASONS.get(u_lower)) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
+        return jsonify({
+            'banned': True,
+            'is_banned': True,
+            'ban_reason': ban_reason,
+            'timed_out': True,
+            'remaining': 'Permanent Ban',
+            'remaining_seconds': 0,
+            'reason': ban_reason,
+            'timeout_reason': ban_reason
+        })
+
+    if not user_id and not client_ip:
+        return jsonify({'timed_out': False, 'banned': False, 'is_banned': False, 'remaining': '', 'remaining_seconds': 0, 'reason': '', 'timeout_reason': ''})
+    is_to, diff_sec, rem_str, to_until, count, reason_val = check_user_timeout(user_id, client_ip=client_ip)
     return jsonify({
         'timed_out': is_to,
+        'banned': False,
+        'is_banned': False,
         'remaining': rem_str,
         'remaining_seconds': diff_sec,
         'timeout_until': to_until,
         'offense_count': count,
-        'reason': reason_val or ''
+        'reason': reason_val or '',
+        'timeout_reason': reason_val or ''
     })
 
 
@@ -6099,11 +6124,22 @@ def list_rooms():
             
     user_id = session.get('user_id')
     client_ip = get_client_ip(request)
+    u_lower = (session.get('username') or '').strip().lower()
+    is_banned = bool((client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS))
+    ban_reason = (BANNED_USERNAMES_REASONS.get(u_lower) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules") if is_banned else None
+
     is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id, client_ip=client_ip)
+    if is_banned:
+        is_to = True
+        rem_str = 'Permanent Ban'
+        reason_val = ban_reason
             
     return jsonify({
         'rooms': active_rooms,
         'timed_out': is_to,
+        'banned': is_banned,
+        'is_banned': is_banned,
+        'ban_reason': ban_reason,
         'remaining': rem_str if is_to else None,
         'timeout_reason': reason_val if is_to else None
     })
@@ -6179,11 +6215,22 @@ def get_lobby_stats():
     
     user_id = session.get('user_id')
     client_ip = get_client_ip(request)
+    u_lower = (session.get('username') or '').strip().lower()
+    is_banned = bool((client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS))
+    ban_reason = (BANNED_USERNAMES_REASONS.get(u_lower) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules") if is_banned else None
+
     is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id, client_ip=client_ip)
+    if is_banned:
+        is_to = True
+        rem_str = 'Permanent Ban'
+        reason_val = ban_reason
     
     return jsonify({
         'stats': stats,
         'timed_out': is_to,
+        'banned': is_banned,
+        'is_banned': is_banned,
+        'ban_reason': ban_reason,
         'remaining': rem_str if is_to else None,
         'timeout_reason': reason_val if is_to else None
     })
