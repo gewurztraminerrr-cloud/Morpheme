@@ -657,13 +657,18 @@
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
+    white-space: normal !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .forum-content-truncated,
 .forum-content-full {
-    white-space: pre-wrap;
+    white-space: pre-wrap !important;
     word-break: break-word;
     width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .forum-ellipsis {
