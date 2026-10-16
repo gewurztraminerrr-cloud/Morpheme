@@ -8991,14 +8991,35 @@ def tools_word_membership():
         lists.append('CSW')
     if in_aw:
         lists.append('AW')
+    if in_csw and not in_nwl:
+        lists.append('csw_only')
 
-    is_valid = bool(lists)
+    new_nwl_dict = load_tools_dictionary('new_nwl')
+    new_csw_dict = load_tools_dictionary('new_csw')
+    new_added_dict = load_tools_dictionary('new_added')
+    all_new_dict = load_tools_dictionary('all_new')
+
+    if new_nwl_dict and word in new_nwl_dict.get('set', set()):
+        lists.append('new_nwl')
+    if new_csw_dict and word in new_csw_dict.get('set', set()):
+        lists.append('new_csw')
+    if new_added_dict and word in new_added_dict.get('set', set()):
+        lists.append('new_added')
+    if all_new_dict and word in all_new_dict.get('set', set()):
+        lists.append('all_new')
+
+    is_valid = bool(in_nwl or in_csw or in_aw)
     return jsonify({
         'word': word,
         'valid': is_valid,
         'nwl': in_nwl,
         'csw': in_csw,
         'aw': in_aw,
+        'csw_only': in_csw and not in_nwl,
+        'new_nwl': bool(new_nwl_dict and word in new_nwl_dict.get('set', set())),
+        'new_csw': bool(new_csw_dict and word in new_csw_dict.get('set', set())),
+        'new_added': bool(new_added_dict and word in new_added_dict.get('set', set())),
+        'all_new': bool(all_new_dict and word in all_new_dict.get('set', set())),
         'lists': lists
     })
 
@@ -9041,6 +9062,22 @@ def tools_validate_word():
         lists.append('CSW')
     if in_aw:
         lists.append('AW')
+    if in_csw and not in_nwl:
+        lists.append('csw_only')
+
+    new_nwl_dict = load_tools_dictionary('new_nwl')
+    new_csw_dict = load_tools_dictionary('new_csw')
+    new_added_dict = load_tools_dictionary('new_added')
+    all_new_dict = load_tools_dictionary('all_new')
+
+    if new_nwl_dict and word in new_nwl_dict.get('set', set()):
+        lists.append('new_nwl')
+    if new_csw_dict and word in new_csw_dict.get('set', set()):
+        lists.append('new_csw')
+    if new_added_dict and word in new_added_dict.get('set', set()):
+        lists.append('new_added')
+    if all_new_dict and word in all_new_dict.get('set', set()):
+        lists.append('all_new')
 
     return jsonify({
         'word': word,

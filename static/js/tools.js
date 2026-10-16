@@ -6483,6 +6483,36 @@ function clearAllWordsToWorkOn() {
 }
 window.clearAllWordsToWorkOn = clearAllWordsToWorkOn;
 
+window._newWordsSets = window._newWordsSets || {};
+async function ensureNewWordsSet(filterVal) {
+    if (!['new_nwl', 'new_csw', 'new_added', 'all_new'].includes(filterVal)) return;
+    if (window._newWordsSets[filterVal]) return;
+    if (window._fetchingNewWordsSet && window._fetchingNewWordsSet[filterVal]) return;
+    window._fetchingNewWordsSet = window._fetchingNewWordsSet || {};
+    window._fetchingNewWordsSet[filterVal] = true;
+    try {
+        const resp = await fetch(`/api/tools/lists?list_type=${filterVal}&no_limit=true`);
+        if (resp.ok) {
+            const data = await resp.json();
+            const list = data[filterVal] || data['new_added'] || data['new_csw'] || data['new_nwl'] || data['all_new'] || [];
+            const set = new Set();
+            list.forEach(item => {
+                if (typeof item === 'string') set.add(item.toUpperCase().trim());
+                else if (item && item.word) set.add(String(item.word).toUpperCase().trim());
+            });
+            window._newWordsSets[filterVal] = set;
+            renderWordsToWorkOnTable();
+        }
+    } catch (e) {
+        console.error('[Words to Work on] Failed to load word list for filter:', filterVal, e);
+    } finally {
+        if (window._fetchingNewWordsSet) {
+            delete window._fetchingNewWordsSet[filterVal];
+        }
+    }
+}
+window.ensureNewWordsSet = ensureNewWordsSet;
+
 function renderWordsToWorkOnTable() {
     const tableBody = document.getElementById('work-on-table-body');
     const totalCountEl = document.getElementById('work-on-total-count');
@@ -6496,12 +6526,35 @@ function renderWordsToWorkOnTable() {
     const allItems = getWordsToWorkOn();
     const filterVal = dictFilterEl ? dictFilterEl.value : 'all';
 
+    if (['new_nwl', 'new_csw', 'new_added', 'all_new'].includes(filterVal) && (!window._newWordsSets || !window._newWordsSets[filterVal])) {
+        ensureNewWordsSet(filterVal);
+    }
+
     // Filter items according to dropdown
     const filteredItems = [];
     allItems.forEach((it, origIdx) => {
         const itemObj = (typeof it === 'object' && it !== null) ? it : { word: it, lists: ['NWL', 'CSW'] };
         const lists = itemObj.lists || [];
-        if (filterVal === 'all' || lists.includes(filterVal)) {
+        const word = (itemObj.word || '').toUpperCase().trim();
+        let matches = false;
+        if (filterVal === 'all') {
+            matches = true;
+        } else if (filterVal === 'csw_only') {
+            matches = lists.includes('csw_only') || (lists.includes('CSW') && !lists.includes('NWL'));
+        } else if (filterVal === 'new_nwl') {
+            matches = lists.includes('new_nwl') || !!(window._newWordsSets && window._newWordsSets['new_nwl'] && window._newWordsSets['new_nwl'].has(word));
+        } else if (filterVal === 'new_csw') {
+            matches = lists.includes('new_csw') || !!(window._newWordsSets && window._newWordsSets['new_csw'] && window._newWordsSets['new_csw'].has(word));
+        } else if (filterVal === 'new_added') {
+            matches = lists.includes('new_added') || !!(window._newWordsSets && window._newWordsSets['new_added'] && window._newWordsSets['new_added'].has(word));
+        } else if (filterVal === 'all_new') {
+            matches = lists.includes('all_new') || lists.includes('new_nwl') || lists.includes('new_csw') || lists.includes('new_added') ||
+                      !!(window._newWordsSets && window._newWordsSets['all_new'] && window._newWordsSets['all_new'].has(word)) ||
+                      !!(window._newWordsSets && window._newWordsSets['new_added'] && window._newWordsSets['new_added'].has(word));
+        } else {
+            matches = lists.includes(filterVal);
+        }
+        if (matches) {
             filteredItems.push({ item: itemObj, origIdx: origIdx });
         }
     });
@@ -9647,6 +9700,11 @@ function getActiveToolsWordList(targetEl) {
             if (woVal === 'AW') return 'added_words';
             if (woVal === 'CSW') return 'CSW';
             if (woVal === 'NWL') return 'NWL';
+            if (woVal === 'csw_only') return 'csw_only';
+            if (woVal === 'new_nwl') return 'new_nwl';
+            if (woVal === 'new_csw') return 'new_csw';
+            if (woVal === 'new_added') return 'new_added';
+            if (woVal === 'all_new') return 'all_new';
             return 'ALL';
         }
         return 'NWL';
@@ -9659,6 +9717,11 @@ function getActiveToolsWordList(targetEl) {
         if (woVal === 'AW') return 'added_words';
         if (woVal === 'CSW') return 'CSW';
         if (woVal === 'NWL') return 'NWL';
+        if (woVal === 'csw_only') return 'csw_only';
+        if (woVal === 'new_nwl') return 'new_nwl';
+        if (woVal === 'new_csw') return 'new_csw';
+        if (woVal === 'new_added') return 'new_added';
+        if (woVal === 'all_new') return 'all_new';
         return 'ALL';
     }
 
