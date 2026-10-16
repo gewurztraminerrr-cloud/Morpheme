@@ -3903,7 +3903,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         touch-action: pan-y !important;
         padding: 4px 14px !important;
         margin-bottom: 4px !important;
-        color: rgba(var(--text-primary-rgb), 0.75) !important;
+        color: rgba(var(--text-primary-rgb), 0.4) !important;
         box-sizing: border-box !important;
     }
 
@@ -14317,21 +14317,36 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Reduce excess gray space below LIC description and harmonize light-greyish colors */
+/* Ensure all 3 Combo Checker descriptions (MP, MP Word Explorer, LIC) share the exact same design and light-greyish color */
+#tool-combo .chart-desc,
+.combo-results-container .chart-desc,
 #lic-chart-desc,
+#mp-explorer-chart-desc,
 #tool-combo #lic-chart-desc,
+#tool-combo #mp-explorer-chart-desc,
 .combo-results-container #lic-chart-desc,
-#tool-combo .result-section:has(#lic-container) .chart-desc {
+.combo-results-container #mp-explorer-chart-desc,
+#tool-combo .result-section:has(#lic-container) .chart-desc,
+#tool-combo #combo-explorer-section .chart-desc {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 6px 14px !important;
-    margin-bottom: 4px !important;
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
     color: rgba(var(--text-primary-rgb), 0.4) !important;
+    padding: 6px 14px !important;
+    margin-bottom: 6px !important;
+    background: transparent !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
 }
 
-#mp-explorer-chart-desc {
-    color: rgba(var(--text-primary-rgb), 0.4) !important;
+#tool-combo .chart-desc *,
+.combo-results-container .chart-desc *,
+#lic-chart-desc *,
+#mp-explorer-chart-desc * {
+    color: inherit !important;
+    font-weight: 500;
 }
 
 /* Desktop and Laptop Full-Width Stretch & Uniform Look for Combo Checker Sections (MP, MP Word Explorer, LIC) */
@@ -14405,9 +14420,12 @@ body,
         font-size: 16px !important; /* Prevents iOS Safari & Android Chrome auto-zoom and screen flash */
     }
 
+    #tool-combo .chart-desc,
+    .combo-results-container .chart-desc,
+    #lic-chart-desc,
     #mp-explorer-chart-desc {
         color: rgba(var(--text-primary-rgb), 0.4) !important;
-        font-size: 0.8rem !important;
+        font-size: 0.82rem !important;
     }
 }
 
