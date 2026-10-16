@@ -14463,6 +14463,32 @@ body,
         border-radius: 8px !important;
         background: rgba(var(--text-primary-rgb), 0.04) !important;
     }
+
+    /* Mobile Unification: Ensure tool-combo flows naturally within the outer scroller without nested scroll conflicts */
+    #tool-combo,
+    #tool-combo.tool-pane,
+    body.is-mobile #tool-combo {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    #tool-combo .combo-scroll-container,
+    .combo-scroll-container,
+    body.is-mobile .combo-scroll-container {
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        padding-right: 0 !important;
+        padding-bottom: 30px !important;
+        -webkit-overflow-scrolling: auto !important;
+    }
+
+    #tool-combo #combo-scrollbar-track,
+    .combo-scrollbar-track {
+        display: none !important;
+    }
 }
 
 /* Light / White Theme Support for Combo Checker Description Scrolling Boxes */
