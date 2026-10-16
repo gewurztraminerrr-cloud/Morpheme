@@ -3824,11 +3824,12 @@ document.addEventListener('visibilitychange', () => {
         } catch (e) {}
     }
 
-    // Safety check for Full List Modal touch events to ensure fullscreen is cleanly exited when interacting with full list
+    // Safety check for Full List Modal and Combo Checker touch events to ensure fullscreen is cleanly exited when interacting with text inputs to prevent Android virtual keyboard 2s black screen
     ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
             const isFullListModal = e.target && e.target.closest && e.target.closest('#full-list-modal');
-            if (isFullListModal && isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
+            const isComboInput = e.target && (e.target.id === 'combo-input' || e.target.id === 'combo-explorer-filter' || (e.target.closest && e.target.closest('#tool-combo') && e.target.tagName === 'INPUT'));
+            if ((isFullListModal || isComboInput) && isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
                 exitFullscreenForKeyboard();
             }
         }, { passive: true });

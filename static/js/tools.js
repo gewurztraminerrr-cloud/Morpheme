@@ -781,6 +781,49 @@ function setupToolsNavigation() {
 })();
 
 
+function _scrollComboInputIntoView(el) {
+    if (!el || window.innerWidth > 900) return;
+    const toolsContent = document.querySelector('#page-tools .tools-content');
+    if (!toolsContent) return;
+
+    const inputRect = el.getBoundingClientRect();
+    const contentRect = toolsContent.getBoundingClientRect();
+    const offsetTop = (inputRect.top - contentRect.top) + toolsContent.scrollTop;
+
+    toolsContent.scrollTo({
+        top: Math.max(0, offsetTop - 12),
+        behavior: 'smooth'
+    });
+}
+window._scrollComboInputIntoView = _scrollComboInputIntoView;
+
+function _handleComboInputFocus(el) {
+    if (!el || window.innerWidth > 900) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try {
+            if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+        } catch (e) {}
+    }
+    _scrollComboInputIntoView(el);
+    setTimeout(() => {
+        if (document.activeElement === el) {
+            _scrollComboInputIntoView(el);
+        }
+    }, 280);
+}
+window._handleComboInputFocus = _handleComboInputFocus;
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        if (window.innerWidth > 900) return;
+        const active = document.activeElement;
+        if (active && (active.id === 'combo-input' || active.id === 'combo-explorer-filter')) {
+            _scrollComboInputIntoView(active);
+        }
+    });
+}
+
 function setupComboChecker() {
     const searchBtn = document.getElementById('combo-search-btn');
     const input = document.getElementById('combo-input');
@@ -790,6 +833,8 @@ function setupComboChecker() {
     }
 
     if (input) {
+        input.addEventListener('focus', () => _handleComboInputFocus(input));
+        input.addEventListener('pointerdown', () => _handleComboInputFocus(input));
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
         });
@@ -936,6 +981,8 @@ function setupComboExplorer() {
     }
 
     if (filterInput) {
+        filterInput.addEventListener('focus', () => _handleComboInputFocus(filterInput));
+        filterInput.addEventListener('pointerdown', () => _handleComboInputFocus(filterInput));
         filterInput.addEventListener('input', () => {
             applyComboExplorerFilter();
         });
