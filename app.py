@@ -6078,7 +6078,16 @@ def list_rooms():
         except Exception as err:
             print(f"[list_rooms] Error formatting room {room_id}: {err}")
             
-    return jsonify({'rooms': active_rooms})
+    user_id = session.get('user_id')
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id, client_ip=client_ip)
+            
+    return jsonify({
+        'rooms': active_rooms,
+        'timed_out': is_to,
+        'remaining': rem_str if is_to else None,
+        'timeout_reason': reason_val if is_to else None
+    })
 
 @app.route('/api/lobby-stats', methods=['GET'])
 def get_lobby_stats():
@@ -6149,7 +6158,16 @@ def get_lobby_stats():
     for key, user_set in config_humans.items():
         stats[key] = len(user_set)
     
-    return jsonify({'stats': stats})
+    user_id = session.get('user_id')
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id, client_ip=client_ip)
+    
+    return jsonify({
+        'stats': stats,
+        'timed_out': is_to,
+        'remaining': rem_str if is_to else None,
+        'timeout_reason': reason_val if is_to else None
+    })
 
 @app.route('/api/lobby/leave', methods=['POST', 'GET'])
 def leave_lobby():
@@ -6227,8 +6245,19 @@ def send_lobby_chat():
     # Flood & spam check
     is_blocked, spam_msg, is_penalty = check_flood_and_spam(user_id, client_ip, message, context='chat')
     if is_blocked:
+        dur_msg = ""
+        penalty = None
         if is_penalty:
-            apply_automated_penalty(user_id, username, client_ip, reason=spam_msg)
+            penalty = apply_automated_penalty(user_id, username, client_ip, reason=spam_msg)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({
+                'error': f"{spam_msg}.{dur_msg}",
+                'timed_out': True,
+                'remaining': penalty['duration_str'] if penalty else None,
+                'duration_str': penalty['duration_str'] if penalty else None,
+                'timeout_until': penalty['timeout_until'] if penalty else None,
+                'timeout_reason': spam_msg
+            }), 400
         return jsonify({'error': spam_msg}), 400
 
     # AI Content Moderation
@@ -6237,7 +6266,14 @@ def send_lobby_chat():
         reason = f"Inappropriate lobby chat: {mod_res.get('reason')}"
         penalty = apply_automated_penalty(user_id, username, client_ip, reason=reason)
         dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
-        return jsonify({'error': f"Inappropriate content detected: {mod_res.get('reason')}.{dur_msg}"}), 400
+        return jsonify({
+            'error': f"Inappropriate content detected: {mod_res.get('reason')}.{dur_msg}",
+            'timed_out': True,
+            'remaining': penalty['duration_str'] if penalty else None,
+            'duration_str': penalty['duration_str'] if penalty else None,
+            'timeout_until': penalty['timeout_until'] if penalty else None,
+            'timeout_reason': reason
+        }), 400
     
     rating = 1200
     avatar_url = None
@@ -6927,8 +6963,19 @@ def submit_chat_message(room_id):
     if message:
         is_blocked, spam_msg, is_penalty = check_flood_and_spam(user_id, client_ip, message, context='chat')
         if is_blocked:
+            dur_msg = ""
+            penalty = None
             if is_penalty:
-                apply_automated_penalty(user_id, session.get('username'), client_ip, reason=spam_msg)
+                penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=spam_msg)
+                dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+                return jsonify({
+                    'error': f"{spam_msg}.{dur_msg}",
+                    'timed_out': True,
+                    'remaining': penalty['duration_str'] if penalty else None,
+                    'duration_str': penalty['duration_str'] if penalty else None,
+                    'timeout_until': penalty['timeout_until'] if penalty else None,
+                    'timeout_reason': spam_msg
+                }), 400
             return jsonify({'error': spam_msg}), 400
 
     # Run AI Content Moderation on text and image combined
@@ -6942,7 +6989,14 @@ def submit_chat_message(room_id):
         reason = f"Inappropriate room chat: {moderation_res.get('reason')}"
         penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=reason)
         dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
-        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}"}), 400
+        return jsonify({
+            'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}",
+            'timed_out': True,
+            'remaining': penalty['duration_str'] if penalty else None,
+            'duration_str': penalty['duration_str'] if penalty else None,
+            'timeout_until': penalty['timeout_until'] if penalty else None,
+            'timeout_reason': reason
+        }), 400
         
     rating = None
     player = room.get_player(user_id)

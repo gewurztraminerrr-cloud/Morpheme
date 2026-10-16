@@ -941,6 +941,13 @@ async function ejectToLobby(reason = "inactivity") {
             <br><br>
             Please wait until your timeout expires before joining another match!
         `;
+        if (typeof window.lockAllGameRoomsUI === 'function') {
+            window.lockAllGameRoomsUI({
+                timed_out: true,
+                remaining: durationText,
+                reason: reasonText
+            });
+        }
     }
 
     // 4. SHOW MODAL FIRST — over whatever page the user is currently on
@@ -3978,7 +3985,15 @@ async function sendChatMessage() {
         if (!resp.ok) {
             const data = await resp.json().catch(() => ({}));
             console.warn('[Chat] Server returned error sending chat:', resp.status, data);
-            if (data && data.error && window.showToast) {
+            if (data && data.timed_out) {
+                if (typeof window.handleImmediateTimeout === 'function') {
+                    window.handleImmediateTimeout(data);
+                } else if (typeof ejectToLobby === 'function') {
+                    const dur = data.remaining || data.duration_str || '10 minutes';
+                    const r = data.timeout_reason || data.reason || data.error || 'Community rules violation';
+                    ejectToLobby(`timeout:${dur}|${r}`);
+                }
+            } else if (data && data.error && window.showToast) {
                 window.showToast(data.error);
             }
         } else {

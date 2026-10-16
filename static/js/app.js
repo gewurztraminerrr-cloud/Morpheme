@@ -3449,30 +3449,89 @@ window.showPermanentBanModal = function(banReason) {
     }
 };
 
+window.lockAllGameRoomsUI = function(timeoutData) {
+    window._userIsTimedOut = true;
+    window._userTimeoutInfo = timeoutData || { timed_out: true };
+    const durStr = (timeoutData && (timeoutData.remaining || timeoutData.duration_str)) ? ` (${timeoutData.remaining || timeoutData.duration_str} remaining)` : '';
+    const tooltip = `Account Timed Out: Game rooms locked${durStr}`;
+
+    // Target all room cards, buttons, inputs, and play navigation
+    const targets = document.querySelectorAll(
+        '.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn'
+    );
+    targets.forEach(el => {
+        el.classList.add('timeout-locked');
+        el.setAttribute('disabled', 'true');
+        el.style.pointerEvents = 'none';
+        el.style.cursor = 'not-allowed';
+        el.title = tooltip;
+    });
+
+    // Also attach a prominent warning banner inside #dynamic-rooms-container or #rooms-list
+    const container = document.getElementById('dynamic-rooms-container') || document.getElementById('rooms-list');
+    if (container && !document.getElementById('timeout-lobby-banner')) {
+        const banner = document.createElement('div');
+        banner.id = 'timeout-lobby-banner';
+        banner.className = 'timeout-lobby-banner';
+        banner.style.cssText = 'background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin: 8px 0 12px 0; text-align: center; color: #fca5a5; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);';
+        banner.innerHTML = `<i class="fa fa-ban" style="color: #ef4444; font-size: 1.1rem;"></i> Account Restricted: Game rooms are un-pressable while on active timeout${durStr}.`;
+        container.prepend(banner);
+    }
+};
+
+window.clearTimeoutLockUI = function() {
+    window._userIsTimedOut = false;
+    window._userTimeoutInfo = null;
+    const targets = document.querySelectorAll(
+        '.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"], .room-card, .room-item, #dynamic-rooms-container button, .rating-input, #play-btn'
+    );
+    targets.forEach(el => {
+        el.classList.remove('timeout-locked');
+        el.removeAttribute('disabled');
+        el.style.pointerEvents = '';
+        el.style.cursor = '';
+        if (el.title && el.title.startsWith("Account Timed Out")) {
+            el.title = "";
+        }
+    });
+    const banner = document.getElementById('timeout-lobby-banner');
+    if (banner) banner.remove();
+};
+
+window.handleImmediateTimeout = function(timeoutData) {
+    if (!timeoutData) return;
+    window.lockAllGameRoomsUI(timeoutData);
+    
+    // If user is currently in a room, immediately eject to lobby
+    if (window.currentPageId === 'page-play' || window.currentRoomId) {
+        if (typeof window.ejectToLobby === 'function') {
+            const dur = timeoutData.remaining || timeoutData.duration_str || '10 minutes';
+            const r = timeoutData.timeout_reason || timeoutData.reason || timeoutData.error || 'Community rules violation';
+            window.ejectToLobby(`timeout:${dur}|${r}`);
+        } else if (typeof window.showPage === 'function') {
+            window.showPage('page-lobby');
+        }
+    }
+    
+    if (typeof window.showTimeoutBanModal === 'function') {
+        window.showTimeoutBanModal(timeoutData);
+    }
+};
+
 window.checkAccountTimeoutAndAlert = async function() {
     try {
         const toResp = await fetch('/api/user/my_timeout_status?_t=' + Date.now(), { cache: 'no-store' });
         const toData = await toResp.json();
         const isTimedOut = !!(toData && toData.timed_out);
-        window._userTimeoutInfo = isTimedOut ? toData : null;
-        window._userIsTimedOut = isTimedOut;
         
-        const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
-        lobbyButtons.forEach(btn => {
-            if (isTimedOut) {
-                btn.classList.add('timeout-locked');
-                btn.title = "Account Timed Out: Click for details";
-            } else {
-                btn.classList.remove('timeout-locked');
-                if (btn.title === "Account Timed Out: Click for details") btn.title = "";
-            }
-        });
-
         if (isTimedOut) {
+            window.lockAllGameRoomsUI(toData);
             if (typeof window.showTimeoutBanModal === 'function') {
                 window.showTimeoutBanModal(toData);
             }
             return true;
+        } else if (window._userIsTimedOut) {
+            window.clearTimeoutLockUI();
         }
     } catch(e) {}
     return false;

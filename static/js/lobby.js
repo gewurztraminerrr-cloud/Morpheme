@@ -1076,6 +1076,16 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json();
 
+        if (data && data.timed_out) {
+            if (typeof window.lockAllGameRoomsUI === 'function') {
+                window.lockAllGameRoomsUI(data);
+            }
+        } else if (data && data.timed_out === false && window._userIsTimedOut) {
+            if (typeof window.clearTimeoutLockUI === 'function') {
+                window.clearTimeoutLockUI();
+            }
+        }
+
         let rooms = (data && data.rooms) ? data.rooms : [];
 
         // Recalculate average ratings
@@ -1217,9 +1227,12 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const rId = String(room.room_id || '');
                 const rState = String(room.state || 'active');
 
+                const isUserTimedOut = Boolean(window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out));
                 let actionButtons = '';
 
-                if (room._isUserInRoom || (rId && (rId === window.currentRoomId || rId === savedRoomId))) {
+                if (isUserTimedOut) {
+                    actionButtons = `<button class="join-room-btn timeout-locked" disabled style="opacity: 0.4 !important; filter: grayscale(0.85) !important; pointer-events: none !important; cursor: not-allowed !important;" title="Account Timed Out: Game rooms locked">Locked</button>`;
+                } else if (room._isUserInRoom || (rId && (rId === window.currentRoomId || rId === savedRoomId))) {
                     actionButtons = `<button class="join-room-btn return-mode" data-room="${rId}" onclick="handleJoinRoomInline(this)" style="background: #e67e22; color: #ffffff; font-weight: 700;">Return to Game</button>`;
                 } else if (activeTab === 'closed' || !room._isOpen) {
                     // Closed Rooms: ONLY allow Spectate button to be visible
@@ -1241,7 +1254,7 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                 const ratingRangeText = `${roomMin} - ${roomMax < 9999 ? roomMax : '∞'}`;
 
                 return `
-                <div class="room-item">
+                <div class="room-item ${isUserTimedOut ? 'timeout-locked' : ''}">
                     <div class="room-header-row">
                         <div class="room-status ${rState}">${rState.toUpperCase()}</div>
                         <div class="room-meta">
@@ -1259,6 +1272,9 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
 
             if (roomsContainer) {
                 roomsContainer.innerHTML = html;
+                if (window._userIsTimedOut && typeof window.lockAllGameRoomsUI === 'function') {
+                    window.lockAllGameRoomsUI(window._userTimeoutInfo);
+                }
             }
         }
 
@@ -1331,19 +1347,11 @@ window.syncLobbyTimeoutState = async function() {
         const toResp = await fetch(`/api/user/my_timeout_status?_t=${Date.now()}`, { cache: 'no-store' });
         const toData = await toResp.json();
         const isTimedOut = !!(toData && toData.timed_out);
-        window._userTimeoutInfo = isTimedOut ? toData : null;
-        window._userIsTimedOut = isTimedOut;
-        
-        const lobbyButtons = document.querySelectorAll('.game-btn, .confirm-create-room-btn, .join-room-btn, .nav-btn[data-page="play"]');
-        lobbyButtons.forEach(btn => {
-            if (isTimedOut) {
-                btn.classList.add('timeout-locked');
-                btn.title = "Account Timed Out: Click for details";
-            } else {
-                btn.classList.remove('timeout-locked');
-                if (btn.title === "Account Timed Out: Click for details") btn.title = "";
-            }
-        });
+        if (isTimedOut) {
+            if (typeof window.lockAllGameRoomsUI === 'function') window.lockAllGameRoomsUI(toData);
+        } else if (window._userIsTimedOut) {
+            if (typeof window.clearTimeoutLockUI === 'function') window.clearTimeoutLockUI();
+        }
         return isTimedOut;
     } catch(e) {
         return false;
@@ -1365,6 +1373,15 @@ async function fetchLobbyStats(mode = 'all') {
         }
         const response = await fetch(`/api/lobby-stats?_t=${now}`, { cache: 'no-store' });
         const data = await response.json();
+        if (data && data.timed_out) {
+            if (typeof window.lockAllGameRoomsUI === 'function') {
+                window.lockAllGameRoomsUI(data);
+            }
+        } else if (data && data.timed_out === false && window._userIsTimedOut) {
+            if (typeof window.clearTimeoutLockUI === 'function') {
+                window.clearTimeoutLockUI();
+            }
+        }
         if (data && data.stats) {
             updateLobbyButtons(data.stats, mode);
         }
@@ -1445,9 +1462,14 @@ function updateLobbyButtons(stats, mode = 'all') {
             baseText = (game === 'accumulative' || game === 'subanagrams') ? 'Start' : 'Show Rooms';
         }
         const targetText = `${baseText}\n[${count}]`;
-
         if (rawText.trim() !== targetText.trim()) {
             btn.textContent = targetText;
+        }
+
+        if (window._userIsTimedOut) {
+            btn.classList.add('timeout-locked');
+            btn.setAttribute('disabled', 'true');
+            btn.style.pointerEvents = 'none';
         }
     });
 }
@@ -1866,7 +1888,9 @@ async function handleLobbyChatSubmit(e) {
             if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
         } else {
             if (data.timed_out) {
-                if (typeof window.showTimeoutBanModal === 'function') {
+                if (typeof window.handleImmediateTimeout === 'function') {
+                    window.handleImmediateTimeout(data);
+                } else if (typeof window.showTimeoutBanModal === 'function') {
                     window.showTimeoutBanModal(data);
                 } else {
                     alert(data.error || 'You are timed out.');

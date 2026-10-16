@@ -2008,17 +2008,24 @@ body.theme-white .lobby-journey-sticky-header {
 .game-btn.timeout-locked,
 .confirm-create-room-btn.timeout-locked,
 .join-room-btn.timeout-locked,
-.nav-btn[data-page="play"].timeout-locked {
-    opacity: 0.45 !important;
+.nav-btn[data-page="play"].timeout-locked,
+.room-card.timeout-locked,
+.room-item.timeout-locked,
+.timeout-locked {
+    opacity: 0.4 !important;
     filter: grayscale(0.85) !important;
     cursor: not-allowed !important;
+    pointer-events: none !important;
+    user-select: none !important;
 }
 
 .game-btn.timeout-locked:hover,
 .confirm-create-room-btn.timeout-locked:hover,
-.join-room-btn.timeout-locked:hover {
+.join-room-btn.timeout-locked:hover,
+.room-card.timeout-locked:hover {
     transform: none !important;
     box-shadow: none !important;
+    pointer-events: none !important;
 }
 
 /* ============================================================
