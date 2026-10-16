@@ -790,39 +790,16 @@ function setupComboChecker() {
     }
 
     function _handleComboInputFocus(el) {
-        const pane = document.getElementById('tool-combo');
-        if (pane) pane.classList.add('keyboard-open');
-        const scrollBox = document.getElementById('combo-scroll-container');
-        if (scrollBox) scrollBox.classList.add('keyboard-open');
-        const contentCol = document.querySelector('#page-tools .tools-content-column');
-        if (contentCol) contentCol.classList.add('combo-keyboard-active');
-
+        if (!el) return;
         if (window.innerWidth <= 900) {
-            if (el && el.id === 'combo-input') {
-                if (scrollBox) scrollBox.scrollTop = 0;
-                const toolsContent = document.querySelector('#page-tools .tools-content');
-                if (toolsContent) toolsContent.scrollTop = 0;
-            } else if (el && el.id === 'combo-explorer-filter') {
-                const expSec = document.getElementById('combo-explorer-section');
-                if (expSec && scrollBox) {
-                    scrollBox.scrollTop = Math.max(0, expSec.offsetTop - 10);
-                }
-            }
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
         }
     }
 
     function _handleComboInputBlur() {
-        setTimeout(() => {
-            const active = document.activeElement;
-            if (!active || (active.id !== 'combo-input' && active.id !== 'combo-explorer-filter')) {
-                const pane = document.getElementById('tool-combo');
-                if (pane) pane.classList.remove('keyboard-open');
-                const scrollBox = document.getElementById('combo-scroll-container');
-                if (scrollBox) scrollBox.classList.remove('keyboard-open');
-                const contentCol = document.querySelector('#page-tools .tools-content-column');
-                if (contentCol) contentCol.classList.remove('combo-keyboard-active');
-            }
-        }, 120);
+        // No-op: keep layout stable without DOM mutations
     }
 
     window._handleComboInputFocus = _handleComboInputFocus;
@@ -830,7 +807,11 @@ function setupComboChecker() {
 
     if (input) {
         input.addEventListener('focus', () => _handleComboInputFocus(input));
-        input.addEventListener('blur', _handleComboInputBlur);
+        input.addEventListener('click', () => {
+            if (window.innerWidth <= 900 && document.activeElement === input) {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
         });
@@ -979,6 +960,11 @@ function setupComboExplorer() {
     if (filterInput) {
         if (typeof window._handleComboInputFocus === 'function') {
             filterInput.addEventListener('focus', () => window._handleComboInputFocus(filterInput));
+            filterInput.addEventListener('click', () => {
+                if (window.innerWidth <= 900 && document.activeElement === filterInput) {
+                    filterInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
             filterInput.addEventListener('blur', window._handleComboInputBlur);
         }
         filterInput.addEventListener('input', () => {

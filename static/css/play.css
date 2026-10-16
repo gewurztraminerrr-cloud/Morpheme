@@ -14317,7 +14317,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Reduce excess gray space below LIC description */
+/* Reduce excess gray space below LIC description and harmonize light-greyish colors */
 #lic-chart-desc,
 #tool-combo #lic-chart-desc,
 .combo-results-container #lic-chart-desc,
@@ -14327,6 +14327,11 @@ body.is-mobile .page *::-webkit-scrollbar {
     max-height: none !important;
     padding: 6px 14px !important;
     margin-bottom: 4px !important;
+    color: rgba(var(--text-primary-rgb), 0.4) !important;
+}
+
+#mp-explorer-chart-desc {
+    color: rgba(var(--text-primary-rgb), 0.4) !important;
 }
 
 /* Desktop and Laptop Full-Width Stretch & Uniform Look for Combo Checker Sections (MP, MP Word Explorer, LIC) */
@@ -14400,61 +14405,9 @@ body,
         font-size: 16px !important; /* Prevents iOS Safari & Android Chrome auto-zoom and screen flash */
     }
 
-    /* While typing on mobile in Combo Checker, hide tool description header to maximize visible vertical height */
-    #tool-combo.keyboard-open .tool-header,
-    .combo-scroll-container.keyboard-open .tool-header {
-        display: none !important;
-    }
-
-    /* Hide mobile bottom nav while typing in Combo Checker to maximize room above soft keyboard */
-    .tools-content-column:has(#tool-combo.keyboard-open) > .mobile-bottom-nav,
-    .tools-content-column.combo-keyboard-active > .mobile-bottom-nav {
-        display: none !important;
-    }
-
-    /* Pin Combo control panel to the top while typing so textboxes never scroll out of view */
-    #tool-combo.keyboard-open .combo-control-panel,
-    .combo-scroll-container.keyboard-open .combo-control-panel {
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 50 !important;
-        padding: 8px 10px !important;
-        margin-bottom: 10px !important;
-        background: var(--bg-panel, #1e293b) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
-        border-radius: 8px !important;
-    }
-
-    #tool-combo.keyboard-open .combo-control-panel .input-row,
-    .combo-scroll-container.keyboard-open .combo-control-panel .input-row {
-        gap: 6px !important;
-    }
-
-    #tool-combo.keyboard-open #combo-input,
-    .combo-scroll-container.keyboard-open #combo-input {
-        height: 42px !important;
-        min-height: 42px !important;
-        margin-bottom: 0 !important;
-    }
-
-    #tool-combo.keyboard-open #combo-dict,
-    .combo-scroll-container.keyboard-open #combo-dict,
-    #tool-combo.keyboard-open #combo-search-btn,
-    .combo-scroll-container.keyboard-open #combo-search-btn {
-        height: 38px !important;
-        min-height: 38px !important;
-    }
-
-    #tool-combo.keyboard-open #combo-scroll-container,
-    .combo-scroll-container.keyboard-open {
-        padding-bottom: 350px !important;
-    }
-
-    /* Content visibility optimization for Explorer lists on mobile to eliminate GPU reflow blackouts */
-    #combo-explorer-input-list,
-    #combo-explorer-response-list {
-        content-visibility: auto;
-        contain-intrinsic-size: 0 400px;
+    #mp-explorer-chart-desc {
+        color: rgba(var(--text-primary-rgb), 0.4) !important;
+        font-size: 0.8rem !important;
     }
 }
 
