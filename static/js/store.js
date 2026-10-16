@@ -181,9 +181,15 @@
             <h2>Morpheme Store</h2>
             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
             <div class="store-top-banner">
-                <div class="store-last-updated-text">
-                    <span class="store-pulse-dot"></span>
-                    <span>Prices and products last updated on <strong>${catalog.last_catalog_update || 'October 16, 2026'}</strong></span>
+                <div class="store-banner-dates-row">
+                    <div class="store-last-updated-text">
+                        <span class="store-pulse-dot"></span>
+                        <span>Prices and products last updated on <strong>${catalog.last_catalog_update || 'October 16, 2026'}</strong></span>
+                    </div>
+                    <div class="store-next-update-text">
+                        <i class="fas fa-calendar-alt" style="margin-right: 5px; opacity: 0.85;"></i>
+                        <span>Next store update: <strong>${catalog.next_scheduled_update || 'November 16, 2026'}</strong></span>
+                    </div>
                 </div>
                 <div class="store-currency-context">
                     <span class="store-context-label">Prices reflected for:</span>

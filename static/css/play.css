@@ -3155,6 +3155,12 @@ body.theme-white #page-settings .mobile-bottom-nav {
         border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
     }
+    #tool-store .store-banner-dates-row {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
     #tool-store .store-last-updated-text {
         display: flex !important;
         align-items: center !important;
@@ -3163,6 +3169,14 @@ body.theme-white #page-settings .mobile-bottom-nav {
         font-weight: 700 !important;
         color: var(--accent-color, #ff007f) !important;
         letter-spacing: 0.2px !important;
+    }
+    #tool-store .store-next-update-text {
+        display: flex !important;
+        align-items: center !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        opacity: 0.82 !important;
+        margin-left: 16px !important;
     }
     #tool-store .store-pulse-dot {
         width: 8px !important;

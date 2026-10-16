@@ -28,19 +28,30 @@ def save_catalog(data, path=CATALOG_PATH):
         json.dump(data, f, indent=4)
     print(f"Catalog successfully written to {path}")
 
-def run_monthly_refresh(check_only=False, target_date=None):
+def compute_next_month_str(base_date=None):
+    dt = base_date or datetime.now()
+    year = dt.year + (dt.month // 12)
+    month = (dt.month % 12) + 1
+    day = min(dt.day, 28)
+    next_dt = dt.replace(year=year, month=month, day=day)
+    return next_dt.strftime("%B %d, %Y")
+
+def run_monthly_refresh(check_only=False, target_date=None, target_next_date=None):
     catalog = load_catalog()
     today_str = target_date or datetime.now().strftime("%B %d, %Y")
+    next_str = target_next_date or compute_next_month_str()
     
     print(f"=== Morpheme Store Monthly Catalog Maintenance ===")
     print(f"Previous catalog update: {catalog.get('last_catalog_update')}")
     print(f"New catalog update date: {today_str}")
+    print(f"Next scheduled update:   {next_str}")
     print(f"Total products in catalog: {len(catalog.get('products', []))}")
 
     if not check_only:
         catalog['last_catalog_update'] = today_str
+        catalog['next_scheduled_update'] = next_str
         save_catalog(catalog)
-        print("Updated top-level catalog timestamp.")
+        print("Updated top-level catalog timestamps.")
 
     return catalog
 
