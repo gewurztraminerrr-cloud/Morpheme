@@ -53,22 +53,30 @@ def parse_data_url(data_url):
 
 GAME_CONTEXT_WORDS = {'ass', 'bitch', 'tit', 'crap', 'poop', 'fart', 'damn', 'shit', 'bastard', 'twat'}
 GAME_INDICATORS_REGEX = re.compile(
-    r'\b(?:play|played|plays|playing|word|words|valid|validity|score|scored|scoring|points|pts|tiles?|board|turn|move|letters?|dict|dictionary|csw|nwl)\b',
+    r'\b(?:play|played|plays|playing|word|words|valid|validity|score|scored|scoring|points|pts|tiles?|board|turn|letters?|dict|dictionary|csw|nwl|twl|bingo)\b',
     re.IGNORECASE
 )
 TARGETED_ATTACK_REGEX = re.compile(
-    r'\b(?:you|u|ur|your|dumb|stupid|ugly|fat|crazy|moron|loser)\b',
+    r'\b(?:you(?:[\'’]re|re|r)?|u|ur|your|dumb|stupid|ugly|fat|crazy|moron|loser|piece\s+of|sack\s+of|bag\s+of|full\s+of|load\s+of|crock\s+of|eat|suck|sucks|trash|garbage|pathetic|worthless)\b',
     re.IGNORECASE
 )
 
 # Zero-loophole pattern definitions for abuse, profanity, threats, slurs, and spam
 DIRECTED_ABUSE_PATTERNS = [
-    # Fuck variants and directed attacks
+    # Fuck variants and compound attacks
     (re.compile(r'\b(?:go\s+)?f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:ing|er|ers)?\s*(?:you|u|off|yall|ya|yourself|urself)\b', re.IGNORECASE), 'Abusive profanity directed at another player'),
     (re.compile(r'\b(?:what\s+the\s+)?f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:ing)?\s+(?:hell|crap|shit|idiot|loser|moron)\b', re.IGNORECASE), 'Abusive profanity'),
-    (re.compile(r'\bf+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]+\b', re.IGNORECASE), 'Prohibited profanity / vulgarity'),
+    (re.compile(r'\bf+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]+(?:ing|er|ers|ed|s)?\b', re.IGNORECASE), 'Prohibited profanity / vulgarity'),
     (re.compile(r'\bm+o+t+h+e+r+[\W_]*f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:er|ers|ing)?\b', re.IGNORECASE), 'Severe abusive profanity'),
     
+    # Shit variants & compound insults
+    (re.compile(r'\b(?:piece|sack|bag|load|crock|full|eat)\s+of\s+[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+s?\b', re.IGNORECASE), 'Abusive profanity / insult'),
+    (re.compile(r'\beat\s+[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+\b', re.IGNORECASE), 'Abusive hostility / vulgarity'),
+    (re.compile(r'\b[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+(?:head|heads|hole|holes|face|faced|bag|bags)\b', re.IGNORECASE), 'Abusive personal insult'),
+    (re.compile(r'\b(?:bull|horse|ape|bat|chickens?)[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+\b', re.IGNORECASE), 'Profanity / vulgarity'),
+    (re.compile(r'\b[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+(?:ty|tier|tiest|ting)?\b', re.IGNORECASE), 'Profanity / vulgarity'),
+    (re.compile(r'\b[\$s]+[\W_]*[h\#]+[\W_]*[\!1i|]+[\W_]*t+s?\b', re.IGNORECASE), 'Profanity / vulgarity'),
+
     # STFU / GTFO
     (re.compile(r'\b(?:s[\W_]*t[\W_]*f[\W_]*u|shut\s+the\s+f+[\W_]*[u\*@0]+[\W_]*ck\s+up|g[\W_]*t[\W_]*f[\W_]*o)\b', re.IGNORECASE), 'Hostile abusive command'),
     
@@ -81,12 +89,20 @@ DIRECTED_ABUSE_PATTERNS = [
     (re.compile(r'\b(?:w+h+o+r+e+s?|s+l+u+t+s?)\b', re.IGNORECASE), 'Abusive harassment / sexual insult'),
     (re.compile(r'\b(?:r+e+t+a+r+d+(?:ed|s)?)\b', re.IGNORECASE), 'Abusive insult / slur'),
     
-    # Hostile phrases & sexual vulgarity
-    (re.compile(r'\b(?:eat\s+s+h+i+t|eat\s+a\s+d+i+c+k|s+u+c+k\s+(?:my|a|this)\s+(?:d+i+c+k|c+o+c+k|b+a+l+l+s?)|blow\s*job|send\s+nudes|child\s*porn|pedophil)\b', re.IGNORECASE), 'Abusive hostility / sexual harassment'),
-    (re.compile(r'\b(?:a+[\$s]+[\$s]+[\W_]*h+o+l+e+s?|d+i+c+k+h+e+a+d+s?|d+i+p+s+h+i+t+s?|d+o+u+c+h+e+b+a+g+s?)\b', re.IGNORECASE), 'Abusive personal insult'),
-    
+    # Ass variants
+    (re.compile(r'\b(?:a+[\$s]+[\$s]+[\W_]*h+o+l+e+s?|d+u+m+b+a+[\$s]+[\$s]+|j+a+c+k+a+[\$s]+[\$s]+|f+a+t+a+[\$s]+[\$s]+|l+a+z+y+a+[\$s]+[\$s]+|a+[\$s]+[\$s]+(?:hat|wipe|clown)s?)\b', re.IGNORECASE), 'Abusive personal insult'),
+    (re.compile(r'\ba+[\$s]+[\$s]+(?:es)?\b', re.IGNORECASE), 'Profanity / vulgarity'),
+
+    # Dick / Pussy / Genital insults
+    (re.compile(r'\b(?:d+i+c+k+h+e+a+d+s?|d+i+p+s+h+i+t+s?|d+o+u+c+h+e+b+a+g+s?)\b', re.IGNORECASE), 'Abusive personal insult'),
+    (re.compile(r'\b(?:eat\s+a\s+d+i+c+k|s+u+c+k\s+(?:my|a|this)\s+(?:d+i+c+k|c+o+c+k|b+a+l+l+s?)|blow\s*job|send\s+nudes|child\s*porn|pedophil)\b', re.IGNORECASE), 'Abusive hostility / sexual harassment'),
+    (re.compile(r'\b(?:d+i+c+k+s?|p+u+s+s+y|p+u+s+s+i+e+s|c+o+c+k+s?)\b', re.IGNORECASE), 'Profanity / sexual vulgarity'),
+
     # Standalone Bitch (and leetspeak b!tch, b1tch)
-    (re.compile(r'\bb+[\!1i]+t+c+h+(?:es|y)?\b', re.IGNORECASE), 'Abusive language / profanity'),
+    (re.compile(r'\bb+[\!1i]+t+c+h+(?:es|ing|y)?\b', re.IGNORECASE), 'Abusive language / profanity'),
+
+    # Targeted abuse without profanity
+    (re.compile(r'\b(?:you(?:[\'’]re|re)?|u|ur)\s+(?:(?:are|r)\s+)?(?:suck|sucks|trash|garbage|worthless|pathetic|loser|moron|idiot)\b', re.IGNORECASE), 'Directed harassment / personal attack'),
 
     # Commercial spam
     (re.compile(r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/)?[a-zA-Z0-9_\+]+', re.IGNORECASE), 'Commercial spam link (Telegram)'),
@@ -124,17 +140,17 @@ def check_local_moderation(text, is_username=False):
         match = pat.search(t)
         if match:
             matched_str = match.group(0).lower()
+            clean_word = re.sub(r'[\W_0-9]', '', matched_str)
+            # Only exact dictionary game words can qualify for exception (never compound insults or inflections)
+            is_game_word = clean_word in GAME_CONTEXT_WORDS
+            
             # Check Scrabble/Boggle game word exception
-            # ONLY certain dictionary words qualify if used in a game context
-            # 'fuck', 'kys', hate slurs, ad links NEVER qualify
-            is_game_safe = False
-            if matched_str in GAME_CONTEXT_WORDS and GAME_INDICATORS_REGEX.search(t):
+            if is_game_word and GAME_INDICATORS_REGEX.search(t):
                 # Ensure no targeted personal attack pronouns/words are present
                 if not TARGETED_ATTACK_REGEX.search(t):
-                    is_game_safe = True
+                    continue
             
-            if not is_game_safe:
-                return True, reason
+            return True, reason
                 
     return False, ""
 
