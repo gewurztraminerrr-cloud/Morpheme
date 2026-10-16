@@ -78,6 +78,7 @@ window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
 window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
+window.currentUserFlag = localStorage.getItem('morpheme_country_flag') || '';
 
 function setCurrentUser(username, email = null, isGuest = false, isMod = null, rating = null) {
     if (!username) {
@@ -312,6 +313,11 @@ async function loadCurrentUserConfigRatings() {
             if (data.timezone) {
                 window.currentUserTimezone = data.timezone;
                 localStorage.setItem('morpheme_timezone', data.timezone);
+            }
+            if (data.country_flag) {
+                window.currentUserFlag = data.country_flag;
+                try { localStorage.setItem('morpheme_country_flag', data.country_flag); } catch (e) {}
+                if (window.renderMorphemeStore) window.renderMorphemeStore();
             }
             if (data.config_ratings) {
                 window.currentUserConfigRatings = data.config_ratings;

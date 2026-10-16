@@ -2358,6 +2358,10 @@ async function updateFlag(flag) {
         const data = await response.json();
         if (data.error) {
             alert("Failed to update flag: " + data.error);
+        } else {
+            window.currentUserFlag = flag;
+            try { localStorage.setItem('morpheme_country_flag', flag); } catch (e) {}
+            if (window.renderMorphemeStore) window.renderMorphemeStore();
         }
     } catch (err) {
         console.error("Flag update failed:", err);

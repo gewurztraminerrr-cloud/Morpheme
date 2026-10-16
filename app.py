@@ -4133,7 +4133,7 @@ def login():
                 'error': f'This account has been permanently banned from Morpheme.\nReason: {ban_reason}'
             }), 200
 
-        cursor = conn.execute('SELECT id, password_hash, email, username FROM users WHERE username = ? COLLATE NOCASE', (username,))
+        cursor = conn.execute('SELECT id, password_hash, email, username, country_flag FROM users WHERE username = ? COLLATE NOCASE', (username,))
         user = cursor.fetchone()
         
         if not user or not check_password_hash(user[1], password):
@@ -4141,6 +4141,7 @@ def login():
             return jsonify({'success': False, 'error': 'Invalid username or password'}), 200
         
         canonical_username = user[3]
+        country_flag = user[4] or '🏳️'
         auth_token = uuid.uuid4().hex
         client_ip = get_client_ip()
         conn.execute('UPDATE users SET auth_token = ?, last_ip = ? WHERE id = ?', (auth_token, client_ip, user[0]))
@@ -4159,6 +4160,7 @@ def login():
             'user_id': user[0],
             'username': canonical_username, 
             'email': user[2],
+            'country_flag': country_flag,
             'is_mod': is_mod(canonical_username),
             'auth_token': auth_token
         })
@@ -4178,7 +4180,7 @@ def auto_login():
             return jsonify({'success': False, 'error': 'Token missing'}), 200
             
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        cursor = conn.execute('SELECT id, username, email, rating FROM users WHERE auth_token = ?', (token,))
+        cursor = conn.execute('SELECT id, username, email, rating, country_flag FROM users WHERE auth_token = ?', (token,))
         user = cursor.fetchone()
         
         if user:
@@ -4203,11 +4205,27 @@ def auto_login():
             'username': user[1],
             'email': user[2],
             'rating': user[3],
+            'country_flag': user[4] or '🏳️',
             'is_mod': is_mod(user[1])
         })
     except Exception as e:
         print(f"[AutoLoginError] {e}")
         return jsonify({'success': False, 'error': str(e)}), 200
+
+
+@app.route('/api/store/catalog', methods=['GET'])
+def get_store_catalog():
+    try:
+        catalog_path = os.path.join(app.static_folder, 'data', 'store_catalog.json')
+        if os.path.exists(catalog_path):
+            with open(catalog_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            resp = jsonify(data)
+            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            return resp
+        return jsonify({'error': 'Catalog not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def purge_guest_user(user_id, username):
