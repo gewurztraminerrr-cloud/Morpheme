@@ -1,6 +1,6 @@
 print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_04:00 (Tally Hardened)")
 
-from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response, Response
+from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response, Response, has_request_context
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
@@ -47,26 +47,39 @@ def parse_data_url(data_url):
         print(f"[Moderation] Failed to parse data URL: {e}")
         return None, None
 
+LOCAL_SEVERE_PATTERNS = [
+    r'\b(?:nigg(?:er|a|ers)|faggot|kike|chink|gook|tranny|cunt)\b',
+    r'\b(?:child\s*porn|pedophil)\b',
+    r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/)?[a-zA-Z0-9_\+]+',
+    r'(?:https?://)?(?:chat\.)?whatsapp\.com/[a-zA-Z0-9]+',
+    r'(?:https?://)?discord(?:\.gg|app\.com/invite)/[a-zA-Z0-9]+',
+    r'\b(?:free\s+crypto|airdrop\s+usdt|claim\s+usdt|whatsapp\s+\+?[0-9]{7,}|call\s+girl|escort\s+service)\b',
+]
+
 def moderate_content(text=None, image_bytes=None, mime_type=None):
     """
-    Moderates content using Google Gemini 1.5 Flash API.
+    Moderates content using local fast heuristics + Google Gemini 1.5 Flash API.
     Supports text and/or image bytes.
     Returns: {"inappropriate": True/False, "reason": "..."}
     """
+    # 1. Local fast-path heuristic check on text
+    if text:
+        text_str = str(text)
+        for pat in LOCAL_SEVERE_PATTERNS:
+            if re.search(pat, text_str, re.IGNORECASE):
+                print(f"[Moderation] Local heuristic matched: {pat}")
+                return {"inappropriate": True, "reason": "Prohibited abusive language, hate speech, or commercial ad link"}
+
     api_key = os.environ.get('GEMINI_API_KEY')
     if not api_key:
-        # Fail-open if no key is configured (ideal for local/default setup)
-        print("[Moderation] WARNING: GEMINI_API_KEY not set. Moderation bypassed (Fail-Open).")
+        # If no key is configured, rely on local heuristics
         return {"inappropriate": False, "reason": "Service unconfigured"}
 
-    # Determine url
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-    
     parts = []
     
     # Base64-encode image if provided
     if image_bytes:
-        # Ensure correct mime-type format
         if not mime_type:
             mime_type = "image/jpeg"
         elif not mime_type.startswith("image/"):
@@ -80,20 +93,28 @@ def moderate_content(text=None, image_bytes=None, mime_type=None):
             }
         })
         
-    # Append prompt
     prompt = (
-        "You are a content moderation system. Analyze if the provided content (text and/or image) "
-        "is inappropriate, X-rated, sexually explicit, highly offensive, or harmful.\n"
+        "You are an automated content moderation AI for Morpheme, an online competitive word game platform (like Scrabble and Boggle).\n"
+        "Your task is to analyze the provided text and/or image and determine if it violates community rules.\n\n"
+        "FLAG AS INAPPROPRIATE (inappropriate: true) IF:\n"
+        "1. X-rated, sexually explicit, pornographic, or erotic content (in photos or text).\n"
+        "2. Targeted personal abuse, harassment, slurs, hate speech, threats, or severe vulgarity directed at individuals.\n"
+        "3. Commercial advertisements, spam link dumps, crypto/gambling promotions, or WhatsApp/Telegram/Discord solicitation.\n"
+        "4. Offensive, abusive, or sexually explicit usernames.\n\n"
+        "CRITICAL WORD-GAME EXCEPTION (inappropriate: false):\n"
+        "Morpheme is a competitive word game. Players routinely find, discuss, and play valid dictionary words on the board "
+        "(such as ASS, TIT, CRAP, BITCH, POOP, FART, DAMN). Mentioning, celebrating, or analyzing valid dictionary words in "
+        "the context of board tiles, words found, or game rules is FULLY PERMITTED and MUST NOT be flagged. "
+        "Only flag if the words are weaponized as direct personal attacks, harassment, or explicit sexual advances.\n\n"
     )
     if text:
-        prompt += f"Text to analyze: {text}\n"
+        prompt += f"Content to analyze:\n{text}\n\n"
         
     prompt += (
         "Respond with a JSON object containing exactly two fields: "
         "'inappropriate' (boolean) and 'reason' (string explaining why it was flagged, or empty if safe). "
-        "Do not include any markdown formatting or extra text in your response, just the raw JSON."
+        "Do not include any markdown formatting or extra text, just raw JSON."
     )
-    
     parts.append({"text": prompt})
     
     payload = {
@@ -109,12 +130,9 @@ def moderate_content(text=None, image_bytes=None, mime_type=None):
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code != 200:
             print(f"[Moderation] API Error: {response.status_code} - {response.text}")
-            # Fail-open on API failure to prevent app disruption
             return {"inappropriate": False, "reason": f"API error: {response.status_code}"}
             
         res_data = response.json()
-        
-        # Parse output from candidate content
         candidates = res_data.get('candidates', [])
         if not candidates:
             return {"inappropriate": False, "reason": "No candidates returned"}
@@ -122,7 +140,6 @@ def moderate_content(text=None, image_bytes=None, mime_type=None):
         text_content = candidates[0].get('content', {}).get('parts', [{}])[0].get('text', '').strip()
         parsed_res = json.loads(text_content)
         
-        # Normalize keys/values
         is_inappropriate = bool(parsed_res.get('inappropriate', False))
         reason = str(parsed_res.get('reason', ''))
         
@@ -131,7 +148,6 @@ def moderate_content(text=None, image_bytes=None, mime_type=None):
         
     except Exception as e:
         print(f"[Moderation] Error during API call: {e}")
-        # Fail-open
         return {"inappropriate": False, "reason": f"Error: {e}"}
 
 app = Flask(__name__, static_folder='static')
@@ -2119,48 +2135,292 @@ def parse_timeout_datetime(dt_str):
     return None
 
 
-def check_user_timeout(user_id_or_name):
+IP_TIMEOUTS_CACHE = {} # ip -> (timeout_until_dt, offense_count, reason)
+
+def reload_ip_timeouts():
+    """Reloads active temporary IP timeouts from database into in-memory structure."""
+    global IP_TIMEOUTS_CACHE
+    try:
+        conn = get_db_connection(DB_PATH, timeout=15.0)
+        conn.row_factory = sqlite3.Row
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        rows = conn.execute("SELECT ip_address, timeout_until, timeout_offense_count, timeout_reason FROM ip_timeouts").fetchall()
+        new_cache = {}
+        for r in rows:
+            ip = (r['ip_address'] or '').strip()
+            if ip and r['timeout_until']:
+                dt = parse_timeout_datetime(r['timeout_until'])
+                if dt and dt > now_utc:
+                    new_cache[ip] = (dt, r['timeout_offense_count'] or 1, r['timeout_reason'] or 'Temporary restriction')
+        IP_TIMEOUTS_CACHE = new_cache
+        conn.close()
+        print(f"[IP_TIMEOUTS] Loaded {len(IP_TIMEOUTS_CACHE)} active IP timeout(s) into cache.")
+    except Exception as e:
+        print(f"[IP_TIMEOUTS] Error reloading IP timeouts: {e}")
+
+
+def check_user_timeout(user_id_or_name, client_ip=None):
     """
-    Checks if a user is currently under timeout.
+    Checks if a user or client IP is currently under timeout.
     Returns (is_timed_out, remaining_seconds, remaining_str, timeout_until_str, offense_count, timeout_reason)
     """
-    if not user_id_or_name:
+    if client_ip is None and has_request_context():
+        try:
+            client_ip = get_client_ip()
+        except Exception:
+            client_ip = None
+
+    if not user_id_or_name and not client_ip:
         return False, 0, "", None, 0, None
-    if str(user_id_or_name).strip().lower() in ('jeffb', 'jeffbabiak'):
+    if user_id_or_name and str(user_id_or_name).strip().lower() in ('jeffb', 'jeffbabiak'):
         return False, 0, "", None, 0, None
+
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+
+    # 1. Check in-memory IP timeouts cache first
+    if client_ip and client_ip in IP_TIMEOUTS_CACHE:
+        dt_until, off_count, reason_val = IP_TIMEOUTS_CACHE[client_ip]
+        diff_sec = (dt_until - now_utc).total_seconds()
+        if diff_sec > 0:
+            mins = max(1, int(math.ceil(diff_sec / 60.0)))
+            rem_str = format_duration_string(mins)
+            return True, diff_sec, rem_str, dt_until.strftime('%Y-%m-%d %H:%M:%S'), off_count, reason_val
+        else:
+            IP_TIMEOUTS_CACHE.pop(client_ip, None)
+
+    # 2. Check DB
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn = get_db_connection(DB_PATH, timeout=30.0)
         conn.row_factory = sqlite3.Row
         try:
-            if str(user_id_or_name).isdigit():
-                row = conn.execute(
-                    "SELECT id, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ? OR username = ? COLLATE NOCASE",
-                    (int(user_id_or_name), str(user_id_or_name))
-                ).fetchone()
-            else:
-                row = conn.execute(
-                    "SELECT id, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE username = ? COLLATE NOCASE",
-                    (str(user_id_or_name),)
-                ).fetchone()
+            row = None
+            if user_id_or_name:
+                if str(user_id_or_name).isdigit():
+                    row = conn.execute(
+                        "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE id = ? OR username = ? COLLATE NOCASE",
+                        (int(user_id_or_name), str(user_id_or_name))
+                    ).fetchone()
+                else:
+                    row = conn.execute(
+                        "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason FROM users WHERE username = ? COLLATE NOCASE",
+                        (str(user_id_or_name),)
+                    ).fetchone()
 
-            if not row or not row['timeout_until']:
-                return False, 0, "", None, (row['timeout_offense_count'] if row else 0), None
-            
-            timeout_until_str = row['timeout_until']
-            dt_until = parse_timeout_datetime(timeout_until_str)
-            if dt_until:
-                now_utc = datetime.datetime.now(datetime.timezone.utc)
-                diff_sec = (dt_until - now_utc).total_seconds()
-                if diff_sec > 0:
-                    mins = max(1, int(math.ceil(diff_sec / 60.0)))
-                    rem_str = format_duration_string(mins)
-                    reason_val = row['timeout_reason'] or 'Temporary restriction'
-                    return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0), reason_val
+            if row and row['timeout_until']:
+                timeout_until_str = row['timeout_until']
+                dt_until = parse_timeout_datetime(timeout_until_str)
+                if dt_until:
+                    diff_sec = (dt_until - now_utc).total_seconds()
+                    if diff_sec > 0:
+                        mins = max(1, int(math.ceil(diff_sec / 60.0)))
+                        rem_str = format_duration_string(mins)
+                        reason_val = row['timeout_reason'] or 'Temporary restriction'
+                        return True, diff_sec, rem_str, timeout_until_str, (row['timeout_offense_count'] or 0), reason_val
+
+            # Also check ip_timeouts table if client_ip was passed
+            if client_ip:
+                ip_row = conn.execute("SELECT timeout_until, timeout_offense_count, timeout_reason FROM ip_timeouts WHERE ip_address = ?", (client_ip,)).fetchone()
+                if ip_row and ip_row['timeout_until']:
+                    dt_until = parse_timeout_datetime(ip_row['timeout_until'])
+                    if dt_until:
+                        diff_sec = (dt_until - now_utc).total_seconds()
+                        if diff_sec > 0:
+                            mins = max(1, int(math.ceil(diff_sec / 60.0)))
+                            rem_str = format_duration_string(mins)
+                            reason_val = ip_row['timeout_reason'] or 'Temporary restriction'
+                            IP_TIMEOUTS_CACHE[client_ip] = (dt_until, ip_row['timeout_offense_count'] or 1, reason_val)
+                            return True, diff_sec, rem_str, ip_row['timeout_until'], (ip_row['timeout_offense_count'] or 0), reason_val
         finally:
             conn.close()
     except Exception as e:
         print(f"[check_user_timeout] DB error: {e}")
     return False, 0, "", None, 0, None
+
+
+def apply_automated_penalty(user_id_or_name, username=None, client_ip=None, reason="Violation of community rules", conn=None):
+    """
+    Applies an automated escalating penalty (10m * 2^(offenses-1)) with 24-hour decay.
+    Updates users table, records IP timeout, and evicts from active rooms.
+    """
+    check_name = str(username or user_id_or_name or '').strip().lower()
+    if check_name in ('jeffb', 'jeffbabiak'):
+        return None
+
+    if client_ip is None and has_request_context():
+        try:
+            client_ip = get_client_ip()
+        except Exception:
+            client_ip = None
+
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection(DB_PATH, timeout=30.0)
+        close_conn = True
+    conn.row_factory = sqlite3.Row
+
+    try:
+        user_row = None
+        user_id = None
+        actual_username = username or str(user_id_or_name or 'Player')
+        
+        if user_id_or_name:
+            if str(user_id_or_name).isdigit():
+                user_row = conn.execute(
+                    "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at FROM users WHERE id = ? OR username = ? COLLATE NOCASE",
+                    (int(user_id_or_name), str(user_id_or_name))
+                ).fetchone()
+            else:
+                user_row = conn.execute(
+                    "SELECT id, username, timeout_until, timeout_offense_count, last_timeout_at FROM users WHERE username = ? COLLATE NOCASE",
+                    (str(user_id_or_name),)
+                ).fetchone()
+
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        curr_offenses = 0
+        last_to_str = None
+        
+        if user_row:
+            user_id = user_row['id']
+            actual_username = user_row['username']
+            curr_offenses = user_row['timeout_offense_count'] or 0
+            last_to_str = user_row['last_timeout_at']
+
+        if client_ip and curr_offenses == 0:
+            ip_row = conn.execute("SELECT timeout_offense_count, last_timeout_at FROM ip_timeouts WHERE ip_address = ?", (client_ip,)).fetchone()
+            if ip_row:
+                curr_offenses = ip_row['timeout_offense_count'] or 0
+                if not last_to_str:
+                    last_to_str = ip_row['last_timeout_at']
+
+        # Calculate decay: 1 offense level reduction per 24 hours of good behavior
+        if last_to_str:
+            last_dt = parse_timeout_datetime(last_to_str)
+            if last_dt:
+                elapsed_hours = (now_utc - last_dt).total_seconds() / 3600.0
+                decay_levels = int(elapsed_hours // 24)
+                curr_offenses = max(0, curr_offenses - decay_levels)
+
+        new_offenses = curr_offenses + 1
+        duration_minutes = 10 * (2 ** (new_offenses - 1))
+        # Cap duration at 7 days (10,080 minutes)
+        duration_minutes = min(10080, duration_minutes)
+
+        duration_str = format_duration_string(duration_minutes)
+        timeout_until_dt = now_utc + datetime.timedelta(minutes=duration_minutes)
+        timeout_until_str = timeout_until_dt.strftime('%Y-%m-%d %H:%M:%S')
+        now_str = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Update users table if user_id exists
+        if user_id:
+            conn.execute("""
+                UPDATE users 
+                SET timeout_until = ?, timeout_offense_count = ?, last_timeout_at = ?, timeout_reason = ?
+                WHERE id = ?
+            """, (timeout_until_str, new_offenses, now_str, reason, user_id))
+
+        # Record IP timeout
+        if client_ip:
+            conn.execute("""
+                INSERT OR REPLACE INTO ip_timeouts (ip_address, timeout_until, timeout_offense_count, last_timeout_at, timeout_reason)
+                VALUES (?, ?, ?, ?, ?)
+            """, (client_ip, timeout_until_str, new_offenses, now_str, reason))
+            IP_TIMEOUTS_CACHE[client_ip] = (timeout_until_dt, new_offenses, reason)
+
+        conn.commit()
+
+        # Evict user from active game rooms
+        if user_id:
+            for room in list(room_manager.rooms.values()):
+                if any(str(p.user_id) == str(user_id) for p in room.players):
+                    room.add_chat_message("System", f"{actual_username} has been placed on timeout ({duration_str}) for community rule violations.", is_system=True)
+                    if not hasattr(room, 'evicted_users'):
+                        room.evicted_users = {}
+                    room.evicted_users[str(user_id)] = f"timeout:{duration_str}|{reason}"
+                    room.remove_player(user_id, force=True)
+            cleanup_user_rooms_entirely(user_id)
+
+        print(f"[Automated Penalty] Issued to {actual_username} (IP: {client_ip}) for {duration_str} (Offense #{new_offenses}). Reason: {reason}")
+        return {
+            'timed_out': True,
+            'duration_minutes': duration_minutes,
+            'duration_str': duration_str,
+            'offense_count': new_offenses,
+            'timeout_until': timeout_until_str,
+            'reason': reason
+        }
+    except Exception as e:
+        print(f"[apply_automated_penalty] Error: {e}")
+        return None
+    finally:
+        if close_conn:
+            conn.close()
+
+
+_FLOOD_TIMESTAMPS = {} # key -> deque([t1, t2, ...], maxlen=10)
+_RECENT_CHAT_HASHES = {} # key -> deque([(t, text_hash), ...], maxlen=10)
+_FORUM_RECENT_HASHES = {} # key -> deque([(t, text_hash), ...], maxlen=10)
+
+def check_flood_and_spam(user_id, client_ip, text, context='chat'):
+    """
+    Checks for rapid flooding, duplicate message spam, and commercial ad patterns.
+    Returns: (is_blocked, error_message, is_punishable_offense)
+    """
+    key = str(user_id) if user_id else str(client_ip or 'unknown')
+    now = time.time()
+
+    # 1. Commercial Ad / Scam Link regex detection
+    ad_patterns = [
+        r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/)?[a-zA-Z0-9_\+]+',
+        r'(?:https?://)?(?:chat\.)?whatsapp\.com/[a-zA-Z0-9]+',
+        r'(?:https?://)?discord(?:\.gg|app\.com/invite)/[a-zA-Z0-9]+',
+        r'\b(?:free\s+crypto|airdrop\s+usdt|claim\s+usdt|whatsapp\s+\+?[0-9]{7,}|call\s+girl|escort\s+service)\b',
+    ]
+    for pat in ad_patterns:
+        if re.search(pat, text, re.IGNORECASE):
+            return True, "Commercial advertisements, offsite invite links, and spam promotions are strictly prohibited.", True
+
+    # 2. Duplicate message check
+    import hashlib
+    norm_text = re.sub(r'\s+', ' ', text.strip().lower())
+    if len(norm_text) >= 3:
+        msg_hash = hashlib.md5(norm_text.encode('utf-8')).hexdigest()
+        
+        if context == 'chat':
+            if key not in _RECENT_CHAT_HASHES:
+                from collections import deque
+                _RECENT_CHAT_HASHES[key] = deque(maxlen=10)
+            hq = _RECENT_CHAT_HASHES[key]
+            recent_matches = [t for (t, h) in hq if h == msg_hash and (now - t) < 120]
+            hq.append((now, msg_hash))
+            if len(recent_matches) >= 3:
+                # 4th attempt: punishable offense
+                return True, "Automated penalty: Repeated spam messages.", True
+            elif len(recent_matches) >= 2:
+                # 3rd attempt: warning block
+                return True, "Please do not repeat the same message.", False
+
+        elif context in ('forum', 'profile'):
+            if key not in _FORUM_RECENT_HASHES:
+                from collections import deque
+                _FORUM_RECENT_HASHES[key] = deque(maxlen=10)
+            hq = _FORUM_RECENT_HASHES[key]
+            recent_matches = [t for (t, h) in hq if h == msg_hash and (now - t) < 300]
+            hq.append((now, msg_hash))
+            if len(recent_matches) >= 1:
+                return True, "Duplicate post detected. Please do not submit identical threads, comments, or bios.", False
+
+    # 3. Rapid Flood check (only for chat)
+    if context == 'chat':
+        if key not in _FLOOD_TIMESTAMPS:
+            from collections import deque
+            _FLOOD_TIMESTAMPS[key] = deque(maxlen=10)
+        q = _FLOOD_TIMESTAMPS[key]
+        q.append(now)
+        # If > 4 messages within 3.0 seconds -> rate limit
+        if len(q) >= 4 and (now - q[-4]) < 3.0:
+            return True, "You are sending messages too fast. Please wait a moment.", False
+
+    return False, "", False
 
 
 @app.route('/api/mods/timeout_user', methods=['POST'])
@@ -2830,9 +3090,23 @@ def init_db():
         try:
             conn.execute(f'ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}')
             conn.commit()
-            print(f"Migrated DB: Added {col_def[0]} column to users")
         except sqlite3.OperationalError:
             pass
+
+    # MIGRATION: Add ip_timeouts table
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS ip_timeouts (
+                ip_address TEXT PRIMARY KEY,
+                timeout_until DATETIME NOT NULL,
+                timeout_offense_count INTEGER DEFAULT 1,
+                last_timeout_at DATETIME NOT NULL,
+                timeout_reason TEXT
+            )
+        ''')
+        conn.commit()
+    except Exception as e:
+        print(f"[init_db] Error creating ip_timeouts table: {e}")
 
     # MIGRATION: Add user_rating to round_history
     try:
@@ -3302,6 +3576,7 @@ def init_db():
 init_db()
 init_db_indexes()
 reload_banned_ips()
+reload_ip_timeouts()
 
 # Configuration for Uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/avatars')
@@ -3936,10 +4211,21 @@ def register():
     if not _validate_captcha(captcha_id, captcha_val):
         return jsonify({'error': 'Incorrect or expired CAPTCHA. Please click on the CAPTCHA image to refresh and try again.'}), 400
         
+    # Check if client IP is currently under timeout
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(None, client_ip=client_ip)
+    if is_to:
+        return jsonify({'error': f'Your IP address is currently restricted from creating accounts for another {rem_str}.\nReason: {reason_val}'}), 403
+
     # Username validation
     import re
     if not re.match(r'^[a-zA-Z0-9_]{1,16}$', username):
         return jsonify({'error': 'A maximum of 16 characters are allowed for a username (letters, numbers, underscores only)'}), 400
+
+    # AI Username Moderation (prohibiting slurs, X-rated, and abusive handles)
+    mod_res = moderate_content(text=f"Username to evaluate: {username}")
+    if mod_res.get("inappropriate"):
+        return jsonify({'error': f"Inappropriate username: {mod_res.get('reason')}. Please choose a clean, friendly username."}), 400
 
     if not email:
         return jsonify({'error': 'Email is required'}), 400
@@ -4519,6 +4805,12 @@ def update_profile():
     if session.get('is_guest'):
         return jsonify({'error': 'Guest accounts cannot update profile'}), 403
         
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session['user_id'], client_ip=client_ip)
+    if is_to:
+        r_text = reason_val or 'Temporary restriction'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str}), 403
+
     data = request.get_json()
     fields = ['full_name', 'age', 'gender', 'location', 'quote', 'description', 'proof_url', 'timezone']
     updates = {k: v for k, v in data.items() if k in fields}
@@ -4540,6 +4832,28 @@ def update_profile():
     for k in ['location', 'proof_url', 'timezone']:
         if k in updates:
             updates[k] = str(updates[k])[:100]
+
+    # Collect all user-supplied profile text for spam and AI content moderation
+    profile_text_parts = []
+    for f in ['full_name', 'quote', 'description', 'location']:
+        val = str(updates.get(f) or '').strip()
+        if val:
+            profile_text_parts.append(f"{f}: {val}")
+
+    if profile_text_parts:
+        text_to_check = "\n".join(profile_text_parts)
+        is_blocked, spam_msg, is_penalty = check_flood_and_spam(session['user_id'], client_ip, text_to_check, context='profile')
+        if is_blocked:
+            if is_penalty:
+                apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=spam_msg)
+            return jsonify({'error': spam_msg}), 400
+
+        mod_res = moderate_content(text=text_to_check)
+        if mod_res.get("inappropriate"):
+            reason = f"Profile text violation: {mod_res.get('reason')}"
+            penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({'error': f"Inappropriate profile content: {mod_res.get('reason')}.{dur_msg}"}), 400
         
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -5185,6 +5499,12 @@ def upload_avatar():
     if session.get('is_guest'):
         return jsonify({'error': 'Guest accounts cannot upload avatars'}), 403
         
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session['user_id'], client_ip=client_ip)
+    if is_to:
+        r_text = reason_val or 'Temporary restriction'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str}), 403
+
     if 'avatar' not in request.files:
         return jsonify({'error': 'No file part'}), 400
         
@@ -5206,7 +5526,9 @@ def upload_avatar():
             # Run AI moderation check
             moderation_res = moderate_content(image_bytes=file_bytes, mime_type=ext)
             if moderation_res.get("inappropriate"):
-                return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+                penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=f"Inappropriate avatar image: {moderation_res.get('reason')}")
+                dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+                return jsonify({'error': f"Inappropriate content detected in avatar: {moderation_res.get('reason')}.{dur_msg}"}), 400
                 
             # Generate safe filename: user_id_timestamp.ext
             new_filename = f"user_{session['user_id']}_{int(time.time())}.{ext}"
@@ -5801,12 +6123,14 @@ def send_lobby_chat():
     username = session.get('username') or 'Guest'
     is_guest = session.get('is_guest', False)
     
+    client_ip = get_client_ip(request)
+
     # Check user discipline / timeout
-    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id or username)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id or username, client_ip=client_ip)
     if is_to:
         r_text = reason_val or 'Moderator timeout'
         return jsonify({
-            'error': f'You are temporarily timed out from chatting for another {rem_str}.',
+            'error': f'You are temporarily timed out from chatting for another {rem_str}.\nReason: {r_text}',
             'timed_out': True,
             'remaining': rem_str,
             'reason': f'timeout:{rem_str}|{r_text}'
@@ -5818,6 +6142,21 @@ def send_lobby_chat():
         return jsonify({'error': 'Message cannot be empty'}), 400
     
     message = message[:1000]
+
+    # Flood & spam check
+    is_blocked, spam_msg, is_penalty = check_flood_and_spam(user_id, client_ip, message, context='chat')
+    if is_blocked:
+        if is_penalty:
+            apply_automated_penalty(user_id, username, client_ip, reason=spam_msg)
+        return jsonify({'error': spam_msg}), 400
+
+    # AI Content Moderation
+    mod_res = moderate_content(text=message)
+    if mod_res.get("inappropriate"):
+        reason = f"Inappropriate lobby chat: {mod_res.get('reason')}"
+        penalty = apply_automated_penalty(user_id, username, client_ip, reason=reason)
+        dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+        return jsonify({'error': f"Inappropriate content detected: {mod_res.get('reason')}.{dur_msg}"}), 400
     
     rating = 1200
     avatar_url = None
@@ -6491,6 +6830,26 @@ def submit_chat_message(room_id):
     if image and len(image) > 2 * 1024 * 1024:
         return jsonify({'error': 'Image too large (max 1.5MB)'}), 400
         
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    client_ip = get_client_ip(request)
+
+    # Timeout check
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id, client_ip=client_ip)
+    if is_to:
+        r_text = reason_val or 'Moderator timeout'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str, 'timeout_reason': r_text, 'reason': f'timeout:{rem_str}|{r_text}'}), 403
+
+    # Flood & spam check on text
+    if message:
+        is_blocked, spam_msg, is_penalty = check_flood_and_spam(user_id, client_ip, message, context='chat')
+        if is_blocked:
+            if is_penalty:
+                apply_automated_penalty(user_id, session.get('username'), client_ip, reason=spam_msg)
+            return jsonify({'error': spam_msg}), 400
+
     # Run AI Content Moderation on text and image combined
     image_bytes = None
     mime_type = None
@@ -6499,17 +6858,10 @@ def submit_chat_message(room_id):
 
     moderation_res = moderate_content(text=message, image_bytes=image_bytes, mime_type=mime_type)
     if moderation_res.get("inappropriate"):
-        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
-        
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Not authenticated'}), 401
-        
-    # Timeout check
-    is_to, _, rem_str, _, _, reason_val = check_user_timeout(user_id)
-    if is_to:
-        r_text = reason_val or 'Moderator timeout'
-        return jsonify({'error': f'You are currently timed out for another {rem_str}.', 'timed_out': True, 'remaining': rem_str, 'timeout_reason': r_text, 'reason': f'timeout:{rem_str}|{r_text}'}), 403
+        reason = f"Inappropriate room chat: {moderation_res.get('reason')}"
+        penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=reason)
+        dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+        return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}"}), 400
         
     rating = None
     player = room.get_player(user_id)
@@ -10406,6 +10758,12 @@ def create_forum_post():
     if 'user_id' not in session or session.get('is_guest'):
         return jsonify({'error': 'Forum access is restricted to registered members only. Please sign up or login to participate!'}), 403
         
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session['user_id'], client_ip=client_ip)
+    if is_to:
+        r_text = reason_val or 'Temporary restriction'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str}), 403
+
     data = request.form
     category_id = data.get('category_id')
     title = (data.get('title') or '').strip()[:100]
@@ -10413,6 +10771,15 @@ def create_forum_post():
     
     if not category_id or not title or not content:
         return jsonify({'error': 'Missing fields'}), 400
+
+    text_to_moderate = f"Title: {title}\nContent: {content}"
+
+    # Anti-Spam & Duplicate Check
+    is_blocked, spam_msg, is_penalty = check_flood_and_spam(session['user_id'], client_ip, text_to_moderate, context='forum')
+    if is_blocked:
+        if is_penalty:
+            apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=spam_msg)
+        return jsonify({'error': spam_msg}), 400
         
     upload_files = []
     for key in ['images', 'image', 'images[]']:
@@ -10423,7 +10790,6 @@ def create_forum_post():
     upload_files = upload_files[:6]
 
     saved_urls = []
-    text_to_moderate = f"Title: {title}\nContent: {content}"
     
     for idx, file in enumerate(upload_files):
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
@@ -10433,7 +10799,10 @@ def create_forum_post():
         mod_text = text_to_moderate if idx == 0 else ""
         moderation_res = moderate_content(text=mod_text, image_bytes=image_bytes, mime_type=ext)
         if moderation_res.get("inappropriate"):
-            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}"}), 400
+            reason = f"Inappropriate forum post image: {moderation_res.get('reason')}"
+            penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}.{dur_msg}"}), 400
 
         import uuid
         filename = f"{uuid.uuid4()}.{ext}"
@@ -10443,7 +10812,10 @@ def create_forum_post():
     if not upload_files:
         moderation_res = moderate_content(text=text_to_moderate)
         if moderation_res.get("inappropriate"):
-            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+            reason = f"Inappropriate forum post: {moderation_res.get('reason')}"
+            penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}"}), 400
 
     image_url_db = json.dumps(saved_urls) if saved_urls else None
 
@@ -10492,12 +10864,25 @@ def create_forum_comment():
     if 'user_id' not in session or session.get('is_guest'):
         return jsonify({'error': 'Registered users only'}), 403
         
+    client_ip = get_client_ip(request)
+    is_to, _, rem_str, _, _, reason_val = check_user_timeout(session['user_id'], client_ip=client_ip)
+    if is_to:
+        r_text = reason_val or 'Temporary restriction'
+        return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str}), 403
+
     data = request.form
     post_id = data.get('post_id')
     content = (data.get('content') or '').strip()[:2000]
     
     if not post_id or not content:
         return jsonify({'error': 'Missing fields'}), 400
+
+    # Anti-Spam & Duplicate Check
+    is_blocked, spam_msg, is_penalty = check_flood_and_spam(session['user_id'], client_ip, content, context='forum')
+    if is_blocked:
+        if is_penalty:
+            apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=spam_msg)
+        return jsonify({'error': spam_msg}), 400
         
     upload_files = []
     for key in ['images', 'image', 'images[]']:
@@ -10516,7 +10901,10 @@ def create_forum_comment():
         mod_text = content if idx == 0 else ""
         moderation_res = moderate_content(text=mod_text, image_bytes=image_bytes, mime_type=ext)
         if moderation_res.get("inappropriate"):
-            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}"}), 400
+            reason = f"Inappropriate forum reply image: {moderation_res.get('reason')}"
+            penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({'error': f"Inappropriate content detected in image #{idx+1}: {moderation_res.get('reason')}.{dur_msg}"}), 400
 
         import uuid
         filename = f"reply_{uuid.uuid4()}.{ext}"
@@ -10526,7 +10914,10 @@ def create_forum_comment():
     if not upload_files:
         moderation_res = moderate_content(text=content)
         if moderation_res.get("inappropriate"):
-            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}"}), 400
+            reason = f"Inappropriate forum reply: {moderation_res.get('reason')}"
+            penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}"}), 400
 
     image_url_db = json.dumps(saved_urls) if saved_urls else None
 
