@@ -917,7 +917,7 @@ body[class*="theme-light-"] .forum-view-whole-msg-btn:hover,
 .forum-reaction-btn.own-post-reaction,
 .forum-reaction-btn.disabled {
     cursor: not-allowed !important;
-    opacity: 0.55 !important;
+    opacity: 1 !important;
 }
 
 .forum-reaction-btn.own-post-reaction:hover,
@@ -939,6 +939,16 @@ body[class*="theme-light-"] .forum-view-whole-msg-btn:hover,
 [class*="theme-white"] .forum-reaction-btn:hover,
 [class*="theme-light-"] .forum-reaction-btn:hover {
     background: rgba(0, 0, 0, 0.08);
+}
+
+[class*="theme-white"] .forum-reaction-btn.own-post-reaction:hover,
+[class*="theme-light-"] .forum-reaction-btn.own-post-reaction:hover,
+[class*="theme-white"] .forum-reaction-btn.disabled:hover,
+[class*="theme-light-"] .forum-reaction-btn.disabled:hover {
+    transform: none !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #475569 !important;
 }
 
 [class*="theme-white"] .forum-like-btn.active,

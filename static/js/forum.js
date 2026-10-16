@@ -2186,11 +2186,11 @@ const Forum = {
                         </div>
                         <div class="post-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
                             <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="0" ${isOwnPost ? 'data-is-own="true"' : ''}>
-                                <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${post.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Like'}">
+                                <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${(!isOwnPost && post.user_reaction === 'like') ? 'active' : ''}" data-reaction="like" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Like'}">
                                     <span class="reaction-icon">👍</span>
                                     <span class="reaction-count">${post.likes || 0}</span>
                                 </button>
-                                <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${post.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Dislike'}">
+                                <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnPost ? 'disabled own-post-reaction' : ''} ${(!isOwnPost && post.user_reaction === 'dislike') ? 'active' : ''}" data-reaction="dislike" title="${isOwnPost ? 'You cannot like or dislike your own post' : 'Dislike'}">
                                     <span class="reaction-icon">👎</span>
                                     <span class="reaction-count">${post.dislikes || 0}</span>
                                 </button>
@@ -2291,11 +2291,11 @@ const Forum = {
                                 </div>
                                 <div class="comment-header-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
                                     <div class="forum-reaction-group" data-post-id="${post.id}" data-comment-id="${c.id}" ${isOwnComment ? 'data-is-own="true"' : ''}>
-                                        <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${c.user_reaction === 'like' ? 'active' : ''}" data-reaction="like" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Like'}">
+                                        <button type="button" class="forum-reaction-btn forum-like-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${(!isOwnComment && c.user_reaction === 'like') ? 'active' : ''}" data-reaction="like" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Like'}">
                                             <span class="reaction-icon">👍</span>
                                             <span class="reaction-count">${c.likes || 0}</span>
                                         </button>
-                                        <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${c.user_reaction === 'dislike' ? 'active' : ''}" data-reaction="dislike" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Dislike'}">
+                                        <button type="button" class="forum-reaction-btn forum-dislike-btn ${isOwnComment ? 'disabled own-post-reaction' : ''} ${(!isOwnComment && c.user_reaction === 'dislike') ? 'active' : ''}" data-reaction="dislike" title="${isOwnComment ? 'You cannot like or dislike your own post' : 'Dislike'}">
                                             <span class="reaction-icon">👎</span>
                                             <span class="reaction-count">${c.dislikes || 0}</span>
                                         </button>
