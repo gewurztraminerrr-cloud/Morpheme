@@ -181,31 +181,40 @@
             <h2>Morpheme Store</h2>
             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
             <div class="store-top-banner">
-                <div class="store-banner-dates-row">
-                    <div class="store-last-updated-text">
-                        <span class="store-pulse-dot"></span>
-                        <span>Prices and products last updated on <strong>${catalog.last_catalog_update || 'October 16, 2026'}</strong></span>
+                <div class="store-status-dates-card">
+                    <div class="store-status-row store-last-updated-row">
+                        <span class="store-status-icon-wrap"><span class="store-pulse-dot"></span></span>
+                        <div class="store-status-content">
+                            <span class="store-status-label">Prices and products last updated on</span>
+                            <span class="store-status-date">${catalog.last_catalog_update || 'October 16, 2026'}</span>
+                        </div>
                     </div>
-                    <div class="store-next-update-text">
-                        <i class="fas fa-calendar-alt" style="margin-right: 5px; opacity: 0.85;"></i>
-                        <span>Next store update: <strong>${catalog.next_scheduled_update || 'November 16, 2026'}</strong></span>
+                    <div class="store-status-divider"></div>
+                    <div class="store-status-row store-next-update-row">
+                        <span class="store-status-icon-wrap"><i class="fas fa-calendar-alt"></i></span>
+                        <div class="store-status-content">
+                            <span class="store-status-label">Next store update:</span>
+                            <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="store-currency-context">
+
+                <div class="store-currency-card">
                     <span class="store-context-label">Prices reflected for:</span>
                     <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
                         ${flagHtml}
-                        <span>${curr.name} (${curr.code})</span>
+                        <span class="store-flag-country-name">${curr.name}</span>
+                        <span class="store-flag-currency-code">(${curr.code})</span>
                     </div>
                 </div>
             </div>
             <div class="store-category-filters" id="store-category-filters">
-                <button class="store-filter-btn ${_activeCategory === 'all' ? 'active' : ''}" data-cat="all">All Products (${catalog.products.length})</button>
-                <button class="store-filter-btn ${_activeCategory === 'hardware' ? 'active' : ''}" data-cat="hardware">Tournament Hardware</button>
-                <button class="store-filter-btn ${_activeCategory === 'mobile' ? 'active' : ''}" data-cat="mobile">Phones & Tablets</button>
-                <button class="store-filter-btn ${_activeCategory === 'computers' ? 'active' : ''}" data-cat="computers">PC & Mac Computers</button>
-                <button class="store-filter-btn ${_activeCategory === 'books' ? 'active' : ''}" data-cat="books">Dictionaries</button>
-                <button class="store-filter-btn ${_activeCategory === 'games' ? 'active' : ''}" data-cat="games">Games & Accessories</button>
+                <button class="store-filter-btn ${_activeCategory === 'all' ? 'active' : ''}" data-cat="all"><i class="fas fa-th-large"></i><span>All Products (${catalog.products.length})</span></button>
+                <button class="store-filter-btn ${_activeCategory === 'hardware' ? 'active' : ''}" data-cat="hardware"><i class="fas fa-microchip"></i><span>Tournament Hardware</span></button>
+                <button class="store-filter-btn ${_activeCategory === 'mobile' ? 'active' : ''}" data-cat="mobile"><i class="fas fa-mobile-alt"></i><span>Phones & Tablets</span></button>
+                <button class="store-filter-btn ${_activeCategory === 'computers' ? 'active' : ''}" data-cat="computers"><i class="fas fa-laptop"></i><span>PC & Mac</span></button>
+                <button class="store-filter-btn ${_activeCategory === 'books' ? 'active' : ''}" data-cat="books"><i class="fas fa-book"></i><span>Dictionaries</span></button>
+                <button class="store-filter-btn ${_activeCategory === 'games' ? 'active' : ''}" data-cat="games"><i class="fas fa-cube"></i><span>Games & Gear</span></button>
             </div>
         `;
 
