@@ -771,6 +771,13 @@ select option {
     color: var(--text-primary) !important;
 }
 
+[class*="theme-white"] .combo-tabs-header,
+[class*="theme-light-"] .combo-tabs-header {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
 [class*="theme-white"] .combo-tab-btn,
 [class*="theme-light-"] .combo-tab-btn {
     background: rgba(0, 0, 0, 0.04) !important;
@@ -787,17 +794,17 @@ select option {
 [class*="theme-white"] .combo-tab-btn.active#combo-tab-btn-mp,
 [class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-mp {
     color: #b45309 !important;
-    background: rgba(245, 158, 11, 0.15) !important;
-    border-color: #d97706 !important;
-    box-shadow: inset 0 -3px 0 #d97706 !important;
+    background: #ffffff !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2) !important;
 }
 
 [class*="theme-white"] .combo-tab-btn.active#combo-tab-btn-lic,
 [class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-lic {
     color: #1d4ed8 !important;
-    background: rgba(59, 130, 246, 0.15) !important;
-    border-color: #2563eb !important;
-    box-shadow: inset 0 -3px 0 #2563eb !important;
+    background: #ffffff !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2) !important;
 }
 
 [class*="theme-white"] .wotd-definition,

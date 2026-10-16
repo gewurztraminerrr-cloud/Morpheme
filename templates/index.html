@@ -176,9 +176,9 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1791130081" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791130490" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791140700">
+    <link rel="stylesheet" href="/css/style.css?v=1791140800">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130490">
-    <link rel="stylesheet" href="/css/play.css?v=1791140700">
+    <link rel="stylesheet" href="/css/play.css?v=1791140800">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4796,62 +4796,62 @@
 
                                 <!-- MP Explorer Section: Positioned beneath the MP and LIC content -->
                                 <div class="result-section" id="combo-explorer-section" style="width: 100%; box-sizing: border-box; margin-top: 15px; margin-bottom: 0; padding: 10px 14px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(var(--text-primary-rgb), 0.05); border-radius: 10px;">
-                                    <div class="combo-explorer-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-                                        <h3 style="color: #60a5fa; margin: 0; font-size: 1.15rem;">MP Word Explorer</h3>
-                                        <div class="combo-explorer-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                            <!-- Dictionary Dropdown -->
-                                            <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
-                                                <span>Dictionary:</span>
-                                                <select id="combo-explorer-dict" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
-                                                    <option value="NWL">NWL</option>
-                                                    <option value="CSW" selected>CSW</option>
-                                                    <option value="AW">AW</option>
-                                                    <option value="All">All</option>
-                                                    <option value="csw_only">CSW Only</option>
-                                                    <option value="uniqueNWL">NWL Uniques</option>
-                                                    <option value="new_nwl">New NWL Words</option>
-                                                    <option value="new_csw">New CSW Words</option>
-                                                    <option value="new_added">New AW Words</option>
-                                                    <option value="all_new">All New Words</option>
-                                                </select>
-                                            </label>
-                                            <!-- Length Dropdown -->
-                                            <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
-                                                <span>Length:</span>
-                                                <select id="combo-explorer-length" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
-                                                    <option value="3">3 Letters</option>
-                                                    <option value="4">4 Letters</option>
-                                                    <option value="5">5 Letters</option>
-                                                    <option value="6">6 Letters</option>
-                                                    <option value="7" selected>7 Letters</option>
-                                                    <option value="8">8 Letters</option>
-                                                    <option value="9">9 Letters</option>
-                                                    <option value="10">10 Letters</option>
-                                                </select>
-                                            </label>
-                                            <!-- MP Dropdown -->
-                                            <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
-                                                <span>MP Value:</span>
-                                                <select id="combo-explorer-mp" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
-                                                    <option value="0">0 MP</option>
-                                                    <option value="1" selected>1 MP</option>
-                                                    <option value="2">2 MP</option>
-                                                    <option value="3">3 MP</option>
-                                                </select>
-                                            </label>
-                                            <!-- Ordering Buttons (Always paired together) -->
-                                            <div class="combo-explorer-order-group" style="display: inline-flex; gap: 6px; align-items: center;">
-                                                <button id="combo-explorer-random-btn" type="button" class="table-scroll-btn" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in random order rather than alphabetical order">
-                                                    Random
-                                                </button>
-                                                <button id="combo-explorer-az-btn" type="button" class="table-scroll-btn active" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in alphabetical order">
-                                                    A–Z
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="combo-explorer-top-bar" style="margin-bottom: 6px;">
+                                        <h3 style="color: #60a5fa; margin: 0 0 6px 0; font-size: 1.15rem;">MP Word Explorer</h3>
+                                        <div class="chart-desc" id="mp-explorer-chart-desc">Explore words with non-plural and non-inflection MP connections.</div>
                                     </div>
 
-                                    <div class="chart-desc" id="mp-explorer-chart-desc">Explore words with non-plural and non-inflection MP connections.</div>
+                                    <div class="combo-explorer-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                                        <!-- Dictionary Dropdown -->
+                                        <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+                                            <span>Dictionary:</span>
+                                            <select id="combo-explorer-dict" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
+                                                <option value="NWL">NWL</option>
+                                                <option value="CSW" selected>CSW</option>
+                                                <option value="AW">AW</option>
+                                                <option value="All">All</option>
+                                                <option value="csw_only">CSW Only</option>
+                                                <option value="uniqueNWL">NWL Uniques</option>
+                                                <option value="new_nwl">New NWL Words</option>
+                                                <option value="new_csw">New CSW Words</option>
+                                                <option value="new_added">New AW Words</option>
+                                                <option value="all_new">All New Words</option>
+                                            </select>
+                                        </label>
+                                        <!-- Length Dropdown -->
+                                        <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+                                            <span>Length:</span>
+                                            <select id="combo-explorer-length" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
+                                                <option value="3">3 Letters</option>
+                                                <option value="4">4 Letters</option>
+                                                <option value="5">5 Letters</option>
+                                                <option value="6">6 Letters</option>
+                                                <option value="7" selected>7 Letters</option>
+                                                <option value="8">8 Letters</option>
+                                                <option value="9">9 Letters</option>
+                                                <option value="10">10 Letters</option>
+                                            </select>
+                                        </label>
+                                        <!-- MP Dropdown -->
+                                        <label style="font-size: 0.85rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+                                            <span>MP Value:</span>
+                                            <select id="combo-explorer-mp" style="padding: 5px 10px; border-radius: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #475569; font-size: 0.85rem; cursor: pointer;">
+                                                <option value="0">0 MP</option>
+                                                <option value="1" selected>1 MP</option>
+                                                <option value="2">2 MP</option>
+                                                <option value="3">3 MP</option>
+                                            </select>
+                                        </label>
+                                        <!-- Ordering Buttons (Always paired together) -->
+                                        <div class="combo-explorer-order-group" style="display: inline-flex; gap: 6px; align-items: center;">
+                                            <button id="combo-explorer-random-btn" type="button" class="table-scroll-btn" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in random order rather than alphabetical order">
+                                                Random
+                                            </button>
+                                            <button id="combo-explorer-az-btn" type="button" class="table-scroll-btn active" style="padding: 5px 12px; font-size: 0.85rem; height: auto; border-radius: 6px; cursor: pointer;" title="Display words and MPs in alphabetical order">
+                                                A–Z
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     <!-- Dual Table Layout -->
                                     <div class="combo-explorer-grid" style="display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 12px; margin-top: 8px;">
@@ -10085,7 +10085,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1791140700"></script>
+    <script src="/js/tools.js?v=1791140800"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>

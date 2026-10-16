@@ -14387,7 +14387,8 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Ensure all 3 Combo Checker descriptions (MP, MP Word Explorer, LIC) share the exact same scrolling box effect as Suggestions/Ideas */
+/* Ensure all Combo Checker descriptions (Tool header, MP, MP Word Explorer, LIC) share the exact same scrolling box effect */
+#tool-combo .tool-header p,
 #tool-combo .chart-desc,
 .combo-results-container .chart-desc,
 #lic-chart-desc,
@@ -14417,6 +14418,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     width: 100% !important;
 }
 
+#tool-combo .tool-header p::-webkit-scrollbar,
 #tool-combo .chart-desc::-webkit-scrollbar,
 .combo-results-container .chart-desc::-webkit-scrollbar,
 #lic-chart-desc::-webkit-scrollbar,
@@ -14424,6 +14426,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     width: 4px !important;
 }
 
+#tool-combo .tool-header p::-webkit-scrollbar-track,
 #tool-combo .chart-desc::-webkit-scrollbar-track,
 .combo-results-container .chart-desc::-webkit-scrollbar-track,
 #lic-chart-desc::-webkit-scrollbar-track,
@@ -14431,6 +14434,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     background: transparent !important;
 }
 
+#tool-combo .tool-header p::-webkit-scrollbar-thumb,
 #tool-combo .chart-desc::-webkit-scrollbar-thumb,
 .combo-results-container .chart-desc::-webkit-scrollbar-thumb,
 #lic-chart-desc::-webkit-scrollbar-thumb,
@@ -14439,6 +14443,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     border-radius: 4px !important;
 }
 
+#tool-combo .tool-header p *,
 #tool-combo .chart-desc *,
 .combo-results-container .chart-desc *,
 #lic-chart-desc *,
@@ -14507,20 +14512,126 @@ body.is-mobile .page *::-webkit-scrollbar {
         font-size: 16px !important; /* Prevents iOS Safari & Android Chrome auto-zoom and screen flash */
     }
 
+    /* Aesthetic Mobile Segmented Tabs for MP and LIC */
+    #tool-combo .combo-tabs-header,
+    .combo-tabs-header {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: rgba(var(--text-primary-rgb), 0.06) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 12px !important;
+        padding: 4px !important;
+        margin: 0 auto 16px auto !important;
+        max-width: 320px !important;
+        width: 100% !important;
+        gap: 6px !important;
+        box-sizing: border-box !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    #tool-combo .combo-tab-btn,
+    .combo-tab-btn {
+        flex: 1 1 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 8px 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.8px !important;
+        border-radius: 9px !important;
+        border: 1px solid transparent !important;
+        border-bottom: 1px solid transparent !important;
+        background: transparent !important;
+        color: rgba(var(--text-primary-rgb), 0.6) !important;
+        cursor: pointer !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    #tool-combo .combo-tab-btn.active#combo-tab-btn-mp,
+    .combo-tab-btn.active#combo-tab-btn-mp {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(217, 119, 6, 0.16) 100%) !important;
+        border: 1px solid rgba(255, 215, 0, 0.5) !important;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.5) !important;
+        color: #ffd700 !important;
+        font-weight: 800 !important;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.35) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    #tool-combo .combo-tab-btn.active#combo-tab-btn-lic,
+    .combo-tab-btn.active#combo-tab-btn-lic {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.28) 0%, rgba(37, 99, 235, 0.16) 100%) !important;
+        border: 1px solid rgba(96, 165, 250, 0.5) !important;
+        border-bottom: 1px solid rgba(96, 165, 250, 0.5) !important;
+        color: #60a5fa !important;
+        font-weight: 800 !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+        text-shadow: 0 0 8px rgba(96, 165, 250, 0.35) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Harmonized Descriptions Across Entire Combo Checker on Mobile */
+    #tool-combo .tool-header p,
+    #page-tools #tool-combo .tool-header p,
     #tool-combo .chart-desc,
     .combo-results-container .chart-desc,
     #lic-chart-desc,
-    #mp-explorer-chart-desc {
-        color: rgba(var(--text-primary-rgb), 0.4) !important;
-        font-size: 0.76rem !important;
-        line-height: 1.28 !important;
-        height: calc(2.56em + 8px) !important;
-        max-height: calc(2.56em + 8px) !important;
-        padding: 4px 10px !important;
-        margin-bottom: 6px !important;
+    #mp-explorer-chart-desc,
+    #tool-combo #lic-chart-desc,
+    #tool-combo #mp-explorer-chart-desc {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        padding: 5px 12px !important;
+        margin: 0 0 8px 0 !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
         border-radius: 8px !important;
         background: rgba(var(--text-primary-rgb), 0.04) !important;
+        color: rgba(var(--text-primary-rgb), 0.45) !important;
+        box-sizing: border-box !important;
+        text-align: left !important;
+    }
+
+    #tool-combo .tool-header p::-webkit-scrollbar,
+    #page-tools #tool-combo .tool-header p::-webkit-scrollbar,
+    #tool-combo .chart-desc::-webkit-scrollbar,
+    .combo-results-container .chart-desc::-webkit-scrollbar,
+    #lic-chart-desc::-webkit-scrollbar,
+    #mp-explorer-chart-desc::-webkit-scrollbar {
+        width: 4px !important;
+        height: 4px !important;
+    }
+
+    #tool-combo .tool-header p::-webkit-scrollbar-track,
+    #page-tools #tool-combo .tool-header p::-webkit-scrollbar-track,
+    #tool-combo .chart-desc::-webkit-scrollbar-track,
+    .combo-results-container .chart-desc::-webkit-scrollbar-track,
+    #lic-chart-desc::-webkit-scrollbar-track,
+    #mp-explorer-chart-desc::-webkit-scrollbar-track {
+        background: transparent !important;
+    }
+
+    #tool-combo .tool-header p::-webkit-scrollbar-thumb,
+    #page-tools #tool-combo .tool-header p::-webkit-scrollbar-thumb,
+    #tool-combo .chart-desc::-webkit-scrollbar-thumb,
+    .combo-results-container .chart-desc::-webkit-scrollbar-thumb,
+    #lic-chart-desc::-webkit-scrollbar-thumb,
+    #mp-explorer-chart-desc::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.25) !important;
+        border-radius: 4px !important;
     }
 
     /* Mobile Unification: Ensure tool-combo flows naturally within the outer scroller without nested scroll conflicts */
@@ -14551,6 +14662,7 @@ body.is-mobile .page *::-webkit-scrollbar {
 }
 
 /* Light / White Theme Support for Combo Checker Description Scrolling Boxes */
+[class*="theme-white"] #tool-combo .tool-header p,
 [class*="theme-white"] #tool-combo .chart-desc,
 [class*="theme-white"] .combo-results-container .chart-desc,
 [class*="theme-white"] #lic-chart-desc,
@@ -14561,6 +14673,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
+[class*="theme-light-"] #tool-combo .tool-header p,
 [class*="theme-light-"] #tool-combo .chart-desc,
 [class*="theme-light-"] .combo-results-container .chart-desc,
 [class*="theme-light-"] #lic-chart-desc,
