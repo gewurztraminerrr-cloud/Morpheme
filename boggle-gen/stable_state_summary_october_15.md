@@ -13,7 +13,7 @@ START_OVER_POINT_OCTOBER_15
 | **localhost**      | ✅ Synchronized | Working tree clean, synced with origin/main |
 | **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, verified live) |
-| **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
+| **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts across all 39 themes |
 
 ---
 
@@ -29,9 +29,9 @@ START_OVER_POINT_OCTOBER_15
 - **Restricting the Enter Button Strictly to Multiplayer Subanagrams**:
   - In `static/css/play.css`, hidden `#submit-word-btn` by default across all standard game rooms (4x4, 5x5, 6x8, 3D, tournament, private, 24h) on desktop, laptop, mobile, and tablet (`display: none !important;`).
   - Restored `body.is-desktop .word-input-section` max-width back to `500px !important;` for standard rooms, keeping the word input box, Rotate, and Transpose buttons centered with standard spacing.
-  - In multiplayer Subanagrams (`body.is-subanagrams`), displayed the emerald **Enter** button (`#submit-word-btn`) and red **Clear** button (`#clear-word-btn`) with `display: inline-flex !important;` on both desktop and mobile.
-- **Mobile Subanagrams Input Textbox, Clear, and Enter Buttons Restored**:
-  - Overrode the mobile hiding rule inside `@media (max-width: 992px)` for Subanagrams (`body.is-subanagrams .word-input-section`), displaying `#word-input` with centered uppercase letters (`font-size: 1.1rem; letter-spacing: 2px;`) to display letters in real time as tiles are tapped on mobile devices, with Enter and Clear buttons alongside.
+  - In multiplayer Subanagrams (`body.is-subanagrams`), displayed the emerald **Enter** button (`#submit-word-btn`) with `display: inline-flex !important;` on both desktop and mobile.
+- **Mobile Subanagrams Input Textbox Restored**:
+  - Overrode the mobile hiding rule inside `@media (max-width: 992px)` for Subanagrams (`body.is-subanagrams .word-input-section`), displaying `#word-input` with centered uppercase letters (`font-size: 1.1rem; letter-spacing: 2px;`) to display letters in real time as tiles are tapped on mobile devices.
 - **Instant Synchronous Loading Feedback on Room Entry**:
   - In `templates/index.html` and `static/js/lobby.js`, eliminated the 2–3 second delay when entering a room from the lobby.
   - `window.showLoadingOverlay('Loading...')` is invoked **synchronously on the first line** of click handlers before any network requests (`checkAccountTimeoutAndAlert`), with forced DOM reflow (`void overlay.offsetHeight;`) ensuring the loading spinner and message render in the exact frame the button is clicked.
@@ -98,65 +98,7 @@ START_OVER_POINT_OCTOBER_15
   - In `app.py`, added full-length word check during public singleton hub reconstruction.
   - In `static/js/play.js`, ensured Subanagrams format strictly falls back to `'Totally Random'` and never displays `'Normal'`. Bumped `play.js` cache buster in `templates/index.html` to `v=1791130400`.
 
-### 11. Multiplayer Subanagrams Board "Shuffle" Button
-- **User Request**: Add a button next to the textbox in multiplayer Subanagrams that rearranges the letters in random order reading "Shuffle", completely separate and different from Rotate and Transpose in grid rooms.
-- **HTML Layout**:
-  - In `templates/index.html`, added `<button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button">Shuffle</button>` inside `.word-input-section` directly alongside `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear).
-- **CSS Styling & Responsiveness**:
-  - In `static/css/play.css`, styled `#shuffle-board-btn` with a vivid blue gradient (`linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)`), bold white font, rounded corners (`border-radius: 8px`), and interactive hover shadow.
-  - Hidden by default in standard grid rooms (`display: none !important;`) and only displayed when `body.is-subanagrams` is active (`display: inline-flex !important;`).
-  - **Desktop Layout**: Widened the Subanagrams input row container to `680px`, keeping `#word-input`, `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) side-by-side in a single row (`flex-wrap: nowrap !important;`).
-  - **Mobile Layout**: Configured `flex-wrap: wrap !important;` on `.word-input-section` with `#word-input`, Enter, and Clear on the top row, and relocated `#shuffle-board-btn` to its own dedicated row directly beneath them, stretching horizontally across the full width (`width: 100% !important; flex: 1 1 100% !important;`) matching the combined width of the textbox and the two action buttons.
-- **Client Randomization & State Preservation**:
-  - In `static/js/play.js`, implemented `window.shuffleSubanagramsBoard()`:
-    - Extracts letters and runs a Fisher-Yates shuffle with a guarantee of producing a distinct permutation whenever at least two distinct letters exist.
-    - Saves the custom arrangement in `window.subanagramsCustomBoard` alongside the sorted multiset key `window.subanagramsBoardKey`.
-    - Updates `window.lastGameState.board = [shuffled]` and triggers `renderBoard([shuffled])` immediately without layout shifts or fullscreen interruptions.
-    - Preserves the shuffled order across background server countdown ticks/heartbeats during the round.
-    - Automatically remaps `mouseState.selectedPath` and `mouseState.visitedCells` to the new tile coordinates if letters were already entered in `#word-input`, re-triggering highlight pathfinding.
-    - Resets cleanly when a new round starts, on round intermission, or upon room exit.
-  - Bumped `play.css` cache buster to `v=1791130460` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
-
-### 12. Subanagrams Mobile Shuffle Touch Event & Locked Clear Button Layout
-- **User Requests**:
-  1. Fix the Shuffle button in multiplayer Subanagrams so it reliably works on mobile touchscreens.
-  2. Put the Clear button back to the right of the Enter button (it had dropped below the textbox and Enter button on mobile).
-  3. Keep the Shuffle button below the textbox and Enter and Clear buttons, stretching horizontally across their combined full width.
-- **Root Cause Analysis**:
-  1. **Clear Button Wrapping**: `.word-input-section` had `flex-wrap: wrap`. When screen width was narrow (~360px–390px), `#word-input` + Enter + Clear exceeded the row width, causing Clear to wrap onto a second line, and Shuffle onto a third line.
-  2. **Mobile Shuffle Not Working**:
-     - `renderBoard` checked `hasLetters` using `row.some(...)` before normalizing 1D Subanagrams arrays (`['A', 'B', ...]`), causing `hasLetters` to evaluate to `false` and aborting board rendering.
-     - Mobile Safari/Chrome touch taps on `#shuffle-board-btn` could have synthetic click events suppressed or delayed if the virtual keyboard was focused or touch gesture intercepted.
-     - Letter extraction only checked 2D `Array.isArray(board[0])`, falling through if `board` was 1D.
-- **Architectural Solution**:
-  - **DOM Structure (`templates/index.html`)**:
-    - Wrapped `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear) inside `<div class="word-input-row" id="word-input-row">`.
-    - Placed `#shuffle-board-btn` directly beneath `.word-input-row`.
-    - Added inline event handlers `onclick` and `ontouchend` on `#shuffle-board-btn`.
-  - **CSS Layout (`static/css/play.css`)**:
-    - **Mobile (`@media (max-width: 992px)`, `body.is-mobile`)**:
-      - `.word-input-section`: `display: flex !important; flex-direction: column !important; width: calc(100% - 24px) !important; max-width: 480px !important; margin: 6px auto 0 auto !important; gap: 6px !important;`
-      - `.word-input-row`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important; gap: 6px !important;`
-      - `#word-input`: `flex: 1 1 auto !important; min-width: 0 !important; height: 42px !important;`
-      - `#submit-word-btn`, `#clear-word-btn`: `flex: 0 0 auto !important; white-space: nowrap !important; height: 42px !important;` — guaranteeing Clear is strictly to the right of Enter and can never wrap!
-      - `#shuffle-board-btn`: `display: inline-flex !important; width: 100% !important; flex: 1 1 100% !important; height: 42px !important; touch-action: manipulation !important; user-select: none !important; -webkit-tap-highlight-color: transparent !important;` — stretches across the full width of the row above it.
-    - **Desktop (`body.is-desktop.is-subanagrams`)**:
-      - `.word-input-section`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; max-width: 680px !important; gap: 8px !important;`
-      - `.word-input-row`: `display: contents !important;` — unwraps children so `#word-input`, Enter, Clear, and Shuffle align seamlessly on a single horizontal row.
-  - **JS Logic & Touch Responsiveness (`static/js/play.js`)**:
-    - Reordered `renderBoard()` to normalize Subanagrams board format before computing `hasLetters`.
-    - In `window.shuffleSubanagramsBoard(e)`, added `e.preventDefault()`, `e.stopPropagation()`, 250ms debouncing, robust extraction for both 1D and 2D board arrays, and reset `mouseState.isDown = false`.
-    - Added acoustic tile audio / micro-haptic sensation on shuffle via `BoardAudio.playTileSound(1)`.
-    - Attached dedicated `touchend` and `click` listeners on `#shuffle-board-btn` and delegator on `document`.
-  - Bumped `play.css` cache buster to `v=1791130480`, `play.js` cache buster to `v=1791130470`, and `lobby.css` cache buster to `v=1791130490` in `templates/index.html`.
-- **Lobby Subanagrams Title Spacing Equalization**:
-  - Removed legacy `.split-points-section` from the 14px last-child margin rules in `static/css/lobby.css`.
-  - Enforced `margin-bottom: 22px !important;` on `.split-points-section`, making the visual space above the Subanagrams title from the Split Points buttons exactly 22px, perfectly identical to the 22px distance between the Split Points title and the FCFS buttons.
-- **Vertical Length (Height) Synchronization on Mobile**:
-  - Enforced exact vertical length matching across `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) on mobile devices (`height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 42px !important; box-sizing: border-box !important; padding: 0 14px !important;`).
-  - Scoped desktop 44px sizing strictly to `body.is-desktop.is-subanagrams`, preventing desktop heights from overriding mobile buttons.
-
-### 13. MP Word Explorer Feature Architecture
+### 11. MP Word Explorer Feature Architecture
 - **Interactive Multi-Length Discovery**:
   - Implemented the MP Word Explorer within Combo Checker, allowing users to explore all words of a given length and view their non-plural, non-inflection MP connections.
   - Dropdown controls for Length (4–15), MP distance (0MP–3MP), Dictionary (NWL, CSW, AW, All, etc.), and ordering modes (A–Z and Random).
@@ -164,7 +106,7 @@ START_OVER_POINT_OCTOBER_15
   - Excluded 4-letter words from MP Explorer match results by rule.
   - Interactive clickable word links throughout input words and match results opening the instant lexicographical definition popup (`window.lookupWord`).
 
-### 14. Combo Checker Header Design & Description Box Harmonization
+### 12. Combo Checker Header Design & Description Box Harmonization
 - **Title Backgrounds**:
   - Eliminated the light-grey rectangular backgrounds around all section headings in Combo Checker (`#tool-combo .result-section h3, .combo-results-container .result-section h3, #combo-explorer-section h3 { background: transparent !important; }`) across all desktop, laptop, tablet, and mobile platforms.
 - **Harmonized Description Formatting**:
@@ -172,7 +114,7 @@ START_OVER_POINT_OCTOBER_15
   - Applied the Suggestions/Ideas scrolling-box effect (`height: calc(2.7em + 8px); overflow-y: auto;`) with subtle borders, border-radius, and custom scrollbar thumb styling.
   - Added dedicated theme overrides for white and light themes to ensure consistent contrast and readability across dark and light palettes.
 
-### 15. Mobile Virtual Keyboard Black Screen Elimination & Input Visibility
+### 13. Mobile Virtual Keyboard Black Screen Elimination & Input Visibility
 - **Root Cause Identification**:
   - Investigated the 2-second temporary black screen occurring on mobile devices when tapping "FILTER INPUT WORDS..." (`#combo-explorer-filter`) and "ENTER LETTERS TO CHECK..." (`#combo-input`).
   - Identified two contributing factors:
@@ -183,7 +125,7 @@ START_OVER_POINT_OCTOBER_15
   - Added synchronous `exitFullscreenForKeyboard()` checks on `pointerdown` and `touchstart` for Combo Checker inputs in `static/js/app.js` and `static/js/tools.js`, guaranteeing the soft keyboard launches outside of fullscreen without display surface destruction.
   - Implemented `_scrollComboInputIntoView()` in `static/js/tools.js` triggered on focus, pointerdown, and `visualViewport` resize. When the keyboard deploys, `.tools-content` automatically scrolls the input into clear view above the virtual keyboard without pinning or sticking the control panel to the top during normal scrolling.
 
-### 16. Definition Popup "CC" Navigation & Scroll-to-Top
+### 14. Definition Popup "CC" Navigation & Scroll-to-Top
 - **Auto-Navigation & Page Switching**:
   - In `static/js/tools.js`, clicking **“CC”** (`#tool-def-cc-btn`) on any word definition popup now automatically switches to the Tools page (`window.showPage('page-tools')`) if invoked from Play, Lobby, or full list views.
   - Resets saved scroll offsets (`window._savedComboScrollTop = 0` and `_savedToolScrollPositions['combo'] = 0`).
@@ -192,6 +134,42 @@ START_OVER_POINT_OCTOBER_15
   - Resets horizontal scrollers (`#mp-container` and `#lic-container`) to `.scrollLeft = 0`.
   - On mobile, automatically slides the layout horizontally to the tool content pane.
   - Populates the searched word and triggers `runComboSearch()`, leaving the user at the very top of Combo Checker with the header, description, and control panel directly in view.
+
+### 15. Unified Visible Panel for Combo Checker Search and MP/LIC Tabs
+- **Visible Container**:
+  - In `templates/index.html` and `static/css/tools.css`, unified the "ENTER LETTERS TO CHECK…" search row and the MP / LIC tab row within a single visible enclosing panel card (`.combo-unified-container` / `.combo-unified-card`).
+  - Styled with subtle borders (`1px solid rgba(var(--text-primary-rgb), 0.12)`), rounded corners (`border-radius: 12px`), cohesive background tints, and balanced inner padding.
+  - Maintained responsive proportions and compact margins across mobile, tablet, and desktop displays so all contents remain fully visible without clipping or overflow.
+
+### 16. New Word Lists Added to "Words to Work on" Dropdown Menu
+- **Expanded Lexicon Lists**:
+  - In `templates/index.html`, `static/js/tools.js`, and `app.py`, added the following word lists to the "Words to Work on" tool dropdown menu:
+    - **`CSW Only`**: CSW words that are not valid in NWL.
+    - **`New NWL Words`**: Newly approved words added to the official NWL dictionary.
+    - **`New CSW Words`**: Newly approved words added to the official CSW dictionary.
+    - **`New AW Words`**: Words newly added to the Added Words (AW) dictionary.
+    - **`All New Words`**: Combined aggregate of all recent additions across NWL, CSW, and AW.
+  - Wired backend endpoints and cache indexing to serve random and sorted sub-lists with instantaneous retrieval.
+
+### 17. 39-Theme Visual Contrast, Neatness, and Legibility Audit
+- **Full Theme Coverage**:
+  - Audited all 39 theme color layouts across Morpheme (Standard, Dark, White, Light Gray/Red/Orange/Yellow/Green/Blue/Purple/Pink, Neon, Cyberpunk, Forest, Sunset, Retro, Slate, Ocean, Midnight, Espresso, Rose, Emerald, Amethyst, and all color variations).
+  - Guaranteed high contrast, clean typography, neat element spacing, and appropriate color accents across both **Combo Checker** and **Words to Work on**.
+  - In `static/css/tools.css` and `static/css/style.css`, added explicit theme overrides for the unified panel card, dropdown menus, text inputs, action buttons, tab navigation, result cards, and word list items.
+
+### 18. Multiplayer Subanagrams Mobile Button Restructuring & Platform-Wide Clear Removal
+- **Clear Button Removal Across All Platforms**:
+  - Completely removed / hidden `#clear-word-btn` (`display: none !important;`) on all devices (mobile, tablet, desktop, laptop) in multiplayer Subanagrams rooms.
+- **Mobile Button Reordering & Hierarchy**:
+  - Traded places between the **Enter** and **Shuffle** buttons on mobile devices.
+  - Positioned **Enter** (`#submit-word-btn`) **above** the input row, stretching across the entire width of the container (`width: 100% !important; flex: 1 1 100% !important;`) with an enlarged `48px` height, bold `1.05rem` font, and vivid emerald gradient (`linear-gradient(135deg, #10b981 0%, #059669 100%)`), making it the largest, most prominent, and easiest button to tap.
+  - Relocated **Shuffle** (`#shuffle-board-btn`) into the row alongside `#word-input` (`height: 42px`, `padding: 0 16px`, blue gradient).
+  - Attached debounced touch and click delegators (`window.submitSubanagramsInput(e)`) for zero-latency tap response.
+- **Desktop Subanagrams Layout**:
+  - Aligned `#word-input` (order 1, flex 1), `#submit-word-btn` (order 2, 44px), and `#shuffle-board-btn` (order 3, 44px) seamlessly side-by-side in a single unified horizontal row.
+- **Rules & Documentation Updates**:
+  - Harmonized the FAQ item (`#faq-subanagrams`) and Lobby Guide card to document the new mobile layout and reflect the retirement of the Clear button.
+  - Bumped cache query versions in `templates/index.html` (`play.css?v=1791150000`, `play.js?v=1791150000`).
 
 ---
 
@@ -203,5 +181,5 @@ START_OVER_POINT_OCTOBER_15
   - `ABELLOEMRINGERITE` & `ABELLOEMRINGERITES`: `is_valid: true`, `lists: ["AW"]`
   - `TESTTEST` & `TESTTESTS`: `is_valid: false`
 - **PM2 Process**: `morpheme` online (fork mode, memory stable ~185MB initial / ~800MB–1.4GB fully warmed up).
+- **Theme Audit**: Verified legible contrast and clean borders across light, dark, and saturated color palettes.
 - **Mobile Fullscreen Invariant**: Continuous fullscreen preserved across navigation, with cleanly targeted keyboard exit safeguards for text inputs to eliminate mobile black screens.
-
