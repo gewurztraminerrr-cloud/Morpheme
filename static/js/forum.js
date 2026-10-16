@@ -2193,7 +2193,7 @@ const Forum = {
                     </div>
                     <h1 class="post-detail-title">${pinnedBadge}${closedBadge}${this.escapeHtml(post.title)}</h1>
                 </div>
-                <div class="post-content">${this.renderContentWithLinks(post.content)}</div>
+                <div class="post-content">${this.renderPostContent(post.content)}</div>
                 ${postImagesHtml}
             </div>
         `;
@@ -2294,7 +2294,7 @@ const Forum = {
                                     ` : ''}
                                 </div>
                             </div>
-                            <div class="comment-content">${this.renderContentWithLinks(c.content)}</div>
+                            <div class="comment-content">${this.renderPostContent(c.content)}</div>
                             ${cImagesHtml}
                         </div>
                     `;
@@ -3116,6 +3116,54 @@ const Forum = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    renderPostContent: function (text) {
+        if (!text) return '';
+        const raw = String(text);
+        if (raw.length <= 500) {
+            return this.renderContentWithLinks(raw);
+        }
+
+        const truncated = raw.slice(0, 500).trimEnd();
+        const truncatedHtml = this.renderContentWithLinks(truncated) + '<span class="forum-ellipsis">...</span>';
+        const fullHtml = this.renderContentWithLinks(raw);
+
+        return `
+            <div class="forum-expandable-content">
+                <div class="forum-content-truncated">${truncatedHtml}</div>
+                <div class="forum-content-full" style="display: none;">${fullHtml}</div>
+                <button type="button" class="forum-view-whole-msg-btn" onclick="Forum.expandWholeMessage(this, event)">View Whole Message</button>
+            </div>
+        `;
+    },
+
+    expandWholeMessage: function (btn, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        if (!btn) return;
+        const container = btn.closest('.forum-expandable-content');
+        if (!container) return;
+        const truncatedEl = container.querySelector('.forum-content-truncated');
+        const fullEl = container.querySelector('.forum-content-full');
+        if (truncatedEl) truncatedEl.style.display = 'none';
+        if (fullEl) {
+            fullEl.style.display = 'block';
+            fullEl.querySelectorAll('.forum-user-clickable').forEach(el => {
+                if (!el._hasProfileListener) {
+                    el._hasProfileListener = true;
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const uname = el.getAttribute('data-username');
+                        Forum.openMiniProfile(uname, e);
+                    });
+                }
+            });
+        }
+        btn.remove();
     },
 
     renderContentWithLinks: function (text) {

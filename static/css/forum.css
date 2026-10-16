@@ -651,6 +651,76 @@
     word-break: break-word;
 }
 
+/* Expandable Post & Comment Content (> 500 characters) */
+.forum-expandable-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.forum-content-truncated,
+.forum-content-full {
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+}
+
+.forum-ellipsis {
+    opacity: 0.85;
+    font-weight: 700;
+    margin-left: 1px;
+}
+
+.forum-view-whole-msg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    margin-top: 8px;
+    user-select: none;
+}
+
+.forum-view-whole-msg-btn:hover {
+    background: rgba(56, 189, 248, 0.25);
+    color: #7dd3fc;
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: translateY(-1px);
+}
+
+.forum-view-whole-msg-btn:active {
+    transform: translateY(0);
+}
+
+/* Light & White Theme overrides for View Whole Message button */
+body.theme-white .forum-view-whole-msg-btn,
+[class*="theme-white"] .forum-view-whole-msg-btn,
+body[class*="theme-light-"] .forum-view-whole-msg-btn,
+[class*="theme-light-"] .forum-view-whole-msg-btn {
+    background: #f0f9ff !important;
+    border: 1px solid #7dd3fc !important;
+    color: #0284c7 !important;
+}
+
+body.theme-white .forum-view-whole-msg-btn:hover,
+[class*="theme-white"] .forum-view-whole-msg-btn:hover,
+body[class*="theme-light-"] .forum-view-whole-msg-btn:hover,
+[class*="theme-light-"] .forum-view-whole-msg-btn:hover {
+    background: #e0f2fe !important;
+    border-color: #0284c7 !important;
+    color: #0369a1 !important;
+}
+
 .post-image-container {
     margin-top: 20px;
     border-radius: 10px;
