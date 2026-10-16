@@ -171,6 +171,19 @@ START_OVER_POINT_OCTOBER_15
   - Harmonized the FAQ item (`#faq-subanagrams`) and Lobby Guide card to document the new mobile layout and reflect the retirement of the Clear button.
   - Bumped cache query versions in `templates/index.html` (`play.css?v=1791150000`, `play.js?v=1791150000`).
 
+### 19. Lobby Guide Button ("WHAT AM I LOOKING AT?") 3D Refinement, Black Growth & Glow Elimination, and Mobile Proportions
+- **Eliminated Black Growth on Mobile**:
+  - Replaced the opaque dark `#12121f` sticky header background and negative horizontal margins on mobile with `background: transparent !important;` and zero margins, matching desktop and laptop behavior.
+  - Eliminated the solid `#000000` multi-step drops and diffuse 18px–22px black outer glow halos across base, hover, and active states.
+  - Replaced with a crisp, subtle 3D physical extrusion (`0 1.5px 0 #1c1d27, 0 3px 0 #0d0e14, 0 3.5px 6px rgba(0, 0, 0, 0.3)`) and a delicate 1px border (`rgba(255, 255, 255, 0.14)`).
+- **Proportional Mobile Sizing**:
+  - Reduced the vertical size of the button on mobile (`min-height: 26px`, `padding: 4px 10px`, `font-size: 0.70rem`) so it is proportional to the sleek banner on laptops and desktops rather than appearing oversized or chunky.
+- **Symmetrical Vertical Buffer**:
+  - Balanced vertical container padding (`padding: 10px 8px 10px 8px !important;` on standard mobile, `12px 10px` on tablets, `9px 6px` on small screens) ensuring equal, comfortable breathing room above and below the message.
+- **Platform-Wide Glow Removal & Cache Bump**:
+  - Stripped all diffuse black glow halos across all platforms.
+  - Bumped `lobby.css?v=` to `1791150300` in `templates/index.html`.
+
 ---
 
 ## Verification & Health Check
@@ -183,3 +196,4 @@ START_OVER_POINT_OCTOBER_15
 - **PM2 Process**: `morpheme` online (fork mode, memory stable ~185MB initial / ~800MB–1.4GB fully warmed up).
 - **Theme Audit**: Verified legible contrast and clean borders across light, dark, and saturated color palettes.
 - **Mobile Fullscreen Invariant**: Continuous fullscreen preserved across navigation, with cleanly targeted keyboard exit safeguards for text inputs to eliminate mobile black screens.
+- **Lobby Guide Button**: Verified sleek 26px height with 10px symmetrical vertical padding and zero black growth or glow on mobile and desktop.
