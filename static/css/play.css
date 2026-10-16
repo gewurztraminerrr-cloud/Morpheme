@@ -14288,6 +14288,160 @@ body.is-mobile .page *::-webkit-scrollbar {
 }
 
 /* Combo Explorer Styles */
+.combo-explorer-top-bar {
+    margin-bottom: 6px;
+}
+
+.combo-explorer-title {
+    color: #60a5fa;
+    margin: 0 0 6px 0;
+    font-size: 1.15rem;
+}
+
+.combo-explorer-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.combo-explorer-label {
+    font-size: 0.85rem;
+    color: rgba(var(--text-primary-rgb), 0.85);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.combo-explorer-select {
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--text-primary);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.2);
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.combo-explorer-select option {
+    background: #1a1a2e;
+    color: #ffffff;
+}
+
+.combo-explorer-order-group {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.combo-explorer-order-btn {
+    padding: 5px 12px !important;
+    font-size: 0.85rem !important;
+    height: auto !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+}
+
+.combo-explorer-grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 280px) 1fr;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.combo-explorer-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 280px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.combo-explorer-card-header {
+    padding: 8px 12px;
+    background: rgba(var(--text-primary-rgb), 0.06);
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.combo-explorer-header-input {
+    color: #93c5fd;
+}
+
+.combo-explorer-header-response {
+    color: #34d399;
+}
+
+.combo-explorer-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.combo-explorer-badge-input {
+    background: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+}
+
+.combo-explorer-badge-response {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+
+.combo-explorer-filter-bar {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.combo-explorer-filter-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    font-size: 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.18);
+    border-radius: 4px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    outline: none;
+}
+
+.combo-explorer-filter-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+#combo-explorer-input-list,
+#combo-explorer-response-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 6px;
+    padding-right: 18px;
+}
+
+.combo-explorer-placeholder {
+    padding: 24px 16px;
+    text-align: center;
+    color: rgba(var(--text-primary-rgb), 0.5);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
 .combo-explorer-word-item {
     padding: 6px 10px;
     cursor: pointer;
@@ -14295,7 +14449,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     font-family: monospace;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: rgba(var(--text-primary-rgb), 0.85);
     transition: all 0.15s ease;
     user-select: none;
 }
@@ -14321,8 +14475,8 @@ body.is-mobile .page *::-webkit-scrollbar {
 
 .combo-explorer-match-item {
     padding: 6px 8px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(var(--text-primary-rgb), 0.04);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
     border-radius: 6px;
     text-align: center;
     cursor: pointer;
@@ -14369,7 +14523,6 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
 }
 
-
 /* Custom scrollbar for Combo Explorer cards */
 .combo-explorer-card {
     position: relative !important;
@@ -14382,7 +14535,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     right: 3px !important;
     width: 14px !important;
     background: rgba(0, 0, 0, 0.25) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
     border-radius: 7px !important;
 }
 
@@ -14760,27 +14913,467 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
 }
 
-/* Light / White Theme Support for Combo Checker Description Scrolling Boxes */
-[class*="theme-white"] #tool-combo .tool-header p,
-[class*="theme-white"] #tool-combo .chart-desc,
-[class*="theme-white"] .combo-results-container .chart-desc,
-[class*="theme-white"] #lic-chart-desc,
-[class*="theme-white"] #mp-explorer-chart-desc {
+/* ==========================================================================
+   Combo Checker - All Color Layouts & Contrast Support
+   ========================================================================== */
+
+/* Universal No Results styling */
+.no-results,
+#tool-combo .no-results {
+    padding: 30px 20px;
+    text-align: center;
+    color: rgba(var(--text-primary-rgb), 0.6);
+    font-size: 0.95rem;
+    font-style: italic;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Light Themes & Pure White Theme Support for Combo Checker */
+body.theme-white #tool-combo,
+[class*="theme-white"] #tool-combo,
+body[class*="theme-light-"] #tool-combo,
+[class*="theme-light-"] #tool-combo {
+    color: #0f172a !important;
+}
+
+body.theme-white #tool-combo .tool-header h2,
+[class*="theme-white"] #tool-combo .tool-header h2,
+body[class*="theme-light-"] #tool-combo .tool-header h2,
+[class*="theme-light-"] #tool-combo .tool-header h2 {
+    color: #1e1b4b !important;
+}
+
+/* Section titles for Light & White Themes */
+body.theme-white #combo-pane-mp h3,
+[class*="theme-white"] #combo-pane-mp h3,
+body[class*="theme-light-"] #combo-pane-mp h3,
+[class*="theme-light-"] #combo-pane-mp h3 {
+    color: #b45309 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-white #combo-pane-lic h3,
+[class*="theme-white"] #combo-pane-lic h3,
+body[class*="theme-light-"] #combo-pane-lic h3,
+[class*="theme-light-"] #combo-pane-lic h3,
+body.theme-white #combo-explorer-title,
+[class*="theme-white"] #combo-explorer-title,
+body[class*="theme-light-"] #combo-explorer-title,
+[class*="theme-light-"] #combo-explorer-title {
+    color: #1d4ed8 !important;
+    font-weight: 800 !important;
+}
+
+/* Arrow Navigation Buttons in Light & White Themes */
+body.theme-white .table-scroll-btn,
+[class*="theme-white"] .table-scroll-btn,
+body[class*="theme-light-"] .table-scroll-btn,
+[class*="theme-light-"] .table-scroll-btn {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    color: #475569 !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white .table-scroll-btn:hover,
+[class*="theme-white"] .table-scroll-btn:hover,
+body[class*="theme-light-"] .table-scroll-btn:hover,
+[class*="theme-light-"] .table-scroll-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+/* Unified & Control Panels in Light Themes */
+body.theme-white #tool-combo .combo-unified-panel,
+[class*="theme-white"] #tool-combo .combo-unified-panel,
+body[class*="theme-light-"] #tool-combo .combo-unified-panel,
+[class*="theme-light-"] #tool-combo .combo-unified-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white #tool-combo .combo-control-panel,
+[class*="theme-white"] #tool-combo .combo-control-panel,
+body[class*="theme-light-"] #tool-combo .combo-control-panel,
+[class*="theme-light-"] #tool-combo .combo-control-panel {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Inputs in Light & White Themes */
+body.theme-white #combo-input,
+[class*="theme-white"] #combo-input,
+body[class*="theme-light-"] #combo-input,
+[class*="theme-light-"] #combo-input {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #combo-input::placeholder,
+[class*="theme-white"] #combo-input::placeholder,
+body[class*="theme-light-"] #combo-input::placeholder,
+[class*="theme-light-"] #combo-input::placeholder {
+    color: #64748b !important;
+}
+
+body.theme-white #combo-dict,
+[class*="theme-white"] #combo-dict,
+body[class*="theme-light-"] #combo-dict,
+[class*="theme-light-"] #combo-dict {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #combo-dict option,
+[class*="theme-white"] #combo-dict option,
+body[class*="theme-light-"] #combo-dict option,
+[class*="theme-light-"] #combo-dict option,
+body.theme-white .combo-explorer-select option,
+[class*="theme-white"] .combo-explorer-select option,
+body[class*="theme-light-"] .combo-explorer-select option,
+[class*="theme-light-"] .combo-explorer-select option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+/* Tabs in Light & White Themes */
+body.theme-white .combo-tabs-header,
+[class*="theme-white"] .combo-tabs-header,
+body[class*="theme-light-"] .combo-tabs-header,
+[class*="theme-light-"] .combo-tabs-header {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white .combo-tab-btn,
+[class*="theme-white"] .combo-tab-btn,
+body[class*="theme-light-"] .combo-tab-btn,
+[class*="theme-light-"] .combo-tab-btn {
+    background: transparent !important;
+    color: #64748b !important;
+    border: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+}
+
+body.theme-white .combo-tab-btn:hover,
+[class*="theme-white"] .combo-tab-btn:hover,
+body[class*="theme-light-"] .combo-tab-btn:hover,
+[class*="theme-light-"] .combo-tab-btn:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .combo-tab-btn.active#combo-tab-btn-mp,
+[class*="theme-white"] .combo-tab-btn.active#combo-tab-btn-mp,
+body[class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-mp,
+[class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-mp {
+    background: #ffffff !important;
+    color: #b45309 !important;
+    font-weight: 800 !important;
+    border: 1px solid rgba(245, 158, 11, 0.5) !important;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25) !important;
+    text-shadow: none !important;
+}
+
+body.theme-white .combo-tab-btn.active#combo-tab-btn-lic,
+[class*="theme-white"] .combo-tab-btn.active#combo-tab-btn-lic,
+body[class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-lic,
+[class*="theme-light-"] .combo-tab-btn.active#combo-tab-btn-lic {
+    background: #ffffff !important;
+    color: #1d4ed8 !important;
+    font-weight: 800 !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25) !important;
+    text-shadow: none !important;
+}
+
+/* Result Section in Tab Panes */
+body.theme-white #tool-combo .combo-tab-pane .result-section,
+[class*="theme-white"] #tool-combo .combo-tab-pane .result-section,
+body[class*="theme-light-"] #tool-combo .combo-tab-pane .result-section,
+[class*="theme-light-"] #tool-combo .combo-tab-pane .result-section {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Scrolling Box Descriptions in Light & White Themes */
+body.theme-white #tool-combo .tool-header p,
+[class*="theme-white"] #tool-combo .tool-header p,
+body[class*="theme-light-"] #tool-combo .tool-header p,
+[class*="theme-light-"] #tool-combo .tool-header p,
+body.theme-white #tool-combo .chart-desc,
+[class*="theme-white"] #tool-combo .chart-desc,
+body[class*="theme-light-"] #tool-combo .chart-desc,
+[class*="theme-light-"] #tool-combo .chart-desc,
+body.theme-white #lic-chart-desc,
+[class*="theme-white"] #lic-chart-desc,
+body[class*="theme-light-"] #lic-chart-desc,
+[class*="theme-light-"] #lic-chart-desc,
+body.theme-white #mp-explorer-chart-desc,
+[class*="theme-white"] #mp-explorer-chart-desc,
+body[class*="theme-light-"] #mp-explorer-chart-desc,
+[class*="theme-light-"] #mp-explorer-chart-desc {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
-[class*="theme-light-"] #tool-combo .tool-header p,
-[class*="theme-light-"] #tool-combo .chart-desc,
-[class*="theme-light-"] .combo-results-container .chart-desc,
-[class*="theme-light-"] #lic-chart-desc,
-[class*="theme-light-"] #mp-explorer-chart-desc {
-    background: var(--bg-primary) !important;
-    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
-    border: 1px solid var(--card-border) !important;
-    color: var(--text-primary) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+/* MP & LIC Result Columns in Light & White Themes */
+body.theme-white #tool-combo .group-column,
+[class*="theme-white"] #tool-combo .group-column,
+body[class*="theme-light-"] #tool-combo .group-column,
+[class*="theme-light-"] #tool-combo .group-column {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
 }
+
+body.theme-white #tool-combo .group-header,
+[class*="theme-white"] #tool-combo .group-header,
+body[class*="theme-light-"] #tool-combo .group-header,
+[class*="theme-light-"] #tool-combo .group-header {
+    background: #f1f5f9 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    font-weight: 800 !important;
+}
+
+body.theme-white #tool-combo .group-row,
+[class*="theme-white"] #tool-combo .group-row,
+body[class*="theme-light-"] #tool-combo .group-row,
+[class*="theme-light-"] #tool-combo .group-row {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+body.theme-white #tool-combo .group-row:nth-child(even),
+[class*="theme-white"] #tool-combo .group-row:nth-child(even),
+body[class*="theme-light-"] #tool-combo .group-row:nth-child(even),
+[class*="theme-light-"] #tool-combo .group-row:nth-child(even) {
+    background: #f8fafc !important;
+}
+
+body.theme-white #tool-combo .group-row:hover,
+[class*="theme-white"] #tool-combo .group-row:hover,
+body[class*="theme-light-"] #tool-combo .group-row:hover,
+[class*="theme-light-"] #tool-combo .group-row:hover {
+    background: #ede9fe !important;
+}
+
+body.theme-white #tool-combo .group-row .clickable-word-link,
+[class*="theme-white"] #tool-combo .group-row .clickable-word-link,
+body[class*="theme-light-"] #tool-combo .group-row .clickable-word-link,
+[class*="theme-light-"] #tool-combo .group-row .clickable-word-link {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    text-decoration-color: rgba(37, 99, 235, 0.35) !important;
+}
+
+body.theme-white #tool-combo .group-row .clickable-word-link:hover,
+[class*="theme-white"] #tool-combo .group-row .clickable-word-link:hover,
+body[class*="theme-light-"] #tool-combo .group-row .clickable-word-link:hover,
+[class*="theme-light-"] #tool-combo .group-row .clickable-word-link:hover {
+    color: #2563eb !important;
+    text-decoration-color: #2563eb !important;
+    background: #e0e7ff !important;
+}
+
+body.theme-white #tool-combo .no-results,
+[class*="theme-white"] #tool-combo .no-results,
+body[class*="theme-light-"] #tool-combo .no-results,
+[class*="theme-light-"] #tool-combo .no-results {
+    color: #64748b !important;
+}
+
+/* MP Word Explorer Section in Light & White Themes */
+body.theme-white #combo-explorer-section,
+[class*="theme-white"] #combo-explorer-section,
+body[class*="theme-light-"] #combo-explorer-section,
+[class*="theme-light-"] #combo-explorer-section {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white .combo-explorer-label,
+[class*="theme-white"] .combo-explorer-label,
+body[class*="theme-light-"] .combo-explorer-label,
+[class*="theme-light-"] .combo-explorer-label {
+    color: #334155 !important;
+    font-weight: 600 !important;
+}
+
+body.theme-white .combo-explorer-select,
+[class*="theme-white"] .combo-explorer-select,
+body[class*="theme-light-"] .combo-explorer-select,
+[class*="theme-light-"] .combo-explorer-select {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .combo-explorer-card,
+[class*="theme-white"] .combo-explorer-card,
+body[class*="theme-light-"] .combo-explorer-card,
+[class*="theme-light-"] .combo-explorer-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-white .combo-explorer-card-header,
+[class*="theme-white"] .combo-explorer-card-header,
+body[class*="theme-light-"] .combo-explorer-card-header,
+[class*="theme-light-"] .combo-explorer-card-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white .combo-explorer-header-input,
+[class*="theme-white"] .combo-explorer-header-input,
+body[class*="theme-light-"] .combo-explorer-header-input,
+[class*="theme-light-"] .combo-explorer-header-input {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white .combo-explorer-header-response,
+[class*="theme-white"] .combo-explorer-header-response,
+body[class*="theme-light-"] .combo-explorer-header-response,
+[class*="theme-light-"] .combo-explorer-header-response {
+    color: #059669 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white .combo-explorer-badge-input,
+[class*="theme-white"] .combo-explorer-badge-input,
+body[class*="theme-light-"] .combo-explorer-badge-input,
+[class*="theme-light-"] .combo-explorer-badge-input {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+body.theme-white .combo-explorer-badge-response,
+[class*="theme-white"] .combo-explorer-badge-response,
+body[class*="theme-light-"] .combo-explorer-badge-response,
+[class*="theme-light-"] .combo-explorer-badge-response {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+body.theme-white .combo-explorer-filter-bar,
+[class*="theme-white"] .combo-explorer-filter-bar,
+body[class*="theme-light-"] .combo-explorer-filter-bar,
+[class*="theme-light-"] .combo-explorer-filter-bar {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white .combo-explorer-filter-input,
+[class*="theme-white"] .combo-explorer-filter-input,
+body[class*="theme-light-"] .combo-explorer-filter-input,
+[class*="theme-light-"] .combo-explorer-filter-input {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .combo-explorer-filter-input::placeholder,
+[class*="theme-white"] .combo-explorer-filter-input::placeholder,
+body[class*="theme-light-"] .combo-explorer-filter-input::placeholder,
+[class*="theme-light-"] .combo-explorer-filter-input::placeholder {
+    color: #64748b !important;
+}
+
+body.theme-white .combo-explorer-word-item,
+[class*="theme-white"] .combo-explorer-word-item,
+body[class*="theme-light-"] .combo-explorer-word-item,
+[class*="theme-light-"] .combo-explorer-word-item {
+    color: #1e293b !important;
+}
+
+body.theme-white .combo-explorer-word-item:hover,
+[class*="theme-white"] .combo-explorer-word-item:hover,
+body[class*="theme-light-"] .combo-explorer-word-item:hover,
+[class*="theme-light-"] .combo-explorer-word-item:hover {
+    background: #ede9fe !important;
+    color: #4338ca !important;
+}
+
+body.theme-white .combo-explorer-word-item.selected,
+[class*="theme-white"] .combo-explorer-word-item.selected,
+body[class*="theme-light-"] .combo-explorer-word-item.selected,
+[class*="theme-light-"] .combo-explorer-word-item.selected {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-left: 3px solid #60a5fa !important;
+}
+
+body.theme-white .combo-explorer-match-item,
+[class*="theme-white"] .combo-explorer-match-item,
+body[class*="theme-light-"] .combo-explorer-match-item,
+[class*="theme-light-"] .combo-explorer-match-item {
+    background: #f0f9ff !important;
+    border: 1px solid #bae6fd !important;
+    color: #0284c7 !important;
+}
+
+body.theme-white .combo-explorer-match-item:hover,
+[class*="theme-white"] .combo-explorer-match-item:hover,
+body[class*="theme-light-"] .combo-explorer-match-item:hover,
+[class*="theme-light-"] .combo-explorer-match-item:hover {
+    background: #e0f2fe !important;
+    border-color: #0284c7 !important;
+    color: #0369a1 !important;
+}
+
+body.theme-white .combo-explorer-placeholder,
+[class*="theme-white"] .combo-explorer-placeholder,
+body[class*="theme-light-"] .combo-explorer-placeholder,
+[class*="theme-light-"] .combo-explorer-placeholder {
+    color: #64748b !important;
+}
+
+/* Custom scrollbars in Combo Checker for Light & White Themes */
+body.theme-white #tool-combo .custom-scrollbar-track,
+[class*="theme-white"] #tool-combo .custom-scrollbar-track,
+body[class*="theme-light-"] #tool-combo .custom-scrollbar-track,
+[class*="theme-light-"] #tool-combo .custom-scrollbar-track {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-white #tool-combo .custom-scrollbar-thumb,
+[class*="theme-white"] #tool-combo .custom-scrollbar-thumb,
+body[class*="theme-light-"] #tool-combo .custom-scrollbar-thumb,
+[class*="theme-light-"] #tool-combo .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, #60a5fa, #2563eb) !important;
+    border: 1px solid #1d4ed8 !important;
+    box-shadow: 0 0 6px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* Pure Black Theme & Dark Colored Themes Enhancements for Combo Checker */
+body.theme-black #tool-combo .combo-unified-panel,
+body.theme-black #tool-combo .result-section,
+body.theme-black #combo-explorer-section,
+body.theme-black .combo-explorer-card {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.theme-black #combo-input,
+body.theme-black #combo-dict,
+body.theme-black .combo-explorer-select,
+body.theme-black .combo-explorer-filter-input {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
 

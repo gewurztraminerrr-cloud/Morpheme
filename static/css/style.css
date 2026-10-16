@@ -11482,6 +11482,40 @@ body.theme-white #tool-work-on #work-on-scrollbar-thumb.dragging,
     background: linear-gradient(180deg, #4f46e5, #3730a3) !important;
 }
 
+/* Select options for Words to Work on across themes */
+#tool-work-on select option {
+    background: #1a1a2e;
+    color: #ffffff;
+}
+
+body.theme-white #tool-work-on select option,
+[class*="theme-white"] #tool-work-on select option,
+body[class*="theme-light-"] #tool-work-on select option,
+[class*="theme-light-"] #tool-work-on select option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+/* Empty state message in Light & White Themes */
+body.theme-white #tool-work-on #work-on-table-body div,
+[class*="theme-white"] #tool-work-on #work-on-table-body div,
+body[class*="theme-light-"] #tool-work-on #work-on-table-body div,
+[class*="theme-light-"] #tool-work-on #work-on-table-body div {
+    color: #64748b !important;
+}
+
+/* Theme Black enhancements for Words to Work on */
+body.theme-black #tool-work-on .work-on-input-panel,
+body.theme-black #tool-work-on .work-on-table-card {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.theme-black #tool-work-on input#work-on-input,
+body.theme-black #tool-work-on .work-on-select {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+
 /* Remove glowing effect, focus outline, tap highlight, and text selection around page titles (Tools, Mods, Settings, and hyphenated section titles) */
 .page-title-header,
 .page-title-header *,
