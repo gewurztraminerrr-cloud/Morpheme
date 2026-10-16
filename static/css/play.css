@@ -14537,7 +14537,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     #tool-combo #combo-explorer-section,
     .combo-results-container #combo-explorer-section,
     #combo-explorer-section {
@@ -14557,19 +14557,105 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
     .combo-explorer-controls {
         width: 100% !important;
-        justify-content: flex-start !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 8px !important;
         box-sizing: border-box !important;
     }
-    .combo-explorer-order-group {
-        display: inline-flex !important;
+    .combo-explorer-label {
+        width: 100% !important;
+        display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 6px !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        box-sizing: border-box !important;
+    }
+    .combo-explorer-label span {
+        width: 90px !important;
+        min-width: 90px !important;
+        flex-shrink: 0 !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+    }
+    .combo-explorer-select {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        font-size: 16px !important;
+    }
+    .combo-explorer-order-group {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
+        margin-top: 2px !important;
+    }
+    .combo-explorer-order-btn {
+        flex: 1 1 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
     }
     .combo-explorer-card {
         height: 250px !important;
     }
+}
+
+/* Ensure mobile devices with body.is-mobile also stretch Dictionary, Length, and MP Value to reach right side of panel */
+body.is-mobile #combo-explorer-section .combo-explorer-controls {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #combo-explorer-section .combo-explorer-label {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #combo-explorer-section .combo-explorer-label span {
+    width: 90px !important;
+    min-width: 90px !important;
+    flex-shrink: 0 !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+body.is-mobile #combo-explorer-section .combo-explorer-select {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+}
+body.is-mobile #combo-explorer-section .combo-explorer-order-group {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    margin-top: 2px !important;
+}
+body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
+    flex: 1 1 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
 }
 
 /* Custom scrollbar for Combo Explorer cards */
@@ -14738,7 +14824,7 @@ body.is-mobile .page *::-webkit-scrollbar {
 }
 
 /* Desktop and Laptop Full-Width Stretch & Uniform Look for Combo Checker Sections (MP, MP Word Explorer, LIC) */
-@media (min-width: 641px) {
+@media (min-width: 769px) {
     #tool-combo .combo-results-container,
     .combo-results-container {
         width: 100% !important;
