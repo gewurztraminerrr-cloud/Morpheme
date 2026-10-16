@@ -172,7 +172,7 @@ def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=Fa
         # Local checks passed; if no Gemini key is configured, return clean
         return {"inappropriate": False, "reason": ""}
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
     parts = []
     
     # Base64-encode image if provided
@@ -235,6 +235,9 @@ def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=Fa
             return {"inappropriate": False, "reason": "No candidates returned"}
             
         text_content = candidates[0].get('content', {}).get('parts', [{}])[0].get('text', '').strip()
+        if text_content.startswith('```'):
+            text_content = re.sub(r'^```(?:json)?\s*', '', text_content)
+            text_content = re.sub(r'\s*```$', '', text_content)
         parsed_res = json.loads(text_content)
         
         is_inappropriate = bool(parsed_res.get('inappropriate', False))
