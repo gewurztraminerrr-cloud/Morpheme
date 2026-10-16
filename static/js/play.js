@@ -2417,7 +2417,10 @@ async function updateGameState(incomingState = null) {
                     shuffleBtnEl.style.display = 'none';
                 }
             }
-
+            const clearBtnEl = document.getElementById('clear-word-btn');
+            if (clearBtnEl && state.game_type === 'subanagrams') {
+                clearBtnEl.style.display = 'none';
+            }
             if (inputEl && inputEl.disabled !== !isActive) {
                 inputEl.disabled = !isActive;
             }
@@ -8024,25 +8027,44 @@ function initWordSubmission() {
         return;
     }
 
-    if (submitBtn) {
-        submitBtn.onclick = () => {
-            const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
-            if (isSub && typeof mouseState !== 'undefined' && mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
-                const path = mouseState.selectedPath;
-                const word = path.map((p, i) => getLetterFromPathIndex(path, i, false)).join('');
-                const serverPath = path.map(p => {
-                    if (p.face !== null && p.face !== undefined) {
-                        return [p.face, p.row, p.col];
-                    }
-                    return [p.row, p.col];
-                });
-                console.log('[play.js] Subanagrams Enter clicked:', word, serverPath);
-                submitWord(word, serverPath);
-            } else {
-                const val = wordInputEl.value;
-                console.log('[play.js] submission triggered via button click:', val);
-                submitWord(val);
+    let lastEnterTapTime = 0;
+    window.submitSubanagramsInput = function(e) {
+        const now = Date.now();
+        if (now - lastEnterTapTime < 250) {
+            if (e && typeof e.preventDefault === 'function' && e.cancelable !== false) e.preventDefault();
+            return;
+        }
+        lastEnterTapTime = now;
+        if (e) {
+            if (typeof e.preventDefault === 'function' && e.cancelable !== false) {
+                e.preventDefault();
             }
+            if (typeof e.stopPropagation === 'function') {
+                e.stopPropagation();
+            }
+        }
+        const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+        if (isSub && typeof mouseState !== 'undefined' && mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+            const path = mouseState.selectedPath;
+            const word = path.map((p, i) => getLetterFromPathIndex(path, i, false)).join('');
+            const serverPath = path.map(p => {
+                if (p.face !== null && p.face !== undefined) {
+                    return [p.face, p.row, p.col];
+                }
+                return [p.row, p.col];
+            });
+            console.log('[play.js] Subanagrams Enter clicked:', word, serverPath);
+            submitWord(word, serverPath);
+        } else if (wordInputEl) {
+            const val = wordInputEl.value;
+            console.log('[play.js] submission triggered via button click:', val);
+            submitWord(val);
+        }
+    };
+
+    if (submitBtn) {
+        submitBtn.onclick = (e) => {
+            window.submitSubanagramsInput(e);
         };
     }
 
@@ -9485,6 +9507,14 @@ window.shuffleSubanagramsBoard = function(e) {
 };
 
 document.addEventListener('touchend', (e) => {
+    const submitBtn = e.target ? e.target.closest('#submit-word-btn') : null;
+    if (submitBtn) {
+        if (e.cancelable !== false) e.preventDefault();
+        e.stopPropagation();
+        console.log('[play.js] Enter touchend!');
+        if (window.submitSubanagramsInput) window.submitSubanagramsInput(e);
+        return;
+    }
     const shuffleBtn = e.target ? e.target.closest('#shuffle-board-btn') : null;
     if (shuffleBtn) {
         if (e.cancelable !== false) e.preventDefault();
@@ -9496,6 +9526,14 @@ document.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 document.addEventListener('click', (e) => {
+    const submitBtn = e.target ? e.target.closest('#submit-word-btn') : null;
+    if (submitBtn) {
+        if (e.cancelable !== false) e.preventDefault();
+        e.stopPropagation();
+        console.log('[play.js] Enter clicked!');
+        if (window.submitSubanagramsInput) window.submitSubanagramsInput(e);
+        return;
+    }
     const shuffleBtn = e.target ? e.target.closest('#shuffle-board-btn') : null;
     if (shuffleBtn) {
         if (e.cancelable !== false) e.preventDefault();

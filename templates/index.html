@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1791130490" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1791141100">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130490">
-    <link rel="stylesheet" href="/css/play.css?v=1791141100">
+    <link rel="stylesheet" href="/css/play.css?v=1791150000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -3640,12 +3640,12 @@
                     <div id="game-board" class="game-board"></div>
                     <div id="word-validation-status" class="validation-status"></div>
                     <div class="word-input-section">
+                        <button id="submit-word-btn" class="submit-word-btn timer-btn" type="button" onclick="if(window.submitSubanagramsInput)window.submitSubanagramsInput(event);" ontouchend="if(window.submitSubanagramsInput)window.submitSubanagramsInput(event);">Enter</button>
                         <div class="word-input-row" id="word-input-row">
                             <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" onkeydown="if(event.key==='Enter'||event.keyCode===13){event.preventDefault();submitWord(this.value);}">
-                            <button id="submit-word-btn">Enter</button>
-                            <button id="clear-word-btn" class="clear-btn timer-btn" type="button">Clear</button>
+                            <button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button" onclick="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);" ontouchend="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);">Shuffle</button>
+                            <button id="clear-word-btn" class="clear-btn timer-btn" type="button" style="display: none !important;">Clear</button>
                         </div>
-                        <button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button" onclick="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);" ontouchend="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);">Shuffle</button>
                         <div class="timer-controls-group" id="timer-controls-group">
                             <button id="rotate-board-btn" class="rotate-btn timer-btn">Rotate</button>
                             <button id="transpose-board-btn" class="rotate-btn timer-btn">Transpose</button>
@@ -7316,7 +7316,7 @@
                             </ul>
                             <p><strong>Device Controls & Mobile Word Entry:</strong></p>
                             <ul>
-                                <li><strong>📱 Mobile Devices (Individual Letter Tapping):</strong> On smartphones and tablets, swiping across tiles is not applicable. <strong>Users must individually tap on each letter tile</strong> one by one to spell out words into the text input box. Once your word is assembled, tap the emerald <strong>Enter</strong> button to submit it, or tap the red <strong>Clear</strong> button (positioned to the right of Enter) to reset your selection. Directly below the input box and buttons sits the full-width blue <strong>Shuffle</strong> button, which rearranges the dealt letters into random permutations to give you a fresh visual angle and spark new word discoveries.</li>
+                                <li><strong>📱 Mobile Devices (Individual Letter Tapping):</strong> On smartphones and tablets, swiping across tiles is not applicable. <strong>Users must individually tap on each letter tile</strong> one by one to spell out words into the text input box. The prominent, full-width emerald <strong>Enter</strong> button is positioned directly above the input row for rapid submissions. Alongside the input box sits the blue <strong>Shuffle</strong> button, which rearranges the dealt letters into random permutations to give you a fresh visual angle and spark new word discoveries.</li>
                                 <li><strong>💻 Desktop & Laptop Devices:</strong> Players can either click letter tiles with a mouse/trackpad or simply type words directly using the physical keyboard and press the keyboard's <kbd>Enter</kbd> key. You can also click the on-screen <strong>Shuffle</strong> button (or press the keyboard shuffle shortcut) to reorder the tiles.</li>
                             </ul>
                         </div>
@@ -9456,7 +9456,7 @@
                                     <strong>How It Works & Concept:</strong> A thrilling multiplayer unscrambling and anagram contest with the specific intention of serving as a warm-up for rated play! All players in the room are dealt the exact same single row of 7, 8, or 9 letters and compete synchronously against a 2-minute countdown timer. Your objective is to discover and enter all valid dictionary sub-words (ranging from 3 letters up to the full rack length) contained within those dealt letters. Unlike 2D grid boards, letter tiles do not need to be adjacent—you can choose letters from any position along the rack in any order (up to the number of times each letter was dealt).
                                 </p>
                                 <p class="lobby-guide-card-desc">
-                                    <strong>Device Input & Mobile Tapping Rule:</strong> On mobile devices (smartphones and tablets), <em>users must individually tap on each letter tile</em> one by one to spell out words in the textbox (swiping across tiles is not applicable). Tap the emerald <strong>Enter</strong> button to submit or red <strong>Clear</strong> to reset. Directly below the textbox and buttons sits the blue <strong>Shuffle</strong> button, which permutes the rack into a new random order to help your eyes recognize new anagram combinations. Desktop and laptop players can either click tiles with the mouse or type words directly using the physical keyboard.
+                                    <strong>Device Input & Mobile Tapping Rule:</strong> On mobile devices (smartphones and tablets), <em>users must individually tap on each letter tile</em> one by one to spell out words in the textbox (swiping across tiles is not applicable). Tap the large emerald <strong>Enter</strong> button directly above the input row to submit words. The blue <strong>Shuffle</strong> button sits directly alongside the textbox to permute the rack into a new random order and help your eyes recognize new anagram combinations. Desktop and laptop players can either click tiles with the mouse or type words directly using the physical keyboard.
                                 </p>
                                 <p class="lobby-guide-card-desc">
                                     <strong>Button Action:</strong> Clicking <code>Start [N]</code> drops you immediately into the live multiplayer Subanagrams round with continuous synchronized matchmaking.
@@ -10089,7 +10089,7 @@
     <script src="/js/forum.js?v=1791130520"></script>
     <script src="/js/app.js?v=1791140400"></script>
     <script src="/js/lobby.js?v=1791100010"></script>
-    <script src="/js/play.js?v=1791130540"></script>
+    <script src="/js/play.js?v=1791150000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
