@@ -230,6 +230,12 @@ window.showTool = function(toolId) {
 
     // Trigger lazy loads & dynamic style refreshes
     if (toolId === 'combo') {
+        if (typeof window.switchComboTab === 'function') {
+            const curActiveTab = document.querySelector('.combo-tab-btn.active');
+            if (!curActiveTab) {
+                window.switchComboTab('mp');
+            }
+        }
         const comboScroll = document.getElementById('combo-scroll-container');
         if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
             comboScroll._updateCustomScrollbar();
@@ -824,7 +830,37 @@ if (window.visualViewport) {
     });
 }
 
+window.switchComboTab = function(tabName) {
+    const isLic = (tabName === 'lic');
+    const mpBtn = document.getElementById('combo-tab-btn-mp');
+    const licBtn = document.getElementById('combo-tab-btn-lic');
+    const mpPane = document.getElementById('combo-pane-mp');
+    const licPane = document.getElementById('combo-pane-lic');
+
+    if (mpBtn) mpBtn.classList.toggle('active', !isLic);
+    if (licBtn) licBtn.classList.toggle('active', isLic);
+
+    if (mpPane) {
+        mpPane.classList.toggle('active', !isLic);
+        mpPane.style.display = isLic ? 'none' : 'block';
+    }
+    if (licPane) {
+        licPane.classList.toggle('active', isLic);
+        licPane.style.display = isLic ? 'block' : 'none';
+    }
+
+    const comboScroll = document.getElementById('combo-scroll-container');
+    if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
+        comboScroll._updateCustomScrollbar();
+        setTimeout(() => { if (comboScroll._updateCustomScrollbar) comboScroll._updateCustomScrollbar(); }, 50);
+    }
+};
+
 function setupComboChecker() {
+    if (typeof window.switchComboTab === 'function') {
+        window.switchComboTab('mp');
+    }
+
     const searchBtn = document.getElementById('combo-search-btn');
     const input = document.getElementById('combo-input');
 
@@ -9803,6 +9839,10 @@ window.showWordDefinitionPopup = async function (word, event) {
                         try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
                     }
                 }
+            }
+
+            if (typeof window.switchComboTab === 'function') {
+                window.switchComboTab('mp');
             }
 
             const comboInput = document.getElementById('combo-input');

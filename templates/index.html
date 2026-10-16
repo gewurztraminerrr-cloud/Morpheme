@@ -176,9 +176,9 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1791130081" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791130490" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791130081">
+    <link rel="stylesheet" href="/css/style.css?v=1791140700">
     <link rel="stylesheet" href="/css/lobby.css?v=1791130490">
-    <link rel="stylesheet" href="/css/play.css?v=1791140400">
+    <link rel="stylesheet" href="/css/play.css?v=1791140700">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1791130148">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4724,13 +4724,13 @@
                         <div id="combo-scroll-container" class="combo-scroll-container">
                             <div class="tool-header">
                                 <h2>Combo Checker</h2>
-                                <p>Find connected words via MP and LIC.</p>
+                                <p>Find connected words via MP and LIC, and explore connections using the MP Word Explorer.</p>
                             </div>
 
-                                <div class="combo-control-panel">
-                                    <div class="input-row">
-                                        <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                            autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                            <div class="combo-control-panel">
+                                <div class="input-row">
+                                    <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                        autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
                                     <select id="combo-dict" style="min-width: 155px;">
                                         <option value="NWL">NWL (US)</option>
                                         <option value="CSW" selected>CSW (Intl)</option>
@@ -4747,26 +4747,55 @@
                                 </div>
                             </div>
 
-                            <div id="combo-results" class="combo-results-container hidden">
-                                <!-- MP Section: Horizontal Groups (0MP to 3MP) -->
-                                <div class="result-section">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                        <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
-                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
-                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                            <div id="combo-results" class="combo-results-container">
+                                <!-- MP and LIC Tabs Section -->
+                                <div class="combo-tabs-section">
+                                    <div class="combo-tabs-header">
+                                        <button type="button" class="combo-tab-btn active" id="combo-tab-btn-mp" onclick="window.switchComboTab('mp')">MP</button>
+                                        <button type="button" class="combo-tab-btn" id="combo-tab-btn-lic" onclick="window.switchComboTab('lic')">LIC</button>
+                                    </div>
+
+                                    <div class="combo-tab-panes">
+                                        <!-- MP Section Tab Pane (0MP to 3MP) -->
+                                        <div id="combo-pane-mp" class="combo-tab-pane active">
+                                            <div class="result-section">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                    <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
+                                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
+                                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                                                    </div>
+                                                </div>
+                                                <div class="chart-desc">
+                                                    Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
+                                                </div>
+                                                <div class="horizontal-scroll-container" id="mp-container">
+                                                    <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="chart-desc">
-                                        Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
-                                    </div>
-                                    <div class="horizontal-scroll-container" id="mp-container">
-                                        <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+
+                                        <!-- LIC Section Tab Pane (Sorted by Shared Count) -->
+                                        <div id="combo-pane-lic" class="combo-tab-pane" style="display: none;">
+                                            <div class="result-section">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                    <h3 style="color: #60a5fa; margin: 0;">LIC (Letters In Common)</h3>
+                                                    <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                                        <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
+                                                        <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                                    </div>
+                                                </div>
+                                                <div class="chart-desc" id="lic-chart-desc">The letters are there, but are they arranged in such a way so as to have both be present?</div>
+                                                <div class="horizontal-scroll-container" id="lic-container">
+                                                    <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- MP Explorer Section: Filtered by Word Length & MP Value -->
-                                <div class="result-section" id="combo-explorer-section" style="width: 100%; box-sizing: border-box; margin: 0; padding: 10px 14px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(var(--text-primary-rgb), 0.05); border-radius: 10px;">
+                                <!-- MP Explorer Section: Positioned beneath the MP and LIC content -->
+                                <div class="result-section" id="combo-explorer-section" style="width: 100%; box-sizing: border-box; margin-top: 15px; margin-bottom: 0; padding: 10px 14px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(var(--text-primary-rgb), 0.05); border-radius: 10px;">
                                     <div class="combo-explorer-top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
                                         <h3 style="color: #60a5fa; margin: 0; font-size: 1.15rem;">MP Word Explorer</h3>
                                         <div class="combo-explorer-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -4858,21 +4887,6 @@
                                                 <div class="custom-scrollbar-thumb" id="combo-explorer-response-thumb"></div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- LIC Section: Horizontal Groups (Sorted by Shared Count) -->
-                                <div class="result-section">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                        <h3 style="color: #60a5fa; margin: 0;">LIC (Letters In Common)</h3>
-                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
-                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
-                                        </div>
-                                    </div>
-                                    <div class="chart-desc" id="lic-chart-desc">The letters are there, but are they arranged in such a way so as to have both be present?</div>
-                                    <div class="horizontal-scroll-container" id="lic-container">
-                                        <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
                                     </div>
                                 </div>
                             </div>
@@ -10071,7 +10085,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1791140600"></script>
+    <script src="/js/tools.js?v=1791140700"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>
     <script src="/js/private_matches.js?v=33806"></script>

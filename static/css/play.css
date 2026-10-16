@@ -3869,6 +3869,76 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         padding: 4px 18px 40px 4px !important;
     }
 
+    /* Combo Checker Tabs */
+    .combo-tabs-section {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+
+    .combo-tabs-header {
+        display: flex !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+        border-bottom: 2px solid rgba(var(--text-primary-rgb), 0.1) !important;
+        padding-bottom: 0px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    .combo-tab-btn {
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.1) !important;
+        border-bottom: none !important;
+        border-radius: 8px 8px 0 0 !important;
+        padding: 9px 24px !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        color: rgba(var(--text-primary-rgb), 0.6) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        letter-spacing: 0.5px !important;
+        outline: none !important;
+        user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .combo-tab-btn:hover {
+        color: var(--text-primary) !important;
+        background: rgba(var(--text-primary-rgb), 0.08) !important;
+    }
+
+    .combo-tab-btn.active#combo-tab-btn-mp {
+        color: #ffd700 !important;
+        background: rgba(255, 215, 0, 0.1) !important;
+        border-color: rgba(255, 215, 0, 0.35) !important;
+        box-shadow: inset 0 -3px 0 #ffd700 !important;
+        font-weight: 800 !important;
+    }
+
+    .combo-tab-btn.active#combo-tab-btn-lic {
+        color: #60a5fa !important;
+        background: rgba(96, 165, 250, 0.1) !important;
+        border-color: rgba(96, 165, 250, 0.35) !important;
+        box-shadow: inset 0 -3px 0 #60a5fa !important;
+        font-weight: 800 !important;
+    }
+
+    .combo-tab-panes {
+        width: 100% !important;
+    }
+
+    .combo-tab-pane {
+        display: none;
+        width: 100% !important;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .combo-tab-pane.active {
+        display: block !important;
+    }
+
     #tool-combo .combo-results-container,
     .combo-results-container {
         display: flex !important;
