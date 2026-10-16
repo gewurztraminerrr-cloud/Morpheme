@@ -1872,7 +1872,7 @@ body.theme-white .lobby-journey-sticky-header {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         margin: 0 !important;
-        padding: 7px 10px 7px 10px !important;
+        padding: 12px 10px 12px 10px !important;
         box-sizing: border-box !important;
     }
     .lobby-journey-message {
@@ -1903,7 +1903,7 @@ body.theme-white .lobby-journey-sticky-header {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         margin: 0 !important;
-        padding: 6px 8px 6px 8px !important;
+        padding: 10px 8px 10px 8px !important;
     }
     .lobby-journey-message {
         font-size: 0.70rem !important;
@@ -1936,7 +1936,7 @@ body.theme-white .lobby-journey-sticky-header {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         margin: 0 !important;
-        padding: 5px 6px 5px 6px !important;
+        padding: 9px 6px 9px 6px !important;
     }
     .lobby-journey-message {
         font-size: 0.64rem !important;
