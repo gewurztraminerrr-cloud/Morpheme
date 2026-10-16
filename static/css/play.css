@@ -14538,14 +14538,28 @@ body.is-mobile .page *::-webkit-scrollbar {
 }
 
 @media (max-width: 640px) {
+    #tool-combo #combo-explorer-section,
+    .combo-results-container #combo-explorer-section,
+    #combo-explorer-section {
+        padding: 10px 10px 14px 10px !important;
+        border-radius: 14px !important;
+        margin-bottom: 16px !important;
+        background: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+        box-sizing: border-box !important;
+    }
     .combo-explorer-grid {
         grid-template-columns: 1fr !important;
         gap: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     .combo-explorer-controls {
         width: 100% !important;
         justify-content: flex-start !important;
         gap: 8px !important;
+        box-sizing: border-box !important;
     }
     .combo-explorer-order-group {
         display: inline-flex !important;
@@ -14607,13 +14621,55 @@ body.is-mobile .page *::-webkit-scrollbar {
     height: 0 !important;
 }
 
-/* Explicit override to prevent .result-section min-height from stretching MP Word Explorer on desktop/laptop */
+/* Explicit override to style and add clean padding around all content for MP Word Explorer */
 #tool-combo #combo-explorer-section,
-.combo-results-container #combo-explorer-section {
+.combo-results-container #combo-explorer-section,
+#combo-explorer-section {
     min-height: 0 !important;
     height: auto !important;
     flex: 0 0 auto !important;
     overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+    border-radius: 14px !important;
+    padding: 16px 18px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+#combo-explorer-section .combo-explorer-title,
+#tool-combo #combo-explorer-section .combo-explorer-title {
+    padding: 0 !important;
+    margin: 0 0 6px 0 !important;
+}
+
+#combo-explorer-section .combo-explorer-top-bar {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 8px !important;
+}
+
+#combo-explorer-section #mp-explorer-chart-desc {
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#combo-explorer-section .combo-explorer-controls {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 10px !important;
+}
+
+#combo-explorer-section .combo-explorer-grid {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-top: 0 !important;
 }
 
 /* Ensure all Combo Checker descriptions (Tool header, MP, MP Word Explorer, LIC) share the exact same scrolling box effect */
@@ -14691,8 +14747,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
 
     #tool-combo .result-section,
-    .combo-results-container .result-section,
-    #combo-explorer-section {
+    .combo-results-container .result-section {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
@@ -14701,6 +14756,22 @@ body.is-mobile .page *::-webkit-scrollbar {
         background: rgba(0, 0, 0, 0.2) !important;
         border-radius: 10px !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.05) !important;
+    }
+
+    #tool-combo #combo-explorer-section,
+    .combo-results-container #combo-explorer-section,
+    #combo-explorer-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        background: rgba(0, 0, 0, 0.22) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 14px !important;
+        padding: 16px 18px !important;
+        margin-bottom: 24px !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
     }
 
     #tool-combo .horizontal-scroll-container,
