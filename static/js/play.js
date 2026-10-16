@@ -3999,27 +3999,52 @@ window.sendChatMessage = sendChatMessage;
 function initPlayDOMElements() {
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send-btn');
+    const chatPanel = document.querySelector('.chat-panel');
+    const leftPanelContainer = document.querySelector('.left-panel-container');
+    const collapseBtn = document.getElementById('chat-collapse-btn');
+
+    let isPlayChatExpanded = false;
+    let lastChatCollapseTime = 0;
+    let playKeyboardWasShown = false;
+    let playBaselineH = 0;
+
+    const curPlayViewportH = () => (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+    const recordPlayBaseline = () => {
+        if (document.activeElement !== chatInput) playBaselineH = Math.max(curPlayViewportH(), window.innerHeight);
+    };
+    recordPlayBaseline();
+    window.addEventListener('resize', recordPlayBaseline);
 
     function updatePlayChatKeyboardPosition() {
-        if (!chatPanel) return;
+        if (!chatPanel || !isPlayChatExpanded) {
+            if (chatPanel) {
+                chatPanel.classList.remove('keyboard-open');
+                chatPanel.style.bottom = '';
+            }
+            if (leftPanelContainer) leftPanelContainer.classList.remove('keyboard-active');
+            return;
+        }
         const isInputFocused = document.activeElement === chatInput;
         const vv = window.visualViewport;
+        const shrink = playBaselineH ? Math.max(0, playBaselineH - curPlayViewportH()) : 0;
         const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
-        const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile'));
 
-        if (isInputFocused && kbHeight > 50) {
+        if (isInputFocused && (shrink > 100 || kbHeight > 50)) {
+            playKeyboardWasShown = true;
             chatPanel.classList.add('keyboard-open');
             if (leftPanelContainer) leftPanelContainer.classList.add('keyboard-active');
-            chatPanel.style.bottom = (kbHeight + 8) + 'px';
+            chatPanel.style.bottom = kbHeight > 50 ? (kbHeight + 4) + 'px' : '';
             setTimeout(() => {
                 chatInput.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 const hist = document.getElementById('chat-history');
                 if (hist) hist.scrollTop = hist.scrollHeight;
             }, 40);
-        } else if (!isInputFocused) {
+        } else if (!isInputFocused || (playKeyboardWasShown && shrink <= 100 && kbHeight <= 50)) {
+            playKeyboardWasShown = false;
             chatPanel.classList.remove('keyboard-open');
             if (leftPanelContainer) leftPanelContainer.classList.remove('keyboard-active');
             chatPanel.style.bottom = '';
+            if (isInputFocused) chatInput.blur();
         }
     }
 
@@ -4035,14 +4060,24 @@ function initPlayDOMElements() {
         chatInput.addEventListener('paste', () => setTimeout(updateRoomChatCounter, 10));
         chatInput.addEventListener('click', (e) => {
             e.stopPropagation();
+            const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile'));
+            if (isMobile && !isPlayChatExpanded) {
+                expandChat();
+            }
         });
         chatInput.addEventListener('focus', () => {
-            chatPanel.classList.add('keyboard-open');
-            if (leftPanelContainer) leftPanelContainer.classList.add('keyboard-active');
-            updatePlayChatKeyboardPosition();
-            setTimeout(updatePlayChatKeyboardPosition, 50);
-            setTimeout(updatePlayChatKeyboardPosition, 150);
-            setTimeout(updatePlayChatKeyboardPosition, 300);
+            const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile'));
+            if (isMobile && !isPlayChatExpanded) {
+                expandChat();
+            }
+            if (isPlayChatExpanded) {
+                chatPanel.classList.add('keyboard-open');
+                if (leftPanelContainer) leftPanelContainer.classList.add('keyboard-active');
+                updatePlayChatKeyboardPosition();
+                setTimeout(updatePlayChatKeyboardPosition, 50);
+                setTimeout(updatePlayChatKeyboardPosition, 150);
+                setTimeout(updatePlayChatKeyboardPosition, 300);
+            }
             const scrollHist = () => {
                 const hist = document.getElementById('chat-history');
                 if (hist) hist.scrollTop = hist.scrollHeight;
@@ -4052,6 +4087,7 @@ function initPlayDOMElements() {
             setTimeout(scrollHist, 300);
         });
         chatInput.addEventListener('blur', () => {
+            playKeyboardWasShown = false;
             if (chatPanel) {
                 chatPanel.classList.remove('keyboard-open');
                 chatPanel.style.bottom = '';
@@ -4068,7 +4104,6 @@ function initPlayDOMElements() {
     }
 
     if (chatSend) {
-        // Prevent blur when tapping Send on touchscreens so input isn't blurred before sending
         chatSend.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             sendChatMessage();
@@ -4080,29 +4115,28 @@ function initPlayDOMElements() {
     }
 
     // --- CHAT PANEL EXPAND / COLLAPSE SYSTEM ---
-    const chatPanel = document.querySelector('.chat-panel');
-    const leftPanelContainer = document.querySelector('.left-panel-container');
-    const collapseBtn = document.getElementById('chat-collapse-btn');
-
     function collapseChat() {
-        if (!chatPanel || (!chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
+        if (!chatPanel || (!isPlayChatExpanded && !chatPanel.classList.contains('expanded') && !chatPanel.classList.contains('collapsing'))) return;
+        isPlayChatExpanded = false;
+        lastChatCollapseTime = Date.now();
+
         if (typeof window._cancelChatMomentum === 'function') {
             window._cancelChatMomentum();
         }
         
-        if (chatInput) {
+        if (chatInput && document.activeElement === chatInput) {
             chatInput.blur();
         }
 
-        if (collapseBtn) {
-            collapseBtn.style.display = 'none';
-        }
-
+        playKeyboardWasShown = false;
         if (chatPanel) {
             chatPanel.style.transform = '';
             chatPanel.style.willChange = '';
             chatPanel.classList.remove('keyboard-open');
             chatPanel.style.bottom = '';
+        }
+        if (leftPanelContainer) {
+            leftPanelContainer.classList.remove('keyboard-active');
         }
 
         chatPanel.classList.add('collapsing');
@@ -4121,7 +4155,11 @@ function initPlayDOMElements() {
     }
 
     function expandChat() {
-        if (!chatPanel || chatPanel.classList.contains('expanded')) return;
+        if (!chatPanel) return;
+        if (Date.now() - lastChatCollapseTime < 450) return;
+        if (isPlayChatExpanded && chatPanel.classList.contains('expanded')) return;
+        
+        isPlayChatExpanded = true;
         if (typeof window._cancelChatMomentum === 'function') {
             window._cancelChatMomentum();
         }
@@ -4130,9 +4168,6 @@ function initPlayDOMElements() {
         if (leftPanelContainer) {
             leftPanelContainer.classList.add('chat-expanded');
             leftPanelContainer.scrollTop = 0;
-        }
-        if (collapseBtn) {
-            collapseBtn.style.display = 'flex';
         }
         const chatHistory = document.getElementById('chat-history');
         if (chatHistory) {
@@ -4184,34 +4219,37 @@ function initPlayDOMElements() {
         }, { passive: true });
 
         chatPanel.addEventListener('click', (e) => {
-            // Do not toggle if clicking input, send button, interactive links, users, or close button
-            if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user') || e.target.closest('#chat-collapse-btn')) {
+            if (Date.now() - lastChatCollapseTime < 450) return;
+            if (e.target.closest('#chat-collapse-btn') || e.target.closest('.chat-collapse-btn')) return;
+            if (e.target.closest('.chat-input-section') || e.target.closest('.clickable-word-link') || e.target.closest('.chat-user')) {
                 return;
             }
 
-            // If user was scrolling on touch device, do not open
             if (isTouchScroll) {
                 isTouchScroll = false;
                 return;
             }
 
-            if (!chatPanel.classList.contains('expanded')) {
+            if (!isPlayChatExpanded) {
                 expandChat();
             }
         });
     }
 
     if (collapseBtn) {
-        collapseBtn.addEventListener('click', (e) => {
+        const handleCollapse = (e) => {
+            e.preventDefault();
             e.stopPropagation();
             collapseChat();
-        });
+        };
+        collapseBtn.addEventListener('pointerdown', handleCollapse);
+        collapseBtn.addEventListener('touchstart', handleCollapse, { passive: false });
+        collapseBtn.addEventListener('click', handleCollapse);
     }
 
     // Collapse when clicking outside the chatbox (on desktop only, or when user clicks outside the panel)
     document.addEventListener('click', (e) => {
         if (chatPanel && chatPanel.classList.contains('expanded')) {
-            // On mobile devices, require pressing the X close button to close the chatbox
             const isMobileViewport = window.innerWidth <= 992 || (document.body && document.body.classList.contains('is-mobile'));
             if (!isMobileViewport && !chatPanel.contains(e.target)) {
                 collapseChat();

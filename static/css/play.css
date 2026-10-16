@@ -9462,7 +9462,13 @@ body.is-desktop .word-input-section {
 }
 
 .chat-panel.expanded .chat-collapse-btn {
-    display: flex;
+    display: flex !important;
+}
+
+.chat-panel:not(.expanded) .chat-collapse-btn,
+.chat-panel.collapsing .chat-collapse-btn {
+    display: none !important;
+    pointer-events: none !important;
 }
 
 .chat-collapse-btn:hover {
@@ -9588,21 +9594,30 @@ body[class*="theme-light-"] .chat-collapse-btn:hover {
         min-height: 0 !important;
     }
 
-    /* Mobile Chat Keyboard Open Adjustments - keeps in-game chatbox, send button, and ample message history in full view */
-    .chat-panel.keyboard-open {
-        transition: bottom 0.12s ease-out !important;
-        z-index: 10005 !important;
-        min-height: 0 !important;
-        max-height: calc(100vh - 40px) !important;
-        max-height: calc(100dvh - 40px) !important;
+    /* Mobile Chat Keyboard Open Adjustments - elevates fixed above virtual keyboard with clean framing and no clipping */
+    .chat-panel.expanded.keyboard-open {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 0 !important;
+        width: calc(100% - 16px) !important;
+        max-width: 540px !important;
+        margin: 0 auto !important;
+        max-height: min(440px, 68vh) !important;
+        max-height: min(440px, 68dvh) !important;
         height: auto !important;
+        z-index: 10005 !important;
+        box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.85) !important;
+        transition: bottom 0.12s ease-out !important;
+        border-radius: 14px !important;
         display: flex !important;
         flex-direction: column !important;
     }
 
-    .chat-panel.keyboard-open #chat-history {
-        max-height: none !important;
-        min-height: 180px !important;
+    .chat-panel.expanded.keyboard-open #chat-history {
+        max-height: min(280px, 42vh) !important;
+        max-height: min(280px, 42dvh) !important;
+        min-height: 140px !important;
         height: auto !important;
         flex: 1 1 auto !important;
     }
