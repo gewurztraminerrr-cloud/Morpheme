@@ -6,18 +6,13 @@ START_OVER_POINT_OCTOBER_15
 ```
 *(Also tagged as `stable-2026-10-15`)*
 
-## Latest Commit ID
-```
-4527562232a514d2ba7bb13c59ca632ef39d2208
-```
-
 ## Synchronization Status
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| **localhost**      | ✅ Synchronized | Commit `45275622`, working tree clean, synced with origin/main |
-| **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub (`45275622`) |
-| **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (Commit `45275622`, PM2 online, verified live HTTP/2 200 OK) |
+| **localhost**      | ✅ Synchronized | Working tree clean, synced with origin/main |
+| **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
+| **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, verified live) |
 | **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts |
 
 ---
@@ -58,87 +53,155 @@ START_OVER_POINT_OCTOBER_15
 - Upgraded deployment workflow with a pre-reset safety guard that scans `added_words.txt` and `added_words_dates.txt` on remote for uncommitted additions before performing `git reset --hard`.
 - Any words added on production that do not yet exist in `origin/main` are automatically backed up, preserved across the git reset, and seamlessly re-injected so user-added words will never be lost on future deploys.
 
-### 4. Definition Synchronization for ABELLOEMRINGERITE & ABELLOEMRINGERITES
-- Permanently synchronized definitions and dictionary entries for `ABELLOEMRINGERITE` and `ABELLOEMRINGERITES` (repeating the mineral definition per AGENTS.md Rule 1).
+### 4. Fix for Tools "ALL" Dictionary Loader
+- **Bug**: In `app.py`, `load_tools_dictionary('ALL')` previously read word files using `line.strip().upper()` without splitting on whitespace (`.split()[0]`). For date-stamped files like `new_NWL.txt`, words with dates (e.g., `TESTTESTS\t22/05/2026`) failed exact string matching in `ALL`.
+- **Fix**: Updated `load_tools_dictionary('ALL')` to parse words using `line.strip().split()[0].upper()`.
+- **List Badge Support**: Updated `tools_validate_word` to check membership against cached tools dictionary sets so `NWL` and `CSW` badges display for newly added words.
 
-### 5. Removal of Erroneous Scratch Word TESTTEST
-- Removed erroneous test word `TESTTEST` and its plural `TESTTESTS` from all local and remote dictionary text files and database tables.
+### 5. Removal of Test Words from New NWL Words & Dictionaries
+- Manually purged obsolete test entries `TESTTEST` and `TESTTESTS` from `dictionaries/new_NWL.txt`, `added_words.txt`, `added_words_duplicate.txt`, `Definitions.txt`, and `wikdefs_aw_duplicate.txt` on both localhost and remote.
+- Verified that both words now return `is_valid: false` across all dictionaries on production.
 
-### 6. Subanagrams Intention Documentation Across App
-- In `templates/index.html`:
-  - Updated Subanagrams Guide / "What am I looking at" modal (`#sub-help-modal`) to explicitly state the intention is to warm up for rated play.
-  - In `#faq-subanagrams`, stated that the primary intention of multiplayer Subanagrams is to warm up for rated play.
-  - In Lobby Guide Modal (`#lobby-guide-modal`), highlighted warm-up intention.
-- **Forum Mobile Original Post Response Badge (`static/js/forum.js`)**:
-  - In `showReplyMobileModal(postNumber)`:
-    - Replaced the text-based user count label with thread-consistent badge: `💬 ${respCount}`.
-    - Added interactive click listener so tapping it opens responses list modal.
+### 6. Full Synchronization of October 15 Added Words
+- Synchronized newly added mineral words from production into localhost and GitHub:
+  - **`ABELLOEMRINGERITE`** / **`ABELLOEMRINGERITES`** (`15/10/2026`)
+  - **`ACHAVALITE`** / **`ACHAVALITES`** (`15/10/2026`)
+  - **`ACHYROPHANITE`** / **`ACHYROPHANITES`** (`15/10/2026`)
+- Sourced and placed definitions across all dictionary files and local/remote SQLite databases.
 
-### 7. Fix for Temporary Duplicate Word Row Under Words on Submission
-- Deduplicated optimistic submission handling in `static/js/play.js` inside `submitWord()`, ensuring server response updates the existing row in place without duplicating or flickering.
+### 7. Equalized Forum Vertical Spacing Above General & Category Tabs
+- **Sidebar Spacing Symmetry**:
+  - In `static/css/forum.css`, changed `.forum-nav-list` padding from `padding: 6px 0;` to `padding: 0;` (and `padding: 0 !important;` on mobile).
+  - Eliminated the asymmetrical `6px` top gap above **General**, ensuring identical `15px` padding above and below each category item and making item active/hover highlights fit flush between the top and bottom divider lines.
+- **Category Heading Vertical Margins**:
+  - Added `margin-top: 5px;` to `.header-titles h2` (and `margin-top: 4px !important;` on mobile `#forum-category-title`) to eliminate the browser default `0.83em` (~24px) margin-top, giving equal top and bottom spacing around category titles in the main forum view.
 
-### 8. Combo Checker: Non-Plural / Non-Inflection MP Filtering & Interactive MP Word Explorer
-- **Non-Plural & Non-Inflection Filtering (`is_plural_or_inflection`)**:
-  - Implemented inflection filtering in `app.py`: excludes simple and irregular plural suffixes (`+S`, `+ES`, `+IES`), verb and adjective inflections (`+D`, `+ED`, `+ER`, `+EST`, `+ING`), vowel elision (e.g. drop `E` before `-ED`, `-ING`, `-ER`, `-EST`), and consonant doubling (e.g., `HOP` -> `HOPPED`, `HOPPING`).
-  - Example: For input word `WASTRIE` at 1MP, plural `WASTRIES` is excluded, while true Morpheme distance connections such as `WASTRIFE` are included.
-- **Dual-Table MP Word Explorer (`#combo-explorer-section`)**:
-  - Placed cleanly in Tools -> Combo Checker between the MP horizontal container and the LIC container.
-  - **Independent Dictionary Dropdown (`#combo-explorer-dict`)**:
-    - Users can select which dictionary to explore independently from the main Combo Checker input:
-      `NWL`, `CSW`, `AW`, `All`, `CSW Only`, `NWL Uniques`, `New NWL Words`, `New CSW Words`, `New AW Words`, and `All New Words`.
-  - **Word Length Dropdown**: 3 to 10 letters (defaults to 7 Letters).
-  - **MP Value Dropdown**: 0 MP, 1 MP, 2 MP, 3 MP (defaults to 1 MP).
-  - **Random Order Button**: Enables displaying words and their respective MPs in randomized order rather than alphabetical order.
-  - **A–Z Button**: Restores standard ordering.
-  - **4-Letter Word Exclusion**: Specifically for the MP Word Explorer, 4-letter words are not captured in results (e.g. for `LINKBOY`, `LINK` is not captured as a 0MP word, so `LINKBOY` is not in the 0MP input words list and `LINK` does not appear as an MP connection).
-  - **Output Table Length-Descending Sorting**: In the MP Word Explorer output table, words are sorted by length, largest first (`-len(w)`, with alphabetical secondary sort). E.g. for `WASTRIE` at 1MP, 8-letter connections `WASTERIE` and `WASTRIFE` appear at the very top.
-  - **Standard Combo Checker Preserved**: The main Combo Checker search tool retains standard dictionary and procedure rules.
-  - **Complete Native Word List Rendering**:
-    - Replaced DOM chunking with full string concatenation and container event delegation (`#combo-explorer-input-list`).
-    - Eliminates list truncation at 150 words (e.g. `ACKNOWN`), rendering all 27,678+ words instantaneously (~3ms) with smooth continuous native scrolling from A to Z.
-  - **Dictionary Dropdown Labeling**:
-    - Renamed `"New All Words"` option to `"All New Words"`.
-  - **Input Words Table**: Displays all words of the selected length that actually have one or more non-plural/non-inflection MP connections. Includes instant client-side text filtering (`#combo-explorer-filter`) and instantaneous list rendering.
-  - **Response Table**: Displays all non-plural, non-inflection words at that MP value away from the selected input word.
-  - **Definition Lookup**: Each matching word in the response table is an interactive link that invokes `window.lookupWord(word, event)` for instant lexicographical definition popups.
-  - **Mobile Fullscreen Invariant**: Preserved continuously across all dropdown selections, filters, and word selections without triggering fullscreen exits.
+### 8. Category Divider Lines on Mobile in Forum
+- In `static/css/forum.css`, added `.forum-nav-list .forum-cat-item:not(:last-child)` with `border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;` to the global base rules and the mobile `@media (max-width: 900px)` media query.
+- Categories on mobile devices now feature the same clean, subtle horizontal divider lines as on desktop and laptop displays.
+- Incremented `forum.css` version in `templates/index.html` to `v=1791130148` for immediate cache busting across client browsers.
 
-### 9. Explorer Length Sorting, Title Grey Background Removal, and Mobile Input Visibility
-- **Length-Strict Sorting (e.g. `SCHWAS` vs `WAGES` for `SCHWAGS`)**:
-  - In `static/js/tools.js` and `app.py`, created `_sortMatchesByLength(matches, isRandom)` ensuring words are categorized and sorted by length descending (`b.length - a.length`) as the absolute primary sorting tier.
-  - 6-letter words (such as `SCHWAS`) always appear before 5-letter words (`WAGES`, `SWAGS`, `WANGS`) regardless of alphabetical order or randomized order. When Random mode is enabled, randomization shuffles strictly within identical length tiers.
-  - Fixed button ID listener binding in `static/js/tools.js` to ensure the A–Z toggle button reliably resets sorting across all platforms.
-- **Root Backdrop Black Flash Prevention on Mobile Input Tap**:
-  - In `static/css/play.css`, set `html, html:fullscreen, html:-webkit-full-screen, body, ::backdrop, :fullscreen::backdrop { background: #0f172a !important; background-color: #0f172a !important; }` with a concrete hex color to prevent CSS variable fallback failures in top-layer backdrops.
-  - Enforced `font-size: 16px !important;` on `#combo-input` and `#combo-explorer-filter` on mobile viewports (`max-width: 900px`) to eliminate iOS/Android auto-zoom window viewport repainting flashes.
-  - Added `content-visibility: auto; contain-intrinsic-size: 0 400px;` to `#combo-explorer-input-list` and `#combo-explorer-response-list`. Offscreen items among the 27,000+ words are skipped during layout computation, dropping render time from 150ms to <1ms and preventing the mobile GPU compositor from stalling or flashing black during soft keyboard transitions.
-  - Removed smooth-scrolling animations (`scrollIntoView({ behavior: 'smooth' })`) during keyboard open/resize events, eliminating simultaneous animation collisions with the operating system's window insets.
-- **Mobile Keyboard Visibility & Fixed Textbox Anchoring**:
-  - In `static/css/play.css`:
-    - Automatically hides `.tool-header` while typing (`#tool-combo.keyboard-open .tool-header { display: none !important; }`), reclaiming 70px of vertical space.
-    - Automatically hides the bottom mobile navigation bar while typing (`.tools-content-column.combo-keyboard-active > .mobile-bottom-nav { display: none !important; }`), reclaiming an additional 55px.
-    - Anchors `.combo-control-panel` to the very top with `position: sticky; top: 0 !important; z-index: 50;`, ensuring `#combo-input` stays pinned directly in full view above the soft keyboard without scrolling offscreen or vanishing when typing.
-  - Removed `scrollIntoView` invocations on every keystroke (`input` event), ensuring the textbox remains stable and rock-solid without jumping, shaking, or disappearing as words are entered.
-- **Removal of Light Grey Rectangular Backgrounds Around Combo Checker Titles**:
-  - In `static/css/play.css`, removed the background styling on `.result-section h3` and explicitly enforced `#tool-combo .result-section h3, .combo-results-container .result-section h3, #combo-explorer-section h3 { background: transparent !important; }` across all desktop, laptop, tablet, and mobile platforms.
+### 9. Forum Maximum Image Attachment Limit Increased to 6
+- **Backend Enforced Limits**: In `app.py`, updated `create_forum_post` (`POST /api/forum/posts`) and `create_forum_comment` (`POST /api/forum/comments`) from `upload_files[:4]` to `upload_files[:6]`.
+- **Client Frontend Validation & UI**:
+  - In `static/js/forum.js`, updated `addFiles` target array limit check and alert message from 4 to 6 ("You can attach a maximum of 6 images per post.").
+  - Updated `renderImagePreviews` file counter and indicator texts (`(up to 6)`, `${targetArray.length}/6 images`, `Maximum 6 images selected`).
+  - In `templates/index.html`, updated all upload input labels and prompts for new threads, inline comment boxes, and floating reply popups to reference 6 images instead of 4.
+  - Bumped `forum.js` cache buster version in `templates/index.html` to `v=1791130138`.
+
+### 10. Subanagrams "Word Guaranteed" vs "Totally Random" Invariant Enforcement
+- **Root Cause**: In Subanagrams mode, boards generated from the letter bag without a full-length word (such as `FLENONUVE` of length 9) could retain or default to the `"Word Guaranteed"` format label if `mode: 'word'` was requested or defaulted, or if intermission parameters had staged `"Word Guaranteed"` before candidate solving finished.
+- **Strict Invariant**: Enforced that a board is labeled `"Word Guaranteed"` **if and only if** there is genuinely at least one valid dictionary word of maximum sequence length (`len(w) == seq_len`) formed by those letters; otherwise it is strictly categorized as `"Totally Random"`.
+- **Backend Generator & Promotion Updates**:
+  - In `subanagrams_generator.py`, verified that `best_results` contains a word where `len(w) == len(best_candidate)`. If no full-length word exists, `board_format` and `mode` are strictly forced to `'Totally Random'` and `'random'`. Added fallback word recovery from `candidates_by_len` when `mode == 'word'` is requested.
+  - In `game_room.py`, added authoritative full-length word verification across all board generation and promotion hooks (`subanagrams_search_worker`, `generate_spinner_params`, `start_next_round` rollover and promotion, and kickstart methods).
+  - In `app.py`, added full-length word check during public singleton hub reconstruction.
+  - In `static/js/play.js`, ensured Subanagrams format strictly falls back to `'Totally Random'` and never displays `'Normal'`. Bumped `play.js` cache buster in `templates/index.html` to `v=1791130400`.
+
+### 11. Multiplayer Subanagrams Board "Shuffle" Button
+- **User Request**: Add a button next to the textbox in multiplayer Subanagrams that rearranges the letters in random order reading "Shuffle", completely separate and different from Rotate and Transpose in grid rooms.
+- **HTML Layout**:
+  - In `templates/index.html`, added `<button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button">Shuffle</button>` inside `.word-input-section` directly alongside `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear).
+- **CSS Styling & Responsiveness**:
+  - In `static/css/play.css`, styled `#shuffle-board-btn` with a vivid blue gradient (`linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)`), bold white font, rounded corners (`border-radius: 8px`), and interactive hover shadow.
+  - Hidden by default in standard grid rooms (`display: none !important;`) and only displayed when `body.is-subanagrams` is active (`display: inline-flex !important;`).
+  - **Desktop Layout**: Widened the Subanagrams input row container to `680px`, keeping `#word-input`, `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) side-by-side in a single row (`flex-wrap: nowrap !important;`).
+  - **Mobile Layout**: Configured `flex-wrap: wrap !important;` on `.word-input-section` with `#word-input`, Enter, and Clear on the top row, and relocated `#shuffle-board-btn` to its own dedicated row directly beneath them, stretching horizontally across the full width (`width: 100% !important; flex: 1 1 100% !important;`) matching the combined width of the textbox and the two action buttons.
+- **Client Randomization & State Preservation**:
+  - In `static/js/play.js`, implemented `window.shuffleSubanagramsBoard()`:
+    - Extracts letters and runs a Fisher-Yates shuffle with a guarantee of producing a distinct permutation whenever at least two distinct letters exist.
+    - Saves the custom arrangement in `window.subanagramsCustomBoard` alongside the sorted multiset key `window.subanagramsBoardKey`.
+    - Updates `window.lastGameState.board = [shuffled]` and triggers `renderBoard([shuffled])` immediately without layout shifts or fullscreen interruptions.
+    - Preserves the shuffled order across background server countdown ticks/heartbeats during the round.
+    - Automatically remaps `mouseState.selectedPath` and `mouseState.visitedCells` to the new tile coordinates if letters were already entered in `#word-input`, re-triggering highlight pathfinding.
+    - Resets cleanly when a new round starts, on round intermission, or upon room exit.
+  - Bumped `play.css` cache buster to `v=1791130460` and `play.js` cache buster to `v=1791130450` in `templates/index.html`.
+
+### 12. Subanagrams Mobile Shuffle Touch Event & Locked Clear Button Layout
+- **User Requests**:
+  1. Fix the Shuffle button in multiplayer Subanagrams so it reliably works on mobile touchscreens.
+  2. Put the Clear button back to the right of the Enter button (it had dropped below the textbox and Enter button on mobile).
+  3. Keep the Shuffle button below the textbox and Enter and Clear buttons, stretching horizontally across their combined full width.
+- **Root Cause Analysis**:
+  1. **Clear Button Wrapping**: `.word-input-section` had `flex-wrap: wrap`. When screen width was narrow (~360px–390px), `#word-input` + Enter + Clear exceeded the row width, causing Clear to wrap onto a second line, and Shuffle onto a third line.
+  2. **Mobile Shuffle Not Working**:
+     - `renderBoard` checked `hasLetters` using `row.some(...)` before normalizing 1D Subanagrams arrays (`['A', 'B', ...]`), causing `hasLetters` to evaluate to `false` and aborting board rendering.
+     - Mobile Safari/Chrome touch taps on `#shuffle-board-btn` could have synthetic click events suppressed or delayed if the virtual keyboard was focused or touch gesture intercepted.
+     - Letter extraction only checked 2D `Array.isArray(board[0])`, falling through if `board` was 1D.
+- **Architectural Solution**:
+  - **DOM Structure (`templates/index.html`)**:
+    - Wrapped `#word-input`, `#submit-word-btn` (Enter), and `#clear-word-btn` (Clear) inside `<div class="word-input-row" id="word-input-row">`.
+    - Placed `#shuffle-board-btn` directly beneath `.word-input-row`.
+    - Added inline event handlers `onclick` and `ontouchend` on `#shuffle-board-btn`.
+  - **CSS Layout (`static/css/play.css`)**:
+    - **Mobile (`@media (max-width: 992px)`, `body.is-mobile`)**:
+      - `.word-input-section`: `display: flex !important; flex-direction: column !important; width: calc(100% - 24px) !important; max-width: 480px !important; margin: 6px auto 0 auto !important; gap: 6px !important;`
+      - `.word-input-row`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: 100% !important; gap: 6px !important;`
+      - `#word-input`: `flex: 1 1 auto !important; min-width: 0 !important; height: 42px !important;`
+      - `#submit-word-btn`, `#clear-word-btn`: `flex: 0 0 auto !important; white-space: nowrap !important; height: 42px !important;` — guaranteeing Clear is strictly to the right of Enter and can never wrap!
+      - `#shuffle-board-btn`: `display: inline-flex !important; width: 100% !important; flex: 1 1 100% !important; height: 42px !important; touch-action: manipulation !important; user-select: none !important; -webkit-tap-highlight-color: transparent !important;` — stretches across the full width of the row above it.
+    - **Desktop (`body.is-desktop.is-subanagrams`)**:
+      - `.word-input-section`: `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; max-width: 680px !important; gap: 8px !important;`
+      - `.word-input-row`: `display: contents !important;` — unwraps children so `#word-input`, Enter, Clear, and Shuffle align seamlessly on a single horizontal row.
+  - **JS Logic & Touch Responsiveness (`static/js/play.js`)**:
+    - Reordered `renderBoard()` to normalize Subanagrams board format before computing `hasLetters`.
+    - In `window.shuffleSubanagramsBoard(e)`, added `e.preventDefault()`, `e.stopPropagation()`, 250ms debouncing, robust extraction for both 1D and 2D board arrays, and reset `mouseState.isDown = false`.
+    - Added acoustic tile audio / micro-haptic sensation on shuffle via `BoardAudio.playTileSound(1)`.
+    - Attached dedicated `touchend` and `click` listeners on `#shuffle-board-btn` and delegator on `document`.
+  - Bumped `play.css` cache buster to `v=1791130480`, `play.js` cache buster to `v=1791130470`, and `lobby.css` cache buster to `v=1791130490` in `templates/index.html`.
+- **Lobby Subanagrams Title Spacing Equalization**:
+  - Removed legacy `.split-points-section` from the 14px last-child margin rules in `static/css/lobby.css`.
+  - Enforced `margin-bottom: 22px !important;` on `.split-points-section`, making the visual space above the Subanagrams title from the Split Points buttons exactly 22px, perfectly identical to the 22px distance between the Split Points title and the FCFS buttons.
+- **Vertical Length (Height) Synchronization on Mobile**:
+  - Enforced exact vertical length matching across `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) on mobile devices (`height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 42px !important; box-sizing: border-box !important; padding: 0 14px !important;`).
+  - Scoped desktop 44px sizing strictly to `body.is-desktop.is-subanagrams`, preventing desktop heights from overriding mobile buttons.
+
+### 13. MP Word Explorer Feature Architecture
+- **Interactive Multi-Length Discovery**:
+  - Implemented the MP Word Explorer within Combo Checker, allowing users to explore all words of a given length and view their non-plural, non-inflection MP connections.
+  - Dropdown controls for Length (4–15), MP distance (0MP–3MP), Dictionary (NWL, CSW, AW, All, etc.), and ordering modes (A–Z and Random).
+  - Implemented length-descending sorting (`b.length - a.length`) as primary tier across matches, displaying longest connections first (e.g. 8-letter connections `WASTERIE` and `WASTRIFE` for `WASTRIE` before 7-letter `ASTRIDE`).
+  - Excluded 4-letter words from MP Explorer match results by rule.
+  - Interactive clickable word links throughout input words and match results opening the instant lexicographical definition popup (`window.lookupWord`).
+
+### 14. Combo Checker Header Design & Description Box Harmonization
+- **Title Backgrounds**:
+  - Eliminated the light-grey rectangular backgrounds around all section headings in Combo Checker (`#tool-combo .result-section h3, .combo-results-container .result-section h3, #combo-explorer-section h3 { background: transparent !important; }`) across all desktop, laptop, tablet, and mobile platforms.
+- **Harmonized Description Formatting**:
+  - Matched design, typography, layout, and light-greyish muted color (`rgba(var(--text-primary-rgb), 0.4)`) across all three Combo Checker descriptions: MP (Microprocedures) v2.0, LIC (Letter Insertion Combinations) v2.0, and MP Word Explorer.
+  - Applied the Suggestions/Ideas scrolling-box effect (`height: calc(2.7em + 8px); overflow-y: auto;`) with subtle borders, border-radius, and custom scrollbar thumb styling.
+  - Added dedicated theme overrides for white and light themes to ensure consistent contrast and readability across dark and light palettes.
+
+### 15. Mobile Virtual Keyboard Black Screen Elimination & Input Visibility
+- **Root Cause Identification**:
+  - Investigated the 2-second temporary black screen occurring on mobile devices when tapping "FILTER INPUT WORDS..." (`#combo-explorer-filter`) and "ENTER LETTERS TO CHECK..." (`#combo-input`).
+  - Identified two contributing factors:
+    1. HTML `autocapitalize="characters"` dynamically forcing Android Chrome IME into all-caps mode, stalling GPU rasterizer buffer swaps.
+    2. Software keyboard deployment while HTML5 Fullscreen mode is active on mobile devices triggering Android SurfaceFlinger buffer recreation.
+- **Permanent Solution**:
+  - Removed `autocapitalize="characters"` from `#combo-input` and `#combo-explorer-filter`, setting `autocapitalize="none" autocorrect="off"`. Visual capitalization is handled cleanly via CSS `text-transform: uppercase` and JS `.toUpperCase()`.
+  - Added synchronous `exitFullscreenForKeyboard()` checks on `pointerdown` and `touchstart` for Combo Checker inputs in `static/js/app.js` and `static/js/tools.js`, guaranteeing the soft keyboard launches outside of fullscreen without display surface destruction.
+  - Implemented `_scrollComboInputIntoView()` in `static/js/tools.js` triggered on focus, pointerdown, and `visualViewport` resize. When the keyboard deploys, `.tools-content` automatically scrolls the input into clear view above the virtual keyboard without pinning or sticking the control panel to the top during normal scrolling.
+
+### 16. Definition Popup "CC" Navigation & Scroll-to-Top
+- **Auto-Navigation & Page Switching**:
+  - In `static/js/tools.js`, clicking **“CC”** (`#tool-def-cc-btn`) on any word definition popup now automatically switches to the Tools page (`window.showPage('page-tools')`) if invoked from Play, Lobby, or full list views.
+  - Resets saved scroll offsets (`window._savedComboScrollTop = 0` and `_savedToolScrollPositions['combo'] = 0`).
+- **Clean Scroll to Top**:
+  - Resets `.scrollTop = 0` across `.tools-content`, `#combo-scroll-container`, and `#tool-combo`.
+  - Resets horizontal scrollers (`#mp-container` and `#lic-container`) to `.scrollLeft = 0`.
+  - On mobile, automatically slides the layout horizontally to the tool content pane.
+  - Populates the searched word and triggers `runComboSearch()`, leaving the user at the very top of Combo Checker with the header, description, and control panel directly in view.
 
 ---
 
 ## Verification & Health Check
 
-- **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK` / `HTTP/2 200`.
-- **Live Combo Explorer Endpoint Verified Across All Dictionaries**:
-  - `NWL`, `CSW`, `AW`, `All`, `CSW Only`, `NWL Uniques`, `New NWL Words`, `New CSW Words`, `New AW Words`, `All New Words`: all return `200 OK`.
-- **Live Parameter Verification**:
-  - `POST https://morpheme.games/api/tools/combo/explorer` with `{"dictionary":"CSW","length":7,"mp":1,"word":"WASTRIE"}`:
-    - Status: `200 OK`
-    - Count: 37 matches
-    - 4-letter words present: `false`
-    - Matches sorted by length largest first: `true` (Top matches: `WASTERIE` [8], `WASTRIFE` [8], `ASTRIDE` [7], `STRIAE` [6]...)
-    - `WASTRIES` present in matches: `false` (successfully filtered as plural)
-  - `POST https://morpheme.games/api/tools/combo/explorer` with `{"dictionary":"CSW","length":7,"mp":0,"word":"LINKBOY"}`:
-    - Count: 0 (`LINK` is not captured as 0MP in Explorer)
-  - `POST https://morpheme.games/api/tools/combo` with `{"dictionary":"CSW","search_term":"LINKBOY"}`:
-    - Main Combo Checker retains `LINK` under 0MP according to standard rules.
-- **PM2 Process**: `morpheme` online (fork mode, memory stable ~800MB–1.4GB fully warmed up).
-- **Mobile Fullscreen Invariant**: Preserved continuously across all pages, navigation, modals, and tabs.
+- **Automated Health Check**: `curl -s https://morpheme.games/api/lobby-stats` returns `{"stats":{}}` with HTTP 200 OK.
+- **Validation Endpoints Verified Live**:
+  - `WANGYANITE` & `WANGYANITES`: `is_valid: true`, `lists: ["AW"]`
+  - `ABELLOEMRINGERITE` & `ABELLOEMRINGERITES`: `is_valid: true`, `lists: ["AW"]`
+  - `TESTTEST` & `TESTTESTS`: `is_valid: false`
+- **PM2 Process**: `morpheme` online (fork mode, memory stable ~185MB initial / ~800MB–1.4GB fully warmed up).
+- **Mobile Fullscreen Invariant**: Continuous fullscreen preserved across navigation, with cleanly targeted keyboard exit safeguards for text inputs to eliminate mobile black screens.
+

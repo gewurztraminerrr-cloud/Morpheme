@@ -156,15 +156,52 @@ START_OVER_POINT_OCTOBER_15
   - Enforced exact vertical length matching across `#submit-word-btn` (Enter), `#clear-word-btn` (Clear), and `#shuffle-board-btn` (Shuffle) on mobile devices (`height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 42px !important; box-sizing: border-box !important; padding: 0 14px !important;`).
   - Scoped desktop 44px sizing strictly to `body.is-desktop.is-subanagrams`, preventing desktop heights from overriding mobile buttons.
 
----
+### 13. MP Word Explorer Feature Architecture
+- **Interactive Multi-Length Discovery**:
+  - Implemented the MP Word Explorer within Combo Checker, allowing users to explore all words of a given length and view their non-plural, non-inflection MP connections.
+  - Dropdown controls for Length (4–15), MP distance (0MP–3MP), Dictionary (NWL, CSW, AW, All, etc.), and ordering modes (A–Z and Random).
+  - Implemented length-descending sorting (`b.length - a.length`) as primary tier across matches, displaying longest connections first (e.g. 8-letter connections `WASTERIE` and `WASTRIFE` for `WASTRIE` before 7-letter `ASTRIDE`).
+  - Excluded 4-letter words from MP Explorer match results by rule.
+  - Interactive clickable word links throughout input words and match results opening the instant lexicographical definition popup (`window.lookupWord`).
+
+### 14. Combo Checker Header Design & Description Box Harmonization
+- **Title Backgrounds**:
+  - Eliminated the light-grey rectangular backgrounds around all section headings in Combo Checker (`#tool-combo .result-section h3, .combo-results-container .result-section h3, #combo-explorer-section h3 { background: transparent !important; }`) across all desktop, laptop, tablet, and mobile platforms.
+- **Harmonized Description Formatting**:
+  - Matched design, typography, layout, and light-greyish muted color (`rgba(var(--text-primary-rgb), 0.4)`) across all three Combo Checker descriptions: MP (Microprocedures) v2.0, LIC (Letter Insertion Combinations) v2.0, and MP Word Explorer.
+  - Applied the Suggestions/Ideas scrolling-box effect (`height: calc(2.7em + 8px); overflow-y: auto;`) with subtle borders, border-radius, and custom scrollbar thumb styling.
+  - Added dedicated theme overrides for white and light themes to ensure consistent contrast and readability across dark and light palettes.
+
+### 15. Mobile Virtual Keyboard Black Screen Elimination & Input Visibility
+- **Root Cause Identification**:
+  - Investigated the 2-second temporary black screen occurring on mobile devices when tapping "FILTER INPUT WORDS..." (`#combo-explorer-filter`) and "ENTER LETTERS TO CHECK..." (`#combo-input`).
+  - Identified two contributing factors:
+    1. HTML `autocapitalize="characters"` dynamically forcing Android Chrome IME into all-caps mode, stalling GPU rasterizer buffer swaps.
+    2. Software keyboard deployment while HTML5 Fullscreen mode is active on mobile devices triggering Android SurfaceFlinger buffer recreation.
+- **Permanent Solution**:
+  - Removed `autocapitalize="characters"` from `#combo-input` and `#combo-explorer-filter`, setting `autocapitalize="none" autocorrect="off"`. Visual capitalization is handled cleanly via CSS `text-transform: uppercase` and JS `.toUpperCase()`.
+  - Added synchronous `exitFullscreenForKeyboard()` checks on `pointerdown` and `touchstart` for Combo Checker inputs in `static/js/app.js` and `static/js/tools.js`, guaranteeing the soft keyboard launches outside of fullscreen without display surface destruction.
+  - Implemented `_scrollComboInputIntoView()` in `static/js/tools.js` triggered on focus, pointerdown, and `visualViewport` resize. When the keyboard deploys, `.tools-content` automatically scrolls the input into clear view above the virtual keyboard without pinning or sticking the control panel to the top during normal scrolling.
+
+### 16. Definition Popup "CC" Navigation & Scroll-to-Top
+- **Auto-Navigation & Page Switching**:
+  - In `static/js/tools.js`, clicking **“CC”** (`#tool-def-cc-btn`) on any word definition popup now automatically switches to the Tools page (`window.showPage('page-tools')`) if invoked from Play, Lobby, or full list views.
+  - Resets saved scroll offsets (`window._savedComboScrollTop = 0` and `_savedToolScrollPositions['combo'] = 0`).
+- **Clean Scroll to Top**:
+  - Resets `.scrollTop = 0` across `.tools-content`, `#combo-scroll-container`, and `#tool-combo`.
+  - Resets horizontal scrollers (`#mp-container` and `#lic-container`) to `.scrollLeft = 0`.
+  - On mobile, automatically slides the layout horizontally to the tool content pane.
+  - Populates the searched word and triggers `runComboSearch()`, leaving the user at the very top of Combo Checker with the header, description, and control panel directly in view.
+
 ---
 
 ## Verification & Health Check
 
-- **Automated Health Check**: `curl -I https://morpheme.games/` returns `HTTP/1.1 200 OK` / `HTTP/2 200`.
+- **Automated Health Check**: `curl -s https://morpheme.games/api/lobby-stats` returns `{"stats":{}}` with HTTP 200 OK.
 - **Validation Endpoints Verified Live**:
   - `WANGYANITE` & `WANGYANITES`: `is_valid: true`, `lists: ["AW"]`
   - `ABELLOEMRINGERITE` & `ABELLOEMRINGERITES`: `is_valid: true`, `lists: ["AW"]`
   - `TESTTEST` & `TESTTESTS`: `is_valid: false`
-- **PM2 Process**: `morpheme` online (fork mode, memory stable ~800MB–1.4GB fully warmed up).
-- **Mobile Fullscreen Invariant**: Preserved continuously across all pages, navigation, modals, and tabs.
+- **PM2 Process**: `morpheme` online (fork mode, memory stable ~185MB initial / ~800MB–1.4GB fully warmed up).
+- **Mobile Fullscreen Invariant**: Continuous fullscreen preserved across navigation, with cleanly targeted keyboard exit safeguards for text inputs to eliminate mobile black screens.
+
