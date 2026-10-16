@@ -53,17 +53,38 @@ START_OVER_POINT_OCTOBER_16
   - Reset `#combo-explorer-section .combo-explorer-title` padding to `0 !important` and aligned margins, ensuring the title, description box, dropdown controls (Dictionary, Length, MP Value, Order), and dual result cards (Input Words, MP Connections) align flush with one another.
   - Ensured `box-sizing: border-box !important;` and `width: 100% !important;` across the grid and control elements for clean edge-to-edge alignment without horizontal overflow.
 
-### 4. Lobby "WHAT AM I LOOKING AT?" Button Refinements
-- **Proportional Sizing on Mobile**:
-  - In `static/css/lobby.css`, reduced the vertical size of the "WHAT AM I LOOKING AT?" button on mobile viewports so its height and padding are proportional to its appearance on laptops and desktops.
-- **Vertical Spacing Buffer**:
-  - Added dedicated vertical padding buffers above and below the button within the Lobby matrix layout.
-  - Eliminated dark growth and glowing edge artifacts beneath the button on mobile viewports.
+### 4. Lobby Guide ("WHAT AM I LOOKING AT?") Content & Diagram Polish
+- **Subanagrams Rack Length Range**:
+  - Updated Subanagrams description from "7, 8 or 9 letters" to "6, 7, 8, 9, or 10 letters" in both the Lobby Guide overview card and the modal FAQ section (`templates/index.html`).
+- **3D Cube Dice Mathematics Clarification**:
+  - Clarified the 3D Cube description: "3x3x3 Cube (27 letter dice, 54 visible letter faces across 6 sides; 9 on each face)".
+- **Diagram Deduplication**:
+  - Eliminated redundant duplicate dimension labels (`4x4`, `5x7`, `6x8`) situated above the column headers row in the visual Lobby button layout guide.
 
-### 5. Cache Busting & Asset Updates
+### 5. MP Word Explorer Mobile Horizontal Extension
+- **Full Width Controls on Mobile Devices**:
+  - In `static/css/play.css`, updated `@media (max-width: 768px)` and `body.is-mobile` rules for `.combo-explorer-controls`:
+    - Changed the controls grid layout to `grid-template-columns: 1fr` and `width: 100%`.
+    - Styled `.combo-explorer-control-group` with `display: flex`, `width: 100%`, and `flex: 1 1 100%`.
+    - Standardized labels to `width: 90px; min-width: 90px; text-align: left;` and inputs/selects to `flex: 1 1 auto; width: 100%; font-size: 16px;`.
+    - Dictionary, Length, and MP Value dropdowns now stretch all the way to the right boundary of the panel.
+    - Order buttons (Random / A–Z) span evenly 50/50 across the bottom row.
+
+### 6. Forum Long Post Truncation & "View Whole Post" Expansion
+- **500-Character Truncation & Interactive Expansion**:
+  - In `static/js/forum.js`, updated post and comment rendering to inspect body length. Posts exceeding 500 characters are truncated with an ellipsis (`"..."`) and followed by a `"View Whole Post"` button (`.forum-view-whole-btn`).
+  - Added `window.expandWholeMessage(btn, postId, isComment)` to smoothly swap truncated text with full sanitized post content on click and remove the button.
+- **Pre-Wrap Blank Line & Indentation Elimination**:
+  - In `static/css/forum.css` and `static/js/forum.js`, fixed an issue where whitespace in template literals rendered as blank lines above post text or beneath the expansion button due to container `white-space: pre-wrap`.
+  - Removed template literal newlines and applied `white-space: normal !important; margin: 0 !important; padding: 0 !important;` to `.forum-expandable-content`.
+
+### 7. Cache Busting & Asset Updates
 - In `templates/index.html`:
-  - Bumped `play.css` cache-buster to `v=1791150300`.
-  - Bumped `tools.js` cache-buster to `v=1791150200`.
+  - `play.css?v=1791152900`
+  - `forum.css?v=1791154500`
+  - `forum.js?v=1791154500`
+  - `lobby.css?v=1791150300`
+  - `tools.js?v=1791150200`
 
 ---
 
