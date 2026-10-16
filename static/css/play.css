@@ -14317,7 +14317,7 @@ body.is-mobile .page *::-webkit-scrollbar {
     overflow: visible !important;
 }
 
-/* Ensure all 3 Combo Checker descriptions (MP, MP Word Explorer, LIC) share the exact same design and light-greyish color */
+/* Ensure all 3 Combo Checker descriptions (MP, MP Word Explorer, LIC) share the exact same scrolling box effect as Suggestions/Ideas */
 #tool-combo .chart-desc,
 .combo-results-container .chart-desc,
 #lic-chart-desc,
@@ -14328,17 +14328,45 @@ body.is-mobile .page *::-webkit-scrollbar {
 .combo-results-container #mp-explorer-chart-desc,
 #tool-combo .result-section:has(#lic-container) .chart-desc,
 #tool-combo #combo-explorer-section .chart-desc {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
+    display: block !important;
     font-size: 0.82rem !important;
-    line-height: 1.4 !important;
-    color: rgba(var(--text-primary-rgb), 0.4) !important;
-    padding: 6px 14px !important;
+    line-height: 1.35 !important;
+    height: calc(2.7em + 8px) !important;
+    max-height: calc(2.7em + 8px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    padding: 4px 12px !important;
     margin-bottom: 6px !important;
-    background: transparent !important;
-    border-bottom: none !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
+    border-radius: 8px !important;
+    background: rgba(var(--text-primary-rgb), 0.04) !important;
+    color: rgba(var(--text-primary-rgb), 0.4) !important;
     box-sizing: border-box !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+#tool-combo .chart-desc::-webkit-scrollbar,
+.combo-results-container .chart-desc::-webkit-scrollbar,
+#lic-chart-desc::-webkit-scrollbar,
+#mp-explorer-chart-desc::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+#tool-combo .chart-desc::-webkit-scrollbar-track,
+.combo-results-container .chart-desc::-webkit-scrollbar-track,
+#lic-chart-desc::-webkit-scrollbar-track,
+#mp-explorer-chart-desc::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+#tool-combo .chart-desc::-webkit-scrollbar-thumb,
+.combo-results-container .chart-desc::-webkit-scrollbar-thumb,
+#lic-chart-desc::-webkit-scrollbar-thumb,
+#mp-explorer-chart-desc::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.25) !important;
+    border-radius: 4px !important;
 }
 
 #tool-combo .chart-desc *,
@@ -14425,7 +14453,37 @@ body,
     #lic-chart-desc,
     #mp-explorer-chart-desc {
         color: rgba(var(--text-primary-rgb), 0.4) !important;
-        font-size: 0.82rem !important;
+        font-size: 0.76rem !important;
+        line-height: 1.28 !important;
+        height: calc(2.56em + 8px) !important;
+        max-height: calc(2.56em + 8px) !important;
+        padding: 4px 10px !important;
+        margin-bottom: 6px !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
+        border-radius: 8px !important;
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
     }
+}
+
+/* Light / White Theme Support for Combo Checker Description Scrolling Boxes */
+[class*="theme-white"] #tool-combo .chart-desc,
+[class*="theme-white"] .combo-results-container .chart-desc,
+[class*="theme-white"] #lic-chart-desc,
+[class*="theme-white"] #mp-explorer-chart-desc {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[class*="theme-light-"] #tool-combo .chart-desc,
+[class*="theme-light-"] .combo-results-container .chart-desc,
+[class*="theme-light-"] #lic-chart-desc,
+[class*="theme-light-"] #mp-explorer-chart-desc {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
