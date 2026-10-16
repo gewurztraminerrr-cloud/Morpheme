@@ -789,29 +789,7 @@ function setupComboChecker() {
         searchBtn.addEventListener('click', runComboSearch);
     }
 
-    function _handleComboInputFocus(el) {
-        if (!el || window.innerWidth > 900) return;
-        setTimeout(() => {
-            if (document.activeElement === el) {
-                const scrollTarget = (el.id === 'combo-input') ? (el.closest('.combo-control-panel') || el) : el;
-                try {
-                    scrollTarget.scrollIntoView({ behavior: 'auto', block: 'start' });
-                } catch (e) {
-                    scrollTarget.scrollIntoView(true);
-                }
-            }
-        }, 100);
-    }
-
-    function _handleComboInputBlur() {
-        // No-op: keep layout stable without DOM mutations
-    }
-
-    window._handleComboInputFocus = _handleComboInputFocus;
-    window._handleComboInputBlur = _handleComboInputBlur;
-
     if (input) {
-        input.addEventListener('focus', () => _handleComboInputFocus(input));
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') runComboSearch();
         });
@@ -958,10 +936,6 @@ function setupComboExplorer() {
     }
 
     if (filterInput) {
-        if (typeof window._handleComboInputFocus === 'function') {
-            filterInput.addEventListener('focus', () => window._handleComboInputFocus(filterInput));
-            filterInput.addEventListener('blur', window._handleComboInputBlur);
-        }
         filterInput.addEventListener('input', () => {
             applyComboExplorerFilter();
         });

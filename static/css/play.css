@@ -14420,17 +14420,6 @@ body.is-mobile .page *::-webkit-scrollbar {
     }
 }
 
-/* Prevent Fullscreen Root Backdrop Blackout on Keyboard Launch */
-html,
-html:fullscreen,
-html:-webkit-full-screen,
-body,
-::backdrop,
-:fullscreen::backdrop {
-    background: #0f172a !important;
-    background-color: #0f172a !important;
-}
-
 /* Remove Light Grey Rectangular Background from all Combo Checker Section Titles on All Platforms */
 #tool-combo .result-section h3,
 .combo-results-container .result-section h3,
