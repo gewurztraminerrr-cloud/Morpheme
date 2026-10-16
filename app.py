@@ -47,33 +47,114 @@ def parse_data_url(data_url):
         print(f"[Moderation] Failed to parse data URL: {e}")
         return None, None
 
-LOCAL_SEVERE_PATTERNS = [
-    r'\b(?:nigg(?:er|a|ers)|faggot|kike|chink|gook|tranny|cunt)\b',
-    r'\b(?:child\s*porn|pedophil)\b',
-    r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/)?[a-zA-Z0-9_\+]+',
-    r'(?:https?://)?(?:chat\.)?whatsapp\.com/[a-zA-Z0-9]+',
-    r'(?:https?://)?discord(?:\.gg|app\.com/invite)/[a-zA-Z0-9]+',
-    r'\b(?:free\s+crypto|airdrop\s+usdt|claim\s+usdt|whatsapp\s+\+?[0-9]{7,}|call\s+girl|escort\s+service)\b',
+# ---------------------------------------------------------
+# COMPREHENSIVE AI & HEURISTIC CONTENT MODERATION SYSTEM
+# ---------------------------------------------------------
+
+GAME_CONTEXT_WORDS = {'ass', 'bitch', 'tit', 'crap', 'poop', 'fart', 'damn', 'shit', 'bastard', 'twat'}
+GAME_INDICATORS_REGEX = re.compile(
+    r'\b(?:play|played|plays|playing|word|words|valid|validity|score|scored|scoring|points|pts|tiles?|board|turn|move|letters?|dict|dictionary|csw|nwl)\b',
+    re.IGNORECASE
+)
+TARGETED_ATTACK_REGEX = re.compile(
+    r'\b(?:you|u|ur|your|dumb|stupid|ugly|fat|crazy|moron|loser)\b',
+    re.IGNORECASE
+)
+
+# Zero-loophole pattern definitions for abuse, profanity, threats, slurs, and spam
+DIRECTED_ABUSE_PATTERNS = [
+    # Fuck variants and directed attacks
+    (re.compile(r'\b(?:go\s+)?f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:ing|er|ers)?\s*(?:you|u|off|yall|ya|yourself|urself)\b', re.IGNORECASE), 'Abusive profanity directed at another player'),
+    (re.compile(r'\b(?:what\s+the\s+)?f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:ing)?\s+(?:hell|crap|shit|idiot|loser|moron)\b', re.IGNORECASE), 'Abusive profanity'),
+    (re.compile(r'\bf+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]+\b', re.IGNORECASE), 'Prohibited profanity / vulgarity'),
+    (re.compile(r'\bm+o+t+h+e+r+[\W_]*f+[\W_]*[u\*@0]+[\W_]*[ck\*]+[\W_]*[k\*]*(?:er|ers|ing)?\b', re.IGNORECASE), 'Severe abusive profanity'),
+    
+    # STFU / GTFO
+    (re.compile(r'\b(?:s[\W_]*t[\W_]*f[\W_]*u|shut\s+the\s+f+[\W_]*[u\*@0]+[\W_]*ck\s+up|g[\W_]*t[\W_]*f[\W_]*o)\b', re.IGNORECASE), 'Hostile abusive command'),
+    
+    # KYS / Threats / Self-harm
+    (re.compile(r'\b(?:k[\W_]*y[\W_]*s|kill\s+your\s*self|go\s+die|get\s+cancer|die\s+in\s+a\s+fire|hope\s+you\s+die)\b', re.IGNORECASE), 'Severe harassment / threat / self-harm incitement'),
+    
+    # Insults & slurs
+    (re.compile(r'\b(?:nigg(?:er|a|ers)|faggot|fag|kike|chink|gook|tranny|spic|wetback)\b', re.IGNORECASE), 'Prohibited hate speech / slur'),
+    (re.compile(r'\b(?:c+[\W_]*u+[\W_]*n+[\W_]*t+s?)\b', re.IGNORECASE), 'Severe vulgarity / misogynistic slur'),
+    (re.compile(r'\b(?:w+h+o+r+e+s?|s+l+u+t+s?)\b', re.IGNORECASE), 'Abusive harassment / sexual insult'),
+    (re.compile(r'\b(?:r+e+t+a+r+d+(?:ed|s)?)\b', re.IGNORECASE), 'Abusive insult / slur'),
+    
+    # Hostile phrases & sexual vulgarity
+    (re.compile(r'\b(?:eat\s+s+h+i+t|eat\s+a\s+d+i+c+k|s+u+c+k\s+(?:my|a|this)\s+(?:d+i+c+k|c+o+c+k|b+a+l+l+s?)|blow\s*job|send\s+nudes|child\s*porn|pedophil)\b', re.IGNORECASE), 'Abusive hostility / sexual harassment'),
+    (re.compile(r'\b(?:a+[\$s]+[\$s]+[\W_]*h+o+l+e+s?|d+i+c+k+h+e+a+d+s?|d+i+p+s+h+i+t+s?|d+o+u+c+h+e+b+a+g+s?)\b', re.IGNORECASE), 'Abusive personal insult'),
+    
+    # Standalone Bitch (and leetspeak b!tch, b1tch)
+    (re.compile(r'\bb+[\!1i]+t+c+h+(?:es|y)?\b', re.IGNORECASE), 'Abusive language / profanity'),
+
+    # Commercial spam
+    (re.compile(r'(?:https?://)?(?:t\.me|telegram\.me)/(?:joinchat/)?[a-zA-Z0-9_\+]+', re.IGNORECASE), 'Commercial spam link (Telegram)'),
+    (re.compile(r'(?:https?://)?(?:chat\.)?whatsapp\.com/[a-zA-Z0-9]+', re.IGNORECASE), 'Commercial spam link (WhatsApp)'),
+    (re.compile(r'(?:https?://)?discord(?:\.gg|app\.com/invite)/[a-zA-Z0-9]+', re.IGNORECASE), 'Unauthorized Discord invite link'),
+    (re.compile(r'\b(?:free\s+crypto|airdrop\s+usdt|claim\s+usdt|whatsapp\s+\+?[0-9]{7,}|call\s+girl|escort\s+service)\b', re.IGNORECASE), 'Commercial advertisement / scam')
 ]
 
-def moderate_content(text=None, image_bytes=None, mime_type=None):
+# Prohibited username patterns (strict, zero exceptions)
+USERNAME_PROHIBITED_REGEX = re.compile(
+    r'(?:f+u+c+k|b+i+t+c+h|c+u+n+t|d+i+c+k|p+u+s+s+y|c+o+c+k|a+s+s+h+o+l+e|s+h+i+t|n+i+g+g|f+a+g|s+l+u+t|w+h+o+r+e|p+e+d+o|p+o+r+n|k+y+s|n+a+z+i)',
+    re.IGNORECASE
+)
+
+def check_local_moderation(text, is_username=False):
     """
-    Moderates content using local fast heuristics + Google Gemini 1.5 Flash API.
+    Evaluates text locally with zero-latency heuristics.
+    Returns: (is_inappropriate: bool, reason: str)
+    """
+    if not text:
+        return False, ""
+    t = str(text).strip()
+    
+    # 1. Strict username check
+    if is_username:
+        if USERNAME_PROHIBITED_REGEX.search(t):
+            return True, "Username contains prohibited profanity or offensive terms"
+        for pat, reason in DIRECTED_ABUSE_PATTERNS:
+            if pat.search(t):
+                return True, reason
+        return False, ""
+        
+    # 2. General text check
+    for pat, reason in DIRECTED_ABUSE_PATTERNS:
+        match = pat.search(t)
+        if match:
+            matched_str = match.group(0).lower()
+            # Check Scrabble/Boggle game word exception
+            # ONLY certain dictionary words qualify if used in a game context
+            # 'fuck', 'kys', hate slurs, ad links NEVER qualify
+            is_game_safe = False
+            if matched_str in GAME_CONTEXT_WORDS and GAME_INDICATORS_REGEX.search(t):
+                # Ensure no targeted personal attack pronouns/words are present
+                if not TARGETED_ATTACK_REGEX.search(t):
+                    is_game_safe = True
+            
+            if not is_game_safe:
+                return True, reason
+                
+    return False, ""
+
+def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=False):
+    """
+    Moderates content using local zero-loophole engine + Google Gemini 1.5 Flash API.
     Supports text and/or image bytes.
     Returns: {"inappropriate": True/False, "reason": "..."}
     """
-    # 1. Local fast-path heuristic check on text
+    # 1. Zero-loophole local moderation check on text
     if text:
-        text_str = str(text)
-        for pat in LOCAL_SEVERE_PATTERNS:
-            if re.search(pat, text_str, re.IGNORECASE):
-                print(f"[Moderation] Local heuristic matched: {pat}")
-                return {"inappropriate": True, "reason": "Prohibited abusive language, hate speech, or commercial ad link"}
+        is_bad, bad_reason = check_local_moderation(text, is_username=is_username)
+        if is_bad:
+            print(f"[Moderation] Local zero-loophole rule matched: {bad_reason}")
+            return {"inappropriate": True, "reason": bad_reason}
 
     api_key = os.environ.get('GEMINI_API_KEY')
     if not api_key:
-        # If no key is configured, rely on local heuristics
-        return {"inappropriate": False, "reason": "Service unconfigured"}
+        # Local checks passed; if no Gemini key is configured, return clean
+        return {"inappropriate": False, "reason": ""}
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     parts = []
@@ -2243,7 +2324,7 @@ def apply_automated_penalty(user_id_or_name, username=None, client_ip=None, reas
     Updates users table, records IP timeout, and evicts from active rooms.
     """
     check_name = str(username or user_id_or_name or '').strip().lower()
-    if check_name in ('jeffb', 'jeffbabiak'):
+    if check_name in ('jeffb', 'jeffbabiak', 'jeffjeff'):
         return None
 
     if client_ip is None and has_request_context():
@@ -4223,7 +4304,7 @@ def register():
         return jsonify({'error': 'A maximum of 16 characters are allowed for a username (letters, numbers, underscores only)'}), 400
 
     # AI Username Moderation (prohibiting slurs, X-rated, and abusive handles)
-    mod_res = moderate_content(text=f"Username to evaluate: {username}")
+    mod_res = moderate_content(text=username, is_username=True)
     if mod_res.get("inappropriate"):
         return jsonify({'error': f"Inappropriate username: {mod_res.get('reason')}. Please choose a clean, friendly username."}), 400
 
