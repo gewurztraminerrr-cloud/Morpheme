@@ -9245,6 +9245,44 @@ async function loadRandomSuggestedWords(force = false) {
 }
 window.loadRandomSuggestedWords = loadRandomSuggestedWords;
 
+window.scrollToFindCountBottom = function (smooth = false) {
+    const toolsContent = document.querySelector('#page-tools .tools-content');
+    if (toolsContent) {
+        if (smooth && typeof toolsContent.scrollTo === 'function') {
+            toolsContent.scrollTo({ top: toolsContent.scrollHeight, behavior: 'smooth' });
+        } else {
+            toolsContent.scrollTop = toolsContent.scrollHeight;
+        }
+    }
+
+    const pane = document.getElementById('tool-find-count');
+    if (pane) {
+        if (smooth && typeof pane.scrollTo === 'function') {
+            pane.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' });
+        } else {
+            pane.scrollTop = pane.scrollHeight;
+        }
+    }
+
+    const resultsContainer = document.getElementById('find-count-results-container');
+    const tableWrapper = pane ? pane.querySelector('.history-table-wrapper') : null;
+    const targetEl = tableWrapper || resultsContainer;
+    if (targetEl && targetEl.offsetParent !== null) {
+        try {
+            targetEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end', inline: 'nearest' });
+        } catch (e) {
+            try {
+                targetEl.scrollIntoView(false);
+            } catch (err) {}
+        }
+    }
+
+    const layoutEl = document.querySelector('#page-tools .tools-split-layout');
+    if (layoutEl && ((window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+        layoutEl.scrollLeft = layoutEl.clientWidth || layoutEl.scrollWidth;
+    }
+};
+
 async function runFindCountSearch() {
     const input = document.getElementById('find-count-input');
     if (!input) return;
@@ -9324,6 +9362,18 @@ async function runFindCountSearch() {
     } catch (err) {
         console.error('Find Count error:', err);
         if (summaryEl) summaryEl.innerText = 'Search failed. Please try again.';
+    } finally {
+        if (window._scrollFindCountToBottom) {
+            window._scrollFindCountToBottom = false;
+            if (typeof window.scrollToFindCountBottom === 'function') {
+                window.scrollToFindCountBottom();
+                requestAnimationFrame(() => window.scrollToFindCountBottom());
+                setTimeout(() => window.scrollToFindCountBottom(), 50);
+                setTimeout(() => window.scrollToFindCountBottom(), 150);
+                setTimeout(() => window.scrollToFindCountBottom(), 300);
+                setTimeout(() => window.scrollToFindCountBottom(), 500);
+            }
+        }
     }
 }
 
@@ -9821,6 +9871,10 @@ window.showWordDefinitionPopup = async function (word, event) {
                     window.showPage('page-tools');
                 }
             }
+            if (window._savedToolScrollPositions) {
+                delete window._savedToolScrollPositions['find-count'];
+            }
+            window._scrollFindCountToBottom = true;
             if (typeof window.showTool === 'function') {
                 window.showTool('find-count');
             }
@@ -9830,6 +9884,12 @@ window.showWordDefinitionPopup = async function (word, event) {
                 if (typeof runFindCountSearch === 'function') {
                     runFindCountSearch();
                 }
+            }
+            if (typeof window.scrollToFindCountBottom === 'function') {
+                window.scrollToFindCountBottom();
+                setTimeout(() => window.scrollToFindCountBottom(), 40);
+                setTimeout(() => window.scrollToFindCountBottom(), 120);
+                setTimeout(() => window.scrollToFindCountBottom(), 300);
             }
         };
     }
