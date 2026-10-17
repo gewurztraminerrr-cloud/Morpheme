@@ -16,7 +16,7 @@
 }
 
 .forum-sidebar {
-    width: 400px;
+    width: 480px;
     border-right: 1px solid var(--input-border);
     display: flex;
     flex-direction: column;
@@ -37,7 +37,7 @@
 #forum-user-search-input {
     flex: 1;
     min-width: 0; /* Allow it to shrink */
-    max-width: 340px; /* Prevent spilling */
+    max-width: 420px; /* Prevent spilling */
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--input-border);
     border-radius: 6px;
