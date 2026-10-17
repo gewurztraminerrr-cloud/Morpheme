@@ -3147,7 +3147,7 @@ const Forum = {
         const truncatedHtml = this.renderContentWithLinks(truncated) + '<span class="forum-ellipsis">...</span>';
         const fullHtml = this.renderContentWithLinks(raw);
 
-        return `<div class="forum-expandable-content"><div class="forum-content-truncated">${truncatedHtml}</div><div class="forum-content-full" style="display: none;">${fullHtml}</div><button type="button" class="forum-view-whole-msg-btn" onclick="Forum.expandWholeMessage(this, event)">View Whole Post</button></div>`;
+        return `<div class="forum-expandable-content"><div class="forum-content-truncated">${truncatedHtml}</div><div class="forum-content-full" style="display: none;">${fullHtml}</div><button type="button" class="forum-view-whole-msg-btn" onclick="Forum.expandWholeMessage(this, event)">View Entire Post</button></div>`;
     },
 
     expandWholeMessage: function (btn, event) {

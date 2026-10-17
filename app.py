@@ -3429,7 +3429,7 @@ def init_db():
         categories = [
             ("General", "General discussion about Morpheme."),
             ("Tips, Tricks, and Strategies", "Share your best gameplay advice."),
-            ("Screenshots", "Show off your high scores and cool boards."),
+            ("Screenshots/Recordings", "Show off your high scores and cool boards."),
             ("Introduce Yourself", "New here? Say hello!"),
             ("News", "Official news and updates from the developers."),
             ("Suggestions/Ideas", suggestions_desc),
@@ -3443,6 +3443,13 @@ def init_db():
         except Exception:
             pass
         
+        # MIGRATION: Ensure Screenshots category is renamed to Screenshots/Recordings
+        try:
+            conn.execute("UPDATE forum_categories SET name = 'Screenshots/Recordings' WHERE name = 'Screenshots'")
+            conn.execute("UPDATE forum_responders SET category_name = 'Screenshots/Recordings' WHERE category_name = 'Screenshots'")
+        except Exception:
+            pass
+
         # MIGRATION: Ensure Suggestions category is renamed to Suggestions/Ideas and clean up duplicates
         try:
             conn.execute("UPDATE forum_posts SET category_id = (SELECT id FROM forum_categories WHERE name = 'Suggestions/Ideas' LIMIT 1) WHERE category_id = (SELECT id FROM forum_categories WHERE name = 'Suggestions' LIMIT 1)")
@@ -10348,6 +10355,7 @@ def get_forum_categories():
             'general': 1,
             'tips, tricks, and strategies': 2,
             'screenshots': 3,
+            'screenshots/recordings': 3,
             'introduce yourself': 4,
             'news': 5,
             'suggestions/ideas': 6,
