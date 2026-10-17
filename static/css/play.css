@@ -11897,6 +11897,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 6px !important;
         margin: 0 auto !important;
         font-size: 0.94rem !important;
         font-weight: 700 !important;
@@ -11915,6 +11916,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         font-size: 0.85rem !important;
         font-weight: 600 !important;
         opacity: 0.85 !important;
+        margin-left: 3px !important;
     }
     #tool-store .store-category-filters {
         gap: 6px !important;
