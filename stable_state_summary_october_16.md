@@ -116,22 +116,34 @@ START_OVER_POINT_OCTOBER_16
 - **Restored Reaction Pill Borders**: Full high-contrast styling preserved on reaction pills with `cursor: not-allowed` for author's own posts.
 - **500-Character Truncation**: Automatic body truncation with smooth interactive `"View Whole Post"` expansion.
 
-### 11. Tools & Combo Checker Navigation
-- **MP Word Explorer Mobile Horizontal Extension**: Full-width responsive controls and fluid layout on mobile devices.
+### 11. Tools & Combo Checker Architecture
+- **Prominent Main Tabs (Manual vs MP Explorer)**:
+  - Top-level main tab bar (`#combo-main-tabs-header`) with high-contrast pills separating **Manual** (`#combo-main-pane-manual`) and **MP Explorer** (`#combo-main-pane-explorer`).
+  - **Manual** contains the manual search input row (`#combo-input`, `#combo-dict`, `#combo-search-btn`) and the MP and LIC subtabs and result tables (`#mp-container`, `#lic-container`).
+  - **MP Explorer** contains the standalone MP Word Explorer controls, filter, and dual table layout (`#combo-explorer-section`).
+  - Entering Combo Checker (`showTool('combo')` or initial page load) and clicking "CC" in definition popups automatically defaults to the **Manual** tab.
+  - Multi-hop back navigation (`toolsGoBack`) preserves and restores the active main tab (`comboMainTab`).
+- **MP Word Explorer Advanced Controls**:
+  - Added dedicated dropdown row for Direction (**Both**, **Forwards**, **Backwards**) and Order (**A–Z**, **Random**).
+  - Responsive dual-table layout with custom scrollbars and instant live filtering.
+  - Clickable definition popups on header title words (e.g., `"0MP from SCARIDS"` allows clicking SCARIDS).
+  - Definition popup "CC" button synchronizes Combo Checker's dictionary to whatever dictionary is active in MP Word Explorer.
 - **Desktop/Laptop "← Back" Navigation**: Multi-hop stack-based navigation (`window._defPopupNavStack`) to seamlessly navigate between definition popups, CC, and FC.
 - **Tools Tab Screen Freeze Resolution**: MutationObserver guard ensuring tool switching never resets the active tab or triggers lockups.
 
 ### 12. Cache Busting & Asset Versions
 - In `templates/index.html`:
+  - `style.css?v=1792204000`
   - `lobby.css?v=1791173000`
   - `app.js?v=1791173000`
   - `lobby.js?v=1791173000`
-  - `play.css?v=1791164500`
+  - `play.css?v=1792204000`
   - `play.js?v=1791172000`
   - `store.js?v=1791164500`
   - `forum.css?v=1792196000`
   - `forum.js?v=1791160800`
-  - `tools.js?v=1791150200`
+  - `tools.js?v=1792204000`
+- Latest Commit: `73f038dd`
 
 ---
 
