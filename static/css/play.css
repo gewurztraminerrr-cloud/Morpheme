@@ -4302,14 +4302,16 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     }
 
     #tool-combo .combo-unified-panel .combo-control-panel,
-    .combo-unified-panel .combo-control-panel {
-        background: rgba(var(--text-primary-rgb), 0.04) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
-        border-radius: 10px !important;
-        padding: 6px 10px !important;
-        margin-bottom: 6px !important;
-        box-sizing: border-box !important;
+    .combo-unified-panel .combo-control-panel,
+    #tool-combo .combo-control-panel {
+        padding: 10px 14px !important;
+        margin-bottom: 14px !important;
+        border-radius: 12px !important;
+        background: linear-gradient(145deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+        border: 1.5px solid rgba(96, 165, 250, 0.55) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(37, 99, 235, 0.2) !important;
         width: 100% !important;
+        box-sizing: border-box !important;
         flex: 0 0 auto !important;
     }
 
@@ -16439,40 +16441,22 @@ body[class*="theme-light-"] #tool-combo .combo-unified-panel,
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
-@media (min-width: 901px) {
-    body:not(.is-mobile).theme-white #tool-combo .combo-control-panel,
-    body:not(.is-mobile)[class*="theme-white"] #tool-combo .combo-control-panel,
-    body:not(.is-mobile)[class*="theme-light-"] #tool-combo .combo-control-panel,
-    body.is-desktop.theme-white #tool-combo .combo-control-panel,
-    body.is-desktop[class*="theme-white"] #tool-combo .combo-control-panel,
-    body.is-desktop[class*="theme-light-"] #tool-combo .combo-control-panel {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-}
-
-/* Mobile Devices: Standing Out Combo Control Panel for White & Light Themes */
-@media (max-width: 900px) {
-    body.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
-    body[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
-    [class*="theme-white"] .combo-unified-panel .combo-control-panel,
-    [class*="theme-light-"] .combo-unified-panel .combo-control-panel,
-    body.is-mobile.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
-    body.is-mobile[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
-    body.is-mobile[class*="theme-white"] .combo-unified-panel .combo-control-panel,
-    body.is-mobile[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
-        background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%) !important;
-        border: 1.5px solid #93c5fd !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15) !important;
-    }
-}
-body.is-mobile.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
-body.is-mobile[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
-body.is-mobile[class*="theme-white"] .combo-unified-panel .combo-control-panel,
-body.is-mobile[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
+/* All Platforms (Desktop, Laptop, Tablet, Mobile): Visible High-Contrast Border and Standout Background in White & Light Themes */
+body.theme-white #tool-combo .combo-control-panel,
+[class*="theme-white"] #tool-combo .combo-control-panel,
+body[class*="theme-light-"] #tool-combo .combo-control-panel,
+[class*="theme-light-"] #tool-combo .combo-control-panel,
+body.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
+[class*="theme-white"] #tool-combo .combo-unified-panel .combo-control-panel,
+body[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
+[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
+body.theme-white .combo-unified-panel .combo-control-panel,
+[class*="theme-white"] .combo-unified-panel .combo-control-panel,
+body[class*="theme-light-"] .combo-unified-panel .combo-control-panel,
+[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
     background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%) !important;
-    border: 1.5px solid #93c5fd !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15) !important;
+    border: 2px solid #3b82f6 !important;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
 }
 
 /* Inputs in Light & White Themes */
@@ -16945,6 +16929,14 @@ body.theme-black #tool-combo .result-section,
 body.theme-black #combo-explorer-section,
 body.theme-black .combo-explorer-card {
     border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.theme-black #tool-combo .combo-control-panel,
+body.theme-black #tool-combo .combo-unified-panel .combo-control-panel,
+body.theme-black .combo-unified-panel .combo-control-panel {
+    background: linear-gradient(145deg, rgba(30, 58, 138, 0.45) 0%, rgba(10, 15, 30, 0.9) 100%) !important;
+    border: 1.5px solid rgba(96, 165, 250, 0.65) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(37, 99, 235, 0.25) !important;
 }
 
 body.theme-black #combo-input,
