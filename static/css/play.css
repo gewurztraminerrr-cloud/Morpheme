@@ -3144,7 +3144,7 @@ body.theme-white #page-settings .mobile-bottom-nav {
     #tool-store .store-top-banner {
         display: flex !important;
         flex-direction: column !important;
-        gap: 10px !important;
+        gap: 6px !important;
         padding: 0 !important;
         margin-top: 14px !important;
         margin-bottom: 14px !important;
@@ -3155,8 +3155,11 @@ body.theme-white #page-settings .mobile-bottom-nav {
     #tool-store .store-status-dates-card {
         display: flex !important;
         flex-direction: column !important;
-        gap: 8px !important;
-        padding: 12px 16px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 6px !important;
+        padding: 12px 16px 8px 16px !important;
         border-radius: 12px !important;
         background: rgba(var(--text-primary-rgb), 0.05) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.14) !important;
@@ -3165,92 +3168,111 @@ body.theme-white #page-settings .mobile-bottom-nav {
     }
     #tool-store .store-status-row {
         display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-    }
-    #tool-store .store-status-icon-wrap {
-        display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 20px !important;
-        height: 20px !important;
-        flex-shrink: 0 !important;
-        font-size: 0.88rem !important;
-        color: var(--accent-color, #ff007f) !important;
+        text-align: center !important;
+        width: 100% !important;
+        gap: 2px !important;
+    }
+    #tool-store .store-status-icon-wrap {
+        display: none !important;
     }
     #tool-store .store-status-content {
         display: flex !important;
-        align-items: baseline !important;
-        gap: 6px !important;
-        flex-wrap: wrap !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        width: 100% !important;
+        gap: 2px !important;
     }
     #tool-store .store-status-label {
+        display: block !important;
+        text-align: center !important;
         font-size: 0.82rem !important;
-        opacity: 0.78 !important;
+        opacity: 0.8 !important;
         font-weight: 500 !important;
     }
     #tool-store .store-last-updated-row .store-status-date {
-        font-size: 0.92rem !important;
+        display: block !important;
+        text-align: center !important;
+        font-size: 1.05rem !important;
         font-weight: 700 !important;
         color: var(--accent-color, #ff007f) !important;
         letter-spacing: 0.2px !important;
     }
     #tool-store .store-next-update-row .store-status-date {
-        font-size: 0.88rem !important;
+        display: block !important;
+        text-align: center !important;
+        font-size: 1.02rem !important;
         font-weight: 700 !important;
         color: var(--text-primary, #fff) !important;
     }
     #tool-store .store-status-divider {
         height: 1px !important;
-        width: 100% !important;
-        background: rgba(var(--text-primary-rgb), 0.08) !important;
-        margin: 1px 0 !important;
+        width: 60% !important;
+        max-width: 320px !important;
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+        margin: 4px auto !important;
     }
     #tool-store .store-currency-divider {
-        display: none !important;
-    }
-    #tool-store .store-pulse-dot {
-        width: 8px !important;
-        height: 8px !important;
-        border-radius: 50% !important;
-        background: #00ff88 !important;
-        box-shadow: 0 0 10px #00ff88 !important;
-        display: inline-block !important;
-        animation: storePulse 2s infinite !important;
-    }
-    @keyframes storePulse {
-        0% { transform: scale(0.95); opacity: 0.8; }
-        50% { transform: scale(1.25); opacity: 1; }
-        100% { transform: scale(0.95); opacity: 0.8; }
+        display: block !important;
+        height: 1px !important;
+        width: 60% !important;
+        max-width: 320px !important;
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+        margin: 0 auto 6px auto !important;
     }
     #tool-store .store-currency-card {
         display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        flex-wrap: wrap !important;
-        gap: 10px !important;
-        padding: 10px 16px !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 0 !important;
+        padding: 6px 16px 8px 16px !important;
         border-radius: 12px !important;
         background: rgba(var(--text-primary-rgb), 0.04) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
     }
     #tool-store .store-context-label {
+        display: block !important;
+        text-align: center !important;
         font-size: 0.82rem !important;
-        font-weight: 600 !important;
-        opacity: 0.82 !important;
+        font-weight: 500 !important;
+        opacity: 0.8 !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
     }
     #tool-store .store-flag-badge {
         display: inline-flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        padding: 5px 12px !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        margin: 2px auto 0 auto !important;
+        padding: 4px 16px !important;
         border-radius: 20px !important;
         background: rgba(var(--text-primary-rgb), 0.08) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.22) !important;
         font-weight: 700 !important;
-        font-size: 0.82rem !important;
+        font-size: 1.02rem !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    }
+    #tool-store .store-flag-badge .flag-icon-img {
+        width: 22px !important;
+        height: auto !important;
+    }
+    #tool-store .store-flag-country-name {
+        font-size: 1.02rem !important;
+        font-weight: 700 !important;
+    }
+    #tool-store .store-flag-currency-code {
+        font-size: 0.92rem !important;
+        font-weight: 600 !important;
+        opacity: 0.85 !important;
+        margin-left: 3px !important;
     }
     #tool-store .store-category-filters {
         display: flex !important;
