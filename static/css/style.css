@@ -773,28 +773,58 @@ select option {
 
 [class*="theme-white"] .combo-main-tabs-header,
 [class*="theme-light-"] .combo-main-tabs-header {
-    background: #e2e8f0 !important;
+    background: #f1f5f9 !important;
     border: 1.5px solid #cbd5e1 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
 }
 
 [class*="theme-white"] .combo-main-tab-btn,
 [class*="theme-light-"] .combo-main-tab-btn {
     color: #475569 !important;
     background: transparent !important;
+    border-color: transparent !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn .combo-main-tab-icon,
+[class*="theme-light-"] .combo-main-tab-btn .combo-main-tab-icon {
+    opacity: 0.75 !important;
 }
 
 [class*="theme-white"] .combo-main-tab-btn:hover,
 [class*="theme-light-"] .combo-main-tab-btn:hover {
     color: #0f172a !important;
-    background: rgba(255, 255, 255, 0.6) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(203, 213, 225, 0.8) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
-[class*="theme-white"] .combo-main-tab-btn.active,
-[class*="theme-light-"] .combo-main-tab-btn.active {
+[class*="theme-white"] .combo-main-tab-btn:hover .combo-main-tab-icon,
+[class*="theme-light-"] .combo-main-tab-btn:hover .combo-main-tab-icon {
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn.active#combo-main-tab-btn-manual,
+[class*="theme-light-"] .combo-main-tab-btn.active#combo-main-tab-btn-manual {
     color: #ffffff !important;
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(37, 99, 235, 0.8) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn.active#combo-main-tab-btn-explorer,
+[class*="theme-light-"] .combo-main-tab-btn.active#combo-main-tab-btn-explorer {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(79, 70, 229, 0.8) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn.active .combo-main-tab-icon,
+[class*="theme-light-"] .combo-main-tab-btn.active .combo-main-tab-icon {
+    color: #ffffff !important;
+    opacity: 1 !important;
 }
 
 [class*="theme-white"] .combo-tabs-header,
