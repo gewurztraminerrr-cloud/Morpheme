@@ -193,13 +193,14 @@
                     <div class="store-status-row store-next-update-row">
                         <span class="store-status-icon-wrap"><i class="fas fa-calendar-alt"></i></span>
                         <div class="store-status-content">
-                            <span class="store-status-label">Next store update:</span>
+                            <span class="store-status-label">Next Store update will occur on</span>
                             <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="store-currency-card">
+                    <div class="store-status-divider store-currency-divider"></div>
                     <span class="store-context-label">Prices reflected for:</span>
                     <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
                         ${flagHtml}

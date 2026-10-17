@@ -3206,6 +3206,9 @@ body.theme-white #page-settings .mobile-bottom-nav {
         background: rgba(var(--text-primary-rgb), 0.08) !important;
         margin: 1px 0 !important;
     }
+    #tool-store .store-currency-divider {
+        display: none !important;
+    }
     #tool-store .store-pulse-dot {
         width: 8px !important;
         height: 8px !important;
@@ -11871,7 +11874,15 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         height: 1px !important;
         width: 80% !important;
         max-width: 200px !important;
-        margin: 2px auto !important;
+        margin: 4px auto !important;
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
+    }
+    #tool-store .store-currency-divider {
+        display: block !important;
+        height: 1px !important;
+        width: 80% !important;
+        max-width: 200px !important;
+        margin: 0 auto 6px auto !important;
         background: rgba(var(--text-primary-rgb), 0.1) !important;
     }
     #tool-store .store-currency-card {
@@ -11880,8 +11891,8 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
-        padding: 10px 14px !important;
-        gap: 6px !important;
+        padding: 4px 14px 6px 14px !important;
+        gap: 2px !important;
         border-radius: 12px !important;
         width: 100% !important;
         box-sizing: border-box !important;
@@ -11892,6 +11903,8 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         font-size: 0.74rem !important;
         font-weight: 500 !important;
         opacity: 0.8 !important;
+        margin: 0 0 2px 0 !important;
+        line-height: 1.2 !important;
     }
     #tool-store .store-flag-badge {
         display: inline-flex !important;
@@ -11901,7 +11914,7 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         margin: 0 auto !important;
         font-size: 0.94rem !important;
         font-weight: 700 !important;
-        padding: 5px 14px !important;
+        padding: 4px 14px !important;
         border-radius: 20px !important;
     }
     #tool-store .store-flag-badge .flag-icon-img {
