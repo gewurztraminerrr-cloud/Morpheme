@@ -1793,8 +1793,14 @@ window.showMiniProfile = async function (username) {
         return;
     }
 
+    if (window._miniProfileAbortController) {
+        try { window._miniProfileAbortController.abort(); } catch (e) {}
+    }
+    window._miniProfileAbortController = new AbortController();
+    const signal = window._miniProfileAbortController.signal;
+
     try {
-        const response = await fetch(`/api/profile/${encodeURIComponent(username)}`);
+        const response = await fetch(`/api/profile/mini/${encodeURIComponent(username)}`, { signal });
         const data = await response.json();
         console.log('[showMiniProfile] Data received:', data);
 
@@ -5912,18 +5918,10 @@ window.openFullListModal = function() {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    // If list data is already cached in memory, directly restore saved placement without clearing DOM
-    const hasCachedList = (window._cachedFullWordLists[currentFilterKey] && window._cachedFullWordLists[currentFilterKey].length > 0) ||
-        (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && !window.listsServerTruncated && currentWordsType === selectedType);
-
-    if (hasCachedList) {
-        _fullListAllWords = window._cachedFullWordLists[currentFilterKey] || currentWordsList;
-        window._cachedFullWordLists[currentFilterKey] = _fullListAllWords;
-        window.isFullListLoading = false;
-        initFullListVirtualScrollbar();
-        restoreOrRenderFullList(currentFilterKey);
-        return;
-    }
+    // Prioritize showing any already available words immediately!
+    const cachedWords = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
+    const inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
+    const initialWords = (cachedWords && cachedWords.length > 0) ? cachedWords : inMemoryWords;
 
     if (selectedType === 'words_to_work_on') {
         const items = typeof getWordsToWorkOn === 'function' ? getWordsToWorkOn() : [];
@@ -5946,16 +5944,33 @@ window.openFullListModal = function() {
         return;
     }
 
-    // Only when fetching fresh list data from network do we show loading state
-    _fullListRenderedStart = 0;
-    _fullListRenderedEnd = 0;
-    results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span><span style="font-size: 0.85rem; opacity: 0.75; font-weight: 500; margin-top: -4px;">This may take a moment for large lists</span></div>';
-    results.scrollTop = 0;
-    window.isFullListLoading = true;
+    if (initialWords && initialWords.length > 0) {
+        _fullListAllWords = initialWords;
+        if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+        window._cachedFullWordLists[currentFilterKey] = initialWords;
+        initFullListVirtualScrollbar();
+        restoreOrRenderFullList(currentFilterKey);
 
-    if (fullListCount) {
-        fullListCount.textContent = `Loading…`;
+        if (!window.listsServerTruncated || (cachedWords && cachedWords.length > (inMemoryWords ? inMemoryWords.length : 0))) {
+            window.isFullListLoading = false;
+            return;
+        }
+
+        if (fullListCount) {
+            fullListCount.innerHTML = `Showing ${initialWords.length.toLocaleString()} words <span style="font-size:0.8rem; opacity:0.8;">(loading full set…)</span>`;
+        }
+    } else {
+        // No words in memory yet, show prioritized loading indicator
+        _fullListRenderedStart = 0;
+        _fullListRenderedEnd = 0;
+        results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading word list…</span><span style="font-size: 0.85rem; opacity: 0.75; font-weight: 500; margin-top: -4px;">Prioritizing full list display</span></div>';
+        results.scrollTop = 0;
+        if (fullListCount) {
+            fullListCount.textContent = `Loading…`;
+        }
     }
+
+    window.isFullListLoading = true;
 
     let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
     if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
@@ -5963,7 +5978,7 @@ window.openFullListModal = function() {
     url += `&t=${Date.now()}`;
 
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 120000);
+    const fetchTimeout = setTimeout(() => controller.abort(), 60000);
 
     fetch(url, { signal: controller.signal })
         .then(r => {
@@ -5983,9 +5998,15 @@ window.openFullListModal = function() {
         .catch(err => {
             clearTimeout(fetchTimeout);
             console.error('[Full List] Failed to fetch full word list:', err);
-            if (fullListCount) fullListCount.textContent = `Fetch error`;
-            results.innerHTML = `<div class="full-list-error-state" style="padding: 40px 20px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Unable to load words.<br><span style="font-size: 0.85rem; opacity: 0.75; display: inline-block; margin-top: 6px;">Please check your connection and try again.</span><br><button type="button" class="full-list-retry-btn" onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
             window.isFullListLoading = false;
+            if (_fullListAllWords && _fullListAllWords.length > 0) {
+                if (fullListCount) {
+                    fullListCount.innerHTML = `Showing ${_fullListAllWords.length.toLocaleString()} words <span style="font-size:0.78rem; opacity:0.8; color:#ffb703;">(full stream paused)</span>`;
+                }
+            } else {
+                if (fullListCount) fullListCount.textContent = `Fetch error`;
+                results.innerHTML = `<div class="full-list-error-state" style="padding: 40px 20px; text-align: center; color: #f87171; font-size: 1rem; width: 100%;">Unable to load words.<br><span style="font-size: 0.85rem; opacity: 0.75; display: inline-block; margin-top: 6px;">Please check your connection and try again.</span><br><button type="button" class="full-list-retry-btn" onclick="window.openFullListModal()" style="margin-top: 14px; background: rgba(167,139,250,0.25); border: 1px solid #a78bfa; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700;">Retry</button></div>`;
+            }
         });
 };
 
@@ -6477,6 +6498,22 @@ async function fetchListsData(typeOverride) {
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
         window.listsServerTruncated = data.is_truncated || false;
+
+        const modalEl = document.getElementById('full-list-modal');
+        const modalIsOpen = modalEl && !modalEl.classList.contains('hidden');
+        const activeFilterKey = `${selectedType}_${lengthSelect ? lengthSelect.value : 'all'}_${startSelect ? startSelect.value : 'all'}`;
+        if (modalIsOpen && window._lastFullListFilterKey === activeFilterKey) {
+            _fullListAllWords = words;
+            if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+            window._cachedFullWordLists[activeFilterKey] = words;
+            window.isFullListLoading = false;
+            initFullListVirtualScrollbar();
+            restoreOrRenderFullList(activeFilterKey);
+            const fullListCount = document.getElementById('full-list-modal-count');
+            if (fullListCount) {
+                fullListCount.textContent = `Showing ${words.length.toLocaleString()} words`;
+            }
+        }
 
         if (!words || words.length === 0) {
             if (scrollArea) scrollArea.innerHTML = '<div style="padding:20px; opacity:0.6; text-align:center;">No words found matching these filters.</div>';
@@ -7095,10 +7132,17 @@ async function runSequenceSearch() {
 
     resultsContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#rgba(255,255,255,0.7);">Searching...</div>';
 
+    if (window._seqSearchAbortController) {
+        try { window._seqSearchAbortController.abort(); } catch (e) {}
+    }
+    window._seqSearchAbortController = new AbortController();
+    const signal = window._seqSearchAbortController.signal;
+
     try {
         const response = await fetch('/api/tools/sequence', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: signal,
             body: JSON.stringify({
                 sequence: seq,
                 mode: mode,

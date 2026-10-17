@@ -3289,8 +3289,12 @@ def init_db():
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_round_history_user ON round_history(user_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_round_history_room ON round_history(room_id)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_round_history_user_ts ON round_history(user_id, timestamp DESC)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)')
         conn.commit()
-        print("Migrated DB: Added round_history table")
+        print("Migrated DB: Added round_history table and performance indexes")
     except Exception as e:
         print(f"Migration Error (round_history): {e}")
 
@@ -5019,8 +5023,99 @@ def touch_user_last_visited(user_id):
         except Exception as e:
             print(f"[LastVisited] Error touching last_visited for user {user_id}: {e}")
 
+_PROFILE_CACHE = {}
+_PROFILE_CACHE_TTL = 30.0  # 30s cache TTL for heavy full profile calculations
+
+@app.route('/api/profile/mini/<username>', methods=['GET'])
+def get_mini_profile(username):
+    """Ultra-fast mini profile endpoint that bypasses full round_history scans."""
+    conn = sqlite3.connect(DB_PATH, timeout=10)
+    cursor = conn.execute('''
+        SELECT id, username, rating, games_played, avatar_url, country_flag, 
+               full_name, age, gender, location, quote, description, proof_url, wins,
+               created_at, last_visited, timezone
+        FROM users WHERE username = ? COLLATE NOCASE
+    ''', (username,))
+    user = cursor.fetchone()
+    if not user:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    user_id = user[0]
+
+    # Fast aggregate for total points and counted games from indexed round_history
+    try:
+        cursor_stats = conn.execute('''
+            SELECT COALESCE(SUM(total_score), 0), COUNT(*)
+            FROM round_history
+            WHERE user_id = ? AND total_score > 0
+        ''', (user_id,))
+        stats_row = cursor_stats.fetchone()
+        pt_sum = stats_row[0] if stats_row else 0
+        counted_games = stats_row[1] if stats_row else 0
+    except Exception:
+        pt_sum = 0
+        counted_games = 0
+
+    forum_posts_count = 0
+    try:
+        cursor_fp = conn.execute('SELECT COALESCE(total_forum_posts, 0) FROM users WHERE id = ?', (user_id,))
+        fp_row = cursor_fp.fetchone()
+        forum_posts_count = fp_row[0] if fp_row and fp_row[0] is not None else 0
+    except Exception:
+        pass
+
+    conn.close()
+
+    session_info = room_manager.find_user_session(user_id)
+
+    return jsonify({
+        'user_id': user_id,
+        'username': user[1],
+        'rating': user[2],
+        'games_played': user[3] if (user[3] and user[3] > 0) else counted_games,
+        'wins': user[13] or 0,
+        'pt_sum': pt_sum,
+        'avatar_url': user[4],
+        'country_flag': user[5] or '🏳️',
+        'full_name': user[6] or '-',
+        'age': user[7] or '-',
+        'gender': user[8] or '-',
+        'location': user[9] or '-',
+        'quote': user[10] or 'Enter a personal quote',
+        'description': user[11] or 'Add a detailed description about yourself...',
+        'proof_url': user[12],
+        'created_at': user[14],
+        'last_visited': user[15] or user[14],
+        'timezone': user[16] or 'auto',
+        'forum_posts_count': forum_posts_count,
+        'status': {
+            'is_online': session_info['is_online'] if session_info else False,
+            'current_room': session_info['room_id'] if session_info else None,
+            'session': session_info
+        }
+    })
+
 @app.route('/api/profile/<username>', methods=['GET'])
 def get_public_profile(username):
+    if request.args.get('mini') in ('1', 'true'):
+        return get_mini_profile(username)
+
+    period = request.args.get('period', 'all').lower()
+    cache_key = (username.lower(), period)
+    now_ts = time.time()
+    if cache_key in _PROFILE_CACHE:
+        cached_data, cached_at = _PROFILE_CACHE[cache_key]
+        if now_ts - cached_at < _PROFILE_CACHE_TTL:
+            target_uid = cached_data.get('user_id', 0)
+            session_info = room_manager.find_user_session(target_uid) if target_uid else None
+            cached_data['status'] = {
+                'is_online': session_info['is_online'] if session_info else False,
+                'current_room': session_info['room_id'] if session_info else None,
+                'session': session_info
+            }
+            return jsonify(cached_data)
+
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
         touch_user_last_visited(session['user_id'])
@@ -5271,7 +5366,8 @@ def get_public_profile(username):
     conn.close()
     session_info = room_manager.find_user_session(user[0])
         
-    return jsonify({
+    result_data = {
+        'user_id': user[0],
         'username': user[1],
         'rating': user[2],
         'games_played': games_played_period, # PER-PERIOD (multiplayer >= 2)
@@ -5306,7 +5402,9 @@ def get_public_profile(username):
             'current_room': session_info['room_id'] if session_info else None,
             'session': session_info
         }
-    })
+    }
+    _PROFILE_CACHE[cache_key] = (result_data, now_ts)
+    return jsonify(result_data)
 
 @app.route('/api/profile/<username>/achievements/<game_type>/<board_dimensions>/<int:time_limit>', methods=['GET'])
 def get_room_achievements(username, game_type, board_dimensions, time_limit):
@@ -9387,7 +9485,7 @@ def tools_get_lists():
 @app.route('/api/tools/sequence', methods=['POST'])
 def tools_sequence_search():
     """Handles Sequence Search: Starts/Ends With, Contains (Fwd/Rev)."""
-    data = request.json
+    data = request.json or {}
     sequence = data.get('sequence', '').upper().strip()
     mode = data.get('mode', 'contains') # starts, ends, contains
     length_filter = data.get('length', 'all')
@@ -9401,7 +9499,7 @@ def tools_sequence_search():
     if length_filter and str(length_filter).lower() != 'all':
         try:
             target_len = int(length_filter)
-        except ValueError:
+        except (ValueError, TypeError):
             pass
             
     dictionary = load_tools_dictionary(dict_name)
@@ -9410,24 +9508,41 @@ def tools_sequence_search():
         
     results = []
     seq_rev = sequence[::-1]
+    is_palindrome = (sequence == seq_rev)
     word_list = dictionary['words']
     lens = dictionary['lens']
     
-    for i in range(len(word_list)):
-        if target_len is not None and lens[i] != target_len:
-            continue
-            
-        word = word_list[i]
-        matched = False
-        if mode == 'starts':
-            if word.startswith(sequence): matched = True
-        elif mode == 'ends':
-            if word.endswith(sequence): matched = True
-        elif mode == 'contains':
-            if sequence in word or seq_rev in word: matched = True
-            
-        if matched:
-            results.append(word)
+    if mode == 'starts':
+        for i, word in enumerate(word_list):
+            if target_len is not None and lens[i] != target_len:
+                continue
+            if word.startswith(sequence):
+                results.append(word)
+    elif mode == 'ends':
+        for i, word in enumerate(word_list):
+            if target_len is not None and lens[i] != target_len:
+                continue
+            if word.endswith(sequence):
+                results.append(word)
+    elif mode == 'contains':
+        if is_palindrome:
+            for i, word in enumerate(word_list):
+                if target_len is not None and lens[i] != target_len:
+                    continue
+                if sequence in word:
+                    results.append(word)
+        else:
+            for i, word in enumerate(word_list):
+                if target_len is not None and lens[i] != target_len:
+                    continue
+                if sequence in word or seq_rev in word:
+                    results.append(word)
+    else:
+        for i, word in enumerate(word_list):
+            if target_len is not None and lens[i] != target_len:
+                continue
+            if sequence in word:
+                results.append(word)
             
     results.sort(key=lambda x: (len(x), x))
     
@@ -9441,7 +9556,10 @@ def tools_subanagrams():
     data = request.json or {}
     raw_input = data.get('input', '')
     dict_name = data.get('dictionary', 'NWL')
-    min_len = int(data.get('min_length', 3))
+    try:
+        min_len = int(data.get('min_length', 3))
+    except (ValueError, TypeError):
+        min_len = 3
     
     clean_input = re.sub(r'[^A-Z]', '', raw_input.upper())
     if not clean_input:
@@ -9496,8 +9614,14 @@ def tools_subanagrams():
 def tools_subanagrams_random():
     import random
     dict_name = request.args.get('dictionary', 'CSW')
-    target_len = int(request.args.get('length', 8))
-    min_len = int(request.args.get('min_length', 3))
+    try:
+        target_len = int(request.args.get('length', 8))
+    except (ValueError, TypeError):
+        target_len = 8
+    try:
+        min_len = int(request.args.get('min_length', 3))
+    except (ValueError, TypeError):
+        min_len = 3
     mode = request.args.get('mode', 'word')
     
     dictionary = load_tools_dictionary(dict_name)

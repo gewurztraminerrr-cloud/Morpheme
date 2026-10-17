@@ -1636,6 +1636,7 @@ setTimeout(() => {
     checkForumActivity();
 }, 500);
 setInterval(() => {
+    if (document.hidden) return;
     checkTournamentTurn();
     checkForumActivity();
 }, 4000);
@@ -4177,6 +4178,7 @@ function touchMorphemeActivity() {
 window.addEventListener('beforeunload', touchMorphemeActivity);
 function handleAppVisibilityChange() {
     if (document.visibilityState === 'visible') {
+        touchMorphemeActivity();
         if (typeof window.fetchLobbyStats === 'function') {
             window.fetchLobbyStats('all').catch(() => {});
         }

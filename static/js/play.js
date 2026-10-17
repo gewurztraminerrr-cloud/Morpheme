@@ -1430,23 +1430,27 @@ document.addEventListener('visibilitychange', () => {
             return; // Do NOT call updateGameState/refreshPollInterval for private match
         }
 
-        // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
+        // Instant Feedback: Show ticking countdown if active, otherwise fetch immediately without forced WAIT...
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
-                timerInterval = setInterval(updateLocalTimer, 500);
+                timerInterval = setInterval(updateLocalTimer, 100);
             }
             updateLocalTimer();
         } else {
-            setTimerWaitingState(true);
+            // Graceful fallback: only show WAIT... if state fetch takes longer than 300ms
+            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = setTimeout(() => {
+                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
+                    setTimerWaitingState(true);
+                }
+            }, 300);
         }
 
-        // Add a small 80ms delay before fetching to let the mobile OS restore cellular/Wi-Fi connectivity
-        setTimeout(() => {
-            if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
-                updateGameState();
-                refreshPollInterval();
-            }
-        }, 80);
+        // Fetch state immediately without artificial delays
+        if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
+            updateGameState();
+            refreshPollInterval();
+        }
 
         // Re-sync timer if needed (ONLY if lastGameState is fresh, within 5 seconds)
         if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
@@ -1540,23 +1544,27 @@ window.addEventListener('focus', () => {
             return;
         }
 
-        // Instant Feedback: Show ticking countdown if active, otherwise show "WAIT..."
+        // Instant Feedback: Show ticking countdown if active, otherwise fetch immediately without forced WAIT...
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
-                timerInterval = setInterval(updateLocalTimer, 500);
+                timerInterval = setInterval(updateLocalTimer, 100);
             }
             updateLocalTimer();
         } else {
-            setTimerWaitingState(true);
+            // Graceful fallback: only show WAIT... if state fetch takes longer than 300ms
+            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = setTimeout(() => {
+                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
+                    setTimerWaitingState(true);
+                }
+            }, 300);
         }
 
-        // Add a small 80ms delay to let the network stack settle
-        setTimeout(() => {
-            if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
-                updateGameState();
-                refreshPollInterval();
-            }
-        }, 80);
+        // Fetch state immediately without artificial delays
+        if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
+            updateGameState();
+            refreshPollInterval();
+        }
 
         if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
             syncTimerWithServer(window.lastGameState);
@@ -1745,6 +1753,11 @@ async function updateGameState(incomingState = null) {
         }
 
         if (!state) return;
+
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
+        }
 
         // Store raw state BEFORE transposition so orientation changes can re-evaluate correctly.
         // window.lastGameState is mutated in-place by safelyTransposeState; if we cloned from it
@@ -5654,14 +5667,15 @@ function updateLocalTimer() {
     if (window._lastLocalTimerTickTime) {
         const gap = tickTime - window._lastLocalTimerTickTime;
         if (gap > 2200) {
-            console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting delayed wake-up update.`);
-            if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
-                setTimerWaitingState(true);
-            }
-            setTimeout(() => {
-                updateGameState();
-                refreshPollInterval();
-            }, 80);
+            console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant wake-up update.`);
+            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = setTimeout(() => {
+                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
+                    setTimerWaitingState(true);
+                }
+            }, 300);
+            updateGameState();
+            refreshPollInterval();
         }
     }
     window._lastLocalTimerTickTime = tickTime;
