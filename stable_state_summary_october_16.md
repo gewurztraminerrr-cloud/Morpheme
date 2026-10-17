@@ -85,10 +85,16 @@ START_OVER_POINT_OCTOBER_16
 ### 8. Morpheme Store Modernization & Dynamic Multi-Currency Engine
 - Flag-based automated multi-currency converter across 50+ world currencies.
 - Centralized structured catalog with tournament-grade laptops, rigs, displays, and official dictionaries.
+- **Mobile Store Typography & Layout Overhaul**:
+  - Centered labels for `"Prices and products last updated on"`, `"Next Store update will occur on"`, and `"Prices reflected for:"`.
+  - Prominent, enlarged dates (`0.96rem` in accent pink `#ff007f` and `0.94rem` in crisp `#fff`) and location badge (`0.94rem` with flag and currency code).
+  - Symmetrical dual-divider grouping creating a unified three-part dashboard presentation on mobile.
+  - Compact vertical spacing directly between `"Prices reflected for:"` and the country flag/currency badge.
 
 ### 9. Cache Busting & Asset Versions
 - In `templates/index.html`:
-  - `play.css?v=1792211000`
+  - `play.css?v=1792213500`
+  - `store.js?v=1792213000`
   - `tools.js?v=1792210000`
   - `style.css?v=1792208000`
   - `lobby.css?v=1791173000`
@@ -96,7 +102,6 @@ START_OVER_POINT_OCTOBER_16
   - `lobby.js?v=1792204000`
   - `play.js?v=1791172000`
   - `settings.js?v=1792204000`
-  - `store.js?v=1791164500`
   - `forum.css?v=1792196000`
   - `forum.js?v=1792200000`
 
