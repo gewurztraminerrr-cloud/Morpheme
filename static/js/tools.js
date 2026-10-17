@@ -479,11 +479,18 @@ window.toolsGoBack = function() {
             window.showTool(originTool);
         }
 
-        if (originTool === 'combo' && navEntry.comboWord) {
-            const comboInput = document.getElementById('combo-input');
-            if (comboInput) {
-                comboInput.value = navEntry.comboWord;
-                if (typeof runComboSearch === 'function') runComboSearch();
+        if (originTool === 'combo' && (navEntry.comboWord || navEntry.comboDict)) {
+            const comboDict = document.getElementById('combo-dict');
+            if (navEntry.comboDict && comboDict) {
+                comboDict.value = navEntry.comboDict;
+                try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
+            }
+            if (navEntry.comboWord) {
+                const comboInput = document.getElementById('combo-input');
+                if (comboInput) {
+                    comboInput.value = navEntry.comboWord;
+                    if (typeof runComboSearch === 'function') runComboSearch();
+                }
             }
             if (navEntry.comboSubtab && typeof window.switchComboTab === 'function') {
                 window.switchComboTab(navEntry.comboSubtab);
@@ -9831,6 +9838,16 @@ window.hideWordDefinitionPopup = function () {
 };
 
 function getActiveToolsWordList(targetEl) {
+    if (targetEl && targetEl.closest && targetEl.closest('#combo-explorer-section')) {
+        const expDict = document.getElementById('combo-explorer-dict');
+        if (expDict && expDict.value) {
+            let val = expDict.value;
+            if (val === 'AW') val = 'added_words';
+            if (val.toUpperCase() === 'ALL') val = 'ALL';
+            return val;
+        }
+    }
+
     const fullListModal = document.getElementById('full-list-modal');
     const isInsideFullList = fullListModal && (!fullListModal.classList.contains('hidden') || (targetEl && targetEl.closest && targetEl.closest('#full-list-modal')));
     const listsPane = document.getElementById('tool-lists');
@@ -9902,6 +9919,17 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     const evt = event || window.event;
     const target = evt ? (evt.currentTarget || evt.target) : null;
+    const isFromExplorer = !!(target && target.closest && target.closest('#combo-explorer-section'));
+    window._defPopupFromExplorer = isFromExplorer;
+    if (isFromExplorer) {
+        const expDict = document.getElementById('combo-explorer-dict');
+        let dVal = expDict ? expDict.value : null;
+        if (dVal === 'AW') dVal = 'added_words';
+        if (dVal && dVal.toUpperCase() === 'ALL') dVal = 'ALL';
+        window._defPopupExplorerDict = dVal;
+    } else {
+        window._defPopupExplorerDict = null;
+    }
     window._defPopupSourceList = getActiveToolsWordList(target);
 
     let popover = document.getElementById('tool-word-def-popover');
@@ -10039,6 +10067,7 @@ window.showWordDefinitionPopup = async function (word, event) {
                 savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
                 savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
                 comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
+                comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
                 comboSubtab: window._activeComboTab || 'mp',
                 findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
             });
@@ -10079,8 +10108,10 @@ window.showWordDefinitionPopup = async function (word, event) {
             }
 
             // Sync Combo Checker word list to the originating list
-            const targetDict = window._defPopupSourceList;
+            let targetDict = window._defPopupExplorerDict || window._defPopupSourceList;
             if (targetDict) {
+                if (targetDict === 'AW') targetDict = 'added_words';
+                if (targetDict.toUpperCase() === 'ALL') targetDict = 'ALL';
                 const comboDict = document.getElementById('combo-dict');
                 if (comboDict) {
                     const optExists = Array.from(comboDict.options).some(opt => opt.value === targetDict);
@@ -10166,6 +10197,7 @@ window.showWordDefinitionPopup = async function (word, event) {
                 savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
                 savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
                 comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
+                comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
                 comboSubtab: window._activeComboTab || 'mp',
                 findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
             });
