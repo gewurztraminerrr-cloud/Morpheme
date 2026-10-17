@@ -197,15 +197,14 @@
                             <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="store-currency-card">
-                    <div class="store-status-divider store-currency-divider"></div>
-                    <span class="store-context-label">Prices reflected for:</span>
-                    <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
-                        ${flagHtml}
-                        <span class="store-flag-country-name">${curr.name}</span>
-                        <span class="store-flag-currency-code">(${curr.code})</span>
+                    <div class="store-status-divider"></div>
+                    <div class="store-currency-card">
+                        <span class="store-context-label">Prices reflected for:</span>
+                        <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
+                            ${flagHtml}
+                            <span class="store-flag-country-name">${curr.name}</span>
+                            <span class="store-flag-currency-code">(${curr.code})</span>
+                        </div>
                     </div>
                 </div>
             </div>

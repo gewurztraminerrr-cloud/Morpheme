@@ -3159,7 +3159,7 @@ body.theme-white #page-settings .mobile-bottom-nav {
         justify-content: center !important;
         text-align: center !important;
         gap: 6px !important;
-        padding: 12px 16px 8px 16px !important;
+        padding: 12px 16px 12px 16px !important;
         border-radius: 12px !important;
         background: rgba(var(--text-primary-rgb), 0.05) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.14) !important;
@@ -3209,20 +3209,14 @@ body.theme-white #page-settings .mobile-bottom-nav {
         font-weight: 700 !important;
         color: var(--text-primary, #fff) !important;
     }
-    #tool-store .store-status-divider {
-        height: 1px !important;
-        width: 60% !important;
-        max-width: 320px !important;
-        background: rgba(var(--text-primary-rgb), 0.1) !important;
-        margin: 4px auto !important;
-    }
+    #tool-store .store-status-divider,
     #tool-store .store-currency-divider {
         display: block !important;
         height: 1px !important;
         width: 60% !important;
         max-width: 320px !important;
         background: rgba(var(--text-primary-rgb), 0.1) !important;
-        margin: 0 auto 6px auto !important;
+        margin: 4px auto !important;
     }
     #tool-store .store-currency-card {
         display: flex !important;
@@ -3231,11 +3225,13 @@ body.theme-white #page-settings .mobile-bottom-nav {
         justify-content: center !important;
         text-align: center !important;
         gap: 0 !important;
-        padding: 6px 16px 8px 16px !important;
-        border-radius: 12px !important;
-        background: rgba(var(--text-primary-rgb), 0.04) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
     }
     #tool-store .store-context-label {
         display: block !important;
@@ -11892,19 +11888,13 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         font-weight: 700 !important;
         color: var(--text-primary, #fff) !important;
     }
-    #tool-store .store-status-divider {
-        height: 1px !important;
-        width: 80% !important;
-        max-width: 200px !important;
-        margin: 4px auto !important;
-        background: rgba(var(--text-primary-rgb), 0.1) !important;
-    }
+    #tool-store .store-status-divider,
     #tool-store .store-currency-divider {
         display: block !important;
         height: 1px !important;
         width: 80% !important;
         max-width: 200px !important;
-        margin: 0 auto 6px auto !important;
+        margin: 4px auto !important;
         background: rgba(var(--text-primary-rgb), 0.1) !important;
     }
     #tool-store .store-currency-card {
@@ -11913,9 +11903,13 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
-        padding: 4px 14px 6px 14px !important;
+        padding: 0 !important;
+        margin: 0 !important;
         gap: 0 !important;
-        border-radius: 12px !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
