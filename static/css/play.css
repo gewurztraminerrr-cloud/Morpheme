@@ -11813,32 +11813,108 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         box-shadow: none !important;
     }
     #tool-store .store-status-dates-card {
-        padding: 10px 12px !important;
-        gap: 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 10px 14px !important;
+        gap: 8px !important;
         border-radius: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #tool-store .store-status-row {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        width: 100% !important;
+        gap: 2px !important;
+    }
+    #tool-store .store-status-icon-wrap {
+        display: none !important;
     }
     #tool-store .store-status-content {
+        display: flex !important;
         flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 1px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        width: 100% !important;
+        gap: 2px !important;
     }
     #tool-store .store-status-label {
-        font-size: 0.72rem !important;
+        display: block !important;
+        text-align: center !important;
+        font-size: 0.74rem !important;
+        font-weight: 500 !important;
+        opacity: 0.8 !important;
     }
-    #tool-store .store-status-date {
-        font-size: 0.82rem !important;
+    #tool-store .store-last-updated-row .store-status-date {
+        display: block !important;
+        text-align: center !important;
+        font-size: 0.96rem !important;
+        font-weight: 700 !important;
+        color: var(--accent-color, #ff007f) !important;
+        letter-spacing: 0.2px !important;
+    }
+    #tool-store .store-next-update-row .store-status-date {
+        display: block !important;
+        text-align: center !important;
+        font-size: 0.94rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary, #fff) !important;
+    }
+    #tool-store .store-status-divider {
+        height: 1px !important;
+        width: 80% !important;
+        max-width: 200px !important;
+        margin: 2px auto !important;
+        background: rgba(var(--text-primary-rgb), 0.1) !important;
     }
     #tool-store .store-currency-card {
-        padding: 8px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 10px 14px !important;
+        gap: 6px !important;
         border-radius: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     #tool-store .store-context-label {
-        font-size: 0.75rem !important;
+        display: block !important;
+        text-align: center !important;
+        font-size: 0.74rem !important;
+        font-weight: 500 !important;
+        opacity: 0.8 !important;
     }
     #tool-store .store-flag-badge {
-        font-size: 0.76rem !important;
-        padding: 4px 10px !important;
-        border-radius: 16px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
+        font-size: 0.94rem !important;
+        font-weight: 700 !important;
+        padding: 5px 14px !important;
+        border-radius: 20px !important;
+    }
+    #tool-store .store-flag-badge .flag-icon-img {
+        width: 22px !important;
+        height: auto !important;
+    }
+    #tool-store .store-flag-country-name {
+        font-size: 0.94rem !important;
+        font-weight: 700 !important;
+    }
+    #tool-store .store-flag-currency-code {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        opacity: 0.85 !important;
     }
     #tool-store .store-category-filters {
         gap: 6px !important;
