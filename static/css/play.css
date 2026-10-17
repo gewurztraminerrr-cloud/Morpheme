@@ -4051,6 +4051,8 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-x pan-y !important;
+}
+
 /* ==========================================================================
    Combo Checker Main Tabs (Manual vs MP Explorer) - Global Base Styles
    ========================================================================== */
@@ -4247,6 +4249,8 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         border-radius: 10px !important;
         padding: 12px 14px !important;
         box-sizing: border-box !important;
+    }
+
     /* Combo Checker Tabs */
     .combo-tabs-section {
         width: 100% !important;
