@@ -15961,13 +15961,16 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
     }
 
+    body.is-mobile #tool-combo .combo-unified-panel .combo-control-panel,
+    body.is-mobile .combo-unified-panel .combo-control-panel,
     #tool-combo .combo-unified-panel .combo-control-panel,
     .combo-unified-panel .combo-control-panel {
-        padding: 8px 10px !important;
-        margin-bottom: 12px !important;
-        border-radius: 8px !important;
-        background: rgba(var(--text-primary-rgb), 0.04) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
+        padding: 10px 12px !important;
+        margin-bottom: 14px !important;
+        border-radius: 12px !important;
+        background: linear-gradient(145deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+        border: 1.5px solid rgba(96, 165, 250, 0.55) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(37, 99, 235, 0.2) !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
@@ -16324,12 +16327,40 @@ body[class*="theme-light-"] #tool-combo .combo-unified-panel,
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
-body.theme-white #tool-combo .combo-control-panel,
-[class*="theme-white"] #tool-combo .combo-control-panel,
-body[class*="theme-light-"] #tool-combo .combo-control-panel,
-[class*="theme-light-"] #tool-combo .combo-control-panel {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+@media (min-width: 901px) {
+    body:not(.is-mobile).theme-white #tool-combo .combo-control-panel,
+    body:not(.is-mobile)[class*="theme-white"] #tool-combo .combo-control-panel,
+    body:not(.is-mobile)[class*="theme-light-"] #tool-combo .combo-control-panel,
+    body.is-desktop.theme-white #tool-combo .combo-control-panel,
+    body.is-desktop[class*="theme-white"] #tool-combo .combo-control-panel,
+    body.is-desktop[class*="theme-light-"] #tool-combo .combo-control-panel {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+}
+
+/* Mobile Devices: Standing Out Combo Control Panel for White & Light Themes */
+@media (max-width: 900px) {
+    body.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
+    body[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
+    [class*="theme-white"] .combo-unified-panel .combo-control-panel,
+    [class*="theme-light-"] .combo-unified-panel .combo-control-panel,
+    body.is-mobile.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
+    body.is-mobile[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
+    body.is-mobile[class*="theme-white"] .combo-unified-panel .combo-control-panel,
+    body.is-mobile[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
+        background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%) !important;
+        border: 1.5px solid #93c5fd !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15) !important;
+    }
+}
+body.is-mobile.theme-white #tool-combo .combo-unified-panel .combo-control-panel,
+body.is-mobile[class*="theme-light-"] #tool-combo .combo-unified-panel .combo-control-panel,
+body.is-mobile[class*="theme-white"] .combo-unified-panel .combo-control-panel,
+body.is-mobile[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%) !important;
+    border: 1.5px solid #93c5fd !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15) !important;
 }
 
 /* Inputs in Light & White Themes */

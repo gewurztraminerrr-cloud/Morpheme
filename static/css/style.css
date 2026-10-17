@@ -988,9 +988,11 @@ select option {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
 }
 
-[class*="theme-white"] .combo-unified-panel .combo-control-panel {
-    background: rgba(0, 0, 0, 0.02) !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
+@media (min-width: 901px) {
+    [class*="theme-white"] .combo-unified-panel .combo-control-panel {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
 }
 
 [class*="theme-white"] .combo-unified-panel .combo-tab-pane .result-section {
@@ -1004,9 +1006,11 @@ select option {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
 }
 
-[class*="theme-light-"] .combo-unified-panel .combo-control-panel {
-    background: rgba(0, 0, 0, 0.03) !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
+@media (min-width: 901px) {
+    [class*="theme-light-"] .combo-unified-panel .combo-control-panel {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
 }
 
 [class*="theme-light-"] .combo-unified-panel .combo-tab-pane .result-section {
