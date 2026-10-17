@@ -174,11 +174,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1791130081" as="style">
+    <link rel="preload" href="/css/style.css?v=1792204000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1791173000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1791141100">
+    <link rel="stylesheet" href="/css/style.css?v=1792204000">
     <link rel="stylesheet" href="/css/lobby.css?v=1791173000">
-    <link rel="stylesheet" href="/css/play.css?v=1792202000">
+    <link rel="stylesheet" href="/css/play.css?v=1792204000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1791130150">
     <link rel="stylesheet" href="/css/forum.css?v=1792196000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4504,69 +4504,84 @@
                                 <p>Find connected words via MP and LIC, and explore connections using the MP Word Explorer.</p>
                             </div>
 
-                            <div id="combo-results" class="combo-results-container">
-                                <!-- Unified Visible Panel surrounding both "ENTER LETTERS TO CHECK..." and MP/LIC Tabs -->
-                                <div class="combo-unified-panel" id="combo-unified-panel">
-                                    <div class="combo-control-panel">
-                                        <div class="input-row">
-                                            <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                                autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
-                                            <select id="combo-dict" style="min-width: 155px;">
-                                                <option value="NWL">NWL (US)</option>
-                                                <option value="CSW" selected>CSW (Intl)</option>
-                                                <option value="added_words">AW</option>
-                                                <option value="ALL">All (Full)</option>
-                                                <option value="csw_only">CSW Only</option>
-                                                <option value="uniqueNWL">NWL Uniques</option>
-                                                <option value="new_nwl">New NWL Words</option>
-                                                <option value="new_csw">New CSW Words</option>
-                                                <option value="new_added">New AW Words</option>
-                                                <option value="all_new">All New Words</option>
-                                            </select>
-                                            <button id="combo-search-btn">Check</button>
-                                        </div>
-                                    </div>
+                            <!-- Main Combo Tabs: Manual vs MP Explorer -->
+                            <div class="combo-main-tabs-header" id="combo-main-tabs-header">
+                                <button type="button" class="combo-main-tab-btn active" id="combo-main-tab-btn-manual" onclick="window.switchComboMainTab('manual')">
+                                    <span>Manual</span>
+                                </button>
+                                <button type="button" class="combo-main-tab-btn" id="combo-main-tab-btn-explorer" onclick="window.switchComboMainTab('explorer')">
+                                    <span>MP Explorer</span>
+                                </button>
+                            </div>
 
-                                    <!-- MP and LIC Tabs Section -->
-                                    <div class="combo-tabs-section">
-                                        <div class="combo-tabs-header">
-                                            <button type="button" class="combo-tab-btn active" id="combo-tab-btn-mp" onclick="window.switchComboTab('mp')">MP</button>
-                                            <button type="button" class="combo-tab-btn" id="combo-tab-btn-lic" onclick="window.switchComboTab('lic')">LIC</button>
-                                        </div>
-
-                                        <div class="combo-tab-panes">
-                                            <!-- MP Section Tab Pane (0MP to 3MP) -->
-                                            <div id="combo-pane-mp" class="combo-tab-pane active">
-                                                <div class="result-section">
-                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                                        <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
-                                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
-                                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="chart-desc">
-                                                        Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
-                                                    </div>
-                                                    <div class="horizontal-scroll-container" id="mp-container">
-                                                        <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
-                                                    </div>
+                            <div class="combo-main-tab-panes">
+                                <!-- Manual Tab Pane -->
+                                <div id="combo-main-pane-manual" class="combo-main-tab-pane active">
+                                    <div id="combo-results" class="combo-results-container">
+                                        <!-- Unified Visible Panel surrounding both "ENTER LETTERS TO CHECK..." and MP/LIC Tabs -->
+                                        <div class="combo-unified-panel" id="combo-unified-panel">
+                                            <div class="combo-control-panel">
+                                                <div class="input-row">
+                                                    <input type="text" id="combo-input" placeholder="Enter letters to check..."
+                                                        autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                                    <select id="combo-dict" style="min-width: 155px;">
+                                                        <option value="NWL">NWL (US)</option>
+                                                        <option value="CSW" selected>CSW (Intl)</option>
+                                                        <option value="added_words">AW</option>
+                                                        <option value="ALL">All (Full)</option>
+                                                        <option value="csw_only">CSW Only</option>
+                                                        <option value="uniqueNWL">NWL Uniques</option>
+                                                        <option value="new_nwl">New NWL Words</option>
+                                                        <option value="new_csw">New CSW Words</option>
+                                                        <option value="new_added">New AW Words</option>
+                                                        <option value="all_new">All New Words</option>
+                                                    </select>
+                                                    <button id="combo-search-btn">Check</button>
                                                 </div>
                                             </div>
 
-                                            <!-- LIC Section Tab Pane (Sorted by Shared Count) -->
-                                            <div id="combo-pane-lic" class="combo-tab-pane" style="display: none;">
-                                                <div class="result-section">
-                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                                        <h3 style="color: #60a5fa; margin: 0;">LIC (Letters In Common)</h3>
-                                                        <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
-                                                            <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
-                                                            <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                            <!-- MP and LIC Tabs Section -->
+                                            <div class="combo-tabs-section">
+                                                <div class="combo-tabs-header">
+                                                    <button type="button" class="combo-tab-btn active" id="combo-tab-btn-mp" onclick="window.switchComboTab('mp')">MP</button>
+                                                    <button type="button" class="combo-tab-btn" id="combo-tab-btn-lic" onclick="window.switchComboTab('lic')">LIC</button>
+                                                </div>
+
+                                                <div class="combo-tab-panes">
+                                                    <!-- MP Section Tab Pane (0MP to 3MP) -->
+                                                    <div id="combo-pane-mp" class="combo-tab-pane active">
+                                                        <div class="result-section">
+                                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                                <h3 style="color: #ffd700; margin: 0;">MP (Microprocedures) v2.0</h3>
+                                                                <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                                                    <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
+                                                                    <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="chart-desc">
+                                                                Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in <strong>WASTRIE → ASTRIDE</strong>, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like <strong>LIVEE (LIVE + E)</strong>, then append the <strong>W</strong> at the end and reverse it to make the word <strong>WEEVIL</strong>. If making up <strong>LIVEE</strong> helps you to arrive at <strong>WEEVIL</strong>, then do it! You can make up any sequence that works for you!
+                                                            </div>
+                                                            <div class="horizontal-scroll-container" id="mp-container">
+                                                                <!-- Dynamic Columns (0MP, 1MP, 2MP...) will be injected here -->
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="chart-desc" id="lic-chart-desc">The letters are there, but are they arranged in such a way so as to have both be present?</div>
-                                                    <div class="horizontal-scroll-container" id="lic-container">
-                                                        <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+
+                                                    <!-- LIC Section Tab Pane (Sorted by Shared Count) -->
+                                                    <div id="combo-pane-lic" class="combo-tab-pane" style="display: none;">
+                                                        <div class="result-section">
+                                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                                <h3 style="color: #60a5fa; margin: 0;">LIC (Letters In Common)</h3>
+                                                                <div class="table-scroll-arrows" style="display: flex; gap: 6px; align-items: center;">
+                                                                    <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
+                                                                    <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="chart-desc" id="lic-chart-desc">The letters are there, but are they arranged in such a way so as to have both be present?</div>
+                                                            <div class="horizontal-scroll-container" id="lic-container">
+                                                                <!-- Dynamic Columns (Shared=3, Shared=4...) will be injected here -->
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4574,109 +4589,111 @@
                                     </div>
                                 </div>
 
-                                <!-- MP Explorer Section: Positioned beneath the MP and LIC content -->
-                                <div class="result-section" id="combo-explorer-section">
-                                    <div class="combo-explorer-top-bar" style="margin-bottom: 6px;">
-                                        <h3 id="combo-explorer-title" class="combo-explorer-title">MP Word Explorer</h3>
-                                        <div class="chart-desc" id="mp-explorer-chart-desc">Explore words with non-plural and non-inflection MP connections.</div>
-                                    </div>
-
-                                    <div class="combo-explorer-controls">
-                                        <div class="combo-explorer-controls-row">
-                                            <!-- Dictionary Dropdown -->
-                                        <label class="combo-explorer-label">
-                                            <span>Dictionary:</span>
-                                            <select id="combo-explorer-dict" class="combo-explorer-select">
-                                                <option value="NWL">NWL</option>
-                                                <option value="CSW" selected>CSW</option>
-                                                <option value="AW">AW</option>
-                                                <option value="All">All</option>
-                                                <option value="csw_only">CSW Only</option>
-                                                <option value="uniqueNWL">NWL Uniques</option>
-                                                <option value="new_nwl">New NWL Words</option>
-                                                <option value="new_csw">New CSW Words</option>
-                                                <option value="new_added">New AW Words</option>
-                                                <option value="all_new">All New Words</option>
-                                            </select>
-                                        </label>
-                                        <!-- Length Dropdown -->
-                                        <label class="combo-explorer-label">
-                                            <span>Length:</span>
-                                            <select id="combo-explorer-length" class="combo-explorer-select">
-                                                <option value="3">3 Letters</option>
-                                                <option value="4">4 Letters</option>
-                                                <option value="5">5 Letters</option>
-                                                <option value="6">6 Letters</option>
-                                                <option value="7" selected>7 Letters</option>
-                                                <option value="8">8 Letters</option>
-                                                <option value="9">9 Letters</option>
-                                                <option value="10">10 Letters</option>
-                                            </select>
-                                        </label>
-                                        <!-- MP Dropdown -->
-                                        <label class="combo-explorer-label">
-                                            <span>MP Value:</span>
-                                            <select id="combo-explorer-mp" class="combo-explorer-select">
-                                                <option value="0">0 MP</option>
-                                                <option value="1" selected>1 MP</option>
-                                                <option value="2">2 MP</option>
-                                                <option value="3">3 MP</option>
-                                            </select>
-                                        </label>
+                                <!-- MP Explorer Tab Pane -->
+                                <div id="combo-main-pane-explorer" class="combo-main-tab-pane" style="display: none;">
+                                    <div class="result-section" id="combo-explorer-section">
+                                        <div class="combo-explorer-top-bar" style="margin-bottom: 6px;">
+                                            <h3 id="combo-explorer-title" class="combo-explorer-title">MP Word Explorer</h3>
+                                            <div class="chart-desc" id="mp-explorer-chart-desc">Explore words with non-plural and non-inflection MP connections.</div>
                                         </div>
-                                        <div class="combo-explorer-controls-row">
-                                            <!-- Direction Dropdown -->
-                                            <label class="combo-explorer-label">
-                                                <span>Direction:</span>
-                                                <select id="combo-explorer-direction" class="combo-explorer-select">
-                                                    <option value="both" selected>Both</option>
-                                                    <option value="forwards">Forwards</option>
-                                                    <option value="backwards">Backwards</option>
-                                                </select>
-                                            </label>
-                                            <!-- Order Dropdown -->
-                                            <label class="combo-explorer-label">
-                                                <span>Order:</span>
-                                                <select id="combo-explorer-order" class="combo-explorer-select">
-                                                    <option value="az" selected>A–Z</option>
-                                                    <option value="random">Random</option>
-                                                </select>
-                                            </label>
-                                        </div>
-                                    </div>
 
-                                    <!-- Dual Table Layout -->
-                                    <div class="combo-explorer-grid">
-                                        <!-- Input Words Table -->
-                                        <div id="combo-explorer-input-card" class="combo-explorer-card">
-                                            <div class="combo-explorer-card-header combo-explorer-header-input">
-                                                <span id="combo-explorer-input-title">Input Words</span>
-                                                <span id="combo-explorer-input-count" class="combo-explorer-badge combo-explorer-badge-input">0</span>
+                                        <div class="combo-explorer-controls">
+                                            <div class="combo-explorer-controls-row">
+                                                <!-- Dictionary Dropdown -->
+                                                <label class="combo-explorer-label">
+                                                    <span>Dictionary:</span>
+                                                    <select id="combo-explorer-dict" class="combo-explorer-select">
+                                                        <option value="NWL">NWL</option>
+                                                        <option value="CSW" selected>CSW</option>
+                                                        <option value="AW">AW</option>
+                                                        <option value="All">All</option>
+                                                        <option value="csw_only">CSW Only</option>
+                                                        <option value="uniqueNWL">NWL Uniques</option>
+                                                        <option value="new_nwl">New NWL Words</option>
+                                                        <option value="new_csw">New CSW Words</option>
+                                                        <option value="new_added">New AW Words</option>
+                                                        <option value="all_new">All New Words</option>
+                                                    </select>
+                                                </label>
+                                                <!-- Length Dropdown -->
+                                                <label class="combo-explorer-label">
+                                                    <span>Length:</span>
+                                                    <select id="combo-explorer-length" class="combo-explorer-select">
+                                                        <option value="3">3 Letters</option>
+                                                        <option value="4">4 Letters</option>
+                                                        <option value="5">5 Letters</option>
+                                                        <option value="6">6 Letters</option>
+                                                        <option value="7" selected>7 Letters</option>
+                                                        <option value="8">8 Letters</option>
+                                                        <option value="9">9 Letters</option>
+                                                        <option value="10">10 Letters</option>
+                                                    </select>
+                                                </label>
+                                                <!-- MP Dropdown -->
+                                                <label class="combo-explorer-label">
+                                                    <span>MP Value:</span>
+                                                    <select id="combo-explorer-mp" class="combo-explorer-select">
+                                                        <option value="0">0 MP</option>
+                                                        <option value="1" selected>1 MP</option>
+                                                        <option value="2">2 MP</option>
+                                                        <option value="3">3 MP</option>
+                                                    </select>
+                                                </label>
                                             </div>
-                                            <div class="combo-explorer-filter-bar">
-                                                <input id="combo-explorer-filter" class="combo-explorer-filter-input" type="text" placeholder="Filter input words..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
-                                            </div>
-                                            <div id="combo-explorer-input-list">
-                                                <div class="combo-explorer-placeholder">Loading words...</div>
-                                            </div>
-                                            <div class="custom-scrollbar-track" id="combo-explorer-input-track">
-                                                <div class="custom-scrollbar-thumb" id="combo-explorer-input-thumb"></div>
+                                            <div class="combo-explorer-controls-row">
+                                                <!-- Direction Dropdown -->
+                                                <label class="combo-explorer-label">
+                                                    <span>Direction:</span>
+                                                    <select id="combo-explorer-direction" class="combo-explorer-select">
+                                                        <option value="both" selected>Both</option>
+                                                        <option value="forwards">Forwards</option>
+                                                        <option value="backwards">Backwards</option>
+                                                    </select>
+                                                </label>
+                                                <!-- Order Dropdown -->
+                                                <label class="combo-explorer-label">
+                                                    <span>Order:</span>
+                                                    <select id="combo-explorer-order" class="combo-explorer-select">
+                                                        <option value="az" selected>A–Z</option>
+                                                        <option value="random">Random</option>
+                                                    </select>
+                                                </label>
                                             </div>
                                         </div>
 
-                                        <!-- Response Table -->
-                                        <div id="combo-explorer-response-card" class="combo-explorer-card">
-                                            <div class="combo-explorer-card-header combo-explorer-header-response">
-                                                <span id="combo-explorer-response-title">MP Connections</span>
-                                                <span id="combo-explorer-response-count" class="combo-explorer-badge combo-explorer-badge-response">0</span>
-                                            </div>
-                                            <div id="combo-explorer-response-list">
-                                                <div class="combo-explorer-placeholder">
-                                                    Select an input word on the left to display its matching MP words.
+                                        <!-- Dual Table Layout -->
+                                        <div class="combo-explorer-grid">
+                                            <!-- Input Words Table -->
+                                            <div id="combo-explorer-input-card" class="combo-explorer-card">
+                                                <div class="combo-explorer-card-header combo-explorer-header-input">
+                                                    <span id="combo-explorer-input-title">Input Words</span>
+                                                    <span id="combo-explorer-input-count" class="combo-explorer-badge combo-explorer-badge-input">0</span>
+                                                </div>
+                                                <div class="combo-explorer-filter-bar">
+                                                    <input id="combo-explorer-filter" class="combo-explorer-filter-input" type="text" placeholder="Filter input words..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                                </div>
+                                                <div id="combo-explorer-input-list">
+                                                    <div class="combo-explorer-placeholder">Loading words...</div>
+                                                </div>
+                                                <div class="custom-scrollbar-track" id="combo-explorer-input-track">
+                                                    <div class="custom-scrollbar-thumb" id="combo-explorer-input-thumb"></div>
                                                 </div>
                                             </div>
-                                            <div class="custom-scrollbar-track" id="combo-explorer-response-track">
-                                                <div class="custom-scrollbar-thumb" id="combo-explorer-response-thumb"></div>
+
+                                            <!-- Response Table -->
+                                            <div id="combo-explorer-response-card" class="combo-explorer-card">
+                                                <div class="combo-explorer-card-header combo-explorer-header-response">
+                                                    <span id="combo-explorer-response-title">MP Connections</span>
+                                                    <span id="combo-explorer-response-count" class="combo-explorer-badge combo-explorer-badge-response">0</span>
+                                                </div>
+                                                <div id="combo-explorer-response-list">
+                                                    <div class="combo-explorer-placeholder">
+                                                        Select an input word on the left to display its matching MP words.
+                                                    </div>
+                                                </div>
+                                                <div class="custom-scrollbar-track" id="combo-explorer-response-track">
+                                                    <div class="custom-scrollbar-thumb" id="combo-explorer-response-thumb"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -9882,7 +9899,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1792203000"></script>
+    <script src="/js/tools.js?v=1792204000"></script>
     <script src="/js/store.js?v=1791164500"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1790628000"></script>

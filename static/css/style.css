@@ -771,6 +771,32 @@ select option {
     color: var(--text-primary) !important;
 }
 
+[class*="theme-white"] .combo-main-tabs-header,
+[class*="theme-light-"] .combo-main-tabs-header {
+    background: #e2e8f0 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn,
+[class*="theme-light-"] .combo-main-tab-btn {
+    color: #475569 !important;
+    background: transparent !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn:hover,
+[class*="theme-light-"] .combo-main-tab-btn:hover {
+    color: #0f172a !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+[class*="theme-white"] .combo-main-tab-btn.active,
+[class*="theme-light-"] .combo-main-tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+}
+
 [class*="theme-white"] .combo-tabs-header,
 [class*="theme-light-"] .combo-tabs-header {
     background: rgba(0, 0, 0, 0.05) !important;

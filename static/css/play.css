@@ -4120,6 +4120,76 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         box-sizing: border-box !important;
     }
 
+    /* Main Combo Checker Tabs (Manual vs MP Explorer) */
+    .combo-main-tabs-header {
+        display: inline-flex !important;
+        align-items: center !important;
+        background: rgba(15, 23, 42, 0.55) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+        border-radius: 12px !important;
+        padding: 5px !important;
+        gap: 6px !important;
+        margin-bottom: 16px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28) !important;
+        user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .combo-main-tab-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 9px 24px !important;
+        border-radius: 9px !important;
+        font-size: 1.02rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        outline: none !important;
+        text-transform: uppercase !important;
+    }
+
+    .combo-main-tab-btn:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .combo-main-tab-btn.active {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        font-weight: 800 !important;
+    }
+
+    .combo-main-tab-panes {
+        width: 100% !important;
+    }
+
+    .combo-main-tab-pane {
+        width: 100% !important;
+    }
+
+    .combo-main-tab-pane:not(.active) {
+        display: none !important;
+    }
+
+    @media (max-width: 600px) {
+        .combo-main-tabs-header {
+            display: flex !important;
+            width: 100% !important;
+        }
+        .combo-main-tab-btn {
+            flex: 1 1 50% !important;
+            padding: 9px 12px !important;
+            font-size: 0.92rem !important;
+            text-align: center !important;
+        }
+    }
+
     /* Combo Checker Tabs */
     .combo-tabs-section {
         width: 100% !important;
@@ -15504,6 +15574,41 @@ body[class*="theme-light-"] .combo-explorer-select option,
 [class*="theme-light-"] .combo-explorer-select option {
     background: #ffffff !important;
     color: #0f172a !important;
+}
+
+/* Main Combo Tabs in Light & White Themes */
+body.theme-white .combo-main-tabs-header,
+[class*="theme-white"] .combo-main-tabs-header,
+body[class*="theme-light-"] .combo-main-tabs-header,
+[class*="theme-light-"] .combo-main-tabs-header {
+    background: #e2e8f0 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-white .combo-main-tab-btn,
+[class*="theme-white"] .combo-main-tab-btn,
+body[class*="theme-light-"] .combo-main-tab-btn,
+[class*="theme-light-"] .combo-main-tab-btn {
+    color: #475569 !important;
+    background: transparent !important;
+}
+
+body.theme-white .combo-main-tab-btn:hover,
+[class*="theme-white"] .combo-main-tab-btn:hover,
+body[class*="theme-light-"] .combo-main-tab-btn:hover,
+[class*="theme-light-"] .combo-main-tab-btn:hover {
+    color: #0f172a !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+body.theme-white .combo-main-tab-btn.active,
+[class*="theme-white"] .combo-main-tab-btn.active,
+body[class*="theme-light-"] .combo-main-tab-btn.active,
+[class*="theme-light-"] .combo-main-tab-btn.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
 }
 
 /* Tabs in Light & White Themes */

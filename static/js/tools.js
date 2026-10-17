@@ -230,6 +230,9 @@ window.showTool = function(toolId) {
 
     // Trigger lazy loads & dynamic style refreshes
     if (toolId === 'combo') {
+        if (typeof window.switchComboMainTab === 'function') {
+            window.switchComboMainTab('manual');
+        }
         if (typeof window.switchComboTab === 'function') {
             const curActiveTab = document.querySelector('.combo-tab-btn.active');
             if (!curActiveTab) {
@@ -479,21 +482,26 @@ window.toolsGoBack = function() {
             window.showTool(originTool);
         }
 
-        if (originTool === 'combo' && (navEntry.comboWord || navEntry.comboDict)) {
-            const comboDict = document.getElementById('combo-dict');
-            if (navEntry.comboDict && comboDict) {
-                comboDict.value = navEntry.comboDict;
-                try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
+        if (originTool === 'combo') {
+            if (navEntry.comboMainTab && typeof window.switchComboMainTab === 'function') {
+                window.switchComboMainTab(navEntry.comboMainTab);
             }
-            if (navEntry.comboWord) {
-                const comboInput = document.getElementById('combo-input');
-                if (comboInput) {
-                    comboInput.value = navEntry.comboWord;
-                    if (typeof runComboSearch === 'function') runComboSearch();
+            if (navEntry.comboWord || navEntry.comboDict) {
+                const comboDict = document.getElementById('combo-dict');
+                if (navEntry.comboDict && comboDict) {
+                    comboDict.value = navEntry.comboDict;
+                    try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
                 }
-            }
-            if (navEntry.comboSubtab && typeof window.switchComboTab === 'function') {
-                window.switchComboTab(navEntry.comboSubtab);
+                if (navEntry.comboWord) {
+                    const comboInput = document.getElementById('combo-input');
+                    if (comboInput) {
+                        comboInput.value = navEntry.comboWord;
+                        if (typeof runComboSearch === 'function') runComboSearch();
+                    }
+                }
+                if (navEntry.comboSubtab && typeof window.switchComboTab === 'function') {
+                    window.switchComboTab(navEntry.comboSubtab);
+                }
             }
         } else if (originTool === 'find-count' && navEntry.findCountWord) {
             const fcInput = document.getElementById('find-count-input');
@@ -957,8 +965,51 @@ if (window.visualViewport) {
     });
 }
 
+window._activeComboMainTab = 'manual';
+window._activeComboTab = 'mp';
+
+window.switchComboMainTab = function(tabName) {
+    const isExplorer = (tabName === 'explorer');
+    window._activeComboMainTab = isExplorer ? 'explorer' : 'manual';
+
+    const manualBtn = document.getElementById('combo-main-tab-btn-manual');
+    const explorerBtn = document.getElementById('combo-main-tab-btn-explorer');
+    const manualPane = document.getElementById('combo-main-pane-manual');
+    const explorerPane = document.getElementById('combo-main-pane-explorer');
+
+    if (manualBtn) manualBtn.classList.toggle('active', !isExplorer);
+    if (explorerBtn) explorerBtn.classList.toggle('active', isExplorer);
+
+    if (manualPane) {
+        manualPane.classList.toggle('active', !isExplorer);
+        manualPane.style.display = isExplorer ? 'none' : 'block';
+    }
+    if (explorerPane) {
+        explorerPane.classList.toggle('active', isExplorer);
+        explorerPane.style.display = isExplorer ? 'block' : 'none';
+    }
+
+    if (isExplorer) {
+        const inputList = document.getElementById('combo-explorer-input-list');
+        if (inputList && typeof inputList._updateCustomScrollbar === 'function') {
+            inputList._updateCustomScrollbar();
+        }
+        const respList = document.getElementById('combo-explorer-response-list');
+        if (respList && typeof respList._updateCustomScrollbar === 'function') {
+            respList._updateCustomScrollbar();
+        }
+    }
+
+    const comboScroll = document.getElementById('combo-scroll-container');
+    if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
+        comboScroll._updateCustomScrollbar();
+        setTimeout(() => { if (comboScroll._updateCustomScrollbar) comboScroll._updateCustomScrollbar(); }, 50);
+    }
+};
+
 window.switchComboTab = function(tabName) {
     const isLic = (tabName === 'lic');
+    window._activeComboTab = isLic ? 'lic' : 'mp';
     const mpBtn = document.getElementById('combo-tab-btn-mp');
     const licBtn = document.getElementById('combo-tab-btn-lic');
     const mpPane = document.getElementById('combo-pane-mp');
@@ -984,6 +1035,9 @@ window.switchComboTab = function(tabName) {
 };
 
 function setupComboChecker() {
+    if (typeof window.switchComboMainTab === 'function') {
+        window.switchComboMainTab('manual');
+    }
     if (typeof window.switchComboTab === 'function') {
         window.switchComboTab('mp');
     }
@@ -10068,6 +10122,7 @@ window.showWordDefinitionPopup = async function (word, event) {
                 savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
                 comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
                 comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
+                comboMainTab: window._activeComboMainTab || 'manual',
                 comboSubtab: window._activeComboTab || 'mp',
                 findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
             });
@@ -10105,6 +10160,10 @@ window.showWordDefinitionPopup = async function (word, event) {
 
             if (typeof window.showTool === 'function') {
                 window.showTool('combo');
+            }
+
+            if (typeof window.switchComboMainTab === 'function') {
+                window.switchComboMainTab('manual');
             }
 
             // Sync Combo Checker word list to the originating list
@@ -10198,6 +10257,7 @@ window.showWordDefinitionPopup = async function (word, event) {
                 savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
                 comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
                 comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
+                comboMainTab: window._activeComboMainTab || 'manual',
                 comboSubtab: window._activeComboTab || 'mp',
                 findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
             });
