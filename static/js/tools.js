@@ -226,6 +226,11 @@ window.showTool = function(toolId) {
         } else {
             content.classList.remove('has-new-users-active');
         }
+        if (toolId === 'combo') {
+            content.classList.add('has-combo-active');
+        } else {
+            content.classList.remove('has-combo-active');
+        }
     }
 
     // Trigger lazy loads & dynamic style refreshes
@@ -239,11 +244,14 @@ window.showTool = function(toolId) {
                 window.switchComboTab('mp');
             }
         }
+        if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
+        }
         const comboScroll = document.getElementById('combo-scroll-container');
         if (comboScroll && typeof comboScroll._updateCustomScrollbar === 'function') {
             comboScroll._updateCustomScrollbar();
-        } else if (typeof initCustomScrollbarForElement === 'function') {
-            initCustomScrollbarForElement('combo-scroll-container', 'combo-scrollbar-track', 'combo-scrollbar-thumb');
+            setTimeout(() => { if (comboScroll._updateCustomScrollbar) comboScroll._updateCustomScrollbar(); }, 80);
+            setTimeout(() => { if (comboScroll._updateCustomScrollbar) comboScroll._updateCustomScrollbar(); }, 200);
         }
         const expInput = document.getElementById('combo-explorer-input-list');
         if (expInput && typeof expInput._updateCustomScrollbar === 'function') {

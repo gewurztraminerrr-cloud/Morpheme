@@ -16218,30 +16218,135 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
         border-radius: 4px !important;
     }
 
-    /* Mobile Unification: Ensure tool-combo flows naturally within the outer scroller without nested scroll conflicts */
-    #tool-combo,
-    #tool-combo.tool-pane,
-    body.is-mobile #tool-combo {
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
+    /* Mobile Devices: Full-page Scroller and Thumb in Combo Checker */
+    #page-tools .tools-content:has(#tool-combo.active),
+    #page-tools .tools-content.has-combo-active,
+    body.is-mobile #page-tools .tools-content:has(#tool-combo.active),
+    body.is-mobile #page-tools .tools-content.has-combo-active {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 4px 6px 2px 6px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
     }
 
+    #page-tools #tool-combo.tool-pane.active,
+    body.is-mobile #tool-combo.tool-pane.active,
+    #tool-combo.tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #tool-combo .tool-header,
+    .combo-scroll-container .tool-header {
+        margin-bottom: 12px !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* combo-scroll-container is the main vertical scroller for the whole Combo Checker page on mobile */
     #tool-combo .combo-scroll-container,
     .combo-scroll-container,
+    body.is-mobile #tool-combo .combo-scroll-container,
     body.is-mobile .combo-scroll-container {
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        flex: 1 1 auto !important;
+        overflow-y: auto !important;
         overflow-x: hidden !important;
-        padding-right: 0 !important;
-        padding-bottom: 30px !important;
-        -webkit-overflow-scrolling: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        box-sizing: border-box !important;
+        padding: 8px 18px 40px 6px !important;
+        scrollbar-width: none !important;
     }
 
-    #tool-combo #combo-scrollbar-track,
-    .combo-scrollbar-track {
+    #tool-combo .combo-scroll-container::-webkit-scrollbar,
+    .combo-scroll-container::-webkit-scrollbar {
         display: none !important;
+        width: 0 !important;
+    }
+
+    /* Inner panes allow content to flow naturally so scrollHeight reflects full page height */
+    #tool-combo .combo-main-tab-panes,
+    .combo-main-tab-panes,
+    #tool-combo .combo-main-tab-pane,
+    .combo-main-tab-pane,
+    #tool-combo .combo-results-container,
+    .combo-results-container,
+    #tool-combo .combo-unified-panel,
+    .combo-unified-panel {
+        height: auto !important;
+        max-height: none !important;
+        min-height: min-content !important;
+        overflow: visible !important;
+        flex: unset !important;
+    }
+
+    /* Custom Scroller Track on right edge */
+    #tool-combo #combo-scrollbar-track,
+    .combo-scrollbar-track,
+    body.is-mobile #tool-combo #combo-scrollbar-track {
+        display: block !important;
+        position: absolute !important;
+        top: 6px !important;
+        bottom: 8px !important;
+        right: 2px !important;
+        width: 14px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        z-index: 100 !important;
+        touch-action: none !important;
+        user-select: none !important;
+        cursor: pointer !important;
+    }
+
+    /* Custom Draggable Scroller Thumb */
+    #tool-combo #combo-scrollbar-thumb,
+    .combo-scrollbar-thumb,
+    body.is-mobile #tool-combo #combo-scrollbar-thumb {
+        display: block !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 1px !important;
+        width: 10px !important;
+        background: linear-gradient(180deg, rgba(0, 210, 255, 0.85), rgba(58, 123, 213, 0.85)) !important;
+        border-radius: 5px !important;
+        border: 1px solid rgba(0, 210, 255, 0.6) !important;
+        box-shadow: 0 0 8px rgba(0, 210, 255, 0.4) !important;
+        touch-action: none !important;
+        user-select: none !important;
+        min-height: 36px !important;
+        cursor: grab !important;
+        z-index: 101 !important;
+    }
+
+    #tool-combo #combo-scrollbar-thumb::before,
+    .combo-scrollbar-thumb::before {
+        content: '' !important;
+        position: absolute !important;
+        top: -8px !important;
+        bottom: -8px !important;
+        left: -16px !important;
+        right: -16px !important;
+        touch-action: none !important;
     }
 }
 
