@@ -1416,7 +1416,7 @@ const Forum = {
         let respondersHtml = '';
         if (window.currentUser && !window.currentUserIsGuest) {
             const isRespActive = (this.currentCategoryId === 'responders');
-            const hasNewResp = this.hasNewResponders;
+            const hasNewResp = isRespActive ? false : Boolean(this.hasNewResponders);
             respondersHtml = `
                 <div class="forum-cat-item forum-responders-tab ${isRespActive ? 'active' : ''} ${hasNewResp ? 'has-new' : ''}" data-id="responders">
                     <span class="forum-cat-name">
@@ -1473,6 +1473,13 @@ const Forum = {
 
     selectRespondersCategory: async function () {
         this.currentCategoryId = 'responders';
+        this.hasNewResponders = false;
+
+        // Immediately stop highlighting "View Responses" and "Forum" in top menu
+        const respTab = document.querySelector('.forum-responders-tab');
+        if (respTab) respTab.classList.remove('has-new');
+        const btnForums = document.getElementById('btn-forums');
+        if (btnForums) btnForums.classList.remove('has-new');
 
         // Update UI
         document.querySelectorAll('.forum-cat-item').forEach(item => {
@@ -1549,7 +1556,8 @@ const Forum = {
             const data = await res.json();
             const responders = data.responders || [];
 
-            const hasUnclicked = responders.some(r => (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked));
+            // If user is currently on the responders category, do not re-add gold to the tab
+            const hasUnclicked = (this.currentCategoryId === 'responders') ? false : responders.some(r => (r.is_clicked === 0 || r.is_clicked === '0' || !r.is_clicked));
             this.hasNewResponders = hasUnclicked;
             const respTab = document.querySelector('.forum-responders-tab');
             if (respTab) {

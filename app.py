@@ -11268,6 +11268,10 @@ def view_forum_responders():
             VALUES (?, 'forum_responders_last_viewed', CURRENT_TIMESTAMP)
             ON CONFLICT(user_id, setting_key) DO UPDATE SET setting_value = CURRENT_TIMESTAMP
         ''', (user_id,))
+        conn.execute('''
+            UPDATE forum_responders SET is_clicked = 1
+            WHERE recipient_id = ?
+        ''', (user_id,))
         conn.commit()
         return jsonify({'success': True})
     finally:
