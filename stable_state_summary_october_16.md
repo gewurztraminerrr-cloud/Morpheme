@@ -8,145 +8,104 @@ START_OVER_POINT_OCTOBER_16
 
 ## Synchronization Status
 
-| Environment    | Status | Commit / Notes |
-|----------------|--------|----------------|
-| **localhost**      | ✅ Synchronized | Working tree clean, synced with origin/main |
-| **GitHub (main)**  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
-| **morpheme.games** | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, verified live HTTP 200 OK) |
-| **App / Client**   | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts across all 39 themes |
+| Environment | Status | Commit / Notes |
+|:---|:---|:---|
+| **localhost** | ✅ Synchronized | Working tree clean, synced with origin/main |
+| **GitHub (main)** | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
+| **morpheme.games** | ✅ Synchronized | Deployed to `132.148.72.249` (PM2 online, verified live HTTP 200 OK) |
+| **App / Client** | ✅ Synchronized | Verified on desktop, laptop, tablet, and mobile layouts across all 39 themes |
 
 ---
 
 ## Session Highlights & Architectural Updates (October 15–16, 2026)
 
-### 1. Forum Popups & Forms Readability Across All 39 Color Layouts
-- **Universal High-Contrast Theming**:
-  - Full theme-adaptive styling overhaul for all modal dialogs, popups, response windows, and composition forms in the Forum across all 39 Morpheme color layouts (dark themes, pure white, and all 18 light pastel themes).
-- **Floating Response Popup Window (`.forum-reply-popup`)**:
-  - **White & Light Layouts**: Pure `#ffffff` card with `#cbd5e1` borders, `#f8fafc` header, and high-contrast `#0f172a` text.
-  - **Window Controls (Minimize & Close)**: Replaced low-contrast gray text with `#f1f5f9` backgrounds, `#cbd5e1` borders, and `#1e293b` text (with red hover state on close).
-  - **Textarea & Placeholder**: `#ffffff` background with `1.5px solid #cbd5e1` border, `#0f172a` text, legible `#64748b` placeholders, and an active blue focus ring.
-  - **Counter & File Upload**: High-contrast `#475569` character counter; file upload box styled with clean dashed borders and `#0f172a` label/icon text.
-  - **Buttons**: Secondary "Cancel" button styled with neutral borders and `#1e293b` text; "Post Reply" retains the vibrant signature blue gradient with `#ffffff` text.
-  - **Dark Themes**: Clean `#f8fafc` text on deep translucent slate (`rgba(0, 0, 0, 0.35)`), legible `#94a3b8` placeholders and counters, and clear window control buttons.
-- **Original Post / New Thread Form (`.forum-create-card`)**:
-  - Full white and light layout overrides ensuring title input, content textarea, labels, counters, and attachment boxes are rendered in clean white with crisp borders and dark text.
-- **In-Thread Discussion Form (`.forum-comment-form`)**:
-  - Extended full white and light theme adaptability to discussion textareas, counters, and attachment boxes.
-- **Responses List Popup (`.forum-responses-popup`)**:
-  - Background, header, close button, and response item cards adapt across white, light, and dark layouts.
-  - Added deep violet `#6d28d9` on `rgba(109, 40, 217, 0.1)` for `.forum-post-number-badge` on light themes to prevent washed-out text.
-- **Hover Preview & Mobile Preview Modals (`.forum-reply-hover-card`, `.forum-reply-mobile-card`)**:
-  - Author name, date, post badge, response counter badge, snippet text, and the "Take Me There" navigation button maintain crisp, legible contrast across all themes.
-- **External Post Navigation Confirmation Modal (`#generic-confirm-modal`)**:
-  - Styled modal card, header, body text, Cancel, and Confirm buttons with theme-adaptive contrast.
+### 1. Combo Checker Architecture Modernization (Manual & MP Explorer)
+- **Top-Level Main Tabs (Manual vs MP Explorer)**:
+  - Segregated Combo Checker into two prominent top-level main tabs: **Manual** and **MP Explorer**, with custom SVG vector icons, glassmorphic container styling (`backdrop-filter: blur(16px)`), and high-contrast theme-adaptive active gradients.
+  - Defaults to **Manual** upon entry and when clicking "CC" in definition popups.
+  - Mobile touch deck (`@media (max-width: 900px)`) with segmented pill deck and 42px touch targets across all 39 color layouts.
+- **Desktop/Laptop Viewport Screen Fit**:
+  - Content in both Manual and MP Explorer fits cleanly onto the screen with zero outer vertical scrolling (`#combo-scroll-container` and `.tools-content` have `overflow-y: hidden`).
+  - Vertical scrolling is strictly confined to the inner data tables and lists (`#mp-container`, `#lic-container`, `#combo-explorer-input-list`, `#combo-explorer-response-list`).
+- **Single-Row MP Explorer Dropdowns**:
+  - All 5 dropdown menus in MP Word Explorer (`Dictionary`, `Length`, `MP Value`, `Direction`, `Order`) sit along a single horizontal row on desktop and laptop viewports via flexbox `display: contents` row flattening.
+- **Table Scrolling on Desktop & Laptop Fixed**:
+  - Repaired disconnected flex chains across intermediate containers under `@media (min-width: 901px)` (`.combo-main-tab-panes`, `.combo-results-container`, `.combo-unified-panel`, `.combo-tabs-section`, `.combo-tab-panes`, `.result-section`, `.list-scroll-area-wrapper`, `.group-table-container`).
+  - Enabled active scrollbars for `1MP`, `2MP`, `3MP` while cleanly hiding empty scrollbars for `0MP`.
+  - Added dedicated gold/blue custom scrollbar tracks with mousewheel forwarding.
+- **Vertical Length Extension of Manual Main Panel**:
+  - Removed legacy desktop `padding-bottom: 60px !important` from `.combo-results-container`.
+  - Stretched `.combo-unified-panel` to 100% full vertical height (`height: 100% !important; max-height: 100% !important; margin-bottom: 0 !important; box-sizing: border-box !important;`).
+  - Directly matches the bottom boundary (`bottom: 717px` / `height: 473px`) of the MP Explorer panel, providing an additional 60px of vertical viewing height for the group tables.
 
-### 2. Comprehensive AI Content Moderation & Anti-Spam Zero-Loophole Engine
-- **Multi-Touchpoint Coverage**:
-  - Automatically screens and moderates user inputs across all platform entry points:
-    - **User Registration**: Real-time screening of usernames for obscenities, slurs, threats, and explicit terms with zero exceptions.
-    - **User Profiles**: Profiles, bios, custom quotes, full names, locations, and avatar picture uploads.
-    - **Lobby & Game Room Chat**: Real-time screening of chat messages, image attachments, rapid flooding, and duplicate message spam.
-    - **Community Forum**: Real-time screening of thread titles, thread content, replies/comments, image uploads, and commercial advertisement links.
-- **Zero-Latency Local Heuristic Guarantee**:
-  - Built-in comprehensive regular expression and heuristic engine in `app.py:check_local_moderation` guaranteeing instant penalty enforcement without relying on external API availability or network latency.
-  - Catches directed abuse (`fuck you`, `fuck off`, `f*ck you`, `go fuck yourself`, `what the fuck`, `stfu`, `shut the fuck up`, `gtfo`).
-  - Catches severe harassment, self-harm, and violent threats (`kys`, `kill yourself`, `go die`, `get cancer`, `die in a fire`, `hope you die`).
-  - Catches compound insults & profanities (`piece of shit`, `sack of shit`, `full of shit`, `load of shit`, `crock of shit`, `shithead`, `shitface`, `bullshit`, `shitty`, `dumbass`, `jackass`, `asshole`, `asswipe`, `dickhead`, `dipshit`, `douchebag`).
-  - Catches hostile personal attacks (`you suck`, `u suck`, `you're trash`, `you are garbage`, `you're pathetic`, `you're worthless`).
-  - Catches hate speech and slurs across racial, ethnic, religious, and sexual identities.
-  - Catches commercial spam links (Telegram `t.me/`, WhatsApp `chat.whatsapp.com/`, Discord invites `discord.gg/`, crypto scams, and solicitation).
-- **Competitive Scrabble/Boggle Dictionary Immunity**:
-  - Morpheme is a competitive word game platform where valid dictionary words like *ASS*, *BITCH*, *TIT*, *CRAP*, *POOP*, *FART*, *DAMN*, and *SHIT* are routinely found and played on the board.
-  - The moderation engine validates whether words are used in a legitimate gameplay context (e.g. *"I played ASS for 12 points"*, *"is BITCH valid in CSW?"*, *"I found SHIT on the board"*).
-  - However, if **any** targeted pronoun or insult word (`you`, `you're`, `u`, `ur`, `piece of`, `sack of`, `dumb`, `stupid`, `ugly`) is present, game-context immunity is instantly denied and the message is blocked.
+### 2. MP Word Explorer & Combo Checker Connectivity
+- **Directional & Sorting Controls**: Added Forwards, Backwards, and Both direction filter dropdowns, alongside Random and A-Z sorting buttons.
+- **Title Word Definition Popups**: Clickable definition popover support for the selected word in the title banner and 0-matches message (e.g. `0MP from SCARIDS`).
+- **Synchronized Combo Checker Dictionary from Definition Popups**:
+  - When opening a definition popup from any word in MP Word Explorer, clicking "CC" seamlessly sets Combo Checker's dictionary (`#combo-dict`) to match whatever dictionary is currently selected in MP Word Explorer (`#combo-explorer-dict`).
+  - Supports `AW` $\rightarrow$ `added_words`, `All` $\rightarrow$ `ALL`, `CSW`, `NWL`, `csw_only`, `uniqueNWL`, `new_nwl`, `new_csw`, `new_added`, and `all_new`.
+  - Immediate execution of `runComboSearch()` with matching dictionary.
+  - Multi-hop stack navigation (`window._defPopupNavStack`) preserves and restores previous Combo Checker dictionary and search state when navigating back.
 
-### 3. Active Multimodal Google Gemini Vision Pipeline
-- **AI Computer Vision for Images**:
-  - Integrated Google Gemini 1.5/3.5 Vision via `/v1beta/models/gemini-3.5-flash-lite:generateContent` to inspect binary image bytes on all photo upload routes.
-  - Robust JSON response extraction with automatic markdown code-fence stripping (` ```json ... ``` `).
-  - Configured active `GEMINI_API_KEY` on the production server (`/home/morpheme/morpheme/.env`) and verified with live multimodal test payloads.
+### 3. CSS Brace Integrity & Layout Protection
+- Resolved brace imbalances in `static/css/play.css`, bringing curly braces to 100% balance: **1,961 open braces / 1,961 close braces** (Difference: 0).
+- Fully restored and protected layout structures for Settings, Tools, Mods, and game room sidecars across all 39 Morpheme themes.
 
-### 4. Immediate Game Room UI Lockdown
-- **Automatic & Instantaneous Lockdown**:
-  - When an account is placed on timeout or ban, `window.lockAllGameRoomsUI(timeoutData)` executes immediately without waiting for user action.
-  - Evicts the penalized user from any active game room back to the main lobby.
-  - All game rooms across the application immediately render visually locked (`opacity: 0.45 !important; filter: grayscale(0.85) !important; cursor: not-allowed !important;`).
-  - Injects a high-contrast glowing red warning banner at the top of the rooms list displaying the active restriction and remaining duration.
-  - Background polling via `/api/rooms` and `/api/lobby-stats` synchronizes the locked state across all open tabs.
+### 4. Lobby Guide ("WHAT AM I LOOKING AT?") Persistent Dismissal
+- **Multi-Layer State Synchronization**:
+  - When a user dismisses the guide (*"Remove the link leading to this explanation in Lobby and do not show it again"*), the state (`lobby_guide_dismissed: 'true'`) is saved across all storage tiers:
+    1. Browser `localStorage` (`morpheme_lobby_guide_dismissed`).
+    2. Per-user settings cache (`window.userSettings.lobby_guide_dismissed` and `saveSettingsToStorage()`).
+    3. UI toggle (`setting-lobby-guide-toggle.checked = false`).
+    4. Flask server session (`session['lobby_guide_dismissed']`).
+    5. Persistent database table `user_settings` in SQLite via `/api/settings/update` and `/api/save_setting`.
+- **Startup & App Reload Resilience**:
+  - `settings.js:getDefaultSettings()` and `loadCachedSettings()` respect cached state.
+  - Removed legacy first-run reset check in `templates/index.html`. Preserves the clean "ENTER A ROOM TO CONTINUE YOUR JOURNEY" banner without regression upon app restart.
 
-### 5. Lobby Button Click Modal Trigger for Banned & Timed-Out Users
-- **Clickable Locked Buttons with Explanation Modals**:
-  - Removed `pointer-events: none` and HTML `disabled` attributes from locked buttons, using `pointer-events: auto !important;` so browser click events register.
-  - Global capture-phase click interceptor intercepts clicks on **any** game button (`.game-btn`, `.acc-btn`, `.fcfs-btn`, `.split-btn`), room card, room list item, Join/Locked button, Spectate button, Create Room button, or the warning banner.
-  - **If Banned**: Pressing any button halts entry and launches the styled **Account Permanently Banned** modal explaining why the account was terminated.
-  - **If Timed Out**: Pressing any button halts entry and launches the styled **Account Timed Out** modal with a real-time countdown timer and the specific violation reason.
-  - When the timeout expires, background polling automatically unlocks the UI and restores normal gameplay buttons without requiring a full page reload.
+### 5. Forum Popups & Readability Across All 39 Color Layouts
+- **Universal High-Contrast Theming**: Full theme-adaptive styling overhaul for all modal dialogs, popups, response windows, and composition forms in the Forum across all 39 Morpheme color layouts.
+- **Floating Response Popup Window (`.forum-reply-popup`)**: High-contrast card, clean headers, legible placeholders, active focus rings, and styled window controls.
+- **Self-Reaction Prevention**: Prohibited users from liking or disliking their own threads, posts, or comments, with user-friendly toast feedback.
+- **View Entire Post**: Reworded post truncation action from "View Full Post" / "View Whole Post" to "View Entire Post" with smooth expansion.
 
-### 6. Uniform Timeout Enforcement (Removal of Hardcoded Bypasses)
-- **Eliminated Exemption Loops**:
-  - Removed hardcoded developer exemptions in `app.py:check_user_timeout()` that previously caused `jeffb` to bypass shared IP timeout checks.
-  - All users sharing an IP address now receive identical, uniform timeout and ban enforcement.
-
-### 7. Exponential Penalty Ladder with 24-Hour Forgiveness Decay
-- **Escalating Penalty Ladder**:
+### 6. AI Content Moderation & Anti-Spam Zero-Loophole Engine
+- **Multi-Touchpoint Coverage**: Automatically screens and moderates user inputs across registration, profiles, lobby/game chats, and forums.
+- **Zero-Latency Local Heuristic Guarantee**: Built-in regular expression and heuristic engine in `app.py:check_local_moderation` guaranteeing instant penalty enforcement.
+- **Competitive Scrabble/Boggle Dictionary Immunity**: Allows valid dictionary words during legitimate gameplay context while denying immunity if targeted insult words or pronouns are detected.
+- **Exponential Penalty Ladder with 24-Hour Forgiveness Decay**:
   - Automatic doubling formula: $\text{duration} = 10 \times 2^{(\text{offenses} - 1)}$ minutes.
-  - Offense 1: **10 minutes** | Offense 2: **20 minutes** | Offense 3: **40 minutes** | Offense 4: **80 minutes** | Offense 5: **160 minutes** | Offense 6: **320 minutes** (capped at 7 days).
-- **24-Hour Forgiveness Decay**:
-  - For every 24 hours of clean, offense-free play, the user's recorded offense level decays by 1, allowing reformed players to heal their standing over time.
-- **Dual-Layer Account & IP Tracking**:
-  - Penalties are recorded to both the user account record and the `ip_timeouts` database table to prevent evasion via logout or account switching.
+  - For every 24 hours of clean play, recorded offense level decays by 1.
+  - Dual-layer account and IP tracking via `ip_timeouts` table.
+
+### 7. Multimodal Google Gemini Vision Pipeline & Lockdown Interceptor
+- AI computer vision on binary image bytes using Google Gemini Vision on photo upload routes.
+- Automatic visual lockdown and eviction for penalized accounts with capture-phase button interceptors and live countdown timers.
 
 ### 8. Morpheme Store Modernization & Dynamic Multi-Currency Engine
-- **Profile Flag Currency Detection**:
-  - In `static/js/store.js`, automatic currency mapping based on the user's selected profile country flag across 50+ world currencies with real-time conversion rates.
-- **Centralized Catalog (`static/data/store_catalog.json`)**:
-  - Structured, versioned catalog containing 17 curated products across 5 categories.
-  - Automatic metadata tracking for `last_catalog_update` and `next_scheduled_update`.
-- **Competitive Tournament Hardware**:
-  - Added ASUS ROG Zephyrus G16, Custom Tournament PC Rig, 16" Apple MacBook Pro (M4 Max), and Apple Mac Studio + Studio Display 5K alongside tablets, phones, and official CSW/NWL dictionaries.
-- **Mobile Store UI Overhaul**:
-  - Dual-card status banner (`.store-status-dates-card`), currency badge pill (`.store-currency-card`), and touch-friendly pill category filters.
+- Flag-based automated multi-currency converter across 50+ world currencies.
+- Centralized structured catalog with tournament-grade laptops, rigs, displays, and official dictionaries.
 
-### 9. Mobile Game Room Chatbox Polish & Transition Stability
-- Standardized mobile game room chat drawer behavior to match Lobby Chat with visual viewport tracking (`window.visualViewport`) to eliminate virtual keyboard layout jumps.
-
-### 10. Forum Enhancements & Visual Restyling
-- **Self-Reaction Prevention**: Prohibited users from liking or disliking their own threads, posts, or comments, with user-friendly toast feedback.
-- **Restored Reaction Pill Borders**: Full high-contrast styling preserved on reaction pills with `cursor: not-allowed` for author's own posts.
-- **500-Character Truncation**: Automatic body truncation with smooth interactive `"View Whole Post"` expansion.
-
-### 11. Tools & Combo Checker Architecture
-- **Prominent Main Tabs (Manual vs MP Explorer) - Premium Glass Segmented Deck**:
-  - Top-level main segmented deck (`#combo-main-tabs-header`) with high-end glassmorphism (`backdrop-filter: blur(16px)`), crisp 1.5px borders, top specular highlight bevel (`::before`), and responsive 50/50 balance.
-  - Custom SVG iconography embedded in each tab: Keyboard/Typing icon for **Manual** and sleek Compass/Exploration icon for **MP Explorer**.
-  - Distinct active glows and dual gradients: Electric Blue (`linear-gradient(135deg, #3b82f6, #1d4ed8)`) for Manual, and Royal Indigo/Violet (`linear-gradient(135deg, #6366f1, #3730a3)`) for MP Explorer, with ambient drop shadows and subtle text shadows.
-  - Complete support across Dark, Pure White, and all 18 Light Pastel themes.
-  - **Manual** contains the manual search input row (`#combo-input`, `#combo-dict`, `#combo-search-btn`) and the MP and LIC subtabs and result tables (`#mp-container`, `#lic-container`).
-  - **MP Explorer** contains the standalone MP Word Explorer controls, filter, and dual table layout (`#combo-explorer-section`).
-  - Entering Combo Checker (`showTool('combo')` or initial page load) and clicking "CC" in definition popups automatically defaults to the **Manual** tab.
-  - Multi-hop back navigation (`toolsGoBack`) preserves and restores the active main tab (`comboMainTab`).
-- **MP Word Explorer Advanced Controls**:
-  - Added dedicated dropdown row for Direction (**Both**, **Forwards**, **Backwards**) and Order (**A–Z**, **Random**).
-  - Responsive dual-table layout with custom scrollbars and instant live filtering.
-  - Clickable definition popups on header title words (e.g., `"0MP from SCARIDS"` allows clicking SCARIDS).
-  - Definition popup "CC" button synchronizes Combo Checker's dictionary to whatever dictionary is active in MP Word Explorer.
-- **Desktop/Laptop "← Back" Navigation**: Multi-hop stack-based navigation (`window._defPopupNavStack`) to seamlessly navigate between definition popups, CC, and FC.
-- **Tools Tab Screen Freeze Resolution**: MutationObserver guard ensuring tool switching never resets the active tab or triggers lockups.
-
-### 12. Cache Busting & Asset Versions
+### 9. Cache Busting & Asset Versions
 - In `templates/index.html`:
-  - `style.css?v=1792207000`
+  - `play.css?v=1792211000`
+  - `tools.js?v=1792210000`
+  - `style.css?v=1792208000`
   - `lobby.css?v=1791173000`
   - `app.js?v=1791173000`
-  - `lobby.js?v=1791173000`
-  - `play.css?v=1792207000`
+  - `lobby.js?v=1792204000`
   - `play.js?v=1791172000`
+  - `settings.js?v=1792204000`
   - `store.js?v=1791164500`
   - `forum.css?v=1792196000`
-  - `forum.js?v=1791160800`
-  - `tools.js?v=1792204000`
-- Latest Commit: `1128746c`
+  - `forum.js?v=1792200000`
+
+---
+
+## Server & Infrastructure
+- **Remote Production Host**: Ubuntu 24.04 LTS at `132.148.72.249`.
+- **Application Stack**: Python 3.9 + Waitress WSGI managed by PM2 (`morpheme`).
+- **Database**: SQLite (`morpheme.db`) with WAL mode, automated migrations, IP ban cache, and timeout tables.
 
 ---
 
@@ -162,7 +121,3 @@ START_OVER_POINT_OCTOBER_16
 - **Find Count (FC)**: Discovery leaderboards and lifetime word frequency statistics.
 - **Lists & Study Sets**: High-probability word lists, subanagrams, CSW Only, New NWL, and custom study sets.
 
-### 3. Server & Infrastructure
-- **Remote Production Host**: Ubuntu 24.04 LTS at `132.148.72.249`.
-- **Application Stack**: Python 3.9 + Waitress WSGI managed by PM2 (`morpheme`).
-- **Database**: SQLite (`morpheme.db`) with WAL mode, automated migrations, IP ban cache, and timeout tables.
