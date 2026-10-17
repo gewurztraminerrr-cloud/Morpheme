@@ -1099,6 +1099,8 @@ function _sortMatchesByLength(matches, isRandom) {
 function setupComboExplorer() {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
+    const dirSelect = document.getElementById('combo-explorer-direction');
+    const orderSelect = document.getElementById('combo-explorer-order');
     const randomBtn = document.getElementById('combo-explorer-random-btn');
     const azBtn = document.getElementById('combo-explorer-az-btn') || document.getElementById('combo-explorer-sort-btn');
     const expDictSelect = document.getElementById('combo-explorer-dict');
@@ -1109,6 +1111,21 @@ function setupComboExplorer() {
 
     lengthSelect.addEventListener('change', () => loadComboExplorerWords(true));
     mpSelect.addEventListener('change', () => loadComboExplorerWords(true));
+
+    if (dirSelect) {
+        dirSelect.addEventListener('change', () => {
+            _comboExplorerWordsCache.clear();
+            _comboExplorerMatchesCache.clear();
+            loadComboExplorerWords(true);
+        });
+    }
+
+    if (orderSelect) {
+        orderSelect.addEventListener('change', () => {
+            _comboExplorerIsRandom = (orderSelect.value === 'random');
+            applyComboExplorerOrdering();
+        });
+    }
 
     if (expDictSelect) {
         expDictSelect.addEventListener('change', () => {
@@ -1123,6 +1140,7 @@ function setupComboExplorer() {
             _comboExplorerIsRandom = true;
             randomBtn.classList.add('active');
             if (azBtn) azBtn.classList.remove('active');
+            if (orderSelect) orderSelect.value = 'random';
             applyComboExplorerOrdering();
         });
     }
@@ -1132,6 +1150,7 @@ function setupComboExplorer() {
             _comboExplorerIsRandom = false;
             azBtn.classList.add('active');
             if (randomBtn) randomBtn.classList.remove('active');
+            if (orderSelect) orderSelect.value = 'az';
             applyComboExplorerOrdering();
         });
     }
@@ -1220,8 +1239,11 @@ async function loadComboExplorerWords(forceReset = false) {
     const length = parseInt(lengthSelect.value, 10) || 7;
     const mp = parseInt(mpSelect.value, 10);
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
+    const dirSelect = document.getElementById('combo-explorer-direction');
+    const direction = dirSelect ? dirSelect.value : 'both';
 
-    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP)`;
+    const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
+    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${dirTitle})`;
     if (inputCount) inputCount.textContent = '...';
     inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading words...</div>';
 
@@ -1237,7 +1259,7 @@ async function loadComboExplorerWords(forceReset = false) {
             </div>`;
     }
 
-    const cacheKey = `${dictionary}_${length}_${mp}`;
+    const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
     let words = [];
 
     if (_comboExplorerWordsCache.has(cacheKey)) {
@@ -1251,7 +1273,8 @@ async function loadComboExplorerWords(forceReset = false) {
                 body: JSON.stringify({
                     dictionary: dictionary,
                     length: length,
-                    mp: mp
+                    mp: mp,
+                    direction: direction
                 })
             });
             const data = await resp.json();
@@ -1325,6 +1348,8 @@ window.selectComboExplorerWord = async function(word) {
     const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
     const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
+    const dirSelect = document.getElementById('combo-explorer-direction');
+    const direction = dirSelect ? dirSelect.value : 'both';
     const safeWord = String(word).trim().toUpperCase();
 
     if (respTitle) {
@@ -1333,7 +1358,7 @@ window.selectComboExplorerWord = async function(word) {
     if (respCount) respCount.textContent = '...';
     if (respList) respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading matches...</div>';
 
-    const cacheKey = `${dictionary}_${word}_${mp}`;
+    const cacheKey = `${dictionary}_${word}_${mp}_${direction}`;
     let matches = [];
 
     if (_comboExplorerMatchesCache.has(cacheKey)) {
@@ -1347,7 +1372,8 @@ window.selectComboExplorerWord = async function(word) {
                     dictionary: dictionary,
                     length: length,
                     mp: mp,
-                    word: word
+                    word: word,
+                    direction: direction
                 })
             });
             const data = await resp.json();
@@ -1371,13 +1397,16 @@ function renderComboExplorerMatches() {
     const countBadge = document.getElementById('combo-explorer-response-count');
     const mpSelect = document.getElementById('combo-explorer-mp');
     const mp = mpSelect ? mpSelect.value : '1';
+    const dirSelect = document.getElementById('combo-explorer-direction');
+    const direction = dirSelect ? dirSelect.value : 'both';
+    const dirPhrase = (direction === 'forwards') ? ' forward' : ((direction === 'backwards') ? ' backward' : '');
 
     if (!listEl) return;
 
     if (!_comboExplorerDisplayMatches || _comboExplorerDisplayMatches.length === 0) {
         listEl.innerHTML = `
             <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem;">
-                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
+                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection${dirPhrase} ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
             </div>`;
         if (countBadge) countBadge.textContent = '0';
         if (typeof listEl._updateCustomScrollbar === 'function') {

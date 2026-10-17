@@ -8903,7 +8903,7 @@ def get_combo_payload_for_word(search_term, dict_name):
     return result_payload, 200
 
 
-def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both'):
     """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp."""
     source_len = len(w)
     dict_set = dict_data['set']
@@ -8914,17 +8914,24 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
             if l == 4:
                 continue
             for start in range(source_len - l + 1):
-                sub1 = w[start:start+l]
-                if len(sub1) != 4 and sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
-                    return True
-                sub2 = w[::-1][start:start+l]
-                if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
-                    return True
+                if direction in ('both', 'forwards'):
+                    sub1 = w[start:start+l]
+                    if len(sub1) != 4 and sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
+                        return True
+                if direction in ('both', 'backwards'):
+                    sub2 = w[::-1][start:start+l]
+                    if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
+                        return True
         return False
 
     if target_mp == 1:
         common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-        for s in (w, w[::-1]):
+        dirs = []
+        if direction in ('both', 'forwards'):
+            dirs.append(w)
+        if direction in ('both', 'backwards'):
+            dirs.append(w[::-1])
+        for s in dirs:
             # Fast path 1: drop extremity letter
             if source_len > 5:
                 d1 = s[1:]
@@ -8966,9 +8973,9 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
 
     if target_mp >= 2:
         # Any word with 0MP or 1MP connections also has 2MP and 3MP connections
-        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
             return True
-        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
             return True
 
     return False
@@ -9003,6 +9010,9 @@ def tools_combo_explorer():
         target_mp = int(data.get('mp', 1))
     except (ValueError, TypeError):
         target_mp = 1
+    direction = str(data.get('direction', 'both')).lower().strip()
+    if direction not in ('forwards', 'backwards', 'both'):
+        direction = 'both'
     random_order = bool(data.get('random', False))
     selected_word = data.get('word', '').upper().strip()
 
@@ -9017,6 +9027,13 @@ def tools_combo_explorer():
             return jsonify(combo_res), status_code
         mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
         matches_list = [m for m in mp_matches if len(m) != 4]
+
+        # Filter matches by direction (forwards, backwards, both)
+        if direction == 'forwards':
+            matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m, target_mp)[0] == target_mp]
+        elif direction == 'backwards':
+            matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m[::-1], target_mp)[0] == target_mp]
+
         if not random_order:
             matches_list.sort(key=lambda w: (-len(w), w))
         else:
@@ -9037,13 +9054,14 @@ def tools_combo_explorer():
             'word': selected_word,
             'length': len(selected_word),
             'mp': target_mp,
+            'direction': direction,
             'dictionary': dict_name,
             'matches': matches_list,
             'count': len(matches_list)
         })
 
     # 2. Return list of input words of that length that actually have >= 1 match at target_mp
-    cache_key = (dict_name, length, target_mp)
+    cache_key = (dict_name, length, target_mp, direction)
     if cache_key in COMBO_EXPLORER_CACHE:
         input_words = COMBO_EXPLORER_CACHE[cache_key]
     else:
@@ -9058,7 +9076,7 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in words_of_len:
-            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list):
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
                 verified_words.append(w)
                 
         COMBO_EXPLORER_CACHE[cache_key] = verified_words
@@ -9072,6 +9090,7 @@ def tools_combo_explorer():
     return jsonify({
         'length': length,
         'mp': target_mp,
+        'direction': direction,
         'dictionary': dict_name,
         'words': res_words,
         'count': len(res_words)

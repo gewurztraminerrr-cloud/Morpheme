@@ -14581,10 +14581,16 @@ body.is-mobile .page *::-webkit-scrollbar {
 
 .combo-explorer-controls {
     display: flex;
+    flex-direction: column;
     gap: 8px;
+    margin-bottom: 8px;
+}
+
+.combo-explorer-controls-row {
+    display: flex;
+    gap: 12px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 8px;
 }
 
 .combo-explorer-label {
