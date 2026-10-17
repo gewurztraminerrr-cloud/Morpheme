@@ -3727,21 +3727,22 @@ def allowed_file(filename):
 # ... (rest of file) ...
 
 # Settings Endpoints
+@app.route('/api/save_setting', methods=['POST'])
 @app.route('/api/settings/update', methods=['POST'])
 def update_setting():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    data = request.get_json()
+    data = request.get_json() or {}
     key = data.get('key')
     value = data.get('value')
     
-    # GUESTS: Do not save to DB (Settings are session-only)
-    if session.get('is_guest'):
-        return jsonify({'success': True})
-    
     if not key or value is None:
         return jsonify({'error': 'Missing key or value'}), 400
+
+    if key == 'lobby_guide_dismissed':
+        session['lobby_guide_dismissed'] = str(value)
+        session.modified = True
+
+    if 'user_id' not in session or session.get('is_guest'):
+        return jsonify({'success': True})
         
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
@@ -3760,15 +3761,17 @@ def update_setting():
 
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
-    if 'user_id' not in session:
-        return jsonify({'settings': {}}) # Return empty for guests/unauthed
-    
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
-    rows = cursor.fetchall()
-    conn.close()
-    
-    settings = {row[0]: row[1] for row in rows}
+    settings = {}
+    if 'user_id' in session:
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
+        rows = cursor.fetchall()
+        conn.close()
+        settings = {row[0]: row[1] for row in rows}
+
+    if 'lobby_guide_dismissed' in session and 'lobby_guide_dismissed' not in settings:
+        settings['lobby_guide_dismissed'] = session['lobby_guide_dismissed']
+
     return jsonify({'settings': settings})
 
 @app.route('/api/stats/user_count', methods=['GET'])

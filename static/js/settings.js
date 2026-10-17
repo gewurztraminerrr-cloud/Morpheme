@@ -37,7 +37,7 @@ function debounce(func, wait) {
             app_theme: 'default',
             allow_pm: true,
             allow_invites: true,
-            lobby_guide_dismissed: false
+            lobby_guide_dismissed: (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true')
         };
     }
     window.getDefaultSettings = getDefaultSettings;
@@ -69,6 +69,7 @@ function debounce(func, wait) {
             }
         } catch (e) {}
     }
+    window.saveSettingsToStorage = saveSettingsToStorage;
 
     function loadCachedSettings() {
         try {
@@ -78,7 +79,11 @@ function debounce(func, wait) {
             const key = getSettingsStorageKey();
             const saved = localStorage.getItem(key);
             if (saved) {
-                return Object.assign(getDefaultSettings(), JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
+                    parsed.lobby_guide_dismissed = 'true';
+                }
+                return Object.assign(getDefaultSettings(), parsed);
             }
         } catch (e) {}
         return getDefaultSettings();
@@ -124,6 +129,7 @@ function debounce(func, wait) {
             try {
                 const isDismissed = settings.lobby_guide_dismissed === 'true' || settings.lobby_guide_dismissed === true;
                 localStorage.setItem('morpheme_lobby_guide_dismissed', isDismissed ? 'true' : 'false');
+                if (window.userSettings) window.userSettings.lobby_guide_dismissed = isDismissed ? 'true' : 'false';
                 const guideToggle = document.getElementById('setting-lobby-guide-toggle');
                 if (guideToggle) guideToggle.checked = !isDismissed;
                 if (typeof window.initLobbyGuideState === 'function') {

@@ -2226,7 +2226,11 @@ setInterval(() => {
 
 function initLobbyGuideState() {
     try {
-        const isDismissed = localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true';
+        let isDismissed = localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true';
+        if (!isDismissed && window.userSettings && (window.userSettings.lobby_guide_dismissed === 'true' || window.userSettings.lobby_guide_dismissed === true)) {
+            isDismissed = true;
+            localStorage.setItem('morpheme_lobby_guide_dismissed', 'true');
+        }
         const guideBtn = document.getElementById('lobby-new-user-guide-btn');
         const journeyBanner = document.getElementById('lobby-journey-banner');
         if (guideBtn && journeyBanner) {
@@ -2571,21 +2575,40 @@ function closeLobbyGuideModal(permanentlyDismiss) {
         modal.style.display = 'none';
     }
     try {
-        if (permanentlyDismiss) {
-            localStorage.setItem('morpheme_lobby_guide_dismissed', 'true');
-            fetch('/api/save_setting', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'lobby_guide_dismissed', value: 'true' })
-            }).catch(() => {});
-        } else {
-            localStorage.setItem('morpheme_lobby_guide_dismissed', 'false');
-            fetch('/api/save_setting', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'lobby_guide_dismissed', value: 'false' })
-            }).catch(() => {});
+        const dismissedStr = permanentlyDismiss ? 'true' : 'false';
+        localStorage.setItem('morpheme_lobby_guide_dismissed', dismissedStr);
+
+        if (!window.userSettings) {
+            window.userSettings = (typeof window.getDefaultSettings === 'function') ? window.getDefaultSettings() : {};
         }
+        window.userSettings.lobby_guide_dismissed = dismissedStr;
+
+        if (typeof window.saveSettingsToStorage === 'function') {
+            window.saveSettingsToStorage();
+        } else {
+            const username = (window.currentUser || (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('morpheme_username') || '').trim();
+            const key = username ? `morpheme_settings_${username.toLowerCase()}` : 'morpheme_settings_guest';
+            try {
+                localStorage.setItem(key, JSON.stringify(window.userSettings));
+            } catch (e) {}
+        }
+
+        const guideToggle = document.getElementById('setting-lobby-guide-toggle');
+        if (guideToggle) {
+            guideToggle.checked = !permanentlyDismiss;
+        }
+
+        const payload = JSON.stringify({ key: 'lobby_guide_dismissed', value: dismissedStr });
+        fetch('/api/settings/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        }).catch(() => {});
+        fetch('/api/save_setting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        }).catch(() => {});
     } catch (e) {
         console.error('Error saving lobby guide state:', e);
     }
