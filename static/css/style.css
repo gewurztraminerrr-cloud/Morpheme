@@ -771,6 +771,125 @@ select option {
     color: var(--text-primary) !important;
 }
 
+/* Base Combo Checker Main Tabs */
+.combo-main-tabs-header {
+    display: flex !important;
+    align-items: center !important;
+    max-width: 440px !important;
+    width: 100% !important;
+    background: rgba(15, 23, 42, 0.72) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 14px !important;
+    padding: 5px !important;
+    gap: 6px !important;
+    margin: 0 0 20px 0 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.combo-main-tab-btn {
+    flex: 1 1 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 9px !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    font-family: inherit !important;
+    font-size: 1.02rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    color: rgba(255, 255, 255, 0.68) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    outline: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-transform: none !important;
+}
+
+.combo-main-tab-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    opacity: 0.72 !important;
+    transition: transform 0.22s ease, opacity 0.22s ease !important;
+}
+
+.combo-main-tab-label {
+    font-weight: inherit !important;
+    letter-spacing: inherit !important;
+    white-space: nowrap !important;
+}
+
+.combo-main-tab-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    transform: translateY(-1px) !important;
+}
+
+.combo-main-tab-btn:hover .combo-main-tab-icon {
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+}
+
+.combo-main-tab-btn:active {
+    transform: translateY(0) scale(0.98) !important;
+}
+
+.combo-main-tab-btn.active {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    transform: none !important;
+}
+
+.combo-main-tab-btn.active .combo-main-tab-icon {
+    opacity: 1 !important;
+    transform: scale(1.06) !important;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)) !important;
+}
+
+.combo-main-tab-btn.active#combo-main-tab-btn-manual {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 18px rgba(37, 99, 235, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.38), inset 0 -1px 0 rgba(0, 0, 0, 0.22) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+.combo-main-tab-btn.active#combo-main-tab-btn-explorer {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #3730a3 100%) !important;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.38), inset 0 -1px 0 rgba(0, 0, 0, 0.22) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+@media (max-width: 900px) {
+    #tool-combo .combo-main-tabs-header,
+    .combo-main-tabs-header {
+        max-width: 360px !important;
+        margin: 0 auto 16px auto !important;
+        padding: 4px !important;
+        gap: 6px !important;
+    }
+    #tool-combo .combo-main-tab-btn,
+    .combo-main-tab-btn {
+        padding: 9px 12px !important;
+        font-size: 0.94rem !important;
+        min-height: 42px !important;
+    }
+    #tool-combo .combo-main-tab-icon,
+    .combo-main-tab-icon {
+        width: 17px !important;
+        height: 17px !important;
+    }
+}
+
 [class*="theme-white"] .combo-main-tabs-header,
 [class*="theme-light-"] .combo-main-tabs-header {
     background: #f1f5f9 !important;
