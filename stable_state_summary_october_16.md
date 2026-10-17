@@ -117,8 +117,11 @@ START_OVER_POINT_OCTOBER_16
 - **500-Character Truncation**: Automatic body truncation with smooth interactive `"View Whole Post"` expansion.
 
 ### 11. Tools & Combo Checker Architecture
-- **Prominent Main Tabs (Manual vs MP Explorer)**:
-  - Top-level main tab bar (`#combo-main-tabs-header`) with high-contrast pills separating **Manual** (`#combo-main-pane-manual`) and **MP Explorer** (`#combo-main-pane-explorer`).
+- **Prominent Main Tabs (Manual vs MP Explorer) - Premium Glass Segmented Deck**:
+  - Top-level main segmented deck (`#combo-main-tabs-header`) with high-end glassmorphism (`backdrop-filter: blur(16px)`), crisp 1.5px borders, top specular highlight bevel (`::before`), and responsive 50/50 balance.
+  - Custom SVG iconography embedded in each tab: Keyboard/Typing icon for **Manual** and sleek Compass/Exploration icon for **MP Explorer**.
+  - Distinct active glows and dual gradients: Electric Blue (`linear-gradient(135deg, #3b82f6, #1d4ed8)`) for Manual, and Royal Indigo/Violet (`linear-gradient(135deg, #6366f1, #3730a3)`) for MP Explorer, with ambient drop shadows and subtle text shadows.
+  - Complete support across Dark, Pure White, and all 18 Light Pastel themes.
   - **Manual** contains the manual search input row (`#combo-input`, `#combo-dict`, `#combo-search-btn`) and the MP and LIC subtabs and result tables (`#mp-container`, `#lic-container`).
   - **MP Explorer** contains the standalone MP Word Explorer controls, filter, and dual table layout (`#combo-explorer-section`).
   - Entering Combo Checker (`showTool('combo')` or initial page load) and clicking "CC" in definition popups automatically defaults to the **Manual** tab.
@@ -133,17 +136,17 @@ START_OVER_POINT_OCTOBER_16
 
 ### 12. Cache Busting & Asset Versions
 - In `templates/index.html`:
-  - `style.css?v=1792204000`
+  - `style.css?v=1792205000`
   - `lobby.css?v=1791173000`
   - `app.js?v=1791173000`
   - `lobby.js?v=1791173000`
-  - `play.css?v=1792204000`
+  - `play.css?v=1792205000`
   - `play.js?v=1791172000`
   - `store.js?v=1791164500`
   - `forum.css?v=1792196000`
   - `forum.js?v=1791160800`
   - `tools.js?v=1792204000`
-- Latest Commit: `73f038dd`
+- Latest Commit: `54208fad`
 
 ---
 
