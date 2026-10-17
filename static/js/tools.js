@@ -1621,6 +1621,18 @@ function renderGroups(groupsData, containerId, type) {
         }
 
         initCustomScrollbarForElement(`${colId}-scroll`, `${colId}-track`, `${colId}-thumb`);
+        requestAnimationFrame(() => {
+            const el = document.getElementById(`${colId}-scroll`);
+            if (el && typeof el._updateCustomScrollbar === 'function') {
+                el._updateCustomScrollbar();
+            }
+        });
+        setTimeout(() => {
+            const el = document.getElementById(`${colId}-scroll`);
+            if (el && typeof el._updateCustomScrollbar === 'function') {
+                el._updateCustomScrollbar();
+            }
+        }, 120);
     });
 
     if (!foundAny) {
@@ -6243,6 +6255,12 @@ function initCustomScrollbarForElement(scrollAreaId, trackId, thumbId) {
     track.addEventListener('pointerdown', handleTrackJump, { passive: false });
     track.addEventListener('mousedown', handleTrackJump);
     track.addEventListener('touchstart', handleTrackJump, { passive: false });
+    track.addEventListener('wheel', (e) => {
+        scrollArea.scrollTop += e.deltaY;
+        if (e.cancelable !== false && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     // Initial position triggers with RAF and timeouts to guarantee execution post-layout
     requestAnimationFrame(updateThumb);

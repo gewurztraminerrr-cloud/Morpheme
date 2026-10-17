@@ -4210,7 +4210,53 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         padding: 2px 10px 4px 4px !important;
     }
 
-    /* Unified Visible Panel enclosing both "ENTER LETTERS TO CHECK..." and MP/LIC Tabs */
+    #tool-combo .combo-main-tabs-header,
+    .combo-main-tabs-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 8px !important;
+    }
+
+    #tool-combo .combo-main-tab-panes,
+    .combo-main-tab-panes {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-main-tab-pane.active,
+    .combo-main-tab-pane.active,
+    #combo-main-pane-manual.active,
+    #combo-main-pane-explorer.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-results-container,
+    .combo-results-container {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+        gap: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     /* Unified Visible Panel enclosing both "ENTER LETTERS TO CHECK..." and MP/LIC Tabs */
     #tool-combo .combo-unified-panel,
     .combo-unified-panel {
@@ -4221,9 +4267,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         margin-bottom: 0 !important;
         box-sizing: border-box !important;
         width: 100% !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -4247,9 +4294,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     .combo-tabs-section {
         width: 100% !important;
         box-sizing: border-box !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -4307,9 +4355,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 
     .combo-tab-panes {
         width: 100% !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -4324,23 +4373,11 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     .combo-tab-pane.active {
         display: flex !important;
         flex-direction: column !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
-    }
-
-    #tool-combo .combo-results-container,
-    .combo-results-container {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 0 !important;
-        flex: 1 1 auto !important;
-        min-height: 0 !important;
-        height: 100% !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }
 
     #tool-combo .combo-unified-panel .combo-tab-pane .result-section,
@@ -4349,9 +4386,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     .combo-results-container .result-section {
         display: flex !important;
         flex-direction: column !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
         overflow: hidden !important;
         background: rgba(0, 0, 0, 0.15) !important;
         border-radius: 10px !important;
@@ -4399,7 +4437,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     #lic-container {
         display: flex !important;
         flex-direction: row !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
@@ -4408,6 +4446,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         padding: 4px 6px !important;
         gap: 10px !important;
         box-sizing: border-box !important;
+        align-items: stretch !important;
     }
 
     #tool-combo .group-column,
@@ -4442,9 +4481,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 
     #tool-combo .list-scroll-area-wrapper,
     .list-scroll-area-wrapper {
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
-        height: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         position: relative !important;
@@ -4454,7 +4494,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     #tool-combo .group-table-container,
     .combo-results-container .group-table-container,
     .group-table-container {
-        flex: 1 1 auto !important;
+        flex: 1 1 0px !important;
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
@@ -4462,6 +4502,41 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         overflow-x: hidden !important;
         padding: 4px 6px !important;
         box-sizing: border-box !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+    }
+
+    #tool-combo .group-column .custom-scrollbar-track,
+    .group-column .custom-scrollbar-track {
+        position: absolute !important;
+        top: 4px !important;
+        bottom: 4px !important;
+        right: 2px !important;
+        width: 14px !important;
+        z-index: 50 !important;
+        pointer-events: auto !important;
+    }
+
+    #tool-combo .group-column .custom-scrollbar-thumb,
+    .group-column .custom-scrollbar-thumb {
+        position: absolute !important;
+        width: 10px !important;
+        left: 1px !important;
+        border-radius: 6px !important;
+        cursor: grab !important;
+        pointer-events: auto !important;
+    }
+
+    #mp-container .custom-scrollbar-thumb {
+        background: linear-gradient(180deg, #ffd700, #b8860b) !important;
+        border: 1px solid rgba(255, 215, 0, 0.6) !important;
+        box-shadow: 0 0 6px rgba(255, 215, 0, 0.35) !important;
+    }
+
+    #lic-container .custom-scrollbar-thumb {
+        background: linear-gradient(180deg, #60a5fa, #2563eb) !important;
+        border: 1px solid rgba(96, 165, 250, 0.6) !important;
+        box-shadow: 0 0 6px rgba(96, 165, 250, 0.35) !important;
     }
 
     .group-word-list {
@@ -15488,6 +15563,150 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
     .combo-scroll-container {
         overflow: hidden !important;
         padding: 2px 10px 4px 4px !important;
+    }
+
+    #tool-combo .combo-main-tab-panes,
+    .combo-main-tab-panes {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-main-tab-pane.active,
+    .combo-main-tab-pane.active,
+    #combo-main-pane-manual.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-results-container,
+    .combo-results-container {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-unified-panel,
+    .combo-unified-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-tabs-section,
+    .combo-unified-panel .combo-tabs-section,
+    .combo-tabs-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-tab-panes,
+    .combo-tab-panes {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-tab-pane.active,
+    .combo-tab-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .combo-unified-panel .combo-tab-pane .result-section,
+    .combo-unified-panel .combo-tab-pane .result-section,
+    #tool-combo .result-section,
+    .combo-results-container .result-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    #tool-combo .horizontal-scroll-container,
+    .combo-results-container .horizontal-scroll-container,
+    #mp-container,
+    #lic-container {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        align-items: stretch !important;
+    }
+
+    #tool-combo .group-column,
+    .combo-results-container .group-column,
+    .group-column {
+        flex: 0 0 190px !important;
+        min-width: 160px !important;
+        width: 190px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    #tool-combo .list-scroll-area-wrapper,
+    .list-scroll-area-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    #tool-combo .group-table-container,
+    .combo-results-container .group-table-container,
+    .group-table-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 4px 6px !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
     }
 
     /* All 5 Explorer Dropdowns in ONE single row on desktop/laptop */
