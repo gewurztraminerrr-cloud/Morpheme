@@ -14666,6 +14666,27 @@ body.is-mobile .page *::-webkit-scrollbar {
     color: #34d399;
 }
 
+.combo-explorer-title-word {
+    cursor: pointer !important;
+    text-decoration: underline !important;
+    text-decoration-color: rgba(56, 189, 248, 0.5) !important;
+    text-underline-offset: 3px !important;
+    color: #38bdf8 !important;
+    font-family: monospace;
+    font-weight: 700;
+    transition: all 0.15s ease !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+    display: inline-block !important;
+    user-select: text !important;
+}
+
+.combo-explorer-title-word:hover {
+    color: #ffffff !important;
+    background: rgba(56, 189, 248, 0.25) !important;
+    text-decoration-color: #38bdf8 !important;
+}
+
 .combo-explorer-badge {
     font-size: 0.75rem;
     font-weight: 700;
@@ -15690,6 +15711,23 @@ body[class*="theme-light-"] .combo-explorer-header-response,
 [class*="theme-light-"] .combo-explorer-header-response {
     color: #059669 !important;
     font-weight: 700 !important;
+}
+
+body.theme-white .combo-explorer-title-word,
+[class*="theme-white"] .combo-explorer-title-word,
+body[class*="theme-light-"] .combo-explorer-title-word,
+[class*="theme-light-"] .combo-explorer-title-word {
+    color: #0284c7 !important;
+    text-decoration-color: rgba(2, 132, 199, 0.5) !important;
+}
+
+body.theme-white .combo-explorer-title-word:hover,
+[class*="theme-white"] .combo-explorer-title-word:hover,
+body[class*="theme-light-"] .combo-explorer-title-word:hover,
+[class*="theme-light-"] .combo-explorer-title-word:hover {
+    color: #0369a1 !important;
+    background: rgba(2, 132, 199, 0.15) !important;
+    text-decoration-color: #0284c7 !important;
 }
 
 body.theme-white .combo-explorer-badge-input,

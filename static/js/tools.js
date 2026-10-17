@@ -1325,8 +1325,11 @@ window.selectComboExplorerWord = async function(word) {
     const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
     const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
+    const safeWord = String(word).trim().toUpperCase();
 
-    if (respTitle) respTitle.textContent = `${mp}MP from ${word}`;
+    if (respTitle) {
+        respTitle.innerHTML = `${mp}MP from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${safeWord}', event)" title="Click to view definition">${safeWord}</span>`;
+    }
     if (respCount) respCount.textContent = '...';
     if (respList) respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading matches...</div>';
 
@@ -1374,7 +1377,7 @@ function renderComboExplorerMatches() {
     if (!_comboExplorerDisplayMatches || _comboExplorerDisplayMatches.length === 0) {
         listEl.innerHTML = `
             <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem;">
-                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection ${mp}MP words found for ${_comboExplorerSelectedWord}.` : 'Select an input word on the left to display its matching MP words.'}
+                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
             </div>`;
         if (countBadge) countBadge.textContent = '0';
         if (typeof listEl._updateCustomScrollbar === 'function') {
