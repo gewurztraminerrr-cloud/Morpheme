@@ -3147,7 +3147,7 @@ body.theme-white #page-settings .mobile-bottom-nav {
         gap: 6px !important;
         padding: 0 !important;
         margin-top: 14px !important;
-        margin-bottom: 14px !important;
+        margin-bottom: 12px !important;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -3276,12 +3276,15 @@ body.theme-white #page-settings .mobile-bottom-nav {
         gap: 8px !important;
         overflow-x: auto !important;
         padding: 4px 2px 4px 2px !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 12px !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: none !important;
     }
     #tool-store .store-category-filters::-webkit-scrollbar {
         display: none !important;
+    }
+    #tool-store .store-grid {
+        margin-top: 0 !important;
     }
     #tool-store .store-filter-btn {
         display: inline-flex !important;
