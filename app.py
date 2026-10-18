@@ -6761,6 +6761,10 @@ def get_room_state(room_id):
         if not room:
              return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
+        user_id = session.get('user_id')
+        if user_id:
+            room.update_player_activity(user_id)
+
         # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.
         _hb_t0 = time.time()
         room.check_and_update_state()
@@ -6775,15 +6779,24 @@ def get_room_state(room_id):
             except Exception as e:
                 print(f"[app.py] Error lazy-loading yesterday's history for room {room_id}: {e}")
 
-        # MILESTONE PROCESSING (synchronous, outside lock).
+        # MILESTONE PROCESSING (asynchronous in background thread so HTTP response returns instantly in <10ms!).
         milestone = room.get_next_round_milestone()
         _hb_t3 = time.time()
         if milestone == 'spinner':
-            room_manager.generate_spinner_params(room_id, reveal=False)
+            if not getattr(room, '_transition_spinner_launched', False):
+                room._transition_spinner_launched = True
+                import threading
+                threading.Thread(target=room_manager.generate_spinner_params, args=(room_id, False), daemon=True).start()
         elif milestone == 'reveal':
-            room_manager.generate_spinner_params(room_id, reveal=True)
+            if not getattr(room, 'spinner_params_revealed', False):
+                import threading
+                threading.Thread(target=room_manager.generate_spinner_params, args=(room_id, True), daemon=True).start()
         elif milestone == 'search':
-            room_manager.start_board_search(room_id)
+            with room._state_lock:
+                if not getattr(room, 'board_search_started', False) and not getattr(room, 'board_search_loading', False):
+                    room.board_search_loading = True
+                    import threading
+                    threading.Thread(target=room_manager.start_board_search, args=(room_id,), daemon=True).start()
         elif milestone == 'start':
             if not getattr(room, 'starting_round', False):
                 import threading

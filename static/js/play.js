@@ -1366,7 +1366,7 @@ function handleResumeWakeUp(source) {
     if (document.hidden) return;
     const now = Date.now();
     // Debounce rapid successive events (visibilitychange + focus + pageshow often fire within 50ms on mobile)
-    if (now - _lastResumeWakeUpTime < 1200) {
+    if (now - _lastResumeWakeUpTime < 300) {
         console.log(`[play.js] Ignoring duplicate wake-up event from ${source} (${now - _lastResumeWakeUpTime}ms since last wake-up).`);
         return;
     }
@@ -1517,6 +1517,15 @@ window.addEventListener('pageshow', () => {
     }
 });
 
+// Pointerdown Listener: Instant wake-up on first user touch if returning from idle/freeze
+window.addEventListener('pointerdown', () => {
+    if (document.hidden) return;
+    const now = Date.now();
+    if (now - _lastResumeWakeUpTime > 1500 && (now - lastStateFetchTime > 3000 || !timerInterval)) {
+        handleResumeWakeUp('pointerdown');
+    }
+}, { passive: true });
+
 function stopPolling() {
     if (pollInterval) {
         clearInterval(pollInterval);
@@ -1541,7 +1550,7 @@ function stopPolling() {
 }
 
 // Dedicated helper to fetch room state with timeout, allowing rapid recovery from dead socket connections
-async function fetchRoomStateWithTimeout(url, options = {}, timeoutMs = 4500) {
+async function fetchRoomStateWithTimeout(url, options = {}, timeoutMs = 2500) {
     if (window._activeStateFetchController) {
         try {
             window._activeStateFetchController.abort();
@@ -1636,12 +1645,12 @@ async function _doUpdateGameState(incomingState = null) {
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     tBefore = Date.now() / 1000;
-                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 4500);
+                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 2500);
                     if (response && response.ok) break;
                 } catch (err) {
                     if (attempt === 0) {
-                        console.warn(`[play.js] Initial state fetch failed (${err.message}), retrying in 250ms for socket thaw...`);
-                        await new Promise(r => setTimeout(r, 250));
+                        console.warn(`[play.js] Initial state fetch failed (${err.message}), retrying in 50ms for socket thaw...`);
+                        await new Promise(r => setTimeout(r, 50));
                         continue;
                     }
                     console.log(`[play.js] State fetch timed out or failed (${err.message}). Retrying on next poll tick.`);
