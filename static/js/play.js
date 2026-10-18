@@ -1321,32 +1321,38 @@ function setTimerWaitingState(isWaiting) {
     const timerLabel = document.querySelector('.timer-label');
     if (isWaiting) {
         if (timerVal) {
-            timerVal.innerHTML = '';
-            void timerVal.offsetHeight; // Force reflow
-            timerVal.innerHTML = 'WAIT<span class="wait-dot">.</span><span class="wait-dot">.</span><span class="wait-dot">.</span>';
-            
-            // Force animation restart on next frame to ensure it runs on mobile wake-up
-            requestAnimationFrame(() => {
-                timerVal.querySelectorAll('.wait-dot').forEach((el, index) => {
-                    el.style.animation = 'none';
-                    void el.offsetHeight; // trigger reflow
-                    el.style.animation = `wait-bounce 1.4s infinite ease-in-out`;
-                    el.style.animationDelay = `${index * 0.2}s`;
+            if (!timerVal.innerHTML.includes('WAIT')) {
+                timerVal.innerHTML = 'WAIT<span class="wait-dot">.</span><span class="wait-dot">.</span><span class="wait-dot">.</span>';
+                
+                // Force animation restart on next frame to ensure it runs on mobile wake-up
+                requestAnimationFrame(() => {
+                    timerVal.querySelectorAll('.wait-dot').forEach((el, index) => {
+                        el.style.animation = 'none';
+                        void el.offsetHeight; // trigger reflow
+                        el.style.animation = `wait-bounce 1.4s infinite ease-in-out`;
+                        el.style.animationDelay = `${index * 0.2}s`;
+                    });
                 });
-            });
+            }
         }
-        if (timerLabel) timerLabel.textContent = "";
+        if (timerLabel) {
+            const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+            const expectedLabel = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
+            if (timerLabel.textContent !== expectedLabel) {
+                timerLabel.textContent = expectedLabel;
+            }
+        }
     } else {
         if (window._waitGraceTimeout) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
         }
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        const expectedLabel = (currentState === 'intermission') ? "Next Round:" : "Time:";
+        const expectedLabel = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
         if (timerLabel && timerLabel.textContent !== expectedLabel) {
             timerLabel.textContent = expectedLabel;
         }
-        if (timerVal && (timerVal.innerHTML.includes('WAIT') || timerVal.textContent.includes('WAIT'))) {
+        if (timerVal && (timerVal.innerHTML.includes('WAIT') || timerVal.textContent.includes('WAIT') || timerVal.textContent === '...')) {
             timerVal.textContent = window._lastTimerDisplay || "0:00";
             timerVal.style.fontVariantNumeric = 'tabular-nums';
         }
@@ -1399,6 +1405,7 @@ function handleResumeWakeUp(source) {
         try { window._activeStateFetchController.abort(); } catch(e) {}
         window._activeStateFetchController = null;
     }
+    _activeUpdateGameStatePromise = null;
     window._activeUpdateGameStatePromise = null;
     isFetchingState = false;
     lastStateFetchTime = 0;
@@ -1449,7 +1456,7 @@ function handleResumeWakeUp(source) {
 
     // Instant Feedback:
     // If the timer is still active, tick it immediately.
-    // If expired while away, update display cleanly without jarring '--:--'
+    // If expired while away, show smooth waiting indicator without jarring freeze
     const nowSec = Date.now() / 1000;
     if (localEndTime && localEndTime > nowSec) {
         if (!timerInterval) {
@@ -1462,15 +1469,12 @@ function handleResumeWakeUp(source) {
             timerInterval = null;
         }
         window._lastTimerDisplay = null;
-        const timerVal = document.getElementById('timer-value');
-        if (timerVal) {
-            timerVal.textContent = '...';
-            timerVal.style.fontVariantNumeric = 'tabular-nums';
-        }
+        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         const timerLabel = document.querySelector('.timer-label');
         if (timerLabel) {
-            timerLabel.textContent = 'Time:';
+            timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
         }
+        setTimerWaitingState(true);
     }
     if (window._waitGraceTimeout) {
         clearTimeout(window._waitGraceTimeout);
@@ -1714,7 +1718,7 @@ async function _doUpdateGameState(incomingState = null) {
             window._waitGraceTimeout = null;
         }
 
-        if (state.state === 'active' || state.state === 'intermission') {
+        if (state.state === 'active' || (state.state === 'intermission' && state.time_remaining > 0)) {
             setTimerWaitingState(false);
             if (window._transitionPollTimer && (state.time_remaining > 0 || state.state === 'active')) {
                 clearInterval(window._transitionPollTimer);
@@ -1796,7 +1800,7 @@ async function _doUpdateGameState(incomingState = null) {
         // round's board, while reapplyBoardHighlights() uses window.lastGameState.board for DFS
         // path searching. If these two differ even briefly, word highlight clicks will silently
         // fail (path found on wrong board → no cells match). Normalize here so they are identical.
-        if (state.state === 'intermission' && state.previous_board && state.previous_board.length > 0) {
+        if ((state.state === 'intermission' || state.state === 'waiting') && state.previous_board && state.previous_board.length > 0) {
             state.board = state.previous_board;
         }
 
@@ -1820,10 +1824,9 @@ async function _doUpdateGameState(incomingState = null) {
         // LOADING STATE: Room was just created and board is being generated async
         if (state.state === 'loading') {
             console.log('[play.js] Room is in loading state. Showing loading indicator and fast-polling...');
-            const timerVal = document.getElementById('timer-value');
             const timerLabel = document.querySelector('.timer-label');
-            if (timerVal) timerVal.textContent = '...';
-            if (timerLabel && timerLabel.textContent !== "Time:") timerLabel.textContent = 'Time:';
+            if (timerLabel && timerLabel.textContent !== "Next Round:") timerLabel.textContent = 'Next Round:';
+            setTimerWaitingState(true);
 
             const boardEl = document.getElementById('game-board');
             if (boardEl) {
@@ -2347,9 +2350,9 @@ async function _doUpdateGameState(incomingState = null) {
             renderFCFSNotepads(state.players, state);
         } else {
             // Render previous day's board if the user is on the previous tab
-            let grayed = state.state === 'intermission';
+            let grayed = state.state === 'intermission' || state.state === 'waiting';
             let boardToRender = state.board;
-            if (state.state === 'intermission' && state.previous_board && state.previous_board.length > 0) {
+            if ((state.state === 'intermission' || state.state === 'waiting') && state.previous_board && state.previous_board.length > 0) {
                 boardToRender = state.previous_board;
             } else if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0) {
                 boardToRender = state.previous_board;
@@ -2359,15 +2362,27 @@ async function _doUpdateGameState(incomingState = null) {
                 boardToRender = window.lastGameState.board;
             }
             const is3D = state.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
-            renderBoard(boardToRender, grayed, is3D, state);
+            try {
+                renderBoard(boardToRender, grayed, is3D, state);
+            } catch (bErr) {
+                console.error('[play.js] Error in renderBoard:', bErr);
+            }
         }
 
         // Update players (pass full state for context if needed)
-        renderPlayers(state.players, currentUsername, state);
+        try {
+            renderPlayers(state.players, currentUsername, state);
+        } catch (pErr) {
+            console.error('[play.js] Error in renderPlayers:', pErr);
+        }
 
         // Update chat
         if (state.chat_messages) {
-            renderChat(state.chat_messages);
+            try {
+                renderChat(state.chat_messages);
+            } catch (cErr) {
+                console.error('[play.js] Error in renderChat:', cErr);
+            }
         }
 
         // Enable/disable input and buttons
@@ -2417,7 +2432,7 @@ async function _doUpdateGameState(incomingState = null) {
                 if (inputEl.disabled !== !isActive) {
                     inputEl.disabled = !isActive;
                 }
-                const expectedPlaceholder = isActive ? "Enter word" : (state.state === 'intermission' ? "Waiting for next round..." : (state.state === 'waiting' ? "Waiting for players..." : "Enter word"));
+                const expectedPlaceholder = isActive ? "Enter word" : ((state.state === 'intermission' || state.state === 'waiting') ? "Waiting for next round..." : "Enter word");
                 if (inputEl.placeholder !== expectedPlaceholder) {
                     inputEl.placeholder = expectedPlaceholder;
                 }
@@ -5628,6 +5643,20 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         timerFormatIs24h = true;
     }
 
+    // Handle waiting state immediately
+    if (state.state === 'waiting') {
+        const timerLabel = document.querySelector('.timer-label');
+        if (timerLabel && timerLabel.textContent !== "Next Round:") {
+            timerLabel.textContent = "Next Round:";
+        }
+        setTimerWaitingState(true);
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        return;
+    }
+
     // Synchronously update the timer display right now if active or intermission
     if (state.state === 'active' || state.state === 'intermission') {
         const nowSec = Date.now() / 1000;
@@ -5638,6 +5667,20 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         } else if (state.state === 'intermission') {
             const limit = (state.time_limit >= 7200) ? 5 : 60;
             if (rem > limit) rem = limit;
+
+            // If intermission countdown has reached 0 on client while server is preparing next round
+            if (rem <= 0) {
+                const timerLabel = document.querySelector('.timer-label');
+                if (timerLabel && timerLabel.textContent !== "Next Round:") {
+                    timerLabel.textContent = "Next Round:";
+                }
+                setTimerWaitingState(true);
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                return;
+            }
         }
         const secs = Math.ceil(rem);
         let disp;
@@ -5761,7 +5804,7 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         const timerLabel = document.querySelector('.timer-label');
         if (timerLabel) {
-            const expectedLabel = (currentState === 'intermission') ? "Next Round:" : "Time:";
+            const expectedLabel = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
             if (timerLabel.textContent !== expectedLabel) {
                 timerLabel.textContent = expectedLabel;
             }
