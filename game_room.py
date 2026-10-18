@@ -2213,7 +2213,7 @@ class GameRoom:
                             'performance_efficiency': getattr(p, 'performance_efficiency', 0),
                             'joined_mid_round': getattr(p, 'joined_mid_round', False)
                         })
-                self.last_round_human_participants = len([p for p in intermission_player_snapshots if not getattr(p, 'is_ai', False)])
+                self.last_round_human_participants = len([p for p in all_candidate_players if not getattr(p, 'is_ai', False)])
                 
                 # Asynchronous Post-Round Processing
                 def process_results_async():
@@ -6142,9 +6142,6 @@ class RoomManager:
                             room.spinner_params['bonus_word_length'] = len(bonus_word)
                     
                     # ATOMIC STAGING PROMOTION: Set metadata FIRST and board LAST to prevent stale data race
-                    if room.state != 'intermission':
-                        print(f"[RoomManager] Background board generation for {room_id} finished while room state is '{room.state}'. SKIPPING assignment to prevent mid-round swap!")
-                        return
                     
                     room.next_round_words = all_words
                     room.next_round_word_paths = all_words_dict
@@ -6236,13 +6233,7 @@ class RoomManager:
                     if target_room.current_round > search_round:
                         print(f"[RoomManager] Stale board search discarded for {room_id} (search_round: {search_round}, current_round: {target_room.current_round})")
                         return
-                    
-                    # IMMUTABLE ACTIVE BOARD LOCK:
-                    # If target_room is currently in 'active' state for search_round,
-                    # its active board is locked and CANNOT be swapped mid-round!
-                    if target_room.state == 'active' and target_room.current_round == search_round:
-                        print(f"[RoomManager] Background board search finished for active round {search_round} of {room_id}. Active board is locked. Discarding mid-round swap.")
-                        return
+
 
                     target_room.next_round_board = board # SIGNAL READY IMMEDIATELY!
                     
@@ -6747,6 +6738,10 @@ class RoomManager:
             
             # 2. STATE TRANSITION LOCK: Perform the atomic board swap
             with room._state_lock:
+                if room.state == 'active':
+                    print(f"[RoomManager] Aborting start_next_round promotion for {room_id}: room already transitioned to active round {room.current_round}!")
+                    room.starting_round = False
+                    return False
                 room._did_6x8_fallback_rescue = False
                 room._did_050_fallback_rescue = False
                 # Reset players active stats and roster for the next round BEFORE database save
@@ -7337,9 +7332,8 @@ class RoomManager:
             from board_generator import pop_any_cached_board, pop_compatible_cached_board
             from word_validator import word_validator
             
-            # Check if room already has an active board with letters
-            has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
-            if has_letters and room.state == 'active':
+            # IMMUTABLE ACTIVE GUARD: Never touch room if already active
+            if room.state == 'active':
                 return room
 
             # Handle subanagrams mode

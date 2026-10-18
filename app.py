@@ -6571,11 +6571,12 @@ def get_room_state(room_id):
 
         # Safeguard: if room is intermission and time is up, trigger next round or break stall immediately
         if room.state == 'intermission' and room.time_remaining <= 0:
-            is_stale_start = getattr(room, 'starting_round', False) and (time.time() - getattr(room, '_round_start_init_time', 0) > 2.0)
+            is_stale_start = getattr(room, 'starting_round', False) and (time.time() - getattr(room, '_round_start_init_time', 0) > 10.0)
             if is_stale_start:
-                print(f"[get_room_state] TR=0 for {room_id} with STALE starting_round (>2s). Force-resetting and delivering instant board.")
+                print(f"[get_room_state] TR=0 for {room_id} with STALE starting_round (>10s). Force-resetting and delivering instant board.")
                 room.starting_round = False
-                room_manager.force_instant_board(room_id)
+                if room.state == 'intermission':
+                    room_manager.force_instant_board(room_id)
             elif not getattr(room, 'starting_round', False):
                 import threading
                 print(f"[get_room_state] TR=0 for {room_id} — launching start_next_round async")
