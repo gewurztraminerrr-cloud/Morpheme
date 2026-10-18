@@ -1341,8 +1341,10 @@ function setTimerWaitingState(isWaiting) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
         }
-        if (timerLabel && timerLabel.textContent !== "Time:") {
-            timerLabel.textContent = "Time:";
+        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+        const expectedLabel = (currentState === 'intermission') ? "Next Round:" : "Time:";
+        if (timerLabel && timerLabel.textContent !== expectedLabel) {
+            timerLabel.textContent = expectedLabel;
         }
         if (timerVal && (timerVal.innerHTML.includes('WAIT') || timerVal.textContent.includes('WAIT'))) {
             timerVal.textContent = window._lastTimerDisplay || "0:00";
@@ -1459,10 +1461,15 @@ function handleResumeWakeUp(source) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        window._lastTimerDisplay = null;
         const timerVal = document.getElementById('timer-value');
         if (timerVal) {
-            timerVal.textContent = window._lastTimerDisplay || '0:00';
+            timerVal.textContent = '...';
             timerVal.style.fontVariantNumeric = 'tabular-nums';
+        }
+        const timerLabel = document.querySelector('.timer-label');
+        if (timerLabel) {
+            timerLabel.textContent = 'Time:';
         }
     }
     if (window._waitGraceTimeout) {
@@ -1877,6 +1884,8 @@ async function _doUpdateGameState(incomingState = null) {
             // Clear word input immediately so they see it's over
             if (wordInput) {
                 wordInput.value = '';
+                wordInput.disabled = true;
+                wordInput.placeholder = "Waiting for next round...";
                 wordInput.blur();
             }
 
@@ -2404,8 +2413,14 @@ async function _doUpdateGameState(incomingState = null) {
             if (clearBtnEl && state.game_type === 'subanagrams') {
                 clearBtnEl.style.display = 'none';
             }
-            if (inputEl && inputEl.disabled !== !isActive) {
-                inputEl.disabled = !isActive;
+            if (inputEl) {
+                if (inputEl.disabled !== !isActive) {
+                    inputEl.disabled = !isActive;
+                }
+                const expectedPlaceholder = isActive ? "Enter word" : (state.state === 'intermission' ? "Waiting for next round..." : (state.state === 'waiting' ? "Waiting for players..." : "Enter word"));
+                if (inputEl.placeholder !== expectedPlaceholder) {
+                    inputEl.placeholder = expectedPlaceholder;
+                }
             }
             if (submitBtnEl && submitBtnEl.disabled !== !isActive) {
                 submitBtnEl.disabled = !isActive;
@@ -5642,6 +5657,13 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
             cachedTimerValueEl.textContent = disp;
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
+        const timerLabel = document.querySelector('.timer-label');
+        if (timerLabel) {
+            const expectedLabel = (state.state === 'intermission') ? "Next Round:" : "Time:";
+            if (timerLabel.textContent !== expectedLabel) {
+                timerLabel.textContent = expectedLabel;
+            }
+        }
         setTimerWaitingState(false);
     }
 
@@ -5736,6 +5758,14 @@ function updateLocalTimer() {
             cachedTimerValueEl.textContent = display;
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
+        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+        const timerLabel = document.querySelector('.timer-label');
+        if (timerLabel) {
+            const expectedLabel = (currentState === 'intermission') ? "Next Round:" : "Time:";
+            if (timerLabel.textContent !== expectedLabel) {
+                timerLabel.textContent = expectedLabel;
+            }
+        }
         setTimerWaitingState(false);
 
         // Low time visual for text (User Request)
@@ -5797,6 +5827,7 @@ function updateLocalTimer() {
             if (wordInput) {
                 wordInput.value = '';
                 wordInput.disabled = true;
+                wordInput.placeholder = "Waiting for next round...";
                 wordInput.blur();
             }
             // Reset mouse selection state if it was active
