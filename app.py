@@ -6764,7 +6764,9 @@ def get_room_state(room_id):
             
         user_id = session.get('user_id')
         if user_id:
-            if not room.get_player(user_id) and not room.get_spectator(user_id) and not getattr(room, 'is_closing', False):
+            if not room.get_player(user_id) and not room.get_spectator(user_id):
+                # When an active player is polling or returning to a room, unmark is_closing
+                room.is_closing = False
                 username = session.get('username')
                 if username:
                     is_guest = session.get('is_guest', False)
@@ -6797,6 +6799,8 @@ def get_room_state(room_id):
                         except Exception as e:
                             print(f"[app.py] Auto-rejoin user stats error: {e}")
                     room.add_player(user_id, username, rating, games_played=games_played, country_flag=country_flag, manual_accessed=False, is_guest=is_guest)
+            else:
+                room.is_closing = False
             room.update_player_activity(user_id)
 
         # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.

@@ -330,10 +330,16 @@ class GameRoom:
                 print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
                 self.check_and_update_state()
             elif self.state == 'intermission':
+                now = time.time()
+                ff_init = getattr(self, '_fast_forwarding_init_time', 0)
+                if getattr(self, '_fast_forwarding_intermission', False) and (now - ff_init > 4.0):
+                    self._fast_forwarding_intermission = False
+
                 if getattr(self, 'last_round_human_participants', 0) == 0 and not getattr(self, '_fast_forwarding_intermission', False):
                     self._fast_forwarding_intermission = True
+                    self._fast_forwarding_init_time = now
                     print(f"[GameRoom] Human player {username} joined room {self.room_id} during empty round intermission. Fast-forwarding to active round.")
-                    self.intermission_start_time = time.time() - 65.0
+                    self.intermission_start_time = now - 65.0
                     global _room_manager_instance
                     rm = _room_manager_instance
                     if rm:
@@ -1843,154 +1849,157 @@ class GameRoom:
                 if getattr(self, '_wakeup_in_progress', False):
                     return False  # Already waking up — don't wipe/regenerate again
                 self._wakeup_in_progress = True
-                print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined. Generating/popping fresh board.")
-                self.board = None
-                self.all_words = set()
-                self.all_words_paths = {}
+                try:
+                    print(f"[GameRoom] Waking up paused room {self.room_id} instantly because human player joined. Generating/popping fresh board.")
+                    self.board = None
+                    self.all_words = set()
+                    self.all_words_paths = {}
 
-                # 1. Pop a compatible board from cache immediately
-                from board_generator import pop_compatible_cached_board
-                sp = self.spinner_params or {}
-                dict_val = sp.get('dictionary', 'NWL')
-                fmt_val = sp.get('board_format', 'Normal')
-                min_l_val = sp.get('min_word_length', 3)
-                use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
-                bonus_word_len = sp.get('bonus_word_length')
-                target_range = sp.get('word_count_range', '100-200')
-                fallback = None
-                for _ in range(10):
-                    candidate = pop_compatible_cached_board(
-                        self.board_dimensions,
-                        dict_val,
-                        fmt_val,
-                        min_l_val,
-                        use_aw_val,
-                        bonus_word_len=bonus_word_len
-                    )
-                    if not candidate:
-                        break
-                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
-                    _c_min_len = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or min_l_val
-                    _fw_filtered = [w for w in _fw if len(w) >= _c_min_len]
-                    min_len_count = sum(1 for w in _fw_filtered if len(w) == _c_min_len)
-                    if is_board_count_valid(len(_fw_filtered), target_range) and min_len_count >= 5:
-                        fallback = (_fb, _fw_filtered, _fc, _ff, {w: p for w, p in _fp.items() if w in _fw_filtered}, _fr, _fbw, _fparams)
-                        break
-                
-                if fallback:
-                    fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
-                    print(f"[GameRoom] Wakeup: Popped board from cache with {len(fw)} words for range '{target_range}'!")
-                else:
-                    print(f"[GameRoom] Wakeup: Cache empty. Using emergency fallback board.")
-                    # Get emergency fallback board matching default spinner params
-                    e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
-                    e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
-                    e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
-                    e_wc = target_range
-                    e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
-                    e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
-                    fallback = get_emergency_fallback_board(
-                        self.board_dimensions, e_format, self.time_limit,
-                        dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
-                    )
-                    if len(fallback) >= 9:
-                        fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
-                    else:
-                        fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
-
-                # 2. Sync spinner params
-                fparams = dict(fparams) if fparams else {}
-                dict_val = fparams.get('dictionary') or (self.spinner_params.get('dictionary') if self.spinner_params else 'NWL')
-                use_aw_val = fparams.get('use_added_words') or (self.spinner_params.get('use_added_words') if self.spinner_params else False)
-                if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
-                    dict_val = f"{dict_val} + AW"
-                
-                wc_label = target_range
-
-                new_sp = {
-                    'dictionary': dict_val,
-                    'difficulty': fparams.get('difficulty') or (self.spinner_params.get('difficulty') if self.spinner_params else 'Medium'),
-                    'word_count_range': wc_label,
-                    'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
-                    'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
-                    'bonus_word_length': len(fbw) if fbw else (fparams.get('bonus_word_len') or 6),
-                    'use_added_words': use_aw_val,
-                    'board_dimensions': self.board_dimensions,
-                    'time_limit': self.time_limit,
-                    'generated_at': now,
-                    'uniqueness': fr
-                }
-                self.board = fb
-                calc_min = fparams.get('min_word_length') if (isinstance(fparams, dict) and fparams.get('min_word_length') is not None) else 3
-                self.all_words_paths = {w: p for w, p in fp.items() if len(w) >= int(calc_min)}
-                self.all_words = set(self.all_words_paths.keys())
-                self.total_words_count = len(self.all_words)
-                self.initial_total_words = self.total_words_count
-
-                new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
-
-                if not getattr(self, '_spinner_params_locked', False):
-                    self.spinner_params = new_sp
-                    self.next_spinner_params = new_sp
-                    self.next_round_spinner_params = new_sp
-                    self.spinner_params_generated = True
-                    self.spinner_params_revealed = True
-                    self.was_revealed_this_intermission = True
-                    self._spinner_params_locked = True  # LOCK: no further spinner_params overwrites until round resets
-                    import copy
-                    self.frozen_revealed_params = copy.deepcopy(new_sp)
-                    self._reveal_sync_complete = True
-                
-                # Set up active round variables
-                self.current_board_format = new_sp['board_format']
-                self.current_word_count_range = wc_label
-                self.current_difficulty = new_sp['difficulty']
-                self.current_dictionary = new_sp['dictionary']
-                self.current_min_length = new_sp['min_word_length']
-                self.use_added_words = new_sp['use_added_words']
-                self.current_uniqueness = fr
-                bw_l = new_sp.get('bonus_word_length', 8) if isinstance(new_sp, dict) else 8
-                if not fbw or str(fbw).strip().upper() in ['', 'NONE'] or str(fbw).upper().endswith('ING') or str(fbw).upper().endswith('INGS'):
-                    candidates = [w for w in (self.all_words or []) if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
-                    if not candidates:
-                        candidates = [w for w in (self.all_words or []) if len(w) >= 5 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
-                    if candidates:
-                        import random
-                        fbw = random.choice(list(candidates)).upper()
-                    else:
-                        fbw = self._get_bonus_word(
-                            length=bw_l,
-                            dictionary=self.current_dictionary,
-                            alternating=('checkerboard' in str(self.current_board_format).lower())
+                    # 1. Pop a compatible board from cache immediately
+                    from board_generator import pop_compatible_cached_board
+                    floor_len = 4 if '4x6' in self.board_dimensions else (5 if '5x7' in self.board_dimensions else (6 if ('6x8' in self.board_dimensions or '3x3x3' in self.board_dimensions) else 3))
+                    sp = self.spinner_params or {}
+                    dict_val = sp.get('dictionary', 'NWL')
+                    fmt_val = sp.get('board_format', 'Normal')
+                    min_l_val = max(floor_len, int(sp.get('min_word_length', floor_len)))
+                    use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
+                    bonus_word_len = sp.get('bonus_word_length')
+                    target_range = sp.get('word_count_range', '100-200')
+                    fallback = None
+                    for _ in range(10):
+                        candidate = pop_compatible_cached_board(
+                            self.board_dimensions,
+                            dict_val,
+                            fmt_val,
+                            min_l_val,
+                            use_aw_val,
+                            bonus_word_len=bonus_word_len
                         )
-                self.bonus_word = str(fbw or '').upper().strip()
-                self.bonus_cell = fc
-                self.solving_complete = True
-                
-                # Fast-score length-based scores instantly to eliminate HTTP request blocking latency!
-                fast_scores = {}
-                is_valued = ('valued' in str(self.current_board_format).lower())
-                from scoring import get_valued_word_score
-                for w in self.all_words:
-                    if is_valued:
-                        s = get_valued_word_score(w)
+                        if not candidate:
+                            break
+                        _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+                        _c_min_len = (_fparams.get('min_word_length') if isinstance(_fparams, dict) else None) or min_l_val
+                        _fw_filtered = [w for w in _fw if len(w) >= _c_min_len]
+                        min_len_count = sum(1 for w in _fw_filtered if len(w) == _c_min_len)
+                        if is_board_count_valid(len(_fw_filtered), target_range) and min_len_count >= 5:
+                            fallback = (_fb, _fw_filtered, _fc, _ff, {w: p for w, p in _fp.items() if w in _fw_filtered}, _fr, _fbw, _fparams)
+                            break
+                    
+                    if fallback:
+                        fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+                        print(f"[GameRoom] Wakeup: Popped board from cache with {len(fw)} words for range '{target_range}'!")
                     else:
-                        length = len(w)
-                        s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
-                    fast_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
-                self.solved_words_with_scores = fast_scores
-                self.csw_only_words = getattr(self, 'next_round_csw_only_words', [])
-                self.added_words = getattr(self, 'next_round_added_words', [])
-                self.update_counts_by_len()
+                        print(f"[GameRoom] Wakeup: Cache empty. Using emergency fallback board.")
+                        # Get emergency fallback board matching default spinner params
+                        e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
+                        e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
+                        e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
+                        e_wc = target_range
+                        e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
+                        e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
+                        fallback = get_emergency_fallback_board(
+                            self.board_dimensions, e_format, self.time_limit,
+                            dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
+                        )
+                        if len(fallback) >= 9:
+                            fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
+                        else:
+                            fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
 
-                # Set timestamps and transition state IMMEDIATELY (0ms latency!)
-                self.state = 'active'
-                self.round_start_time = now
-                self.intermission_start_time = 0
-                self.starting_round = False
-                self._wakeup_in_progress = False
-                self._initial_board_delivered = True
-                self._transition_spinner_launched = False
+                    # 2. Sync spinner params
+                    fparams = dict(fparams) if fparams else {}
+                    dict_val = fparams.get('dictionary') or (self.spinner_params.get('dictionary') if self.spinner_params else 'NWL')
+                    use_aw_val = fparams.get('use_added_words') or (self.spinner_params.get('use_added_words') if self.spinner_params else False)
+                    if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
+                        dict_val = f"{dict_val} + AW"
+                    
+                    wc_label = target_range
+
+                    new_sp = {
+                        'dictionary': dict_val,
+                        'difficulty': fparams.get('difficulty') or (self.spinner_params.get('difficulty') if self.spinner_params else 'Medium'),
+                        'word_count_range': wc_label,
+                        'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
+                        'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
+                        'bonus_word_length': len(fbw) if fbw else (fparams.get('bonus_word_len') or 6),
+                        'use_added_words': use_aw_val,
+                        'board_dimensions': self.board_dimensions,
+                        'time_limit': self.time_limit,
+                        'generated_at': now,
+                        'uniqueness': fr
+                    }
+                    self.board = fb
+                    calc_min = fparams.get('min_word_length') if (isinstance(fparams, dict) and fparams.get('min_word_length') is not None) else 3
+                    self.all_words_paths = {w: p for w, p in fp.items() if len(w) >= int(calc_min)}
+                    self.all_words = set(self.all_words_paths.keys())
+                    self.total_words_count = len(self.all_words)
+                    self.initial_total_words = self.total_words_count
+
+                    new_sp = SpinnerSet.sanitize_params(new_sp, self.board_dimensions, self.time_limit >= 7200)
+
+                    if not getattr(self, '_spinner_params_locked', False):
+                        self.spinner_params = new_sp
+                        self.next_spinner_params = new_sp
+                        self.next_round_spinner_params = new_sp
+                        self.spinner_params_generated = True
+                        self.spinner_params_revealed = True
+                        self.was_revealed_this_intermission = True
+                        self._spinner_params_locked = True  # LOCK: no further spinner_params overwrites until round resets
+                        import copy
+                        self.frozen_revealed_params = copy.deepcopy(new_sp)
+                        self._reveal_sync_complete = True
+                    
+                    # Set up active round variables
+                    self.current_board_format = new_sp['board_format']
+                    self.current_word_count_range = wc_label
+                    self.current_difficulty = new_sp['difficulty']
+                    self.current_dictionary = new_sp['dictionary']
+                    self.current_min_length = new_sp['min_word_length']
+                    self.use_added_words = new_sp['use_added_words']
+                    self.current_uniqueness = fr
+                    bw_l = new_sp.get('bonus_word_length', 8) if isinstance(new_sp, dict) else 8
+                    if not fbw or str(fbw).strip().upper() in ['', 'NONE'] or str(fbw).upper().endswith('ING') or str(fbw).upper().endswith('INGS'):
+                        candidates = [w for w in (self.all_words or []) if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                        if not candidates:
+                            candidates = [w for w in (self.all_words or []) if len(w) >= 5 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                        if candidates:
+                            import random
+                            fbw = random.choice(list(candidates)).upper()
+                        else:
+                            fbw = self._get_bonus_word(
+                                length=bw_l,
+                                dictionary=self.current_dictionary,
+                                alternating=('checkerboard' in str(self.current_board_format).lower())
+                            )
+                    self.bonus_word = str(fbw or '').upper().strip()
+                    self.bonus_cell = fc
+                    self.solving_complete = True
+                    
+                    # Fast-score length-based scores instantly to eliminate HTTP request blocking latency!
+                    fast_scores = {}
+                    is_valued = ('valued' in str(self.current_board_format).lower())
+                    from scoring import get_valued_word_score
+                    for w in self.all_words:
+                        if is_valued:
+                            s = get_valued_word_score(w)
+                        else:
+                            length = len(w)
+                            s = 1 if length <= 4 else (2 if length == 5 else (3 if length == 6 else (5 if length == 7 else 11)))
+                        fast_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
+                    self.solved_words_with_scores = fast_scores
+                    self.csw_only_words = getattr(self, 'next_round_csw_only_words', [])
+                    self.added_words = getattr(self, 'next_round_added_words', [])
+                    self.update_counts_by_len()
+
+                    # Set timestamps and transition state IMMEDIATELY (0ms latency!)
+                    self.state = 'active'
+                    self.round_start_time = now
+                    self.intermission_start_time = 0
+                    self.starting_round = False
+                    self._initial_board_delivered = True
+                    self._transition_spinner_launched = False
+                finally:
+                    self._wakeup_in_progress = False
 
                 # Refine detailed scoring and dictionary categorization asynchronously in background daemon thread
                 def refine_active_scoring_async():
@@ -2213,7 +2222,7 @@ class GameRoom:
                             'performance_efficiency': getattr(p, 'performance_efficiency', 0),
                             'joined_mid_round': getattr(p, 'joined_mid_round', False)
                         })
-                self.last_round_human_participants = len([p for p in all_candidate_players if not getattr(p, 'is_ai', False)])
+                self.last_round_human_participants = len([p for p in intermission_player_snapshots if not getattr(p, 'is_ai', False)])
                 
                 # Asynchronous Post-Round Processing
                 def process_results_async():
@@ -2404,8 +2413,13 @@ class GameRoom:
                 # do not force them to wait through a 60s intermission for an empty round! Fast-forward intermission immediately.
                 humans = [p for p in self.players if not getattr(p, 'is_ai', False)]
                 if len(humans) > 0 and getattr(self, 'last_round_human_participants', 0) == 0:
+                    ff_init = getattr(self, '_fast_forwarding_init_time', 0)
+                    if getattr(self, '_fast_forwarding_intermission', False) and (now - ff_init > 4.0):
+                        self._fast_forwarding_intermission = False
+
                     if not getattr(self, '_fast_forwarding_intermission', False):
                         self._fast_forwarding_intermission = True
+                        self._fast_forwarding_init_time = now
                         print(f"[GameRoom] Fast-forwarding empty intermission for room {self.room_id}: human joined empty round review.")
                         self.intermission_start_time = now - 65.0
                         global _room_manager_instance

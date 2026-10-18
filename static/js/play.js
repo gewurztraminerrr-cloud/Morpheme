@@ -1353,7 +1353,14 @@ function setTimerWaitingState(isWaiting) {
             timerLabel.textContent = expectedLabel;
         }
         if (timerVal && (timerVal.innerHTML.includes('WAIT') || timerVal.textContent.includes('WAIT') || timerVal.textContent === '...')) {
-            timerVal.textContent = window._lastTimerDisplay || "0:00";
+            let fallbackDisp = window._lastTimerDisplay;
+            if (!fallbackDisp && window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 0) {
+                const sRem = Math.ceil(window.lastGameState.time_remaining);
+                const m = Math.floor(sRem / 60);
+                const s = sRem % 60;
+                fallbackDisp = `${m}:${s.toString().padStart(2, '0')}`;
+            }
+            timerVal.textContent = fallbackDisp || "0:00";
             timerVal.style.fontVariantNumeric = 'tabular-nums';
         }
     }
@@ -1468,7 +1475,6 @@ function handleResumeWakeUp(source) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
-        window._lastTimerDisplay = null;
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         const timerLabel = document.querySelector('.timer-label');
         if (timerLabel) {
@@ -1746,6 +1752,7 @@ async function _doUpdateGameState(incomingState = null) {
         // Sync and tick local timer immediately upon receiving authoritative state from server.
         // Guarantees zero-latency countdown resumption and clears any lingering "WAIT..." state
         // before heavy DOM manipulation (board, players, chat, scores) takes place.
+        window._lastLocalTimerTickTime = Date.now();
         syncTimerWithServer(state, tBefore, tAfter);
         updateLocalTimer();
 
@@ -5764,7 +5771,7 @@ function updateLocalTimer() {
     const tickTime = Date.now();
     if (window._lastLocalTimerTickTime) {
         const gap = tickTime - window._lastLocalTimerTickTime;
-        if (gap > 2200) {
+        if (gap > 3500) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant wake-up update.`);
             window._lastLocalTimerTickTime = tickTime;
             handleResumeWakeUp('thread_thaw');

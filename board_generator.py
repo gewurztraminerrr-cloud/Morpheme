@@ -252,6 +252,9 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
     elif dimensions:
         dimensions = str(dimensions)
 
+    floor_len = 4 if '4x6' in dimensions else (5 if '5x7' in dimensions else (6 if ('6x8' in dimensions or '3x3x3' in dimensions) else 3))
+    min_word_length = max(floor_len, int(min_word_length or floor_len))
+
     conn = None
     try:
         conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
@@ -326,6 +329,9 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             dimensions = f"{dimensions[0]}x{dimensions[1]}"
     elif dimensions:
         dimensions = str(dimensions)
+
+    floor_len = 4 if '4x6' in dimensions else (5 if '5x7' in dimensions else (6 if ('6x8' in dimensions or '3x3x3' in dimensions) else 3))
+    min_word_length = max(floor_len, int(min_word_length or floor_len))
     """
     Find and pop a board from pregenerated_boards that strictly matches:
     - dimensions
