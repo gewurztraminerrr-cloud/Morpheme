@@ -1739,6 +1739,7 @@ async function _doUpdateGameState(incomingState = null) {
         }
 
         if (state.state === 'active' || (state.state === 'intermission' && state.time_remaining > 0)) {
+            window._rapidTransitionPolling = false;
             setTimerWaitingState(false);
             if (window._transitionPollTimer && (state.time_remaining > 0 || state.state === 'active')) {
                 clearTimeout(window._transitionPollTimer);
@@ -5711,13 +5712,22 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
             if (rem > limit) rem = limit;
 
             // If intermission countdown has reached 0 on client while server is preparing next round
-            // ONLY set waiting state if server also confirms 0 or no time remaining!
+            // Keep 0:00 display and start grace window instead of immediately flashing WAIT...
             if (rem <= 0 && (!state.time_remaining || state.time_remaining <= 0.5)) {
                 const timerLabel = document.querySelector('.timer-label');
                 if (timerLabel && timerLabel.textContent !== "Next Round:") {
                     timerLabel.textContent = "Next Round:";
                 }
-                setTimerWaitingState(true);
+                if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+                if (cachedTimerValueEl) {
+                    cachedTimerValueEl.textContent = '0:00';
+                    cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+                }
+                if (!window._waitGraceTimeout) {
+                    window._waitGraceTimeout = setTimeout(() => {
+                        setTimerWaitingState(true);
+                    }, 400);
+                }
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
@@ -5882,22 +5892,23 @@ function updateLocalTimer() {
         }
     }
 
-    if (remaining > 1.5) {
+    if (remaining > 2.0) {
         window._preTransitionFetched = false;
     }
 
     // Proactive transition pre-fetch: when countdown is almost complete, initiate the transition poll
     // so the server returns the new state BEFORE the local countdown reaches 0:00!
     const activeCurrentState = (window.lastGameState && window.lastGameState.state) || 'active';
-    const preFetchLead = (activeCurrentState === 'intermission') ? 0.9 : 0.4;
+    const preFetchLead = (activeCurrentState === 'intermission') ? 1.2 : 0.5;
     if (remaining <= preFetchLead && remaining > 0 && !window._preTransitionFetched && !document.hidden) {
         window._preTransitionFetched = true;
+        window._rapidTransitionPolling = true;
         updateGameState();
     }
 
     if (remaining <= 0 && timerInterval) {
-        // If the authoritative game state still has valid time remaining (> 1.0s), re-anchor instead of halting on WAIT...
-        if (window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 1.0) {
+        // If the authoritative game state still has valid time remaining (> 0.05s), re-anchor instead of halting on WAIT...
+        if (window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 0.05) {
             localEndTime = (Date.now() / 1000) + window.lastGameState.time_remaining;
             return;
         }
@@ -5927,8 +5938,17 @@ function updateLocalTimer() {
             return;
         }
         
-        // Instant client-side transition feedback!
-        setTimerWaitingState(true);
+        // Instant client-side transition feedback: Keep 0:00 and delay WAIT... with 400ms grace window
+        if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+        if (cachedTimerValueEl) {
+            cachedTimerValueEl.textContent = '0:00';
+            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+        }
+        if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
+        window._waitGraceTimeout = setTimeout(() => {
+            setTimerWaitingState(true);
+        }, 400);
+
         if (currentState === 'active') {
             const wordInput = document.getElementById('word-input');
             if (wordInput) {
@@ -5949,6 +5969,7 @@ function updateLocalTimer() {
         }
 
         // Force immediate single-flight transition fetch
+        window._rapidTransitionPolling = true;
         isFetchingState = false;
         lastStateFetchTime = 0;
         updateGameState();
@@ -5967,24 +5988,29 @@ function updateLocalTimer() {
             const s = window.lastGameState;
             if (s && (s.state === expectedNextState || s.current_round !== startRound)) {
                 window._transitionPollTimer = null;
+                window._rapidTransitionPolling = false;
                 return;
             }
-            if (transitionAttempts >= 20) { // 2.5s max safety
+            if (transitionAttempts >= 25) { // 2.5s max safety
                 window._transitionPollTimer = null;
+                window._rapidTransitionPolling = false;
                 return;
             }
+            isFetchingState = false;
+            lastStateFetchTime = 0;
             updateGameState().finally(() => {
                 const s2 = window.lastGameState;
                 if (s2 && (s2.state === expectedNextState || s2.current_round !== startRound)) {
                     window._transitionPollTimer = null;
+                    window._rapidTransitionPolling = false;
                     return;
                 }
                 if (window._transitionPollTimer) {
-                    window._transitionPollTimer = setTimeout(pollTransitionNext, 120);
+                    window._transitionPollTimer = setTimeout(pollTransitionNext, 80);
                 }
             });
         }
-        window._transitionPollTimer = setTimeout(pollTransitionNext, 120);
+        window._transitionPollTimer = setTimeout(pollTransitionNext, 80);
     }
 
     // -- Update Triple Format Music State --

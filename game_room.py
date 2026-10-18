@@ -1571,7 +1571,7 @@ class GameRoom:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
             intermission_limit = 2 if self.time_limit >= 7200 else 60
-            if elapsed >= intermission_limit - 0.8:
+            if elapsed >= intermission_limit - 1.2:
                 return 'start'
             
         # 2. Parameter Reveal (15s into intermission)
@@ -2021,7 +2021,7 @@ class GameRoom:
                         should_end = True
                 else:
                     elapsed = now - self.round_start_time
-                    if elapsed >= self.time_limit - 0.2:
+                    if elapsed >= self.time_limit - 0.4:
                         # Ensure we don't end round 0.5s after start due to uninitialized time
                         if self.round_start_time > 0:
                             should_end = True
