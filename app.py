@@ -6578,9 +6578,11 @@ def get_room_state(room_id):
                 if room.state == 'intermission':
                     room_manager.force_instant_board(room_id)
             elif not getattr(room, 'starting_round', False):
-                import threading
-                print(f"[get_room_state] TR=0 for {room_id} — launching start_next_round async")
-                threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
+                print(f"[get_room_state] TR=0 for {room_id} — running start_next_round synchronously")
+                try:
+                    room_manager.start_next_round(room.room_id)
+                except Exception as _snr_err:
+                    print(f"[get_room_state] Error running start_next_round: {_snr_err}")
 
         # 2. On-demand database backfill for previous day's board/history
         if room.time_limit >= 7200:
@@ -6837,8 +6839,10 @@ def get_room_state(room_id):
                     threading.Thread(target=room_manager.start_board_search, args=(room_id,), daemon=True).start()
         elif milestone == 'start':
             if not getattr(room, 'starting_round', False):
-                import threading
-                threading.Thread(target=room_manager.start_next_round, args=(room_id,), daemon=True).start()
+                try:
+                    room_manager.start_next_round(room_id)
+                except Exception as _snr_err:
+                    print(f"[app.py] Error in synchronous start_next_round for room {room_id}: {_snr_err}")
         _hb_t4 = time.time()
 
         ms_caus = (_hb_t1 - _hb_t0) * 1000

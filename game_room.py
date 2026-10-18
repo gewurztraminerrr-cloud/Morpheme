@@ -1571,7 +1571,7 @@ class GameRoom:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
             intermission_limit = 2 if self.time_limit >= 7200 else 60
-            if elapsed >= intermission_limit - 0.5:
+            if elapsed >= intermission_limit - 0.8:
                 return 'start'
             
         # 2. Parameter Reveal (15s into intermission)

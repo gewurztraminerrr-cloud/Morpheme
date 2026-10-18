@@ -1308,9 +1308,9 @@ function refreshPollInterval() {
     // Speed up polling significantly when transitioning or when intermission is about to end
     if (!document.hidden) {
         if (window._rapidTransitionPolling) {
-             delay = 100; // High-frequency polling at 0:00 transition
+             delay = 80; // High-frequency polling at 0:00 transition
         } else if (window.lastGameState && (window.lastGameState.state === 'waiting' || (window.lastGameState.state === 'intermission' && window.lastGameState.time_remaining <= 2.5))) {
-             delay = 300; // Poll rapidly when waiting or intermission is at 0 to catch instant wake-up
+             delay = 150; // Poll rapidly when waiting or intermission is near 0 to catch instant wake-up
         }
     }
 
@@ -1625,9 +1625,10 @@ async function _doUpdateGameState(incomingState = null) {
         return;
     }
 
-    // Micro-debounce to prevent duplicate parallel fetches within 150ms (common on simultaneous focus/visibility events)
+    // Micro-debounce to prevent duplicate parallel fetches
     const now = Date.now();
-    if (!incomingState && now - lastStateFetchTime < 150) {
+    const minDebounce = window._rapidTransitionPolling ? 40 : 150;
+    if (!incomingState && now - lastStateFetchTime < minDebounce) {
         console.log('[play.js] updateGameState: Suppressing duplicate concurrent state fetch.');
         return;
     }
@@ -1744,6 +1745,10 @@ async function _doUpdateGameState(incomingState = null) {
             if (window._transitionPollTimer && (state.time_remaining > 0 || state.state === 'active')) {
                 clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
+            }
+            if (window._rapidTransitionPolling) {
+                window._rapidTransitionPolling = false;
+                refreshPollInterval();
             }
         }
 
@@ -5936,11 +5941,13 @@ function updateLocalTimer() {
         }
 
         // Force immediate reset of fetching guard to ensure 0:00 transition fetch is NEVER suppressed!
+        window._rapidTransitionPolling = true;
+        refreshPollInterval();
         isFetchingState = false;
         lastStateFetchTime = 0;
         updateGameState();
 
-        // Rapid 300ms polling loop until server state transition is confirmed
+        // Rapid 80ms polling loop until server state transition is confirmed
         let transitionAttempts = 0;
         const startRound = (window.lastGameState && window.lastGameState.current_round) || 0;
         const expectedNextState = (currentState === 'active') ? 'intermission' : 'active';
@@ -5951,17 +5958,21 @@ function updateLocalTimer() {
             if (s && (s.state === expectedNextState || s.current_round !== startRound)) {
                 clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
+                window._rapidTransitionPolling = false;
+                refreshPollInterval();
                 return;
             }
-            if (transitionAttempts >= 15) { // 4.5 seconds max safety timeout
+            if (transitionAttempts >= 25) { // 2.0 seconds max safety timeout
                 clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
+                window._rapidTransitionPolling = false;
+                refreshPollInterval();
                 return;
             }
             isFetchingState = false;
             lastStateFetchTime = 0;
             updateGameState();
-        }, 300);
+        }, 80);
     }
 
     // -- Update Triple Format Music State --
