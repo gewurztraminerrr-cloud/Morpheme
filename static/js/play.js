@@ -797,6 +797,7 @@ async function ejectToLobby(reason = "inactivity") {
     window._lastGameStateFetchedTime = 0;
     lastGameInteractionTime = Date.now();
     window._wasEverInRoster = false;
+    timerFormatIs24h = false;
     window._emptyPlayersPollCount = 0;
     try {
         localStorage.removeItem('last_joined_room');
@@ -1553,6 +1554,7 @@ function stopPolling() {
         clearInterval(window.rotatingLettersInterval);
         window.rotatingLettersInterval = null;
     }
+    timerFormatIs24h = false;
 }
 
 // Dedicated helper to fetch room state with timeout, allowing rapid recovery from dead socket connections
@@ -1643,6 +1645,10 @@ async function _doUpdateGameState(incomingState = null) {
         let tBefore = null;
         let tAfter = null;
         if (incomingState) {
+            if (incomingState.room_id && incomingState.room_id !== roomId) {
+                console.log(`[play.js] updateGameState: Discarding incomingState for wrong room (${incomingState.room_id} vs current ${roomId})`);
+                return;
+            }
             state = incomingState;
             window._lastGameStateFetchedTime = Date.now();
         } else {
@@ -5666,9 +5672,7 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     }
 
     // SPECIAL CASE: 24h Rooms align to authoritative server midnight boundary
-    if (state.time_limit >= 7200) {
-        timerFormatIs24h = true;
-    }
+    timerFormatIs24h = !!(state && ((state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400'))) || (state.game_type === '24h')));
 
     // Handle waiting state immediately
     if (state.state === 'waiting') {
@@ -5816,9 +5820,11 @@ function updateLocalTimer() {
 
     const seconds = Math.ceil(remaining);
 
-    // Format determination: Stick with it once detected
-    if (window.lastGameState && window.lastGameState.time_limit >= 3600) {
-        timerFormatIs24h = true;
+    // Format determination: Synchronized with current room's authoritative state
+    if (window.lastGameState) {
+        timerFormatIs24h = !!((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h'));
+    } else {
+        timerFormatIs24h = false;
     }
 
     let display;
@@ -5901,7 +5907,7 @@ function updateLocalTimer() {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
         
-        const is24hRoom = (window.lastGameState && (window.lastGameState.time_limit >= 7200 || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))))) || timerFormatIs24h;
+        const is24hRoom = !!(window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h')));
         if (is24hRoom && window._wasEverInRoster) {
             console.warn('[play.js] 24H room local countdown reached 0:00 (12:00 AM midnight). Ejecting to lobby with daily reset notice.');
             ejectToLobby("daily_reset");
@@ -9521,6 +9527,8 @@ async function leaveCurrentRoom() {
     // 1. Clear local state and stop polling immediately (synchronous)
     stopPolling();
     window.currentRoomId = null;
+    timerFormatIs24h = false;
+    window._wasEverInRoster = false;
     localStorage.removeItem('last_joined_room');
     window._localSubmittedWords = new Set();
     window._localSubmittedWordsList = [];
