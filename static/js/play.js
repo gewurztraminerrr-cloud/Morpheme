@@ -1479,20 +1479,7 @@ function handleResumeWakeUp(source) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
         }
-        const timeAway = nowSec - (window._lastGameStateFetchedTime || 0);
-        // If away briefly (<30s), show 0:00. If away for minutes, let updateGameState() set the fresh state immediately
-        if (timeAway < 30) {
-            const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-            const timerLabel = document.querySelector('.timer-label');
-            if (timerLabel) {
-                timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
-            }
-            if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
-            if (cachedTimerValueEl) {
-                cachedTimerValueEl.textContent = '0:00';
-                cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
-            }
-        }
+        setTimerWaitingState(true);
     }
 
     // Flag wake-up fetch to enable fast socket-thaw detection
@@ -5724,32 +5711,22 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         } else if (state.state === 'intermission') {
             const limit = (state.time_limit >= 7200) ? 5 : 60;
             if (rem > limit) rem = limit;
-
-            // If intermission countdown has reached 0 on client while server is preparing next round
-            // Keep 0:00 display and start grace window instead of immediately flashing WAIT...
-            if (rem <= 0 && (!state.time_remaining || state.time_remaining <= 0.5)) {
-                const timerLabel = document.querySelector('.timer-label');
-                if (timerLabel && timerLabel.textContent !== "Next Round:") {
-                    timerLabel.textContent = "Next Round:";
-                }
-                if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
-                if (cachedTimerValueEl) {
-                    cachedTimerValueEl.textContent = '0:00';
-                    cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
-                }
-                if (!window._waitGraceTimeout) {
-                    window._waitGraceTimeout = setTimeout(() => {
-                        setTimerWaitingState(true);
-                    }, 400);
-                }
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-                return;
-            }
         }
+
         const secs = Math.ceil(rem);
+        if (secs <= 0 || (typeof state.time_remaining === 'number' && state.time_remaining <= 0)) {
+            if (window._waitGraceTimeout) {
+                clearTimeout(window._waitGraceTimeout);
+                window._waitGraceTimeout = null;
+            }
+            setTimerWaitingState(true);
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            return;
+        }
+
         let disp;
         if (timerFormatIs24h) {
             const h = Math.floor(secs / 3600);
@@ -5843,48 +5820,51 @@ function updateLocalTimer() {
     }
 
     const seconds = Math.ceil(remaining);
-
-    // Format determination: Synchronized with current room's authoritative state
-    if (window.lastGameState) {
-        timerFormatIs24h = !!((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h'));
+    if (seconds <= 0 || remaining <= 0) {
+        setTimerWaitingState(true);
     } else {
-        timerFormatIs24h = false;
-    }
-
-    let display;
-    if (timerFormatIs24h) {
-        const hours = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        // Use H:MM:SS format as requested (no leading zero on hours if < 10)
-        display = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    } else {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        display = `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    window._lastTimerDisplay = display;
-
-    if (cachedTimerValueEl) {
-        if (cachedTimerValueEl.textContent !== display) {
-            cachedTimerValueEl.textContent = display;
-            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
-        }
-        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        const timerLabel = document.querySelector('.timer-label');
-        if (timerLabel) {
-            const expectedLabel = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
-            if (timerLabel.textContent !== expectedLabel) {
-                timerLabel.textContent = expectedLabel;
-            }
-        }
-        setTimerWaitingState(false);
-
-        // Low time visual for text (User Request)
-        if (remaining <= 10 && remaining > 0) {
-            cachedTimerValueEl.style.color = '#ef4444';
+        // Format determination: Synchronized with current room's authoritative state
+        if (window.lastGameState) {
+            timerFormatIs24h = !!((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h'));
         } else {
-            cachedTimerValueEl.style.color = '';
+            timerFormatIs24h = false;
+        }
+
+        let display;
+        if (timerFormatIs24h) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            // Use H:MM:SS format as requested (no leading zero on hours if < 10)
+            display = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        } else {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            display = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        window._lastTimerDisplay = display;
+
+        if (cachedTimerValueEl) {
+            if (cachedTimerValueEl.textContent !== display) {
+                cachedTimerValueEl.textContent = display;
+                cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+            }
+            const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+            const timerLabel = document.querySelector('.timer-label');
+            if (timerLabel) {
+                const expectedLabel = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
+                if (timerLabel.textContent !== expectedLabel) {
+                    timerLabel.textContent = expectedLabel;
+                }
+            }
+            setTimerWaitingState(false);
+
+            // Low time visual for text (User Request)
+            if (remaining <= 10 && remaining > 0) {
+                cachedTimerValueEl.style.color = '#ef4444';
+            } else {
+                cachedTimerValueEl.style.color = '';
+            }
         }
     }
 
@@ -5952,16 +5932,11 @@ function updateLocalTimer() {
             return;
         }
         
-        // Instant client-side transition feedback: Keep 0:00 and delay WAIT... with 400ms grace window
-        if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
-        if (cachedTimerValueEl) {
-            cachedTimerValueEl.textContent = '0:00';
-            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
         }
-        if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
-        window._waitGraceTimeout = setTimeout(() => {
-            setTimerWaitingState(true);
-        }, 1200);
+        setTimerWaitingState(true);
 
         if (currentState === 'active') {
             const wordInput = document.getElementById('word-input');
