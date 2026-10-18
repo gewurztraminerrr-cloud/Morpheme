@@ -1336,8 +1336,16 @@ function setTimerWaitingState(isWaiting) {
         }
         if (timerLabel) timerLabel.textContent = "";
     } else {
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
+        }
         if (timerLabel && timerLabel.textContent !== "Time:") {
             timerLabel.textContent = "Time:";
+        }
+        if (timerVal && (timerVal.innerHTML.includes('WAIT') || timerVal.textContent.includes('WAIT'))) {
+            timerVal.textContent = window._lastTimerDisplay || "0:00";
+            timerVal.style.fontVariantNumeric = 'tabular-nums';
         }
     }
 }
@@ -1434,13 +1442,13 @@ document.addEventListener('visibilitychange', () => {
             }
             updateLocalTimer();
         } else {
-            // Graceful fallback: only show WAIT... if state fetch takes longer than 300ms
+            // Graceful fallback: only show WAIT... if state fetch takes longer than 600ms
             if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = setTimeout(() => {
                 if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
                     setTimerWaitingState(true);
                 }
-            }, 300);
+            }, 600);
         }
 
         // Fetch state immediately without artificial delays
@@ -1548,13 +1556,13 @@ window.addEventListener('focus', () => {
             }
             updateLocalTimer();
         } else {
-            // Graceful fallback: only show WAIT... if state fetch takes longer than 300ms
+            // Graceful fallback: only show WAIT... if state fetch takes longer than 600ms
             if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = setTimeout(() => {
                 if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
                     setTimerWaitingState(true);
                 }
-            }, 300);
+            }, 600);
         }
 
         // Fetch state immediately without artificial delays
@@ -1758,6 +1766,10 @@ async function updateGameState(incomingState = null) {
 
         if (state.state === 'active' || state.state === 'intermission') {
             setTimerWaitingState(false);
+            if (window._transitionPollTimer && (state.time_remaining > 0 || state.state === 'active')) {
+                clearInterval(window._transitionPollTimer);
+                window._transitionPollTimer = null;
+            }
         }
 
         // Store raw state BEFORE transposition so orientation changes can re-evaluate correctly.
@@ -5629,6 +5641,10 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         }
     }
 
+    if (stableServerTimeOffset === null || isNaN(stableServerTimeOffset)) {
+        stableServerTimeOffset = (serverTime ? serverTime - clientTime : 0);
+    }
+
     let endTime = 0;
     if (state.state === 'active') {
         endTime = state.round_end_time || (state.server_time + state.time_remaining);
@@ -5638,7 +5654,7 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         endTime = state.server_time + (state.time_remaining || 0);
     }
 
-    if (endTime && stableServerTimeOffset !== null) {
+    if (endTime) {
         localEndTime = endTime - stableServerTimeOffset;
     }
 
@@ -5647,9 +5663,41 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         timerFormatIs24h = true;
     }
 
-    if (!timerInterval && localEndTime > 0 && !document.hidden) {
+    // Synchronously update the timer display right now if active or intermission
+    if (state.state === 'active' || state.state === 'intermission') {
+        const nowSec = Date.now() / 1000;
+        let rem = Math.max(0, localEndTime - nowSec);
+        if (state.state === 'active') {
+            const limit = state.time_limit || 45;
+            if (rem > limit) rem = limit;
+        } else if (state.state === 'intermission') {
+            const limit = (state.time_limit >= 7200) ? 5 : 60;
+            if (rem > limit) rem = limit;
+        }
+        const secs = Math.ceil(rem);
+        let disp;
+        if (timerFormatIs24h) {
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            disp = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        } else {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            disp = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        window._lastTimerDisplay = disp;
+        if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+        if (cachedTimerValueEl) {
+            cachedTimerValueEl.textContent = disp;
+            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+        }
+        setTimerWaitingState(false);
+    }
+
+    if (!timerInterval && localEndTime > (Date.now() / 1000) && !document.hidden) {
         timerInterval = setInterval(updateLocalTimer, 100); // 100ms for near-instant 0:00 detection
-    } else if ((localEndTime <= 0 || document.hidden) && timerInterval) {
+    } else if ((localEndTime <= (Date.now() / 1000) || document.hidden) && timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
@@ -5671,14 +5719,16 @@ function updateLocalTimer() {
         const gap = tickTime - window._lastLocalTimerTickTime;
         if (gap > 2200) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant wake-up update.`);
+            window._lastLocalTimerTickTime = tickTime;
             if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = setTimeout(() => {
                 if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
                     setTimerWaitingState(true);
                 }
-            }, 300);
+            }, 600);
             updateGameState();
             refreshPollInterval();
+            return;
         }
     }
     window._lastLocalTimerTickTime = tickTime;
@@ -5736,6 +5786,7 @@ function updateLocalTimer() {
         const secs = seconds % 60;
         display = `${mins}:${secs.toString().padStart(2, '0')}`;
     }
+    window._lastTimerDisplay = display;
 
     if (cachedTimerValueEl) {
         if (cachedTimerValueEl.textContent !== display) {
@@ -5771,6 +5822,13 @@ function updateLocalTimer() {
     }
 
     if (remaining <= 0 && timerInterval) {
+        // If state is stale (> 4s since fetch, common on mobile background wake-up), do not prematurely declare 0:00 transition
+        if (window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime > 4000)) {
+            console.log('[play.js] updateLocalTimer: localEndTime reached 0:00 but state is stale (>4s). Requesting fresh state update before transition.');
+            updateGameState();
+            return;
+        }
+
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');

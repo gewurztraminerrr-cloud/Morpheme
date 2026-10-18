@@ -1469,13 +1469,8 @@ class GameRoom:
         if self.state == 'waiting':
             humans = [p for p in self.players if not getattr(p, 'is_ai', False)]
             if len(humans) > 0:
-                print(f"[check_and_update_state] Unpausing waiting room {self.room_id} because {len(humans)} human player(s) present.")
-                with self._state_lock:
-                    self.state = 'intermission'
-                    self.intermission_start_time = now - 60  # Force intermission to look expired
-                    self.spinner_params_generated = False
-                    self.board_search_started = False
-                return 'start'
+                print(f"[get_next_round_milestone] Unpausing waiting room {self.room_id} cleanly via check_and_update_state().")
+                self.check_and_update_state()
             return None
         
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
@@ -6528,9 +6523,8 @@ class RoomManager:
                 # Board already exists — this 'waiting' state was a false-positive from the
                 # heartbeat's empty-room pause. Abort to prevent board re-roll.
                 print(f"[RoomManager] Aborting start_next_round for {room_id}: state='waiting' but board already active (heartbeat false-positive).")
-                return False
-            room.state = 'intermission'  # Canonical path: waiting → intermission → active
-            room.intermission_start_time = time.time() - 60  # Force it to look expired
+            # Allow direct transition: waiting -> active
+            pass
             
         # 0. ATOMIC GUARD: Ensure only ONE thread/request triggers the round start transition
         # This prevents stacking up identical wait loops on a single slow-loading board.
