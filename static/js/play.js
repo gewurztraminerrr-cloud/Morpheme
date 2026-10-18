@@ -1969,8 +1969,12 @@ async function _doUpdateGameState(incomingState = null) {
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
         }
 
-        // INTERMISSION STATE LOGIC
+        // INTERMISSION & WINNER ANNOUNCEMENT LOGIC
+        const defContent = document.getElementById('definition-content');
         const defPanel = document.querySelector('.definitions-panel');
+        const defHeader = document.getElementById('definition-header');
+        const isViewingDefinition = (window.userViewingDefinitionIntermission === true || window.wordPressedDuringIntermission === true);
+        const isTimerExpired = defPanel ? defPanel.classList.contains('timer-flash') : false;
         let hasActualWinner = false;
 
         if (state.state === 'intermission' && state.winners_history) {
@@ -1981,6 +1985,42 @@ async function _doUpdateGameState(incomingState = null) {
 
             if (defPanel && defPanel.classList.contains('winner-flash')) {
                 defPanel.classList.remove('winner-flash');
+            }
+
+            if (defContent && !isViewingDefinition && !isTimerExpired) {
+                if (hasActualWinner) {
+                    const winnerTextIdentifier = `WINNER_R${latest.round}`;
+                    if (!defContent.innerHTML.includes(winnerTextIdentifier)) {
+                        const winnersList = latest.winners.map(w => w.username).join(' & ');
+                        const bonusText = (state.bonus_word && String(state.bonus_word).toUpperCase() !== 'NONE') ? state.bonus_word : '';
+                        const bonusHtml = bonusText ? ` <span style="opacity: 0.5;">•</span> Bonus: <span style="color: #ffd700; font-weight: 700;">${bonusText.toUpperCase()}</span>` : '';
+
+                        defContent.innerHTML = `
+                            <div id="${winnerTextIdentifier}" class="intermission-winner-card">
+                                <div class="winner-title">
+                                    🏆 ${winnersList.toUpperCase()}
+                                </div>
+                                <div class="winner-subtext">
+                                    Congratulations! 1st Place with ${latest.score || 0} pts${bonusHtml}
+                                </div>
+                                <div class="intermission-divider"></div>
+                                <p class="placeholder intermission-prompt">Select a word to see its definition</p>
+                            </div>
+                        `;
+                        if (defHeader) {
+                            defHeader.classList.add('hidden');
+                            defHeader.style.display = 'none';
+                        }
+                    }
+                } else {
+                    if (!defContent.innerHTML.includes('placeholder') || defContent.innerHTML.includes('intermission-winner-card')) {
+                        defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                        if (defHeader) {
+                            defHeader.classList.add('hidden');
+                            defHeader.style.display = 'none';
+                        }
+                    }
+                }
             }
         }
 

@@ -653,6 +653,55 @@
     word-break: break-word;
 }
 
+.intermission-winner-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 2px 0;
+}
+
+.intermission-winner-card .winner-title {
+    font-size: 1.05rem;
+    font-weight: 850;
+    color: #ffd700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+body.theme-white .intermission-winner-card .winner-title,
+body[class*="theme-light-"] .intermission-winner-card .winner-title {
+    color: #b8860b;
+}
+
+.intermission-winner-card .winner-subtext {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    opacity: 0.9;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+.intermission-winner-card .intermission-divider {
+    width: 100%;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    margin: 6px 0;
+}
+
+.intermission-winner-card .intermission-prompt {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.75;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
 .definition-word {
     font-weight: 800;
     color: var(--accent-color);
