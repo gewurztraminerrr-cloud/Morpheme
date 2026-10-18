@@ -1475,21 +1475,23 @@ function handleResumeWakeUp(source) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
-        const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        const timerLabel = document.querySelector('.timer-label');
-        if (timerLabel) {
-            timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
-        }
-        // Do NOT flash WAIT... on wake-up!
-        // Show 0:00 or last display while the wake-up fetch resolves in the background.
-        if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
-        if (cachedTimerValueEl) {
-            cachedTimerValueEl.textContent = '0:00';
-            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
-        }
         if (window._waitGraceTimeout) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
+        }
+        const timeAway = nowSec - (window._lastGameStateFetchedTime || 0);
+        // If away briefly (<30s), show 0:00. If away for minutes, let updateGameState() set the fresh state immediately
+        if (timeAway < 30) {
+            const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
+            const timerLabel = document.querySelector('.timer-label');
+            if (timerLabel) {
+                timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
+            }
+            if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+            if (cachedTimerValueEl) {
+                cachedTimerValueEl.textContent = '0:00';
+                cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+            }
         }
     }
 

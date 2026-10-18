@@ -1547,14 +1547,35 @@ class GameRoom:
                                 min_word_length=_min_len,
                                 difficulty=_diff,
                                 is_emergency=True,
+                                timeout=5.0,
                                 use_added_words=_use_aw
                             )
                             if gen_res:
                                 g_b, g_w, g_c, g_f, g_p, g_r, g_bw = gen_res[:7]
                                 g_params = gen_res[8] if len(gen_res) > 8 else (_room_ref.spinner_params or {})
                                 _stage_board((g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params))
+                            elif not getattr(_room_ref, 'next_round_board', None):
+                                print(f"[Watchdog] Emergency board gen returned empty. Staging emergency fallback board.")
+                                fb = get_emergency_fallback_board(_dims, _fmt, _room_ref.time_limit, dictionary=_dict, use_added_words=_use_aw, target_range=_range, min_word_length=_min_len, difficulty=_diff)
+                                if fb:
+                                    if len(fb) >= 9:
+                                        f_b, f_w, f_c, f_f, f_p, f_r, f_bw, _, f_params = fb
+                                    else:
+                                        f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params = fb
+                                    _stage_board((f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params))
                         except Exception as ex_wd:
                             print(f"[Watchdog] Emergency generate_board error: {ex_wd}")
+                            if not getattr(_room_ref, 'next_round_board', None):
+                                try:
+                                    fb = get_emergency_fallback_board(_dims, _fmt, _room_ref.time_limit, dictionary=_dict, use_added_words=_use_aw, target_range=_range, min_word_length=_min_len, difficulty=_diff)
+                                    if fb:
+                                        if len(fb) >= 9:
+                                            f_b, f_w, f_c, f_f, f_p, f_r, f_bw, _, f_params = fb
+                                        else:
+                                            f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params = fb
+                                        _stage_board((f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params))
+                                except Exception as fb_err:
+                                    print(f"[Watchdog] Fallback error: {fb_err}")
                     threading.Thread(target=_watchdog_gen, daemon=True).start()
 
         if getattr(self, 'starting_round', False):
