@@ -1390,6 +1390,7 @@ document.addEventListener('visibilitychange', () => {
             window._activeStateFetchController = null;
         }
         isFetchingState = false;
+        lastStateFetchTime = 0;
 
         // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
         if (isTournamentPlay) {
@@ -1435,20 +1436,16 @@ document.addEventListener('visibilitychange', () => {
             return; // Do NOT call updateGameState/refreshPollInterval for private match
         }
 
-        // Instant Feedback: Show ticking countdown if active, otherwise fetch immediately without forced WAIT...
+        // Instant Feedback: Show ticking countdown if active; never force WAIT... preemptively on wake-up
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
                 timerInterval = setInterval(updateLocalTimer, 100);
             }
             updateLocalTimer();
-        } else {
-            // Graceful fallback: only show WAIT... if state fetch takes longer than 600ms
-            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
-            window._waitGraceTimeout = setTimeout(() => {
-                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
-                    setTimerWaitingState(true);
-                }
-            }, 600);
+        }
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
         }
 
         // Fetch state immediately without artificial delays
@@ -1506,6 +1503,7 @@ window.addEventListener('focus', () => {
             window._activeStateFetchController = null;
         }
         isFetchingState = false;
+        lastStateFetchTime = 0;
 
         // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
         if (isTournamentPlay) {
@@ -1549,20 +1547,16 @@ window.addEventListener('focus', () => {
             return;
         }
 
-        // Instant Feedback: Show ticking countdown if active, otherwise fetch immediately without forced WAIT...
+        // Instant Feedback: Show ticking countdown if active; never force WAIT... preemptively on wake-up
         if (localEndTime && localEndTime > (Date.now() / 1000)) {
             if (!timerInterval) {
                 timerInterval = setInterval(updateLocalTimer, 100);
             }
             updateLocalTimer();
-        } else {
-            // Graceful fallback: only show WAIT... if state fetch takes longer than 600ms
-            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
-            window._waitGraceTimeout = setTimeout(() => {
-                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
-                    setTimerWaitingState(true);
-                }
-            }, 600);
+        }
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
         }
 
         // Fetch state immediately without artificial delays
@@ -1778,6 +1772,13 @@ async function updateGameState(incomingState = null) {
         window.lastRawGameState = JSON.parse(JSON.stringify(state));
 
         safelyTransposeState(state);
+
+        // Immediate Timer Synchronization:
+        // Sync and tick local timer immediately upon receiving authoritative state from server.
+        // Guarantees zero-latency countdown resumption and clears any lingering "WAIT..." state
+        // before heavy DOM manipulation (board, players, chat, scores) takes place.
+        syncTimerWithServer(state, tBefore, tAfter);
+        updateLocalTimer();
 
         // Mobile Device Restriction: Cube is not allowed on mobile!
         const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -5720,12 +5721,12 @@ function updateLocalTimer() {
         if (gap > 2200) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant wake-up update.`);
             window._lastLocalTimerTickTime = tickTime;
-            if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
-            window._waitGraceTimeout = setTimeout(() => {
-                if (!localEndTime || localEndTime <= (Date.now() / 1000)) {
-                    setTimerWaitingState(true);
-                }
-            }, 600);
+            if (window._waitGraceTimeout) {
+                clearTimeout(window._waitGraceTimeout);
+                window._waitGraceTimeout = null;
+            }
+            isFetchingState = false;
+            lastStateFetchTime = 0;
             updateGameState();
             refreshPollInterval();
             return;
@@ -5822,9 +5823,11 @@ function updateLocalTimer() {
     }
 
     if (remaining <= 0 && timerInterval) {
-        // If state is stale (> 4s since fetch, common on mobile background wake-up), do not prematurely declare 0:00 transition
-        if (window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime > 4000)) {
+        // If state is stale (> 4s since fetch or uninitialized, common on mobile background wake-up), do not prematurely declare 0:00 transition
+        if (!window._lastGameStateFetchedTime || (Date.now() - window._lastGameStateFetchedTime > 4000)) {
             console.log('[play.js] updateLocalTimer: localEndTime reached 0:00 but state is stale (>4s). Requesting fresh state update before transition.');
+            isFetchingState = false;
+            lastStateFetchTime = 0;
             updateGameState();
             return;
         }
