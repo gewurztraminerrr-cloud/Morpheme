@@ -9511,9 +9511,11 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
 }
 
 async function leaveCurrentRoom() {
-    window._isEnteringRoom = false;
-    window._userLeftRoom = true;
-    window._lastLeftRoomTime = Date.now();
+    if (!window._isEnteringRoom && !window._isCreatingRoom) {
+        window._isEnteringRoom = false;
+        window._userLeftRoom = true;
+        window._lastLeftRoomTime = Date.now();
+    }
 
     if (isTournamentPlay) {
         // We don't necessarily want to force forfeit on EVERY leave (e.g. browser refresh handles itself better)
@@ -9559,7 +9561,7 @@ async function leaveCurrentRoom() {
     if (window.updateManualToolState) window.updateManualToolState();
 
     try {
-        if (window.location.hash === '#page-play') {
+        if (!window._isEnteringRoom && !window._isCreatingRoom && window.location.hash === '#page-play') {
             history.replaceState(null, null, '#page-lobby');
         }
     } catch (e) {}

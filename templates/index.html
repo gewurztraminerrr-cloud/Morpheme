@@ -511,9 +511,11 @@
                 var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
 
                 if (window.currentRoomId && typeof window.leaveCurrentRoom === 'function') {
-                    try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
+                    try { await window.leaveCurrentRoom(); } catch (e) {}
                 }
                 window.currentRoomId = null;
+                window._isEnteringRoom = true;
+                window._userLeftRoom = false;
 
                 localStorage.removeItem('tournament_play_active');
                 localStorage.removeItem('private_match_active');
@@ -9902,8 +9904,8 @@
     <script src="/js/settings.js?v=1792204000"></script>
     <script src="/js/forum.js?v=1792220000"></script>
     <script src="/js/app.js?v=1792220000"></script>
-    <script src="/js/lobby.js?v=1792204000"></script>
-    <script src="/js/play.js?v=1792345000"></script>
+    <script src="/js/lobby.js?v=1792345100"></script>
+    <script src="/js/play.js?v=1792345100"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>

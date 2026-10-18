@@ -97,9 +97,11 @@ async function enterLobbyRoom(rawBtn) {
         const boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
         if (window.currentRoomId && window.leaveCurrentRoom) {
-            try { window.leaveCurrentRoom().catch(function() {}); } catch (e) {}
+            try { await window.leaveCurrentRoom(); } catch (e) {}
         }
         window.currentRoomId = null;
+        window._isEnteringRoom = true;
+        window._userLeftRoom = false;
 
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
@@ -308,6 +310,11 @@ async function createRoom(config, minRating, maxRating) {
         console.warn('[createRoom] Room creation already in progress, ignoring duplicate call');
         return;
     }
+    if (window.currentRoomId && window.leaveCurrentRoom) {
+        try { await window.leaveCurrentRoom(); } catch (e) {}
+    }
+    window.currentRoomId = null;
+
     window._isCreatingRoom = true;
 
     // CLEAR SPECIAL MODES: We are entering a normal room
@@ -505,6 +512,9 @@ function setupLobbyEvents() {
                     await window.leaveCurrentRoom();
                 }
             }
+            window.currentRoomId = null;
+            window._isEnteringRoom = true;
+            window._userLeftRoom = false;
             const isSpectator = joinBtn.dataset.spectator === 'true';
             console.log(`Joining room: ${roomId} (Spectator: ${isSpectator})`);
 
