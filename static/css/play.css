@@ -7672,7 +7672,7 @@ input[type=range]::-moz-range-track {
     }
     .definitions-panel .definition-header,
     .definitions-panel #definition-header {
-        text-align: center !important;
+        text-align: left !important;
         width: 100% !important;
     }
     /* When a word is defined (header active/shown), show header and separating divider */
@@ -7695,12 +7695,18 @@ input[type=range]::-moz-range-track {
         margin-bottom: 0 !important;
     }
     .definitions-panel .definition-word,
-    .definitions-panel #definition-word,
-    .definitions-panel .pronunciation:not(.hidden):not(:empty):not([style*="display: none"]),
-    .definitions-panel #definition-pronunciation:not(.hidden):not(:empty):not([style*="display: none"]) {
-        text-align: center !important;
+    .definitions-panel #definition-word {
+        text-align: left !important;
         display: block !important;
         width: 100% !important;
+        color: var(--accent-color) !important;
+    }
+    .definitions-panel .pronunciation:not(.hidden):not(:empty):not([style*="display: none"]),
+    .definitions-panel #definition-pronunciation:not(.hidden):not(:empty):not([style*="display: none"]) {
+        text-align: left !important;
+        display: block !important;
+        width: 100% !important;
+        color: var(--accent-color) !important;
     }
     .definitions-panel #definition-content,
     .definitions-panel .definition-text,

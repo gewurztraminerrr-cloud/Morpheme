@@ -1940,9 +1940,10 @@ async function _doUpdateGameState(incomingState = null) {
             if (activeWordsTab !== 'history' && activeWordsTab !== 'remaining') {
                 activeWordsTab = 'found';
             }
+            window.wordPressedDuringIntermission = false;
             window.userViewingDefinitionIntermission = false;
             
-            // CLEAR STALE DEFINITIONS (Ensure winner announcement triggers)
+            // CLEAR STALE DEFINITIONS (Ensure "Select a word to see its definition" appears at start of intermission)
             // But don't overwrite if Personal Timer has expired — timer-flash takes priority
             const defPanelCheck = document.querySelector('.definitions-panel');
             const timerExpiredAtTransition = defPanelCheck && defPanelCheck.classList.contains('timer-flash');
@@ -1968,113 +1969,18 @@ async function _doUpdateGameState(incomingState = null) {
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
         }
 
-        // WINNER ANNOUNCEMENT LOGIC (Persistent during intermission)
-        const defContent = document.getElementById('definition-content');
+        // INTERMISSION STATE LOGIC
         const defPanel = document.querySelector('.definitions-panel');
-        const defHeader = document.getElementById('definition-header');
-        const isViewingDefinition = window.userViewingDefinitionIntermission === true;
-        // Personal Timer expiry takes priority — do not overwrite "Time is up!" notice
-        const isTimerExpired = defPanel ? defPanel.classList.contains('timer-flash') : false;
         let hasActualWinner = false;
 
         if (state.state === 'intermission' && state.winners_history) {
             const latest = state.winners_history[0];
-            // MANDATE: Only show if the record is for the round that JUST finished AND someone scored
+            // MANDATE: Only track if the record is for the round that JUST finished AND someone scored
             const isForCurrentRound = latest && latest.round === state.current_round;
             hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
-            const bonusText = (state.bonus_word && String(state.bonus_word).toUpperCase() !== 'NONE') ? state.bonus_word : '';
-            const bonusHtml = bonusText ? `<div style="font-size: 0.85rem; color: #fff; opacity: 0.8; margin: 4px 0;">Bonus Word: <span style="color: #ffd700; font-weight: 800; letter-spacing: 1px;">${bonusText.toUpperCase()}</span></div>` : '';
-
-            if (hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired) {
-                // If not already showing this round's winner
-                const winnerTextIdentifier = `WINNER_R${latest.round}`;
-                if (!defContent.innerHTML.includes(winnerTextIdentifier) || defContent.innerHTML.includes('placeholder')) {
-                    const winnersList = latest.winners.map(w => w.username).join(' & ');
-                    
-                    if (defPanel) {
-                        const is24H = (state.time_limit >= 7200);
-                        if (!is24H) {
-                            defPanel.classList.add('winner-flash');
-                        }
-                        // NOTE: do NOT remove timer-flash here — Personal Timer expiry takes priority
-                    }
-                    if (defHeader) defHeader.style.display = 'none';
-                    
-                    const me = (state.your_username || window.currentUser || document.getElementById('current-username')?.innerText || '').toLowerCase().trim();
-                    const amIPlayerInRoom = state.players.some(p => p.username.toLowerCase().trim() === me);
-                    const playerCount = (state.players && Array.isArray(state.players)) ? state.players.length : 0;
-                    const maxPlayers = state.max_players || 8;
-                    const canJoinInThisRoom = (playerCount < maxPlayers) || state.game_type === 'accumulative';
-
-                    const joinButtonHtml = (!amIPlayerInRoom && canJoinInThisRoom) 
-                        ? `<button id="winner-spec-join-btn" class="spectator-join-btn premium-btn" style="margin-top: 10px; width: auto; font-size: 0.9rem; padding: 10px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid #ffd700; z-index: 10; flex-shrink: 0; cursor: pointer;">Join Room</button>` 
-                        : '';
-
-                    defContent.innerHTML = `
-                        <div id="${winnerTextIdentifier}" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; padding: 5px; box-sizing: border-box; background: rgba(255, 215, 0, 0.05);">
-                            <div style="font-size: 0.75rem; color: #ffd700; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 850; margin-bottom: 2px; animation: textPulse 1.5s infinite; flex-shrink: 0;">🏆 Round Complete 🏆</div>
-                            <h2 style="font-size: 1.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-weight: 950; margin: 3px 0; line-height: 1; flex-shrink: 0;">CONGRATULATIONS</h2>
-                            <div style="font-size: 1.15rem; color: #ffd700; font-weight: 800; text-shadow: 0 0 8px rgba(0,0,0,0.7); max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${winnersList.toUpperCase()}</div>
-                            <div style="font-size: 0.75rem; opacity: 0.95; margin-top: 3px; font-style: italic; flex-shrink: 0;">1st Place with ${latest.score || 0} pts</div>
-                            ${bonusHtml}
-                            ${joinButtonHtml}
-                        </div>
-                    `;
-
-                    // Handle Join Button inside winner announcement
-                    if (joinButtonHtml) {
-                        setTimeout(() => {
-                            const winJoinBtn = document.getElementById('winner-spec-join-btn');
-                            if (winJoinBtn) {
-                                winJoinBtn.onclick = async () => {
-                                    winJoinBtn.textContent = 'Joining...';
-                                    winJoinBtn.disabled = true;
-                                    try {
-                                        const roomId = window.currentRoomId;
-                                        const resp = await fetch(`/api/room/${roomId}/join`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ as_spectator: false })
-                                        });
-                                        const data = await resp.json();
-                                        if (data.success) {
-                                            window.isSpectatorMode = false;
-                                            setTimeout(updateGameState, 100);
-                                        } else {
-                                            alert(data.error);
-                                            winJoinBtn.textContent = 'Join Room';
-                                            winJoinBtn.disabled = false;
-                                        }
-                                    } catch (e) {
-                                        console.error('Spec Join Error:', e);
-                                        winJoinBtn.textContent = 'Error';
-                                        winJoinBtn.disabled = false;
-                                    }
-                                };
-                            }
-                        }, 50);
-                    }
-                }
-            } else if (!hasActualWinner && defContent && !isViewingDefinition && !isTimerExpired && (defContent.innerHTML.includes('CONGRATULATIONS') || defContent.innerHTML.includes('placeholder'))) {
-                // CLEAR the previous winner announcement if current round had no winner
-                defContent.innerHTML = `
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100%; text-align: center; opacity: 0.9;">
-                        <div style="font-size: 0.8rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Round Ended</div>
-                        <div style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 5px;">No Scoring Words Found</div>
-                        ${bonusHtml}
-                    </div>
-                `;
-                if (defPanel) defPanel.classList.remove('winner-flash');
-                if (defHeader) defHeader.style.display = 'flex';
-            } else if (isViewingDefinition) {
-                // IF viewing a definition: Clean up celebratory effects and restore study header
-                if (defPanel && defPanel.classList.contains('winner-flash')) {
-                    defPanel.classList.remove('winner-flash');
-                }
-                if (defHeader && defHeader.style.display === 'none') {
-                    defHeader.style.display = 'flex';
-                }
+            if (defPanel && defPanel.classList.contains('winner-flash')) {
+                defPanel.classList.remove('winner-flash');
             }
         }
 
@@ -2552,19 +2458,23 @@ async function _doUpdateGameState(incomingState = null) {
                 const defHeader = document.getElementById('definition-header');
                 const defPanel = document.querySelector('.definitions-panel');
                 const timerStillExpired = defPanel && defPanel.classList.contains('timer-flash');
-                // Only reset definition content if Personal Timer is NOT in expired state
+                // Only reset definition content if Personal Timer is NOT in expired state AND no word was pressed during intermission
                 if (!timerStillExpired) {
-                    if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                    if (defHeader) {
-                        defHeader.classList.add('hidden');
-                        defHeader.style.display = 'none';
-                    }
-                    const defWord = document.getElementById('definition-word');
-                    if (defWord) defWord.textContent = '';
-                    const defPron = document.getElementById('definition-pronunciation');
-                    if (defPron) {
-                        defPron.textContent = '';
-                        defPron.style.display = 'none';
+                    if (!window.wordPressedDuringIntermission) {
+                        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                        if (defHeader) {
+                            defHeader.classList.add('hidden');
+                            defHeader.style.display = 'none';
+                        }
+                        const defWord = document.getElementById('definition-word');
+                        if (defWord) defWord.textContent = '';
+                        const defPron = document.getElementById('definition-pronunciation');
+                        if (defPron) {
+                            defPron.textContent = '';
+                            defPron.style.display = 'none';
+                        }
+                    } else {
+                        console.log('[play.js] Preserving definition in panel because word was pressed during intermission.');
                     }
                 }
                 if (defPanel) {
@@ -10038,6 +9948,12 @@ async function fetchDefinition(word) {
     if (!word) return;
     if (window.isSpectatorMode) return; // Block spectators from overwriting definition panel
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
+
+    // Track word selection during intermission so definition persists into next round
+    if (window.lastGameState && window.lastGameState.state === 'intermission') {
+        window.wordPressedDuringIntermission = true;
+        window.userViewingDefinitionIntermission = true;
+    }
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
     const defHeader = document.getElementById('definition-header');
@@ -10106,8 +10022,9 @@ async function fetchDefinition(word) {
 const submittedWordsListEl = document.getElementById('submitted-words-list');
 if (submittedWordsListEl) {
     submittedWordsListEl.addEventListener('click', (e) => {
-        // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
+        // Mark that the user is explicitly viewing a definition (so definition persists into next round)
         if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            window.wordPressedDuringIntermission = true;
             window.userViewingDefinitionIntermission = true;
         }
 
