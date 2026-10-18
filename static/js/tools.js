@@ -213,10 +213,18 @@ window.showTool = function(toolId) {
             if (p.id === `tool-${toolId}`) p.classList.add('active');
             else p.classList.remove('active');
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists' || toolId === 'combo') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
+        }
+        if (toolId === 'work-on') {
+            content.classList.add('has-work-on-active');
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('work-on-table-scroll', 'work-on-scrollbar-track', 'work-on-scrollbar-thumb');
+            }
+        } else {
+            content.classList.remove('has-work-on-active');
         }
         if (toolId === 'new-users') {
             content.classList.add('has-new-users-active');

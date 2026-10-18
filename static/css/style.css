@@ -11107,10 +11107,10 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
 #tool-work-on .list-scroll-area-wrapper {
     position: relative !important;
-    height: 440px !important;
-    min-height: 440px !important;
-    max-height: 440px !important;
-    flex: 0 0 440px !important;
+    height: 440px;
+    min-height: 440px;
+    max-height: 440px;
+    flex: 0 0 440px;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -11118,9 +11118,9 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
 #tool-work-on #work-on-table-scroll {
     position: relative !important;
-    height: 440px !important;
-    min-height: 440px !important;
-    max-height: 440px !important;
+    height: 440px;
+    min-height: 440px;
+    max-height: 440px;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
@@ -11252,6 +11252,23 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
 /* Mobile Responsive Adjustments for Words to Work on */
 @media (max-width: 992px), (pointer: coarse) {
+    #tool-work-on {
+        overflow-y: auto !important;
+        padding-bottom: 30px !important;
+    }
+
+    #tool-work-on .list-scroll-area-wrapper {
+        height: 440px !important;
+        min-height: 440px !important;
+        max-height: 440px !important;
+    }
+
+    #tool-work-on #work-on-table-scroll {
+        height: 440px !important;
+        min-height: 440px !important;
+        max-height: 440px !important;
+    }
+
     #tool-work-on .work-on-table-header {
         height: 38px !important;
         min-height: 38px !important;

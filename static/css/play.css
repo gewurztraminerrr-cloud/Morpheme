@@ -10466,17 +10466,24 @@ body .board-cell.tile-flash-purple * {
 }
 
 @media (min-width: 901px) {
-    /* Disable outer scroller (Scroller 1) on desktop ONLY for Sequence and Subanagrams */
+    /* Disable outer scroller (Scroller 1) on desktop for tools managing internal scroll */
     .tools-content.no-outer-scroll,
     .tools-content.no-outer-scroll .tool-pane.active {
         overflow-y: hidden !important;
         overflow-x: hidden !important;
     }
 
+    #page-tools .tools-content:has(#tool-work-on.active),
+    #page-tools .tools-content.has-work-on-active {
+        padding: 12px !important;
+        overflow-y: hidden !important;
+    }
+
     #tool-sequence.tool-pane.active,
     #tool-subanagrams.tool-pane.active,
     #tool-lists.tool-pane.active,
     #tool-combo.tool-pane.active,
+    #tool-work-on.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -10491,10 +10498,61 @@ body .board-cell.tile-flash-purple * {
 
     #tool-sequence .tool-header,
     #tool-subanagrams .tool-header,
-    #tool-lists .tool-header {
+    #tool-lists .tool-header,
+    #tool-work-on .tool-header {
         flex: 0 0 auto !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 4px !important;
         padding: 0 !important;
+    }
+
+    #tool-work-on .work-on-input-panel {
+        flex: 0 0 auto !important;
+        margin-bottom: 12px !important;
+    }
+
+    #tool-work-on .work-on-control-bar {
+        flex: 0 0 auto !important;
+        margin-bottom: 12px !important;
+        padding: 0 4px !important;
+    }
+
+    #tool-work-on .work-on-table-card {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-work-on .work-on-table-header {
+        flex: 0 0 40px !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+    }
+
+    #tool-work-on .list-scroll-area-wrapper {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-work-on #work-on-table-scroll {
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        position: relative !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
 
     .combo-control-panel,
