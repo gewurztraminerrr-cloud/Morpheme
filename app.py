@@ -6474,13 +6474,13 @@ def send_lobby_chat():
 
 @app.route('/api/room/<room_id>/state')
 def get_room_state(room_id):
+    user_rating_for_snapshot = None
     if 'user_id' in session:
         uid = session['user_id']
         room_manager.update_presence(uid)
     
     room = room_manager.get_room(room_id)
     if room:
-        user_rating_for_snapshot = None
         if 'user_id' in session:
             uid = session['user_id']
             if str(uid) in getattr(room, 'evicted_users', {}):
