@@ -1397,8 +1397,10 @@ function handleResumeWakeUp(source) {
         try { window._activeStateFetchController.abort(); } catch(e) {}
         window._activeStateFetchController = null;
     }
+    window._activeUpdateGameStatePromise = null;
     isFetchingState = false;
     lastStateFetchTime = 0;
+    window.lastRenderedStateJSON = null; // Force full DOM re-render on wake-up
 
     // TOURNAMENT MODE: Handle resume separately
     if (isTournamentPlay) {
@@ -1444,7 +1446,7 @@ function handleResumeWakeUp(source) {
 
     // Instant Feedback:
     // If the timer is still active, tick it immediately.
-    // If expired while away, clear the stale frozen text (e.g. 0:35 from prior round) immediately!
+    // If expired while away, update display cleanly without jarring '--:--'
     const nowSec = Date.now() / 1000;
     if (localEndTime && localEndTime > nowSec) {
         if (!timerInterval) {
@@ -1458,7 +1460,8 @@ function handleResumeWakeUp(source) {
         }
         const timerVal = document.getElementById('timer-value');
         if (timerVal) {
-            timerVal.textContent = '--:--';
+            timerVal.textContent = window._lastTimerDisplay || '0:00';
+            timerVal.style.fontVariantNumeric = 'tabular-nums';
         }
     }
     if (window._waitGraceTimeout) {
@@ -1525,8 +1528,8 @@ function stopPolling() {
     }
 }
 
-// Helper to fetch with timeout, allowing rapid recovery from dead socket connections
-async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
+// Dedicated helper to fetch room state with timeout, allowing rapid recovery from dead socket connections
+async function fetchRoomStateWithTimeout(url, options = {}, timeoutMs = 4500) {
     if (window._activeStateFetchController) {
         try {
             window._activeStateFetchController.abort();
@@ -1558,8 +1561,26 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 1200) {
 let lastStateFetchTime = 0;
 let isFetchingState = false;
 window._activeStateFetchController = null;
+let _activeUpdateGameStatePromise = null;
 
 async function updateGameState(incomingState = null) {
+    if (incomingState) {
+        return _doUpdateGameState(incomingState);
+    }
+    if (_activeUpdateGameStatePromise) {
+        return _activeUpdateGameStatePromise;
+    }
+    _activeUpdateGameStatePromise = (async () => {
+        try {
+            return await _doUpdateGameState(null);
+        } finally {
+            _activeUpdateGameStatePromise = null;
+        }
+    })();
+    return _activeUpdateGameStatePromise;
+}
+
+async function _doUpdateGameState(incomingState = null) {
     if (!isOnPlayPage()) {
         stopPolling();
         return;
@@ -1598,16 +1619,22 @@ async function updateGameState(incomingState = null) {
             state = incomingState;
             window._lastGameStateFetchedTime = Date.now();
         } else {
-            // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
-            // This is just extra safety, the refreshPollInterval handles the bulk of it.
-            
+            // Fetch authoritative room state with mobile socket-thaw retry
             let response;
-            try {
-                tBefore = Date.now() / 1000;
-                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 4500);
-            } catch (err) {
-                console.log(`[play.js] State fetch timed out or failed (${err.message}). Retrying on next poll tick.`);
-                return;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    tBefore = Date.now() / 1000;
+                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 4500);
+                    if (response && response.ok) break;
+                } catch (err) {
+                    if (attempt === 0) {
+                        console.warn(`[play.js] Initial state fetch failed (${err.message}), retrying in 250ms for socket thaw...`);
+                        await new Promise(r => setTimeout(r, 250));
+                        continue;
+                    }
+                    console.log(`[play.js] State fetch timed out or failed (${err.message}). Retrying on next poll tick.`);
+                    return;
+                }
             }
             
             // Check if user left or switched rooms while the network fetch was in-flight
@@ -5737,6 +5764,11 @@ function updateLocalTimer() {
     }
 
     if (remaining <= 0 && timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
+        if (headerEl) headerEl.classList.remove('low-time-warning');
+
         // If state is stale (> 4s since fetch or uninitialized, common on mobile background wake-up), do not prematurely declare 0:00 transition
         if (!window._lastGameStateFetchedTime || (Date.now() - window._lastGameStateFetchedTime > 4000)) {
             console.log('[play.js] updateLocalTimer: localEndTime reached 0:00 but state is stale (>4s). Requesting fresh state update before transition.');
@@ -5745,11 +5777,6 @@ function updateLocalTimer() {
             updateGameState();
             return;
         }
-
-        clearInterval(timerInterval);
-        timerInterval = null;
-        if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
-        if (headerEl) headerEl.classList.remove('low-time-warning');
 
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
@@ -5789,11 +5816,13 @@ function updateLocalTimer() {
 
         // Rapid 300ms polling loop until server state transition is confirmed
         let transitionAttempts = 0;
+        const startRound = (window.lastGameState && window.lastGameState.current_round) || 0;
         const expectedNextState = (currentState === 'active') ? 'intermission' : 'active';
         if (window._transitionPollTimer) clearInterval(window._transitionPollTimer);
         window._transitionPollTimer = setInterval(() => {
             transitionAttempts++;
-            if (window.lastGameState && window.lastGameState.state === expectedNextState) {
+            const s = window.lastGameState;
+            if (s && (s.state === expectedNextState || s.current_round !== startRound)) {
                 clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
                 return;
