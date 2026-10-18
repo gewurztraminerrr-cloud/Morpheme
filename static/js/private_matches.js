@@ -292,6 +292,7 @@
 
     async function loadPrivateMatches() {
         if (!window.currentUser || window.currentUserIsGuest) return;
+        if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
         try {
             const res = await fetch('/api/private-match/list', { cache: 'no-store' });
             const data = await res.json();

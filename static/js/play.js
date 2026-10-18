@@ -765,6 +765,7 @@ function isOnPlayPage() {
     const style = window.getComputedStyle(playPage);
     return style.display !== 'none' && !playPage.classList.contains('hidden');
 }
+window.isOnPlayPage = isOnPlayPage;
 
 async function ejectToLobby(reason = "inactivity") {
     window.ejectToLobby = ejectToLobby;
@@ -1479,17 +1480,17 @@ function handleResumeWakeUp(source) {
         if (timerLabel) {
             timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
         }
-        // Do NOT immediately flash WAIT... on wake-up!
-        // Show 0:00 or last display and allow a 400ms grace window for the wake-up fetch to complete
+        // Do NOT flash WAIT... on wake-up!
+        // Show 0:00 or last display while the wake-up fetch resolves in the background.
         if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
         if (cachedTimerValueEl) {
             cachedTimerValueEl.textContent = '0:00';
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
         }
-        if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
-        window._waitGraceTimeout = setTimeout(() => {
-            setTimerWaitingState(true);
-        }, 400);
+        if (window._waitGraceTimeout) {
+            clearTimeout(window._waitGraceTimeout);
+            window._waitGraceTimeout = null;
+        }
     }
 
     // Flag wake-up fetch to enable fast socket-thaw detection
@@ -5958,7 +5959,7 @@ function updateLocalTimer() {
         if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
         window._waitGraceTimeout = setTimeout(() => {
             setTimerWaitingState(true);
-        }, 400);
+        }, 1200);
 
         if (currentState === 'active') {
             const wordInput = document.getElementById('word-input');

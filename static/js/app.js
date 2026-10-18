@@ -1608,6 +1608,7 @@ async function checkSession() {
 // Setup navigation
 async function checkTournamentTurn() {
     if (!currentUser || window.currentUserIsGuest) return;
+    if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
     try {
         const res = await fetch('/api/tournament/status');
         const data = await res.json();
@@ -1632,21 +1633,25 @@ window.checkTournamentTurn = checkTournamentTurn;
 
 // Check initially (500ms) and periodically every 4s for instant turn green button and Forum gold responder notification flashing
 setTimeout(() => {
+    if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
     checkTournamentTurn();
     checkForumActivity();
 }, 500);
 setInterval(() => {
     if (document.hidden) return;
+    if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
     checkTournamentTurn();
     checkForumActivity();
 }, 4000);
 
 window.addEventListener('focus', () => {
+    if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
     checkTournamentTurn();
     checkForumActivity();
 });
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
+        if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
         checkTournamentTurn();
         checkForumActivity();
     }
@@ -1660,6 +1665,7 @@ async function checkForumActivity() {
         if (respTab) respTab.classList.remove('has-new');
         return;
     }
+    if ((typeof isOnPlayPage === 'function' && isOnPlayPage()) || window.currentRoomId) return;
     try {
         const res = await fetch('/api/forum/responders/status', { cache: 'no-store' });
         if (!res.ok) return;
@@ -4182,7 +4188,8 @@ window.addEventListener('beforeunload', touchMorphemeActivity);
 function handleAppVisibilityChange() {
     if (document.visibilityState === 'visible') {
         touchMorphemeActivity();
-        if (typeof window.fetchLobbyStats === 'function') {
+        const onPlay = (typeof isOnPlayPage === 'function' && isOnPlayPage()) || !!window.currentRoomId;
+        if (!onPlay && typeof window.fetchLobbyStats === 'function') {
             window.fetchLobbyStats('all').catch(() => {});
         }
         try {
