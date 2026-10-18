@@ -1401,6 +1401,7 @@ function handleResumeWakeUp(source) {
     isFetchingState = false;
     lastStateFetchTime = 0;
     window.lastRenderedStateJSON = null; // Force full DOM re-render on wake-up
+    window._lastLocalTimerTickTime = now; // Reset timer tick anchor to avoid false thaw gap trigger
 
     // TOURNAMENT MODE: Handle resume separately
     if (isTournamentPlay) {
