@@ -1479,14 +1479,21 @@ function handleResumeWakeUp(source) {
         if (timerLabel) {
             timerLabel.textContent = (currentState === 'intermission' || currentState === 'waiting') ? "Next Round:" : "Time:";
         }
-        setTimerWaitingState(true);
-    }
-    if (window._waitGraceTimeout) {
-        clearTimeout(window._waitGraceTimeout);
-        window._waitGraceTimeout = null;
+        // Do NOT immediately flash WAIT... on wake-up!
+        // Show 0:00 or last display and allow a 400ms grace window for the wake-up fetch to complete
+        if (!cachedTimerValueEl || !cachedTimerValueEl.isConnected) cachedTimerValueEl = document.getElementById('timer-value');
+        if (cachedTimerValueEl) {
+            cachedTimerValueEl.textContent = '0:00';
+            cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+        }
+        if (window._waitGraceTimeout) clearTimeout(window._waitGraceTimeout);
+        window._waitGraceTimeout = setTimeout(() => {
+            setTimerWaitingState(true);
+        }, 400);
     }
 
-    // Fetch authoritative state immediately and refresh polling
+    // Flag wake-up fetch to enable fast socket-thaw detection
+    window._isWakeUpFetch = true;
     updateGameState();
     refreshPollInterval();
 }
@@ -1653,10 +1660,14 @@ async function _doUpdateGameState(incomingState = null) {
         } else {
             // Fetch authoritative room state with mobile socket-thaw retry
             let response;
+            const isWakeUpThaw = !!(window._isWakeUpFetch || (Date.now() - (window._lastGameStateFetchedTime || 0) > 30000));
+            window._isWakeUpFetch = false;
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     tBefore = Date.now() / 1000;
-                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 2500);
+                    // On wake-up after idle/background, fail fast on attempt 0 (800ms) to rapidly detect half-dead TCP sockets
+                    const timeoutLimit = (isWakeUpThaw && attempt === 0) ? 800 : 2500;
+                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, timeoutLimit);
                     if (response && response.ok) break;
                 } catch (err) {
                     if (attempt === 0) {
