@@ -6587,8 +6587,7 @@ def get_room_state(room_id):
         # 2. On-demand database backfill for previous day's board/history
         if room.time_limit >= 7200:
             room_manager.load_previous_day_data(room)
-            
-        print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
+
     try:
         if not room:
             # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)

@@ -1307,10 +1307,8 @@ function refreshPollInterval() {
     // User Request: Automatic/instant transition. 
     // Speed up polling significantly when transitioning or when intermission is about to end
     if (!document.hidden) {
-        if (window._rapidTransitionPolling) {
-             delay = 80; // High-frequency polling at 0:00 transition
-        } else if (window.lastGameState && (window.lastGameState.state === 'waiting' || (window.lastGameState.state === 'intermission' && window.lastGameState.time_remaining <= 2.5))) {
-             delay = 150; // Poll rapidly when waiting or intermission is near 0 to catch instant wake-up
+        if (window.lastGameState && window.lastGameState.state === 'waiting') {
+             delay = 500;
         }
     }
 
@@ -1743,12 +1741,9 @@ async function _doUpdateGameState(incomingState = null) {
         if (state.state === 'active' || (state.state === 'intermission' && state.time_remaining > 0)) {
             setTimerWaitingState(false);
             if (window._transitionPollTimer && (state.time_remaining > 0 || state.state === 'active')) {
+                clearTimeout(window._transitionPollTimer);
                 clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
-            }
-            if (window._rapidTransitionPolling) {
-                window._rapidTransitionPolling = false;
-                refreshPollInterval();
             }
         }
 
@@ -5887,6 +5882,19 @@ function updateLocalTimer() {
         }
     }
 
+    if (remaining > 1.5) {
+        window._preTransitionFetched = false;
+    }
+
+    // Proactive transition pre-fetch: when countdown is almost complete, initiate the transition poll
+    // so the server returns the new state BEFORE the local countdown reaches 0:00!
+    const activeCurrentState = (window.lastGameState && window.lastGameState.state) || 'active';
+    const preFetchLead = (activeCurrentState === 'intermission') ? 0.9 : 0.4;
+    if (remaining <= preFetchLead && remaining > 0 && !window._preTransitionFetched && !document.hidden) {
+        window._preTransitionFetched = true;
+        updateGameState();
+    }
+
     if (remaining <= 0 && timerInterval) {
         // If the authoritative game state still has valid time remaining (> 1.0s), re-anchor instead of halting on WAIT...
         if (window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 1.0) {
@@ -5940,39 +5948,43 @@ function updateLocalTimer() {
             // Just call updateGameState immediately to get the new board.
         }
 
-        // Force immediate reset of fetching guard to ensure 0:00 transition fetch is NEVER suppressed!
-        window._rapidTransitionPolling = true;
-        refreshPollInterval();
+        // Force immediate single-flight transition fetch
         isFetchingState = false;
         lastStateFetchTime = 0;
         updateGameState();
 
-        // Rapid 80ms polling loop until server state transition is confirmed
+        // Sequential chained polling (prevents waitress task queue flooding)
         let transitionAttempts = 0;
         const startRound = (window.lastGameState && window.lastGameState.current_round) || 0;
         const expectedNextState = (currentState === 'active') ? 'intermission' : 'active';
-        if (window._transitionPollTimer) clearInterval(window._transitionPollTimer);
-        window._transitionPollTimer = setInterval(() => {
+        if (window._transitionPollTimer) {
+            clearTimeout(window._transitionPollTimer);
+            window._transitionPollTimer = null;
+        }
+
+        function pollTransitionNext() {
             transitionAttempts++;
             const s = window.lastGameState;
             if (s && (s.state === expectedNextState || s.current_round !== startRound)) {
-                clearInterval(window._transitionPollTimer);
                 window._transitionPollTimer = null;
-                window._rapidTransitionPolling = false;
-                refreshPollInterval();
                 return;
             }
-            if (transitionAttempts >= 25) { // 2.0 seconds max safety timeout
-                clearInterval(window._transitionPollTimer);
+            if (transitionAttempts >= 20) { // 2.5s max safety
                 window._transitionPollTimer = null;
-                window._rapidTransitionPolling = false;
-                refreshPollInterval();
                 return;
             }
-            isFetchingState = false;
-            lastStateFetchTime = 0;
-            updateGameState();
-        }, 80);
+            updateGameState().finally(() => {
+                const s2 = window.lastGameState;
+                if (s2 && (s2.state === expectedNextState || s2.current_round !== startRound)) {
+                    window._transitionPollTimer = null;
+                    return;
+                }
+                if (window._transitionPollTimer) {
+                    window._transitionPollTimer = setTimeout(pollTransitionNext, 120);
+                }
+            });
+        }
+        window._transitionPollTimer = setTimeout(pollTransitionNext, 120);
     }
 
     // -- Update Triple Format Music State --

@@ -1485,8 +1485,8 @@ class GameRoom:
         # update Spinner Set parameters (spinner_params, next_spinner_params), and reveal them DURING intermission!
         if self.state == 'intermission' and self.time_limit < 7200:
             elapsed_intermission = now - self.intermission_start_time
-            if elapsed_intermission >= 10.0 and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
-                print(f"[Watchdog] 10s into intermission for {self.room_id} — no board ready. Running emergency fallback.")
+            if elapsed_intermission >= (intermission_limit - 10.0) and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
+                print(f"[Watchdog] 10s remaining in intermission for {self.room_id} — no board ready. Running emergency fallback.")
                 self._fallback_at_50s_done = True
 
                 # Capture params immediately (fast, on Waitress thread)
