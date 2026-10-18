@@ -6763,6 +6763,39 @@ def get_room_state(room_id):
             
         user_id = session.get('user_id')
         if user_id:
+            if not room.get_player(user_id) and not room.get_spectator(user_id) and not getattr(room, 'is_closing', False):
+                username = session.get('username')
+                if username:
+                    is_guest = session.get('is_guest', False)
+                    rating = 1200
+                    games_played = 0
+                    country_flag = '🏳️'
+                    if not is_guest:
+                        try:
+                            conn = sqlite3.connect(DB_PATH, timeout=5)
+                            game_type_base = room.game_type.replace('solo_', '')
+                            config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
+                            if room.time_limit >= 7200:
+                                cursor = conn.execute('SELECT rating, games_played, country_flag FROM users WHERE id = ?', (user_id,))
+                                row = cursor.fetchone()
+                                if row:
+                                    rating = row[0]
+                                    games_played = row[1]
+                                    if row[2]: country_flag = row[2]
+                            else:
+                                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
+                                row = cursor.fetchone()
+                                if row:
+                                    rating = row[0]
+                                cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
+                                row2 = cur.fetchone()
+                                if row2:
+                                    games_played = row2[0]
+                                    if row2[1]: country_flag = row2[1]
+                            conn.close()
+                        except Exception as e:
+                            print(f"[app.py] Auto-rejoin user stats error: {e}")
+                    room.add_player(user_id, username, rating, games_played=games_played, country_flag=country_flag, manual_accessed=False, is_guest=is_guest)
             room.update_player_activity(user_id)
 
         # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.

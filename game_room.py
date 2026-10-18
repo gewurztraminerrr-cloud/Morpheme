@@ -325,9 +325,20 @@ class GameRoom:
             self.chat_messages.pop(0)
 
     def _trigger_wake_if_needed(self, is_ai, username):
-        if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
-            print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
-            self.check_and_update_state()
+        if not is_ai and self.time_limit < 7200:
+            if self.state == 'waiting':
+                print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
+                self.check_and_update_state()
+            elif self.state == 'intermission':
+                if getattr(self, 'last_round_human_participants', 0) == 0 and not getattr(self, '_fast_forwarding_intermission', False):
+                    self._fast_forwarding_intermission = True
+                    print(f"[GameRoom] Human player {username} joined room {self.room_id} during empty round intermission. Fast-forwarding to active round.")
+                    self.intermission_start_time = time.time() - 65.0
+                    global _room_manager_instance
+                    rm = _room_manager_instance
+                    if rm:
+                        import threading
+                        threading.Thread(target=rm.start_next_round, args=(self.room_id,), daemon=True).start()
     
     def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
         """Add player to room"""
@@ -2204,6 +2215,7 @@ class GameRoom:
                             'performance_efficiency': getattr(p, 'performance_efficiency', 0),
                             'joined_mid_round': getattr(p, 'joined_mid_round', False)
                         })
+                self.last_round_human_participants = len([p for p in intermission_player_snapshots if not getattr(p, 'is_ai', False)])
                 
                 # Asynchronous Post-Round Processing
                 def process_results_async():
@@ -2390,6 +2402,20 @@ class GameRoom:
         if self.state == 'intermission':
             is_daily = (self.time_limit >= 7200)
             if not is_daily:
+                # FAST-WAKE: If zero humans participated in the completed round, and a human player is now present,
+                # do not force them to wait through a 60s intermission for an empty round! Fast-forward intermission immediately.
+                humans = [p for p in self.players if not getattr(p, 'is_ai', False)]
+                if len(humans) > 0 and getattr(self, 'last_round_human_participants', 0) == 0:
+                    if not getattr(self, '_fast_forwarding_intermission', False):
+                        self._fast_forwarding_intermission = True
+                        print(f"[GameRoom] Fast-forwarding empty intermission for room {self.room_id}: human joined empty round review.")
+                        self.intermission_start_time = now - 65.0
+                        global _room_manager_instance
+                        rm = _room_manager_instance
+                        if rm:
+                            import threading
+                            threading.Thread(target=rm.start_next_round, args=(self.room_id,), daemon=True).start()
+
                 elapsed = now - self.intermission_start_time
                 # 10s elapsed corresponds to 50s remaining (0:50) of a 60s intermission
                 if elapsed >= 10.0 and not getattr(self, '_did_050_fallback_rescue', False):
@@ -7205,6 +7231,7 @@ class RoomManager:
                 room.board_search_started_actual = False
                 room._spinner_params_locked = True   # Keep LOCKED during active round!
                 room._initial_board_delivered = True  # ISSUE 6: mark first board has been delivered
+                room._fast_forwarding_intermission = False
                 
                 # Reset Round counters
                 room.current_round += 1

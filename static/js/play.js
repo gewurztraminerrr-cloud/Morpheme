@@ -10055,7 +10055,11 @@ if (submittedWordsListEl) {
 }
 
 window.addEventListener('beforeunload', () => {
-    if (window.currentRoomId) {
+    // Only send leave beacon on desktop browsers.
+    // Mobile browsers (iOS Safari / Android Chrome) fire beforeunload on minimize/background/app switch,
+    // which incorrectly evicts players from active rooms.
+    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile && window.currentRoomId) {
         const url = '/api/room/' + window.currentRoomId + '/leave';
         navigator.sendBeacon(url);
     }
