@@ -1307,11 +1307,8 @@ function refreshPollInterval() {
     if (!document.hidden) {
         if (window._rapidTransitionPolling) {
              delay = 100; // High-frequency polling at 0:00 transition
-        } else if (window.lastGameState && window.lastGameState.state === 'intermission') {
-             const tr = window.lastGameState.time_remaining;
-             if (tr < 2.5) {
-                  delay = 500; // Poll twice as fast at the very end
-             }
+        } else if (window.lastGameState && (window.lastGameState.state === 'waiting' || (window.lastGameState.state === 'intermission' && window.lastGameState.time_remaining <= 2.5))) {
+             delay = 300; // Poll rapidly when waiting or intermission is at 0 to catch instant wake-up
         }
     }
 
@@ -1672,18 +1669,18 @@ async function updateGameState(incomingState = null) {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
             
-            // Mobile/Wake-up instant response: If a request takes >600ms (common on suspended mobile tabs due to dead HTTP sockets),
-            // abort it and retry immediately. The retry forces a fresh TCP/SSL socket and completes instantly!
+            // Mobile/Wake-up instant response: Allow adequate timeout (2000ms) for mobile cellular reconnection handshake,
+            // with a 3500ms fallback retry on failure.
             let response;
             try {
                 tBefore = Date.now() / 1000;
-                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 600);
+                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 2000);
             } catch (err) {
                 console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
                 try {
                     tBefore = Date.now() / 1000;
-                    // Try again with a slightly longer timeout (1800ms) to ensure it doesn't block indefinitely
-                    response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}&retry=true`, { cache: 'no-store' }, 1800);
+                    // Try again with a slightly longer timeout (3500ms) to ensure it doesn't block indefinitely
+                    response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}&retry=true`, { cache: 'no-store' }, 3500);
                 } catch (retryErr) {
                     console.log(`[play.js] Wake-up retry fetch also failed:`, retryErr);
                     return; // Let the next scheduled poll handle it
@@ -1757,6 +1754,10 @@ async function updateGameState(incomingState = null) {
         if (window._waitGraceTimeout) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
+        }
+
+        if (state.state === 'active' || state.state === 'intermission') {
+            setTimerWaitingState(false);
         }
 
         // Store raw state BEFORE transposition so orientation changes can re-evaluate correctly.
@@ -3490,12 +3491,12 @@ async function updateGameState(incomingState = null) {
             }
         }
 
-        // Rapid retry if server is lagged (stayed in active or intermission state but time is up)
-        if (state && (state.state === 'active' || state.state === 'intermission') && state.time_remaining <= 0) {
-            console.warn(`[play.js] Server state is ${state.state} with 0s left. Scheduling rapid state check in 200ms...`);
+        // Rapid retry if server is lagged (stayed in active or intermission state but time is up, or room is waiting)
+        if (state && (((state.state === 'active' || state.state === 'intermission') && state.time_remaining <= 0) || state.state === 'waiting')) {
+            console.warn(`[play.js] Server state is ${state.state} (tr=${state.time_remaining}). Scheduling rapid state check in 200ms...`);
             if (!window._rapidPollCount || window._rapidPollCount < 20) {
                 window._rapidPollCount = (window._rapidPollCount || 0) + 1;
-                setTimeout(() => updateGameState(), 100);
+                setTimeout(() => updateGameState(), 200);
             } else {
                 window._rapidPollCount = 0;
             }
@@ -5633,6 +5634,8 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         endTime = state.round_end_time || (state.server_time + state.time_remaining);
     } else if (state.state === 'intermission') {
         endTime = state.intermission_end_time || (state.server_time + state.time_remaining);
+    } else if (state.state === 'waiting') {
+        endTime = state.server_time + (state.time_remaining || 0);
     }
 
     if (endTime && stableServerTimeOffset !== null) {

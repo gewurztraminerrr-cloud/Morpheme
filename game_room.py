@@ -323,6 +323,11 @@ class GameRoom:
         # Keep only last 30 messages
         if len(self.chat_messages) > 30:
             self.chat_messages.pop(0)
+
+    def _trigger_wake_if_needed(self, is_ai, username):
+        if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
+            print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
+            self.check_and_update_state()
     
     def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
         """Add player to room"""
@@ -358,13 +363,6 @@ class GameRoom:
                 del self.evicted_users[uid_str]
                 print(f"[GameRoom] Cleared eviction flag for {username} on join.")
                 
-            # UNPAUSE: If human player joins a paused 'waiting' room, unpause it immediately
-            if self.state == 'waiting' and not is_ai and self.time_limit < 7200:
-                print(f"[GameRoom] Human player {username} joined waiting room {self.room_id}. Unpausing room...")
-                self.state = 'intermission'
-                self.intermission_start_time = time.time() - 60
-                self.spinner_params_generated = False
-                self.board_search_started = False
             
             # Check if player already exists (PERSISTENCE / REUSE)
             existing_player = self.get_player(user_id) or self.get_player(username)
@@ -400,6 +398,7 @@ class GameRoom:
                 
                 if is_daily:
                     self.save_active_players()
+                self._trigger_wake_if_needed(is_ai, username)
                 return True
             
             # Check if player exists in round_quitters (RESTORE mid-round state)
@@ -422,6 +421,7 @@ class GameRoom:
                     print(f"[GameRoom] Reversed abandonment bounty for returning player {username}. Pool now: {self.abandonment_bounty}")
                 if is_daily:
                     self.save_active_players()
+                self._trigger_wake_if_needed(is_ai, username)
                 return True
 
             # Check if player exists in past_players
@@ -471,6 +471,7 @@ class GameRoom:
                 self.players.sort(key=lambda p: p.rating, reverse=True)
                 if is_daily:
                     self.save_active_players()
+                self._trigger_wake_if_needed(is_ai, username)
                 return True
 
             # Ensure player is not already in the room (prevent duplicates)
@@ -505,6 +506,7 @@ class GameRoom:
             
             if is_daily:
                 self.save_active_players()
+            self._trigger_wake_if_needed(is_ai, username)
             return True # Success
 
     def add_spectator(self, user_id, username, rating):

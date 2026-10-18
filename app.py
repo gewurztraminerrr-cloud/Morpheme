@@ -557,9 +557,7 @@ def remove_moderator(username):
 
 def is_mod(username):
     if not username: return False
-    res = username.lower() in get_moderators()
-    print(f"[Mods] Checking if {username} is mod: {res}")
-    return res
+    return username.lower() in get_moderators()
 
 
 # Auth Helpers
@@ -6482,27 +6480,6 @@ def get_room_state(room_id):
     
     room = room_manager.get_room(room_id)
     if room:
-        # 1. On-demand state updates & next round transitions safeguard
-        room.check_and_update_state()
-        room_manager.check_6x8_rescue(room)
-
-        # Safeguard: if room is active but has no board/letters, force instant board immediately!
-        has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
-        if room.state == 'active' and not has_letters:
-            print(f"[get_room_state] Room {room_id} is active but has empty board. Force-loading instant board now...")
-            room_manager.force_instant_board(room_id)
-
-        if room.state == 'intermission' and room.time_remaining <= 0:
-            if not getattr(room, 'starting_round', False):
-                import threading
-                print(f"[get_room_state] TR=0 for {room_id} — launching start_next_round async")
-                threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
-
-        # 2. On-demand database backfill for previous day's board/history
-        if room.time_limit >= 7200:
-            room_manager.load_previous_day_data(room)
-            
-        print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
         user_rating_for_snapshot = None
         if 'user_id' in session:
             uid = session['user_id']
@@ -6572,6 +6549,43 @@ def get_room_state(room_id):
                     room.add_player(uid, session.get('username', 'Player'), rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
 
             room.update_player_activity(uid)
+
+        # 1. On-demand state updates & next round transitions safeguard
+        # If room is paused in 'waiting' and a human player is present/polling, wake up immediately!
+        if room.state == 'waiting' and room.time_limit < 7200:
+            humans = [p for p in room.players if not p.is_ai]
+            if len(humans) > 0:
+                print(f"[get_room_state] Waking up paused room {room_id} immediately for active human player.")
+                room.check_and_update_state()
+            else:
+                room_manager.force_instant_board(room_id)
+        else:
+            room.check_and_update_state()
+        room_manager.check_6x8_rescue(room)
+
+        # Safeguard: if room is active but has no board/letters, force instant board immediately!
+        has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
+        if room.state == 'active' and not has_letters:
+            print(f"[get_room_state] Room {room_id} is active but has empty board. Force-loading instant board now...")
+            room_manager.force_instant_board(room_id)
+
+        # Safeguard: if room is intermission and time is up, trigger next round or break stall immediately
+        if room.state == 'intermission' and room.time_remaining <= 0:
+            is_stale_start = getattr(room, 'starting_round', False) and (time.time() - getattr(room, '_round_start_init_time', 0) > 2.0)
+            if is_stale_start:
+                print(f"[get_room_state] TR=0 for {room_id} with STALE starting_round (>2s). Force-resetting and delivering instant board.")
+                room.starting_round = False
+                room_manager.force_instant_board(room_id)
+            elif not getattr(room, 'starting_round', False):
+                import threading
+                print(f"[get_room_state] TR=0 for {room_id} — launching start_next_round async")
+                threading.Thread(target=room_manager.start_next_round, args=(room.room_id,), daemon=True).start()
+
+        # 2. On-demand database backfill for previous day's board/history
+        if room.time_limit >= 7200:
+            room_manager.load_previous_day_data(room)
+            
+        print(f"[get_room_state] Room: {room_id} | State: {room.state} | PrevBonus: {getattr(room, 'previous_bonus_word', 'None')} | CurrBonus: {room.bonus_word}")
     try:
         if not room:
             # User Request: STABILITY. Public hubs (pub_...) should be recreated on demand if they vanish (e.g. server restart)
