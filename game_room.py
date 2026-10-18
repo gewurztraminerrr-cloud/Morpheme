@@ -337,7 +337,6 @@ class GameRoom:
                     global _room_manager_instance
                     rm = _room_manager_instance
                     if rm:
-                        import threading
                         threading.Thread(target=rm.start_next_round, args=(self.room_id,), daemon=True).start()
     
     def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
@@ -1565,7 +1564,6 @@ class GameRoom:
                                 _stage_board((g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params))
                         except Exception as ex_wd:
                             print(f"[Watchdog] Emergency generate_board error: {ex_wd}")
-                    import threading
                     threading.Thread(target=_watchdog_gen, daemon=True).start()
 
         if getattr(self, 'starting_round', False):
@@ -2413,7 +2411,6 @@ class GameRoom:
                         global _room_manager_instance
                         rm = _room_manager_instance
                         if rm:
-                            import threading
                             threading.Thread(target=rm.start_next_round, args=(self.room_id,), daemon=True).start()
 
                 elapsed = now - self.intermission_start_time
@@ -3198,7 +3195,8 @@ class RoomManager:
                             if not getattr(room, 'starting_round', False):
                                 threading.Thread(target=self.start_next_round, args=(room_id,), daemon=True).start()
                     except Exception as tick_err:
-                        print(f"[Heartbeat] Error on {room_id}: {tick_err}")
+                        import traceback
+                        print(f"[Heartbeat] Error on {room_id}: {tick_err}\n{traceback.format_exc()}")
                 
                 # 2. Lazy Inactivity Cleanup (Every 30s: 120 iterations at 0.25s)
                 if loop_counter % 120 == 0:
@@ -4486,13 +4484,11 @@ class RoomManager:
                 
                 if milestone == 'spinner':
                     # Proactive generation
-                    import threading
                     threading.Thread(target=self.generate_spinner_params, args=(room_id, False), daemon=True).start()
                 
                 elif milestone == 'reveal':
                     # Reveal (Intermission only)
                     if not getattr(room, 'spinner_params_revealed', False):
-                        import threading
                         threading.Thread(target=self.generate_spinner_params, args=(room_id, True), daemon=True).start()
 
                 elif milestone == 'search':
@@ -4500,13 +4496,11 @@ class RoomManager:
                     if not getattr(room, 'board_search_started', False):
                         room.board_search_started = True
                         print(f"[TRANSITION] Room {room_id}: PROACTIVE SEARCH TRIGGERED")
-                        import threading
                         threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
                 
                 elif milestone == 'start' and room.state == 'intermission':
                     # Start next round
                     if not getattr(room, 'starting_round', False):
-                        import threading
                         threading.Thread(target=self.start_next_round, args=(room_id,), daemon=True).start()
 
                 # 2. Check for inactive players

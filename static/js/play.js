@@ -5670,6 +5670,17 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     if (state.state === 'active' || state.state === 'intermission') {
         const nowSec = Date.now() / 1000;
         let rem = Math.max(0, localEndTime - nowSec);
+
+        // RESILIENCE FIX: If authoritative server reports time_remaining > 0, trust the server!
+        // Prevent local clock drift, mobile thaw skew, or offset jitter from zeroing the countdown.
+        if (typeof state.time_remaining === 'number' && state.time_remaining > 0) {
+            if (rem <= 0 || Math.abs(rem - state.time_remaining) > 2.0) {
+                rem = state.time_remaining;
+                localEndTime = nowSec + rem;
+                stableServerTimeOffset = (serverTime || (endTime - rem)) - clientTime;
+            }
+        }
+
         if (state.state === 'active') {
             const limit = state.time_limit || 45;
             if (rem > limit) rem = limit;
@@ -5678,7 +5689,8 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
             if (rem > limit) rem = limit;
 
             // If intermission countdown has reached 0 on client while server is preparing next round
-            if (rem <= 0) {
+            // ONLY set waiting state if server also confirms 0 or no time remaining!
+            if (rem <= 0 && (!state.time_remaining || state.time_remaining <= 0.5)) {
                 const timerLabel = document.querySelector('.timer-label');
                 if (timerLabel && timerLabel.textContent !== "Next Round:") {
                     timerLabel.textContent = "Next Round:";
@@ -5847,6 +5859,12 @@ function updateLocalTimer() {
     }
 
     if (remaining <= 0 && timerInterval) {
+        // If the authoritative game state still has valid time remaining (> 1.0s), re-anchor instead of halting on WAIT...
+        if (window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 1.0) {
+            localEndTime = (Date.now() / 1000) + window.lastGameState.time_remaining;
+            return;
+        }
+
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');
@@ -10054,16 +10072,10 @@ if (submittedWordsListEl) {
     });
 }
 
-window.addEventListener('beforeunload', () => {
-    // Only send leave beacon on desktop browsers.
-    // Mobile browsers (iOS Safari / Android Chrome) fire beforeunload on minimize/background/app switch,
-    // which incorrectly evicts players from active rooms.
-    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (!isMobile && window.currentRoomId) {
-        const url = '/api/room/' + window.currentRoomId + '/leave';
-        navigator.sendBeacon(url);
-    }
-});
+// NOTE: Avoid sending automated /leave on beforeunload because tab freezing / switching in Safari
+// and Chromium can fire beforeunload prematurely, falsely evicting active players.
+// Inactivity timeout (10m) and explicit "Leave Room" buttons handle room departures safely.
+window.addEventListener('beforeunload', () => {});
 
 function createSpectatorPanel() {
     const panel = document.createElement('div');

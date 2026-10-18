@@ -3782,12 +3782,15 @@ window.updateUserRatingHighlight = function(rating) {
     }
 }
 
-// Presence Beacon: Notify server when browser tab is closed
-// pagehide is more reliable than beforeunload in Safari and mobile browsers
+// Presence Beacon: Notify server when browser tab is closed on desktop
+// NOTE: Mobile browsers (Safari/Chrome) fire pagehide on minimize/app switch.
+// Never send presence leave on mobile or while in a game room to prevent false eviction!
 window.addEventListener('pagehide', (e) => {
+    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile || window.currentRoomId || (typeof isOnPlayPage === 'function' && isOnPlayPage())) {
+        return;
+    }
     if (window.currentUser) {
-        // Note: pagehide fires on both navigation and closing
-        // We use sendBeacon for reliable delivery
         navigator.sendBeacon('/api/presence/leave');
     }
 });
