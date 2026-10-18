@@ -761,6 +761,7 @@ function resetIdleTimer() {
 function isOnPlayPage() {
     const playPage = document.getElementById('page-play');
     if (!playPage) return false;
+    if (playPage.classList.contains('active') || window.currentPageId === 'page-play') return true;
     const style = window.getComputedStyle(playPage);
     return style.display !== 'none' && !playPage.classList.contains('hidden');
 }
@@ -1351,114 +1352,129 @@ function setTimerWaitingState(isWaiting) {
 }
 
 // Global Visibility Listener to handle battery management
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        const now = Date.now();
-        const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-        const idleGap = Math.max(now - lastGameInteractionTime, lastActiveStored > 0 ? (now - lastActiveStored) : 0);
+// Unified Mobile/Desktop Wake-Up Handler
+let _lastResumeWakeUpTime = 0;
+function handleResumeWakeUp(source) {
+    if (document.hidden) return;
+    const now = Date.now();
+    // Debounce rapid successive events (visibilitychange + focus + pageshow often fire within 50ms on mobile)
+    if (now - _lastResumeWakeUpTime < 1200) {
+        console.log(`[play.js] Ignoring duplicate wake-up event from ${source} (${now - _lastResumeWakeUpTime}ms since last wake-up).`);
+        return;
+    }
+    _lastResumeWakeUpTime = now;
+    console.log(`[play.js] Processing resume wake-up from ${source}.`);
 
-        if (isOnPlayPage()) {
-            const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
-            const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
+    const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+    const idleGap = Math.max(now - lastGameInteractionTime, lastActiveStored > 0 ? (now - lastActiveStored) : 0);
 
-            // IDLE EVICTION ON RETURN: If minimized/idle for >= 10m while in a non-24h game room, eject immediately to lobby!
-            if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
-                console.warn('[play.js] Returned from background after ' + Math.round(idleGap / 1000) + 's (>= 10m). Ejecting to lobby for inactivity.');
-                ejectToLobby("inactivity");
-                return;
-            }
-        }
+    if (isOnPlayPage()) {
+        const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
+        const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
 
-        // Active return under timeout threshold: refresh interaction time
-        lastGameInteractionTime = now;
-        try {
-            const nowStr = now.toString();
-            localStorage.setItem('morpheme_last_active_time', nowStr);
-            localStorage.setItem('morpheme_last_active_timestamp', nowStr);
-        } catch(e) {}
-
-        if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+        // IDLE EVICTION ON RETURN: If idle for >= 10m while in a non-24h game room, eject immediately to lobby!
+        if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
+            console.warn('[play.js] Wake-up after ' + Math.round(idleGap / 1000) + 's (>= 10m). Ejecting to lobby for inactivity.');
+            ejectToLobby("inactivity");
             return;
         }
-        // Tab became visible: Update immediately and restore fast polling
-        console.log('[play.js] Tab visible: Restoring fast polling.');
+    }
 
-        // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
-        if (window._activeStateFetchController) {
-            console.log('[play.js] Tab visible: Aborting stale in-flight state fetch.');
-            try { window._activeStateFetchController.abort(); } catch(e) {}
-            window._activeStateFetchController = null;
-        }
-        isFetchingState = false;
-        lastStateFetchTime = 0;
+    lastGameInteractionTime = now;
+    try {
+        const nowStr = now.toString();
+        localStorage.setItem('morpheme_last_active_time', nowStr);
+        localStorage.setItem('morpheme_last_active_timestamp', nowStr);
+    } catch(e) {}
 
-        // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
-        if (isTournamentPlay) {
-            const now = Date.now() / 1000;
-            if (localEndTime && localEndTime > now) {
-                // Time remains — restart the local countdown
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = setInterval(() => {
-                    const diff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
-                    updateSpecialMatchTimer(diff);
-                    if (diff <= 0) {
-                        clearInterval(timerInterval);
-                        finishTournamentTurn();
-                    }
-                }, 1000);
-                const initialDiff = Math.max(0, Math.ceil(localEndTime - now));
-                updateSpecialMatchTimer(initialDiff);
-            } else if (localEndTime) {
-                // Timer already expired while tab was hidden — finish the turn now
-                console.log('[play.js] Tournament timer expired while hidden. Finishing turn.');
-                if (timerInterval) clearInterval(timerInterval);
-                finishTournamentTurn();
-            } else {
-                setTimerWaitingState(true);
-            }
-            return; // Do NOT call updateGameState/refreshPollInterval for tournament
-        }
+    if (!isOnPlayPage()) {
+        return;
+    }
 
-        // PRIVATE MATCH MODE: Handle resume separately — don't poll public room endpoints
-        if (isPrivateMatchPlay) {
-            const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
-            const endTime = activeMatch ? activeMatch.end_time : null;
-            const now = Date.now() / 1000;
-            if (endTime && endTime > now) {
-                startPrivateMatchTimer(endTime);
-            } else if (endTime) {
-                console.log('[play.js] Private match timer expired while hidden. Finishing turn.');
-                if (timerInterval) clearInterval(timerInterval);
-                finishPrivateMatchTurn();
-            } else {
-                setTimerWaitingState(true);
-            }
-            return; // Do NOT call updateGameState/refreshPollInterval for private match
-        }
+    // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
+    if (window._activeStateFetchController) {
+        console.log('[play.js] Wake-up: Aborting stale in-flight state fetch.');
+        try { window._activeStateFetchController.abort(); } catch(e) {}
+        window._activeStateFetchController = null;
+    }
+    isFetchingState = false;
+    lastStateFetchTime = 0;
 
-        // Instant Feedback: Show ticking countdown if active; never force WAIT... preemptively on wake-up
-        if (localEndTime && localEndTime > (Date.now() / 1000)) {
-            if (!timerInterval) {
-                timerInterval = setInterval(updateLocalTimer, 100);
-            }
-            updateLocalTimer();
+    // TOURNAMENT MODE: Handle resume separately
+    if (isTournamentPlay) {
+        const nowSec = Date.now() / 1000;
+        if (localEndTime && localEndTime > nowSec) {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const diff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
+                updateSpecialMatchTimer(diff);
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    finishTournamentTurn();
+                }
+            }, 1000);
+            const initialDiff = Math.max(0, Math.ceil(localEndTime - nowSec));
+            updateSpecialMatchTimer(initialDiff);
+        } else if (localEndTime) {
+            console.log('[play.js] Tournament timer expired while hidden. Finishing turn.');
+            if (timerInterval) clearInterval(timerInterval);
+            finishTournamentTurn();
+        } else {
+            setTimerWaitingState(true);
         }
-        if (window._waitGraceTimeout) {
-            clearTimeout(window._waitGraceTimeout);
-            window._waitGraceTimeout = null;
-        }
+        return;
+    }
 
-        // Fetch state immediately without artificial delays
-        if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
-            updateGameState();
-            refreshPollInterval();
+    // PRIVATE MATCH MODE: Handle resume separately
+    if (isPrivateMatchPlay) {
+        const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
+        const endTime = activeMatch ? activeMatch.end_time : null;
+        const nowSec = Date.now() / 1000;
+        if (endTime && endTime > nowSec) {
+            startPrivateMatchTimer(endTime);
+        } else if (endTime) {
+            console.log('[play.js] Private match timer expired while hidden. Finishing turn.');
+            if (timerInterval) clearInterval(timerInterval);
+            finishPrivateMatchTurn();
+        } else {
+            setTimerWaitingState(true);
         }
+        return;
+    }
 
-        // Re-sync timer if needed (ONLY if lastGameState is fresh, within 5 seconds)
-        if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
-            syncTimerWithServer(window.lastGameState);
-            updateLocalTimer(); // Instantly update timer display
+    // Instant Feedback:
+    // If the timer is still active, tick it immediately.
+    // If expired while away, clear the stale frozen text (e.g. 0:35 from prior round) immediately!
+    const nowSec = Date.now() / 1000;
+    if (localEndTime && localEndTime > nowSec) {
+        if (!timerInterval) {
+            timerInterval = setInterval(updateLocalTimer, 100);
         }
+        updateLocalTimer();
+    } else {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        const timerVal = document.getElementById('timer-value');
+        if (timerVal) {
+            timerVal.textContent = '--:--';
+        }
+    }
+    if (window._waitGraceTimeout) {
+        clearTimeout(window._waitGraceTimeout);
+        window._waitGraceTimeout = null;
+    }
+
+    // Fetch authoritative state immediately and refresh polling
+    updateGameState();
+    refreshPollInterval();
+}
+
+// Global Visibility Listener to handle battery management
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        handleResumeWakeUp('visibilitychange');
     } else {
         // Tab hidden: Enter battery-saving mode
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
@@ -1475,100 +1491,14 @@ document.addEventListener('visibilitychange', () => {
 // Window Focus Listener: Provides robust mobile wake-up when focus is gained
 window.addEventListener('focus', () => {
     if (!document.hidden) {
-        const now = Date.now();
-        const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-        const idleGap = Math.max(now - lastGameInteractionTime, lastActiveStored > 0 ? (now - lastActiveStored) : 0);
+        handleResumeWakeUp('focus');
+    }
+});
 
-        if (isOnPlayPage()) {
-            const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
-            const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
-
-            // IDLE EVICTION ON RETURN: If idle for >= 10m while in a non-24h game room, eject immediately to lobby!
-            if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
-                console.warn('[play.js] Focus gained after ' + Math.round(idleGap / 1000) + 's (>= 10m). Ejecting to lobby for inactivity.');
-                ejectToLobby("inactivity");
-                return;
-            }
-        }
-
-        if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
-            return;
-        }
-        console.log('[play.js] Window focus gained: Checking wake-up update.');
-
-        // Force-abort any stale/stuck in-flight fetch and release lock to prevent queue clogging
-        if (window._activeStateFetchController) {
-            console.log('[play.js] Focus: Aborting stale in-flight state fetch.');
-            try { window._activeStateFetchController.abort(); } catch(e) {}
-            window._activeStateFetchController = null;
-        }
-        isFetchingState = false;
-        lastStateFetchTime = 0;
-
-        // TOURNAMENT MODE: Handle resume separately — don't poll public room endpoints
-        if (isTournamentPlay) {
-            const now = Date.now() / 1000;
-            if (localEndTime && localEndTime > now) {
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = setInterval(() => {
-                    const diff = Math.max(0, Math.ceil(localEndTime - (Date.now() / 1000)));
-                    updateSpecialMatchTimer(diff);
-                    if (diff <= 0) {
-                        clearInterval(timerInterval);
-                        finishTournamentTurn();
-                    }
-                }, 1000);
-                const initialDiff = Math.max(0, Math.ceil(localEndTime - now));
-                updateSpecialMatchTimer(initialDiff);
-            } else if (localEndTime) {
-                console.log('[play.js] Tournament timer expired while hidden (focus). Finishing turn.');
-                if (timerInterval) clearInterval(timerInterval);
-                finishTournamentTurn();
-            } else {
-                setTimerWaitingState(true);
-            }
-            return;
-        }
-
-        // PRIVATE MATCH MODE: Handle resume separately — don't poll public room endpoints
-        if (isPrivateMatchPlay) {
-            const activeMatch = JSON.parse(localStorage.getItem('private_match_active'));
-            const endTime = activeMatch ? activeMatch.end_time : null;
-            const now = Date.now() / 1000;
-            if (endTime && endTime > now) {
-                startPrivateMatchTimer(endTime);
-            } else if (endTime) {
-                console.log('[play.js] Private match timer expired while hidden (focus). Finishing turn.');
-                if (timerInterval) clearInterval(timerInterval);
-                finishPrivateMatchTurn();
-            } else {
-                setTimerWaitingState(true);
-            }
-            return;
-        }
-
-        // Instant Feedback: Show ticking countdown if active; never force WAIT... preemptively on wake-up
-        if (localEndTime && localEndTime > (Date.now() / 1000)) {
-            if (!timerInterval) {
-                timerInterval = setInterval(updateLocalTimer, 100);
-            }
-            updateLocalTimer();
-        }
-        if (window._waitGraceTimeout) {
-            clearTimeout(window._waitGraceTimeout);
-            window._waitGraceTimeout = null;
-        }
-
-        // Fetch state immediately without artificial delays
-        if (!document.hidden && isOnPlayPage() && window.currentPageId === 'page-play') {
-            updateGameState();
-            refreshPollInterval();
-        }
-
-        if (window.lastGameState && window._lastGameStateFetchedTime && (Date.now() - window._lastGameStateFetchedTime < 5000)) {
-            syncTimerWithServer(window.lastGameState);
-            updateLocalTimer();
-        }
+// Window Pageshow Listener: Mobile bfcache & tab thaw
+window.addEventListener('pageshow', () => {
+    if (!document.hidden) {
+        handleResumeWakeUp('pageshow');
     }
 });
 
@@ -1630,7 +1560,7 @@ let isFetchingState = false;
 window._activeStateFetchController = null;
 
 async function updateGameState(incomingState = null) {
-    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+    if (!isOnPlayPage()) {
         stopPolling();
         return;
     }
@@ -1671,22 +1601,13 @@ async function updateGameState(incomingState = null) {
             // Optimization: Skip fetching if tab has been hidden for a while but not yet reached the 15s pulse
             // This is just extra safety, the refreshPollInterval handles the bulk of it.
             
-            // Mobile/Wake-up instant response: Allow adequate timeout (2000ms) for mobile cellular reconnection handshake,
-            // with a 3500ms fallback retry on failure.
             let response;
             try {
                 tBefore = Date.now() / 1000;
-                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 2000);
+                response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, 4500);
             } catch (err) {
-                console.log(`[play.js] Wake-up state fetch timed out or failed, retrying immediately with fresh socket...`);
-                try {
-                    tBefore = Date.now() / 1000;
-                    // Try again with a slightly longer timeout (3500ms) to ensure it doesn't block indefinitely
-                    response = await fetchWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}&retry=true`, { cache: 'no-store' }, 3500);
-                } catch (retryErr) {
-                    console.log(`[play.js] Wake-up retry fetch also failed:`, retryErr);
-                    return; // Let the next scheduled poll handle it
-                }
+                console.log(`[play.js] State fetch timed out or failed (${err.message}). Retrying on next poll tick.`);
+                return;
             }
             
             // Check if user left or switched rooms while the network fetch was in-flight
@@ -5705,7 +5626,7 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
 }
 
 function updateLocalTimer() {
-    if (!isOnPlayPage() || window.currentPageId !== 'page-play') {
+    if (!isOnPlayPage()) {
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -5721,14 +5642,7 @@ function updateLocalTimer() {
         if (gap > 2200) {
             console.log(`[play.js] updateLocalTimer: Thawed after freeze gap of ${gap}ms. Requesting instant wake-up update.`);
             window._lastLocalTimerTickTime = tickTime;
-            if (window._waitGraceTimeout) {
-                clearTimeout(window._waitGraceTimeout);
-                window._waitGraceTimeout = null;
-            }
-            isFetchingState = false;
-            lastStateFetchTime = 0;
-            updateGameState();
-            refreshPollInterval();
+            handleResumeWakeUp('thread_thaw');
             return;
         }
     }
