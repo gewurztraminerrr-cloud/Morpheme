@@ -6548,6 +6548,9 @@ def get_room_state(room_id):
                 else:
                     room.add_player(uid, session.get('username', 'Player'), rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
 
+            p_obj = room.get_player(uid)
+            if p_obj:
+                p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
             room.update_player_activity(uid)
 
         # 1. On-demand state updates & next round transitions safeguard
@@ -6559,6 +6562,41 @@ def get_room_state(room_id):
                 room.check_and_update_state()
             else:
                 room_manager.force_instant_board(room_id)
+        elif room.state == 'intermission' and room.time_limit < 7200:
+            now_t = time.time()
+            is_wake_up = (request.args.get('wake_up') == '1')
+            req_p = room.get_player(uid) if uid else None
+            user_idle = (now_t - getattr(req_p, '_last_seen_before_update', now_t)) if req_p else 0
+            user_was_away = is_wake_up or (user_idle >= 25.0)
+            user_submitted = bool(req_p and (getattr(req_p, 'previous_round_score', 0) > 0 or len(getattr(req_p, 'previous_submitted_words', [])) > 0))
+
+            other_active_reviewers = [
+                pl for pl in room.players
+                if not getattr(pl, 'is_ai', False)
+                and str(pl.user_id) != str(uid)
+                and (now_t - getattr(pl, 'last_active', 0)) < 15.0
+                and (getattr(pl, 'previous_round_score', 0) > 0 or len(getattr(pl, 'previous_submitted_words', [])) > 0)
+            ]
+
+            should_fast_forward = False
+            if room.time_remaining <= 0:
+                should_fast_forward = True
+            elif len(other_active_reviewers) == 0:
+                if user_was_away or not user_submitted or len(room.players) <= 1:
+                    print(f"[get_room_state] Fast-forwarding unreviewed/empty intermission for room {room_id} (away={user_was_away}, submitted={user_submitted}, reviewers={len(other_active_reviewers)}). Starting next round instantly.")
+                    should_fast_forward = True
+
+            if should_fast_forward:
+                is_stale_start = getattr(room, 'starting_round', False) and (now_t - getattr(room, '_round_start_init_time', 0) > 3.0)
+                if is_stale_start or not getattr(room, 'starting_round', False):
+                    room.starting_round = False
+                    try:
+                        room_manager.start_next_round(room.room_id)
+                    except Exception as _snr_err:
+                        print(f"[get_room_state] Error fast-forwarding intermission: {_snr_err}")
+                        room_manager.force_instant_board(room_id)
+            else:
+                room.check_and_update_state()
         else:
             room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
@@ -6571,9 +6609,9 @@ def get_room_state(room_id):
 
         # Safeguard: if room is intermission and time is up, trigger next round or break stall immediately
         if room.state == 'intermission' and room.time_remaining <= 0:
-            is_stale_start = getattr(room, 'starting_round', False) and (time.time() - getattr(room, '_round_start_init_time', 0) > 10.0)
+            is_stale_start = getattr(room, 'starting_round', False) and (time.time() - getattr(room, '_round_start_init_time', 0) > 3.0)
             if is_stale_start:
-                print(f"[get_room_state] TR=0 for {room_id} with STALE starting_round (>10s). Force-resetting and delivering instant board.")
+                print(f"[get_room_state] TR=0 for {room_id} with STALE starting_round (>3s). Force-resetting and delivering instant board.")
                 room.starting_round = False
                 if room.state == 'intermission':
                     room_manager.force_instant_board(room_id)

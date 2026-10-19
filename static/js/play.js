@@ -1733,13 +1733,14 @@ async function _doUpdateGameState(incomingState = null) {
             // Fetch authoritative room state with mobile socket-thaw retry
             let response;
             const isWakeUpThaw = !!(window._isWakeUpFetch || (Date.now() - (window._lastGameStateFetchedTime || 0) > 30000));
+            const wakeParam = window._isWakeUpFetch ? '&wake_up=1' : '';
             window._isWakeUpFetch = false;
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     tBefore = Date.now() / 1000;
                     // On wake-up after idle/background, fail fast on attempt 0 (800ms) to rapidly detect half-dead TCP sockets
                     const timeoutLimit = (isWakeUpThaw && attempt === 0) ? 800 : 2500;
-                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}`, { cache: 'no-store' }, timeoutLimit);
+                    response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}${wakeParam}`, { cache: 'no-store' }, timeoutLimit);
                     if (response && response.ok) break;
                 } catch (err) {
                     if (attempt === 0) {

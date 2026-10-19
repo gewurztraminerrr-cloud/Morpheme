@@ -3150,19 +3150,21 @@ class RoomManager:
                         # This prevents empty public rooms from looping rounds and pegging CPU in background.
                         is_daily = (room.time_limit >= 7200)
                         humans = [p for p in room.players if not p.is_ai]
-                        if len(humans) == 0 and not is_daily:
+                        now_t = time.time()
+                        active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 30.0]
+                        if len(active_humans) == 0 and not is_daily:
                             # ISSUE 6 FIX: NEVER pause an ACTIVE round — only pause intermission/waiting.
                             # Pausing active rooms mid-board causes board wipes and re-rolls.
                             # Also enforce a 30-second grace period after the most recent round started
                             # to absorb transient 0-player moments (e.g., join latency on first load).
-                            round_age = time.time() - getattr(room, 'round_start_time', 0)
+                            round_age = now_t - getattr(room, 'round_start_time', 0)
                             is_newly_active = (room.state == 'active' and round_age < 30)
                             if room.state not in ['waiting'] and not is_newly_active:
                                 if room.state == 'active':
                                     # Never wipe an active board — just skip milestones silently
                                     continue
                                 if room.state != 'waiting':
-                                    print(f"[Heartbeat] Pausing empty room {room_id}. Setting state to 'waiting'.")
+                                    print(f"[Heartbeat] Pausing inactive room {room_id} (0 active humans). Setting state to 'waiting'.")
                                     with room._state_lock:
                                         room.state = 'waiting'
                                         room.starting_round = False
@@ -4450,7 +4452,9 @@ class RoomManager:
                 # This prevents empty public rooms from looping rounds and pegging CPU in background.
                 is_daily = (room.time_limit >= 7200)
                 humans = [p for p in room.players if not p.is_ai]
-                if len(humans) == 0 and not is_daily:
+                now_t = time.time()
+                active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 30.0]
+                if len(active_humans) == 0 and not is_daily:
                     # ISSUE 6 FIX: NEVER wipe the board or reset an ACTIVE room.
                     # Active rooms may briefly show 0 humans due to join latency or roster timing.
                     # Wiping room.board causes the watchdog to immediately start_next_round, rolling
@@ -4458,7 +4462,7 @@ class RoomManager:
                     if room.state == 'active':
                         continue  # Skip — active board is sacred, never wipe mid-round
                     if room.state != 'waiting':
-                        print(f"[BG-Cleanup] Pausing empty room {room_id}. Setting state to 'waiting'.")
+                        print(f"[BG-Cleanup] Pausing inactive room {room_id} (0 active humans). Setting state to 'waiting'.")
                         with room._state_lock:
                             room.state = 'waiting'
                             room.board = None
