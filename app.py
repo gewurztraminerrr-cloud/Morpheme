@@ -6550,7 +6550,8 @@ def get_room_state(room_id):
             p_obj = room.get_player(uid)
             if p_obj:
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
-            room.update_player_activity(uid)
+            if request.args.get('bg') != '1':
+                room.update_player_activity(uid)
 
         # 1. On-demand state updates & next round transitions safeguard
         # If room is paused in 'waiting' and a human player is present/polling, wake up immediately!

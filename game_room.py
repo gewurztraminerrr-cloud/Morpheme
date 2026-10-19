@@ -4885,7 +4885,7 @@ class RoomManager:
                 if len(p.submitted_words) > 0:
                     p.previous_round_score = p.score
                     p.previous_submitted_words = [dict(w) for w in p.submitted_words]
-                elif getattr(p, 'previous_round_score', 0) > 0 or (hasattr(p, 'previous_submitted_words') and len(p.previous_submitted_words) > 0):
+                elif room.time_limit >= 7200 and (getattr(p, 'previous_round_score', 0) > 0 or (hasattr(p, 'previous_submitted_words') and len(p.previous_submitted_words) > 0)):
                     # Keep existing snapshot from midnight reset
                     pass
                 else:
