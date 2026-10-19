@@ -1468,7 +1468,7 @@ class GameRoom:
         # which causes 'spinner' and 'search' milestones to trigger on every tick/poll,
         # generating board after board and triggering start_next_round repeatedly.
         if self.state == 'waiting':
-            humans = [p for p in self.players if not getattr(p, 'is_ai', False)]
+            humans = [p for p in self.players if not getattr(p, 'is_ai', False) and (now - getattr(p, 'last_active', 0)) < 30.0]
             if len(humans) > 0:
                 print(f"[get_next_round_milestone] Unpausing waiting room {self.room_id} cleanly via check_and_update_state().")
                 self.check_and_update_state()
@@ -1847,7 +1847,7 @@ class GameRoom:
         
         # 0. WAKE UP PAUSED ROOMS
         if self.state == 'waiting' and self.time_limit < 7200:
-            humans = [p for p in self.players if not p.is_ai]
+            humans = [p for p in self.players if not p.is_ai and (now - getattr(p, 'last_active', 0)) < 30.0]
             if len(humans) > 0:
                 if getattr(self, '_wakeup_in_progress', False):
                     return False  # Already waking up

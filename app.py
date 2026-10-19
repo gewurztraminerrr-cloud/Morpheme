@@ -6555,7 +6555,10 @@ def get_room_state(room_id):
 
         # 1. On-demand state updates & next round transitions safeguard
         # If room is paused in 'waiting' and a human player is present/polling, wake up immediately!
-        if room.state == 'waiting' and room.time_limit < 7200:
+        is_bg_poll = (request.args.get('bg') == '1')
+        if is_bg_poll:
+            pass  # Minimized-tab poll: never wake paused rooms or fast-forward rounds on its behalf
+        elif room.state == 'waiting' and room.time_limit < 7200:
             humans = [p for p in room.players if not p.is_ai]
             if len(humans) > 0:
                 print(f"[get_room_state] Waking up paused room {room_id} cleanly via start_next_round for active human player.")
