@@ -7437,6 +7437,9 @@ input[type=range]::-moz-range-track {
         /* Hide scrollbar */
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
+        touch-action: pan-x pan-y !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
     }
     .play-grid::-webkit-scrollbar {
         display: none !important;
@@ -7485,10 +7488,11 @@ input[type=range]::-moz-range-track {
         position: relative !important;
         box-shadow: none !important;
         border: none !important;
-        clip-path: inset(0);
-        /* Prevent sub-pixel bleeding on iOS */
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        contain: layout style !important;
         
         /* Force flex column layout to allow centering children */
         display: flex !important;
@@ -7516,9 +7520,11 @@ input[type=range]::-moz-range-track {
         position: relative !important;
         box-shadow: none !important;
         border: none !important;
-        clip-path: inset(0);
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        contain: layout style !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;

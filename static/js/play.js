@@ -105,9 +105,6 @@ window._currentPlayPanel = 'board'; // tracks which panel is currently in view
 
 window.switchPlayPanel = function(panelId, smooth = true) {
     window._currentPlayPanel = panelId || 'board';
-    if (typeof adjustPlayHeaderForDevice === 'function') {
-        adjustPlayHeaderForDevice();
-    }
     const playGrid = document.querySelector('.play-grid');
     if (!playGrid) return;
     const idx = _PLAY_PANELS.indexOf(window._currentPlayPanel);
@@ -121,9 +118,6 @@ window.switchPlayPanel = function(panelId, smooth = true) {
 };
 
 window._restorePlayPanel = function() {
-    if (typeof adjustPlayHeaderForDevice === 'function') {
-        adjustPlayHeaderForDevice();
-    }
     window.switchPlayPanel(window._currentPlayPanel || 'board', false);
 };
 
@@ -156,10 +150,98 @@ window._restorePlayPanel = function() {
     }
 })();
 
+// Mobile Carousel Swipe Protection:
+// Prevents text inputs (#word-input, #chat-input) from accidentally stealing focus and opening
+// the virtual keyboard (which causes Android 2s blackouts) when the user is simply swiping across windows.
+(function _setupMobilePlayGridSwipeProtection() {
+    let startX = 0;
+    let startY = 0;
+    let isHorizontalSwipe = false;
+    let isTouchActive = false;
+
+    document.addEventListener('touchstart', (e) => {
+        const playGrid = document.querySelector('.play-grid');
+        if (!playGrid || !playGrid.contains(e.target)) return;
+
+        if (e.touches && e.touches.length === 1) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isHorizontalSwipe = false;
+            isTouchActive = true;
+
+            // If an input is currently focused, blur it when the user touches the carousel to slide
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                if (document.activeElement !== e.target) {
+                    document.activeElement.blur();
+                }
+            }
+
+            // Android Chrome virtual keyboard black screen prevention:
+            // If touching any input or input section, cleanly exit fullscreen before keyboard opens
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.word-input-section, .chat-input-section, .score-sum-controls'))) {
+                if (typeof window.exitFullscreenForKeyboard === 'function') {
+                    window.exitFullscreenForKeyboard();
+                }
+            }
+        }
+    }, { passive: true, capture: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isTouchActive || !e.touches || e.touches.length !== 1) return;
+        const playGrid = document.querySelector('.play-grid');
+        if (!playGrid || !playGrid.contains(e.target)) return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const dx = Math.abs(currentX - startX);
+        const dy = Math.abs(currentY - startY);
+
+        if (dx > 8 && dx > dy) {
+            isHorizontalSwipe = true;
+            // The user is swiping horizontally across panels!
+            // Ensure no input retains focus or opens keyboard during the swipe gesture
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                document.activeElement.blur();
+            }
+        }
+    }, { passive: true, capture: true });
+
+    const finishTouch = (e) => {
+        if (!isTouchActive) return;
+        if (isHorizontalSwipe) {
+            // If this was a horizontal swipe gesture across the panels, prevent accidental tap/focus on inputs
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.word-input-section, .chat-input-section'))) {
+                if (e.cancelable && e.type === 'touchend') {
+                    e.preventDefault();
+                }
+                if (e.target.blur) e.target.blur();
+            }
+        }
+        isTouchActive = false;
+        // Keep isHorizontalSwipe flag for 120ms to catch any subsequent click event
+        setTimeout(() => { isHorizontalSwipe = false; }, 120);
+    };
+
+    document.addEventListener('touchend', finishTouch, { passive: false, capture: true });
+    document.addEventListener('touchcancel', () => { isTouchActive = false; isHorizontalSwipe = false; }, { passive: true, capture: true });
+
+    // Suppress click event on inputs if it resulted from a horizontal swipe
+    document.addEventListener('click', (e) => {
+        if (isHorizontalSwipe && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.target.blur) e.target.blur();
+        }
+    }, { capture: true });
+})();
+
 // Re-snap the game panels when the viewport changes (Android/iOS "exit full screen" banner or orientation change).
 window.addEventListener('resize', () => {
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (!isMobile) return;
+    if (!isMobile) {
+        if (typeof adjustPlayHeaderForDevice === 'function') adjustPlayHeaderForDevice();
+        return;
+    }
     if (typeof window.scheduleMobileViewportRecovery === 'function') {
         window.scheduleMobileViewportRecovery();
     } else if (typeof window._restorePlayPanel === 'function') {

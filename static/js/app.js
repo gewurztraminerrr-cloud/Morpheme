@@ -2393,8 +2393,11 @@ window.showPage = showPage;
                 input.focus();
             }
 
-            // Mobile carousel: Ensure board is centered by default and top menu is hidden
+            // Mobile carousel: Ensure board is centered by default, top menu is hidden, and fullscreen is cleanly exited to prevent 2s black screen
             if (window.innerWidth <= 992) {
+                if (typeof window.exitFullscreenForKeyboard === 'function') {
+                    window.exitFullscreenForKeyboard();
+                }
                 if (typeof window.switchPlayPanel === 'function') {
                     window.switchPlayPanel('board', false);
                 } else {
@@ -3963,16 +3966,32 @@ document.addEventListener('visibilitychange', () => {
         } catch (e) {}
     }
 
-    // Safety check for Full List Modal and Combo Checker touch events to ensure fullscreen is cleanly exited when interacting with text inputs to prevent Android virtual keyboard 2s black screen
+    // Safety check for all text inputs (game room word/chat inputs, modal inputs, search inputs, etc.)
+    // to ensure fullscreen is cleanly exited when interacting with or focusing text inputs to prevent Android virtual keyboard 2s black screen
     ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
-            const isFullListModal = e.target && e.target.closest && e.target.closest('#full-list-modal');
-            const isComboInput = e.target && (e.target.id === 'combo-input' || e.target.id === 'combo-explorer-filter' || (e.target.closest && e.target.closest('#tool-combo') && e.target.tagName === 'INPUT'));
-            if ((isFullListModal || isComboInput) && isMobileDevice() && (document.fullscreenElement || document.webkitFullscreenElement)) {
+            if (!isMobileDevice()) return;
+            const target = e.target;
+            const isInput = target && (
+                target.tagName === 'INPUT' || 
+                target.tagName === 'TEXTAREA' || 
+                (target.closest && target.closest('#full-list-modal, #tool-combo, .chat-input-section, .word-input-section, .score-sum-controls, #lobby-chat-drawer'))
+            );
+            if (isInput && (document.fullscreenElement || document.webkitFullscreenElement)) {
                 exitFullscreenForKeyboard();
             }
         }, { passive: true });
     });
+
+    document.addEventListener('focusin', (e) => {
+        if (!isMobileDevice()) return;
+        const target = e.target;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                exitFullscreenForKeyboard();
+            }
+        }
+    }, { capture: true, passive: true });
 
     window.triggerMobileFullscreen = function(force) {
         attemptFullscreen(force !== false);
