@@ -3808,11 +3808,14 @@ function renderChat(messages) {
         return;
     }
 
-    // Only update if new messages arrived (using timestamp of last message for precision)
+    // Only update if new messages arrived or message list changed
     const latestMsg = messages[messages.length - 1];
     const latestTimestamp = latestMsg ? (latestMsg.time || 0) : 0;
+    const latestText = latestMsg ? (latestMsg.message || '') : '';
+    const chatSig = `${messages.length}_${latestTimestamp}_${latestText}`;
     
-    if (latestTimestamp === lastChatTimestamp && messages.length > 0) return;
+    if (chatSig === window._lastChatSignature && messages.length > 0) return;
+    window._lastChatSignature = chatSig;
     lastChatTimestamp = latestTimestamp;
 
     // Remove placeholder
@@ -3946,20 +3949,13 @@ function updateRoomChatCounter() {
 }
 window.updateRoomChatCounter = updateRoomChatCounter;
 
-let isSendingChat = false;
-let lastChatSendTime = 0;
-
 async function sendChatMessage() {
-    const now = Date.now();
-    if (now - lastChatSendTime < 250) return;
-    if (isSendingChat) return;
-
     const input = document.getElementById('chat-input');
     if (!input) return;
-    let message = input.value.trim();
-    const roomId = getCurrentRoomId();
-
+    let message = (input.value || '').trim();
     if (!message) return;
+
+    const roomId = getCurrentRoomId();
     if (!roomId) {
         console.warn('[Chat] Aborting sendChatMessage: No room ID found.');
         return;
@@ -3968,23 +3964,73 @@ async function sendChatMessage() {
         message = message.slice(0, 1000);
     }
 
-    lastChatSendTime = now;
-    isSendingChat = true;
-    input.value = ''; // Synchronously clear input immediately so double-press cannot grab the message again
+    // Immediately clear input and counter synchronously (prevents duplicate sends from Enter events)
+    input.value = '';
     updateRoomChatCounter();
 
-    const sendBtn = document.getElementById('chat-send-btn');
-    if (sendBtn) sendBtn.disabled = true;
+    // Determine current user information for immediate optimistic display
+    const myUsername = (window.lastGameState && window.lastGameState.your_username) ||
+                       window.currentUser ||
+                       localStorage.getItem('morpheme_username') ||
+                       'You';
 
-    try {
-        const resp = await fetch(`/api/room/${roomId}/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
-        });
+    let myRating = null;
+    if (typeof playerRatingCache !== 'undefined' && playerRatingCache && playerRatingCache.has(myUsername)) {
+        myRating = playerRatingCache.get(myUsername);
+    } else if (window.lastGameState) {
+        if (window.lastGameState.players) {
+            const p = window.lastGameState.players.find(x => x.username === myUsername);
+            if (p && p.rating !== undefined) myRating = p.rating;
+        }
+        if (myRating === null && window.lastGameState.spectators) {
+            const s = window.lastGameState.spectators.find(x => x.username === myUsername);
+            if (s && s.rating !== undefined) myRating = s.rating;
+        }
+    }
+
+    // Create optimistic message object for 0ms visual feedback
+    const optimisticMsg = {
+        username: myUsername,
+        message: message,
+        time: Date.now() / 1000,
+        rating: myRating,
+        is_optimistic: true
+    };
+
+    // Render immediately in chat history
+    if (window.lastGameState) {
+        if (!Array.isArray(window.lastGameState.chat_messages)) {
+            window.lastGameState.chat_messages = [];
+        }
+        window.lastGameState.chat_messages.push(optimisticMsg);
+        if (window.lastGameState.chat_messages.length > 30) {
+            window.lastGameState.chat_messages.shift();
+        }
+        renderChat(window.lastGameState.chat_messages);
+    } else {
+        renderChat([optimisticMsg]);
+    }
+
+    // Scroll chat history to bottom immediately
+    const chatHist = document.getElementById('chat-history');
+    if (chatHist) {
+        chatHist.scrollTop = chatHist.scrollHeight;
+    }
+
+    // Dispatch to server asynchronously without blocking typing of subsequent messages
+    fetch(`/api/room/${roomId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    }).then(async resp => {
+        const data = await resp.json().catch(() => ({}));
         if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
             console.warn('[Chat] Server returned error sending chat:', resp.status, data);
+            // Revert optimistic message if rejected
+            if (window.lastGameState && Array.isArray(window.lastGameState.chat_messages)) {
+                window.lastGameState.chat_messages = window.lastGameState.chat_messages.filter(m => m !== optimisticMsg);
+                renderChat(window.lastGameState.chat_messages);
+            }
             if (data && data.timed_out) {
                 if (typeof window.handleImmediateTimeout === 'function') {
                     window.handleImmediateTimeout(data);
@@ -3997,16 +4043,21 @@ async function sendChatMessage() {
                 window.showToast(data.error);
             }
         } else {
-            if (typeof updateGameState === 'function') {
+            // Apply authoritative server chat messages directly if returned
+            if (data && Array.isArray(data.chat_messages)) {
+                if (window.lastGameState) {
+                    window.lastGameState.chat_messages = data.chat_messages;
+                }
+                renderChat(data.chat_messages);
+                const hist = document.getElementById('chat-history');
+                if (hist) hist.scrollTop = hist.scrollHeight;
+            } else if (typeof updateGameState === 'function') {
                 updateGameState();
             }
         }
-    } catch (e) {
-        console.error('Failed to send chat:', e);
-    } finally {
-        isSendingChat = false;
-        if (sendBtn) sendBtn.disabled = false;
-    }
+    }).catch(e => {
+        console.error('[Chat] Failed to send chat message:', e);
+    });
 }
 window.sendChatMessage = sendChatMessage;
 

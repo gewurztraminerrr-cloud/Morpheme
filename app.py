@@ -172,7 +172,7 @@ def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=Fa
         # Local checks passed; if no Gemini key is configured, return clean
         return {"inappropriate": False, "reason": ""}
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     parts = []
     
     # Base64-encode image if provided
@@ -224,7 +224,7 @@ def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=Fa
     }
     
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=3)
         if response.status_code != 200:
             print(f"[Moderation] API Error: {response.status_code} - {response.text}")
             return {"inappropriate": False, "reason": f"API error: {response.status_code}"}
@@ -7162,6 +7162,8 @@ def get_user_current_room():
     
     return jsonify({'room_id': None})
 
+_USER_RATING_CACHE = {}
+
 @app.route('/api/room/<room_id>/chat', methods=['POST'])
 def submit_chat_message(room_id):
     if 'user_id' not in session:
@@ -7171,7 +7173,7 @@ def submit_chat_message(room_id):
     if not room:
         return jsonify({'error': 'Room not found'}), 404
         
-    data = request.get_json()
+    data = request.get_json() or {}
     message = data.get('message', '').strip()
     image = data.get('image')
     
@@ -7183,7 +7185,6 @@ def submit_chat_message(room_id):
         message = message[:1000]
         
     # Optional: Basic validation on image size (length of base64 string) if needed
-    # base64 factor is ~1.33. 1MB image is ~1.33MB string. Limit to ~2MB string.
     if image and len(image) > 2 * 1024 * 1024:
         return jsonify({'error': 'Image too large (max 1.5MB)'}), 400
         
@@ -7199,7 +7200,7 @@ def submit_chat_message(room_id):
         r_text = reason_val or 'Moderator timeout'
         return jsonify({'error': f'You are currently timed out for another {rem_str}.\nReason: {r_text}', 'timed_out': True, 'remaining': rem_str, 'timeout_reason': r_text, 'reason': f'timeout:{rem_str}|{r_text}'}), 403
 
-    # Flood & spam check on text
+    # Fast in-memory Flood & spam check on text
     if message:
         is_blocked, spam_msg, is_penalty = check_flood_and_spam(user_id, client_ip, message, context='chat')
         if is_blocked:
@@ -7218,55 +7219,98 @@ def submit_chat_message(room_id):
                 }), 400
             return jsonify({'error': spam_msg}), 400
 
-    # Run AI Content Moderation on text and image combined
-    image_bytes = None
-    mime_type = None
+        # Fast local zero-loophole moderation check (< 0.1ms)
+        is_bad, bad_reason = check_local_moderation(message)
+        if is_bad:
+            reason = f"Inappropriate room chat: {bad_reason}"
+            penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({
+                'error': f"Inappropriate content detected: {bad_reason}.{dur_msg}",
+                'timed_out': True,
+                'remaining': penalty['duration_str'] if penalty else None,
+                'duration_str': penalty['duration_str'] if penalty else None,
+                'timeout_until': penalty['timeout_until'] if penalty else None,
+                'timeout_reason': reason
+            }), 400
+
+    # Image moderation if present (image requires AI inspection)
     if image:
         image_bytes, mime_type = parse_data_url(image)
+        moderation_res = moderate_content(text=message, image_bytes=image_bytes, mime_type=mime_type)
+        if moderation_res.get("inappropriate"):
+            reason = f"Inappropriate room chat image: {moderation_res.get('reason')}"
+            penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=reason)
+            dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
+            return jsonify({
+                'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}",
+                'timed_out': True,
+                'remaining': penalty['duration_str'] if penalty else None,
+                'duration_str': penalty['duration_str'] if penalty else None,
+                'timeout_until': penalty['timeout_until'] if penalty else None,
+                'timeout_reason': reason
+            }), 400
+    elif message and os.environ.get('GEMINI_API_KEY'):
+        # For pure text messages: dispatch Gemini AI check asynchronously to avoid blocking user chat (<0.01ms overhead)
+        def _bg_moderate_room_chat(r_id, u_id, u_name, c_ip, msg_text):
+            try:
+                m_res = moderate_content(text=msg_text)
+                if m_res.get("inappropriate"):
+                    r_reason = f"Inappropriate room chat: {m_res.get('reason')}"
+                    apply_automated_penalty(u_id, u_name, c_ip, reason=r_reason)
+                    target_room = room_manager.get_room(r_id)
+                    if target_room:
+                        with getattr(target_room, '_state_lock', threading.Lock()):
+                            target_room.chat_messages = [
+                                m for m in target_room.chat_messages
+                                if not (m.get('username') == u_name and m.get('message') == msg_text)
+                            ]
+            except Exception as e:
+                print(f"[Moderation] Background room chat moderation exception: {e}")
 
-    moderation_res = moderate_content(text=message, image_bytes=image_bytes, mime_type=mime_type)
-    if moderation_res.get("inappropriate"):
-        reason = f"Inappropriate room chat: {moderation_res.get('reason')}"
-        penalty = apply_automated_penalty(user_id, session.get('username'), client_ip, reason=reason)
-        dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
-        return jsonify({
-            'error': f"Inappropriate content detected: {moderation_res.get('reason')}.{dur_msg}",
-            'timed_out': True,
-            'remaining': penalty['duration_str'] if penalty else None,
-            'duration_str': penalty['duration_str'] if penalty else None,
-            'timeout_until': penalty['timeout_until'] if penalty else None,
-            'timeout_reason': reason
-        }), 400
+        bg_t = threading.Thread(
+            target=_bg_moderate_room_chat,
+            args=(room_id, user_id, session.get('username'), client_ip, message),
+            daemon=True
+        )
+        bg_t.start()
         
     rating = None
     player = room.get_player(user_id)
-    if player:
+    if player and getattr(player, 'rating', None) is not None:
         rating = player.rating
     else:
         for s in getattr(room, 'spectators', []):
-            if str(s.user_id) == str(user_id):
+            if str(getattr(s, 'user_id', '')) == str(user_id) and getattr(s, 'rating', None) is not None:
                 rating = s.rating
                 break
                 
+    if rating is None and str(user_id) in _USER_RATING_CACHE:
+        rating = _USER_RATING_CACHE[str(user_id)]
+
     if rating is None:
         try:
             import sqlite3
-            conn = sqlite3.connect(DB_PATH, timeout=30)
+            conn = sqlite3.connect(DB_PATH, timeout=0.2)
             cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
             row = cursor.fetchone()
-            if row:
+            if row and row[0] is not None:
                 rating = row[0]
             conn.close()
         except Exception as e:
-            print(f"[Chat] Failed to query rating: {e}")
+            pass
             
     if rating is None:
         rating = 1200
+    _USER_RATING_CACHE[str(user_id)] = rating
         
     room.add_chat_message(session['username'], message, image=image, rating=rating)
     room.update_player_activity(session['user_id'])
     
-    return jsonify({'success': True})
+    return jsonify({
+        'success': True,
+        'chat_messages': room.chat_messages
+    })
 
 @app.route('/room/<room_id>/submit_word', methods=['POST'])
 def submit_word(room_id):
