@@ -435,7 +435,8 @@
     max-height: none !important; /* Remove restriction to fill space */
     flex: 1 !important; /* Expand to fill available space */
     min-height: 0;
-    padding-right: 5px;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 
@@ -13618,6 +13619,11 @@ body.is-desktop .left-panel-container .players-panel {
     overflow: hidden !important;
 }
 
+body.is-desktop #players-list {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 body.is-desktop #players-list .player-item {
     padding: 8px 14px !important;
     min-height: 56px !important;
@@ -15010,6 +15016,11 @@ body.theme-light-pink .cube-replay-face-label {
     [class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
     body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning) {
         box-shadow: none !important;
+    }
+
+    #players-list {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     .board-panel .timer-display {
