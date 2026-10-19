@@ -15068,7 +15068,7 @@ body.theme-light-pink .cube-replay-face-label {
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .left-panel-container .chat-panel,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-panel .words-table-box,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-panel .definitions-panel {
-        background: var(--bg-primary) !important;
+        background-color: var(--bg-primary) !important;
         background-image: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)) !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
         color: var(--text-primary) !important;
@@ -15084,7 +15084,7 @@ body.theme-light-pink .cube-replay-face-label {
     body[class*="theme-light-"] #page-play .left-panel-container .chat-panel,
     body[class*="theme-light-"] #page-play .words-panel .words-table-box,
     body[class*="theme-light-"] #page-play .words-panel .definitions-panel {
-        background: var(--bg-primary) !important;
+        background-color: var(--bg-primary) !important;
         background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
         border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
         color: var(--text-primary) !important;
@@ -15109,7 +15109,7 @@ body.theme-light-pink .cube-replay-face-label {
     [class*="theme-white"] #page-play .left-panel-container .chat-panel,
     [class*="theme-white"] #page-play .words-panel .words-table-box,
     [class*="theme-white"] #page-play .words-panel .definitions-panel {
-        background: var(--bg-panel, rgba(0, 0, 0, 0.05)) !important;
+        background-color: var(--bg-panel, rgba(0, 0, 0, 0.05)) !important;
         background-image: none !important;
         border: none !important;
         color: var(--text-primary) !important;
@@ -15126,7 +15126,7 @@ body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) #page-pl
 body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .left-panel-container .chat-panel,
 body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-panel .words-table-box,
 body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) #page-play .words-panel .definitions-panel {
-    background: var(--bg-primary) !important;
+    background-color: var(--bg-primary) !important;
     background-image: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)) !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
     color: var(--text-primary) !important;
@@ -15141,7 +15141,7 @@ body.is-mobile[class*="theme-light-"] #page-play .left-panel-container .players-
 body.is-mobile[class*="theme-light-"] #page-play .left-panel-container .chat-panel,
 body.is-mobile[class*="theme-light-"] #page-play .words-panel .words-table-box,
 body.is-mobile[class*="theme-light-"] #page-play .words-panel .definitions-panel {
-    background: var(--bg-primary) !important;
+    background-color: var(--bg-primary) !important;
     background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
     border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
     color: var(--text-primary) !important;
@@ -15165,7 +15165,7 @@ body.is-mobile[class*="theme-white"] #page-play .left-panel-container .players-p
 body.is-mobile[class*="theme-white"] #page-play .left-panel-container .chat-panel,
 body.is-mobile[class*="theme-white"] #page-play .words-panel .words-table-box,
 body.is-mobile[class*="theme-white"] #page-play .words-panel .definitions-panel {
-    background: var(--bg-panel, rgba(0, 0, 0, 0.05)) !important;
+    background-color: var(--bg-panel, rgba(0, 0, 0, 0.05)) !important;
     background-image: none !important;
     border: none !important;
     color: var(--text-primary) !important;
