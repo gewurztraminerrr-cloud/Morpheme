@@ -1634,6 +1634,45 @@ function stopPolling() {
     timerFormatIs24h = false;
 }
 
+// Hedged fetch: after a long background the browser's pooled keep-alive sockets may be silently dead and
+// each would hang until timeout. Launch staggered parallel requests so a fresh socket answers right away.
+function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, overallMs = 15000) {
+    return new Promise((resolve, reject) => {
+        const controllers = [];
+        let done = false, launched = 0, failures = 0, timer = null, overall = null;
+        const finish = (fn, val, winner) => {
+            if (done) return;
+            done = true;
+            clearInterval(timer);
+            clearTimeout(overall);
+            controllers.forEach(c => { if (c !== winner) { try { c.abort(); } catch (e) {} } });
+            fn(val);
+        };
+        const check = () => {
+            if (!done && launched >= maxParallel && failures >= launched) finish(reject, new Error('all hedged requests failed'));
+        };
+        const launch = () => {
+            if (done || launched >= maxParallel) return;
+            launched++;
+            const c = new AbortController();
+            controllers.push(c);
+            const t0 = Date.now() / 1000;
+            fetch(urlBuilder(), { cache: 'no-store', signal: c.signal }).then(r => {
+                if (r && (r.ok || r.status === 401 || r.status === 403 || r.status === 404)) {
+                    r._tBefore = t0;
+                    finish(resolve, r, c);
+                } else {
+                    failures++;
+                    check();
+                }
+            }).catch(() => { failures++; check(); });
+        };
+        timer = setInterval(launch, staggerMs);
+        overall = setTimeout(() => finish(reject, new Error('hedged fetch timed out')), overallMs);
+        launch();
+    });
+}
+
 // Dedicated helper to fetch room state with timeout, allowing rapid recovery from dead socket connections
 async function fetchRoomStateWithTimeout(url, options = {}, timeoutMs = 2500) {
     if (window._activeStateFetchController) {
@@ -1735,11 +1774,19 @@ async function _doUpdateGameState(incomingState = null) {
             const isWakeUpThaw = !!(window._isWakeUpFetch || (Date.now() - (window._lastGameStateFetchedTime || 0) > 30000));
             const wakeParam = (window._isWakeUpFetch ? '&wake_up=1' : '') + ((document.hidden && !window._isWakeUpFetch) ? '&bg=1' : '');
             window._isWakeUpFetch = false;
+            if (isWakeUpThaw) {
+                try {
+                    response = await hedgedFetchRoomState(() => `/api/room/${roomId}/state?_t=${Date.now()}${wakeParam}`);
+                    tBefore = response._tBefore || (Date.now() / 1000);
+                } catch (err) {
+                    console.log(`[play.js] Hedged wake-up state fetch failed (${err.message}). Retrying on next poll tick.`);
+                    return;
+                }
+            } else {
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     tBefore = Date.now() / 1000;
-                    // On wake-up after idle/background, fail fast on attempt 0 (800ms) to rapidly detect half-dead TCP sockets
-                    const timeoutLimit = (isWakeUpThaw && attempt === 0) ? 3000 : 6000;
+                    const timeoutLimit = 2500;
                     response = await fetchRoomStateWithTimeout(`/api/room/${roomId}/state?_t=${Date.now()}${wakeParam}`, { cache: 'no-store' }, timeoutLimit);
                     if (response && response.ok) break;
                 } catch (err) {
@@ -1751,6 +1798,7 @@ async function _doUpdateGameState(incomingState = null) {
                     console.log(`[play.js] State fetch timed out or failed (${err.message}). Retrying on next poll tick.`);
                     return;
                 }
+            }
             }
             
             // Check if user left or switched rooms while the network fetch was in-flight
