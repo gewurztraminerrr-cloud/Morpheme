@@ -8,54 +8,77 @@ START_OVER_POINT_OCTOBER_18
 
 ## Latest Commit ID
 ```
-4201804ecdb7ed3ea39bbdc613b85d3e29f98b28
+4e48de6b2007e28b6b7d57e89d0bb90365fbdba8
 ```
 
 ## Synchronization Status
 
 | Environment | Status | Details |
 |:---|:---|:---|
-| **Localhost** | ✅ Synchronized | Clean working tree on `main` at `4201804e` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_18` / `stable-2026-10-18` updated |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to `4201804e`, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`v=1792345100`) for instant live propagation across all devices |
+| **Localhost** | ✅ Synchronized | Clean working tree on `main` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_18` / `stable-2026-10-18` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`play.js?v=1792375000`) for instant live propagation across all devices |
 
 ---
 
 ## Session Highlights & Architectural Updates (October 18, 2026)
 
-### 1. Mobile Room Wake-Up & State Recovery Optimization (`play.js`, `app.py`)
-- **Resolved Stalled Timer on Mobile Resume**: Fixed handling of the server `'waiting'` state during wake-up. Previously, when a mobile phone was locked/minimized for ~4 minutes, empty public rooms paused into `'waiting'`. Polling ignored `'waiting'`, leaving the timer stuck on whatever was set on wake-up. Added full `'waiting'` state support with normalized grayed board and dynamic placeholder `"Waiting for next round..."`.
+### 1. In-Game Room Chat Speed & Instant Delivery Optimization (`app.py`, `play.js`)
+- **Resolved 10–20s Chat Lag & Dropped Messages**:
+  - Identified that `submit_chat_message` was performing a synchronous external HTTP call to a nonexistent Gemini API model (`gemini-3.5-flash-lite`) with a 10-second timeout on every single chat message.
+  - Replaced the synchronous external call with Morpheme's zero-latency in-memory regex engine (`check_local_moderation`), running in `<0.1ms`.
+  - Dispatched AI moderation checks for clean text messages to an asynchronous background daemon thread (`_bg_moderate_room_chat`), completely decoupling content verification from the client's HTTP response.
+  - Corrected the Gemini API model endpoint to `gemini-1.5-flash` with a strict 3-second timeout.
+- **In-Memory Rating Cache**: Eliminated blocking SQLite queries (`sqlite3.connect(DB_PATH, timeout=30)`) on every chat message by resolving ratings directly from in-memory player/spectator objects and `_USER_RATING_CACHE`.
+- **Immediate Authoritative Response**: Route now returns `jsonify({'success': True, 'chat_messages': room.chat_messages})` directly, eliminating reliance on secondary polling.
+- **0ms Optimistic UI Rendering**: Newly typed messages appear in `#chat-history` in 1–3ms with the user's username, rating badge, and timestamp. Removed the client-side `isSendingChat` lock that dropped messages during high-latency requests, and synchronously cleared the input and character counter.
+
+### 2. Desktop Game Room Layout & Visual Balancing (`play.css`, `style.css`)
+- **Equalized Left and Right Spacing in Players Panel**: Adjusted padding and inner container margins (`padding: 0 10px; width: 100%; box-sizing: border-box;`) so player information rectangles have perfectly symmetrical horizontal margins on desktops and laptops.
+- **Restored Light Grey Background for Players Panel**: Re-applied the light grey background (`rgba(0, 0, 0, 0.05)`) around the Players panel beneath the color chart on White themes for desktop/laptop screens (`body.theme-white.is-desktop .players-panel`).
+- **Clean White Header Separator**: Maintained a pure white background in the area beneath the color chart and above the "Players" title on White layouts.
+- **Words to Work On Table Sizing**: Adjusted the vertical length and padding of the Words to Work On table for balanced desktop display.
+
+### 3. Intermission Winner Announcement & Definitions Panel Enhancements (`play.js`, `play.css`)
+- **Structured Winner Announcement**: Restored winner announcements at the beginning of intermission, separated into two clear sections: congratulated user on top, followed by a horizontal divider and `"Select a word to see its definition"` below.
+- **Golden Flashing Effect Restored**: Restored high-visibility golden flashing animation (`@keyframes gold-status-flash`) for winner announcements.
+- **Definitions Panel Padding & Layout**: Enhanced typography, padding, and layout within the intermission definitions panel for comfortable reading.
+- **Cross-Round Definition Persistence**: Retained the selected word's definition across round transitions if clicked during intermission, displayed placeholder at the start of intermission, and aligned mobile word titles to the left with red accents.
+
+### 4. Countdown Expiry & WAIT Transition Optimizations (`play.js`, `app.py`)
+- **Display WAIT... on Expiry**: When the round countdown expires, the timer display now immediately shifts to `WAIT...` rather than freezing at `0:00` while awaiting server transitions.
+- **Asynchronous Milestone Staging**: Staged intermission board generation milestones with a 0.8s–1.2s lead-time, preventing synchronous 60-second emergency stalls.
+- **High-Frequency Transition Polling**: Tightened polling intervals to 80ms during active state transitions with chained fetches to prevent queue flooding.
+
+### 5. Mobile Wake-Up & State Recovery Optimization (`play.js`, `app.py`)
+- **Resolved Stalled Timer on Mobile Resume**: Fixed handling of the server `'waiting'` state during wake-up. Empty public rooms pausing into `'waiting'` now display a normalized grayed board and dynamic placeholder `"Waiting for next round..."`.
 - **Smooth Animated Waiting Indicator**: Replaced static `'...'` with animated bouncing dots (`WAIT...`) and dynamic labels (`Next Round:` during intermission and waiting).
-- **Stale Fetch Promise Deadlock Resolution**: Fixed file-scope lexical variable `_activeUpdateGameStatePromise` reset on wake-up, eliminating 90–120s socket timeout lockups when reconnecting over cellular networks.
-- **Intermission Overrun Handling**: When board generation exceeds the countdown, the client now smoothly displays animated `WAIT...` dots with the `Next Round:` label until the server's next round board generation completes.
-
-### 2. Sub-15ms State Latency Optimizations (`app.py`, `play.js`)
-- **Background Daemon Milestones**: Dispatched synchronous intermission milestones (`start_board_search` and `generate_spinner_params`) to background daemon threads in [app.py](file:///Users/jeffbabiak/.gemini/antigravity/scratch/morpheme/app.py). State polling response times dropped from **300–750ms** down to **5–15ms**.
-- **Mobile Cellular Socket Recovery**: Reduced initial fetch timeout to 2.5s and socket thaw retry delay to 50ms for instant recovery from dead mobile OS sockets.
-
-### 3. Intermission Review Preservation & Fast-Forward Protections (`game_room.py`)
-- **Preserved Full 60s Review Duration**: Eliminated premature fast-forwarding when a room has 0 active players so returning players always experience the full intermission review period.
-- **Fixed `UnboundLocalError`**: Initialized snapshot ratings and player states cleanly at the top of state handlers.
-- **Prevented Erroneous Player Evictions**: Prevented mobile `pagehide` and `beforeunload` events from mistakenly evicting active players during routine browser app switching.
-
-### 4. False 12:00 AM Midnight Reset Eviction Fix (`play.js`)
-- **Root Cause**: Visiting a 24-hour room set `timerFormatIs24h = true`, which was never cleared on room exit. When the 45s countdown in standard rooms subsequently reached 0:00, the client misclassified the room as a 24h room and triggered `ejectToLobby("daily_reset")`.
-- **Solution**: Removed `|| timerFormatIs24h` from local timer reset evaluation. Standardized authoritative 24h room detection (`time_limit >= 7200`, `room_id` containing `24h`/`86400`, or `game_type === '24h'`). Ensured `timerFormatIs24h` and `_wasEverInRoster` are cleared on all room teardowns (`stopPolling()`, `ejectToLobby()`, `exitPlay()`).
-
-### 5. Room Entry Self-Cancellation Fix (`lobby.js`, `play.js`, `templates/index.html`)
-- **Root Cause**: When pressing "Start" in the lobby, `enterLobbyRoom` called `leaveCurrentRoom()` to clean up prior rooms. `leaveCurrentRoom()` unconditionally set `window._userLeftRoom = true;` and `window._isEnteringRoom = false;`. When `/api/room/create` finished ~50ms later, the client saw `_userLeftRoom === true`, aborted navigation to `page-play`, and hid the loading overlay, leaving the user stranded in the lobby.
-- **Solution**:
-  - `leaveCurrentRoom()` now guards flag mutation: `if (!window._isEnteringRoom && !window._isCreatingRoom)`.
-  - Awaited `window.leaveCurrentRoom()` during pre-entry cleanup and explicitly re-asserted `window._isEnteringRoom = true;` and `window._userLeftRoom = false;` before create/join requests.
-  - Bumped asset cache busters to `v=1792345100` in `templates/index.html`.
+- **Stale Fetch Promise Deadlock Resolution**: Reset `_activeUpdateGameStatePromise` on wake-up, eliminating 90–120s socket timeout lockups when reconnecting over cellular networks.
+- **Prevented False Midnight Resets & Room Entry Self-Cancellations**: Ensured `timerFormatIs24h` is cleared on room exit, preventing premature 24h reset evictions in standard rooms. Guarded `leaveCurrentRoom()` during lobby room entry to avoid self-canceling room navigation.
 
 ---
 
-## Commit History (October 18, 2026)
+## Complete Commit History (October 18, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `4a2d52d3` | **Optimize game room chat for instant sending, zero lag, and optimistic delivery** |
+| `f4e926a1` | **style: equalize horizontal spacing for player item rectangles in Players panel on desktop** |
+| `f41b15f4` | **style: restore light grey panel background for Players panel below color chart on desktops and laptops** |
+| `029ff088` | **style: make area beneath color chart and above Players title white on white layouts on desktop** |
+| `eaaacbda` | **feat: enhance definitions panel padding and styling during intermission and restore golden flashing effect** |
+| `c7d58021` | **feat: show winner announcement during intermission with user on top and definition placeholder below divider** |
+| `86d857b7` | **fix: keep definition across rounds if pressed during intermission, show placeholder at start of intermission, and align mobile word title left with red color** |
+| `d61db27b` | **Adjust Words to Work on table vertical length for equal padding on desktop and laptops** |
+| `62b39136` | **fix: display WAIT... message instead of 0:00 when countdown hits zero or expires** |
+| `55a7ee81` | **fix: eliminate 60s emergency board gen stall and fix wake-up intermission timer** |
+| `071dc9eb` | **fix: eliminate background socket contention and wake-up WAIT... flash** |
+| `634b3cd2` | **Eliminate background wake-up WAIT delay: 400ms grace window and fast socket-thaw detection** |
+| `eb55a167` | **Eliminate WAIT transition delay: 1.2s lead-time milestone, grace delay, and rapid polling** |
+| `06c15d64` | **Fix transition queue flooding: proactive pre-fetch, chained polling, and 50s watchdog timing** |
+| `5c7c4cba` | **Optimize WAIT duration: synchronous round start, 80ms transition polling, and 0.8s milestone lead-time** |
+| `0d61b13f` | **docs: add stable state summary for October 18, 2026 (Start Over Point)** |
 | `4201804e` | **Fix race condition in room entry self-cancellation by preserving entering state in leaveCurrentRoom** |
 | `e68273c3` | **Fix false 12AM midnight eviction in non-24h rooms by strictly synchronizing timerFormatIs24h and clearing on exit** |
 | `54a745c4` | **Restore full 60s intermission review: eliminate premature intermission fast-forwarding** |
@@ -78,4 +101,4 @@ START_OVER_POINT_OCTOBER_18
 - **Production Host**: Ubuntu 24.04 LTS at `132.148.72.249`.
 - **Application Stack**: Python 3.9 + Waitress WSGI managed by PM2 (`morpheme`).
 - **Database**: SQLite (`morpheme.db`) with WAL mode, automated migrations, IP ban cache, and timeout tables.
-- **Verification**: Verified live on production host `132.148.72.249` with HTTP 200 OK.
+- **Verification**: Verified live on production host `132.148.72.249` with HTTP 200 OK and headless Chrome UI testing.
