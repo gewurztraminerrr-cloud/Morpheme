@@ -1983,8 +1983,17 @@ async function _doUpdateGameState(incomingState = null) {
             const isForCurrentRound = latest && latest.round === state.current_round;
             hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
 
-            if (defPanel && defPanel.classList.contains('winner-flash')) {
-                defPanel.classList.remove('winner-flash');
+            if (hasActualWinner && !isViewingDefinition && !isTimerExpired) {
+                if (defPanel) {
+                    const is24H = (state.time_limit >= 7200);
+                    if (!is24H) {
+                        defPanel.classList.add('winner-flash');
+                    }
+                }
+            } else {
+                if (defPanel && defPanel.classList.contains('winner-flash')) {
+                    defPanel.classList.remove('winner-flash');
+                }
             }
 
             if (defContent && !isViewingDefinition && !isTimerExpired) {
@@ -9993,6 +10002,10 @@ async function fetchDefinition(word) {
     if (window.lastGameState && window.lastGameState.state === 'intermission') {
         window.wordPressedDuringIntermission = true;
         window.userViewingDefinitionIntermission = true;
+    }
+    const defPanel = document.querySelector('.definitions-panel');
+    if (defPanel && defPanel.classList.contains('winner-flash')) {
+        defPanel.classList.remove('winner-flash');
     }
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');

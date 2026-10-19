@@ -658,9 +658,10 @@
     flex-direction: column;
     justify-content: center;
     height: 100%;
+    min-height: 100%;
     box-sizing: border-box;
     text-align: left;
-    padding: 2px 0;
+    padding: 4px 6px;
 }
 
 .intermission-winner-card .winner-title {
@@ -672,7 +673,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1.2;
+    line-height: 1.25;
+    padding-bottom: 2px;
 }
 
 body.theme-white .intermission-winner-card .winner-title,
@@ -681,25 +683,30 @@ body[class*="theme-light-"] .intermission-winner-card .winner-title {
 }
 
 .intermission-winner-card .winner-subtext {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--text-primary);
-    opacity: 0.9;
-    margin-top: 2px;
-    line-height: 1.2;
+    opacity: 0.95;
+    line-height: 1.25;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 
 .intermission-winner-card .intermission-divider {
     width: 100%;
-    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    margin: 6px 0;
+    height: 1px;
+    border: none;
+    background: rgba(var(--text-primary-rgb), 0.18);
+    margin: 8px 0;
 }
 
 .intermission-winner-card .intermission-prompt {
     margin: 0;
     font-size: 0.85rem;
-    opacity: 0.75;
-    line-height: 1.2;
+    opacity: 0.8;
+    line-height: 1.25;
     color: var(--text-primary);
+    font-style: italic;
+    padding-top: 1px;
 }
 
 .definition-word {
@@ -7005,6 +7012,26 @@ input[type=range]::-moz-range-track {
 .winner-flash {
     animation: winnerAlertPulse 2.5s infinite ease-in-out !important;
     background-image: none !important;
+}
+
+.definitions-panel.winner-flash .intermission-winner-card .winner-title {
+    color: #ffd700 !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 0, 0, 0.8) !important;
+}
+
+.definitions-panel.winner-flash .intermission-winner-card .winner-subtext {
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
+}
+
+.definitions-panel.winner-flash .intermission-winner-card .intermission-divider {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.definitions-panel.winner-flash .intermission-winner-card .intermission-prompt {
+    color: #ffffff !important;
+    opacity: 0.95 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
 }
 
 .winner-flash * {
