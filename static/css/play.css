@@ -13618,16 +13618,6 @@ body.is-desktop .left-panel-container .players-panel {
     overflow: hidden !important;
 }
 
-body.is-desktop.theme-white .left-panel-container #game-color-bar,
-body.is-desktop[class*="theme-white"] .left-panel-container #game-color-bar {
-    box-shadow: none !important;
-}
-
-body.is-desktop.theme-white .left-panel-container .players-panel,
-body.is-desktop[class*="theme-white"] .left-panel-container .players-panel {
-    background: #ffffff !important;
-}
-
 body.is-desktop #players-list .player-item {
     padding: 8px 14px !important;
     min-height: 56px !important;
@@ -15020,22 +15010,6 @@ body.theme-light-pink .cube-replay-face-label {
     [class*="theme-light-"] #page-play .play-header:not(.low-time-warning),
     body[class*="theme-light-"] #page-play .play-header:not(.low-time-warning) {
         box-shadow: none !important;
-    }
-
-    /* White Layouts on Desktops & Laptops: Make area beneath color chart and above Players title white */
-    [class*="theme-white"] .left-panel-container #game-color-bar,
-    body.theme-white .left-panel-container #game-color-bar,
-    body[class*="theme-white"] .left-panel-container #game-color-bar {
-        box-shadow: none !important;
-    }
-
-    [class*="theme-white"] #page-play .players-panel,
-    body.theme-white #page-play .players-panel,
-    body[class*="theme-white"] #page-play .players-panel,
-    [class*="theme-white"] .left-panel-container .players-panel,
-    body.theme-white .left-panel-container .players-panel,
-    body[class*="theme-white"] .left-panel-container .players-panel {
-        background: #ffffff !important;
     }
 
     .board-panel .timer-display {
