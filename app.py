@@ -6474,15 +6474,14 @@ def send_lobby_chat():
 
 @app.route('/api/room/<room_id>/state')
 def get_room_state(room_id):
+    uid = session.get('user_id')
     user_rating_for_snapshot = None
-    if 'user_id' in session:
-        uid = session['user_id']
+    if uid:
         room_manager.update_presence(uid)
     
     room = room_manager.get_room(room_id)
     if room:
-        if 'user_id' in session:
-            uid = session['user_id']
+        if uid:
             if str(uid) in getattr(room, 'evicted_users', {}):
                 reason = room.evicted_users.pop(str(uid), 'inactivity')
                 print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
