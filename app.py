@@ -6556,6 +6556,9 @@ def get_room_state(room_id):
         # 1. On-demand state updates & next round transitions safeguard
         # If room is paused in 'waiting' and a human player is present/polling, wake up immediately!
         is_bg_poll = (request.args.get('bg') == '1')
+        if request.args.get('wake_up') == '1':
+            _wp = room.get_player(uid) if uid else None
+            print(f"[WakeUp-Diag] uid={uid} room={room_id} state={room.state} tr={room.time_remaining:.1f} idle={(time.time() - getattr(_wp, '_last_seen_before_update', time.time())) if _wp else -1:.1f}s starting={getattr(room, 'starting_round', False)} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
         if is_bg_poll:
             pass  # Minimized-tab poll: never wake paused rooms or fast-forward rounds on its behalf
         elif room.state == 'waiting' and room.time_limit < 7200:
