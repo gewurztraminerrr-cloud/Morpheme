@@ -3015,7 +3015,7 @@ class BoardGenerator:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                     min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
-                    max_ratio_tries = 1 if is_emergency else 2
+                    max_ratio_tries = 1
                     if _attempt <= max_ratio_tries:
                         relaxation = 0.05 * _attempt
                         adj_min = max(0.0, min_ratio - relaxation)
