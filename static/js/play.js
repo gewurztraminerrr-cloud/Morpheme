@@ -1383,19 +1383,23 @@ function startPolling() {
 }
 
 function refreshPollInterval() {
-    if (pollInterval) clearInterval(pollInterval);
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
     
-    let delay = document.hidden ? 15000 : 1000;
+    // Do not poll while page is hidden to avoid creating dead TCP sockets in mobile Safari
+    if (document.hidden) {
+        return;
+    }
     
-    // User Request: Automatic/instant transition. 
+    let delay = 1000;
     // Speed up polling significantly when transitioning or when intermission is about to end
-    if (!document.hidden) {
-        if (window.lastGameState && window.lastGameState.state === 'waiting') {
-             delay = 500;
-        }
+    if (window.lastGameState && window.lastGameState.state === 'waiting') {
+        delay = 500;
     }
 
-    pollInterval = setInterval(() => { _rl('poll' + (document.hidden ? ':hid' : '')); updateGameState(); }, delay);
+    pollInterval = setInterval(() => { _rl('poll'); updateGameState(); }, delay);
 }
 
 function setTimerWaitingState(isWaiting) {
@@ -1453,6 +1457,9 @@ function setTimerWaitingState(isWaiting) {
 let _lastResumeWakeUpTime = 0;
 function handleResumeWakeUp(source) {
     if (document.hidden) return;
+    if (window._abortAllInflight) {
+        window._abortAllInflight('resume:' + source);
+    }
     const now = Date.now();
     // Debounce rapid successive events (visibilitychange + focus + pageshow often fire within 50ms on mobile)
     if (now - _lastResumeWakeUpTime < 300) {
@@ -1584,6 +1591,9 @@ document.addEventListener('visibilitychange', () => {
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
         _rl('hidden');
         window._hiddenAtMs = Date.now();
+        if (window._abortAllInflight) {
+            window._abortAllInflight('hide');
+        }
         refreshPollInterval();
 
         // Pause the high-frequency timer interval while hidden
@@ -1618,6 +1628,9 @@ window.addEventListener('pointerdown', () => {
 }, { passive: true });
 
 function stopPolling() {
+    if (window._abortAllInflight) {
+        window._abortAllInflight('stopPolling');
+    }
     if (pollInterval) {
         clearInterval(pollInterval);
         pollInterval = null;
@@ -1641,6 +1654,41 @@ function stopPolling() {
     timerFormatIs24h = false;
 }
 
+// --- Connection hygiene: zombie request prevention ---
+// While the page is hidden on mobile the network goes dead; requests started then (or just before) never settle and
+// occupy the browser's per-host connection slots, so requests after resume queue behind them for ~15-20s.
+// Track GET /api requests, refuse to start them while hidden, and abort every pending one on hide and on resume.
+(function _installFetchHygiene() {
+    if (window._fetchHygieneInstalled) return;
+    window._fetchHygieneInstalled = true;
+    const origFetch = window.fetch.bind(window);
+    window._inflightCtl = new Set();
+    window._abortAllInflight = function(reason) {
+        const n = window._inflightCtl.size;
+        window._inflightCtl.forEach(c => { try { c.abort(); } catch (e) {} });
+        window._inflightCtl.clear();
+        if (typeof _rl === 'function') _rl('abortAll:' + reason + ':' + n);
+    };
+    window.fetch = function(input, init) {
+        init = init || {};
+        let method = 'GET', url = '';
+        try {
+            method = String(init.method || (input && input.method) || 'GET').toUpperCase();
+            url = typeof input === 'string' ? input : ((input && input.url) || String(input || ''));
+        } catch (e) {}
+        if (method !== 'GET' || url.indexOf('/api/') === -1) return origFetch(input, init);
+        if (document.hidden) return Promise.reject(new DOMException('Page hidden', 'AbortError'));
+        const ctl = new AbortController();
+        const ext = init.signal;
+        if (ext) {
+            if (ext.aborted) ctl.abort();
+            else ext.addEventListener('abort', () => { try { ctl.abort(); } catch (e) {} }, { once: true });
+        }
+        window._inflightCtl.add(ctl);
+        return origFetch(input, Object.assign({}, init, { signal: ctl.signal })).finally(() => window._inflightCtl.delete(ctl));
+    };
+})();
+
 // --- Resume diagnostics (ring buffer, flushed to server via beacon after a wake-up) ---
 window._evLog = window._evLog || [];
 function _rl(msg) {
@@ -1661,16 +1709,17 @@ function _flushResumeLog(reason) {
 }
 
 // Hedged fetch: after a long background the browser's pooled keep-alive sockets may be silently dead and
-// each would hang until timeout. Launch staggered parallel requests so a fresh socket answers right away.
-function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, overallMs = 15000) {
+// each would hang until timeout. Launch staggered parallel requests with short individual timeouts so dead
+// pooled connections fail fast (1500ms) and release browser socket slots for fresh TCP handshakes.
+function hedgedFetchRoomState(urlBuilder, staggerMs = 300, maxParallel = 5, overallMs = 6000, perAttemptMs = 1500) {
     return new Promise((resolve, reject) => {
         const controllers = [];
         let done = false, launched = 0, failures = 0, timer = null, overall = null;
         const finish = (fn, val, winner) => {
             if (done) return;
             done = true;
-            clearInterval(timer);
-            clearTimeout(overall);
+            if (timer) clearInterval(timer);
+            if (overall) clearTimeout(overall);
             controllers.forEach(c => { if (c !== winner) { try { c.abort(); } catch (e) {} } });
             fn(val);
         };
@@ -1685,7 +1734,18 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, over
             const t0 = Date.now() / 1000;
             const idx = launched;
             _rl('launch' + idx);
+
+            // Fast timeout on individual hedged attempt: if WebKit routed onto a dead keepalive socket,
+            // kill this attempt in perAttemptMs so the socket is abandoned and connection slot is freed.
+            const attemptTimer = setTimeout(() => {
+                if (!done) {
+                    _rl('to' + idx);
+                    try { c.abort(); } catch (e) {}
+                }
+            }, perAttemptMs);
+
             fetch(urlBuilder(), { cache: 'no-store', signal: c.signal }).then(r => {
+                clearTimeout(attemptTimer);
                 _rl('resp' + idx + ':' + (r ? r.status : '?'));
                 if (r && (r.ok || r.status === 401 || r.status === 403 || r.status === 404)) {
                     r._tBefore = t0;
@@ -1694,7 +1754,12 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, over
                     failures++;
                     check();
                 }
-            }).catch((e) => { _rl('err' + idx + ':' + (e && e.name)); failures++; check(); });
+            }).catch((e) => {
+                clearTimeout(attemptTimer);
+                _rl('err' + idx + ':' + (e && e.name));
+                failures++;
+                check();
+            });
         };
         timer = setInterval(launch, staggerMs);
         overall = setTimeout(() => finish(reject, new Error('hedged fetch timed out')), overallMs);
