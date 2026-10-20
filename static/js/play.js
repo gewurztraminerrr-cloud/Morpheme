@@ -1457,9 +1457,6 @@ function setTimerWaitingState(isWaiting) {
 let _lastResumeWakeUpTime = 0;
 function handleResumeWakeUp(source) {
     if (document.hidden) return;
-    if (window._abortAllInflight) {
-        window._abortAllInflight('resume:' + source);
-    }
     const now = Date.now();
     // Debounce rapid successive events (visibilitychange + focus + pageshow often fire within 50ms on mobile)
     if (now - _lastResumeWakeUpTime < 300) {
@@ -1467,6 +1464,9 @@ function handleResumeWakeUp(source) {
         return;
     }
     _lastResumeWakeUpTime = now;
+    if (window._abortAllInflight) {
+        window._abortAllInflight('resume:' + source);
+    }
     window._resumeT0 = now;
     window._hiddenFor = window._hiddenAtMs ? (now - window._hiddenAtMs) : '?';
     window._resumeLogPending = true;
@@ -1710,8 +1710,8 @@ function _flushResumeLog(reason) {
 
 // Hedged fetch: after a long background the browser's pooled keep-alive sockets may be silently dead and
 // each would hang until timeout. Launch staggered parallel requests with short individual timeouts so dead
-// pooled connections fail fast (1500ms) and release browser socket slots for fresh TCP handshakes.
-function hedgedFetchRoomState(urlBuilder, staggerMs = 300, maxParallel = 5, overallMs = 6000, perAttemptMs = 1500) {
+// pooled connections fail fast (600ms) and release browser socket slots for fresh TCP handshakes.
+function hedgedFetchRoomState(urlBuilder, staggerMs = 150, maxParallel = 8, overallMs = 4000, perAttemptMs = 600) {
     return new Promise((resolve, reject) => {
         const controllers = [];
         let done = false, launched = 0, failures = 0, timer = null, overall = null;
@@ -1753,12 +1753,14 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 300, maxParallel = 5, over
                 } else {
                     failures++;
                     check();
+                    launch();
                 }
             }).catch((e) => {
                 clearTimeout(attemptTimer);
                 _rl('err' + idx + ':' + (e && e.name));
                 failures++;
                 check();
+                launch();
             });
         };
         timer = setInterval(launch, staggerMs);
