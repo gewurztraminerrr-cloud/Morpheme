@@ -6550,6 +6550,9 @@ def get_room_state(room_id):
             p_obj = room.get_player(uid)
             if p_obj:
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
+                _gap = time.time() - p_obj._last_seen_before_update
+                if _gap >= 15.0:
+                    print(f"[Gap-Diag] t={time.time():.1f} uid={uid} room={room_id} gap={_gap:.1f}s wake_up={request.args.get('wake_up')} bg={request.args.get('bg')} state={room.state} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
             if request.args.get('bg') != '1':
                 room.update_player_activity(uid)
 
