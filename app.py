@@ -6589,7 +6589,7 @@ def get_room_state(room_id):
             if room.time_remaining <= 0:
                 should_fast_forward = True
             elif len(other_active_reviewers) == 0:
-                if user_was_away or not user_submitted or len(room.players) <= 1:
+                if user_was_away:
                     print(f"[get_room_state] Fast-forwarding unreviewed/empty intermission for room {room_id} (away={user_was_away}, submitted={user_submitted}, reviewers={len(other_active_reviewers)}). Starting next round instantly.")
                     should_fast_forward = True
 
