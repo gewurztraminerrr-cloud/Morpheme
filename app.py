@@ -6157,6 +6157,15 @@ def force_instant_board_route(room_id):
         return jsonify({'error': 'Room not found'}), 404
     return jsonify({'success': True, 'state': room.state, 'round': room.current_round})
 
+@app.route('/api/client-diag', methods=['POST'])
+def client_diag():
+    try:
+        body = request.get_data(as_text=True)[:3000]
+        print(f"[Client-Diag-Recv] t={time.time():.1f} uid={session.get('user_id')} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'} {body}")
+    except Exception:
+        pass
+    return ('', 204)
+
 @app.route('/api/rooms', methods=['GET'])
 def list_rooms():
     if 'user_id' in session:

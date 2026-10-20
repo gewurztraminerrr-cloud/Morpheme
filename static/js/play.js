@@ -1395,7 +1395,7 @@ function refreshPollInterval() {
         }
     }
 
-    pollInterval = setInterval(updateGameState, delay);
+    pollInterval = setInterval(() => { _rl('poll' + (document.hidden ? ':hid' : '')); updateGameState(); }, delay);
 }
 
 function setTimerWaitingState(isWaiting) {
@@ -1460,6 +1460,11 @@ function handleResumeWakeUp(source) {
         return;
     }
     _lastResumeWakeUpTime = now;
+    window._resumeT0 = now;
+    window._hiddenFor = window._hiddenAtMs ? (now - window._hiddenAtMs) : '?';
+    window._resumeLogPending = true;
+    _rl('resume:' + source);
+    setTimeout(() => _flushResumeLog('timeout45s'), 45000);
     console.log(`[play.js] Processing resume wake-up from ${source}.`);
 
     const lastActiveStored = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
@@ -1577,6 +1582,8 @@ document.addEventListener('visibilitychange', () => {
     } else {
         // Tab hidden: Enter battery-saving mode
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
+        _rl('hidden');
+        window._hiddenAtMs = Date.now();
         refreshPollInterval();
 
         // Pause the high-frequency timer interval while hidden
@@ -1634,6 +1641,25 @@ function stopPolling() {
     timerFormatIs24h = false;
 }
 
+// --- Resume diagnostics (ring buffer, flushed to server via beacon after a wake-up) ---
+window._evLog = window._evLog || [];
+function _rl(msg) {
+    try {
+        window._evLog.push([Date.now(), msg]);
+        if (window._evLog.length > 60) window._evLog.shift();
+    } catch (e) {}
+}
+function _flushResumeLog(reason) {
+    if (!window._resumeLogPending) return;
+    window._resumeLogPending = false;
+    try {
+        const t0 = window._resumeT0 || Date.now();
+        const lines = window._evLog.filter(e => e[0] >= t0 - 20000).map(e => `${e[1]}@${e[0] - t0}`);
+        const payload = `[Client-Diag] reason=${reason} hiddenFor=${window._hiddenFor || '?'}ms ${lines.join(' | ')}`;
+        if (navigator.sendBeacon) navigator.sendBeacon('/api/client-diag', payload);
+    } catch (e) {}
+}
+
 // Hedged fetch: after a long background the browser's pooled keep-alive sockets may be silently dead and
 // each would hang until timeout. Launch staggered parallel requests so a fresh socket answers right away.
 function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, overallMs = 15000) {
@@ -1657,7 +1683,10 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, over
             const c = new AbortController();
             controllers.push(c);
             const t0 = Date.now() / 1000;
+            const idx = launched;
+            _rl('launch' + idx);
             fetch(urlBuilder(), { cache: 'no-store', signal: c.signal }).then(r => {
+                _rl('resp' + idx + ':' + (r ? r.status : '?'));
                 if (r && (r.ok || r.status === 401 || r.status === 403 || r.status === 404)) {
                     r._tBefore = t0;
                     finish(resolve, r, c);
@@ -1665,7 +1694,7 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 400, maxParallel = 6, over
                     failures++;
                     check();
                 }
-            }).catch(() => { failures++; check(); });
+            }).catch((e) => { _rl('err' + idx + ':' + (e && e.name)); failures++; check(); });
         };
         timer = setInterval(launch, staggerMs);
         overall = setTimeout(() => finish(reject, new Error('hedged fetch timed out')), overallMs);
@@ -1777,6 +1806,8 @@ async function _doUpdateGameState(incomingState = null) {
             if (isWakeUpThaw) {
                 try {
                     response = await hedgedFetchRoomState(() => `/api/room/${roomId}/state?_t=${Date.now()}${wakeParam}`);
+                    _rl('won wake=' + (wakeParam.includes('wake_up') ? 1 : 0));
+                    _flushResumeLog('ok');
                     tBefore = response._tBefore || (Date.now() / 1000);
                 } catch (err) {
                     console.log(`[play.js] Hedged wake-up state fetch failed (${err.message}). Retrying on next poll tick.`);
