@@ -1708,10 +1708,9 @@ function _flushResumeLog(reason) {
     } catch (e) {}
 }
 
-// Hedged fetch: after a long background the browser's pooled keep-alive sockets may be silently dead and
-// each would hang until timeout. Launch staggered parallel requests with short individual timeouts so dead
-// pooled connections fail fast (600ms) and release browser socket slots for fresh TCP handshakes.
-function hedgedFetchRoomState(urlBuilder, staggerMs = 150, maxParallel = 8, overallMs = 4000, perAttemptMs = 600) {
+// Hedged fetch: on wake-up, launch staggered parallel requests so that if one socket/stream hangs,
+// a fresh parallel request answers immediately. Whichever request resolves first wins.
+function hedgedFetchRoomState(urlBuilder, staggerMs = 300, maxParallel = 3, overallMs = 5000, perAttemptMs = 2500) {
     return new Promise((resolve, reject) => {
         const controllers = [];
         let done = false, launched = 0, failures = 0, timer = null, overall = null;
@@ -1735,8 +1734,6 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 150, maxParallel = 8, over
             const idx = launched;
             _rl('launch' + idx);
 
-            // Fast timeout on individual hedged attempt: if WebKit routed onto a dead keepalive socket,
-            // kill this attempt in perAttemptMs so the socket is abandoned and connection slot is freed.
             const attemptTimer = setTimeout(() => {
                 if (!done) {
                     _rl('to' + idx);
@@ -1753,14 +1750,12 @@ function hedgedFetchRoomState(urlBuilder, staggerMs = 150, maxParallel = 8, over
                 } else {
                     failures++;
                     check();
-                    launch();
                 }
             }).catch((e) => {
                 clearTimeout(attemptTimer);
                 _rl('err' + idx + ':' + (e && e.name));
                 failures++;
                 check();
-                launch();
             });
         };
         timer = setInterval(launch, staggerMs);
@@ -1867,7 +1862,7 @@ async function _doUpdateGameState(incomingState = null) {
         } else {
             // Fetch authoritative room state with mobile socket-thaw retry
             let response;
-            const isWakeUpThaw = !!(window._isWakeUpFetch || (Date.now() - (window._lastGameStateFetchedTime || 0) > 30000));
+            const isWakeUpThaw = !!window._isWakeUpFetch;
             const wakeParam = (window._isWakeUpFetch ? '&wake_up=1' : '') + ((document.hidden && !window._isWakeUpFetch) ? '&bg=1' : '');
             window._isWakeUpFetch = false;
             if (isWakeUpThaw) {
