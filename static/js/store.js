@@ -182,29 +182,39 @@
             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
             <div class="store-top-banner">
                 <div class="store-status-dates-card">
-                    <div class="store-status-row store-last-updated-row">
-                        <span class="store-status-icon-wrap"><span class="store-pulse-dot"></span></span>
-                        <div class="store-status-content">
-                            <span class="store-status-label">Prices and products last updated on</span>
-                            <span class="store-status-date">${catalog.last_catalog_update || 'October 16, 2026'}</span>
+                    <div class="store-banner-side-visual store-banner-visual-left" title="Morpheme Flagship Boutique">
+                        <img src="/static/images/morpheme_store_front.jpg" alt="Morpheme Flagship Boutique" class="store-banner-showcase-img" loading="lazy">
+                        <span class="store-banner-showcase-tag"><i class="fas fa-store-alt"></i> Morpheme Boutique</span>
+                    </div>
+                    <div class="store-status-center-col">
+                        <div class="store-status-row store-last-updated-row">
+                            <span class="store-status-icon-wrap"><span class="store-pulse-dot"></span></span>
+                            <div class="store-status-content">
+                                <span class="store-status-label">Prices and products last updated on</span>
+                                <span class="store-status-date">${catalog.last_catalog_update || 'October 16, 2026'}</span>
+                            </div>
+                        </div>
+                        <div class="store-status-divider"></div>
+                        <div class="store-status-row store-next-update-row">
+                            <span class="store-status-icon-wrap"><i class="fas fa-calendar-alt"></i></span>
+                            <div class="store-status-content">
+                                <span class="store-status-label">Next Store update will occur on</span>
+                                <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
+                            </div>
+                        </div>
+                        <div class="store-status-divider"></div>
+                        <div class="store-currency-card">
+                            <span class="store-context-label">Prices reflected for:</span>
+                            <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
+                                ${flagHtml}
+                                <span class="store-flag-country-name">${curr.name}</span>
+                                <span class="store-flag-currency-code">(${curr.code})</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="store-status-divider"></div>
-                    <div class="store-status-row store-next-update-row">
-                        <span class="store-status-icon-wrap"><i class="fas fa-calendar-alt"></i></span>
-                        <div class="store-status-content">
-                            <span class="store-status-label">Next Store update will occur on</span>
-                            <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
-                        </div>
-                    </div>
-                    <div class="store-status-divider"></div>
-                    <div class="store-currency-card">
-                        <span class="store-context-label">Prices reflected for:</span>
-                        <div class="store-flag-badge" title="Automatically tailored to your profile country flag (${curr.name})">
-                            ${flagHtml}
-                            <span class="store-flag-country-name">${curr.name}</span>
-                            <span class="store-flag-currency-code">(${curr.code})</span>
-                        </div>
+                    <div class="store-banner-side-visual store-banner-visual-right" title="Morpheme Tournament Showcase">
+                        <img src="/static/images/morpheme_store_display.jpg" alt="Morpheme Tournament Showcase" class="store-banner-showcase-img" loading="lazy">
+                        <span class="store-banner-showcase-tag"><i class="fas fa-award"></i> Tournament Showcase</span>
                     </div>
                 </div>
             </div>

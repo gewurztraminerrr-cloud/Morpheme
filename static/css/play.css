@@ -3211,17 +3211,107 @@ body.theme-white #page-settings .mobile-bottom-nav {
     }
     #tool-store .store-status-dates-card {
         display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        text-align: center !important;
+        gap: 16px !important;
+        padding: 10px 14px !important;
+        border-radius: 14px !important;
+        background: rgba(var(--text-primary-rgb), 0.05) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.14) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+        backdrop-filter: blur(8px) !important;
+        overflow: hidden !important;
+    }
+    #tool-store .store-status-center-col {
+        display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
         gap: 6px !important;
-        padding: 12px 16px 12px 16px !important;
-        border-radius: 12px !important;
-        background: rgba(var(--text-primary-rgb), 0.05) !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.14) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
-        backdrop-filter: blur(8px) !important;
+        flex: 1 1 auto !important;
+        min-width: 260px !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
+    }
+    #tool-store .store-banner-side-visual {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        flex: 0 0 250px !important;
+        width: 250px !important;
+        height: 154px !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+        cursor: pointer !important;
+    }
+    #tool-store .store-banner-side-visual:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+        border-color: var(--accent-color, #ff007f) !important;
+    }
+    #tool-store .store-banner-showcase-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+        transition: transform 0.35s ease !important;
+    }
+    #tool-store .store-banner-side-visual:hover .store-banner-showcase-img {
+        transform: scale(1.06) !important;
+    }
+    #tool-store .store-banner-showcase-tag {
+        position: absolute !important;
+        bottom: 8px !important;
+        left: 8px !important;
+        right: 8px !important;
+        background: rgba(15, 20, 30, 0.8) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        color: #ffffff !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        text-align: center !important;
+        pointer-events: none !important;
+        letter-spacing: 0.3px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    [class*="theme-white"] #tool-store .store-banner-showcase-tag,
+    body.theme-white #tool-store .store-banner-showcase-tag {
+        background: rgba(255, 255, 255, 0.88) !important;
+        color: #1a202c !important;
+        border: 1px solid rgba(0, 0, 0, 0.14) !important;
+    }
+    @media (max-width: 1180px) and (min-width: 901px) {
+        #tool-store .store-banner-side-visual {
+            flex: 0 0 190px !important;
+            width: 190px !important;
+            height: 140px !important;
+        }
+    }
+    @media (max-width: 1020px) and (min-width: 901px) {
+        #tool-store .store-banner-side-visual {
+            flex: 0 0 150px !important;
+            width: 150px !important;
+            height: 130px !important;
+        }
+        #tool-store .store-banner-showcase-tag {
+            font-size: 0.65rem !important;
+            padding: 3px 6px !important;
+        }
     }
     #tool-store .store-status-row {
         display: flex !important;
@@ -12155,6 +12245,9 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         border: none !important;
         box-shadow: none !important;
     }
+    #tool-store .store-banner-side-visual {
+        display: none !important;
+    }
     #tool-store .store-status-dates-card {
         display: flex !important;
         flex-direction: column !important;
@@ -12166,6 +12259,14 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         border-radius: 12px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+    }
+    #tool-store .store-status-center-col {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        gap: 8px !important;
     }
     #tool-store .store-status-row {
         display: flex !important;
