@@ -11408,8 +11408,178 @@ body .board-cell.tile-flash-purple * {
         padding: 8px 10px !important;
         font-size: 0.8rem !important;
     }
+
+    /* Lists Tool Mobile Layout: fit table on screen, remove outer scroll, reduce description padding */
+    #page-tools .tools-content:has(#tool-lists.active),
+    #page-tools .tools-content.has-lists-active {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 8px 10px 4px 10px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+    }
+
+    #page-tools #tool-lists.tool-pane.active,
+    body.is-mobile #page-tools #tool-lists.tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Reduce padding/margin below description to give maximum room for the table */
+    #page-tools #tool-lists .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 2px !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-lists .tool-header p {
+        margin: 0 0 6px 0 !important;
+        padding: 5px 10px !important;
+        font-size: 0.76rem !important;
+        line-height: 1.25 !important;
+        max-height: 42px !important;
+    }
+
+    /* Compact filter panel */
+    #page-tools #tool-lists .combo-control-panel {
+        flex: 0 0 auto !important;
+        padding: 8px 10px !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-lists .combo-control-panel .input-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-lists .combo-control-panel .input-row > select,
+    #page-tools #tool-lists .combo-control-panel .input-row > button {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+    }
+
+    /* Table / panel fits entire remaining screen */
+    #page-tools #tool-lists .lists-container,
+    body.is-mobile #page-tools #tool-lists .lists-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-lists .list-column,
+    body.is-mobile #page-tools #tool-lists .list-column {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-lists #list-column-header-title {
+        flex: 0 0 auto !important;
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+    }
+
+    #page-tools #tool-lists #list-view-full-btn {
+        padding: 4px 8px !important;
+        font-size: 0.72rem !important;
+    }
+
+    #page-tools #tool-lists .list-scroll-area-wrapper,
+    body.is-mobile #page-tools #tool-lists .list-scroll-area-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-lists .list-scroll-area,
+    body.is-mobile #page-tools #tool-lists .list-scroll-area {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 8px !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    #page-tools #tool-lists .list-scroll-area::-webkit-scrollbar,
+    body.is-mobile #page-tools #tool-lists .list-scroll-area::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    #page-tools #tool-lists #list-scrollbar-track {
+        display: block !important;
+        position: absolute !important;
+        right: 4px !important;
+        top: 6px !important;
+        bottom: 6px !important;
+        width: 10px !important;
+        background: rgba(var(--text-primary-rgb), 0.08) !important;
+        border-radius: 5px !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        z-index: 50 !important;
+    }
+
+    #page-tools #tool-lists #list-scrollbar-thumb {
+        position: absolute !important;
+        top: 0 !important;
+        left: 1px !important;
+        width: 6px !important;
+        min-height: 28px !important;
+        background: linear-gradient(180deg, #a78bfa, #7c3aed) !important;
+        border-radius: 4px !important;
+        border: 1px solid rgba(167, 139, 250, 0.85) !important;
+        box-shadow: 0 0 8px rgba(167, 139, 250, 0.45) !important;
+        touch-action: none !important;
+    }
 }
 
+body.is-mobile #page-tools .tools-content:has(#tool-lists.active),
+body.is-mobile #page-tools .tools-content.has-lists-active,
 body.is-mobile #page-tools .tools-content:has(#tool-new-users.active),
 body.is-mobile #page-tools .tools-content.has-new-users-active {
     display: flex !important;
