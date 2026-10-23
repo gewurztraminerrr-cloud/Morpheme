@@ -182,8 +182,9 @@
             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
             <div class="store-top-banner">
                 <div class="store-status-dates-card">
-                    <div class="store-banner-side-visual store-banner-visual-left" title="Morpheme Flagship Boutique">
+                    <div class="store-banner-side-visual store-banner-visual-left" title="Click to enlarge Morpheme Flagship Boutique">
                         <img src="/static/images/morpheme_store_front.jpg" alt="Morpheme Flagship Boutique" class="store-banner-showcase-img" loading="lazy">
+                        <span class="store-banner-zoom-hint" title="Click to enlarge"><i class="fas fa-search-plus"></i></span>
                         <span class="store-banner-showcase-tag"><i class="fas fa-store-alt"></i> Morpheme Boutique</span>
                     </div>
                     <div class="store-status-center-col">
@@ -212,8 +213,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="store-banner-side-visual store-banner-visual-right" title="Tournament Boggle Showcase">
+                    <div class="store-banner-side-visual store-banner-visual-right" title="Click to enlarge Tournament Boggle Showcase">
                         <img src="/static/images/morpheme_store_display.jpg" alt="Tournament Boggle Showcase" class="store-banner-showcase-img" loading="lazy">
+                        <span class="store-banner-zoom-hint" title="Click to enlarge"><i class="fas fa-search-plus"></i></span>
                         <span class="store-banner-showcase-tag"><i class="fas fa-th"></i> Tournament Boggle Showcase</span>
                     </div>
                 </div>
@@ -227,6 +229,24 @@
                 <button class="store-filter-btn ${_activeCategory === 'games' ? 'active' : ''}" data-cat="games"><i class="fas fa-cube"></i><span>Games & Gear</span></button>
             </div>
         `;
+
+        // Wire up Expandable Showcase Images (Lightbox)
+        const visualLeft = headerEl.querySelector('.store-banner-visual-left');
+        if (visualLeft) {
+            visualLeft.addEventListener('click', () => {
+                if (typeof window.showImageLightbox === 'function') {
+                    window.showImageLightbox('/static/images/morpheme_store_front.jpg', 'Morpheme Flagship Boutique — Specialists in Competitive Word Games');
+                }
+            });
+        }
+        const visualRight = headerEl.querySelector('.store-banner-visual-right');
+        if (visualRight) {
+            visualRight.addEventListener('click', () => {
+                if (typeof window.showImageLightbox === 'function') {
+                    window.showImageLightbox('/static/images/morpheme_store_display.jpg', 'Tournament Boggle Showcase — 4×4 Grid, Dome Shaker & Official Dictionaries');
+                }
+            });
+        }
 
         // Wire up Category Filters
         const filterBtns = headerEl.querySelectorAll('.store-filter-btn');
@@ -290,7 +310,7 @@
             return `
                 <div class="store-item" data-category="${escapeHtml(item.category)}" data-id="${escapeHtml(item.id)}">
                     <div class="store-item-image">
-                        <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" loading="lazy">
+                        <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" loading="lazy" style="cursor: zoom-in;" title="Click to enlarge ${escapeHtml(item.title)}">
                     </div>
                     <div class="store-item-info">
                         <div class="store-item-header">
@@ -310,6 +330,15 @@
                 </div>
             `;
         }).join('');
+
+        // Wire up product image lightbox zoom
+        gridEl.querySelectorAll('.store-item-image img').forEach(img => {
+            img.addEventListener('click', () => {
+                if (typeof window.showImageLightbox === 'function') {
+                    window.showImageLightbox(img.src, img.alt || 'Product Image');
+                }
+            });
+        });
     }
 
     function escapeHtml(str) {
