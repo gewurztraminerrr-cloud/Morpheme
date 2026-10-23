@@ -234,6 +234,11 @@ window.showTool = function(toolId) {
         } else {
             content.classList.remove('has-work-on-active');
         }
+        if (toolId === 'subanagrams') {
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('sub-list-results', 'sub-scrollbar-track', 'sub-scrollbar-thumb');
+            }
+        }
         if (toolId === 'new-users') {
             content.classList.add('has-new-users-active');
             if (typeof initCustomScrollbarForElement === 'function') {
