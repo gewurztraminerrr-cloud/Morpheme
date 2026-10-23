@@ -212,9 +212,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="store-banner-side-visual store-banner-visual-right" title="Morpheme Tournament Showcase">
-                        <img src="/static/images/morpheme_store_display.jpg" alt="Morpheme Tournament Showcase" class="store-banner-showcase-img" loading="lazy">
-                        <span class="store-banner-showcase-tag"><i class="fas fa-award"></i> Tournament Showcase</span>
+                    <div class="store-banner-side-visual store-banner-visual-right" title="Tournament Boggle Showcase">
+                        <img src="/static/images/morpheme_store_display.jpg" alt="Tournament Boggle Showcase" class="store-banner-showcase-img" loading="lazy">
+                        <span class="store-banner-showcase-tag"><i class="fas fa-th"></i> Tournament Boggle Showcase</span>
                     </div>
                 </div>
             </div>
