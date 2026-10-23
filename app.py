@@ -6587,23 +6587,20 @@ def get_room_state(room_id):
             req_p = room.get_player(uid) if uid else None
             user_idle = (now_t - getattr(req_p, '_last_seen_before_update', now_t)) if req_p else 0
             user_was_away = is_wake_up or (user_idle >= 20.0)
-            user_submitted = bool(req_p and (getattr(req_p, 'previous_round_score', 0) > 0 or len(getattr(req_p, 'previous_submitted_words', [])) > 0))
 
-            other_active_reviewers = [
+            other_active_humans = [
                 pl for pl in room.players
                 if not getattr(pl, 'is_ai', False)
-                and str(pl.user_id) != str(uid)
-                and (now_t - getattr(pl, 'last_active', 0)) < 15.0
-                and (getattr(pl, 'previous_round_score', 0) > 0 or len(getattr(pl, 'previous_submitted_words', [])) > 0)
+                and (uid is None or str(pl.user_id) != str(uid))
+                and (now_t - getattr(pl, 'last_active', 0)) < 30.0
             ]
 
             should_fast_forward = False
             if room.time_remaining <= 0:
                 should_fast_forward = True
-            elif len(other_active_reviewers) == 0:
-                if user_was_away:
-                    print(f"[get_room_state] Fast-forwarding unreviewed/empty intermission for room {room_id} (away={user_was_away}, submitted={user_submitted}, reviewers={len(other_active_reviewers)}). Starting next round instantly.")
-                    should_fast_forward = True
+            elif len(other_active_humans) == 0 and user_was_away:
+                print(f"[get_room_state] Fast-forwarding intermission for solo/empty room {room_id} (away={user_was_away}). Starting next round instantly.")
+                should_fast_forward = True
 
             if should_fast_forward:
                 is_stale_start = getattr(room, 'starting_round', False) and (now_t - getattr(room, '_round_start_init_time', 0) > 3.0)
@@ -6623,9 +6620,16 @@ def get_room_state(room_id):
             user_idle = (now_t - getattr(req_p, '_last_seen_before_update', now_t)) if req_p else 0
             user_was_away = is_wake_up or (user_idle >= 20.0)
 
-            # If room timer has expired while away, fast-forward directly to fresh round instead of stalling in intermission
-            if room.time_remaining <= 0 and user_was_away:
-                print(f"[get_room_state] Active round expired for {room_id} while user was away ({user_idle:.1f}s). Fast-forwarding directly to fresh round.")
+            other_active_humans = [
+                pl for pl in room.players
+                if not getattr(pl, 'is_ai', False)
+                and (uid is None or str(pl.user_id) != str(uid))
+                and (now_t - getattr(pl, 'last_active', 0)) < 30.0
+            ]
+
+            # If room timer has expired while away, fast-forward directly to fresh round ONLY if player is alone in the room
+            if room.time_remaining <= 0 and user_was_away and len(other_active_humans) == 0:
+                print(f"[get_room_state] Active round expired for {room_id} while user was away ({user_idle:.1f}s) in solo room. Fast-forwarding directly to fresh round.")
                 room.check_and_update_state()  # Ends expired round -> intermission
                 room.starting_round = False
                 try:

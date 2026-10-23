@@ -1457,6 +1457,7 @@ function setTimerWaitingState(isWaiting) {
 let _lastResumeWakeUpTime = 0;
 function handleResumeWakeUp(source) {
     if (document.hidden) return;
+    if (!isOnPlayPage()) return;
     const now = Date.now();
     // Debounce rapid successive events (visibilitychange + focus + pageshow often fire within 50ms on mobile)
     if (now - _lastResumeWakeUpTime < 300) {
@@ -1464,9 +1465,6 @@ function handleResumeWakeUp(source) {
         return;
     }
     _lastResumeWakeUpTime = now;
-    if (window._abortAllInflight) {
-        window._abortAllInflight('resume:' + source);
-    }
     window._resumeT0 = now;
     window._hiddenFor = window._hiddenAtMs ? (now - window._hiddenAtMs) : '?';
     window._resumeLogPending = true;
@@ -1585,15 +1583,15 @@ function handleResumeWakeUp(source) {
 // Global Visibility Listener to handle battery management
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        handleResumeWakeUp('visibilitychange');
+        if (isOnPlayPage()) {
+            handleResumeWakeUp('visibilitychange');
+        }
     } else {
+        if (!isOnPlayPage()) return;
         // Tab hidden: Enter battery-saving mode
         console.log('[play.js] Tab hidden: Entering battery-saving mode.');
         _rl('hidden');
         window._hiddenAtMs = Date.now();
-        if (window._abortAllInflight) {
-            window._abortAllInflight('hide');
-        }
         refreshPollInterval();
 
         // Pause the high-frequency timer interval while hidden
@@ -1606,21 +1604,21 @@ document.addEventListener('visibilitychange', () => {
 
 // Window Focus Listener: Provides robust mobile wake-up when focus is gained
 window.addEventListener('focus', () => {
-    if (!document.hidden) {
+    if (!document.hidden && isOnPlayPage()) {
         handleResumeWakeUp('focus');
     }
 });
 
 // Window Pageshow Listener: Mobile bfcache & tab thaw
 window.addEventListener('pageshow', () => {
-    if (!document.hidden) {
+    if (!document.hidden && isOnPlayPage()) {
         handleResumeWakeUp('pageshow');
     }
 });
 
 // Pointerdown Listener: Instant wake-up on first user touch if returning from idle/freeze
 window.addEventListener('pointerdown', () => {
-    if (document.hidden) return;
+    if (document.hidden || !isOnPlayPage()) return;
     const now = Date.now();
     if (now - _lastResumeWakeUpTime > 1500 && (now - lastStateFetchTime > 3000 || !timerInterval)) {
         handleResumeWakeUp('pointerdown');
@@ -1628,8 +1626,9 @@ window.addEventListener('pointerdown', () => {
 }, { passive: true });
 
 function stopPolling() {
-    if (window._abortAllInflight) {
-        window._abortAllInflight('stopPolling');
+    if (window._activeStateFetchController) {
+        try { window._activeStateFetchController.abort(); } catch (e) {}
+        window._activeStateFetchController = null;
     }
     if (pollInterval) {
         clearInterval(pollInterval);
@@ -1653,41 +1652,6 @@ function stopPolling() {
     }
     timerFormatIs24h = false;
 }
-
-// --- Connection hygiene: zombie request prevention ---
-// While the page is hidden on mobile the network goes dead; requests started then (or just before) never settle and
-// occupy the browser's per-host connection slots, so requests after resume queue behind them for ~15-20s.
-// Track GET /api requests, refuse to start them while hidden, and abort every pending one on hide and on resume.
-(function _installFetchHygiene() {
-    if (window._fetchHygieneInstalled) return;
-    window._fetchHygieneInstalled = true;
-    const origFetch = window.fetch.bind(window);
-    window._inflightCtl = new Set();
-    window._abortAllInflight = function(reason) {
-        const n = window._inflightCtl.size;
-        window._inflightCtl.forEach(c => { try { c.abort(); } catch (e) {} });
-        window._inflightCtl.clear();
-        if (typeof _rl === 'function') _rl('abortAll:' + reason + ':' + n);
-    };
-    window.fetch = function(input, init) {
-        init = init || {};
-        let method = 'GET', url = '';
-        try {
-            method = String(init.method || (input && input.method) || 'GET').toUpperCase();
-            url = typeof input === 'string' ? input : ((input && input.url) || String(input || ''));
-        } catch (e) {}
-        if (method !== 'GET' || url.indexOf('/api/') === -1) return origFetch(input, init);
-        if (document.hidden) return Promise.reject(new DOMException('Page hidden', 'AbortError'));
-        const ctl = new AbortController();
-        const ext = init.signal;
-        if (ext) {
-            if (ext.aborted) ctl.abort();
-            else ext.addEventListener('abort', () => { try { ctl.abort(); } catch (e) {} }, { once: true });
-        }
-        window._inflightCtl.add(ctl);
-        return origFetch(input, Object.assign({}, init, { signal: ctl.signal })).finally(() => window._inflightCtl.delete(ctl));
-    };
-})();
 
 // --- Resume diagnostics (ring buffer, flushed to server via beacon after a wake-up) ---
 window._evLog = window._evLog || [];
