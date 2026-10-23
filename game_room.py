@@ -1468,7 +1468,8 @@ class GameRoom:
         # which causes 'spinner' and 'search' milestones to trigger on every tick/poll,
         # generating board after board and triggering start_next_round repeatedly.
         if self.state == 'waiting':
-            humans = [p for p in self.players if not getattr(p, 'is_ai', False) and (now - getattr(p, 'last_active', 0)) < 30.0]
+            all_p = [p for p in self.players + self.spectators if not getattr(p, 'is_ai', False)]
+            humans = [p for p in all_p if (now - getattr(p, 'last_active', 0)) < 120.0]
             if len(humans) > 0:
                 print(f"[get_next_round_milestone] Unpausing waiting room {self.room_id} cleanly via check_and_update_state().")
                 self.check_and_update_state()
@@ -1847,7 +1848,8 @@ class GameRoom:
         
         # 0. WAKE UP PAUSED ROOMS
         if self.state == 'waiting' and self.time_limit < 7200:
-            humans = [p for p in self.players if not p.is_ai and (now - getattr(p, 'last_active', 0)) < 30.0]
+            all_p = [p for p in self.players + self.spectators if not getattr(p, 'is_ai', False)]
+            humans = [p for p in all_p if (now - getattr(p, 'last_active', 0)) < 120.0]
             if len(humans) > 0:
                 if getattr(self, '_wakeup_in_progress', False):
                     return False  # Already waking up
@@ -2978,31 +2980,27 @@ class RoomManager:
                         # pause it by setting state to 'waiting' and skipping milestone transition ticks.
                         # This prevents empty public rooms from looping rounds and pegging CPU in background.
                         is_daily = (room.time_limit >= 7200)
-                        humans = [p for p in room.players if not p.is_ai]
+                        humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
+                        spectators = [s for s in room.spectators if not getattr(s, 'is_ai', False)]
+                        all_humans = humans + spectators
                         now_t = time.time()
-                        active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 30.0]
+                        active_humans = [p for p in all_humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
                         if len(active_humans) == 0 and not is_daily:
-                            # ISSUE 6 FIX: NEVER pause an ACTIVE round — only pause intermission/waiting.
-                            # Pausing active rooms mid-board causes board wipes and re-rolls.
-                            # Also enforce a 30-second grace period after the most recent round started
-                            # to absorb transient 0-player moments (e.g., join latency on first load).
-                            round_age = now_t - getattr(room, 'round_start_time', 0)
-                            is_newly_active = (room.state == 'active' and round_age < 30)
-                            if room.state not in ['waiting'] and not is_newly_active:
-                                if room.state == 'active':
-                                    # Never wipe an active board mid-round — let check_and_update_state() transition to intermission when round ends!
-                                    pass
-                                elif room.state != 'waiting':
-                                    print(f"[Heartbeat] Pausing inactive room {room_id} (0 active humans). Setting state to 'waiting'.")
-                                    with room._state_lock:
-                                        room.state = 'waiting'
-                                        room.starting_round = False
-                                        room.board_search_started = False
-                                        room.board_search_loading = False
-                                        room.spinner_params_generated = False
-                                        room.next_round_board = None
-                                        room.board = None
-                                    continue
+                            # NEVER pause or wipe a room during an active round or intermission!
+                            # Let both active play and intermission run cleanly to completion.
+                            if room.state in ['active', 'intermission']:
+                                pass
+                            elif room.state != 'waiting':
+                                print(f"[Heartbeat] Pausing inactive room {room_id} (0 active humans for >120s). Setting state to 'waiting'.")
+                                with room._state_lock:
+                                    room.state = 'waiting'
+                                    room.starting_round = False
+                                    room.board_search_started = False
+                                    room.board_search_loading = False
+                                    room.spinner_params_generated = False
+                                    room.next_round_board = None
+                                    room.board = None
+                                continue
 
                         # timers/transitions
                         room.check_and_update_state()
@@ -4281,18 +4279,17 @@ class RoomManager:
                 # pause it by setting state to 'waiting' and skipping transition/milestone processing.
                 # This prevents empty public rooms from looping rounds and pegging CPU in background.
                 is_daily = (room.time_limit >= 7200)
-                humans = [p for p in room.players if not p.is_ai]
+                humans = [p for p in room.players if not getattr(p, 'is_ai', False)]
+                spectators = [s for s in room.spectators if not getattr(s, 'is_ai', False)]
+                all_humans = humans + spectators
                 now_t = time.time()
-                active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 30.0]
+                active_humans = [p for p in all_humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
                 if len(active_humans) == 0 and not is_daily:
-                    # ISSUE 6 FIX: NEVER wipe the board or reset an ACTIVE room.
-                    # Active rooms may briefly show 0 humans due to join latency or roster timing.
-                    # Wiping room.board causes the watchdog to immediately start_next_round, rolling
-                    # a completely new board (the "7 boards in 45 seconds" bug).
-                    if room.state == 'active':
-                        pass  # Let active round expire cleanly via check_and_update_state()
+                    # NEVER pause or wipe a room during an active round or intermission!
+                    if room.state in ['active', 'intermission']:
+                        pass  # Let active round and intermission expire cleanly via check_and_update_state()
                     elif room.state != 'waiting':
-                        print(f"[BG-Cleanup] Pausing inactive room {room_id} (0 active humans). Setting state to 'waiting'.")
+                        print(f"[BG-Cleanup] Pausing inactive room {room_id} (0 active humans for >120s). Setting state to 'waiting'.")
                         with room._state_lock:
                             room.state = 'waiting'
                             room.board = None
