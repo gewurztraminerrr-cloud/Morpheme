@@ -11081,9 +11081,9 @@ body .board-cell.tile-flash-purple * {
 
     /* Left Panel: Sequence Dashboard & Practice Box */
     #tool-subanagrams .subanagrams-game-area {
-        flex: 0 0 380px !important;
-        max-width: 380px !important;
-        width: 380px !important;
+        flex: 0 0 540px !important;
+        max-width: 540px !important;
+        width: 540px !important;
         height: 100% !important;
         max-height: 100% !important;
         display: flex !important;
@@ -11213,6 +11213,14 @@ body .board-cell.tile-flash-purple * {
         background: linear-gradient(180deg, #a78bfa, #7c3aed) !important;
         border-radius: 4px !important;
         cursor: pointer !important;
+    }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+    #tool-subanagrams .subanagrams-game-area {
+        flex: 0 0 440px !important;
+        max-width: 440px !important;
+        width: 440px !important;
     }
 }
 
