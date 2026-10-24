@@ -234,7 +234,10 @@ class _GameScreenState extends State<GameScreen> {
           try {
             final data = jsonDecode(message.message);
             final String sound = data['sound'] ?? '';
-            if (sound == 'tile') {
+            final String action = data['action'] ?? '';
+            if (action == 'vibrate' || sound == 'vibrate') {
+              HapticFeedback.vibrate();
+            } else if (sound == 'tile') {
               int pathLen = data['pathLen'] ?? 1;
               if (pathLen < 1) pathLen = 1;
               if (pathLen > 16) pathLen = 16;

@@ -867,6 +867,14 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.vibration_alert = val;
             saveSettingDebounced('vibration_alert', val);
+            if (val) {
+                if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+                    try { navigator.vibrate(250); } catch (_) {}
+                }
+                if (typeof MorphemeAudioBridge !== 'undefined') {
+                    try { MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 250 })); } catch (_) {}
+                }
+            }
         });
     }
 
