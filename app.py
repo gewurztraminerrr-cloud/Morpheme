@@ -7018,6 +7018,21 @@ def get_room_state(room_id):
 
             # Normalize subanagrams board representation and calculate sequence length
             board_to_send = (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board
+            
+            # INTERMISSION INTEGRITY SHIELD: Guarantee displayed board and words match 100%
+            if is_intermission and board_to_send and words_to_return:
+                from game_room import verify_board_words_consistency
+                prev_paths = getattr(room, 'previous_all_words_paths', None) or getattr(room, 'all_words_paths', None)
+                if not verify_board_words_consistency(board_to_send, words_to_return, prev_paths):
+                    print(f"[get_room_state] Detected mismatch between displayed board and all_words during intermission for {room_id}. Auto-healing...")
+                    _bg = room_manager.board_generator
+                    d_name = getattr(room, 'previous_dictionary', getattr(room, 'current_dictionary', 'NWL'))
+                    solved_words = _bg._solve_board(board_to_send, dictionary=d_name, min_word_length=display_floor)
+                    words_to_return = list(solved_words.keys())
+                    room.previous_all_words = list(words_to_return)
+                    room.previous_all_words_paths = dict(solved_words)
+                    word_scores_to_return = {w: word_scores_to_return.get(w, 1) for w in words_to_return}
+
             calc_seq_len = None
             if room.game_type == 'subanagrams':
                 if board_to_send and len(board_to_send) > 0:

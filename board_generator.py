@@ -5503,82 +5503,9 @@ class BoardGenerator:
         """Check if a word exists on the board (2D or 3D Surface)"""
         if not board or not word:
             return False
-        res, _ = word_validator.find_word_on_board(board, word)
-        return res
+        from word_validator import word_validator
+        return bool(word_validator.find_word_on_board(board, word))
 
-        def dfs_find(f, r, c, index, visited):
-            if index >= len(word):
-                return True
-
-            # Use appropriate neighbors based on dimension
-            neighbors = []
-            if not is_3d:
-                rows, cols = len(board), len(board[0])
-                for dr in [-1, 0, 1]:
-                    for dc in [-1, 0, 1]:
-                        if dr == 0 and dc == 0:
-                            continue
-                        nr, nc = r + dr, c + dc
-                        if 0 <= nr < rows and 0 <= nc < cols:
-                            neighbors.append((-1, nr, nc))
-            else:
-                neighbors = self._get_cube_neighbors(f, r, c)
-
-            for nf, nr, nc in neighbors:
-                if (nf, nr, nc) in visited:
-                    continue
-
-                cell_val = str(board[nf][nr][nc] if is_3d else board[nr][nc]).upper()
-                letters = cell_val.split("/") if "/" in cell_val else [cell_val]
-
-                for char in letters:
-                    match_length = 0
-                    if char == "Q" and word.startswith("QU", index):
-                        match_length = 2
-                    elif word.startswith(char, index):
-                        match_length = len(char)
-
-                    if match_length > 0:
-                        if index + match_length >= len(word):
-                            return True
-                        if dfs_find(nf, nr, nc, index + match_length, visited | {(nf, nr, nc)}):
-                            return True
-            return False
-
-        # Start from every cell
-        if not is_3d:
-            rows, cols = len(board), len(board[0])
-            for r in range(rows):
-                for c in range(cols):
-                    cell_val = str(board[r][c]).upper()
-                    # Initial check
-                    for char in (cell_val.split("/") if "/" in cell_val else [cell_val]):
-                        match_l = 0
-                        if char == "Q" and word.startswith("QU", 0):
-                            match_l = 2
-                        elif word.startswith(char, 0):
-                            match_l = len(char)
-                        if match_l > 0:
-                            if match_l >= len(word):
-                                return True
-                            if dfs_find(-1, r, c, match_l, {(-1, r, c)}):
-                                return True
-        else:
-            for f in range(6):
-                for r in range(3):
-                    for c in range(3):
-                        cell_val = str(board[f][r][c]).upper()
-                        if cell_val == "Q" and word.startswith("QU", 0):
-                            if 2 >= len(word):
-                                return True
-                            if dfs_find(f, r, c, 2, {(f, r, c)}):
-                                return True
-                        elif word.startswith(cell_val, 0):
-                            if len(cell_val) >= len(word):
-                                return True
-                            if dfs_find(f, r, c, len(cell_val), {(f, r, c)}):
-                                return True
-        return False
 
     def can_word_hit_bonus(self, word, board, bonus_cell):
         """Check if a word can be formed on board such that its path contains bonus_cell"""
