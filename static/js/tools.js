@@ -5370,6 +5370,7 @@ function setupListsTool() {
     if (updateBtn) {
         updateBtn.addEventListener('click', () => {
             listsDataLoaded = false; // Force refresh
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
             fetchListsData();
         });
     }
@@ -5377,6 +5378,7 @@ function setupListsTool() {
     const typeFilter = document.getElementById('list-type-filter');
     if (typeFilter) {
         typeFilter.addEventListener('change', () => {
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
             fetchListsData();
         });
     }
@@ -5385,6 +5387,7 @@ function setupListsTool() {
     if (orderFilter) {
         orderFilter.addEventListener('change', () => {
             listsDataLoaded = false;
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
             fetchListsData();
         });
     }
@@ -5836,7 +5839,9 @@ function handleFullListWordJump() {
     const total = _fullListAllWords.length;
     let targetIdx = -1;
     const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
-    if (wordType && (wordType.includes('likelihood') || isNewWordList(wordType))) {
+    const orderSelect = document.getElementById('list-order-filter');
+    const isRandomOrder = orderSelect ? (orderSelect.value === 'random') : false;
+    if (isRandomOrder || (wordType && (wordType.includes('likelihood') || isNewWordList(wordType)))) {
         targetIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' && item !== null ? item.word : item).toUpperCase() === query);
     } else {
         // High-speed binary search for 300,000+ words
@@ -5880,7 +5885,9 @@ function restoreOrRenderFullList(currentFilterKey) {
             const query = wordToCenter.toUpperCase();
             let foundIdx = -1;
             const wordType = (typeof currentWordsType !== 'undefined' ? currentWordsType : 'nwl');
-            if (wordType && (wordType.includes('likelihood') || isNewWordList(wordType))) {
+            const orderSelect = document.getElementById('list-order-filter');
+            const isRandomOrder = orderSelect ? (orderSelect.value === 'random') : false;
+            if (isRandomOrder || (wordType && (wordType.includes('likelihood') || isNewWordList(wordType)))) {
                 foundIdx = _fullListAllWords.findIndex(item => (typeof item === 'object' && item !== null ? item.word : item).toUpperCase() === query);
             } else {
                 let low = 0, high = _fullListAllWords.length - 1;
@@ -5946,10 +5953,12 @@ window.openFullListModal = function() {
     const lengthSelect = document.getElementById('list-length-filter');
     const startSelect = document.getElementById('list-start-filter');
     const typeSelect = document.getElementById('list-type-filter');
+    const orderSelect = document.getElementById('list-order-filter');
     const selectedType = (typeof currentWordsType !== 'undefined' && currentWordsType) ? currentWordsType : (typeSelect ? typeSelect.value : 'nwl');
     const selectedLength = lengthSelect ? lengthSelect.value : 'all';
     const selectedStart = startSelect ? startSelect.value : 'all';
-    const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}`;
+    const selectedOrder = orderSelect ? orderSelect.value : 'alphabetical';
+    const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${selectedOrder}`;
 
     const titleEl = document.getElementById('list-display-title');
     const fullListTitle = document.getElementById('full-list-modal-title');
@@ -5976,7 +5985,10 @@ window.openFullListModal = function() {
 
     // Prioritize showing any already available words immediately!
     const cachedWords = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
-    const inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
+    let inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
+    if (inMemoryWords) {
+        inMemoryWords = (selectedOrder === 'random') ? shuffleWordsArray(inMemoryWords) : sortWordsAlphabetical(inMemoryWords);
+    }
     const initialWords = (cachedWords && cachedWords.length > 0) ? cachedWords : inMemoryWords;
 
     if (selectedType === 'words_to_work_on') {
@@ -5990,7 +6002,11 @@ window.openFullListModal = function() {
             const reqStart = selectedStart.toUpperCase();
             words = words.filter(w => w.startsWith(reqStart));
         }
-        words.sort((a, b) => a.localeCompare(b));
+        if (selectedOrder === 'random') {
+            words = shuffleWordsArray(words);
+        } else {
+            words.sort((a, b) => a.localeCompare(b));
+        }
         _fullListAllWords = words;
         if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
         window._cachedFullWordLists[currentFilterKey] = words;
@@ -6028,7 +6044,7 @@ window.openFullListModal = function() {
 
     window.isFullListLoading = true;
 
-    let url = `/api/tools/lists?list_type=${selectedType}&no_limit=true`;
+    let url = `/api/tools/lists?list_type=${selectedType}&order=${selectedOrder}&no_limit=true`;
     if (selectedLength && selectedLength !== 'all') url += `&length=${selectedLength}`;
     if (selectedStart && selectedStart !== 'all') url += `&starts_with=${selectedStart}`;
     url += `&t=${Date.now()}`;
@@ -6045,8 +6061,10 @@ window.openFullListModal = function() {
             clearTimeout(fetchTimeout);
             if (window._lastFullListFilterKey !== currentFilterKey) return;
             const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || data['all_new'] || [];
-            _fullListAllWords = rawWords;
-            window._cachedFullWordLists[currentFilterKey] = rawWords;
+            const processedWords = (selectedOrder === 'random') ? shuffleWordsArray(rawWords) : rawWords;
+            _fullListAllWords = processedWords;
+            if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+            window._cachedFullWordLists[currentFilterKey] = processedWords;
             window.isFullListLoading = false;
             initFullListVirtualScrollbar();
             restoreOrRenderFullList(currentFilterKey);
@@ -6479,7 +6497,7 @@ async function fetchListsData(typeOverride) {
         currentWordsType = selectedType;
         window.listsServerTruncated = false;
 
-        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}`;
+        const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${selectedOrder}`;
         if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
         window._cachedFullWordLists[currentFilterKey] = words;
 
