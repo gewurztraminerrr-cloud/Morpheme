@@ -2957,8 +2957,9 @@ async function _doUpdateGameState(incomingState = null) {
         }
 
         // Toggle Definitions Panel Visibility (Confined to Found/Words tab on all devices)
-        if (defPanel) {
-            defPanel.style.display = activeWordsTab === 'found' ? '' : 'none';
+        const defPanelEl = document.querySelector('.definitions-panel');
+        if (defPanelEl) {
+            defPanelEl.style.display = activeWordsTab === 'found' ? '' : 'none';
         }
 
         // 2. Render Tab Contents
@@ -3142,7 +3143,7 @@ async function _doUpdateGameState(incomingState = null) {
                         let ptsNum = typeof w === 'string' ? 0 : (w.points || 0);
                         if (typeof pointsObj === 'object' && pointsObj !== null && pointsObj.total !== undefined) {
                             ptsNum = pointsObj.total;
-                        } else if (typeof state.all_word_scores[wordUpper] === 'number') {
+                        } else if (state.all_word_scores && typeof state.all_word_scores[wordUpper] === 'number') {
                             ptsNum = state.all_word_scores[wordUpper];
                         }
                         
