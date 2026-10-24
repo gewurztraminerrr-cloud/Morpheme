@@ -7892,7 +7892,7 @@ async function generateRandomWord() {
             if (data.pronunciation) {
                 html += `<div class="pronunciation" style="margin-bottom: 8px; font-size: 1.5rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
             }
-            html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${definition}</div>`;
+            html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${window.formatDefinitionWithLinks(definition) || "No definition available."}</div>`;
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
@@ -7967,7 +7967,7 @@ async function updateWotd() {
             if (data.pronunciation) {
                 html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
             }
-            html += `<div class="definition-text">${data.definition || "No definition available."}</div>`;
+            html += `<div class="definition-text">${window.formatDefinitionWithLinks(data.definition) || "No definition available."}</div>`;
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
@@ -8731,7 +8731,7 @@ async function runValidationCheck() {
                     html += `<div class="pronunciation" style="margin-bottom: 10px; font-size: 1.8rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
                 }
                 if (data.definition) {
-                    html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: var(--text-primary); font-style: normal;">${data.definition}</div>`;
+                    html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: var(--text-primary); font-style: normal;">${window.formatDefinitionWithLinks(data.definition)}</div>`;
                 }
                 if (data.image_url) {
                     html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
@@ -10201,6 +10201,24 @@ function setupPersonalTimer() {
 // --- Global In-Place Word Definition Popover for Tools ---
 window._wordDefCache = window._wordDefCache || new Map();
 
+window.formatDefinitionWithLinks = function (text) {
+    if (!text) return '';
+    const escaped = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    return escaped.replace(/\[inflections:\s*([^\]]+)\]/gi, (match, wordsStr) => {
+        const words = wordsStr.split(',').map(s => s.trim()).filter(Boolean);
+        const links = words.map(w => {
+            return `<span class="clickable-word-link" onclick="if(window.lookupWord){window.lookupWord('${w}',event);}else if(window.fetchDefinition){window.fetchDefinition('${w}');}" style="font-weight: 700; text-decoration: underline; cursor: pointer; color: #ffd700;" title="Click to view definition for ${w}">${w}</span>`;
+        });
+        return `<span class="def-inflections-container" style="color: inherit; opacity: 0.95;">[inflections: ${links.join(', ')}]</span>`;
+    });
+};
+
 window.openWordInIsValid = function (word) {
     if (!word) return;
     window.hideWordDefinitionPopup();
@@ -10841,7 +10859,7 @@ window.showWordDefinitionPopup = async function (word, event) {
 
         if (contentEl) {
             if (data && data.definition && data.definition.trim()) {
-                contentEl.textContent = data.definition;
+                contentEl.innerHTML = window.formatDefinitionWithLinks(data.definition);
             } else {
                 contentEl.innerHTML = '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
             }

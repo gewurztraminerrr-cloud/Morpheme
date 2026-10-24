@@ -10345,6 +10345,25 @@ function stopDefinitionFireworks() {
     }
 }
 
+function formatDefinitionWithLinks(text) {
+    if (!text) return '';
+    const escaped = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    return escaped.replace(/\[inflections:\s*([^\]]+)\]/gi, (match, wordsStr) => {
+        const words = wordsStr.split(',').map(s => s.trim()).filter(Boolean);
+        const links = words.map(w => {
+            return `<span class="clickable-word-link" onclick="if(window.fetchDefinition){window.fetchDefinition('${w}');}else if(window.lookupWord){window.lookupWord('${w}',event);}" style="font-weight: 700; text-decoration: underline; cursor: pointer; color: #ffd700;" title="Click to view definition for ${w}">${w}</span>`;
+        });
+        return `<span class="def-inflections-container" style="color: inherit; opacity: 0.95;">[inflections: ${links.join(', ')}]</span>`;
+    });
+}
+window.formatDefinitionWithLinks = formatDefinitionWithLinks;
+
 // Definition Logic
 async function fetchDefinition(word) {
     if (!word) return;
@@ -10400,7 +10419,7 @@ async function fetchDefinition(word) {
                 html += `<div class="pronunciation">${data.pronunciation}</div>`;
             }
             if (data.definition) {
-                html += `<span class="definition-text">${data.definition}</span>`;
+                html += `<span class="definition-text">${formatDefinitionWithLinks(data.definition)}</span>`;
             }
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;

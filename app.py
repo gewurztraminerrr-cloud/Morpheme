@@ -8102,6 +8102,103 @@ def format_resolved_definition(word_upper, visited=None):
         DEFINITIONS_CACHE[word_upper] = res
     return res
 
+_AW_INFLECTIONS_CACHE = {}
+
+def get_candidates_from_root(root):
+    r = root.upper()
+    cands = {r + 'S', r + 'ES', r + 'ED', r + 'ING', r + 'ER', r + 'EST'}
+    if r.endswith('E'):
+        cands.update({r + 'D', r + 'R', r + 'ST', r[:-1] + 'ING', r[:-1] + 'ED', r[:-1] + 'ER', r[:-1] + 'EST'})
+    if r.endswith('Y'):
+        cands.update({r[:-1] + 'IES', r[:-1] + 'IED', r[:-1] + 'IER', r[:-1] + 'IEST'})
+    if r.endswith('IE'):
+        cands.add(r[:-2] + 'YING')
+    if len(r) >= 3 and r[-1] not in 'AEIOU':
+        c = r[-1]
+        cands.update({r + c + 'ED', r + c + 'ING', r + c + 'ER', r + c + 'EST'})
+    if r.endswith('US'):
+        cands.add(r[:-2] + 'I')
+    elif r.endswith('A'):
+        cands.add(r + 'E')
+    elif r.endswith('UM') or r.endswith('ON'):
+        cands.add(r[:-2] + 'A')
+    elif r.endswith('EX') or r.endswith('IX'):
+        cands.add(r[:-2] + 'ICES')
+    elif r.endswith('IS'):
+        cands.add(r[:-2] + 'ES')
+    return cands
+
+def get_roots_for_word(w, defn, all_words):
+    roots = set()
+    if defn:
+        m = re.search(r'\b(?:plural|singular|conjugation|participle|past tense|past|gerund|diminutive|comparative|superlative)\s+(?:of|for)\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', defn, re.I)
+        if m:
+            cand = re.sub(r'[^A-Z]', '', m.group(1).upper())
+            if cand in all_words and cand != w:
+                roots.add(cand)
+        m_head = re.match(r'^([A-Z]{3,}),\s*', defn)
+        if m_head:
+            cand = m_head.group(1).upper()
+            if cand in all_words and cand != w:
+                roots.add(cand)
+
+    cands = []
+    if w.endswith('IES') and len(w) > 4: cands.append(w[:-3] + 'Y')
+    if w.endswith('ES') and len(w) > 4: cands.extend([w[:-2], w[:-1], w[:-2] + 'IS'])
+    if w.endswith('S') and len(w) > 3 and not w.endswith(('SS', 'US', 'IS', 'AS')): cands.append(w[:-1])
+    if w.endswith('ING') and len(w) > 5:
+        cands.extend([w[:-3], w[:-3] + 'E'])
+        if len(w) > 6 and w[-4] == w[-5]: cands.append(w[:-4])
+        if w.endswith('YING'): cands.append(w[:-4] + 'IE')
+    if w.endswith('ED') and len(w) > 4:
+        cands.extend([w[:-2], w[:-1]])
+        if w.endswith('IED'): cands.append(w[:-3] + 'Y')
+        if len(w) > 5 and w[-3] == w[-4]: cands.append(w[:-3])
+    if w.endswith('ER') and len(w) > 3:
+        cands.extend([w[:-2], w[:-1]])
+        if w.endswith('IER'): cands.append(w[:-3] + 'Y')
+        if len(w) > 5 and w[-3] == w[-4]: cands.append(w[:-3])
+    if w.endswith('EST') and len(w) > 4:
+        cands.extend([w[:-3], w[:-2]])
+        if w.endswith('IEST'): cands.append(w[:-4] + 'Y')
+        if len(w) > 6 and w[-4] == w[-5]: cands.append(w[:-4])
+    if w.endswith('I') and len(w) > 3: cands.append(w[:-1] + 'US')
+    if w.endswith('AE') and len(w) > 3: cands.append(w[:-1])
+    if w.endswith('A') and len(w) > 4: cands.extend([w[:-1] + 'UM', w[:-1] + 'ON'])
+    if w.endswith('ICES') and len(w) > 5: cands.extend([w[:-4] + 'EX', w[:-4] + 'IX'])
+
+    for c in cands:
+        if c in all_words and c != w:
+            roots.add(c)
+    return roots
+
+def get_valid_inflections_for_aw_word(w):
+    global _AW_INFLECTIONS_CACHE
+    w = w.upper().strip()
+    if w in _AW_INFLECTIONS_CACHE:
+        return _AW_INFLECTIONS_CACHE[w]
+    
+    all_words = getattr(word_validator, 'nwl_words', set()) | getattr(word_validator, 'csw_words', set()) | getattr(word_validator, 'long_words', set()) | getattr(word_validator, 'added_words', set())
+    defn = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
+    roots = get_roots_for_word(w, defn, all_words)
+    inflections = set()
+    inflections.update(get_candidates_from_root(w))
+    for r in roots:
+        inflections.add(r)
+        inflections.update(get_candidates_from_root(r))
+    
+    valid = sorted([cand for cand in inflections if cand in all_words and cand != w])
+    _AW_INFLECTIONS_CACHE[w] = valid
+    return valid
+
+def append_aw_inflections_to_definition(w, defn):
+    if not defn or '[inflections:' in defn.lower():
+        return defn
+    infs = get_valid_inflections_for_aw_word(w)
+    if not infs:
+        return defn
+    return f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
+
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
@@ -8113,6 +8210,8 @@ def lookup_word_definition_and_pronunciation(word):
     pronunciation = PRONUNCIATIONS_CACHE.get(word_upper)
     
     definition = format_resolved_definition(word_upper)
+    if word_upper in getattr(word_validator, 'added_words', set()):
+        definition = append_aw_inflections_to_definition(word_upper, definition)
     
     return definition, pronunciation
 
@@ -8462,6 +8561,8 @@ def ensure_aw_definitions_for_words(words_list):
             
     if resolved_pairs:
         save_aw_definitions_batch(resolved_pairs)
+        global _AW_INFLECTIONS_CACHE
+        _AW_INFLECTIONS_CACHE.clear()
 
 def lookup_definition_image(word):
     image_url = None
