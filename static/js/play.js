@@ -2228,7 +2228,7 @@ async function _doUpdateGameState(incomingState = null) {
                     if (!defContent.innerHTML.includes(winnerTextIdentifier)) {
                         const winnersList = latest.winners.map(w => w.username).join(' & ');
                         const bonusText = (state.bonus_word && String(state.bonus_word).toUpperCase() !== 'NONE') ? state.bonus_word : '';
-                        const bonusHtml = bonusText ? ` <span style="opacity: 0.5;">•</span> Bonus: <span style="color: #ffd700; font-weight: 700;">${bonusText.toUpperCase()}</span>` : '';
+                        const bonusHtml = bonusText ? ` <span class="winner-bullet" style="opacity: 0.5;">•</span> Bonus: <span class="winner-bonus-word">${bonusText.toUpperCase()}</span>` : '';
 
                         defContent.innerHTML = `
                             <div id="${winnerTextIdentifier}" class="intermission-winner-card">
@@ -3192,7 +3192,7 @@ async function _doUpdateGameState(incomingState = null) {
 
                         return `<div class="${className}" data-word="${word}" style="display:flex; justify-content:space-between; cursor:pointer;">
                             <span>${indicator}${word}</span>
-                            <span style="opacity:0.8">${ptsDisplay}</span>
+                            <span class="word-item-pts">${ptsDisplay}</span>
                         </div>`;
                     }).join('');
 
@@ -3602,7 +3602,7 @@ async function _doUpdateGameState(incomingState = null) {
 
                     return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
                         <span>${w}</span>
-                        <span style="opacity:0.6; font-size:0.85em;">${ptsDisplay} ${icon}</span>
+                        <span class="word-item-pts">${ptsDisplay} ${icon}</span>
                     </div>`;
                 };
 
@@ -5525,7 +5525,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                 ${bonusIndicator}
                 <span class="word-text">${wordUpper}</span>
             </div>
-            <span class="points-math">${pointsText}</span>
+            <span class="points-math word-item-pts">${pointsText}</span>
         </div>`;
     }).join('');
 
@@ -8309,7 +8309,7 @@ function renderSplitNotepads(players, state) {
                 const isBonusWord = w.is_bonus || (state.bonus_word && w.word.toUpperCase() === state.bonus_word.toUpperCase());
                 if (isBonusWord) row.classList.add('bonus-word');
 
-                row.innerHTML = `<span>${w.word}</span> <span style="font-size:0.85em; opacity:0.9;">${ptsDisplay}</span>`;
+                row.innerHTML = `<span>${w.word}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }
@@ -8481,7 +8481,7 @@ function renderFCFSNotepads(players, state) {
                 }
                 row.dataset.word = w;
                 row.onclick = () => window.fetchDefinition(w); // Direct handler
-                row.innerHTML = `<span>${w}</span> <span style="font-size:0.85em; opacity:0.9;">${ptsDisplay}</span>`;
+                row.innerHTML = `<span>${w}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }

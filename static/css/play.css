@@ -676,11 +676,15 @@
     white-space: nowrap;
     line-height: 1.25;
     padding-bottom: 2px;
+    text-shadow: none;
 }
 
+[class*="theme-white"] .intermission-winner-card .winner-title,
 body.theme-white .intermission-winner-card .winner-title,
+[class*="theme-light-"] .intermission-winner-card .winner-title,
 body[class*="theme-light-"] .intermission-winner-card .winner-title {
-    color: #b8860b;
+    color: #b45309;
+    text-shadow: none;
 }
 
 .intermission-winner-card .winner-subtext {
@@ -690,6 +694,20 @@ body[class*="theme-light-"] .intermission-winner-card .winner-title {
     line-height: 1.25;
     padding-top: 1px;
     padding-bottom: 1px;
+    text-shadow: none;
+}
+
+.intermission-winner-card .winner-bonus-word {
+    color: #ffd700;
+    font-weight: 700;
+}
+
+[class*="theme-white"] .intermission-winner-card .winner-bonus-word,
+body.theme-white .intermission-winner-card .winner-bonus-word,
+[class*="theme-light-"] .intermission-winner-card .winner-bonus-word,
+body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
+    color: #15803d;
+    font-weight: 800;
 }
 
 .intermission-winner-card .intermission-divider {
@@ -708,6 +726,7 @@ body[class*="theme-light-"] .intermission-winner-card .winner-title {
     color: var(--text-primary);
     font-style: italic;
     padding-top: 1px;
+    text-shadow: none;
 }
 
 .definition-word {
@@ -812,8 +831,34 @@ body[class*="theme-light-"] .intermission-winner-card .winner-title {
     color: #e2e8f0;
     opacity: 0.95;
     margin-top: 3px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    text-shadow: none;
     letter-spacing: 0.01em;
+}
+
+[class*="theme-white"] .def-congrats-overlay,
+body.theme-white .def-congrats-overlay,
+[class*="theme-light-"] .def-congrats-overlay,
+body[class*="theme-light-"] .def-congrats-overlay {
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, rgba(240, 240, 245, 0.96) 100%) !important;
+}
+
+[class*="theme-white"] .def-congrats-title,
+body.theme-white .def-congrats-title,
+[class*="theme-light-"] .def-congrats-title,
+body[class*="theme-light-"] .def-congrats-title {
+    background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #92400e 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .def-congrats-sub,
+body.theme-white .def-congrats-sub,
+[class*="theme-light-"] .def-congrats-sub,
+body[class*="theme-light-"] .def-congrats-sub {
+    color: var(--text-primary) !important;
+    text-shadow: none !important;
+    font-weight: 700 !important;
 }
 
 .def-badge-all-words {
@@ -831,6 +876,16 @@ body[class*="theme-light-"] .intermission-winner-card .winner-title {
     border: 1px solid rgba(251, 191, 36, 0.35);
     border-radius: 9999px;
     box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+}
+
+[class*="theme-white"] .def-badge-all-words,
+body.theme-white .def-badge-all-words,
+[class*="theme-light-"] .def-badge-all-words,
+body[class*="theme-light-"] .def-badge-all-words {
+    color: #92400e !important;
+    background: rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    box-shadow: none !important;
 }
 
 @keyframes def-pulse-title {
@@ -7188,19 +7243,34 @@ input[type=range]::-moz-range-track {
     }
 }
 
-/* Personal Timer /* Winner Celebration Pulse (Golden) */
+/* Winner Celebration Pulse (Golden) */
 @keyframes winnerAlertPulse {
     0% {
         background-color: rgba(255, 215, 0, 0.2);
         box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.3);
     }
     50% {
-        background-color: rgba(255, 215, 0, 0.5);
-        box-shadow: inset 0 0 80px rgba(255, 215, 0, 0.6);
+        background-color: rgba(255, 215, 0, 0.45);
+        box-shadow: inset 0 0 70px rgba(255, 215, 0, 0.55);
     }
     100% {
         background-color: rgba(255, 215, 0, 0.2);
         box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+}
+
+@keyframes winnerAlertPulseLight {
+    0% {
+        background-color: rgba(245, 158, 11, 0.12);
+        box-shadow: inset 0 0 25px rgba(245, 158, 11, 0.15);
+    }
+    50% {
+        background-color: rgba(245, 158, 11, 0.24);
+        box-shadow: inset 0 0 45px rgba(245, 158, 11, 0.28);
+    }
+    100% {
+        background-color: rgba(245, 158, 11, 0.12);
+        box-shadow: inset 0 0 25px rgba(245, 158, 11, 0.15);
     }
 }
 
@@ -7209,29 +7279,52 @@ input[type=range]::-moz-range-track {
     background-image: none !important;
 }
 
+[class*="theme-white"] .winner-flash,
+body.theme-white .winner-flash,
+[class*="theme-light-"] .winner-flash,
+body[class*="theme-light-"] .winner-flash {
+    animation: winnerAlertPulseLight 2.5s infinite ease-in-out !important;
+}
+
 .definitions-panel.winner-flash .intermission-winner-card .winner-title {
     color: #ffd700 !important;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 0, 0, 0.8) !important;
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .definitions-panel.winner-flash .intermission-winner-card .winner-title,
+body.theme-white .definitions-panel.winner-flash .intermission-winner-card .winner-title,
+[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner-card .winner-title,
+body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner-card .winner-title {
+    color: #b45309 !important;
+    text-shadow: none !important;
 }
 
 .definitions-panel.winner-flash .intermission-winner-card .winner-subtext {
-    color: #ffffff !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
+    color: var(--text-primary) !important;
+    text-shadow: none !important;
+}
+
+.definitions-panel.winner-flash .intermission-winner-card .winner-bonus-word {
+    color: #ffd700 !important;
+    font-weight: 700;
+}
+
+[class*="theme-white"] .definitions-panel.winner-flash .intermission-winner-card .winner-bonus-word,
+body.theme-white .definitions-panel.winner-flash .intermission-winner-card .winner-bonus-word,
+[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner-card .winner-bonus-word,
+body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner-card .winner-bonus-word {
+    color: #15803d !important;
+    font-weight: 800;
 }
 
 .definitions-panel.winner-flash .intermission-winner-card .intermission-divider {
-    background: rgba(255, 255, 255, 0.3) !important;
+    background: rgba(var(--text-primary-rgb), 0.22) !important;
 }
 
 .definitions-panel.winner-flash .intermission-winner-card .intermission-prompt {
-    color: #ffffff !important;
-    opacity: 0.95 !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
-}
-
-.winner-flash * {
-    color: #ffffff !important;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+    color: var(--text-primary) !important;
+    opacity: 0.8 !important;
+    text-shadow: none !important;
 }
 
 /* Personal Timer Styles */
@@ -7555,6 +7648,37 @@ input[type=range]::-moz-range-track {
     flex-shrink: 0; /* USER REQUEST: Never squish the math breakdown */
     margin-left: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.word-item-pts {
+    white-space: nowrap;
+    font-size: 0.88em;
+    font-weight: 600;
+    opacity: 0.9;
+    color: var(--text-primary);
+}
+
+.word-item.player-word .word-item-pts {
+    color: #ffffff;
+    opacity: 0.95;
+}
+
+.word-item.bonus-word .word-item-pts,
+.notepad-item.bonus-word .word-item-pts {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-weight: 700;
+}
+
+.word-item.missed .word-item-pts {
+    color: #fb7185 !important;
+    opacity: 0.95;
+}
+
+.word-item.csw-only .word-item-pts {
+    color: #000000 !important;
+    opacity: 1;
+    font-weight: 700;
 }
 
 .word-item {
@@ -15314,14 +15438,131 @@ body.theme-light-gray .word-item.found-by-other:not(.csw-only):not(.added-word):
     color: #111111 !important;
 }
 
+/* High-Contrast Point Sum & Equation Readability in White & Light Layouts */
+[class*="theme-white"] .word-item-pts,
+[class*="theme-light-"] .word-item-pts,
+body.theme-white .word-item-pts,
+body[class*="theme-light-"] .word-item-pts,
+[class*="theme-white"] .notepad-item .word-item-pts,
+[class*="theme-light-"] .notepad-item .word-item-pts,
+body.theme-white .notepad-item .word-item-pts,
+body[class*="theme-light-"] .notepad-item .word-item-pts,
+[class*="theme-white"] #submitted-words-list .word-item span:last-child,
+[class*="theme-light-"] #submitted-words-list .word-item span:last-child,
+body.theme-white #submitted-words-list .word-item span:last-child,
+body[class*="theme-light-"] #submitted-words-list .word-item span:last-child,
+[class*="theme-white"] #all-words-list .word-item span:last-child,
+[class*="theme-light-"] #all-words-list .word-item span:last-child,
+body.theme-white #all-words-list .word-item span:last-child,
+body[class*="theme-light-"] #all-words-list .word-item span:last-child {
+    opacity: 1 !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+}
+
+/* Player word (Blue highlight) - deep contrast dark navy point sum */
+[class*="theme-white"] .word-item.player-word .word-item-pts,
+[class*="theme-light-"] .word-item.player-word .word-item-pts,
+body.theme-white .word-item.player-word .word-item-pts,
+body[class*="theme-light-"] .word-item.player-word .word-item-pts,
+[class*="theme-white"] #submitted-words-list .word-item.player-word span:last-child,
+[class*="theme-light-"] #submitted-words-list .word-item.player-word span:last-child,
+body.theme-white #submitted-words-list .word-item.player-word span:last-child,
+body[class*="theme-light-"] #submitted-words-list .word-item.player-word span:last-child {
+    color: #0a1e3f !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+/* Bonus word (Green highlight) - deep forest green point sum */
+[class*="theme-white"] .word-item.bonus-word .word-item-pts,
+[class*="theme-light-"] .word-item.bonus-word .word-item-pts,
+body.theme-white .word-item.bonus-word .word-item-pts,
+body[class*="theme-light-"] .word-item.bonus-word .word-item-pts,
+[class*="theme-white"] .notepad-item.bonus-word .word-item-pts,
+[class*="theme-light-"] .notepad-item.bonus-word .word-item-pts,
+body.theme-white .notepad-item.bonus-word .word-item-pts,
+body[class*="theme-light-"] .notepad-item.bonus-word .word-item-pts,
+[class*="theme-white"] #submitted-words-list .word-item.bonus-word span:last-child,
+[class*="theme-light-"] #submitted-words-list .word-item.bonus-word span:last-child,
+body.theme-white #submitted-words-list .word-item.bonus-word span:last-child,
+body[class*="theme-light-"] #submitted-words-list .word-item.bonus-word span:last-child {
+    color: #052e16 !important;
+    opacity: 1 !important;
+    font-weight: 850 !important;
+}
+
+/* Missed word (Rose/Red highlight) - deep dark maroon point sum */
+[class*="theme-white"] .word-item.missed .word-item-pts,
+[class*="theme-light-"] .word-item.missed .word-item-pts,
+body.theme-white .word-item.missed .word-item-pts,
+body[class*="theme-light-"] .word-item.missed .word-item-pts,
+[class*="theme-white"] #all-words-list .word-item.missed span:last-child,
+[class*="theme-light-"] #all-words-list .word-item.missed span:last-child,
+body.theme-white #all-words-list .word-item.missed span:last-child,
+body[class*="theme-light-"] #all-words-list .word-item.missed span:last-child {
+    color: #881337 !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+/* CSW-only word (Gold highlight) - crisp solid black point sum */
+[class*="theme-white"] .word-item.csw-only .word-item-pts,
+[class*="theme-light-"] .word-item.csw-only .word-item-pts,
+body.theme-white .word-item.csw-only .word-item-pts,
+body[class*="theme-light-"] .word-item.csw-only .word-item-pts {
+    color: #000000 !important;
+    opacity: 1 !important;
+    font-weight: 850 !important;
+}
+
+/* Added word (Purple highlight) - deep royal purple point sum */
+[class*="theme-white"] .word-item.added-word .word-item-pts,
+[class*="theme-light-"] .word-item.added-word .word-item-pts,
+body.theme-white .word-item.added-word .word-item-pts,
+body[class*="theme-light-"] .word-item.added-word .word-item-pts {
+    color: #3b0764 !important;
+    opacity: 1 !important;
+    font-weight: 800 !important;
+}
+
+/* Points Math pill styling in light/white layouts */
 [class*="theme-white"] .word-item .points-math,
 [class*="theme-light-"] .word-item .points-math,
 body.theme-white .word-item .points-math,
-body.theme-light-gray .word-item .points-math {
-    background: rgba(0, 0, 0, 0.65) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
-    font-weight: 800 !important;
+body[class*="theme-light-"] .word-item .points-math {
+    background: rgba(255, 255, 255, 0.88) !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.25) !important;
+    font-weight: 850 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-white"] .word-item.bonus-word .points-math,
+[class*="theme-light-"] .word-item.bonus-word .points-math,
+body.theme-white .word-item.bonus-word .points-math,
+body[class*="theme-light-"] .word-item.bonus-word .points-math {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #052e16 !important;
+    border: 1.5px solid rgba(22, 163, 74, 0.45) !important;
+}
+
+[class*="theme-white"] .word-item.player-word .points-math,
+[class*="theme-light-"] .word-item.player-word .points-math,
+body.theme-white .word-item.player-word .points-math,
+body[class*="theme-light-"] .word-item.player-word .points-math {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #0a1e3f !important;
+    border: 1.5px solid rgba(37, 99, 235, 0.45) !important;
+}
+
+[class*="theme-white"] .word-item.missed .points-math,
+[class*="theme-light-"] .word-item.missed .points-math,
+body.theme-white .word-item.missed .points-math,
+body[class*="theme-light-"] .word-item.missed .points-math {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #881337 !important;
+    border: 1.5px solid rgba(244, 63, 94, 0.45) !important;
 }
 
 /* 2. Mods Tab Content High-Contrast & Clean Organization for Light Themes */
