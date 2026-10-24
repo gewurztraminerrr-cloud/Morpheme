@@ -1851,6 +1851,23 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     /* Purple */
 }
 
+.validation-status.status-swiping {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.5px !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(99, 102, 241, 0.3) !important;
+    font-size: 1.05rem !important;
+    white-space: nowrap !important;
+    transition: none !important;
+}
+
+body.theme-white .validation-status.status-swiping,
+[class*="theme-white"] .validation-status.status-swiping,
+body[class*="theme-light-"] .validation-status.status-swiping {
+    color: #0f172a !important;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important;
+}
+
 #word-input {
     flex: 1;
     min-width: 60px;

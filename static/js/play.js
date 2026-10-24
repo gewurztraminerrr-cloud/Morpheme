@@ -9634,6 +9634,10 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
 
     // Clear highlights, but keep active highlights if the user has already started a new swipe or typing sequence
     const isSwipingNewWord = mouseState && mouseState.isDown;
+    const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isSwipingNewWord && isMobile) {
+        return;
+    }
     const inputEl = document.getElementById('word-input');
     const isUserTypingNewWord = inputEl && inputEl.value.trim().length > 0;
 
@@ -10470,6 +10474,15 @@ function clearWordInputAndSelection() {
         c.classList.remove('selected', 'current', 'typing-highlight');
         if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
     });
+    const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        const statusEl = document.getElementById('word-validation-status');
+        if (statusEl && statusEl.classList.contains('status-swiping')) {
+            statusEl.textContent = '';
+            statusEl.className = 'validation-status';
+            statusEl.style.color = '';
+        }
+    }
 }
 window.clearWordInputAndSelection = clearWordInputAndSelection;
 
@@ -10577,9 +10590,31 @@ function getLetterFromPathIndex(path, i, isForDisplay = false) {
 }
 
 function updateWordInputFromPath() {
+    const displayWord = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('');
     const wordInputEl = document.getElementById('word-input');
     if (wordInputEl) {
-        wordInputEl.value = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('');
+        wordInputEl.value = displayWord;
+    }
+
+    const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        const statusEl = document.getElementById('word-validation-status');
+        if (statusEl) {
+            if (mouseState && mouseState.isDown && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+                if (validationTimeout) {
+                    clearTimeout(validationTimeout);
+                    validationTimeout = null;
+                }
+                const capitalLetters = displayWord.toUpperCase();
+                statusEl.textContent = capitalLetters;
+                statusEl.className = 'validation-status status-swiping';
+                statusEl.style.color = '';
+            } else if (statusEl.classList.contains('status-swiping')) {
+                statusEl.textContent = '';
+                statusEl.className = 'validation-status';
+                statusEl.style.color = '';
+            }
+        }
     }
 }
 
@@ -10944,6 +10979,16 @@ function finishDragSelection(e) {
             submitWord(word, serverPath);
         } catch (err) {
             console.error('[play.js] Error in finishDragSelection submission:', err);
+        }
+    } else {
+        const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl && statusEl.classList.contains('status-swiping')) {
+                statusEl.textContent = '';
+                statusEl.className = 'validation-status';
+                statusEl.style.color = '';
+            }
         }
     }
 
