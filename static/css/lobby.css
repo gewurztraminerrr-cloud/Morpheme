@@ -2403,9 +2403,11 @@ body.theme-white .lobby-journey-sticky-header {
 .lobby-player-row {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
     gap: 6px;
     padding: 6px 12px;
+    line-height: 1;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
@@ -2431,7 +2433,17 @@ body.theme-white .lobby-journey-sticky-header {
     text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
+.lobby-player-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
 .lobby-player-name {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     font-size: 0.84rem;
     font-weight: 700;
     color: var(--text-primary, #fff);
@@ -2936,8 +2948,13 @@ body.theme-white .lobby-journey-sticky-header {
     .lobby-players-half {
         flex: 0 0 auto !important;
         max-height: 120px !important;
-        min-height: 80px !important;
-        padding: 8px 10px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 8px 10px 4px 10px !important;
+    }
+
+    .lobby-players-half .lobby-half-header {
+        margin-bottom: 4px !important;
     }
 
     .lobby-players-list {
@@ -2947,16 +2964,37 @@ body.theme-white .lobby-journey-sticky-header {
         gap: 6px !important;
         overflow-y: auto !important;
         max-height: 75px !important;
-        padding: 6px 4px !important;
+        padding: 6px 4px 5px 4px !important;
         box-sizing: border-box !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior: contain !important;
     }
 
     .lobby-player-row {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         padding: 4px 8px !important;
         font-size: 0.78rem !important;
+        line-height: 1 !important;
         flex: 0 0 auto !important;
+    }
+
+    .lobby-player-flag {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+    }
+
+    .lobby-player-name {
+        display: inline-flex !important;
+        align-items: center !important;
+        line-height: 1 !important;
+    }
+
+    .lobby-empty-players {
+        margin: 8px 0 !important;
     }
 
     .lobby-chat-half {
@@ -3011,7 +3049,8 @@ body.theme-white .lobby-journey-sticky-header {
         display: flex !important;
         flex: 0 0 auto !important;
         max-height: 110px !important;
-        min-height: 60px !important;
+        min-height: 0 !important;
+        height: auto !important;
     }
 
     .lobby-chat-drawer.open .lobby-chat-half {
