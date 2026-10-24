@@ -5610,23 +5610,40 @@ function updateFullListVirtualScrollbar() {
     }
 
     const total = _fullListAllWords.length;
-    if (total <= 50) {
+    const scrollHeight = resultsEl.scrollHeight;
+    const clientHeight = resultsEl.clientHeight;
+
+    if (scrollHeight <= clientHeight + 2 || clientHeight <= 0) {
         track.style.display = 'none';
         return;
     }
     track.style.display = 'block';
 
-    const trackHeight = track.clientHeight || resultsEl.clientHeight || 400;
+    const trackHeight = track.clientHeight || clientHeight || 400;
     const renderedSpan = Math.max(1, _fullListRenderedEnd - _fullListRenderedStart);
-    const ratio = Math.max(0.06, Math.min(1, renderedSpan / total));
-    const thumbHeight = Math.max(36, Math.min(trackHeight, trackHeight * ratio));
+
+    let ratio;
+    if (renderedSpan >= total) {
+        ratio = clientHeight / Math.max(1, scrollHeight);
+    } else {
+        const domRatio = clientHeight / Math.max(1, scrollHeight);
+        ratio = domRatio * (renderedSpan / total);
+    }
+    ratio = Math.max(0.06, Math.min(0.85, ratio));
+    const thumbHeight = Math.max(36, Math.min(trackHeight * 0.85, trackHeight * ratio));
     thumb.style.height = `${thumbHeight}px`;
 
     const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
-    const maxScrollTop = Math.max(1, resultsEl.scrollHeight - resultsEl.clientHeight);
-    const internalProgress = Math.min(1, Math.max(0, resultsEl.scrollTop / maxScrollTop));
-    const currentWordIndex = _fullListRenderedStart + (internalProgress * renderedSpan);
-    const overallProgress = Math.min(1, Math.max(0, currentWordIndex / total));
+    const maxScrollTop = Math.max(1, scrollHeight - clientHeight);
+
+    let overallProgress = 0;
+    if (renderedSpan >= total) {
+        overallProgress = Math.min(1, Math.max(0, resultsEl.scrollTop / maxScrollTop));
+    } else {
+        const internalProgress = Math.min(1, Math.max(0, resultsEl.scrollTop / maxScrollTop));
+        const currentWordIndex = _fullListRenderedStart + (internalProgress * renderedSpan);
+        overallProgress = Math.min(1, Math.max(0, currentWordIndex / total));
+    }
     const thumbTop = overallProgress * maxThumbTop;
 
     thumb.style.top = `${thumbTop}px`;
@@ -5665,6 +5682,15 @@ function initFullListVirtualScrollbar() {
         thumb.style.setProperty('top', `${newThumbTop}px`, 'important');
 
         const progress = newThumbTop / maxThumbTop;
+        const renderedSpan = Math.max(1, _fullListRenderedEnd - _fullListRenderedStart);
+
+        if (renderedSpan >= total) {
+            if (_dragRafId) cancelAnimationFrame(_dragRafId);
+            const maxScrollTop = Math.max(0, results.scrollHeight - results.clientHeight);
+            results.scrollTop = progress * maxScrollTop;
+            return;
+        }
+
         // At the very bottom, anchor to the last word so ZZZ is always visible
         const targetIndex = progress >= 1 ? total - 1 : Math.floor(progress * total);
 
@@ -5751,12 +5777,26 @@ function initFullListVirtualScrollbar() {
         if (e.target === thumb) return;
         const rect = track.getBoundingClientRect();
         const clickY = getClientY(e) - rect.top;
+        const trackHeight = track.clientHeight || results.clientHeight || 400;
         const thumbHeight = thumb.offsetHeight || 36;
-        startThumbTop = Math.max(0, clickY - thumbHeight / 2);
-        startY = getClientY(e);
+        const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+        const targetThumbTop = Math.max(0, Math.min(maxThumbTop, clickY - thumbHeight / 2));
+        thumb.style.top = `${targetThumbTop}px`;
+        thumb.style.setProperty('top', `${targetThumbTop}px`, 'important');
         onPointerDown(e);
         applyDragPosition(getClientY(e));
     });
+
+    if (window.ResizeObserver) {
+        const ro = new ResizeObserver(() => {
+            if (!isDragging) updateFullListVirtualScrollbar();
+        });
+        ro.observe(results);
+    } else {
+        window.addEventListener('resize', () => {
+            if (!isDragging) updateFullListVirtualScrollbar();
+        }, { passive: true });
+    }
 
     // Smooth continuous window pagination with animation frame throttling
     let _scrollRafId = null;
