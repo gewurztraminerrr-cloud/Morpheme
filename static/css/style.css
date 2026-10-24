@@ -11084,6 +11084,11 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     color: var(--text-primary);
 }
 
+#tool-work-on:not(.active),
+#page-tools .tool-pane:not(.active) {
+    display: none !important;
+}
+
 #tool-work-on input#work-on-input {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -11285,8 +11290,7 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
     }
 
     #page-tools #tool-work-on.tool-pane.active,
-    body.is-mobile #page-tools #tool-work-on.tool-pane.active,
-    #tool-work-on {
+    body.is-mobile #page-tools #tool-work-on.tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 0px !important;

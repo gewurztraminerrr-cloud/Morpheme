@@ -548,7 +548,10 @@ window.resetToolsTab = function(immediate = false) {
         if (layoutEl) layoutEl.scrollLeft = 0;
         if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
         if (content) {
-            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            content.querySelectorAll('.tool-pane').forEach(pane => {
+                pane.classList.remove('active');
+                pane.style.display = 'none';
+            });
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
         }
@@ -562,7 +565,10 @@ window.resetToolsTab = function(immediate = false) {
     window._toolsSlideTimeout = setTimeout(() => {
         if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
         if (content) {
-            content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            content.querySelectorAll('.tool-pane').forEach(pane => {
+                pane.classList.remove('active');
+                pane.style.display = 'none';
+            });
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
         }
