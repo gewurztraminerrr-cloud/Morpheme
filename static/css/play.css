@@ -4731,9 +4731,10 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         box-sizing: border-box !important;
     }
 
-    #tool-combo .result-section > div:first-child {
+    #tool-combo .result-section > div:first-child,
+    #tool-combo .combo-section-header {
         flex: 0 0 auto !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 10px !important;
     }
 
     #tool-combo .chart-desc,
@@ -4745,8 +4746,8 @@ body[class*="theme-light-"] #more-random-words-btn:active,
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        padding: 3px 12px !important;
-        margin-bottom: 4px !important;
+        padding: 5px 12px !important;
+        margin-bottom: 10px !important;
         color: rgba(var(--text-primary-rgb), 0.45) !important;
         box-sizing: border-box !important;
         flex: 0 0 auto !important;
@@ -17124,8 +17125,8 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
-    padding: 4px 12px !important;
-    margin-bottom: 6px !important;
+    padding: 6px 12px !important;
+    margin-bottom: 10px !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
     border-radius: 8px !important;
     background: rgba(var(--text-primary-rgb), 0.04) !important;
