@@ -9491,14 +9491,14 @@ def tools_get_lists():
 
         import random
         def order_list(lst):
+            res = list(lst)
             if order_filter == 'random':
-                res = list(lst)
                 random.shuffle(res)
                 return cap_list(res)
             else:
-                if lst and isinstance(lst[0], dict) and 'word' in lst[0]:
-                    return cap_list(sorted(lst, key=lambda x: x['word']))
-                return cap_list(sorted(list(lst)))
+                if res and isinstance(res[0], dict) and 'word' in res[0]:
+                    return cap_list(sorted(res, key=lambda x: x['word']))
+                return cap_list(sorted(res))
 
         scrabble_freq = {
             'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
