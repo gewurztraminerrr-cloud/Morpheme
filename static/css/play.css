@@ -3508,6 +3508,27 @@ body.theme-white #page-settings .mobile-bottom-nav {
     #tool-store .store-filter-btn.active:focus-visible {
         box-shadow: none !important;
     }
+    body.theme-black #tool-store .store-filter-btn.active,
+    body.theme-gray #tool-store .store-filter-btn.active,
+    body.theme-dark-gray #tool-store .store-filter-btn.active,
+    body.theme-blue #tool-store .store-filter-btn.active,
+    body.theme-dark-blue #tool-store .store-filter-btn.active,
+    body.theme-red #tool-store .store-filter-btn.active,
+    body.theme-dark-red #tool-store .store-filter-btn.active,
+    body.theme-orange #tool-store .store-filter-btn.active,
+    body.theme-dark-orange #tool-store .store-filter-btn.active,
+    body.theme-yellow #tool-store .store-filter-btn.active,
+    body.theme-dark-yellow #tool-store .store-filter-btn.active,
+    body.theme-green #tool-store .store-filter-btn.active,
+    body.theme-dark-green #tool-store .store-filter-btn.active,
+    body.theme-purple #tool-store .store-filter-btn.active,
+    body.theme-dark-purple #tool-store .store-filter-btn.active,
+    body.theme-pink #tool-store .store-filter-btn.active,
+    body.theme-dark-pink #tool-store .store-filter-btn.active,
+    body.theme-brown #tool-store .store-filter-btn.active,
+    body.theme-dark-brown #tool-store .store-filter-btn.active {
+        color: #000000 !important;
+    }
     #tool-store .store-filter-btn:active {
         transform: scale(0.96) !important;
     }
