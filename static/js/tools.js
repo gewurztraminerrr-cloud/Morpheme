@@ -5390,8 +5390,64 @@ function formatWordListDate(date) {
 }
 window.formatWordListDate = formatWordListDate;
 
+function parseWordDate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return 0;
+    const trimmed = dateStr.trim();
+    const parts = trimmed.split('/');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
+    }
+    const dashParts = trimmed.split('-');
+    if (dashParts.length === 3) {
+        return new Date(parseInt(dashParts[0], 10), parseInt(dashParts[1], 10) - 1, parseInt(dashParts[2], 10)).getTime();
+    }
+    return 0;
+}
+window.parseWordDate = parseWordDate;
+
+function sortNewWordsList(arr, order) {
+    if (!arr || !arr.length) return [];
+    const byDate = new Map();
+    for (const item of arr) {
+        const dStr = (typeof item === 'object' && item !== null && item.date) ? String(item.date).trim() : '';
+        if (!byDate.has(dStr)) {
+            byDate.set(dStr, []);
+        }
+        byDate.get(dStr).push(item);
+    }
+
+    const sortedDates = Array.from(byDate.keys()).sort((a, b) => {
+        return parseWordDate(b) - parseWordDate(a);
+    });
+
+    const result = [];
+    for (const d of sortedDates) {
+        let group = [...byDate.get(d)];
+        if (order === 'random') {
+            for (let i = group.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = group[i];
+                group[i] = group[j];
+                group[j] = temp;
+            }
+        } else {
+            group.sort((a, b) => {
+                const wordA = (typeof a === 'object' && a !== null) ? (a.word || '') : String(a);
+                const wordB = (typeof b === 'object' && b !== null) ? (b.word || '') : String(b);
+                return wordA.localeCompare(wordB);
+            });
+        }
+        result.push(...group);
+    }
+    return result;
+}
+window.sortNewWordsList = sortNewWordsList;
+
 function sortWordsAlphabetical(arr) {
     if (!arr || !arr.length) return [];
+    if (typeof arr[0] === 'object' && arr[0] !== null && 'date' in arr[0]) {
+        return sortNewWordsList(arr, 'alphabetical');
+    }
     const copy = [...arr];
     copy.sort((a, b) => {
         const wordA = (typeof a === 'object' && a !== null) ? (a.word || '') : String(a);
@@ -5404,6 +5460,9 @@ window.sortWordsAlphabetical = sortWordsAlphabetical;
 
 function shuffleWordsArray(arr) {
     if (!arr || !arr.length) return [];
+    if (typeof arr[0] === 'object' && arr[0] !== null && 'date' in arr[0]) {
+        return sortNewWordsList(arr, 'random');
+    }
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -6215,7 +6274,11 @@ window.openFullListModal = function() {
     const cachedWords = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
     let inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
     if (inMemoryWords) {
-        inMemoryWords = (selectedOrder === 'random') ? shuffleWordsArray(inMemoryWords) : sortWordsAlphabetical(inMemoryWords);
+        if (isNewWordList(selectedType)) {
+            inMemoryWords = sortNewWordsList(inMemoryWords, selectedOrder);
+        } else {
+            inMemoryWords = (selectedOrder === 'random') ? shuffleWordsArray(inMemoryWords) : sortWordsAlphabetical(inMemoryWords);
+        }
     }
     const initialWords = (cachedWords && cachedWords.length > 0) ? cachedWords : inMemoryWords;
 
@@ -6289,7 +6352,7 @@ window.openFullListModal = function() {
             clearTimeout(fetchTimeout);
             if (window._lastFullListFilterKey !== currentFilterKey) return;
             const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || data['all_new'] || [];
-            const processedWords = (selectedOrder === 'random') ? shuffleWordsArray(rawWords) : rawWords;
+            const processedWords = isNewWordList(selectedType) ? sortNewWordsList(rawWords, selectedOrder) : ((selectedOrder === 'random') ? shuffleWordsArray(rawWords) : rawWords);
             _fullListAllWords = processedWords;
             if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
             window._cachedFullWordLists[currentFilterKey] = processedWords;
@@ -6802,7 +6865,11 @@ async function fetchListsData(typeOverride) {
             countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
         }
 
-        currentWordsList = (selectedOrder === 'random') ? shuffleWordsArray(words) : sortWordsAlphabetical(words);
+        if (isNewWordList(selectedType)) {
+            currentWordsList = sortNewWordsList(words, selectedOrder);
+        } else {
+            currentWordsList = (selectedOrder === 'random') ? shuffleWordsArray(words) : sortWordsAlphabetical(words);
+        }
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
         window.listsServerTruncated = data.is_truncated || false;

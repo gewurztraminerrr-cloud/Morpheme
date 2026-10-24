@@ -9563,6 +9563,40 @@ def tools_get_lists():
                     return cap_list(sorted(res, key=lambda x: x['word']))
                 return cap_list(sorted(res))
 
+        def parse_date_tuple(d_str):
+            try:
+                parts = d_str.strip().split('/')
+                if len(parts) == 3:
+                    return (int(parts[2]), int(parts[1]), int(parts[0]))
+                parts = d_str.strip().split('-')
+                if len(parts) == 3:
+                    return (int(parts[0]), int(parts[1]), int(parts[2]))
+            except Exception:
+                pass
+            return (0, 0, 0)
+
+        def order_new_words_list(lst):
+            if not lst:
+                return []
+            by_date = {}
+            for it in lst:
+                d = it.get('date', '') if isinstance(it, dict) else ''
+                if d not in by_date:
+                    by_date[d] = []
+                by_date[d].append(it)
+
+            sorted_dates = sorted(by_date.keys(), key=parse_date_tuple, reverse=True)
+
+            res = []
+            for d in sorted_dates:
+                group = list(by_date[d])
+                if order_filter == 'random':
+                    random.shuffle(group)
+                else:
+                    group.sort(key=lambda x: x.get('word', '') if isinstance(x, dict) else str(x))
+                res.extend(group)
+            return cap_list(res)
+
         scrabble_freq = {
             'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
             'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
@@ -9620,7 +9654,7 @@ def tools_get_lists():
                 csw_only_set = csw_set - nwl_set
             response['csw_only_likelihood'] = build_likelihood_list(csw_only_set)
 
-        if list_type in ['all', 'added', 'new_added', 'added_likelihood', 'all_likelihood', 'all_words']:
+        if list_type in ['all', 'added', 'added_likelihood', 'all_likelihood', 'all_words']:
             # Added Words: Use preloaded in-memory list (file order has newest words first)
             raw_lines = getattr(word_validator, 'added_words_list', [])
             unique_added = []
@@ -9635,15 +9669,6 @@ def tools_get_lists():
 
             if list_type in ['all', 'added']:
                 response['added'] = order_list(unique_added)
-
-            if list_type in ['all', 'new_added']:
-                dates_map = get_added_words_dates()
-                fallback_d = get_default_added_word_date()
-                new_added_items = [
-                    {'word': w, 'date': dates_map.get(w, fallback_d)}
-                    for w in unique_added
-                ]
-                response['new_added'] = order_list(new_added_items)
 
             if list_type in ['all', 'added_likelihood']:
                 # Deduplicate before scoring
@@ -9670,7 +9695,17 @@ def tools_get_lists():
 
         if list_type in ['all', 'uniques']:
             response['uniques'] = order_list(get_source_set('uniqueNWL'))
-            
+
+        if list_type in ['all', 'new_added']:
+            path = os.path.join(dict_dir, 'added_words_dates.txt')
+            items = load_word_date_pairs(path, default_fallback_date=get_default_added_word_date())
+            filtered = [
+                it for it in items
+                if (target_len is None or len(it['word']) == target_len) and
+                   (start_char is None or it['word'].startswith(start_char))
+            ]
+            response['new_added'] = order_new_words_list(filtered)
+
         if list_type in ['all', 'new_nwl']:
             path = os.path.join(dict_dir, 'new_NWL.txt')
             items = load_word_date_pairs(path, default_fallback_date='22/05/2026')
@@ -9679,8 +9714,8 @@ def tools_get_lists():
                 if (target_len is None or len(it['word']) == target_len) and
                    (start_char is None or it['word'].startswith(start_char))
             ]
-            response['new_nwl'] = order_list(filtered)
-            
+            response['new_nwl'] = order_new_words_list(filtered)
+
         if list_type in ['all', 'new_csw']:
             path = os.path.join(dict_dir, 'new_CSW.txt')
             items = load_word_date_pairs(path, default_fallback_date='21/05/2026')
@@ -9689,7 +9724,7 @@ def tools_get_lists():
                 if (target_len is None or len(it['word']) == target_len) and
                    (start_char is None or it['word'].startswith(start_char))
             ]
-            response['new_csw'] = order_list(filtered)
+            response['new_csw'] = order_new_words_list(filtered)
 
         if list_type in ['all', 'all_new']:
             new_all_items = []
@@ -9718,7 +9753,7 @@ def tools_get_lists():
                     if w not in seen_all_new:
                         seen_all_new.add(w)
                         new_all_items.append(it)
-            response['all_new'] = order_list(new_all_items)
+            response['all_new'] = order_new_words_list(new_all_items)
 
         # Cache response (only for deterministic alphabetical order)
         if order_filter != 'random':
