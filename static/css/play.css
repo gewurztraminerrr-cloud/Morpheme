@@ -2281,6 +2281,29 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     font-weight: 700;
 }
 
+/* Bonus Word under Words (Authoritative Green Highlight during round & review) */
+.word-item.bonus-word,
+.word-item.player-word.bonus-word,
+.word-item.opponent-word.bonus-word,
+#submitted-words-list .word-item.bonus-word,
+#submitted-words-list .word-item.player-word.bonus-word,
+#submitted-words-list .word-item.opponent-word.bonus-word {
+    background: rgba(34, 197, 94, 0.4) !important;
+    border: 2px solid #22c55e !important;
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.6) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 4px #000 !important;
+    animation: bonusPulse 1.5s infinite;
+    z-index: 5;
+}
+
+.word-item.bonus-word span,
+.word-item.player-word.bonus-word span,
+#submitted-words-list .word-item.bonus-word span {
+    color: #ffffff !important;
+}
+
 /* Active Highlight for Finding Finders */
 .word-item.finder-active {
     outline: 3px solid #ffd700;
@@ -15087,6 +15110,89 @@ body.theme-light-purple .word-item.player-word .word-text,
 body.theme-light-pink .word-item.player-word .word-text {
     color: #0f172a !important;
     font-weight: 800 !important;
+}
+
+/* Bonus Word under Words in light themes - Vivid Green */
+[class*="theme-white"] .word-item.bonus-word,
+[class*="theme-white"] .word-item.player-word.bonus-word,
+[class*="theme-white"] #submitted-words-list .word-item.bonus-word,
+[class*="theme-white"] #submitted-words-list .word-item.player-word.bonus-word,
+[class*="theme-light-"] .word-item.bonus-word,
+[class*="theme-light-"] .word-item.player-word.bonus-word,
+[class*="theme-light-"] #submitted-words-list .word-item.bonus-word,
+[class*="theme-light-"] #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-white .word-item.bonus-word,
+body.theme-white .word-item.player-word.bonus-word,
+body.theme-white #submitted-words-list .word-item.bonus-word,
+body.theme-white #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-gray .word-item.bonus-word,
+body.theme-light-gray .word-item.player-word.bonus-word,
+body.theme-light-gray #submitted-words-list .word-item.bonus-word,
+body.theme-light-gray #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-red .word-item.bonus-word,
+body.theme-light-red .word-item.player-word.bonus-word,
+body.theme-light-red #submitted-words-list .word-item.bonus-word,
+body.theme-light-red #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-orange .word-item.bonus-word,
+body.theme-light-orange .word-item.player-word.bonus-word,
+body.theme-light-orange #submitted-words-list .word-item.bonus-word,
+body.theme-light-orange #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-yellow .word-item.bonus-word,
+body.theme-light-yellow .word-item.player-word.bonus-word,
+body.theme-light-yellow #submitted-words-list .word-item.bonus-word,
+body.theme-light-yellow #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-green .word-item.bonus-word,
+body.theme-light-green .word-item.player-word.bonus-word,
+body.theme-light-green #submitted-words-list .word-item.bonus-word,
+body.theme-light-green #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-blue .word-item.bonus-word,
+body.theme-light-blue .word-item.player-word.bonus-word,
+body.theme-light-blue #submitted-words-list .word-item.bonus-word,
+body.theme-light-blue #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-purple .word-item.bonus-word,
+body.theme-light-purple .word-item.player-word.bonus-word,
+body.theme-light-purple #submitted-words-list .word-item.bonus-word,
+body.theme-light-purple #submitted-words-list .word-item.player-word.bonus-word,
+body.theme-light-pink .word-item.bonus-word,
+body.theme-light-pink .word-item.player-word.bonus-word,
+body.theme-light-pink #submitted-words-list .word-item.bonus-word,
+body.theme-light-pink #submitted-words-list .word-item.player-word.bonus-word {
+    background: rgba(34, 197, 94, 0.35) !important;
+    border: 2px solid #16a34a !important;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.45) !important;
+    color: #052e16 !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
+    animation: bonusPulse 1.5s infinite;
+}
+
+[class*="theme-white"] .word-item.bonus-word span,
+[class*="theme-white"] .word-item.player-word.bonus-word span,
+[class*="theme-white"] #submitted-words-list .word-item.bonus-word span,
+[class*="theme-light-"] .word-item.bonus-word span,
+[class*="theme-light-"] .word-item.player-word.bonus-word span,
+[class*="theme-light-"] #submitted-words-list .word-item.bonus-word span,
+body.theme-white .word-item.bonus-word span,
+body.theme-white .word-item.player-word.bonus-word span,
+body.theme-white #submitted-words-list .word-item.bonus-word span,
+body.theme-light-gray .word-item.bonus-word span,
+body.theme-light-gray .word-item.player-word.bonus-word span,
+body.theme-light-gray #submitted-words-list .word-item.bonus-word span,
+body.theme-light-red .word-item.bonus-word span,
+body.theme-light-red .word-item.player-word.bonus-word span,
+body.theme-light-orange .word-item.bonus-word span,
+body.theme-light-orange .word-item.player-word.bonus-word span,
+body.theme-light-yellow .word-item.bonus-word span,
+body.theme-light-yellow .word-item.player-word.bonus-word span,
+body.theme-light-green .word-item.bonus-word span,
+body.theme-light-green .word-item.player-word.bonus-word span,
+body.theme-light-blue .word-item.bonus-word span,
+body.theme-light-blue .word-item.player-word.bonus-word span,
+body.theme-light-purple .word-item.bonus-word span,
+body.theme-light-purple .word-item.player-word.bonus-word span,
+body.theme-light-pink .word-item.bonus-word span,
+body.theme-light-pink .word-item.player-word.bonus-word span {
+    color: #052e16 !important;
 }
 
 /* Added Word (Vivid Royal Purple - Mimicking Dark Mode) */

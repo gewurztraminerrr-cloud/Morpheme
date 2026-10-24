@@ -3166,7 +3166,12 @@ async function _doUpdateGameState(incomingState = null) {
                             }
                         }
 
-                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
+                        const bwUpper = (state.bonus_word || '').trim().toUpperCase();
+                        const isBonus = Boolean(
+                            (bwUpper && wordUpper === bwUpper) ||
+                            (w && typeof w === 'object' && (w.is_bonus || (w.score_details && (w.score_details.bonus_word_points || 0) > 0))) ||
+                            (pointsObj && typeof pointsObj === 'object' && (pointsObj.bonus_word_points || 0) > 0)
+                        );
                         const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
                         const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
 
@@ -3260,7 +3265,11 @@ async function _doUpdateGameState(incomingState = null) {
                         const isMe = finder && currentUser && finder.toLowerCase().trim() === currentUser.toLowerCase().trim();
                         const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
-                        const isBonus = state.bonus_word && wordUpper === state.bonus_word.toUpperCase();
+                        const bwUpper = (state.bonus_word || '').trim().toUpperCase();
+                        const isBonus = Boolean(
+                            (bwUpper && wordUpper === bwUpper) ||
+                            (wObj && typeof wObj === 'object' && (wObj.is_bonus || (wObj.score_details && (wObj.score_details.bonus_word_points || 0) > 0)))
+                        );
                         const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
                         const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
 
@@ -9215,7 +9224,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         window._localSubmittedWordsList.push({
                             word: word,
                             points: localPts,
-                            score_details: {},
+                            score_details: isBonusWord ? { base: Math.max(0, localPts - word.length), bonus_word_points: word.length, total: localPts } : { base: localPts, total: localPts },
+                            is_bonus: isBonusWord,
                             time: Date.now() / 1000
                         });
 
@@ -9366,6 +9376,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             window._localSubmittedWordsList = window._localSubmittedWordsList || [];
             
             const cleanWord = (data.word || word).toUpperCase();
+            const bwUpper = (currentState && currentState.bonus_word ? currentState.bonus_word : '').trim().toUpperCase();
+            const isServerBonus = Boolean(data.is_bonus || (data.score_details && (data.score_details.bonus_word_points || 0) > 0) || (bwUpper && cleanWord === bwUpper));
+
             const existingLocalIdx = window._localSubmittedWordsList.findIndex(item =>
                 (typeof item === 'string' ? item : (item && item.word) || '').toUpperCase() === cleanWord
             );
@@ -9374,6 +9387,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     word: data.word || word,
                     points: data.points || 0,
                     score_details: data.score_details || {},
+                    is_bonus: isServerBonus,
                     time: window._localSubmittedWordsList[existingLocalIdx].time || (Date.now() / 1000)
                 };
             } else {
@@ -9381,6 +9395,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     word: data.word || word,
                     points: data.points || 0,
                     score_details: data.score_details || {},
+                    is_bonus: isServerBonus,
                     time: Date.now() / 1000
                 });
             }
@@ -9412,6 +9427,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         if (placeholder) placeholder.remove();
 
                         const cleanWord = (data.word || word).toUpperCase();
+                        const bwUpper = (currentState.bonus_word || '').trim().toUpperCase();
+                        const isBonus = Boolean(data.is_bonus || (data.score_details && (data.score_details.bonus_word_points || 0) > 0) || (bwUpper && cleanWord === bwUpper));
+
                         // Prevent duplicate row: Check if word is already in DOM (e.g. from optimistic instant render)
                         const existingWordItem = Array.from(listEl.querySelectorAll('.word-item')).find(item => {
                             const w = (item.dataset.word || item.querySelector('span')?.textContent || '').toUpperCase().trim();
@@ -9419,22 +9437,24 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         });
 
                         if (!existingWordItem) {
-                            const isBonus = data.word === currentState.bonus_word;
                             let className = 'word-item player-word' + (isBonus ? ' bonus-word' : '') + (data.points < 0 ? ' penalty-word' : '');
                             const newDiv = document.createElement('div');
                             newDiv.className = className;
-                            newDiv.dataset.word = data.word;
+                            newDiv.dataset.word = data.word || word;
                             newDiv.style.cssText = 'display:flex; justify-content:space-between; animation: slideIn 0.3s ease; cursor:pointer;';
-                            newDiv.innerHTML = `<span><span class="found-indicator present">✓</span>${data.word}</span><span style="opacity:0.8">${data.points}</span>`;
+                            newDiv.innerHTML = `<span><span class="found-indicator present">✓</span>${data.word || word}</span><span style="opacity:0.8">${data.points}</span>`;
                             newDiv.onclick = () => {
-                                const w = (newDiv.dataset.word || data.word).toUpperCase();
+                                const w = (newDiv.dataset.word || data.word || word).toUpperCase();
                                 highlightedFoundWord = (highlightedFoundWord === w) ? null : w;
                                 updateGameState();
-                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(data.word);
+                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(data.word || word);
                             };
                             listEl.prepend(newDiv);
                         } else {
-                            // Already in DOM: update the points display with the server-verified points
+                            // Already in DOM: update the points display and ensure bonus-word class is attached if it's the bonus word
+                            if (isBonus && !existingWordItem.classList.contains('bonus-word')) {
+                                existingWordItem.classList.add('bonus-word');
+                            }
                             const ptsSpan = existingWordItem.querySelector('span:last-child');
                             if (ptsSpan && data.points !== undefined) {
                                 ptsSpan.textContent = data.points;
@@ -12195,7 +12215,7 @@ async function handlePrivateMatchWord(word, path = null) {
         if (placeholder) placeholder.remove();
 
         const item = document.createElement('div');
-        item.className = 'word-item player-word' + (isPenalty ? ' penalty-word' : '');
+        item.className = 'word-item player-word' + (isBonus ? ' bonus-word' : '') + (isPenalty ? ' penalty-word' : '');
         item.style.display = 'flex';
         item.style.justifyContent = 'space-between';
         item.style.animation = 'slideIn 0.3s ease';

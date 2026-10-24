@@ -901,19 +901,20 @@ class GameRoom:
             )
             points = points_data['total']
             word_timestamp = time.time()
+            is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper()) or bool(points_data.get('bonus_word_points', 0) > 0)
             word_metadata = {
                 'word': final_word,
                 'time': word_timestamp,
                 'points': points,
                 'score_details': points_data,
-                'path': None
+                'path': None,
+                'is_bonus': is_bonus
             }
             player.submitted_words.append(word_metadata)
-            if final_word == self.bonus_word:
+            if is_bonus:
                 player.found_bonus_word = True
                 print(f"[GameRoom] Player {player.username} found the BONUS WORD: {final_word}!")
             self._recalculate_player_score(player)
-            is_bonus = (final_word == self.bonus_word)
             msg = f"BONUS WORD! ({points} PTS)" if is_bonus else f"{final_word} VALID (+{points})"
             return True, msg, points, final_word
         
@@ -1124,12 +1125,14 @@ class GameRoom:
         points = points_data['total']
         
         word_timestamp = time.time()
+        is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper()) or bool(points_data.get('bonus_word_points', 0) > 0)
         word_metadata = {
             'word': final_word,
             'time': word_timestamp,
             'points': points,
             'score_details': points_data,
-            'path': path
+            'path': path,
+            'is_bonus': is_bonus
         }
         
         # USER: Update Density (Only after word is fully validated and scored)
@@ -1149,7 +1152,7 @@ class GameRoom:
             print(f"[FCFS-Sync] Shared word '{final_word}' added for {player.username}. Total shared: {len(self.fcfs_found_words)}")
         
         # Check if this is the bonus word
-        if final_word == self.bonus_word:
+        if is_bonus:
             player.found_bonus_word = True
             print(f"[GameRoom] Player {player.username} found the BONUS WORD: {final_word}!")
         

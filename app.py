@@ -7441,13 +7441,15 @@ def submit_word(room_id):
     new_score = player.score if player else 0
     last_sub = (player.submitted_words[-1] if (player and player.submitted_words) else {})
     score_details = last_sub.get('score_details', {}) if isinstance(last_sub, dict) else {}
-    returned_path = last_sub.get('path') if isinstance(last_sub, dict) else path
+    bw_str = str(getattr(room, 'bonus_word', '') or '').strip().upper()
+    is_bonus = bool(final_word and bw_str and final_word.strip().upper() == bw_str) or bool(score_details.get('bonus_word_points', 0) > 0)
 
     return jsonify({
         'success': success, 
         'message': message,
         'points': points,
         'word': final_word,
+        'is_bonus': is_bonus,
         'new_score': new_score,
         'score_details': score_details,
         'path': returned_path,
