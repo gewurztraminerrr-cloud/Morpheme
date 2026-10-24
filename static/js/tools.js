@@ -5202,6 +5202,31 @@ function formatWordListDate(date) {
 }
 window.formatWordListDate = formatWordListDate;
 
+function sortWordsAlphabetical(arr) {
+    if (!arr || !arr.length) return [];
+    const copy = [...arr];
+    copy.sort((a, b) => {
+        const wordA = (typeof a === 'object' && a !== null) ? (a.word || '') : String(a);
+        const wordB = (typeof b === 'object' && b !== null) ? (b.word || '') : String(b);
+        return wordA.localeCompare(wordB);
+    });
+    return copy;
+}
+window.sortWordsAlphabetical = sortWordsAlphabetical;
+
+function shuffleWordsArray(arr) {
+    if (!arr || !arr.length) return [];
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = temp;
+    }
+    return copy;
+}
+window.shuffleWordsArray = shuffleWordsArray;
+
 function startProgressiveRendering() {
     const loadId = ++currentProgressiveLoadId;
     
@@ -5352,6 +5377,14 @@ function setupListsTool() {
     const typeFilter = document.getElementById('list-type-filter');
     if (typeFilter) {
         typeFilter.addEventListener('change', () => {
+            fetchListsData();
+        });
+    }
+
+    const orderFilter = document.getElementById('list-order-filter');
+    if (orderFilter) {
+        orderFilter.addEventListener('change', () => {
+            listsDataLoaded = false;
             fetchListsData();
         });
     }
@@ -6369,6 +6402,7 @@ async function fetchListsData(typeOverride) {
     const lengthSelect = document.getElementById('list-length-filter');
     const startSelect = document.getElementById('list-start-filter');
     const typeSelect = document.getElementById('list-type-filter');
+    const orderSelect = document.getElementById('list-order-filter');
     
     // If we have a type override, update the select's value to keep UI in sync
     if (typeOverride && typeSelect) {
@@ -6378,6 +6412,7 @@ async function fetchListsData(typeOverride) {
     const selectedType = typeSelect ? typeSelect.value : 'nwl';
     const selectedLength = lengthSelect ? lengthSelect.value : 'all';
     const selectedStart = startSelect ? startSelect.value : 'all';
+    const selectedOrder = orderSelect ? orderSelect.value : 'alphabetical';
 
     const titleEl = document.getElementById('list-display-title');
     const countEl = document.getElementById('main-list-count');
@@ -6429,7 +6464,11 @@ async function fetchListsData(typeOverride) {
             words = words.filter(w => w.startsWith(reqStart));
         }
 
-        words.sort((a, b) => a.localeCompare(b));
+        if (selectedOrder === 'random') {
+            words = shuffleWordsArray(words);
+        } else {
+            words.sort((a, b) => a.localeCompare(b));
+        }
 
         if (countEl) {
             countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
@@ -6481,7 +6520,7 @@ async function fetchListsData(typeOverride) {
 
     try {
         // Build Query URL
-        let url = `/api/tools/lists?list_type=${selectedType}&`;
+        let url = `/api/tools/lists?list_type=${selectedType}&order=${selectedOrder}&`;
 
         if (lengthSelect && lengthSelect.value !== 'all') {
             url += `length=${lengthSelect.value}&`;
@@ -6517,24 +6556,24 @@ async function fetchListsData(typeOverride) {
             countEl.textContent = words && words.length ? `(${words.length.toLocaleString()})` : '(0)';
         }
 
-        currentWordsList = words;
+        currentWordsList = (selectedOrder === 'random') ? shuffleWordsArray(words) : sortWordsAlphabetical(words);
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
         window.listsServerTruncated = data.is_truncated || false;
 
         const modalEl = document.getElementById('full-list-modal');
         const modalIsOpen = modalEl && !modalEl.classList.contains('hidden');
-        const activeFilterKey = `${selectedType}_${lengthSelect ? lengthSelect.value : 'all'}_${startSelect ? startSelect.value : 'all'}`;
+        const activeFilterKey = `${selectedType}_${lengthSelect ? lengthSelect.value : 'all'}_${startSelect ? startSelect.value : 'all'}_${selectedOrder}`;
         if (modalIsOpen && window._lastFullListFilterKey === activeFilterKey) {
-            _fullListAllWords = words;
+            _fullListAllWords = currentWordsList;
             if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
-            window._cachedFullWordLists[activeFilterKey] = words;
+            window._cachedFullWordLists[activeFilterKey] = currentWordsList;
             window.isFullListLoading = false;
             initFullListVirtualScrollbar();
             restoreOrRenderFullList(activeFilterKey);
             const fullListCount = document.getElementById('full-list-modal-count');
             if (fullListCount) {
-                fullListCount.textContent = `Showing ${words.length.toLocaleString()} words`;
+                fullListCount.textContent = `Showing ${currentWordsList.length.toLocaleString()} words`;
             }
         }
 

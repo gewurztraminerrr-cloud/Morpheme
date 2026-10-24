@@ -4110,6 +4110,7 @@ body[class*="theme-light-"] #more-random-words-btn:active,
 #list-length-filter,
 #list-start-filter,
 #list-type-filter,
+#list-order-filter,
 #unscramble-length,
 #unscramble-dict,
 #unscramble-must-have,
@@ -11888,7 +11889,8 @@ body .board-cell.tile-flash-purple * {
         border-radius: 8px !important;
     }
 
-    #page-tools #tool-lists .combo-control-panel .input-row {
+    #page-tools #tool-lists .combo-control-panel .input-row,
+    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 6px !important;
@@ -11896,7 +11898,9 @@ body .board-cell.tile-flash-purple * {
     }
 
     #page-tools #tool-lists .combo-control-panel .input-row > select,
-    #page-tools #tool-lists .combo-control-panel .input-row > button {
+    #page-tools #tool-lists .combo-control-panel .input-row > button,
+    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row > select,
+    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row > button {
         width: 100% !important;
         max-width: 100% !important;
         height: 36px !important;
@@ -11905,6 +11909,12 @@ body .board-cell.tile-flash-purple * {
         padding: 0 8px !important;
         font-size: 0.82rem !important;
         border-radius: 6px !important;
+    }
+
+    #page-tools #tool-lists #list-update-btn,
+    body.is-mobile #page-tools #tool-lists #list-update-btn {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
     }
 
     /* Table / panel fits entire remaining screen */
@@ -13098,6 +13108,49 @@ body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
         max-width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 12px !important;
+    }
+
+    #page-tools #tool-lists .combo-control-panel .input-row,
+    body.is-desktop #page-tools #tool-lists .combo-control-panel .input-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-lists #list-length-filter {
+        flex: 0 1 135px !important;
+        min-width: 110px !important;
+        width: 135px !important;
+    }
+
+    #page-tools #tool-lists #list-start-filter {
+        flex: 0 1 135px !important;
+        min-width: 110px !important;
+        width: 135px !important;
+    }
+
+    #page-tools #tool-lists #list-type-filter {
+        flex: 0 1 180px !important;
+        min-width: 140px !important;
+        width: 180px !important;
+    }
+
+    #page-tools #tool-lists #list-order-filter {
+        flex: 0 1 140px !important;
+        min-width: 115px !important;
+        width: 140px !important;
+    }
+
+    #page-tools #tool-lists #list-update-btn,
+    body.is-desktop #page-tools #tool-lists #list-update-btn {
+        flex: 0 0 auto !important;
+        grid-column: auto !important;
+        width: auto !important;
+        padding: 0 20px !important;
     }
 
     #tool-lists .lists-container {

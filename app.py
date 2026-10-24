@@ -9394,10 +9394,11 @@ def tools_get_lists():
         start_filter = request.args.get('starts_with')
         list_type = request.args.get('list_type', 'all').lower()
         no_limit = request.args.get('no_limit', 'false').lower() == 'true'
+        order_filter = request.args.get('order', 'alphabetical').lower()
 
-        # Check cache first
-        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}_{no_limit}"
-        if cache_key in LISTS_CACHE:
+        # Check cache first (only for deterministic alphabetical order)
+        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}_{no_limit}_{order_filter}"
+        if order_filter != 'random' and cache_key in LISTS_CACHE:
             cached_val = LISTS_CACHE[cache_key]
             if isinstance(cached_val, (str, bytes)):
                 return Response(cached_val, mimetype='application/json')
@@ -9488,6 +9489,17 @@ def tools_get_lists():
                 return lst[:10000]
             return lst
 
+        import random
+        def order_list(lst):
+            if order_filter == 'random':
+                res = list(lst)
+                random.shuffle(res)
+                return cap_list(res)
+            else:
+                if lst and isinstance(lst[0], dict) and 'word' in lst[0]:
+                    return cap_list(sorted(lst, key=lambda x: x['word']))
+                return cap_list(sorted(list(lst)))
+
         scrabble_freq = {
             'A': 9, 'B': 2, 'C': 2, 'D': 4, 'E': 12, 'F': 2, 'G': 3, 'H': 2, 'I': 9,
             'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2, 'Q': 1, 'R': 6,
@@ -9508,22 +9520,25 @@ def tools_get_lists():
             for w in word_iterable:
                 score = calculate_scrabble_likelihood(w)
                 res.append({'score': score, 'word': w})
-            res.sort(key=lambda x: (-x['score'], x['word']))
+            if order_filter == 'random':
+                random.shuffle(res)
+            else:
+                res.sort(key=lambda x: x['word'])
             return cap_list(res)
 
         if list_type in ['all', 'nwl', 'csw_only', 'nwl_likelihood', 'csw_only_likelihood', 'all_likelihood', 'likelihood']:
             nwl_set = get_source_set('NWL')
-            if list_type in ['all', 'nwl']: response['nwl'] = cap_list(sorted(list(nwl_set)))
+            if list_type in ['all', 'nwl']: response['nwl'] = order_list(nwl_set)
 
         if list_type in ['all', 'csw', 'csw_only', 'csw_likelihood', 'csw_only_likelihood', 'all_likelihood']:
             csw_set = get_source_set('CSW')
-            if list_type in ['all', 'csw']: response['csw'] = cap_list(sorted(list(csw_set)))
+            if list_type in ['all', 'csw']: response['csw'] = order_list(csw_set)
 
         if list_type in ['all', 'csw_only', 'csw_only_likelihood']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
             if 'csw_set' not in locals(): csw_set = get_source_set('CSW')
             csw_only_set = csw_set - nwl_set
-            if list_type in ['all', 'csw_only']: response['csw_only'] = cap_list(sorted(list(csw_only_set)))
+            if list_type in ['all', 'csw_only']: response['csw_only'] = order_list(csw_only_set)
 
         if list_type in ['all', 'nwl_likelihood', 'likelihood']:
             if 'nwl_set' not in locals(): nwl_set = get_source_set('NWL')
@@ -9556,18 +9571,16 @@ def tools_get_lists():
                     unique_added.append(w)
 
             if list_type in ['all', 'added']:
-                # Both first 10,000 and full list are now alphabetically sorted (A-to-Z)
-                response['added'] = cap_list(sorted(unique_added))
+                response['added'] = order_list(unique_added)
 
             if list_type in ['all', 'new_added']:
-                # New AW Words: newest words first along with date added
                 dates_map = get_added_words_dates()
                 fallback_d = get_default_added_word_date()
                 new_added_items = [
                     {'word': w, 'date': dates_map.get(w, fallback_d)}
                     for w in unique_added
                 ]
-                response['new_added'] = cap_list(new_added_items)
+                response['new_added'] = order_list(new_added_items)
 
             if list_type in ['all', 'added_likelihood']:
                 # Deduplicate before scoring
@@ -9588,12 +9601,12 @@ def tools_get_lists():
                 ]
             all_set.update(unique_added)
             if list_type in ['all', 'all_words']:
-                response['all_words'] = cap_list(sorted(list(all_set)))
+                response['all_words'] = order_list(all_set)
             if list_type in ['all', 'all_likelihood']:
                 response['all_likelihood'] = build_likelihood_list(all_set)
 
         if list_type in ['all', 'uniques']:
-            response['uniques'] = cap_list(sorted(list(get_source_set('uniqueNWL'))))
+            response['uniques'] = order_list(get_source_set('uniqueNWL'))
             
         if list_type in ['all', 'new_nwl']:
             path = os.path.join(dict_dir, 'new_NWL.txt')
@@ -9603,8 +9616,7 @@ def tools_get_lists():
                 if (target_len is None or len(it['word']) == target_len) and
                    (start_char is None or it['word'].startswith(start_char))
             ]
-            filtered.reverse()  # Newest first
-            response['new_nwl'] = cap_list(filtered)
+            response['new_nwl'] = order_list(filtered)
             
         if list_type in ['all', 'new_csw']:
             path = os.path.join(dict_dir, 'new_CSW.txt')
@@ -9614,8 +9626,7 @@ def tools_get_lists():
                 if (target_len is None or len(it['word']) == target_len) and
                    (start_char is None or it['word'].startswith(start_char))
             ]
-            filtered.reverse()  # Newest first
-            response['new_csw'] = cap_list(filtered)
+            response['new_csw'] = order_list(filtered)
 
         if list_type in ['all', 'all_new']:
             new_all_items = []
@@ -9644,23 +9655,20 @@ def tools_get_lists():
                     if w not in seen_all_new:
                         seen_all_new.add(w)
                         new_all_items.append(it)
-            def parse_date_key(it):
-                try:
-                    d_parts = it.get('date', '').split('/')
-                    if len(d_parts) == 3:
-                        return (int(d_parts[2]), int(d_parts[1]), int(d_parts[0]))
-                except Exception:
-                    pass
-                return (0, 0, 0)
-            new_all_items.sort(key=parse_date_key, reverse=True)
-            response['all_new'] = cap_list(new_all_items)
-        # Cache response
-        if no_limit:
-            cached_json = json.dumps(response)
-            LISTS_CACHE[cache_key] = cached_json
-            return Response(cached_json, mimetype='application/json')
+            response['all_new'] = order_list(new_all_items)
+
+        # Cache response (only for deterministic alphabetical order)
+        if order_filter != 'random':
+            if no_limit:
+                cached_json = json.dumps(response)
+                LISTS_CACHE[cache_key] = cached_json
+                return Response(cached_json, mimetype='application/json')
+            else:
+                LISTS_CACHE[cache_key] = response
+                return jsonify(response)
         else:
-            LISTS_CACHE[cache_key] = response
+            if no_limit:
+                return Response(json.dumps(response), mimetype='application/json')
             return jsonify(response)
 
     except Exception as e:
