@@ -1355,7 +1355,14 @@ body {
 .color-bar-segment.active {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
     opacity: 1;
-    border: 1px solid #000;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    border-left: none;
+}
+
+.color-bar-segment:first-child.active {
+    border-left: 1px solid #000;
 }
 
 .color-bar-segment.user-rating-segment {

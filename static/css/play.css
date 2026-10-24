@@ -7745,6 +7745,15 @@ input[type=range]::-moz-range-track {
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
         box-sizing: border-box !important;
     }
+    [class*="theme-white"] .left-panel-container #game-color-bar,
+    body.theme-white .left-panel-container #game-color-bar,
+    body[class*="theme-white"] .left-panel-container #game-color-bar,
+    [class*="theme-white"] #game-color-bar,
+    body.theme-white #game-color-bar,
+    body[class*="theme-white"] #game-color-bar {
+        box-shadow: none !important;
+        background: transparent !important;
+    }
     .left-panel-container .players-panel {
         border-radius: 12px !important;
         width: 100% !important;
@@ -14539,6 +14548,18 @@ body.is-desktop .left-panel-container #game-color-bar {
     overflow: hidden !important;
     flex-shrink: 0 !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.is-desktop.theme-white .left-panel-container #game-color-bar,
+body.is-desktop[class*="theme-white"] .left-panel-container #game-color-bar,
+[class*="theme-white"] .left-panel-container #game-color-bar,
+body.theme-white .left-panel-container #game-color-bar,
+body[class*="theme-white"] .left-panel-container #game-color-bar,
+[class*="theme-white"] #game-color-bar,
+body.theme-white #game-color-bar,
+body[class*="theme-white"] #game-color-bar {
+    box-shadow: none !important;
+    background: transparent !important;
 }
 
 body.is-desktop .left-panel-container .players-panel {
