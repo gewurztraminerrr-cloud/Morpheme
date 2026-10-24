@@ -4,6 +4,8 @@ Monthly Store Updater for Morpheme
 ----------------------------------
 Automatically checks, refreshes, and maintains the Morpheme Store catalog.
 - Updates the top 'Prices and products last updated on [date]' banner.
+- Proactively checks for NEW EDITIONS of all listed dictionaries (OSPD, CSW, Collins)
+  to ensure the catalog reflects the latest commercially available releases.
 - Allows targeted replacements for discontinued/outdated hardware (setting 'Last changed on [date]').
 - Validates JSON catalog integrity and pricing.
 """
@@ -36,6 +38,28 @@ def compute_next_month_str(base_date=None):
     next_dt = dt.replace(year=year, month=month, day=day)
     return next_dt.strftime("%B %d, %Y")
 
+def check_dictionary_editions(catalog):
+    """
+    Mandatory routine check during monthly Store updates:
+    Verifies if newer editions of dictionaries/wordlists have been commercially released.
+    """
+    print("\n--- Mandatory Monthly Dictionary Edition Routine Check ---")
+    book_products = [p for p in catalog.get('products', []) if p.get('category') == 'books']
+    print(f"Checking {len(book_products)} dictionary/wordlist listings in catalog:")
+    for b in book_products:
+        pid = b.get('id')
+        title = b.get('title')
+        last_changed = b.get('last_changed_date')
+        print(f"  • [{pid}] \"{title}\" (Last changed: {last_changed})")
+        if pid == 'ospd_dict':
+            print("    -> Check: Is Merriam-Webster OSPD 8th Edition (or newer) commercially available on Amazon/retailers?")
+        elif pid == 'csw_dict':
+            print("    -> Check: Has Collins / WESPA released a new CSW definitions tournament edition?")
+        elif pid == 'collins_words':
+            print("    -> Check: Has Collins / WESPA released a new official tournament word list?")
+    print("Action item: If a new edition is commercially available, update title, edition number, description, buy_url, and cover art.")
+    print("-----------------------------------------------------------\n")
+
 def run_monthly_refresh(check_only=False, target_date=None, target_next_date=None):
     catalog = load_catalog()
     today_str = target_date or datetime.now().strftime("%B %d, %Y")
@@ -46,6 +70,9 @@ def run_monthly_refresh(check_only=False, target_date=None, target_next_date=Non
     print(f"New catalog update date: {today_str}")
     print(f"Next scheduled update:   {next_str}")
     print(f"Total products in catalog: {len(catalog.get('products', []))}")
+
+    # Mandatory Dictionary Edition Check
+    check_dictionary_editions(catalog)
 
     if not check_only:
         catalog['last_catalog_update'] = today_str
