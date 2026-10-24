@@ -2080,31 +2080,58 @@ async function _doUpdateGameState(incomingState = null) {
             const chatInput = document.getElementById('chat-input');
             const isMobile = window.innerWidth <= 992;
             
-            // User Request: Prevent ALL users from spillover chatting for 2s
+            // User Request: If the user is typing in chat textbox during the round and did not play the round,
+            // allow them to continue typing without having the textbox for the chat disabled for 2 seconds at the end of the round.
+            const currentUsername = (state && state.your_username) || window.currentUser || localStorage.getItem('morpheme_username') || '';
+            const prevPlayer = (previousState && Array.isArray(previousState.players)) ? previousState.players.find(p => p && p.username && p.username.toLowerCase() === currentUsername.toLowerCase()) : null;
+            const currPlayer = (state && Array.isArray(state.players)) ? state.players.find(p => p && p.username && p.username.toLowerCase() === currentUsername.toLowerCase()) : null;
+
+            const hasSubmittedWords = (prevPlayer && ((prevPlayer.submitted_words && prevPlayer.submitted_words.length > 0) || (prevPlayer.words_count > 0))) ||
+                                     (currPlayer && ((currPlayer.submitted_words && currPlayer.submitted_words.length > 0) || (currPlayer.words_count > 0)));
+            const hasScore = (prevPlayer && prevPlayer.score > 0) || (currPlayer && currPlayer.score > 0);
+            const playedRound = !!window._playedCurrentRound || !!hasSubmittedWords || !!hasScore;
+
+            const isTypingInChat = chatInput && (
+                document.activeElement === chatInput ||
+                (chatInput.value && chatInput.value.trim().length > 0) ||
+                (window._lastChatTypingTime && (Date.now() - window._lastChatTypingTime < 10000))
+            );
+
+            const exemptFromDisabled = isTypingInChat && !playedRound;
+
             if (chatInput) {
-                if (!chatInput.hasAttribute('data-original-placeholder') || (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled'))) {
-                    chatInput.setAttribute('data-original-placeholder', (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled')) ? chatInput.placeholder : 'Say something...');
-                }
-                const defaultPlaceholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
-
-                chatInput.disabled = true;
-                chatInput.placeholder = "Chat disabled for 2 seconds...";
-                if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
-                    chatInput.value = '';
-                }
-
-                if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
-                window.chatFocusTimeout = setTimeout(() => {
+                if (exemptFromDisabled) {
+                    // User was typing in chat and did not play the round: allow uninterrupted typing
                     chatInput.disabled = false;
-                    chatInput.placeholder = defaultPlaceholder;
-                    window.chatFocusTimeout = null;
-                    // Ensure we are still in intermission before stealing focus from potentially new round input
-                    if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                        if (!isMobile) {
-                            chatInput.focus();
-                        }
+                    if (window.chatFocusTimeout) {
+                        clearTimeout(window.chatFocusTimeout);
+                        window.chatFocusTimeout = null;
                     }
-                }, 2000);
+                } else {
+                    if (!chatInput.hasAttribute('data-original-placeholder') || (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled'))) {
+                        chatInput.setAttribute('data-original-placeholder', (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled')) ? chatInput.placeholder : 'Say something...');
+                    }
+                    const defaultPlaceholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
+
+                    chatInput.disabled = true;
+                    chatInput.placeholder = "Chat disabled for 2 seconds...";
+                    if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
+                        chatInput.value = '';
+                    }
+
+                    if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
+                    window.chatFocusTimeout = setTimeout(() => {
+                        chatInput.disabled = false;
+                        chatInput.placeholder = defaultPlaceholder;
+                        window.chatFocusTimeout = null;
+                        // Ensure we are still in intermission before stealing focus from potentially new round input
+                        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                            if (!isMobile) {
+                                chatInput.focus();
+                            }
+                        }
+                    }, 2000);
+                }
             }
             
             // Clear word input immediately so they see it's over
@@ -2777,6 +2804,10 @@ async function _doUpdateGameState(incomingState = null) {
                 if (existingFilterBtn) {
                     existingFilterBtn.remove();
                 }
+
+                // Reset played round and chat typing tracking flags on round start
+                window._playedCurrentRound = false;
+                window._lastChatTypingTime = null;
 
                 // Clear and Focus Word Input on Game Start
                 if (window.chatFocusTimeout) {
@@ -4175,6 +4206,7 @@ async function sendChatMessage() {
     // Immediately clear input and counter synchronously (prevents duplicate sends from Enter events)
     input.value = '';
     updateRoomChatCounter();
+    window._lastChatTypingTime = null;
 
     // Determine current user information for immediate optimistic display
     const myUsername = (window.lastGameState && window.lastGameState.your_username) ||
@@ -4336,13 +4368,17 @@ function initPlayDOMElements() {
 
     if (chatInput) {
         chatInput.addEventListener('keydown', (e) => {
+            window._lastChatTypingTime = Date.now();
             if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
                 sendChatMessage();
             }
         });
-        chatInput.addEventListener('input', updateRoomChatCounter);
+        chatInput.addEventListener('input', () => {
+            window._lastChatTypingTime = Date.now();
+            updateRoomChatCounter();
+        });
         chatInput.addEventListener('paste', () => setTimeout(updateRoomChatCounter, 10));
         chatInput.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -8606,6 +8642,9 @@ document.addEventListener('keydown', (e) => {
     let typingHighlightTimeout = null;
 
     wordInputEl.addEventListener('input', () => {
+        if (wordInputEl.value && wordInputEl.value.trim().length > 0) {
+            window._playedCurrentRound = true;
+        }
         const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isDesktop = !isMobileUA && (window.innerWidth > 768 || document.body.classList.contains('is-desktop') || (window.matchMedia && window.matchMedia('(pointer: fine)').matches));
         if (isDesktop && wordInputEl.value) {
@@ -8917,6 +8956,7 @@ function calculateWordScoreLocally(word, path) {
 }
 
 async function submitWord(wordParam = null, pathParam = null, _quFallback = false) {
+    window._playedCurrentRound = true;
     try {
         const input = document.getElementById('word-input');
     let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
@@ -10742,6 +10782,8 @@ function handleCellMouseDown(e) {
 
     if (window.isSpectatorMode) return;
 
+    window._playedCurrentRound = true;
+
     if (cell.classList.contains('grayed')) return;
 
     // Prevent native browser drag/selection behavior from interrupting our swipe
@@ -10879,6 +10921,8 @@ function handleCellTouchStart(e) {
     }
 
     if (window.isSpectatorMode) return;
+
+    window._playedCurrentRound = true;
 
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     if (isSubanagrams) {
