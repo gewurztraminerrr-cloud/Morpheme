@@ -860,7 +860,7 @@
     border-radius: 6px !important;
     padding: 6px 8px !important;
     margin-bottom: 8px;
-    border: 2px solid rgba(var(--text-primary-rgb), 0.55);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.28) !important;
     width: 100%;
     box-sizing: border-box !important;
 }
@@ -3303,13 +3303,23 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
 
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #selected-game-info,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #selected-game-info,
-    body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .create-room-panel,
-    body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .create-room-panel,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel .rating-filter-container,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms .rating-filter-container,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #rooms-list,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms #rooms-list {
         border: 1.5px solid rgba(var(--text-primary-rgb), 0.38) !important;
+    }
+
+    .create-room-panel,
+    .active-rooms-panel .create-room-panel,
+    #mobile-panel-rooms .create-room-panel {
+        border: 1px solid rgba(var(--text-primary-rgb), 0.28) !important;
+    }
+
+    [class*="theme-white"] .create-room-panel,
+    [class*="theme-white"] .active-rooms-panel .create-room-panel,
+    [class*="theme-white"] #mobile-panel-rooms .create-room-panel {
+        border: 1px solid rgba(0, 0, 0, 0.18) !important;
     }
 }
 
