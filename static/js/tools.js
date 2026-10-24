@@ -39,40 +39,124 @@ window.parseUTCTimestamp = function(isoStr) {
 // NEW: Dynamic Text Size Calibrator for Sequences and Words in Tools
 window.applyDynamicSequenceStyle = function(el, textOrLength) {
     if (!el) return;
-    const len = typeof textOrLength === 'number' ? textOrLength : (textOrLength ? String(textOrLength).trim().length : 0);
-    if (!len) return;
 
-    let fontSize, letterSpacing;
-    if (len <= 6) {
-        fontSize = 'clamp(2.85rem, 8.5vw, 5.0rem)';
-        letterSpacing = 'clamp(6px, 1.5vw, 16px)';
-    } else if (len <= 8) {
-        fontSize = 'clamp(2.45rem, 7.2vw, 4.4rem)';
-        letterSpacing = 'clamp(4px, 1.2vw, 12px)';
-    } else if (len <= 10) {
-        fontSize = 'clamp(2.1rem, 6.0vw, 3.8rem)';
-        letterSpacing = 'clamp(3px, 0.9vw, 9px)';
-    } else if (len <= 12) {
-        fontSize = 'clamp(1.8rem, 5.0vw, 3.2rem)';
-        letterSpacing = 'clamp(2px, 0.6vw, 6px)';
-    } else if (len <= 15) {
-        fontSize = 'clamp(1.45rem, 4.0vw, 2.6rem)';
-        letterSpacing = 'clamp(1px, 0.35vw, 4px)';
-    } else if (len <= 18) {
-        fontSize = 'clamp(1.2rem, 3.2vw, 2.2rem)';
-        letterSpacing = 'clamp(0.5px, 0.2vw, 2.5px)';
-    } else {
-        fontSize = 'clamp(1.02rem, 2.6vw, 1.85rem)';
-        letterSpacing = 'clamp(0px, 0.1vw, 1.5px)';
+    // Determine the text representation for measurement
+    let text = '';
+    if (typeof textOrLength === 'string' && textOrLength.trim() !== '' && textOrLength.trim() !== '...' && !textOrLength.trim().toLowerCase().includes('load')) {
+        text = textOrLength.trim().toUpperCase();
+    } else if (el.textContent && el.textContent.trim() !== '' && el.textContent.trim() !== '...' && !el.textContent.trim().toLowerCase().includes('load')) {
+        text = el.textContent.trim().toUpperCase();
     }
 
-    el.style.setProperty('font-size', fontSize, 'important');
-    el.style.setProperty('letter-spacing', letterSpacing, 'important');
+    const len = text ? text.length : (typeof textOrLength === 'number' ? textOrLength : (parseInt(textOrLength, 10) || 7));
+    if (!len) return;
+
+    if (!text || text.length !== len) {
+        text = 'W'.repeat(Math.max(1, len));
+    }
+
+    // Measure available width from container
+    const container = el.closest('.unscramble-game-area') || el.closest('.subanagrams-game-area') || el.closest('.random-word-container') || el.parentElement || el;
+    let availWidth = 0;
+    if (container && container.clientWidth > 0) {
+        const containerCs = window.getComputedStyle(container);
+        const pad = parseFloat(containerCs.paddingLeft || 0) + parseFloat(containerCs.paddingRight || 0);
+        availWidth = Math.max(container.clientWidth - pad - 24, 60);
+    }
+    if (!availWidth || availWidth < 100) {
+        availWidth = Math.max(Math.min(window.innerWidth - 60, 560), 240);
+    }
+
+    // Determine initial letter-spacing (px)
+    let letterSpacing = 2;
+    if (len <= 6) {
+        letterSpacing = 8;
+    } else if (len <= 8) {
+        letterSpacing = 6;
+    } else if (len <= 10) {
+        letterSpacing = 4;
+    } else if (len <= 12) {
+        letterSpacing = 3;
+    } else if (len <= 15) {
+        letterSpacing = 2;
+    } else {
+        letterSpacing = 1;
+    }
+
+    const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let maxCeiling = isMobile ? 44 : 64;
+    if (len <= 6) {
+        maxCeiling = isMobile ? 48 : 72;
+    } else if (len <= 8) {
+        maxCeiling = isMobile ? 42 : 60;
+    } else if (len <= 10) {
+        maxCeiling = isMobile ? 36 : 50;
+    } else if (len <= 12) {
+        maxCeiling = isMobile ? 30 : 42;
+    } else if (len <= 15) {
+        maxCeiling = isMobile ? 26 : 36;
+    } else {
+        maxCeiling = isMobile ? 22 : 30;
+    }
+
+    // Off-screen measurement probe
+    const probe = document.createElement('span');
+    probe.style.cssText = [
+        'position:fixed',
+        'top:-9999px',
+        'left:-9999px',
+        'white-space:nowrap',
+        'visibility:hidden',
+        'font-family:' + (window.getComputedStyle(el).fontFamily || "'Outfit', sans-serif"),
+        'font-weight:900',
+        'letter-spacing:' + letterSpacing + 'px',
+        'text-transform:uppercase',
+        'pointer-events:none'
+    ].join(';');
+    probe.textContent = text;
+    document.body.appendChild(probe);
+
+    let lo = 12, hi = maxCeiling, best = lo;
+    for (let i = 0; i < 20; i++) {
+        const mid = (lo + hi) / 2;
+        probe.style.fontSize = mid + 'px';
+        if (probe.scrollWidth <= availWidth) {
+            best = mid;
+            lo = mid + 0.25;
+        } else {
+            hi = mid - 0.25;
+        }
+    }
+
+    // If still slightly overflowing even at lower bound or if container is narrow, reduce letter-spacing
+    if (probe.scrollWidth > availWidth && letterSpacing > 1) {
+        letterSpacing = 1;
+        probe.style.letterSpacing = '1px';
+        lo = 10;
+        hi = maxCeiling;
+        for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            probe.style.fontSize = mid + 'px';
+            if (probe.scrollWidth <= availWidth) {
+                best = mid;
+                lo = mid + 0.25;
+            } else {
+                hi = mid - 0.25;
+            }
+        }
+    }
+
+    document.body.removeChild(probe);
+
+    el.style.setProperty('font-size', best + 'px', 'important');
+    el.style.setProperty('letter-spacing', letterSpacing + 'px', 'important');
+    el.style.setProperty('white-space', 'nowrap', 'important');
+    el.style.setProperty('word-break', 'keep-all', 'important');
+    el.style.setProperty('overflow-wrap', 'normal', 'important');
     el.style.setProperty('max-width', '100%', 'important');
+    el.style.setProperty('width', '100%', 'important');
     el.style.setProperty('box-sizing', 'border-box', 'important');
-    el.style.setProperty('word-break', 'break-all', 'important');
-    el.style.setProperty('overflow-wrap', 'anywhere', 'important');
-    el.style.setProperty('white-space', 'normal', 'important');
+    el.style.setProperty('text-align', 'center', 'important');
     el.style.setProperty('line-height', '1.25', 'important');
 };
 
@@ -864,11 +948,12 @@ function setupToolsNavigation() {
         window.addEventListener('resize', () => {
             if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
             const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (!isMobile) return;
-            document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
-                requestAnimationFrame(() => enforceSnapForLayout(layoutEl));
-            });
-            // Re-fit WOTD and Is Valid on mobile resize/orientation change
+            if (isMobile) {
+                document.querySelectorAll('.tools-split-layout').forEach(layoutEl => {
+                    requestAnimationFrame(() => enforceSnapForLayout(layoutEl));
+                });
+            }
+            // Re-fit WOTD and Is Valid on resize/orientation change
             const wotdEl = document.getElementById('wotd-display');
             if (wotdEl && wotdEl.innerText && wotdEl.innerText.trim() !== '' && !wotdEl.innerText.includes('Loading')) {
                 requestAnimationFrame(() => {
@@ -883,6 +968,25 @@ function setupToolsNavigation() {
                         window.applyDynamicValidationStyle(validEl, word);
                     });
                 }
+            }
+            // Re-fit Unscramble, Subanagrams, and Random Word on resize/orientation change
+            const unscrambleEl = document.getElementById('unscramble-jumbled');
+            if (unscrambleEl && unscrambleEl.innerText && unscrambleEl.innerText.trim() !== '' && !unscrambleEl.innerText.includes('Loading')) {
+                requestAnimationFrame(() => {
+                    window.applyDynamicSequenceStyle(unscrambleEl, unscrambleEl.innerText.trim());
+                });
+            }
+            const subLettersEl = document.getElementById('sub-letters-display');
+            if (subLettersEl && subLettersEl.innerText && subLettersEl.innerText.trim() !== '' && !subLettersEl.innerText.includes('Loading') && subLettersEl.innerText.trim() !== '...') {
+                requestAnimationFrame(() => {
+                    window.applyDynamicSequenceStyle(subLettersEl, subLettersEl.innerText.trim());
+                });
+            }
+            const randEl = document.getElementById('random-word-display');
+            if (randEl && randEl.innerText && randEl.innerText.trim() !== '' && !randEl.innerText.includes('Loading')) {
+                requestAnimationFrame(() => {
+                    window.applyDynamicSequenceStyle(randEl, randEl.innerText.trim());
+                });
             }
         });
     }
