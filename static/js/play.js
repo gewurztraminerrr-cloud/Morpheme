@@ -9400,7 +9400,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     time: Date.now() / 1000
                 });
             }
-            recordGuessResult(true, true, isSpecialSkip);
+            recordGuessResult(true, true);
         } else {
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
         }
@@ -9562,15 +9562,16 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 }
 
 function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
-    if (isSpecialSkip) return;
     if (isValid) {
         wrongGuessesOnBoardCount = 0;
-    } else {
-        if (isOnBoard) {
-            wrongGuessesOnBoardCount = (wrongGuessesOnBoardCount || 0) + 1;
-            if (wrongGuessesOnBoardCount >= 4) {
-                showGuessingPopup();
-            }
+        return;
+    }
+    if (isSpecialSkip) return;
+    if (isOnBoard) {
+        wrongGuessesOnBoardCount = (wrongGuessesOnBoardCount || 0) + 1;
+        if (wrongGuessesOnBoardCount >= 4) {
+            showGuessingPopup();
+            wrongGuessesOnBoardCount = 0;
         }
     }
 }
@@ -9578,6 +9579,7 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
 let activeGuessingScrollPrevent = null;
 
 function showGuessingPopup() {
+    wrongGuessesOnBoardCount = 0;
     if (window.lastGameState && window.lastGameState.time_limit >= 7200) return;
     if (document.getElementById('guessing-popup')) return;
 
