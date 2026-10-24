@@ -9571,7 +9571,6 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
         wrongGuessesOnBoardCount = (wrongGuessesOnBoardCount || 0) + 1;
         if (wrongGuessesOnBoardCount >= 4) {
             showGuessingPopup();
-            wrongGuessesOnBoardCount = 0;
         }
     }
 }
@@ -9579,7 +9578,6 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
 let activeGuessingScrollPrevent = null;
 
 function showGuessingPopup() {
-    wrongGuessesOnBoardCount = 0;
     if (window.lastGameState && window.lastGameState.time_limit >= 7200) return;
     if (document.getElementById('guessing-popup')) return;
 
