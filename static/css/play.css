@@ -3500,8 +3500,13 @@ body.theme-white #page-settings .mobile-bottom-nav {
         background: var(--accent-color, #ff007f) !important;
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.3) !important;
-        box-shadow: 0 3px 12px rgba(var(--accent-rgb, 255, 0, 127), 0.45) !important;
+        box-shadow: none !important;
         transform: translateY(-1px) !important;
+    }
+    #tool-store .store-filter-btn.active:hover,
+    #tool-store .store-filter-btn.active:focus,
+    #tool-store .store-filter-btn.active:focus-visible {
+        box-shadow: none !important;
     }
     #tool-store .store-filter-btn:active {
         transform: scale(0.96) !important;

@@ -7969,7 +7969,17 @@ body.theme-white .theme-btn.active {
     cursor: pointer;
     width: 100%;
     font-size: 1.1rem;
-    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+    box-shadow: none !important;
+}
+
+#start-solo-btn,
+#start-solo-btn:hover,
+#start-solo-btn:focus,
+#start-solo-btn:active,
+.sf-primary-btn:hover,
+.sf-primary-btn:focus,
+.sf-primary-btn:active {
+    box-shadow: none !important;
 }
 
 .bots-container {
