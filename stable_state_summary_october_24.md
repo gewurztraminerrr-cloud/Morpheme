@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-f53f91bbe87ea408674bff7faea0c179467e921e
+1e07056818ed98592c205b3541ddadd192e62e64
 ```
 
 ## Synchronization Status
@@ -141,6 +141,7 @@ f53f91bbe87ea408674bff7faea0c179467e921e
 
 | Commit | Summary |
 |:---|:---|
+| `1e070568` | **docs: update stable state summary for October 24, 2026 (Start Over Point)** |
 | `f53f91bb` | **Restore true random distribution for word count ranges and fix premature easy fallback bias** |
 | `06c2c7f1` | **Fix board and word list desynchronization across round transitions and intermission** |
 | `5cb9714e` | **fix: resolve BoardGenerator reference in GameRoom.ensure_next_board_ready** |
