@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-391fe514aaef237cb610f2c2f3d3a30b63291e81
+5ffb568c2cbcad5b5b34d1d067a188ec69b52a2c
 ```
 
 ## Synchronization Status
@@ -18,69 +18,74 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`play.css?v=1792830000`, `play.js?v=1792826000`, `tools.js?v=1792825000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`play.css?v=1792830000`, `play.js?v=1792826000`, `tools.js?v=1792842000`) for instant live propagation across all devices |
 
 ---
 
 ## Session Highlights & Architectural Updates (October 24, 2026)
 
-### 1. Combo Checker: Removal of "v2.0" from MP Title and Balanced Spacing
+### 1. New Words Ordering: New Additions Pinned to Top in Alphabetical and Random Orders
+- **Issue Resolved**: When a new word was added to Added Words (AW) via the Mods tab (such as `TILCAYO`), it erroneously appeared third from last at the bottom of the "New AW Words" list in the Lists tool.
+- **Root Cause**:
+  - `tools_get_lists()` in `app.py` was iterating through all 538,420 words in `added_words.txt` instead of loading specifically from `added_words_dates.txt`.
+  - Both backend `order_list` and client `sortWordsAlphabetical` / `shuffleWordsArray` sorted words purely A–Z by name across all dates, pushing `TILCAYO` (starting with T) to the bottom near `WANGYANITE`.
+- **Implementation**:
+  - Implemented `order_new_words_list(lst)` in `app.py`: groups word-date pairs by addition date (`DD/MM/YYYY`) in descending order (newest date first). When Alphabetical is selected, words are sorted alphabetically within each date group; when Random is selected, words are shuffled within each date group.
+  - Pinned newest addition dates (e.g., `24/10/2026`: `TILCAYO`, `TILCAYOS`, `TESTINGG`) strictly to the top of `New AW Words` and `All New Words`.
+  - Implemented client-side `parseWordDate` and `sortNewWordsList` in `static/js/tools.js` to ensure the same date-descending priority is preserved when viewing the list or opening the Full List modal.
+  - Bumped `tools.js` cache buster to `?v=1792842000`.
+
+### 2. Mini-Profile & Public Profile Complete Synchronization
+- **Issue Resolved**: In Tools -> Find Count, the mini-profile for `jeffjeff` displayed `1` under "GAMES" while their Profile displayed `101`; for `jeffb` it displayed `138` while Profile displayed `27`, and "WINS" read `0`.
+- **Implementation**:
+  - Re-engineered `get_mini_profile(username)` in `app.py` to delegate directly to `get_public_profile(username)`, eliminating disconnected schema queries and ensuring both endpoints share the exact same 30-second TTL cache.
+  - Updated `static/js/tools.js` to format games and wins using `.toLocaleString()` and clean placeholder dashes for missing demographics.
+  - Verified live: both `jeffjeff` (101 games, 26 wins) and `jeffb` (27 games, 4 wins) now match identically across mini-profile and public profile.
+
+### 3. Real-Time Combo Query Cache Invalidation on Added Words Modifications
+- **Enhancement**: When words are added to or removed from Added Words via the Mods tab or Tools interface, `COMBO_QUERY_CACHE.clear()` is immediately executed on the server and `window._comboClientCache.clear()` is invoked on the client.
+- **Result**: Combo Checker queries for Microprocedures (MP) and Letters In Common (LIC) immediately incorporate new additions without requiring a server reboot or waiting for cache expiration.
+
+### 4. Firefox Desktop MORPHEME Title Enlarge & Equalized Vertical Spacing
+- **Enhancement**: Under Firefox on desktop (`@-moz-document url-prefix()`), increased the main MORPHEME title logo font size and equalized top and bottom header padding.
+- **Visual Polish**: Aligned visual hierarchy and baseline padding identically with Chrome and Safari.
+
+### 5. Automatic Inflection Suffix Appending for Added Words Definitions
+- **Lexicographical Integrity**: Resolved definitions for Added Words now automatically compute and append valid inflection suffixes (`[inflections: ...]`) covering plurals, participles, and verb tenses via `get_valid_inflections_for_word`.
+
+### 6. Combo Checker: Removal of "v2.0" from MP Title and Balanced Spacing
 - **Title Cleanliness**: Removed outdated `"v2.0"` designation from the Microprocedures header in the Combo Checker tool (`#combo-pane-mp h3`), rendering clean and authoritative as `MP (Microprocedures)`.
 - **Harmonized Spacing & Padding**:
   - Enclosed title and navigation arrows inside a dedicated `.combo-section-header` flex row with `gap: 16px`, `margin-top: 2px`, and `margin-bottom: 10px;`.
   - Expanded horizontal scroll arrow button gap to `gap: 8px; flex-shrink: 0;` with touch-friendly padding.
-  - Relaxed description box margins and padding (`margin-bottom: 10px !important; padding: 5px 12px !important;`) across desktop and mobile, eliminating the previous tight 4px/6px cramped stack.
   - Symmetrically matched layout, typography, and arrow spacing on the LIC (Letters In Common) tab (`#combo-pane-lic`).
 
-### 2. Point Sum Equation Contrast in White Layouts & Elimination of Congratulatory Black Glow
+### 7. Point Sum Equation Contrast in White Layouts & Elimination of Congratulatory Black Glow
 - **High-Contrast Equations in White/Light Themes**:
-  - Eliminated faint `opacity: 0.8` / `0.6` styling from score equation math (`5 + 3 = 8`).
+  - Eliminated faint opacity styling from score equation math (`5 + 3 = 8`).
   - Added semantic `.word-item-pts` with `opacity: 1 !important` and `font-weight: 800 !important`.
-  - Engineered distinct, high-contrast text color palettes tailored to each word state:
-    - Player found words: `#0a1e3f !important` (deep navy on blue).
-    - Bonus words: `#052e16 !important` (forest green on lime green).
-    - Missed words: `#881337 !important` (deep maroon on soft rose).
-    - CSW-only words: `#000000 !important` (crisp black on gold).
-    - Added words: `#3b0764 !important` (royal purple on lavender).
+  - Distinct high-contrast color palettes tailored to each word state.
 - **Eliminated Black Glow Around Congratulatory Winner Card**:
   - Completely removed the heavy `.winner-flash *` black outline shadow (`text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);`).
-  - Set `text-shadow: none !important;` across all winner card elements.
-  - Adapted typography to selected appearance layout: rich warm amber gold (`#b45309`) in White and Light layouts, and luminous pure gold (`#ffd700`) in dark layouts.
+  - Adapted typography to selected layout: warm amber gold (`#b45309`) in White/Light, luminous gold (`#ffd700`) in Dark.
 
-### 3. Words to Work on Strict Tab Isolation & Multi-Tool Integration
-- **Strict Single-Tab Containment**:
-  - Resolved issue where Words to Work on content erroneously persisted or leaked into other tool panes when switching tabs.
-  - Confined `#tool-work-on` strictly to its dedicated container, ensuring explicit isolation so `#page-tools` only displays Words to Work on when that specific tab is selected.
-- **Tool Integration**:
-  - Added the user's personal "Words to Work on" list as a selectable dictionary option in MP Word Explorer and Subanagrams, enabling focused study on missed or starred words.
-  - Mobile table containment: Fitted the Words to Work on table to the device viewport with restricted internal scrolling and pinned action controls.
+### 8. Words to Work on Strict Tab Isolation & Multi-Tool Integration
+- **Strict Single-Tab Containment**: Confined `#tool-work-on` strictly to its dedicated container, ensuring explicit isolation so `#page-tools` only displays Words to Work on when that specific tab is selected.
+- **Tool Integration**: Added the user's personal "Words to Work on" list as a selectable dictionary option in MP Word Explorer and Subanagrams.
+- **Mobile Table Containment**: Fitted the Words to Work on table to device viewport with restricted internal scrolling.
 
-### 4. In-Game Room & Board Interaction Enhancements
-- **Touch-Swipe Real-Time Letter Display**:
-  - On mobile devices, swiped letters now display immediately beneath the board inside the validation space while finger dragging is active, providing tactile visual feedback before swapping to validation status upon finger release.
-- **Bonus Word Row Live Highlighting**:
-  - Words found during the round that match the secret bonus word now highlight with an emerald green row background in real time under the Words panel.
-- **Continuous In-Game Chat at Round End**:
-  - Users who joined as spectators or did not play the active round can now continue chatting freely during round end without arbitrary input freezes.
-  - Guaranteed the "Chat disabled for 2 seconds..." rate-limiting notice reliably dismisses after 2 seconds.
-- **Haptic Vibration Decoupling**:
-  - Decoupled the 10-second intermission countdown vibration alert from the auditory bell setting, allowing silent haptic alerts, and added Flutter bridge native haptic support.
+### 9. In-Game Room & Board Interaction Enhancements
+- **Touch-Swipe Real-Time Letter Display**: On mobile devices, swiped letters display immediately beneath the board inside the validation space while finger dragging is active.
+- **Bonus Word Row Live Highlighting**: Words found during the round matching the secret bonus word highlight with an emerald green row background in real time under the Words panel.
+- **Continuous In-Game Chat at Round End**: Users who joined as spectators or did not play the active round can continue chatting freely during round end.
 
-### 5. Tools Modernization (Lists, Subanagrams, Unscramble)
-- **Lists Ordering & Virtual Scrolling**:
-  - Added Alphabetical and Random ordering dropdowns to the Lists tool with responsive mobile grid formatting.
-  - Ensured randomized seed order is strictly respected when viewing full lists in modal view.
-  - Fixed virtual scroll thumb scaling when all items fit within the viewport without overflowing.
-- **Subanagrams & Unscramble Dual-Panel Layout**:
-  - Reorganized Unscramble on desktop and laptop viewports to mirror Subanagrams' dual-panel layout (game controls on the left, word lists on the right).
-  - Widened sequence game area panel and guaranteed jumbled letter tiles fit on a single row without line wraps.
+### 10. Tools Modernization (Lists, Subanagrams, Unscramble)
+- **Lists Ordering & Virtual Scrolling**: Added Alphabetical and Random ordering dropdowns to the Lists tool with responsive mobile grid formatting and robust virtual scrolling.
+- **Subanagrams & Unscramble Dual-Panel Layout**: Reorganized Unscramble on desktop and laptop viewports to mirror Subanagrams' dual-panel layout.
 
-### 6. Store & Visual Boutique Enhancements
-- **Boutique Showcase Lightbox**:
-  - Made boutique showcase displays and product imagery expandable via full-screen lightbox modal on click.
-  - Updated showcase imagery with official Boggle 4x4/5x5 grid games and dictionaries.
-  - Guaranteed black text on active white category filter pills in monochromatic dark themes.
-  - Added mandatory dictionary edition verification routine to the monthly store update cycle.
+### 11. Store & Visual Boutique Enhancements
+- **Boutique Showcase Lightbox**: Made boutique showcase displays and product imagery expandable via full-screen lightbox modal on click.
+- **Dictionary Edition Verification**: Added mandatory dictionary edition verification routine to the monthly store update cycle.
 
 ---
 
@@ -88,6 +93,11 @@ START_OVER_POINT_OCTOBER_24
 
 | Commit | Summary |
 |:---|:---|
+| `6c47e501` | **fix(lists): keep newly added words at top of New Words lists in alphabetical and random order** |
+| `f08cb2b7` | **fix(profile): synchronize mini-profile stats with canonical public profile data** |
+| `2ac6bd13` | **fix(combo): invalidate server COMBO_QUERY_CACHE and client _comboClientCache on Added Words changes** |
+| `f29fcdaa` | **style: enlarge MORPHEME title and equalize vertical padding on desktop Firefox** |
+| `5cf00d0e` | **feat: include valid inflections at the end of definitions for all Added Words** |
 | `b4a39873` | **Remove v2.0 from MP title and space out title, description, and arrows in Combo Checker** |
 | `9bca2e79` | **Improve point sum equation contrast in white layouts and remove black glow from round-end congratulatory message** |
 | `dc59dc73` | **Confine Words to Work on content strictly to its own tab** |
@@ -126,4 +136,4 @@ START_OVER_POINT_OCTOBER_24
 - **Application Stack**: Python 3.9 / 3.12 + Waitress WSGI managed by PM2 (`morpheme`).
 - **Web Server / Reverse Proxy**: Nginx 1.24.0 with HTTP/2 and SSL/TLS termination (`https://morpheme.games`).
 - **Database**: SQLite (`morpheme.db`) with WAL mode, automated schema migrations, in-memory rating caches, and IP timeout controls.
-- **Verification**: Verified live on production host `132.148.72.249` with HTTP 200 OK and Chrome CDP headless verification.
+- **Verification**: Verified live on production host `132.148.72.249` with HTTP 200 OK across public profile, mini-profile, and new word lists endpoints.
