@@ -5028,79 +5028,11 @@ _PROFILE_CACHE_TTL = 30.0  # 30s cache TTL for heavy full profile calculations
 
 @app.route('/api/profile/mini/<username>', methods=['GET'])
 def get_mini_profile(username):
-    """Ultra-fast mini profile endpoint that bypasses full round_history scans."""
-    conn = sqlite3.connect(DB_PATH, timeout=10)
-    cursor = conn.execute('''
-        SELECT id, username, rating, games_played, avatar_url, country_flag, 
-               full_name, age, gender, location, quote, description, proof_url, wins,
-               created_at, last_visited, timezone
-        FROM users WHERE username = ? COLLATE NOCASE
-    ''', (username,))
-    user = cursor.fetchone()
-    if not user:
-        conn.close()
-        return jsonify({'error': 'User not found'}), 404
-
-    user_id = user[0]
-
-    # Fast aggregate for total points and counted games from indexed round_history
-    try:
-        cursor_stats = conn.execute('''
-            SELECT COALESCE(SUM(total_score), 0), COUNT(*)
-            FROM round_history
-            WHERE user_id = ? AND total_score > 0
-        ''', (user_id,))
-        stats_row = cursor_stats.fetchone()
-        pt_sum = stats_row[0] if stats_row else 0
-        counted_games = stats_row[1] if stats_row else 0
-    except Exception:
-        pt_sum = 0
-        counted_games = 0
-
-    forum_posts_count = 0
-    try:
-        cursor_fp = conn.execute('SELECT COALESCE(total_forum_posts, 0) FROM users WHERE id = ?', (user_id,))
-        fp_row = cursor_fp.fetchone()
-        forum_posts_count = fp_row[0] if fp_row and fp_row[0] is not None else 0
-    except Exception:
-        pass
-
-    conn.close()
-
-    session_info = room_manager.find_user_session(user_id)
-
-    return jsonify({
-        'user_id': user_id,
-        'username': user[1],
-        'rating': user[2],
-        'games_played': user[3] if (user[3] and user[3] > 0) else counted_games,
-        'wins': user[13] or 0,
-        'pt_sum': pt_sum,
-        'avatar_url': user[4],
-        'country_flag': user[5] or '🏳️',
-        'full_name': user[6] or '-',
-        'age': user[7] or '-',
-        'gender': user[8] or '-',
-        'location': user[9] or '-',
-        'quote': user[10] or 'Enter a personal quote',
-        'description': user[11] or 'Add a detailed description about yourself...',
-        'proof_url': user[12],
-        'created_at': user[14],
-        'last_visited': user[15] or user[14],
-        'timezone': user[16] or 'auto',
-        'forum_posts_count': forum_posts_count,
-        'status': {
-            'is_online': session_info['is_online'] if session_info else False,
-            'current_room': session_info['room_id'] if session_info else None,
-            'session': session_info
-        }
-    })
+    """Mini profile endpoint returning canonical public profile data."""
+    return get_public_profile(username)
 
 @app.route('/api/profile/<username>', methods=['GET'])
 def get_public_profile(username):
-    if request.args.get('mini') in ('1', 'true'):
-        return get_mini_profile(username)
-
     period = request.args.get('period', 'all').lower()
     cache_key = (username.lower(), period)
     now_ts = time.time()

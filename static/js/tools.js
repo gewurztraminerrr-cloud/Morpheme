@@ -2034,9 +2034,9 @@ window.showMiniProfile = async function (username) {
 
         // Stats: Games, Wins, Win Rate
         const gamesEl = document.getElementById('mini-profile-games');
-        if (gamesEl) gamesEl.innerText = data.games_played || 0;
+        if (gamesEl) gamesEl.innerText = (data.games_played || 0).toLocaleString();
         const winsEl = document.getElementById('mini-profile-wins');
-        if (winsEl) winsEl.innerText = data.wins || 0;
+        if (winsEl) winsEl.innerText = (data.wins || 0).toLocaleString();
 
         const winRateEl = document.getElementById('mini-profile-winrate');
         if (winRateEl) {
@@ -2055,8 +2055,8 @@ window.showMiniProfile = async function (username) {
         if (demoEl) {
             const ageVal = cleanProfileText(data.age);
             const genderVal = cleanProfileText(data.gender);
-            const ageStr = ageVal ? `Age: ${ageVal}` : 'Age:';
-            const genderStr = genderVal ? `Gender: ${genderVal}` : 'Gender:';
+            const ageStr = ageVal ? `Age: ${ageVal}` : 'Age: -';
+            const genderStr = genderVal ? `Gender: ${genderVal}` : 'Gender: -';
             demoEl.innerText = `${ageStr} ${genderStr}`;
             demoEl.title = demoEl.innerText;
         }
