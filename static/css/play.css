@@ -4117,6 +4117,150 @@ body[class*="theme-light-"] #more-random-words-btn:active,
     background: #3730a3 !important;
 }
 
+/* Find & Count Tool - Suggested Random Words Table */
+.random-words-table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+#random-words-table-body .suggested-word-row {
+    cursor: pointer;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#random-words-table-body .suggested-word-row:hover {
+    background: rgba(var(--text-primary-rgb), 0.06);
+}
+
+#random-words-table-body .suggested-word-row td,
+#random-words-table-body .suggested-word-cell {
+    padding: 7px 10px;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+/* Laptops & Desktops: Horizontal Random Words Table in Find Count */
+@media (min-width: 901px) {
+    body:not(.is-mobile) .random-words-table-wrapper table,
+    body.is-desktop .random-words-table-wrapper table {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    body:not(.is-mobile) .random-words-table-wrapper thead,
+    body.is-desktop .random-words-table-wrapper thead {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    body:not(.is-mobile) .random-words-table-wrapper thead tr,
+    body.is-desktop .random-words-table-wrapper thead tr {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    body:not(.is-mobile) .random-words-table-wrapper thead th,
+    body.is-desktop .random-words-table-wrapper thead th {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    body:not(.is-mobile) #random-words-table-body,
+    body.is-desktop #random-words-table-body {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        align-items: stretch !important;
+    }
+
+    body:not(.is-mobile) #random-words-table-body .suggested-word-row,
+    body.is-desktop #random-words-table-body .suggested-word-row {
+        flex: 1 1 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 0 !important;
+        border-bottom: none !important;
+        border-right: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+        padding: 0 !important;
+    }
+
+    body:not(.is-mobile) #random-words-table-body .suggested-word-row:last-child,
+    body.is-desktop #random-words-table-body .suggested-word-row:last-child {
+        border-right: none !important;
+    }
+
+    body:not(.is-mobile) #random-words-table-body .suggested-word-row:hover,
+    body.is-desktop #random-words-table-body .suggested-word-row:hover {
+        background: rgba(var(--text-primary-rgb), 0.07) !important;
+    }
+
+    body:not(.is-mobile) #random-words-table-body .suggested-word-row td,
+    body:not(.is-mobile) #random-words-table-body .suggested-word-cell,
+    body.is-desktop #random-words-table-body .suggested-word-row td,
+    body.is-desktop #random-words-table-body .suggested-word-cell {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding: 9px 4px !important;
+        font-size: 0.92rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.4px !important;
+        color: var(--accent-color) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+        border: none !important;
+    }
+
+    /* Fallback/loading row on desktop */
+    body:not(.is-mobile) #random-words-table-body > tr:not(.suggested-word-row),
+    body.is-desktop #random-words-table-body > tr:not(.suggested-word-row) {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+/* White & Light Themes: Random Words Table */
+body.theme-white #random-words-table-body .suggested-word-row,
+body[class*="theme-light-"] #random-words-table-body .suggested-word-row,
+[class*="theme-white"] #random-words-table-body .suggested-word-row,
+[class*="theme-light-"] #random-words-table-body .suggested-word-row {
+    border-right-color: rgba(0, 0, 0, 0.1) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-white #random-words-table-body .suggested-word-row:hover,
+body[class*="theme-light-"] #random-words-table-body .suggested-word-row:hover,
+[class*="theme-white"] #random-words-table-body .suggested-word-row:hover,
+[class*="theme-light-"] #random-words-table-body .suggested-word-row:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white #random-words-table-body .suggested-word-row td,
+body.theme-white #random-words-table-body .suggested-word-cell,
+body[class*="theme-light-"] #random-words-table-body .suggested-word-row td,
+body[class*="theme-light-"] #random-words-table-body .suggested-word-cell,
+[class*="theme-white"] #random-words-table-body .suggested-word-row td,
+[class*="theme-white"] #random-words-table-body .suggested-word-cell,
+[class*="theme-light-"] #random-words-table-body .suggested-word-row td,
+[class*="theme-light-"] #random-words-table-body .suggested-word-cell {
+    color: #0369a1 !important;
+}
+
 /* Find & Count Tool - Action Row & Random Words Dropdown */
 .find-count-actions {
     display: flex !important;

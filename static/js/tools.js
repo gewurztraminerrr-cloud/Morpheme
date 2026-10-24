@@ -9933,8 +9933,8 @@ let _randomWordsFetchPromise = null;
 function renderSuggestedWordsTable(tableBody, words) {
     if (!tableBody || !words || words.length === 0) return;
     tableBody.innerHTML = words.map(word => `
-        <tr class="suggested-word-row" data-word="${word}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-            <td style="padding: 7px 10px; color: var(--accent-color); font-weight: 500;">${word}</td>
+        <tr class="suggested-word-row" data-word="${word}">
+            <td class="suggested-word-cell">${word}</td>
         </tr>
     `).join('');
 
@@ -9949,10 +9949,10 @@ function renderSuggestedWordsTable(tableBody, words) {
             }
         });
         row.addEventListener('mouseenter', () => {
-            row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
+            row.style.background = 'rgba(var(--text-primary-rgb), 0.07)';
         });
         row.addEventListener('mouseleave', () => {
-            row.style.background = 'transparent';
+            row.style.background = '';
         });
     });
 }
