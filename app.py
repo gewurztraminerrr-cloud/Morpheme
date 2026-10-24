@@ -1489,6 +1489,7 @@ def add_added_word_api():
         # Clear local/endpoint caches instantly
         TOOLS_DICT_CACHE.clear()
         LISTS_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
         
         # Update ADDED_WORDS_LIST_CACHE in-memory so the list API is instantly updated
         global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME
@@ -1612,6 +1613,7 @@ def remove_added_word():
         # Clear local/endpoint caches instantly
         TOOLS_DICT_CACHE.clear()
         LISTS_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
         
         # Update ADDED_WORDS_LIST_CACHE in-memory so the list API is instantly updated
         global ADDED_WORDS_LIST_CACHE, LAST_ADDED_WORDS_LIST_MTIME, LAST_ADDED_WORDS_MTIME
@@ -8680,6 +8682,7 @@ def _prune_old_word_paths():
 threading.Thread(target=_prune_old_word_paths, daemon=True).start()
 
 TOOLS_DICT_CACHE = {}
+COMBO_QUERY_CACHE = {}
 LAST_ADDED_WORDS_MTIME = None
 
 # --- HIGH-PERFORMANCE C-ACCELERATED MORPHEME METRIC & FEATURE EXTRACTOR ---
@@ -8758,8 +8761,9 @@ def load_tools_dictionary(dict_name):
         TOOLS_DICT_CACHE.pop('all_new', None)
         TOOLS_DICT_CACHE.pop('ALL', None)
         TOOLS_DICT_CACHE.pop('All', None)
-        global LISTS_CACHE
+        global LISTS_CACHE, COMBO_QUERY_CACHE
         LISTS_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
         if word_validator:
             word_validator.get_use_added_words(force=False)
 

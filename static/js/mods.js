@@ -309,6 +309,7 @@ async function addAddedWord() {
         if (data.success) {
             const msg = data.message || `Word(s) added successfully.`;
             showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
+            if (window._comboClientCache) window._comboClientCache.clear();
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
             const errorMsg = data.error || "Failed to add word.";
@@ -365,6 +366,7 @@ async function removeAddedWord() {
         if (data.success && (!data.not_found || (data.removed_words && data.removed_words.length > 0))) {
             const msg = data.message || `Word(s) removed from Added Words list.`;
             showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
+            if (window._comboClientCache) window._comboClientCache.clear();
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
             const errorMsg = data.error || data.message || "Failed to remove word.";
@@ -1165,6 +1167,7 @@ window.promptAddAddedWord = async function() {
         
         if (data.success) {
             alert(data.message);
+            if (window._comboClientCache) window._comboClientCache.clear();
             if (window.loadAddedWords) window.loadAddedWords();
         } else {
             alert(data.error);
@@ -1189,6 +1192,7 @@ window.promptRemoveAddedWord = async function() {
         
         if (data.success && (!data.not_found || (data.removed_words && data.removed_words.length > 0))) {
             alert(data.message || `Word "${word}" removed.`);
+            if (window._comboClientCache) window._comboClientCache.clear();
             if (window.loadAddedWords) window.loadAddedWords('added');
         } else {
             alert(data.error || data.message || `The sequence '${word}' is not present in AW.`);
