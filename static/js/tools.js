@@ -213,7 +213,7 @@ window.showTool = function(toolId) {
             if (p.id === `tool-${toolId}`) p.classList.add('active');
             else p.classList.remove('active');
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
@@ -237,6 +237,11 @@ window.showTool = function(toolId) {
         if (toolId === 'subanagrams') {
             if (typeof initCustomScrollbarForElement === 'function') {
                 initCustomScrollbarForElement('sub-list-results', 'sub-scrollbar-track', 'sub-scrollbar-thumb');
+            }
+        }
+        if (toolId === 'unscramble') {
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('unscramble-found-list', 'unscramble-scrollbar-track', 'unscramble-scrollbar-thumb');
             }
         }
         if (toolId === 'new-users') {
@@ -9568,11 +9573,14 @@ function renderUnscrambleFound(revealMissed = false) {
 
     list.innerHTML = html;
 
-    if (unscrambleState.history.length > 0) {
-        requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('unscramble-found-list', 'unscramble-scrollbar-track', 'unscramble-scrollbar-thumb');
+        }
+        if (unscrambleState.history.length > 0) {
             initCustomScrollbarForElement('unscramble-history-scroll', 'unscramble-history-scrollbar-track', 'unscramble-history-scrollbar-thumb');
-        });
-    }
+        }
+    });
 }
 
 window.startNewUnscramble = startNewUnscramble;
