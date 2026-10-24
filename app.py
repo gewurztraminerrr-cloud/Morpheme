@@ -6834,6 +6834,12 @@ def get_room_state(room_id):
                 room._transition_spinner_launched = True
                 import threading
                 threading.Thread(target=room_manager.generate_spinner_params, args=(room_id, False), daemon=True).start()
+        elif milestone == 'easy_fallback':
+            with room._state_lock:
+                if not getattr(room, 'easy_fallback_applied', False):
+                    room.easy_fallback_applied = True
+                    import threading
+                    threading.Thread(target=room_manager.apply_easy_fallback_and_search, args=(room_id,), daemon=True).start()
         elif milestone == 'reveal':
             if not getattr(room, 'spinner_params_revealed', False):
                 import threading
@@ -13253,6 +13259,10 @@ def room_tick_worker():
                     milestone = room.get_next_round_milestone()
                     if milestone == 'spinner':
                         room_manager.generate_spinner_params(room.room_id, reveal=False)
+                    elif milestone == 'easy_fallback':
+                        if not getattr(room, 'easy_fallback_applied', False):
+                            room.easy_fallback_applied = True
+                            threading.Thread(target=room_manager.apply_easy_fallback_and_search, args=(room.room_id,), daemon=True).start()
                     elif milestone == 'reveal':
                         room_manager.generate_spinner_params(room.room_id, reveal=True)
                     elif milestone == 'search':

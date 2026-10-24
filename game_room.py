@@ -1599,7 +1599,7 @@ class GameRoom:
             if elapsed >= intermission_limit - 1.2:
                 return 'start'
             
-        # 2. Parameter Reveal (15s into intermission)
+        # 2. Parameter Reveal (15s into intermission = 0:45 on clock)
         if self.state == 'intermission':
             if not self.intermission_start_time or self.intermission_start_time <= 0:
                 self.intermission_start_time = now
@@ -1608,6 +1608,18 @@ class GameRoom:
             reveal_threshold = 15.0 if intermission_duration >= 20 else 0.5
             if elapsed >= reveal_threshold and not getattr(self, 'spinner_params_revealed', False):
                 return 'reveal'
+
+        # 2b. Board Search Deadline Check at 0:55 (5s into intermission)
+        # If by 0:55 the board has not been found, change parameters to an easy configuration and use that one.
+        if self.state == 'intermission':
+            if not self.intermission_start_time or self.intermission_start_time <= 0:
+                self.intermission_start_time = now
+            elapsed = now - self.intermission_start_time
+            intermission_duration = 2 if self.time_limit >= 7200 else 60
+            easy_threshold = 5.0 if intermission_duration >= 20 else 0.2
+            if elapsed >= easy_threshold and not getattr(self, 'next_round_board', None):
+                if not getattr(self, 'easy_fallback_applied', False) and not getattr(self, 'spinner_params_revealed', False):
+                    return 'easy_fallback'
 
         # 3. Proactive Parameter Generation (1s into ANY state)
         state_start = self.intermission_start_time if self.state == 'intermission' else self.round_start_time
@@ -1711,9 +1723,18 @@ class GameRoom:
                 else:
                     dict_val = clean_dict
                 
+                wc_label = fparams.get('word_count_range')
+                if not wc_label:
+                    if actual_wc < 100: wc_label = '50-100'
+                    elif actual_wc < 200: wc_label = '100-200'
+                    elif actual_wc < 300: wc_label = '200-300'
+                    elif actual_wc < 400: wc_label = '300-400'
+                    elif actual_wc < 500: wc_label = '400-500'
+                    else: wc_label = '500+'
+                
                 new_sp = {
                     'dictionary': dict_val,
-                    'difficulty': fparams.get('difficulty', 'Medium'),
+                    'difficulty': target_params.get('difficulty') or fparams.get('difficulty', 'Medium'),
                     'word_count_range': wc_label,
                     'board_format': fparams.get('board_format', 'Normal'),
                     'min_word_length': fparams.get('min_word_length', 3),
@@ -1773,15 +1794,8 @@ class GameRoom:
             self.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
             self.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
             self.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
-            
-            self.current_dictionary = e_params.get('dictionary', 'NWL')
-            self.current_difficulty = e_params.get('difficulty', 'Medium')
-            self.current_board_format = e_params.get('board_format', 'Normal')
-            self.current_min_length = e_params.get('min_word_length', 3)
-            self.use_added_words = e_params.get('use_added_words', False)
-            
-        if e_tr and not getattr(self, '_spinner_params_locked', False):
-            self.current_word_count_range = e_tr
+            if e_tr:
+                self.spinner_params['word_count_range'] = e_tr
             
         self.next_round_board = e_board
         self.next_round_words = e_words
@@ -1818,7 +1832,7 @@ class GameRoom:
         # Build next_spinner_params from the actual emergency board params
         esp = {
             'dictionary': e_params.get('dictionary', e_dict) if e_params else e_dict,
-            'difficulty': e_params.get('difficulty', 'Medium') if e_params else 'Medium',
+            'difficulty': source_sp.get('difficulty') or (e_params.get('difficulty', 'Medium') if e_params else 'Medium'),
             'word_count_range': e_tr or '100-200',
             'board_format': e_fmt or 'Normal',
             'min_word_length': e_params.get('min_word_length', 3) if e_params else 3,
@@ -1939,6 +1953,7 @@ class GameRoom:
                 self._spinner_params_locked = False
                 self.frozen_revealed_params = None
                 self._did_050_fallback_rescue = False
+                self.easy_fallback_applied = False
                 print(f"[TRANSITION] Room {self.room_id}: ACTIVE -> INTERMISSION (Time: {self.intermission_start_time}, Elapsed: {now - self.round_start_time})")
                 
                 # [PROACTIVE] Do NOT clear generated/search flags here anymore.
@@ -3024,6 +3039,11 @@ class RoomManager:
                             if not getattr(room, '_transition_spinner_launched', False):
                                 room._transition_spinner_launched = True
                                 threading.Thread(target=self.generate_spinner_params, args=(room_id, False), daemon=True).start()
+                        elif milestone == 'easy_fallback':
+                            with room._state_lock:
+                                if not getattr(room, 'easy_fallback_applied', False):
+                                    room.easy_fallback_applied = True
+                                    threading.Thread(target=self.apply_easy_fallback_and_search, args=(room_id,), daemon=True).start()
                         elif milestone == 'reveal':
                             if not getattr(room, 'spinner_params_revealed', False):
                                 threading.Thread(target=self.generate_spinner_params, args=(room_id, True), daemon=True).start()
@@ -4330,6 +4350,12 @@ class RoomManager:
                     # Proactive generation
                     threading.Thread(target=self.generate_spinner_params, args=(room_id, False), daemon=True).start()
                 
+                elif milestone == 'easy_fallback':
+                    with room._state_lock:
+                        if not getattr(room, 'easy_fallback_applied', False):
+                            room.easy_fallback_applied = True
+                            threading.Thread(target=self.apply_easy_fallback_and_search, args=(room_id,), daemon=True).start()
+
                 elif milestone == 'reveal':
                     # Reveal (Intermission only)
                     if not getattr(room, 'spinner_params_revealed', False):
@@ -4673,11 +4699,20 @@ class RoomManager:
             _actual_wc  = len(room.all_words)
             _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
             _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
-            room.current_word_count_range = _real_wc_sr
-            if isinstance(room.spinner_params, dict):
-                room.spinner_params['word_count_range'] = _real_wc_sr
+
+            _declared_sr = None
             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                room.frozen_revealed_params['word_count_range'] = _real_wc_sr
+                _declared_sr = room.frozen_revealed_params.get('word_count_range')
+            elif isinstance(room.spinner_params, dict) and getattr(room, '_spinner_params_locked', False):
+                _declared_sr = room.spinner_params.get('word_count_range')
+
+            _final_wc_sr = _declared_sr or _real_wc_sr
+
+            room.current_word_count_range = _final_wc_sr
+            if isinstance(room.spinner_params, dict):
+                room.spinner_params['word_count_range'] = _final_wc_sr
+            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                room.frozen_revealed_params['word_count_range'] = _final_wc_sr
             room.update_counts_by_len()
 
 
@@ -4968,36 +5003,50 @@ class RoomManager:
                 
             # 2. Check if already generated but not yet revealed
             if reveal and getattr(room, 'spinner_params_generated', False):
+                # Ensure board has been found before revealing parameters at 0:45
+                if not getattr(room, 'next_round_board', None):
+                    print(f"[RoomManager] At 0:45 reveal: board not yet found for {room_id}. Ensuring board is ready immediately...")
+                    room.ensure_next_board_ready()
+
                 new_params = getattr(room, 'next_spinner_params', None)
-                if new_params:
-                    if room.game_type == 'subanagrams' and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
-                        staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
-                        if not any(len(w) == staged_seq_len for w in room.next_round_words):
-                            new_params['board_format'] = 'Totally Random'
-                            new_params['mode'] = 'random'
-                            room.next_round_format = 'Totally Random'
-                    # PERFORM THE REVEAL — mirror exactly what the slow-path does at line 5008-5019
-                    import copy
-                    if not getattr(room, '_spinner_params_locked', False):
-                        room.spinner_params = dict(new_params)
-                        # FIX: set frozen_revealed_params so start_board_search can update word_count_range
-                        # on it, and so start_next_round uses it as the authoritative active_params.
-                        room.frozen_revealed_params = copy.deepcopy(new_params)
-                    
-                    # Update authoritative labels so they change ON THE DOT at 0s (start_next_round)
-                    # We store them in spinner_params for reveal, but don't promote to 'current_' yet
-                    room.next_round_min_length = new_params.get('min_word_length', 3)
-                    room.spinner_params_revealed = True
-                    # FIX: mark the intermission as revealed so start_next_round takes the frozen path
-                    room.was_revealed_this_intermission = True
-                    # FIX: lock spinner_params so board search thread cannot overwrite them post-reveal.
-                    # Without this lock, the board search was overwriting room.spinner_params with the
-                    # actual board params (format, wc), making previous_params predictable and causing
-                    # the anti-repeat check to always converge to the same "different" pattern.
-                    room._spinner_params_locked = True
-                    room._reveal_sync_complete = True
-                    print(f"[RoomManager] SUCCESS: Revealed pre-generated params for room {room_id} (15s mark)")
-                    return True
+                if not new_params and getattr(room, 'next_round_spinner_params', None):
+                    new_params = getattr(room, 'next_round_spinner_params', None)
+                if not new_params:
+                    new_params = getattr(room, 'spinner_params', None) or {}
+
+                new_params = dict(new_params)
+
+                # Ensure parameters match the found board
+                if getattr(room, 'next_round_words', None):
+                    actual_wc = len(room.next_round_words)
+                    use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper())
+                    new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
+                    new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
+                if getattr(room, 'next_round_format', None):
+                    new_params['board_format'] = room.next_round_format
+                if getattr(room, 'next_round_bonus', None):
+                    new_params['bonus_word_length'] = len(room.next_round_bonus)
+
+                if room.game_type == 'subanagrams' and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
+                    staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
+                    if not any(len(w) == staged_seq_len for w in room.next_round_words):
+                        new_params['board_format'] = 'Totally Random'
+                        new_params['mode'] = 'random'
+                        room.next_round_format = 'Totally Random'
+
+                import copy
+                if not getattr(room, '_spinner_params_locked', False):
+                    room.spinner_params = dict(new_params)
+                    room.frozen_revealed_params = copy.deepcopy(new_params)
+                    room.next_spinner_params = dict(new_params)
+                
+                room.next_round_min_length = new_params.get('min_word_length', 3)
+                room.spinner_params_revealed = True
+                room.was_revealed_this_intermission = True
+                room._spinner_params_locked = True
+                room._reveal_sync_complete = True
+                print(f"[RoomManager] SUCCESS: Revealed pre-generated params for room {room_id} (15s mark: board guaranteed found)")
+                return True
             
             # 3. If we are currently loading, skip to avoid double generation
             if getattr(room, 'spinner_params_loading', False):
@@ -5317,10 +5366,32 @@ class RoomManager:
 
                 if reveal:
                     # 2. PERFORM THE REVEAL (Making them visible to players at 0:45)
+                    if not getattr(room, 'next_round_board', None):
+                        print(f"[RoomManager] At 0:45 reveal (slow-path): board not yet found for {room_id}. Ensuring board is ready immediately...")
+                        room.ensure_next_board_ready()
+
+                    if getattr(room, 'next_round_spinner_params', None):
+                        new_params = dict(room.next_round_spinner_params)
+                    elif getattr(room, 'next_spinner_params', None):
+                        new_params = dict(room.next_spinner_params)
+                    else:
+                        new_params = dict(new_params)
+
+                    if getattr(room, 'next_round_words', None):
+                        actual_wc = len(room.next_round_words)
+                        use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper())
+                        new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
+                        new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
+                    if getattr(room, 'next_round_format', None):
+                        new_params['board_format'] = room.next_round_format
+                    if getattr(room, 'next_round_bonus', None):
+                        new_params['bonus_word_length'] = len(room.next_round_bonus)
+
                     import copy
                     if not getattr(room, '_spinner_params_locked', False):
                         room.spinner_params = copy.deepcopy(new_params)
                         room.frozen_revealed_params = copy.deepcopy(new_params)
+                        room.next_spinner_params = copy.deepcopy(new_params)
                     
                     # Update authoritative labels
                     room.next_round_min_length = new_params.get('min_word_length', 3)
@@ -5328,7 +5399,7 @@ class RoomManager:
                     room.was_revealed_this_intermission = True
                     room._spinner_params_locked = True  # LOCK: no further overwrites until intermission ends!
                     room._reveal_sync_complete = True
-                    print(f"[RoomManager] SUCCESS: Generated and Revealed params for room {room_id}")
+                    print(f"[RoomManager] SUCCESS: Generated and Revealed params for room {room_id} (15s mark: board guaranteed found)")
                 else:
                     print(f"[RoomManager] SUCCESS: Silent parameter generation complete for room {room_id}")
                 
@@ -5347,6 +5418,55 @@ class RoomManager:
         finally:
             with room._state_lock:
                 room.spinner_params_loading = False
+
+    def apply_easy_fallback_and_search(self, room_id):
+        """If by 0:55 during intermission the board has not been found, change the parameters to an easy configuration and use that one."""
+        room = self.get_room(room_id)
+        if not room:
+            return
+        
+        with room._state_lock:
+            if getattr(room, 'next_round_board', None):
+                return
+            
+            print(f"[RoomManager] At 0:55 intermission: board not found for {room_id}. Switching parameters to Easy configuration.")
+            now = time.time()
+            base_dict = 'CSW' if 'CSW' in str(room.current_dictionary).upper() else 'NWL'
+            dims = room.board_dimensions
+            if dims in ['3x3', '4x4', '4x3', '3x4']:
+                easy_min = 3
+            elif dims in ['5x5', '4x6']:
+                easy_min = 4
+            else:
+                easy_min = 5
+                
+            easy_wc = '200-300' if room.time_limit >= 7200 else '100-200'
+            
+            easy_params = {
+                'difficulty': 'Easy',
+                'dictionary': base_dict,
+                'board_format': 'Normal',
+                'min_word_length': easy_min,
+                'word_count_range': easy_wc,
+                'bonus_word_length': 6,
+                'use_added_words': False,
+                'board_dimensions': dims,
+                'time_limit': room.time_limit,
+                'generated_at': now
+            }
+            easy_params = SpinnerSet.sanitize_params(easy_params, dims, room.time_limit >= 7200)
+            
+            room.next_spinner_params = dict(easy_params)
+            if not getattr(room, '_spinner_params_locked', False):
+                room.spinner_params = dict(easy_params)
+            room.next_round_min_length = easy_min
+            
+            room.board_search_started = False
+            room.board_search_started_actual = False
+            room.board_search_loading = False
+            
+        print(f"[RoomManager] Triggering instant easy board retrieval for {room_id}...")
+        room.ensure_next_board_ready()
 
     def check_6x8_rescue(self, room):
         """Rescue watchdog for all rooms.
@@ -5867,10 +5987,10 @@ class RoomManager:
                             room.spinner_params['word_count_range'] = wc_label
                             if 'min_word_length' in params:
                                 room.spinner_params['min_word_length'] = params['min_word_length']
-                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                            room.frozen_revealed_params['word_count_range'] = wc_label
-                            if 'min_word_length' in params:
-                                room.frozen_revealed_params['min_word_length'] = params['min_word_length']
+                            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                                room.frozen_revealed_params['word_count_range'] = wc_label
+                                if 'min_word_length' in params:
+                                    room.frozen_revealed_params['min_word_length'] = params['min_word_length']
 
                         _use_word = _bonus_word or bonus_word
                         if _use_word:
@@ -6243,12 +6363,11 @@ class RoomManager:
                             room.next_spinner_params['word_count_range'] = achieved_wc
                             room.next_spinner_params['min_word_length'] = _sb_min_len
                             
-                            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                                room.frozen_revealed_params['min_word_length'] = _sb_min_len
-                                room.frozen_revealed_params['word_count_range'] = achieved_wc
-                            
-                            # Only sync to active spinner_params if not yet locked for the round
+                            # Only sync to active spinner_params and frozen_revealed_params if not yet locked for the round
                             if not getattr(room, '_spinner_params_locked', False):
+                                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                                    room.frozen_revealed_params['min_word_length'] = _sb_min_len
+                                    room.frozen_revealed_params['word_count_range'] = achieved_wc
                                 room.spinner_params['board_format'] = updated_format
                                 room.spinner_params['word_count_range'] = achieved_wc
                                 room.spinner_params['min_word_length'] = _sb_min_len
@@ -6973,13 +7092,24 @@ class RoomManager:
 
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
-                room.current_word_count_range = real_wc
-                if isinstance(room.spinner_params, dict):
-                    room.spinner_params['word_count_range'] = real_wc
+
+                # USER REQUIREMENT: When the Spinner Set declares parameters at 0:45 during intermission,
+                # do NOT change them at the start of the following round.
+                declared_wc = None
                 if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
-                    room.frozen_revealed_params['word_count_range'] = real_wc
+                    declared_wc = room.frozen_revealed_params.get('word_count_range')
+                if not declared_wc and active_params:
+                    declared_wc = active_params.get('word_count_range')
+
+                final_wc = declared_wc or real_wc
+
+                room.current_word_count_range = final_wc
+                if isinstance(room.spinner_params, dict):
+                    room.spinner_params['word_count_range'] = final_wc
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    room.frozen_revealed_params['word_count_range'] = final_wc
                 if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
-                    room.next_spinner_params['word_count_range'] = real_wc
+                    room.next_spinner_params['word_count_range'] = final_wc
 
                 # SUBANAGRAMS ACCURACY ENFORCEMENT: Format is Word Guaranteed ONLY if a max-length word exists
                 if getattr(room, 'game_type', None) == 'subanagrams':
@@ -7088,7 +7218,7 @@ class RoomManager:
                 room.spinner_params_generated = False
                 room.spinner_params_revealed = False
                 room.was_revealed_this_intermission = False
-                room.frozen_revealed_params = None
+                room.frozen_revealed_params = copy.deepcopy(room.spinner_params) if isinstance(room.spinner_params, dict) else None
                 room.spinner_params_loading = False
                 room.next_spinner_params = None
                 room.next_round_spinner_params = None
