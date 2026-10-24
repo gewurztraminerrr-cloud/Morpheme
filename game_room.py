@@ -1706,10 +1706,11 @@ class GameRoom:
                 
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+            _bg = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
             if 'checkerboard' in str(fmt_val).lower():
-                self.board_generator._verify_checkerboard_safeguard(fb)
+                _bg._verify_checkerboard_safeguard(fb)
             else:
-                self.board_generator._break_accidental_checkerboard(fb)
+                _bg._break_accidental_checkerboard(fb)
             print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
             self.next_round_board = fb
             self.next_round_words = fw
