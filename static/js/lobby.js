@@ -2469,29 +2469,32 @@ function selectGuideWordPath(wordKey, btnElement) {
             desc: 'Start at <strong>S(0,0)</strong> → right to <strong>T(0,1)</strong> → diagonal down to <strong>R(1,1)</strong> → vertical down to <strong>E(2,1)</strong> → diagonal up-right to <strong>A(1,2)</strong> → horizontal right to <strong>M(1,3)</strong>. Fluid multi-angle connection without tile reuse.',
             pts: '+3 Points'
         },
-        'stop': {
-            word: 'STOP',
+        'stamp': {
+            word: 'STAMP',
             tiles: [
                 { id: 'gb-0-0', num: 1 },
                 { id: 'gb-0-1', num: 2 },
-                { id: 'gb-0-2', num: 3 },
-                { id: 'gb-0-3', num: 4 }
+                { id: 'gb-1-2', num: 3 },
+                { id: 'gb-1-3', num: 4 },
+                { id: 'gb-2-2', num: 5 }
             ],
-            type: 'Straight Horizontal Line',
-            desc: 'Start at <strong>S(0,0)</strong> → right to <strong>T(0,1)</strong> → right to <strong>O(0,2)</strong> → right to <strong>P(0,3)</strong>. Straight horizontal orthogonal row.',
-            pts: '+1 Point'
+            type: 'Multi-Directional Angle',
+            desc: 'Start at <strong>S(0,0)</strong> → right to <strong>T(0,1)</strong> → diagonal down-right to <strong>A(1,2)</strong> → horizontal right to <strong>M(1,3)</strong> → diagonal down-left to <strong>P(2,2)</strong> (the P above the D). Sharp lateral and diagonal pathing.',
+            pts: '+2 Points'
         },
-        'slow': {
-            word: 'SLOW',
+        'parole': {
+            word: 'PAROLE',
             tiles: [
-                { id: 'gb-0-0', num: 1 },
-                { id: 'gb-1-0', num: 2 },
-                { id: 'gb-2-0', num: 3 },
-                { id: 'gb-3-0', num: 4 }
+                { id: 'gb-0-3', num: 1 },
+                { id: 'gb-1-2', num: 2 },
+                { id: 'gb-1-1', num: 3 },
+                { id: 'gb-2-0', num: 4 },
+                { id: 'gb-1-0', num: 5 },
+                { id: 'gb-2-1', num: 6 }
             ],
-            type: 'Straight Vertical Column',
-            desc: 'Start at <strong>S(0,0)</strong> → down to <strong>L(1,0)</strong> → down to <strong>O(2,0)</strong> → down to <strong>W(3,0)</strong>. Straight vertical orthogonal column.',
-            pts: '+1 Point'
+            type: 'Multi-Directional Looping Curve',
+            desc: 'Start at <strong>P(0,3)</strong> → diagonal down-left to <strong>A(1,2)</strong> → horizontal left to <strong>R(1,1)</strong> → diagonal down-left to <strong>O(2,0)</strong> → vertical up to <strong>L(1,0)</strong> → diagonal down-right to <strong>E(2,1)</strong>. Fluid multi-angle connection.',
+            pts: '+3 Points'
         },
         'trap': {
             word: 'TRAP',
@@ -2506,6 +2509,8 @@ function selectGuideWordPath(wordKey, btnElement) {
             pts: '+1 Point'
         }
     };
+    paths['stop'] = paths['stamp'];
+    paths['slow'] = paths['parole'];
 
     const data = paths[wordKey] || paths['stream'];
 
