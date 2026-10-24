@@ -495,44 +495,61 @@
 
 .faq-highlight {
     font-weight: 800;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1.4;
+    vertical-align: middle;
 }
 
 .faq-highlight.lime {
     color: #4ade80;
-    text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+    background: rgba(34, 197, 94, 0.22);
+    border: 1px solid rgba(74, 222, 128, 0.45);
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.25);
 }
 
 .faq-highlight.blue {
     color: #60a5fa;
-    text-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+    background: rgba(59, 130, 246, 0.22);
+    border: 1px solid rgba(96, 165, 250, 0.45);
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.25);
 }
 
 .faq-highlight.gold {
     color: #fbbf24;
-    text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+    background: rgba(245, 158, 11, 0.22);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.25);
 }
 
 .faq-highlight.red {
     color: #f87171;
-    text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+    background: rgba(239, 68, 68, 0.22);
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    text-shadow: 0 0 8px rgba(248, 113, 113, 0.25);
 }
 
+.faq-highlight.default,
 .faq-highlight.slate {
-    color: #94a3b8;
-    text-shadow: 0 0 10px rgba(148, 163, 184, 0.3);
+    color: var(--text-primary, #ffffff);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-shadow: none;
 }
 
 .faq-highlight.purple {
-    color: #9333ea;
-    text-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
+    color: #c084fc;
+    background: rgba(168, 85, 247, 0.22);
+    border: 1px solid rgba(192, 132, 252, 0.45);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.25);
 }
 
 .faq-highlight.check {
-    color: var(--text-primary);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.2);
+    color: var(--text-primary, #ffffff);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-shadow: none;
 }
 
 /* Giant Trophy Style */
@@ -1454,6 +1471,82 @@
     border: 1px solid var(--card-border, rgba(0, 0, 0, 0.15)) !important;
     color: var(--text-primary) !important;
 }
+
+/* Theme-specific FAQ Highlights for Light & White Themes */
+[class*="theme-white"] .faq-highlight,
+[class*="theme-light-"] .faq-highlight,
+body.theme-white .faq-highlight,
+body[class*="theme-light-"] .faq-highlight {
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .faq-highlight.lime,
+[class*="theme-light-"] .faq-highlight.lime,
+body.theme-white .faq-highlight.lime,
+body[class*="theme-light-"] .faq-highlight.lime {
+    color: #14532d !important;
+    background: rgba(34, 197, 94, 0.18) !important;
+    border: 1.5px solid #16a34a !important;
+}
+
+[class*="theme-white"] .faq-highlight.blue,
+[class*="theme-light-"] .faq-highlight.blue,
+body.theme-white .faq-highlight.blue,
+body[class*="theme-light-"] .faq-highlight.blue {
+    color: #1e3a8a !important;
+    background: rgba(37, 99, 235, 0.16) !important;
+    border: 1.5px solid #2563eb !important;
+}
+
+[class*="theme-white"] .faq-highlight.gold,
+[class*="theme-light-"] .faq-highlight.gold,
+body.theme-white .faq-highlight.gold,
+body[class*="theme-light-"] .faq-highlight.gold {
+    color: #78350f !important;
+    background: rgba(245, 158, 11, 0.2) !important;
+    border: 1.5px solid #d97706 !important;
+}
+
+[class*="theme-white"] .faq-highlight.red,
+[class*="theme-light-"] .faq-highlight.red,
+body.theme-white .faq-highlight.red,
+body[class*="theme-light-"] .faq-highlight.red {
+    color: #7f1d1d !important;
+    background: rgba(239, 68, 68, 0.16) !important;
+    border: 1.5px solid #dc2626 !important;
+}
+
+[class*="theme-white"] .faq-highlight.default,
+[class*="theme-white"] .faq-highlight.slate,
+[class*="theme-light-"] .faq-highlight.default,
+[class*="theme-light-"] .faq-highlight.slate,
+body.theme-white .faq-highlight.default,
+body.theme-white .faq-highlight.slate,
+body[class*="theme-light-"] .faq-highlight.default,
+body[class*="theme-light-"] .faq-highlight.slate {
+    color: #111111 !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
+}
+
+[class*="theme-white"] .faq-highlight.purple,
+[class*="theme-light-"] .faq-highlight.purple,
+body.theme-white .faq-highlight.purple,
+body[class*="theme-light-"] .faq-highlight.purple {
+    color: #581c87 !important;
+    background: rgba(147, 51, 234, 0.16) !important;
+    border: 1.5px solid #9333ea !important;
+}
+
+[class*="theme-white"] .faq-highlight.check,
+[class*="theme-light-"] .faq-highlight.check,
+body.theme-white .faq-highlight.check,
+body[class*="theme-light-"] .faq-highlight.check {
+    color: #111111 !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.22) !important;
+}
+
 
 /* Hide native scrollbar on mobile devices for How to Play */
 @media (max-width: 900px), (pointer: coarse) {
