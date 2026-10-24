@@ -1782,14 +1782,18 @@
                             if (window._morphemeAudioCtx) {
                                 window._morphemeAudioCtx.decodeAudioData(buf, function(decoded) {
                                     window._preDecodedLobbyBuffer = decoded;
+                                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
+                                    var inGame = (activePage === 'page-play') || !!window.currentRoomId || (document.body && document.body.classList.contains('play-active')) || !!document.querySelector('#page-play.active');
                                     if (window.lobbyMusicEngine) {
                                         window.lobbyMusicEngine.buffer = decoded;
                                         window.lobbyMusicEngine.isLoaded = true;
                                         if (window.lobbyMusicEngine._pendingPlay) {
                                             window.lobbyMusicEngine._pendingPlay = false;
-                                            window.lobbyMusicEngine.play();
+                                            if (!inGame) {
+                                                window.lobbyMusicEngine.play();
+                                            }
                                         }
-                                    } else {
+                                    } else if (!inGame) {
                                         var pLoadEl = document.getElementById('page-loading');
                                         if (pLoadEl && pLoadEl.classList.contains('active')) {
                                             window.triggerGatewayAudioImmediate();
@@ -1802,6 +1806,9 @@
                 } catch(e) {}
 
                 window.triggerGatewayAudioImmediate = function() {
+                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
+                    var inGame = (activePage === 'page-play') || !!window.currentRoomId || (document.body && document.body.classList.contains('play-active')) || !!document.querySelector('#page-play.active');
+                    if (inGame) return;
                     if (window.lobbyMusicEngine) {
                         window.lobbyMusicEngine.play();
                         window._gatewayAudioTriggered = true;
@@ -9913,9 +9920,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1792204000"></script>
     <script src="/js/forum.js?v=1792220000"></script>
-    <script src="/js/app.js?v=1792378300"></script>
+    <script src="/js/app.js?v=1792871000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>
-    <script src="/js/play.js?v=1792870000"></script>
+    <script src="/js/play.js?v=1792871000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>

@@ -2017,6 +2017,14 @@ async function _doUpdateGameState(incomingState = null) {
             state.board = state.previous_board;
         }
 
+        // Ensure lobby music is strictly killed and interaction listeners detached in game room
+        if (window.lobbyMusicEngine && (window.lobbyMusicEngine.isPlaying || window.lobbyMusicEngine._pendingPlay)) {
+            window.lobbyMusicEngine.pause();
+        }
+        if (typeof removeInteractionListeners === 'function') {
+            removeInteractionListeners();
+        }
+
         window.lastGameState = state;  // Store for optimistic updates
         const isSub = state.game_type === 'subanagrams';
         document.body.classList.toggle('is-subanagrams', isSub);

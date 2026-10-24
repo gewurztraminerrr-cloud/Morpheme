@@ -1170,12 +1170,19 @@ class LobbyMusicEngine {
                         this.isLoaded = true;
                         if (this._pendingPlay) {
                             this._pendingPlay = false;
-                            // Silence any fallback HTML audio before switching to Web Audio
-                            const htmlAudio = document.getElementById('lobby-music');
-                            if (htmlAudio && !htmlAudio.paused) {
-                                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+                            const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+                            const inGameRoom = (activePage === 'page-play') || 
+                                               !!window.currentRoomId || 
+                                               (document.getElementById('page-play')?.classList.contains('active')) ||
+                                               document.body.classList.contains('play-active');
+                            if (!inGameRoom) {
+                                // Silence any fallback HTML audio before switching to Web Audio
+                                const htmlAudio = document.getElementById('lobby-music');
+                                if (htmlAudio && !htmlAudio.paused) {
+                                    try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+                                }
+                                this.play();
                             }
-                            this.play();
                         }
                     }, err => {
                         console.warn('[LobbyMusicEngine] decodeAudioData failed:', err);
@@ -1188,6 +1195,25 @@ class LobbyMusicEngine {
     }
 
     play() {
+        // Absolute lockdown: Lobby music must NEVER play while in a game room or on page-play
+        const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+        const inGameRoom = (activePage === 'page-play') || 
+                           !!window.currentRoomId || 
+                           (document.getElementById('page-play')?.classList.contains('active')) ||
+                           document.body.classList.contains('play-active');
+        if (inGameRoom) {
+            this.pause();
+            return;
+        }
+
+        // Must be on page-lobby or page-loading (Gateway)
+        const onGateway = (activePage === 'page-loading') || (document.getElementById('page-loading')?.classList.contains('active'));
+        const onLobby = (activePage === 'page-lobby') || (document.getElementById('page-lobby')?.classList.contains('active')) || onGateway;
+        if (!onLobby) {
+            this.pause();
+            return;
+        }
+
         // Respect user lobby_music setting
         if (window.userSettings && window.userSettings.lobby_music === false) {
             this.pause();
@@ -1377,10 +1403,10 @@ function handleLobbyMusicState() {
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction(e) {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onGateway = (activePage === 'page-loading');
-    const onLobby = (activePage === 'page-lobby' || onGateway);
-    const onPlay = (activePage === 'page-play');
-    const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
+    const onGateway = (activePage === 'page-loading') || (document.getElementById('page-loading')?.classList.contains('active'));
+    const onLobby = (activePage === 'page-lobby') || (document.getElementById('page-lobby')?.classList.contains('active')) || onGateway;
+    const onPlay = (activePage === 'page-play') || (document.getElementById('page-play')?.classList.contains('active'));
+    const inGameRoom = onPlay || !!window.currentRoomId || document.body.classList.contains('play-active');
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
     const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
@@ -1392,6 +1418,9 @@ function playMusicOnFirstInteraction(e) {
         window.lobbyMusicEngine.play();
         removeInteractionListeners();
     } else {
+        if (inGameRoom) {
+            removeInteractionListeners();
+        }
         if (window.lobbyMusicEngine) {
             window.lobbyMusicEngine.pause();
         }
