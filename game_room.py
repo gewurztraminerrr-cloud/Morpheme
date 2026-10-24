@@ -2743,6 +2743,11 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                             cwords_filtered = [w for w in cwords if len(w) >= final_min]
                             cpaths_filtered = {w: p for w, p in cpaths.items() if len(w) >= final_min}
                             
+                            matching_final_min = sum(1 for w in cwords_filtered if len(w) == final_min)
+                            if matching_final_min < 3:
+                                print(f"[get_emergency_fallback_board] Cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
+                                continue
+                                
                             actual_wc = len(cwords_filtered)
                             if actual_wc < min_accept:
                                 print(f"[get_emergency_fallback_board] Cached board had only {actual_wc} words for min_word_length={final_min} (needed >= {min_accept}). REJECTING cached board...")
@@ -2796,7 +2801,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     paths_filtered = {w: p for w, p in paths.items() if len(w) >= final_min}
                     
                     actual_wc = len(words_filtered)
-                    if actual_wc < min_accept:
+                    matching_final_min = sum(1 for w in words_filtered if len(w) == final_min)
+                    if matching_final_min < 3:
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
+                    elif actual_wc < min_accept:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for min_word_length={final_min} (needed >= {min_accept}). REJECTING cached board...")
                     else:
                         if actual_wc < 100: ctr = '50-100'
@@ -4650,27 +4658,18 @@ class RoomManager:
             raw_aw = room.spinner_params.get('use_added_words', False)
             if all_words:
                 actual_shortest = min(len(w) for w in all_words)
-                if actual_shortest < display_min_start:
-                    print(f"[RoomManager] Word generator relaxed min_word_length from {display_min_start} to {actual_shortest}. Updating room param.")
+                if actual_shortest != display_min_start:
+                    print(f"[RoomManager] Word generator aligned min_word_length from {display_min_start} to factual {actual_shortest}. Updating room param.")
                     room.spinner_params['min_word_length'] = actual_shortest
+                    if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                        room.frozen_revealed_params['min_word_length'] = actual_shortest
                     display_min_start = actual_shortest
             
             all_words_dict = {w: p for w, p in (all_words_dict or {}).items() if len(w) >= display_min_start and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
             room.all_words = set(all_words_dict.keys())
             room.all_words_paths = all_words_dict
 
-            
-            # PRESERVE SPUN PARAMETER & KEEP 100% OF SCORABLE GRID WORDS INTACT
-            target_range = room.spinner_params.get('word_count_range') if isinstance(room.spinner_params, dict) else '100-200'
-            room.current_word_count_range = target_range
-            room.update_counts_by_len()
-
-            # FIX: Override with the ACTUAL word count from the generated board.
-            # The target range (e.g. '300-400') is what was requested; the board may
-            # deliver a different count (e.g. 253). Recompute the label from the real
-            # all_words set so the Spinner Set and header show the correct range.
-            # AW boards use the same full-scale buckets as non-AW — 221 words is
-            # '200-300', not '300-400', regardless of dictionary.
+            # Override with the ACTUAL word count from the generated board.
             _actual_wc  = len(room.all_words)
             _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
             _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
@@ -4679,6 +4678,7 @@ class RoomManager:
                 room.spinner_params['word_count_range'] = _real_wc_sr
             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                 room.frozen_revealed_params['word_count_range'] = _real_wc_sr
+            room.update_counts_by_len()
 
 
             
@@ -5852,11 +5852,26 @@ class RoomManager:
                         print(f"[RoomManager] INSTANT CACHE HIT in board search for {room_id}: {len(_words)} words")
                         # Preserve spun parameters generated by SpinnerSet — do not overwrite with cached board params
                         params = dict(params)
-                        room.next_spinner_params = params
-                        wc_label = search_wc or '100-200'
+                        actual_wc = len(_words)
+                        use_aw = params.get('use_added_words', False)
+                        wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw)
                         params['word_count_range'] = wc_label
-                        if room.next_spinner_params:
-                            room.next_spinner_params['word_count_range'] = wc_label
+                        
+                        if _words:
+                            _actual_min_board = min(len(w) for w in _words)
+                            if _actual_min_board > params.get('min_word_length', 3):
+                                params['min_word_length'] = _actual_min_board
+                        
+                        room.next_spinner_params = dict(params)
+                        if not getattr(room, '_spinner_params_locked', False):
+                            room.spinner_params['word_count_range'] = wc_label
+                            if 'min_word_length' in params:
+                                room.spinner_params['min_word_length'] = params['min_word_length']
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['word_count_range'] = wc_label
+                            if 'min_word_length' in params:
+                                room.frozen_revealed_params['min_word_length'] = params['min_word_length']
+
                         _use_word = _bonus_word or bonus_word
                         if _use_word:
                             params['bonus_word_length'] = len(_use_word)
@@ -5871,8 +5886,11 @@ class RoomManager:
                         room.next_round_spinner_params = dict(params)
                         room.next_round_spinner_params['board_format'] = _fmt
                         room.next_round_spinner_params['word_count_range'] = wc_label
-                        actual_wc = len(_words)
                         room.next_round_total_words_count = actual_wc
+                        room.next_round_counts_by_len = {
+                            '_round': room.current_round + 1,
+                            **{str(l): sum(1 for w in (_words or []) if len(w) == l) for l in range(1, 31)}
+                        }
                         room.next_round_board = _board
                         room.solving_complete = True
                         room.board_search_loading = False
@@ -6222,13 +6240,18 @@ class RoomManager:
 
                         if getattr(room, 'next_spinner_params', None):
                             room.next_spinner_params['board_format'] = updated_format
+                            room.next_spinner_params['word_count_range'] = achieved_wc
+                            room.next_spinner_params['min_word_length'] = _sb_min_len
                             
                             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                                 room.frozen_revealed_params['min_word_length'] = _sb_min_len
+                                room.frozen_revealed_params['word_count_range'] = achieved_wc
                             
                             # Only sync to active spinner_params if not yet locked for the round
                             if not getattr(room, '_spinner_params_locked', False):
                                 room.spinner_params['board_format'] = updated_format
+                                room.spinner_params['word_count_range'] = achieved_wc
+                                room.spinner_params['min_word_length'] = _sb_min_len
                         # REVEAL SYNC: Pre-calculate counts by length for the revelation phase
                         # This avoids the "Remaining tab lag" where it shows previous round stats
                         # Always calculate 1-30 to ensure valid data regardless of min-length transitions
@@ -6936,9 +6959,27 @@ class RoomManager:
                 wc_cnt  = len(room.all_words)
                 real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw)
 
+                if room.all_words:
+                    actual_shortest = min(len(w) for w in room.all_words)
+                    if actual_shortest != room.current_min_length:
+                        print(f"[RoomManager] start_next_round aligned min_word_length from {room.current_min_length} to factual {actual_shortest}.")
+                        room.current_min_length = actual_shortest
+                        if isinstance(room.spinner_params, dict):
+                            room.spinner_params['min_word_length'] = actual_shortest
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['min_word_length'] = actual_shortest
+                        if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                            room.next_spinner_params['min_word_length'] = actual_shortest
+
                 room.total_words_count    = wc_cnt
                 room.initial_total_words  = wc_cnt
                 room.current_word_count_range = real_wc
+                if isinstance(room.spinner_params, dict):
+                    room.spinner_params['word_count_range'] = real_wc
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    room.frozen_revealed_params['word_count_range'] = real_wc
+                if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                    room.next_spinner_params['word_count_range'] = real_wc
 
                 # SUBANAGRAMS ACCURACY ENFORCEMENT: Format is Word Guaranteed ONLY if a max-length word exists
                 if getattr(room, 'game_type', None) == 'subanagrams':

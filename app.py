@@ -21,6 +21,7 @@ import base64
 import requests
 import re
 from db import get_db, get_db_connection, DB_PATH, execute_with_retry, init_db_indexes
+from spinner_set import SpinnerSet
 
 # Load environment variables from .env file
 try:
@@ -12473,6 +12474,16 @@ def get_tournament_game_state():
         board = board_raw.get('board')
         bonus_word = board_raw.get('bonus_word', '')
         all_words = board_raw.get('all_words', [])
+        if 'word_count_range' in board_raw:
+            params['word_count_range'] = board_raw['word_count_range']
+        elif all_words:
+            params['word_count_range'] = SpinnerSet.get_factchecked_wc_range(len(all_words), use_added_words=params.get('use_added_words', False), dictionary=params.get('dictionary', 'NWL'))
+        if 'min_word_length' in board_raw:
+            params['min_word_length'] = board_raw['min_word_length']
+        elif all_words:
+            actual_min = min(len(w) for w in all_words)
+            if actual_min > params.get('min_word_length', 3):
+                params['min_word_length'] = actual_min
     else:
         board = board_raw
         bonus_word = ''
@@ -12558,7 +12569,7 @@ def submit_tournament_score():
         bonus_len_target = params.get('bonus_word_length', 0)
 
     dict_name = params.get('dictionary', 'NWL')
-    min_len = params.get('min_word_length', 3)
+    min_len = (board_raw.get('min_word_length') if isinstance(board_raw, dict) and board_raw.get('min_word_length') else params.get('min_word_length', 3))
     use_aw = params.get('use_added_words', False)
     
     # LOAD DICTIONARY
@@ -12988,6 +12999,16 @@ def get_private_match_status(match_id):
     if r['word_count_range']:
         try:
             params['word_count_range'] = json.loads(r['word_count_range'])
+        except:
+            params['word_count_range'] = r['word_count_range']
+    if r['all_words']:
+        try:
+            aw_dict = json.loads(r['all_words'])
+            if aw_dict:
+                actual_min = min(len(w) for w in aw_dict.keys())
+                if actual_min > params.get('min_word_length', 3):
+                    params['min_word_length'] = actual_min
+                params['word_count_range'] = SpinnerSet.get_factchecked_wc_range(len(aw_dict), use_added_words=params.get('use_added_words', False), dictionary=params.get('dictionary', 'NWL'))
         except:
             pass
     if r['board_format']:

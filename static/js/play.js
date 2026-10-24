@@ -2877,7 +2877,9 @@ async function _doUpdateGameState(incomingState = null) {
             let headerText = 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
 
-            const factRange = (state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || 'Random';
+            const factRange = (state.state !== 'intermission' && state.current_word_count_range) 
+                ? state.current_word_count_range 
+                : ((state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || 'Random');
             if (activeWordsTab === 'remaining') headerText = `Remaining (${factRange})`;
             if (activeWordsTab === 'clues') headerText = `Clues (${factRange})`;
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
@@ -5608,14 +5610,16 @@ function updateParameters(state) {
     }
     const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
     const factBonus = useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0);
-    const factMinLen = useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3);
+    const factMinLen = (!isIntermission && state.current_min_length) ? state.current_min_length : (useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3));
     const rawDict = useSp ? (sp.dictionary || state.current_dictionary || 'NWL') : (state.current_dictionary || 'NWL');
     const useAW = useSp 
         ? (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || ''))
         : (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || ''));
     const cleanBaseDict = rawDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').replace(/ADDED_WORDS/i, '').trim() || 'NWL';
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
-    let rawWordRange = useSp ? (sp.word_count_range || state.current_word_count_range || 'Random') : (state.current_word_count_range || 'Random');
+    let rawWordRange = (!isIntermission && state.current_word_count_range) 
+        ? state.current_word_count_range 
+        : (useSp ? (sp.word_count_range || state.current_word_count_range || 'Random') : (state.current_word_count_range || 'Random'));
     if (Array.isArray(rawWordRange)) {
         rawWordRange = rawWordRange.join('-');
     } else {

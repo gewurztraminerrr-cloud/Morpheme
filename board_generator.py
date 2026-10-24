@@ -465,6 +465,16 @@ def pop_cached_board(param_key_str):
                 continue
             
             all_words = data["all_words"]
+            try:
+                pk_data = json.loads(param_key_str)
+                pk_min = int(pk_data.get('min_word_length', 3))
+            except:
+                pk_min = 3
+            matching_min_words = sum(1 for w in all_words if len(w) == pk_min)
+            if matching_min_words < 3:
+                print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {matching_min_words} words of length {pk_min} (needed >= 3)")
+                continue
+
             bonus_cell = tuple(data["bonus_cell"]) if data["bonus_cell"] else None
             board_format_ret = data["board_format_ret"]
             
@@ -2434,6 +2444,11 @@ class BoardGenerator:
                     or '+ AW' in dict_name_upper
                     or '+AW' in dict_name_upper
                 )
+                matching_min_cnt = sum(1 for w in all_words_dict if len(w) == min_word_length)
+                if matching_min_cnt < 3:
+                    print(f"[BoardGen] ATTEMPT {attempts}: Board has only {matching_min_cnt} words of length {min_word_length} (needed >= 3). Retrying...")
+                    continue
+
                 if is_aw_effective:
                     # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
                     is_compliant = (min_words <= count <= max_words)
@@ -3010,6 +3025,11 @@ class BoardGenerator:
                         print(f"[BoardGen] ❌ [Emergency] ATTEMPT {_attempt}: Board has forbidden 'ING' sequence on {achieved_diff} (target {difficulty}) board. Retrying...")
                         continue
             
+            matching_min_cnt = sum(1 for w in final_solve if len(w) == display_min)
+            if matching_min_cnt < 3 and _attempt < 50:
+                print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Board has only {matching_min_cnt} words of length {display_min} (needed >= 3). Retrying...")
+                continue
+
             if min_words <= count <= max_words or _attempt >= 50:
                 if min_words <= count <= max_words:
                     # USER REQUEST: Enforce uniqueness ratio match for the selected difficulty inside emergency loop too.

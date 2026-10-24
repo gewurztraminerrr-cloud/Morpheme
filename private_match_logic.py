@@ -375,7 +375,13 @@ class PrivateMatchManager:
         if 'bonus letter' not in f_low and 'either' not in f_low:
              bonus_cell = None
         
-        now = time.time()
+        # Fact check word count range & min word length
+        actual_wc = len(all_words_dict or all_words_on_board or [])
+        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
+        if all_words_on_board:
+            actual_min = min(len(w) for w in all_words_on_board)
+            if actual_min > min_len:
+                min_len = actual_min
 
         now = time.time()
         # Round-start time is when board is generated, but turn-timers start on client when they click Play.
@@ -390,7 +396,7 @@ class PrivateMatchManager:
             conn.execute('''
                 INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format, dictionary, difficulty)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(target_range), json.dumps(all_words_dict), now, end_time, target_format, dict_name, target_difficulty))
+            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(factual_range), json.dumps(all_words_dict), now, end_time, target_format, dict_name, target_difficulty))
         except Exception as e:
             print(f"FAILED TO INSERT ROUND: {e}")
             print(f"DEBUG LOCALS: board={ 'board' in locals() }, bonus_cell={ 'bonus_cell' in locals() }, target_format={ 'target_format' in locals() }")

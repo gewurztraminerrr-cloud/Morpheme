@@ -348,6 +348,15 @@ class TournamentManager:
             
         bonus_word = final_bonus_word
         
+        # Fact check word count range & min word length
+        actual_wc = len(all_words_on_board or [])
+        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=params.get('use_added_words', False), dictionary=dict_name)
+        factual_min = params.get('min_word_length', 3)
+        if all_words_on_board:
+            actual_min = min(len(w) for w in all_words_on_board)
+            if actual_min > factual_min:
+                factual_min = actual_min
+
         now = time.time()
         # Allow turn duration override from parameters
         turn_dur = params.get('turn_duration', self.turn_duration)
@@ -368,7 +377,9 @@ class TournamentManager:
             'all_words': all_words_on_board,
             'bonus_cell': bonus_cell,
             'board_format': target_format,
-            'uniqueness_ratio': uniqueness_ratio
+            'uniqueness_ratio': uniqueness_ratio,
+            'word_count_range': factual_range,
+            'min_word_length': factual_min
         })))
         
         # 4. Generate Matchups for this round

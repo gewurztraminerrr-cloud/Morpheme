@@ -97,7 +97,7 @@ class SpinnerSet:
             return res
             
         p = dict(res)
-        dims = str(board_dimensions).lower().replace(" ", "")
+        dims = str(p.get('board_dimensions') or board_dimensions).lower().replace(" ", "")
         
         # Normalize word_count_range string format
         wc = p.get('word_count_range')
@@ -151,29 +151,29 @@ class SpinnerSet:
 
         wc_range = p.get('word_count_range')
         if is_aw_effective:
-            if wc_range not in ['300-400', '400-500', '500+']:
+            if wc_range not in ['100-200', '200-300', '300-400', '400-500', '500+']:
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
             if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
                 wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
             
-            # Enforce physical achievable ceiling caps per min_word_length on standard dictionaries
-            if min_word_length >= 8:
-                if wc_range in ['200-300', '300-400', '400-500', '500+']:
-                    wc_range = '100-200'
-            elif min_word_length >= 7:
-                if wc_range in ['300-400', '400-500', '500+']:
-                    wc_range = '200-300'
-            elif min_word_length >= 6:
-                if wc_range in ['400-500', '500+']:
-                    wc_range = '200-300'
+        # Enforce physical achievable ceiling caps per min_word_length universally across dictionaries
+        if min_word_length >= 8:
+            if wc_range in ['200-300', '300-400', '400-500', '500+']:
+                wc_range = '100-200'
+        elif min_word_length >= 7:
+            if wc_range in ['300-400', '400-500', '500+']:
+                wc_range = '200-300'
+        elif min_word_length >= 6:
+            if wc_range in ['400-500', '500+']:
+                wc_range = '300-400' if is_aw_effective else '200-300'
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
 
         if is_24h:
             p['board_format'] = 'Valued Letters'
-            p['word_count_range'] = '300-400'
+            p['word_count_range'] = '200-300'
             p['use_added_words'] = False
             clean_dict = str(p.get('dictionary', 'CSW')).replace('+ AW', '').replace('+AW', '').replace('ADDED_WORDS', '').replace('AW', '').strip()
             if clean_dict not in ['NWL', 'CSW']:
@@ -291,12 +291,37 @@ class SpinnerSet:
     @staticmethod
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions, use_added_words=False):
         d_upper = str(dictionary).upper()
-        if use_added_words or "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
-            choices = ['300-400', '400-500', '500+']
-            weights = [40, 40, 20]
+        is_aw = use_added_words or "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper
+        try:
+            mwl = int(min_word_length)
+        except:
+            mwl = 3
+        if is_aw:
+            if mwl >= 8:
+                choices = ['100-200']
+                weights = [100]
+            elif mwl >= 7:
+                choices = ['200-300']
+                weights = [100]
+            elif mwl >= 6:
+                choices = ['200-300', '300-400']
+                weights = [50, 50]
+            else:
+                choices = ['300-400', '400-500', '500+']
+                weights = [40, 40, 20]
         else:
-            choices = ['50-100', '100-200', '200-300', '300-400']
-            weights = [10, 30, 30, 30]
+            if mwl >= 8:
+                choices = ['50-100', '100-200']
+                weights = [50, 50]
+            elif mwl >= 7:
+                choices = ['100-200', '200-300']
+                weights = [50, 50]
+            elif mwl >= 6:
+                choices = ['100-200', '200-300']
+                weights = [40, 60]
+            else:
+                choices = ['50-100', '100-200', '200-300', '300-400']
+                weights = [10, 30, 30, 30]
         return random.choices(choices, weights=weights)[0]
     
     @staticmethod
@@ -368,3 +393,21 @@ class SpinnerSet:
             'bonus_word_length': 0,
             'generated_at': time.time()
         }
+
+    @staticmethod
+    def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
+        """Map actual word count to the exact corresponding standard range bucket.
+           Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
+        """
+        try:
+            count = int(count)
+        except (ValueError, TypeError):
+            count = 0
+            
+        if count >= 500: return '500+'
+        if count >= 400: return '400-500'
+        if count >= 300: return '300-400'
+        if count >= 200: return '200-300'
+        if count >= 100: return '100-200'
+        return '50-100'
+
