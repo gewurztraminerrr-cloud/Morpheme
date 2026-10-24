@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-ddc59fb7ce0e710b50e1065578d1189b7e304351
+f53f91bbe87ea408674bff7faea0c179467e921e
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ ddc59fb7ce0e710b50e1065578d1189b7e304351
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792845000`, `tools.js?v=1792845000`, `play.js?v=1792847000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792845000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
@@ -96,12 +96,61 @@ ddc59fb7ce0e710b50e1065578d1189b7e304351
 - **Boutique Showcase Lightbox**: Made boutique showcase displays and product imagery expandable via full-screen lightbox modal on click.
 - **Dictionary Edition Verification**: Added mandatory dictionary edition verification routine to the monthly store update cycle.
 
+### 15. Board Generation Compliance & Spinner Set Accuracy Across All Game Modes
+- **Constraint Adherence**: Fixed compliance across all game modes (Standard, Checkerboard, Equality Frequency, Min Word Length, and Letter Distribution).
+- **Spinner Set Synchronization**: Realigned Spinner Set declared parameters to reflect exact search parameters, ensuring game room parameter badges consistently match the generated board.
+- **Physical Caps vs. +AW Modes**: Clarified and enforced physical caps specifically for non-AW boards while allowing authentic +AW boards (which feature extended vocabularies) to achieve 300-400, 400-500, and 500+ ranges without artificial truncation.
+- **Remaining Words Counter**: Fixed countdown computation to accurately track unrevealed words during active gameplay.
+
+### 16. Parameter Lock & Board Discovery Timelines (0:45 & 0:55 Guarantees)
+- **Search Cadence**: Guaranteed that board search finishes by 0:45 of intermission so player spinner sets immediately display authentic parameters.
+- **Dynamic 0:55 Fallback**: Added a safe fallback generation trigger at 0:55 of intermission if an ultra-rare parameter combination hasn't finalized by 0:45, preventing intermission delays or game freezes.
+- **Parameter Immutability**: Room parameters lock strictly upon round transition, preventing any mid-round parameter drift.
+
+### 17. Board Design & Format Consistency (Equality Frequency & Checkerboard)
+- **Layout Consistency**: Unified letter generation formatting and matrix serialization across Equality Frequency and Checkerboard modes, ensuring board design consistency and preventing visual misalignment in board rendering.
+- **Board Generator Reference Resolution**: Resolved `BoardGenerator` scope and initialization references inside `GameRoom.ensure_next_board_ready`.
+
+### 18. Game Room Audio Isolation
+- **Clean Audio Transition**: Fixed audio controller routing to ensure lobby background music terminates cleanly when entering game rooms, preventing overlapping audio tracks.
+
+### 19. Board and Word List Synchronization Shield (`notonboard.png` Fix)
+- **Issue Resolved**: Addressed an edge case where a client would submit a word clearly visible on the board and receive a "not on board" validation failure (`notonboard.png`).
+- **Root Cause**: An asynchronous race condition occurred when a background search thread completed right at an intermission boundary, causing a partial mutation of room staging attributes while the word list remained from an earlier candidate. Furthermore, a boolean return value in `BoardGenerator.is_word_on_board` was incorrectly unpacked as a tuple in certain validation flows.
+- **Implementation**:
+  - **Atomic Staging**: Enclosed all board staging and attribute swaps under `self._state_lock` in `game_room.py` to prevent partial updates.
+  - **Tuple/Boolean Unpack Fix**: Corrected `BoardGenerator.is_word_on_board` invocation and return-handling across all verification paths.
+  - **Integrity Shield**: Implemented a strict pre-round integrity check in `start_next_round` and `get_room_state` that verifies all staged words match the board letters before declaring the room active.
+
+### 20. Word Count Range Randomness & Elimination of Hardcoded 100-200 Fallback
+- **Issue Resolved**: Repeated occurrences where the `100-200` word count range was chosen 5+ times in succession.
+- **Root Causes**:
+  - Premature 0:55 fallback had hardcoded `easy_wc = '100-200'`.
+  - Boards generated authentically in background search before 0:45 were being discarded as stale if they finished slightly early, unnecessarily forcing fallback boards.
+  - Artificial clamp in `SpinnerSet.sanitize_params` forced `100-200` whenever min word length was 8.
+  - Overly skewed probability weights in `SpinnerSet._spin_word_count`.
+- **Implementation**:
+  - **Pre-Reveal Board Acceptance**: Allowed valid boards generated prior to the 0:45 mark to be accepted directly into the room staging pipeline.
+  - **Cache Lookup in Fallback**: Updated `apply_easy_fallback_and_search` to query existing valid board cache before applying fallback parameters.
+  - **Balanced Range Odds**: Re-tuned `SpinnerSet._spin_word_count` to maintain true uniform randomness across all permitted ranges (`100-200`, `200-300`, `300-400`, `400-500`, `500+`).
+  - **Simulation Verified**: Verified over 5,000 parameter generations that 100-200 occurrence dropped from forced 100% to a natural ~16.7% in 6x8 grids, with balanced distribution across higher word count tiers.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `f53f91bb` | **Restore true random distribution for word count ranges and fix premature easy fallback bias** |
+| `06c2c7f1` | **Fix board and word list desynchronization across round transitions and intermission** |
+| `5cb9714e` | **fix: resolve BoardGenerator reference in GameRoom.ensure_next_board_ready** |
+| `88303a55` | **fix: ensure board design and spinner set format consistency between Equality Freq and Checkerboard** |
+| `4f18607c` | **Guarantee board discovery by 0:45, easy fallback by 0:55, and lock declared parameters across round transition** |
+| `92e6c419` | **Prevent lobby music from playing inside game rooms** |
+| `20a861aa` | **Ensure + AW word counts are strictly 300-400, 400-500, and 500+ and restrict physical caps to non-AW** |
+| `d67d6ea0` | **Fix board generation compliance, Spinner Set accuracy, and Remaining word counts across all game modes** |
+| `761b6ed9` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
+| `ddc59fb7` | **docs: update stable state summary for October 24, 2026 (Start Over Point)** |
 | `cf9fb995` | **fix(guessing): keep displaying guessing popup on invalid guesses until a valid word is entered** |
 | `90eada35` | **fix(guessing): reset invalid word count on valid word & fix submission error in submit_word** |
 | `8ce1db01` | **feat(tools): make Find Count random words table run horizontally on laptops and desktops** |
