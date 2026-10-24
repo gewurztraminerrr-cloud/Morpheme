@@ -1830,7 +1830,9 @@ class GameRoom:
         e_format = source_sp.get('board_format', 'Normal')
         e_dict = source_sp.get('dictionary', 'NWL')
         e_use_aw = source_sp.get('use_added_words', False)
-        e_wc = source_sp.get('word_count_range', '100-200')
+        e_wc = source_sp.get('word_count_range')
+        if not e_wc:
+            e_wc = SpinnerSet._spin_word_count(e_dict, 6 if '6x8' in str(self.board_dimensions) else 3, 'Medium', self.board_dimensions, use_added_words=e_use_aw)
         
         e_min_len = source_sp.get('min_word_length')
         e_diff = source_sp.get('difficulty', 'Medium')
@@ -5495,7 +5497,7 @@ class RoomManager:
                 room.spinner_params_loading = False
 
     def apply_easy_fallback_and_search(self, room_id):
-        """If by 0:55 during intermission the board has not been found, change the parameters to an easy configuration and use that one."""
+        """If by 0:55 during intermission the board has not been found, grab a pregenerated board or use an easy configuration."""
         room = self.get_room(room_id)
         if not room:
             return
@@ -5504,10 +5506,83 @@ class RoomManager:
             if getattr(room, 'next_round_board', None):
                 return
             
-            print(f"[RoomManager] At 0:55 intermission: board not found for {room_id}. Switching parameters to Easy configuration.")
+            print(f"[RoomManager] At 0:55 intermission: board not yet staged for {room_id}. Consulting pregenerated cache...")
             now = time.time()
-            base_dict = 'CSW' if 'CSW' in str(room.current_dictionary).upper() else 'NWL'
             dims = room.board_dimensions
+
+            # 1. First, consult pregenerated boards for an instant board grab
+            from board_generator import pop_compatible_cached_board, pop_any_cached_board
+            
+            cur_p = dict(room.next_spinner_params) if getattr(room, 'next_spinner_params', None) else {}
+            target_dict = cur_p.get('dictionary', 'NWL')
+            target_fmt = cur_p.get('board_format', 'Normal')
+            target_min = cur_p.get('min_word_length', 3)
+            use_aw = cur_p.get('use_added_words', False) or '+ AW' in str(target_dict).upper() or '+AW' in str(target_dict).upper()
+            bw_len = cur_p.get('bonus_word_length')
+            
+            cached_candidate = None
+            try:
+                # Try compatible match with spun parameters
+                cached_candidate = pop_compatible_cached_board(dims, target_dict, target_fmt, target_min, use_aw, bonus_word_len=bw_len)
+                if not cached_candidate:
+                    # Try any cached board for these dimensions and format
+                    cached_candidate = pop_any_cached_board(dims, min_word_length=target_min, target_format=target_fmt)
+                if not cached_candidate:
+                    # Try any cached board for these dimensions
+                    cached_candidate = pop_any_cached_board(dims)
+            except Exception as pop_err:
+                print(f"[RoomManager] Error popping pregenerated board in easy fallback: {pop_err}")
+
+            if cached_candidate:
+                c_board, c_words, c_bonus_cell, c_format_ret, c_paths, c_ratio, c_bonus_word, c_params = cached_candidate
+                actual_cnt = len(c_words)
+                c_use_aw = bool(c_params.get('use_added_words', False)) if c_params else use_aw
+                actual_wc_range = self._get_factchecked_wc_range(actual_cnt, use_added_words=c_use_aw)
+                c_min_len = c_params.get('min_word_length', target_min) if c_params else target_min
+                if c_words:
+                    real_min = min(len(w) for w in c_words)
+                    c_min_len = max(c_min_len, real_min)
+                
+                c_dict = c_params.get('dictionary', target_dict) if c_params else target_dict
+                if c_use_aw and '+ AW' not in str(c_dict) and '+AW' not in str(c_dict):
+                    c_dict = f"{c_dict} + AW"
+
+                staged_params = {
+                    'difficulty': c_params.get('difficulty', 'Easy') if c_params else 'Easy',
+                    'dictionary': c_dict,
+                    'board_format': c_format_ret or 'Normal',
+                    'min_word_length': c_min_len,
+                    'word_count_range': actual_wc_range,
+                    'bonus_word_length': len(c_bonus_word) if c_bonus_word else 6,
+                    'use_added_words': c_use_aw,
+                    'board_dimensions': dims,
+                    'time_limit': room.time_limit,
+                    'generated_at': now
+                }
+                staged_params = SpinnerSet.sanitize_params(staged_params, dims, room.time_limit >= 7200)
+
+                room.next_round_board = c_board
+                room.next_round_words = c_words
+                room.next_round_word_paths = c_paths
+                room.next_round_bonus_cell = c_bonus_cell
+                room.next_round_bonus = c_bonus_word
+                room.next_round_format = c_format_ret
+                room.next_round_uniqueness = c_ratio
+                room.next_round_total_words_count = actual_cnt
+
+                room.next_spinner_params = dict(staged_params)
+                room.next_round_spinner_params = dict(staged_params)
+                if not getattr(room, '_spinner_params_locked', False):
+                    room.spinner_params = dict(staged_params)
+                room.next_round_min_length = c_min_len
+                room.board_search_loading = False
+                room.board_search_started_actual = False
+                room.solving_complete = True
+                print(f"[RoomManager] Popped pregenerated cache board for {room_id} ({actual_cnt} words, range={actual_wc_range}, format={c_format_ret})")
+                return
+
+            # 2. If pregenerated cache had no board, generate easy fallback with randomized word count range
+            base_dict = 'CSW' if 'CSW' in str(room.current_dictionary).upper() else 'NWL'
             if dims in ['3x3', '4x4', '4x3', '3x4']:
                 easy_min = 3
             elif dims in ['5x5', '4x6']:
@@ -5515,7 +5590,11 @@ class RoomManager:
             else:
                 easy_min = 5
                 
-            easy_wc = '200-300' if room.time_limit >= 7200 else '100-200'
+            # Randomize word count range according to Odds Window probabilities (never hardcode 100-200!)
+            if room.time_limit >= 7200:
+                easy_wc = '200-300'
+            else:
+                easy_wc = SpinnerSet._spin_word_count(base_dict, easy_min, 'Easy', dims, use_added_words=False)
             
             easy_params = {
                 'difficulty': 'Easy',
@@ -5540,7 +5619,7 @@ class RoomManager:
             room.board_search_started_actual = False
             room.board_search_loading = False
             
-        print(f"[RoomManager] Triggering instant easy board retrieval for {room_id}...")
+        print(f"[RoomManager] Triggering instant easy board retrieval for {room_id} (target_range={easy_wc})...")
         room.ensure_next_board_ready()
 
     def check_6x8_rescue(self, room):
@@ -5587,8 +5666,10 @@ class RoomManager:
                 # Determine min_accept and target min_word_length
                 e_format = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
                 e_dict = room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL'
-                e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
                 e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
+                e_wc = room.spinner_params.get('word_count_range') if room.spinner_params else None
+                if not e_wc:
+                    e_wc = SpinnerSet._spin_word_count(e_dict, 6 if '6x8' in str(room.board_dimensions) else 3, 'Medium', room.board_dimensions, use_added_words=e_use_aw)
                 e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                 e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                 try:
@@ -5643,7 +5724,9 @@ class RoomManager:
                     e_format = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
                     e_dict = room.spinner_params.get('dictionary', 'NWL') if room.spinner_params else 'NWL'
                     e_use_aw = room.spinner_params.get('use_added_words', False) if room.spinner_params else False
-                    e_wc = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                    e_wc = room.spinner_params.get('word_count_range') if room.spinner_params else None
+                    if not e_wc:
+                        e_wc = SpinnerSet._spin_word_count(e_dict, 6 if '6x8' in str(room.board_dimensions) else 3, 'Medium', room.board_dimensions, use_added_words=e_use_aw)
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                     e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     cached_res = get_emergency_fallback_board(
@@ -6189,7 +6272,13 @@ class RoomManager:
 
                     # STALE PARAMETERS CHECK:
                     # If parameters have been re-spun/changed since this search started, discard BEFORE mutating any room attributes!
+                    # CRITICAL: Only discard if parameters have already been revealed and locked to the player at 0:45.
+                    # Before reveal (while wheels are still spinning), an authentically generated board takes precedence over a preliminary fallback.
                     if launched_generated_at is not None:
+                        is_locked_or_revealed = (
+                            getattr(target_room, '_spinner_params_locked', False)
+                            or getattr(target_room, 'spinner_params_revealed', False)
+                        )
                         curr_generated_at = None
                         if target_room and getattr(target_room, 'next_spinner_params', None):
                             curr_generated_at = target_room.next_spinner_params.get('generated_at')
@@ -6201,9 +6290,11 @@ class RoomManager:
                                 if str(curr_params.get(key)) != str(params.get(key)):
                                     config_changed = True
                                     break
-                            if config_changed:
-                                print(f"[RoomManager] Stale board search discarded for {room_id} because parameters were re-spun (launched: {launched_generated_at}, current: {curr_generated_at})")
+                            if config_changed and is_locked_or_revealed:
+                                print(f"[RoomManager] Stale board search discarded for {room_id} because parameters were already revealed/locked to player (launched: {launched_generated_at}, current: {curr_generated_at})")
                                 return
+                            elif config_changed:
+                                print(f"[RoomManager] Parameters re-spun before reveal for {room_id}; accepting freshly generated authentic board (launched: {launched_generated_at}, current: {curr_generated_at})")
                             else:
                                 print(f"[RoomManager] Parameter timestamps drifted by {time_drift:.4f}s but configuration is identical. Keeping board.")
 
@@ -6880,7 +6971,9 @@ class RoomManager:
                     e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
                     e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                     e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
-                    e_target_range = room.spinner_params.get('word_count_range', '100-200') if room.spinner_params else '100-200'
+                    e_target_range = room.spinner_params.get('word_count_range') if room.spinner_params else None
+                    if not e_target_range:
+                        e_target_range = random.choice(['100-200', '200-300', '300-400'])
                     # Use the always-instant emergency fallback (cache → pre-built). Never blocks.
                     e_fallback = get_emergency_fallback_board(
                         room.board_dimensions, e_fmt_target, room.time_limit,

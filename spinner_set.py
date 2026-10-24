@@ -150,23 +150,28 @@ class SpinnerSet:
             if min_word_length > 8: min_word_length = 8
 
         wc_range = p.get('word_count_range')
+        max_len_for_dims = 5 if '4x4' in dims else (6 if '4x6' in dims else (7 if '5x7' in dims else 8))
         if is_aw_effective:
             if wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
             if not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '400-500', '500+']:
-                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
-            
+                if min_word_length == max_len_for_dims:
+                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
+                else:
+                    wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
+
+            # 50-100 Words is strictly restricted to greatest min-length
+            if wc_range == '50-100' and min_word_length < max_len_for_dims:
+                wc_range = random.choices(['100-200', '200-300', '300-400'], weights=[33, 34, 33])[0]
+
             # Enforce physical achievable ceiling caps per min_word_length strictly for standard dictionaries (non-AW)
             if min_word_length >= 8:
-                if wc_range in ['200-300', '300-400', '400-500', '500+']:
-                    wc_range = '100-200'
-            elif min_word_length >= 7:
                 if wc_range in ['300-400', '400-500', '500+']:
-                    wc_range = '200-300'
-            elif min_word_length >= 6:
+                    wc_range = random.choices(['100-200', '200-300'], weights=[50, 50])[0]
+            elif min_word_length >= 7:
                 if wc_range in ['400-500', '500+']:
-                    wc_range = '200-300'
+                    wc_range = random.choices(['200-300', '300-400'], weights=[50, 50])[0]
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
@@ -226,7 +231,11 @@ class SpinnerSet:
             elif is_aw_effective:
                 wc_range = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             else:
-                wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
+                max_len_for_dims = 5 if '4x4' in dims else (6 if '4x6' in dims else (7 if '5x7' in dims else 8))
+                if min_word_length == max_len_for_dims:
+                    wc_range = random.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
+                else:
+                    wc_range = random.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
             # 5. Board Format
             board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
@@ -298,21 +307,25 @@ class SpinnerSet:
             mwl = 3
         if is_aw:
             choices = ['300-400', '400-500', '500+']
-            weights = [40, 40, 20]
+            weights = [33, 33, 34]
+            return random.choices(choices, weights=weights)[0]
         else:
+            dims = str(board_dimensions).lower().replace(" ", "")
+            max_len = 5 if '4x4' in dims else (6 if '4x6' in dims else (7 if '5x7' in dims else 8))
             if mwl >= 8:
-                choices = ['50-100', '100-200']
-                weights = [50, 50]
+                choices = ['50-100', '100-200', '200-300']
+                weights = [20, 40, 40]
             elif mwl >= 7:
-                choices = ['100-200', '200-300']
-                weights = [50, 50]
-            elif mwl >= 6:
-                choices = ['100-200', '200-300']
-                weights = [40, 60]
+                choices = ['100-200', '200-300', '300-400']
+                weights = [33, 34, 33]
+            elif mwl == max_len:
+                # Highest min-length for 4x4 (5L), 4x6 (6L), 5x7 (7L)
+                choices = ['50-100', '100-200', '200-300', '300-400', '500+']
+                weights = [9, 30, 30, 30, 1]
             else:
-                choices = ['50-100', '100-200', '200-300', '300-400']
-                weights = [10, 30, 30, 30]
-        return random.choices(choices, weights=weights)[0]
+                choices = ['100-200', '200-300', '300-400', '500+']
+                weights = [33, 33, 33, 1]
+            return random.choices(choices, weights=weights)[0]
     
     @staticmethod
     def _spin_dictionary():
