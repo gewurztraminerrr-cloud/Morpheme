@@ -11262,30 +11262,205 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
 /* Mobile Responsive Adjustments for Words to Work on */
 @media (max-width: 992px), (pointer: coarse) {
+    #page-tools .tools-content:has(#tool-work-on.active),
+    #page-tools .tools-content.has-work-on-active,
+    body.is-mobile #page-tools .tools-content:has(#tool-work-on.active),
+    body.is-mobile #page-tools .tools-content.has-work-on-active {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 6px 10px 4px 10px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+    }
+
+    #page-tools #tool-work-on.tool-pane.active,
+    body.is-mobile #page-tools #tool-work-on.tool-pane.active,
     #tool-work-on {
-        overflow-y: auto !important;
-        padding-bottom: 30px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        padding-bottom: 0 !important;
     }
 
-    #tool-work-on .list-scroll-area-wrapper {
-        height: 440px !important;
-        min-height: 440px !important;
-        max-height: 440px !important;
+    #tool-work-on .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 4px !important;
+        padding: 0 !important;
     }
 
-    #tool-work-on #work-on-table-scroll {
-        height: 440px !important;
-        min-height: 440px !important;
-        max-height: 440px !important;
+    #tool-work-on .tool-header h2 {
+        display: none !important;
+    }
+
+    #tool-work-on .tool-header p {
+        margin: 0 0 4px 0 !important;
+        padding: 4px 8px !important;
+        font-size: 0.74rem !important;
+        line-height: 1.25 !important;
+        max-height: 48px !important;
+    }
+
+    #tool-work-on .work-on-input-panel {
+        flex: 0 0 auto !important;
+        padding: 8px 10px !important;
+        margin-bottom: 6px !important;
+        border-radius: 8px !important;
+    }
+
+    #tool-work-on .work-on-input-panel > div {
+        gap: 6px !important;
+    }
+
+    #tool-work-on input#work-on-input {
+        padding: 8px 12px !important;
+        font-size: 0.95rem !important;
+    }
+
+    #tool-work-on .work-on-input-panel button {
+        padding: 8px 12px !important;
+        font-size: 0.9rem !important;
+        height: 36px !important;
+    }
+
+    #tool-work-on .work-on-control-bar {
+        flex: 0 0 auto !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 4px !important;
+        margin-bottom: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 0 2px !important;
+    }
+
+    #tool-work-on .work-on-controls-group {
+        display: flex !important;
+        width: 100% !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-work-on select#work-on-dict-filter,
+    #tool-work-on .work-on-select {
+        flex: 1 1 0% !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        height: 32px !important;
+        padding: 4px 8px !important;
+        font-size: 0.8rem !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
+        text-align-last: center !important;
+    }
+
+    #tool-work-on button#work-on-clear-btn,
+    #tool-work-on .work-on-clear-button {
+        flex: 1 1 0% !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        height: 32px !important;
+        padding: 4px 8px !important;
+        font-size: 0.8rem !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    #tool-work-on #work-on-total-count,
+    #tool-work-on .work-on-counter {
+        width: 100% !important;
+        font-size: 0.82rem !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+        align-self: center !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
+
+    #tool-work-on .work-on-table-card {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
     }
 
     #tool-work-on .work-on-table-header {
-        height: 38px !important;
-        min-height: 38px !important;
-        max-height: 38px !important;
+        flex: 0 0 auto !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
         padding: 0 20px 0 10px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+    }
+
+    #tool-work-on .list-scroll-area-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #tool-work-on #work-on-table-scroll {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    #tool-work-on #work-on-table-scroll::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    #tool-work-on #work-on-scrollbar-track {
+        display: block !important;
+        position: absolute !important;
+        right: 4px !important;
+        top: 4px !important;
+        bottom: 4px !important;
+        width: 8px !important;
+        background: rgba(var(--text-primary-rgb), 0.08) !important;
+        border-radius: 4px !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        z-index: 50 !important;
+    }
+
+    #tool-work-on #work-on-scrollbar-thumb {
+        position: absolute !important;
+        top: 0 !important;
+        left: 1px !important;
+        width: 6px !important;
+        min-height: 24px !important;
+        background: linear-gradient(180deg, #a78bfa, #7c3aed) !important;
+        border-radius: 3px !important;
+        border: 1px solid rgba(167, 139, 250, 0.85) !important;
+        touch-action: none !important;
     }
 
     #tool-work-on .work-on-row {
@@ -11327,51 +11502,6 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
         font-size: 0.72rem !important;
         line-height: 1.15 !important;
         white-space: nowrap !important;
-    }
-
-    #tool-work-on .work-on-control-bar {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 12px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 0 2px !important;
-    }
-
-    #tool-work-on .work-on-controls-group {
-        display: flex !important;
-        width: 100% !important;
-        gap: 10px !important;
-        box-sizing: border-box !important;
-    }
-
-    #tool-work-on select#work-on-dict-filter,
-    #tool-work-on .work-on-select {
-        flex: 1 1 0% !important;
-        width: 0 !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        text-align: center !important;
-        text-align-last: center !important;
-    }
-
-    #tool-work-on button#work-on-clear-btn,
-    #tool-work-on .work-on-clear-button {
-        flex: 1 1 0% !important;
-        width: 0 !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        white-space: nowrap !important;
-        text-align: center !important;
-    }
-
-    #tool-work-on #work-on-total-count,
-    #tool-work-on .work-on-counter {
-        width: 100% !important;
-        text-align: center !important;
-        align-self: center !important;
-        margin: 0 auto !important;
-        display: block !important;
     }
 }
 
@@ -11433,9 +11563,11 @@ body.is-mobile #tool-work-on .work-on-badge {
 }
 
 body.is-mobile #tool-work-on .work-on-control-bar {
+    flex: 0 0 auto !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 12px !important;
+    gap: 4px !important;
+    margin-bottom: 6px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 0 2px !important;
@@ -11444,7 +11576,7 @@ body.is-mobile #tool-work-on .work-on-control-bar {
 body.is-mobile #tool-work-on .work-on-controls-group {
     display: flex !important;
     width: 100% !important;
-    gap: 10px !important;
+    gap: 8px !important;
     box-sizing: border-box !important;
 }
 
@@ -11453,6 +11585,9 @@ body.is-mobile #tool-work-on .work-on-select {
     flex: 1 1 0% !important;
     width: 0 !important;
     min-width: 0 !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+    font-size: 0.8rem !important;
     box-sizing: border-box !important;
     text-align: center !important;
     text-align-last: center !important;
@@ -11463,6 +11598,9 @@ body.is-mobile #tool-work-on .work-on-clear-button {
     flex: 1 1 0% !important;
     width: 0 !important;
     min-width: 0 !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+    font-size: 0.8rem !important;
     box-sizing: border-box !important;
     white-space: nowrap !important;
     text-align: center !important;
@@ -11471,6 +11609,8 @@ body.is-mobile #tool-work-on .work-on-clear-button {
 body.is-mobile #tool-work-on #work-on-total-count,
 body.is-mobile #tool-work-on .work-on-counter {
     width: 100% !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
     text-align: center !important;
     align-self: center !important;
     margin: 0 auto !important;

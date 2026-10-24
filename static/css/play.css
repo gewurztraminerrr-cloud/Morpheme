@@ -12274,7 +12274,9 @@ body .board-cell.tile-flash-purple * {
 body.is-mobile #page-tools .tools-content:has(#tool-lists.active),
 body.is-mobile #page-tools .tools-content.has-lists-active,
 body.is-mobile #page-tools .tools-content:has(#tool-new-users.active),
-body.is-mobile #page-tools .tools-content.has-new-users-active {
+body.is-mobile #page-tools .tools-content.has-new-users-active,
+body.is-mobile #page-tools .tools-content:has(#tool-work-on.active),
+body.is-mobile #page-tools .tools-content.has-work-on-active {
     display: flex !important;
     flex-direction: column !important;
     overflow-y: hidden !important;
@@ -12285,18 +12287,21 @@ body.is-mobile #page-tools .tools-content.has-new-users-active {
     min-height: 0 !important;
 }
 
-body.is-mobile #page-tools #new-users-table-scroll {
+body.is-mobile #page-tools #new-users-table-scroll,
+body.is-mobile #page-tools #work-on-table-scroll {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
 
-body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar {
+body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar,
+body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
 }
 
-body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb {
+body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb,
+body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
     display: none !important;
 }
 
