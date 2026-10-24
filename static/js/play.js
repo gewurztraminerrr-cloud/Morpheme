@@ -2080,19 +2080,29 @@ async function _doUpdateGameState(incomingState = null) {
             const chatInput = document.getElementById('chat-input');
             const isMobile = window.innerWidth <= 992;
             
-            // User Request: Prevent ALL users from spillover chatting for 2s (Skip for mobile!)
-            if (chatInput && !isMobile) {
+            // User Request: Prevent ALL users from spillover chatting for 2s
+            if (chatInput) {
+                if (!chatInput.hasAttribute('data-original-placeholder') || (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled'))) {
+                    chatInput.setAttribute('data-original-placeholder', (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled')) ? chatInput.placeholder : 'Say something...');
+                }
+                const defaultPlaceholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
+
                 chatInput.disabled = true;
-                const originalPlaceholder = chatInput.placeholder;
-                chatInput.placeholder = "Chat disabled for 2s...";
-                
+                chatInput.placeholder = "Chat disabled for 2 seconds...";
+                if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
+                    chatInput.value = '';
+                }
+
                 if (window.chatFocusTimeout) clearTimeout(window.chatFocusTimeout);
                 window.chatFocusTimeout = setTimeout(() => {
                     chatInput.disabled = false;
-                    chatInput.placeholder = originalPlaceholder || "Type message...";
+                    chatInput.placeholder = defaultPlaceholder;
+                    window.chatFocusTimeout = null;
                     // Ensure we are still in intermission before stealing focus from potentially new round input
                     if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                        chatInput.focus();
+                        if (!isMobile) {
+                            chatInput.focus();
+                        }
                     }
                 }, 2000);
             }
@@ -2772,6 +2782,15 @@ async function _doUpdateGameState(incomingState = null) {
                 if (window.chatFocusTimeout) {
                     clearTimeout(window.chatFocusTimeout);
                     window.chatFocusTimeout = null;
+                }
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) {
+                    chatInput.disabled = false;
+                    const defaultPlaceholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
+                    chatInput.placeholder = defaultPlaceholder;
+                    if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
+                        chatInput.value = '';
+                    }
                 }
                 
                 setTimeout(() => {
@@ -4253,6 +4272,18 @@ window.sendChatMessage = sendChatMessage;
 // Initialize Play DOM elements and listeners
 function initPlayDOMElements() {
     const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        if (!chatInput.hasAttribute('data-original-placeholder')) {
+            chatInput.setAttribute('data-original-placeholder', (chatInput.placeholder && !chatInput.placeholder.startsWith('Chat disabled')) ? chatInput.placeholder : 'Say something...');
+        }
+        if (chatInput.placeholder && chatInput.placeholder.startsWith('Chat disabled')) {
+            chatInput.disabled = false;
+            chatInput.placeholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
+        }
+        if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
+            chatInput.value = '';
+        }
+    }
     const chatSend = document.getElementById('chat-send-btn');
     const chatPanel = document.querySelector('.chat-panel');
     const leftPanelContainer = document.querySelector('.left-panel-container');

@@ -2254,6 +2254,19 @@ window.showPage = showPage;
         handleLobbyMusicState();
     }
 
+    if (pageId === 'page-play') {
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput && !window.chatFocusTimeout) {
+            if (chatInput.placeholder && chatInput.placeholder.startsWith('Chat disabled')) {
+                chatInput.disabled = false;
+                chatInput.placeholder = chatInput.getAttribute('data-original-placeholder') || 'Say something...';
+            }
+            if (chatInput.value && chatInput.value.startsWith('Chat disabled')) {
+                chatInput.value = '';
+            }
+        }
+    }
+
     // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds and subanagrams)
     const isTournament = (pageId === 'page-play') && (window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     document.body.classList.toggle('is-tournament-round', !!isTournament);
