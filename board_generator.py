@@ -243,7 +243,7 @@ def mark_board_hash_used(board_hash, conn=None):
         return True
 
 
-def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
+def pop_any_cached_board(dimensions, min_word_length=3, target_format='Normal', exclude_format=None):
     if isinstance(dimensions, (tuple, list)):
         if len(dimensions) == 3:
             dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
@@ -262,16 +262,30 @@ def pop_any_cached_board(dimensions, min_word_length=3, exclude_format=None):
         
         while True:
             dim_pattern = f'%"dimensions": "{dimensions}"%'
-            if exclude_format and str(exclude_format).lower() != 'normal':
-                clean_ex = str(exclude_format).split()[0].strip()
-                fmt_pattern = f'%"board_format": "%{clean_ex}%"%'
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key NOT LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
-            else:
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
-            row = cursor.fetchone()
-            if not row and exclude_format:
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
+            if target_format and str(target_format).lower() == 'checkerboard':
+                fmt_pattern = '%"board_format": "Checkerboard"%'
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
                 row = cursor.fetchone()
+            elif target_format and str(target_format).lower() == 'equality freq':
+                fmt_pattern = '%"board_format": "Equality Freq"%'
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
+                row = cursor.fetchone()
+            else:
+                normal_pattern = '%"board_format": "Normal"%'
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, normal_pattern))
+                row = cursor.fetchone()
+                if not row:
+                    cursor.execute("""
+                        SELECT id, param_key, board_json FROM pregenerated_boards 
+                        WHERE param_key LIKE ? 
+                        AND param_key NOT LIKE '%"board_format": "Checkerboard"%'
+                        AND param_key NOT LIKE '%"board_format": "%Mania%"'
+                        AND param_key NOT LIKE '%"board_format": "%Either/Or%"'
+                        AND param_key NOT LIKE '%"board_format": "%Bounce%"'
+                        AND param_key NOT LIKE '%"board_format": "%Penalty%"'
+                        ORDER BY RANDOM() LIMIT 1;
+                    """, (dim_pattern,))
+                    row = cursor.fetchone()
             if not row:
                 break
                 
@@ -688,6 +702,10 @@ def seed_pregenerated_cache_bg():
             ("4x4", "CSW", (100, 200), "Checkerboard", 3, "Medium", False),
             ("4x4", "NWL", (200, 300), "Checkerboard", 3, "Medium", False),
             ("4x4", "CSW", (200, 300), "Checkerboard", 3, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Equality Freq", 3, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Equality Freq", 3, "Medium", False),
+            ("4x4", "NWL", (200, 300), "Equality Freq", 3, "Medium", False),
+            ("4x4", "CSW", (200, 300), "Equality Freq", 3, "Medium", False),
             ("4x4", "NWL", (100, 200), "Either/Or", 3, "Medium", False),
             ("4x4", "CSW", (100, 200), "Either/Or", 3, "Medium", False),
             ("4x4", "NWL", (100, 200), "Valued Letters", 3, "Medium", False),
@@ -701,12 +719,16 @@ def seed_pregenerated_cache_bg():
             ("4x4", "NWL + AW", (300, 400), "Normal", 3, "Medium", True),
             ("4x4", "CSW + AW", (300, 400), "Normal", 3, "Medium", True),
             ("4x4", "NWL + AW", (400, 500), "Checkerboard", 3, "Medium", True),
+            ("4x4", "NWL + AW", (400, 500), "Equality Freq", 3, "Medium", True),
             ("4x4", "CSW + AW", (400, 500), "Valued Letters", 3, "Medium", True),
             ("4x6", "NWL", (200, 300), "Normal", 4, "Medium", False),
             ("4x6", "CSW", (200, 300), "Checkerboard", 4, "Medium", False),
+            ("4x6", "NWL", (200, 300), "Equality Freq", 4, "Medium", False),
             ("5x7", "NWL", (300, 400), "Normal", 5, "Medium", False),
             ("5x7", "CSW", (300, 400), "Either/Or", 5, "Medium", False),
+            ("5x7", "NWL", (300, 400), "Equality Freq", 5, "Medium", False),
             ("6x8", "NWL", (400, 600), "Normal", 6, "Medium", False),
+            ("6x8", "NWL", (400, 600), "Equality Freq", 6, "Medium", False),
         ]
         for dims, dict_name, wc_range, fmt, min_l, diff, use_aw in common_configs:
             try:
@@ -2131,6 +2153,8 @@ class BoardGenerator:
             # Final check to ensure the board strictly alternates C/V in checkerboard mode
             if is_checkerboard:
                 self._verify_checkerboard_safeguard(board, weights, set(embedded_path) if embedded_path else set())
+            else:
+                self._break_accidental_checkerboard(board, depth, protected_positions=embedded_path)
 
             # --- FINAL A'S SANITIZATION FOR LARGE BOARDS ---
             if rows * cols >= 35 and depth == 1:
@@ -2363,13 +2387,15 @@ class BoardGenerator:
                     best_equality_embedded_path = embedded_path
                 
                 time_elapsed = time.time() - start_time
-                should_exit = (dist == 0) or (attempts >= 250) or (time_elapsed >= 5.0)
+                should_exit = (dist == 0) or (attempts >= 250) or (time_elapsed >= max(1.0, (timeout or 5.0) - 0.5))
                 
                 if should_exit:
                     if dist > 0:
                         print(f"[BoardGen] Equality Freq fallback: returning best board with count {len(best_equality_words_dict)} (distance {best_equality_distance}) after {attempts} attempts / {time_elapsed:.2f}s")
                         board = best_equality_board
                         embedded_path = best_equality_embedded_path
+                    
+                    self._break_accidental_checkerboard(board, depth, protected_positions=embedded_path)
                     
                     # Re-solve the chosen board with paths stored so that the metadata/bonus word works!
                     all_words_dict = self._solve_board(
@@ -5849,6 +5875,50 @@ class BoardGenerator:
 
         if repaired > 0:
             print(f"[BoardGen] Checkerboard Safeguard: Forced {repaired} letters to maintain alternation pattern.")
+
+    def _is_checkerboard_layout(self, board, depth=1):
+        """Check if board strictly follows a C/V or V/C alternating pattern."""
+        if not board:
+            return False
+        is_3d = depth > 1 or (isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list))
+        if is_3d:
+            return False
+        rows = len(board)
+        cols = len(board[0]) if rows > 0 and isinstance(board[0], list) else 0
+        if rows < 2 or cols < 2:
+            return False
+        
+        p1 = True  # (r+c)%2 != 0 is vowel, == 0 is consonant
+        p2 = True  # (r+c)%2 == 0 is vowel, != 0 is consonant
+        for r in range(rows):
+            for c in range(cols):
+                cell = str(board[r][c]).split('/')[0]
+                if not cell or not cell.isalpha():
+                    return False
+                is_v = self._is_vowel(cell)
+                if (r + c) % 2 != 0:
+                    if not is_v: p1 = False
+                    if is_v: p2 = False
+                else:
+                    if is_v: p1 = False
+                    if not is_v: p2 = False
+        return p1 or p2
+
+    def _break_accidental_checkerboard(self, board, depth=1, protected_positions=None):
+        """If a non-checkerboard board accidentally has strict alternating C/V, break the alternation."""
+        if not self._is_checkerboard_layout(board, depth=depth):
+            return
+        rows = len(board)
+        cols = len(board[0])
+        protected = set(protected_positions) if protected_positions else set()
+        for r in range(rows):
+            for c in range(cols):
+                if (r, c) not in protected and "/" not in str(board[r][c]):
+                    curr = board[r][c]
+                    if not self._is_vowel(curr):
+                        board[r][c] = 'E'
+                        print(f"[BoardGen] Broke accidental checkerboard pattern at ({r}, {c}) for non-checkerboard board.")
+                        return
 
     def _count_char_on_board(self, board, char, depth=1):
         """Count instances of a specific character (or substring like 'QU') on the board."""

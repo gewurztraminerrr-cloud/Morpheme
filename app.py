@@ -6662,7 +6662,7 @@ def get_room_state(room_id):
                                 else:
                                     from board_generator import pop_any_cached_board
                                     from game_room import get_emergency_fallback_board
-                                    pre_next = pop_any_cached_board(room.board_dimensions)
+                                    pre_next = pop_any_cached_board(room.board_dimensions, target_format='Normal')
                                     if not pre_next:
                                         pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
                                     if pre_next:
@@ -6674,7 +6674,7 @@ def get_room_state(room_id):
                                         room.next_round_words = nw
                                         room.next_round_bonus_cell = nc
                                         room.next_round_bonus = nbw
-                                        room.next_round_format = nf
+                                        room.next_round_format = nf or 'Normal'
                                         room.next_round_word_paths = np or {}
                                         room.next_round_uniqueness = nr
                                         room.next_round_spinner_params = nparams or {}

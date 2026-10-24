@@ -1696,6 +1696,9 @@ class GameRoom:
                 min_accept = max(30, min_accept)
                 
             if actual_cnt >= min_accept:
+                if str(fmt_val).lower() in ['equality freq', 'checkerboard'] and str(ff).lower() != str(fmt_val).lower():
+                    print(f"[GameRoom] ensure_next_board_ready: Candidate format {ff} != requested {fmt_val}. Discarding...")
+                    continue
                 fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l}, fr, fbw, fparams)
                 break
             else:
@@ -1703,6 +1706,10 @@ class GameRoom:
                 
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+            if 'checkerboard' in str(fmt_val).lower():
+                self.board_generator._verify_checkerboard_safeguard(fb)
+            else:
+                self.board_generator._break_accidental_checkerboard(fb)
             print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
             self.next_round_board = fb
             self.next_round_words = fw
@@ -2734,9 +2741,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         cache_candidates = []
         for r_item in ranges_order:
             cache_candidates.append((min_l, r_item, fmt, base_dict, use_added_words))
-            cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
-            cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
-            cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
+            if str(fmt).lower() == 'normal':
+                cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
+                cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
+                cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
         
         diff_order = [difficulty] + [d for d in ['Hard', 'Medium', 'Easy'] if d != difficulty] if difficulty else ['Medium', 'Easy', 'Hard']
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
@@ -2792,6 +2800,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 'difficulty': cdiff,
                                 'bonus_word_len': len(cbonus_word) if cbonus_word else 6
                             }
+                            if 'checkerboard' in str(cfmt).lower():
+                                bg._verify_checkerboard_safeguard(cboard)
+                            else:
+                                bg._break_accidental_checkerboard(cboard)
                             return cboard, cwords_filtered, cbonus_cell, cfmt_ret, cpaths_filtered, cratio, cbonus_word, ctr_resolved, eparams_dict
                 except Exception:
                     continue
@@ -2880,6 +2892,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     'difficulty': difficulty or "Medium",
                     'bonus_word_len': len(l_bw)
                 }
+                if 'checkerboard' in str(l_f).lower():
+                    bg._verify_checkerboard_safeguard(l_b)
+                else:
+                    bg._break_accidental_checkerboard(l_b)
                 print(f"[get_emergency_fallback_board] Fast live generator succeeded: {len(l_w_filt)} words")
                 return l_b, l_w_filt, l_c, l_f, l_p_filt, l_r, l_bw, target_range_resolved, eparams
     except Exception as live_err:
@@ -4538,8 +4554,8 @@ class RoomManager:
                         room.spinner_params.get('min_word_length', 3),
                         use_aw_flag
                     )
-                    if not solo_pop and 'checkerboard' not in str(target_fmt).lower():
-                        solo_pop = pop_any_cached_board(room.board_dimensions)
+                    if not solo_pop and str(target_fmt).lower() == 'normal':
+                        solo_pop = pop_any_cached_board(room.board_dimensions, target_format='Normal')
                     
                     if solo_pop:
                         if len(solo_pop) >= 9:
@@ -4547,9 +4563,15 @@ class RoomManager:
                         else:
                             sboard, swords, sbonus_cell, sfmt, spaths, sratio, sbonus_word, sparams = solo_pop
                         
-                        # SAFEGUARD: If format is Checkerboard, enforce strict C/V alternation pattern!
-                        if 'checkerboard' in str(target_fmt).lower():
-                            self.board_generator._verify_checkerboard_safeguard(sboard)
+                        # Strict format compliance for solo mode
+                        if str(target_fmt).lower() in ['equality freq', 'checkerboard'] and str(sfmt).lower() != str(target_fmt).lower():
+                            print(f"[RoomManager] Solo cached board format {sfmt} mismatch with {target_fmt}. Discarding pop...")
+                            solo_pop = None
+                        else:
+                            if 'checkerboard' in str(target_fmt).lower():
+                                self.board_generator._verify_checkerboard_safeguard(sboard)
+                            else:
+                                self.board_generator._break_accidental_checkerboard(sboard)
 
                         swords_filtered = [w for w in swords if len(w) >= m_len]
                         spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
@@ -6595,10 +6617,10 @@ class RoomManager:
                     candidate = pop_compatible_cached_board(
                         room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bonus_word_len
                     )
+                    if not candidate and str(fmt_val).lower() == 'normal':
+                        candidate = pop_any_cached_board(room.board_dimensions, target_format='Normal')
                     if not candidate:
-                        candidate = pop_any_cached_board(room.board_dimensions)
-                    if not candidate:
-                        print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board.")
+                        print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board for format '{fmt_val}'.")
                         candidate = get_emergency_fallback_board(
                             room.board_dimensions, fmt_val, room.time_limit,
                             dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len
@@ -6610,13 +6632,28 @@ class RoomManager:
                         else:
                             _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                         
+                        # Strict format compliance: If fmt_val is Equality Freq or Checkerboard, candidate MUST match fmt_val
+                        if str(fmt_val).lower() in ['equality freq', 'checkerboard'] and str(_ff).lower() != str(fmt_val).lower():
+                            print(f"[start_next_round] Format mismatch (candidate {_ff} != spun {fmt_val}). Regenerating exact format...")
+                            candidate = get_emergency_fallback_board(
+                                room.board_dimensions, fmt_val, room.time_limit,
+                                dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len
+                            )
+                            if candidate:
+                                if len(candidate) >= 9:
+                                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _, _fparams = candidate
+                                else:
+                                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+
                         _fw_filtered = [w for w in _fw if len(w) >= m_len]
                         if not _fw_filtered: _fw_filtered = _fw
                         _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
                         
                         # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
-                        if 'checkerboard' in str(fmt_val).lower() or 'checkerboard' in str(_ff).lower():
+                        if 'checkerboard' in str(fmt_val).lower():
                             self.board_generator._verify_checkerboard_safeguard(_fb)
+                        else:
+                            self.board_generator._break_accidental_checkerboard(_fb)
 
                         print(f"[start_next_round] Instant 1-ms cache pop for {room_id}: {len(_fw_filtered)} words")
                         room.next_round_board = _fb
@@ -7376,7 +7413,7 @@ class RoomManager:
                     return room
 
             # Pop from cached board pool or emergency fallback
-            pre = pop_any_cached_board(room.board_dimensions)
+            pre = pop_any_cached_board(room.board_dimensions, target_format='Normal')
             if not pre:
                 pre = get_emergency_fallback_board(
                     room.board_dimensions, 'Normal', room.time_limit,
