@@ -9304,13 +9304,19 @@ def tools_combo_explorer():
     random_order = bool(data.get('random', False))
     selected_word = data.get('word', '').upper().strip()
 
-    dict_data = load_tools_dictionary(dict_name)
+    if dict_name == 'words_to_work_on':
+        base_dict_name = 'CSW'
+        dict_data = load_tools_dictionary(base_dict_name)
+    else:
+        base_dict_name = dict_name
+        dict_data = load_tools_dictionary(dict_name)
+
     if not dict_data:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
 
     # 1. If a word is selected, return its matching words at target_mp
     if selected_word:
-        combo_res, status_code = get_combo_payload_for_word(selected_word, dict_name)
+        combo_res, status_code = get_combo_payload_for_word(selected_word, base_dict_name)
         if status_code != 200:
             return jsonify(combo_res), status_code
         mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
@@ -9349,12 +9355,11 @@ def tools_combo_explorer():
         })
 
     # 2. Return list of input words of that length that actually have >= 1 match at target_mp
-    cache_key = (dict_name, length, target_mp, direction)
-    if cache_key in COMBO_EXPLORER_CACHE:
-        input_words = COMBO_EXPLORER_CACHE[cache_key]
-    else:
+    if dict_name == 'words_to_work_on':
         import numpy as np
-        words_of_len = [w for w in dict_data['words'] if len(w) == length]
+        raw_custom = data.get('custom_words', [])
+        custom_words = [w.strip().upper() for w in raw_custom if isinstance(w, str) and w.strip()]
+        words_of_len = [w for w in set(custom_words) if len(w) == length]
         verified_words = []
         c_engine = _init_c_morpheme_metric()
         word_list = dict_data['words']
@@ -9363,12 +9368,31 @@ def tools_combo_explorer():
         dict_masks = dict_data['masks']
         dict_lens_int = dict_lens.astype(np.int16)
 
-        for w in words_of_len:
+        for w in sorted(words_of_len):
             if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
                 verified_words.append(w)
-                
-        COMBO_EXPLORER_CACHE[cache_key] = verified_words
         input_words = verified_words
+    else:
+        cache_key = (dict_name, length, target_mp, direction)
+        if cache_key in COMBO_EXPLORER_CACHE:
+            input_words = COMBO_EXPLORER_CACHE[cache_key]
+        else:
+            import numpy as np
+            words_of_len = [w for w in dict_data['words'] if len(w) == length]
+            verified_words = []
+            c_engine = _init_c_morpheme_metric()
+            word_list = dict_data['words']
+            dict_matrix = dict_data['matrix']
+            dict_lens = dict_data['lens']
+            dict_masks = dict_data['masks']
+            dict_lens_int = dict_lens.astype(np.int16)
+
+            for w in words_of_len:
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
+                    verified_words.append(w)
+                    
+            COMBO_EXPLORER_CACHE[cache_key] = verified_words
+            input_words = verified_words
 
     res_words = list(input_words)
     if random_order:
@@ -9759,6 +9783,28 @@ def tools_subanagrams():
     clean_input = re.sub(r'[^A-Z]', '', raw_input.upper())
     if not clean_input:
         return jsonify({'error': 'No letters provided'}), 400
+
+    if dict_name == 'words_to_work_on':
+        raw_custom = data.get('custom_words', [])
+        custom_words = sorted(list(set(w.strip().upper() for w in raw_custom if isinstance(w, str) and w.strip())))
+        if not custom_words:
+            return jsonify({'error': 'Your "Words to Work on" list is empty. Add words to your list first!'}), 400
+        from collections import Counter
+        input_counter = Counter(clean_input)
+        input_len = len(clean_input)
+        results = []
+        for word in custom_words:
+            if len(word) < min_len or len(word) > input_len:
+                continue
+            word_counter = Counter(word)
+            if all(input_counter[ch] >= count for ch, count in word_counter.items()):
+                results.append(word)
+        results.sort(key=lambda x: (-len(x), x))
+        return jsonify({
+            'letters': clean_input,
+            'results': results,
+            'count': len(results)
+        })
         
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
@@ -9805,20 +9851,100 @@ def tools_subanagrams():
         'count': len(results)
     })
 
-@app.route('/api/tools/subanagrams/random', methods=['GET'])
+@app.route('/api/tools/subanagrams/random', methods=['GET', 'POST'])
 def tools_subanagrams_random():
     import random
-    dict_name = request.args.get('dictionary', 'CSW')
-    try:
-        target_len = int(request.args.get('length', 8))
-    except (ValueError, TypeError):
-        target_len = 8
-    try:
-        min_len = int(request.args.get('min_length', 3))
-    except (ValueError, TypeError):
-        min_len = 3
-    mode = request.args.get('mode', 'word')
-    
+    if request.method == 'POST':
+        data = request.json or {}
+        dict_name = data.get('dictionary', 'CSW')
+        try:
+            target_len = int(data.get('length', 8))
+        except (ValueError, TypeError):
+            target_len = 8
+        try:
+            min_len = int(data.get('min_length', 3))
+        except (ValueError, TypeError):
+            min_len = 3
+        mode = data.get('mode', 'word')
+        custom_words = data.get('custom_words', [])
+    else:
+        dict_name = request.args.get('dictionary', 'CSW')
+        try:
+            target_len = int(request.args.get('length', 8))
+        except (ValueError, TypeError):
+            target_len = 8
+        try:
+            min_len = int(request.args.get('min_length', 3))
+        except (ValueError, TypeError):
+            min_len = 3
+        mode = request.args.get('mode', 'word')
+        custom_words = []
+
+    if dict_name == 'words_to_work_on':
+        custom_words = sorted(list(set(w.strip().upper() for w in custom_words if isinstance(w, str) and w.strip())))
+        if not custom_words:
+            return jsonify({'error': 'Your "Words to Work on" list is empty. Add words to your list first!'}), 400
+
+        if mode == 'random':
+            # Totally random letters using standard English tile distribution
+            BAG = (
+                'E'*12 + 'A'*9 + 'I'*9 + 'O'*8 + 'N'*6 + 'R'*6 + 'T'*6 +
+                'L'*4 + 'S'*4 + 'U'*4 + 'D'*4 + 'G'*3 +
+                'B'*2 + 'C'*2 + 'M'*2 + 'P'*2 + 'F'*2 + 'H'*2 + 'V'*2 + 'W'*2 + 'Y'*2 +
+                'K'*1 + 'J'*1 + 'X'*1 + 'Q'*1 + 'Z'*1
+            )
+            VOWELS = 'AEIOU'
+            min_vowels = max(1, target_len // 4)
+            for _ in range(50):
+                selected = random.choices(BAG, k=target_len)
+                vowel_count = sum(1 for c in selected if c in VOWELS)
+                if vowel_count >= min_vowels and vowel_count < target_len:
+                    random.shuffle(selected)
+                    shuffled_letters = "".join(selected)
+                    break
+            else:
+                shuffled_letters = "".join(random.choices(BAG, k=target_len))
+        else:
+            # Word of Max Length Guaranteed: Pick a random word of target length from custom_words
+            candidates = [w for w in custom_words if len(w) == target_len]
+            if not candidates:
+                available_lens = sorted(list(set(len(w) for w in custom_words)))
+                if available_lens:
+                    return jsonify({'error': f'No words of length {target_len} found in "Words to Work on". Available lengths: {", ".join(str(l) for l in available_lens)}.'}), 400
+                else:
+                    return jsonify({'error': 'Your "Words to Work on" list is empty. Add words to your list first!'}), 400
+
+            chosen_word = random.choice(candidates)
+            letters_list = list(chosen_word)
+            random.shuffle(letters_list)
+            for _ in range(5):
+                if "".join(letters_list) != chosen_word or len(letters_list) <= 3:
+                    break
+                random.shuffle(letters_list)
+            shuffled_letters = "".join(letters_list)
+
+        from collections import Counter
+        input_counter = Counter(shuffled_letters)
+        input_len = len(shuffled_letters)
+        results = []
+        for word in custom_words:
+            if len(word) < min_len or len(word) > input_len:
+                continue
+            word_counter = Counter(word)
+            if all(input_counter[ch] >= count for ch, count in word_counter.items()):
+                results.append(word)
+
+        results.sort(key=lambda x: (-len(x), x))
+        has_full_word = any(len(w) == len(shuffled_letters) for w in results)
+
+        return jsonify({
+            'letters': shuffled_letters,
+            'results': results,
+            'count': len(results),
+            'mode': mode,
+            'has_full_word': has_full_word
+        })
+
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404

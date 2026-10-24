@@ -294,8 +294,13 @@ window.showTool = function(toolId) {
     // Update active class on panes
     if (content) {
         content.querySelectorAll('.tool-pane').forEach(p => {
-            if (p.id === `tool-${toolId}`) p.classList.add('active');
-            else p.classList.remove('active');
+            if (p.id === `tool-${toolId}`) {
+                p.classList.add('active');
+                p.style.display = '';
+            } else {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            }
         });
         if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on') {
             content.classList.add('no-outer-scroll');
@@ -1264,6 +1269,7 @@ let _comboExplorerMatches = [];
 let _comboExplorerDisplayMatches = [];
 let _comboExplorerIsRandom = false;
 let _comboExplorerLoading = false;
+let _comboExplorerWordsRequestId = 0;
 const _comboExplorerWordsCache = new Map();
 const _comboExplorerMatchesCache = new Map();
 
@@ -1437,6 +1443,8 @@ async function loadComboExplorerWords(forceReset = false) {
 
     if (!lengthSelect || !mpSelect || !inputList) return;
 
+    const myReqId = ++_comboExplorerWordsRequestId;
+
     const length = parseInt(lengthSelect.value, 10) || 7;
     const mp = parseInt(mpSelect.value, 10);
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
@@ -1460,12 +1468,36 @@ async function loadComboExplorerWords(forceReset = false) {
             </div>`;
     }
 
-    const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
     let words = [];
 
-    if (_comboExplorerWordsCache.has(cacheKey)) {
-        words = _comboExplorerWordsCache.get(cacheKey);
-    } else {
+    if (dictionary === 'words_to_work_on') {
+        const rawList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+        const workOnWords = rawList
+            .map(it => (typeof it === 'object' && it !== null ? it.word : it))
+            .filter(w => typeof w === 'string' && w.trim().length > 0)
+            .map(w => w.trim().toUpperCase());
+        const uniqueWorkOn = Array.from(new Set(workOnWords));
+
+        if (uniqueWorkOn.length === 0) {
+            if (myReqId !== _comboExplorerWordsRequestId) return;
+            inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Your "Words to Work on" list is empty. Add words to your list first!</div>';
+            if (inputCount) inputCount.textContent = '0';
+            _comboExplorerWords = [];
+            _comboExplorerDisplayWords = [];
+            return;
+        }
+
+        const eligibleOfLen = uniqueWorkOn.filter(w => w.length === length);
+        if (eligibleOfLen.length === 0) {
+            if (myReqId !== _comboExplorerWordsRequestId) return;
+            const availableLens = Array.from(new Set(uniqueWorkOn.map(w => w.length))).sort((a, b) => a - b);
+            inputList.innerHTML = `<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">No words of length ${length} found in "Words to Work on".<br><span style="font-size:0.75rem;opacity:0.8;">Available lengths: ${availableLens.join(', ')}</span></div>`;
+            if (inputCount) inputCount.textContent = '0';
+            _comboExplorerWords = [];
+            _comboExplorerDisplayWords = [];
+            return;
+        }
+
         _comboExplorerLoading = true;
         try {
             const resp = await fetch('/api/tools/combo/explorer', {
@@ -1475,20 +1507,58 @@ async function loadComboExplorerWords(forceReset = false) {
                     dictionary: dictionary,
                     length: length,
                     mp: mp,
-                    direction: direction
+                    direction: direction,
+                    custom_words: eligibleOfLen
                 })
             });
             const data = await resp.json();
+            if (myReqId !== _comboExplorerWordsRequestId) return;
             words = data.words || [];
-            _comboExplorerWordsCache.set(cacheKey, words);
         } catch (err) {
+            if (myReqId !== _comboExplorerWordsRequestId) return;
             console.error('[Combo Explorer Load Error]', err);
             inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #f43f5e; font-size: 0.85rem;">Failed to load words.</div>';
             return;
         } finally {
-            _comboExplorerLoading = false;
+            if (myReqId === _comboExplorerWordsRequestId) {
+                _comboExplorerLoading = false;
+            }
+        }
+    } else {
+        const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
+        if (_comboExplorerWordsCache.has(cacheKey)) {
+            words = _comboExplorerWordsCache.get(cacheKey);
+        } else {
+            _comboExplorerLoading = true;
+            try {
+                const resp = await fetch('/api/tools/combo/explorer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dictionary: dictionary,
+                        length: length,
+                        mp: mp,
+                        direction: direction
+                    })
+                });
+                const data = await resp.json();
+                if (myReqId !== _comboExplorerWordsRequestId) return;
+                words = data.words || [];
+                _comboExplorerWordsCache.set(cacheKey, words);
+            } catch (err) {
+                if (myReqId !== _comboExplorerWordsRequestId) return;
+                console.error('[Combo Explorer Load Error]', err);
+                inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #f43f5e; font-size: 0.85rem;">Failed to load words.</div>';
+                return;
+            } finally {
+                if (myReqId === _comboExplorerWordsRequestId) {
+                    _comboExplorerLoading = false;
+                }
+            }
         }
     }
+
+    if (myReqId !== _comboExplorerWordsRequestId) return;
 
     _comboExplorerWords = words;
     if (filterInput && forceReset) {
@@ -1497,6 +1567,7 @@ async function loadComboExplorerWords(forceReset = false) {
 
     applyComboExplorerOrdering();
 }
+window.loadComboExplorerWords = loadComboExplorerWords;
 
 function renderComboExplorerInputWords(reset = true) {
     const listEl = document.getElementById('combo-explorer-input-list');
@@ -1578,9 +1649,11 @@ window.selectComboExplorerWord = async function(word) {
                 })
             });
             const data = await resp.json();
+            if (_comboExplorerSelectedWord !== word) return;
             matches = data.matches || [];
             _comboExplorerMatchesCache.set(cacheKey, matches);
         } catch (err) {
+            if (_comboExplorerSelectedWord !== word) return;
             console.error('[Combo Explorer Matches Error]', err);
             if (respList) respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #f43f5e; font-size: 0.85rem;">Failed to load matches.</div>';
             return;
@@ -8139,14 +8212,22 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
     }
 
     try {
+        const reqBody = {
+            input: clean,
+            dictionary: dictionary,
+            min_length: minLength
+        };
+        if (dictionary === 'words_to_work_on') {
+            const rawList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+            reqBody.custom_words = rawList
+                .map(it => (typeof it === 'object' && it !== null ? it.word : it))
+                .filter(w => typeof w === 'string' && w.trim().length > 0)
+                .map(w => w.trim().toUpperCase());
+        }
         const response = await fetch('/api/tools/subanagrams', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                input: clean,
-                dictionary: dictionary,
-                min_length: minLength
-            }),
+            body: JSON.stringify(reqBody),
             signal: signal
         });
 
@@ -8155,6 +8236,10 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
         const data = await response.json();
         if (data.error) {
             showSubFeedback(data.error, 'error');
+            if (countInfo) countInfo.textContent = '';
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div class="seq-results-placeholder" style="padding:20px; text-align:center; color:#f43f5e;">${data.error}</div>`;
+            }
             return;
         }
 
@@ -8209,9 +8294,30 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
     }
 
     try {
-        const response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}&min_length=${minLength}`, {
-            signal: signal
-        });
+        let response;
+        if (dictionary === 'words_to_work_on') {
+            const rawList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+            const customWords = rawList
+                .map(it => (typeof it === 'object' && it !== null ? it.word : it))
+                .filter(w => typeof w === 'string' && w.trim().length > 0)
+                .map(w => w.trim().toUpperCase());
+            response = await fetch('/api/tools/subanagrams/random', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    length: length,
+                    dictionary: dictionary,
+                    mode: mode,
+                    min_length: minLength,
+                    custom_words: customWords
+                }),
+                signal: signal
+            });
+        } else {
+            response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}&min_length=${minLength}`, {
+                signal: signal
+            });
+        }
 
         if (signal.aborted) return;
 
@@ -8219,6 +8325,11 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
 
         if (data.error) {
             showSubFeedback(data.error, 'error');
+            if (lettersDisplay) lettersDisplay.textContent = '- - -';
+            if (countInfo) countInfo.textContent = '';
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div class="seq-results-placeholder" style="padding:20px; text-align:center; color:#f43f5e;">${data.error}</div>`;
+            }
             return;
         }
 
@@ -8287,14 +8398,22 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
     }
 
     try {
+        const reqBody = {
+            input: clean,
+            dictionary: dictionary,
+            min_length: minLength
+        };
+        if (dictionary === 'words_to_work_on') {
+            const rawList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+            reqBody.custom_words = rawList
+                .map(it => (typeof it === 'object' && it !== null ? it.word : it))
+                .filter(w => typeof w === 'string' && w.trim().length > 0)
+                .map(w => w.trim().toUpperCase());
+        }
         const response = await fetch('/api/tools/subanagrams', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                input: clean,
-                dictionary: dictionary,
-                min_length: minLength
-            }),
+            body: JSON.stringify(reqBody),
             signal: signal
         });
 
@@ -8303,6 +8422,10 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
         const data = await response.json();
         if (data.error) {
             showSubFeedback(data.error, 'error');
+            if (countInfo) countInfo.textContent = '';
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div class="seq-results-placeholder" style="padding:20px; text-align:center; color:#f43f5e;">${data.error}</div>`;
+            }
             return;
         }
 
