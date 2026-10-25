@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-3f4ce71e4c7e814d3562e0dbcb0b8d296f1fa956
+5c8d4dbdc8aeb4faf80e18ef5cf3dbdc1b657f0f
 ```
 
 ## Synchronization Status
@@ -186,12 +186,29 @@ START_OVER_POINT_OCTOBER_24
   - Removed speculative Latin singular string-chopping from `get_roots_for_word` and required all candidate roots and inflections to pass `is_verified_inflection`.
   - Verified: `ADENIA` now correctly lists only `[inflections: ADENIAS]`, `ADENIAS` lists `[inflections: ADENIA]`, and `ADENIUM` lists `[inflections: ADENIUMS]`.
 
+### 26. Strict Added Words (+ AW) Word Count Range Enforcement (300-400, 400-500, 500+) (`100.png` Fix)
+- **Issue Resolved**: As documented in `100.png`, an Accumulative 4x4 room with `Dict: CSW + AW` displayed `Words: 100-200` with 188 total words found (`0/188 - 0% (309 total pts)`), violating the ironclad rule that Added Words (`+ AW`) rounds must always have word count ranges of `300-400`, `400-500`, or `500+`.
+- **Root Causes**:
+  1. `RoomManager._get_factchecked_wc_range(count, use_added_words=False, dictionary=None)` received `use_added_words` as an argument but completely ignored it, calculating ranges solely based on raw word count and mapping 188 words to `'100-200'`.
+  2. Fallback rescue routines (`get_emergency_fallback_board`, `ensure_next_board_ready`) had `min_accept = max(100, min_accept)` even when `use_added_words` was True, and did not realign `max_accept` when target ranges were resolved to 300+, causing live generators to sample boards down to 199 words.
+  3. Cached board retrieval (`pop_compatible_cached_board`, `pop_cached_board`) did not reject pre-generated boards with `< 300` words or with `word_count_range in ['50-100', '100-200', '200-300']` when `use_added_words` was active.
+  4. Client-side rendering in `play.js` (`formatParameters`, `wordsPanelHeader`) and `private_matches.js` (`renderMatchList`, `renderInvites`) did not include safety clamps to prevent displaying contradictory headers.
+- **Implementation & Ironclad Fixes**:
+  - **`_get_factchecked_wc_range`**: Updated to strictly inspect `is_aw = bool(use_added_words) or '+ AW' in str(dictionary).upper()`. When `is_aw` is True, returns `'500+'` (>=500), `'400-500'` (>=400), or `'300-400'` (<400) — never `< 300`.
+  - **Fallback Safeguards**: Updated `get_emergency_fallback_board`, `ensure_next_board_ready`, and `trigger_early_fallback_rescue` to enforce `min_accept = max(300, min_accept)` and `max_accept = max(399, max_accept)` whenever Added Words is active, ensuring candidate order strictly uses `['300-400', '400-500', '500+']`.
+  - **Cache Protection**: In `board_generator.py`, updated `pop_compatible_cached_board` and `pop_cached_board` to discard any cached boards with `< 300` words or non-compliant range tags when `use_added_words` is active.
+  - **Room Lifecycle Enforcement**: In `game_room.py` (`start_next_round`, `start_board_search`, `kickstart_room`, and existing room wakeup), enforced that `current_word_count_range`, `spinner_params`, and `frozen_revealed_params` are always validated via `SpinnerSet.sanitize_params` and `_get_factchecked_wc_range`.
+  - **Client-Side Safeguards**: In `static/js/play.js` and `static/js/private_matches.js`, added fallback clamps ensuring that whenever `+ AW` is active, the displayed word count range is always `300-400`, `400-500`, or `500+`.
+  - **Verification**: Verified via automated test suite `test_aw_word_count_compliance.py` (500+ sanitizations, live emergency generator, and room round transition) that `+ AW` rounds NEVER produce ranges below 300 words.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `5c8d4dbd` | **Enforce strict 300-400, 400-500, 500+ word count ranges for Added Words (+ AW) across all generation and fallback paths** |
+| `10bc3cbc` | **docs: finalize Start Over stable point with definition verification** |
 | `3f4ce71e` | **docs: update stable state summary with definition-verified inflections** |
 | `ce4a1a53` | **fix(definitions): verify inflection candidates against dictionary definitions before appending** |
 | `3aefca06` | **docs: update latest commit ID in stable state summary** |
