@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-7080f27ced394a93660d686f2aa057e9b99913a7
+97fc2ee39055d8ceb7c6d96c50247b90737e7285
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792895000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792896000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
@@ -144,11 +144,11 @@ START_OVER_POINT_OCTOBER_24
   - Removed broken re-anchor logic in `updateLocalTimer()` so that when `remaining <= 0`, the timer cleanly clamps to `0:00`, clears the interval, and triggers a transition sync check.
   - Unified 24-hour room intermission limits in `game_room.py` to a consistent 5.0 seconds.
 
-### 22. Remaining Tab Mobile Alignment: Length Labels Aligned Furthest to Left
+### 22. Remaining Tab Mobile Alignment: Length Labels Aligned Furthest to Left with Matching Padding
 - **Issue Resolved**: On mobile devices in game rooms, the Remaining tab (`#remaining-words-table`) inherited `text-align: center !important` from `.words-panel`, causing length labels ("6LW", "7LW", etc.) to render in the middle of each row while word counts were aligned to the right.
 - **Implementation**:
-  - In `static/css/play.css`, added explicit `text-align: left !important; padding-left: 0 !important;` for `.len-cell` under `@media (max-width: 992px)` and `body.is-mobile`, placing the length labels furthest to the left while keeping counts right-aligned.
-  - Bumped `play.css?v=1792895000` in `templates/index.html`.
+  - In `static/css/play.css`, added explicit `text-align: left !important; padding-left: 10px !important;` for `.len-cell` and `text-align: right !important; padding-right: 10px !important;` for `.count-cell` under `@media (max-width: 992px)` and `body.is-mobile`, placing the length labels furthest to the left with padding matching the count numbers on the right.
+  - Bumped `play.css?v=1792896000` in `templates/index.html`.
 
 ---
 
@@ -156,6 +156,8 @@ START_OVER_POINT_OCTOBER_24
 
 | Commit | Summary |
 |:---|:---|
+| `97fc2ee3` | **style(play): match left padding on len-cell with right padding on count-cell in Remaining tab on mobile** |
+| `43923e2d` | **docs: update stable state summary with Remaining tab mobile alignment** |
 | `7080f27c` | **style(play): align remaining words length labels furthest to the left on mobile devices** |
 | `1b6e0704` | **fix(play): eliminate intermission timer countdown loop and align 24h intermission limits** |
 | `a133fbc5` | **docs: update walkthrough and stable state summary with intermission timer fix** |
