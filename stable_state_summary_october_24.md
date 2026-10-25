@@ -172,12 +172,28 @@ START_OVER_POINT_OCTOBER_24
     6. In `finishDragSelection()`, added a guard checking if the round is over (`window.lastGameState.state === 'intermission' || window.lastGameState.state === 'waiting'`) to immediately clear `#word-validation-status` and suppress late submissions.
   - In `templates/index.html`, bumped `play.js?v=1792898000`.
 
+### 25. Lexicographical Verification of Added Words Inflections via Definitions
+- **Issue Resolved**: When looking up Added Words such as `ADENIA`, unrelated words like `ADENIUM` (and `ADENIUMS`) were incorrectly listed under `[inflections: ...]`.
+- **Root Cause**: An overly broad Latin suffix-chopping rule (`w.endswith('A') -> UM, ON`) in `get_roots_for_word` guessed that `ADENIUM` was the singular root of `ADENIA` without verifying that the definitions of the two words actually linked to each other. Because `ADENIUM` is a valid Scrabble word (a genus of shrubs), it was added as a root and generated further false inflections (`ADENIUMS`).
+- **Implementation**:
+  - Implemented `extract_root_from_definition(defn)` to extract grammatical root references from headwords (`DOG, ...`) and inflection statements (`plural of ...`, `participle of ...`, `past tense of ...`, `comparative form of ...`, etc.).
+  - Implemented `extract_bracket_inflections(defn, root)` using `re.finditer` to parse bracketed inflection lists (e.g. `[n -S]`, `[v -ED, -ING, -S]`, `[n BACTERIA]`, `[n MEDIA]`, `[n CORONAS or CORONAE]`).
+  - Implemented `is_verified_inflection(w, cand, def_w, def_cand)`:
+    1. Validates that `def_cand` explicitly points to `w` as root or `def_w` explicitly points to `cand` as root.
+    2. Validates that `cand` is declared in bracket notations of `def_w` or `w` is declared in bracket notations of `def_cand`.
+    3. Rejects candidates that have independent definitions describing unrelated entities (e.g. `ADENIUM` describing a genus of shrubs is rejected as an inflection of `ADENIA`).
+    4. For unindexed candidates without definitions, permits inclusion only if they are regular grammatical inflections (`is_plural_or_inflection`).
+  - Removed speculative Latin singular string-chopping from `get_roots_for_word` and required all candidate roots and inflections to pass `is_verified_inflection`.
+  - Verified: `ADENIA` now correctly lists only `[inflections: ADENIAS]`, `ADENIAS` lists `[inflections: ADENIA]`, and `ADENIUM` lists `[inflections: ADENIUMS]`.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `ce4a1a53` | **fix(definitions): verify inflection candidates against dictionary definitions before appending** |
+| `3aefca06` | **docs: update latest commit ID in stable state summary** |
 | `7d734dca` | **docs: finalize Start Over stable point for October 24, 2026** |
 | `b0fb3d13` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
 | `8f4a780d` | **docs: update stable state summary with unsubmitted swiped letters fix** |
