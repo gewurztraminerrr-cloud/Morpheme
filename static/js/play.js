@@ -6189,12 +6189,6 @@ function updateLocalTimer() {
     }
 
     if (remaining <= 0 && timerInterval) {
-        // If the authoritative game state still has valid time remaining (> 0.05s), re-anchor instead of halting on WAIT...
-        if (window.lastGameState && typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining > 0.05) {
-            localEndTime = (Date.now() / 1000) + window.lastGameState.time_remaining;
-            return;
-        }
-
         clearInterval(timerInterval);
         timerInterval = null;
         if (cachedBoardPanelEl) cachedBoardPanelEl.classList.remove('low-time-warning');

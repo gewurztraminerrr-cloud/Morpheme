@@ -790,7 +790,7 @@ class GameRoom:
             if not self.intermission_start_time or self.intermission_start_time <= 0:
                 self.intermission_start_time = time.time()
             elapsed = time.time() - self.intermission_start_time
-            intermission_limit = 2 if self.time_limit >= 7200 else 60
+            intermission_limit = 5 if self.time_limit >= 7200 else 60
             return max(0.0, intermission_limit - elapsed)
             
         # 2. 24h Room ACTIVE: Align to real-world midnight boundary (America/Chicago)
@@ -1532,7 +1532,7 @@ class GameRoom:
         
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
         # Determine normal intermission duration
-        intermission_limit = 2 if self.time_limit >= 7200 else 60
+        intermission_limit = 5 if self.time_limit >= 7200 else 60
         is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
 
         
@@ -1647,7 +1647,7 @@ class GameRoom:
             if not self.intermission_start_time or self.intermission_start_time <= 0:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
-            intermission_limit = 2 if self.time_limit >= 7200 else 60
+            intermission_limit = 5 if self.time_limit >= 7200 else 60
             if elapsed >= intermission_limit - 1.2:
                 return 'start'
             
@@ -1656,7 +1656,7 @@ class GameRoom:
             if not self.intermission_start_time or self.intermission_start_time <= 0:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
-            intermission_duration = 2 if self.time_limit >= 7200 else 60
+            intermission_duration = 5 if self.time_limit >= 7200 else 60
             reveal_threshold = 15.0 if intermission_duration >= 20 else 0.5
             if elapsed >= reveal_threshold and not getattr(self, 'spinner_params_revealed', False):
                 return 'reveal'
@@ -1667,7 +1667,7 @@ class GameRoom:
             if not self.intermission_start_time or self.intermission_start_time <= 0:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
-            intermission_duration = 2 if self.time_limit >= 7200 else 60
+            intermission_duration = 5 if self.time_limit >= 7200 else 60
             easy_threshold = 5.0 if intermission_duration >= 20 else 0.2
             if elapsed >= easy_threshold and not getattr(self, 'next_round_board', None):
                 if not getattr(self, 'easy_fallback_applied', False) and not getattr(self, 'spinner_params_revealed', False):
