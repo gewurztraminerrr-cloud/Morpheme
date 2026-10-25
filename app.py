@@ -968,11 +968,9 @@ _AW_DISALLOWED_PROPER_NOUN_REGEX = re.compile(
     r'\bfirst name\b|'
     r'\bsurname\b|'
     r'\bborn \d{4}\b|'
-    r'\bballet dancer\b|'
-    r'\bpolitician\b|'
-    r'\bfootballer\b|'
+    r'\b(?:is|was)\s+(?:an?|the)(?:\s+former)?\s+(?:ballet\s+dancer|politician|footballer)\b|'
     r'\balbum by\b|'
-    r'\bband\b|'
+    r'\b(?:rock|pop|metal|punk|indie|musical)\s+band\b|'
     r'\b(?:a\s+)?fan\s+of\s+(?:the\s+)?(?:television|tv|web|radio)?\s*(?:series|show|film|movie|franchise|book|novel|comic|band|singer|musician|actor|actress|celebrity|podcast)\b|'
     r'\b(?:a\s+)?follower\s+(?:or\s+supporter\s+)?of\s+[A-Z]|'
     r'\b(?:an?\s+)?enthusiast\s+(?:or\s+fan\s+)?of\s+(?:the\s+)?(?:television|tv|film|movie|show)\b|'
@@ -1028,11 +1026,9 @@ def lookup_web_search_definition(word_upper):
         r'\bfirst name\b',
         r'\bsurname\b',
         r'\bborn \d{4}\b',
-        r'\bballet dancer\b',
-        r'\bpolitician\b',
-        r'\bfootballer\b',
+        r'\b(?:is|was)\s+(?:an?|the)(?:\s+former)?\s+(?:ballet\s+dancer|politician|footballer)\b',
         r'\balbum by\b',
-        r'\bband\b',
+        r'\b(?:rock|pop|metal|punk|indie|musical)\s+band\b',
         r'\b(?:a\s+)?fan\s+of\s+(?:the\s+)?(?:television|tv|web|radio)?\s*(?:series|show|film|movie|franchise|book|novel|comic|band|singer|musician|actor|actress|celebrity|podcast)\b',
         r'\b(?:a\s+)?follower\s+(?:or\s+supporter\s+)?of\s+[A-Z]',
         r'\b(?:an?\s+)?enthusiast\s+(?:or\s+fan\s+)?of\s+(?:the\s+)?(?:television|tv|film|movie|show)\b',
@@ -7966,7 +7962,8 @@ def format_resolved_definition(word_upper, visited=None):
     if not raw:
         return None
 
-    if _AW_DISALLOWED_PROPER_NOUN_REGEX.search(raw):
+    is_official_dict_word = bool(DEFINITIONS_CACHE and word_upper in DEFINITIONS_CACHE and word_upper not in getattr(word_validator, 'added_words', set()))
+    if not is_official_dict_word and _AW_DISALLOWED_PROPER_NOUN_REGEX.search(raw):
         web_def = lookup_web_search_definition(word_upper)
         if web_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(web_def):
             raw = web_def
