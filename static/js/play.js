@@ -2157,6 +2157,18 @@ async function _doUpdateGameState(incomingState = null) {
                 if (mouseState.visitedCells) mouseState.visitedCells.clear();
             }
 
+            // Clear word validation status text under board immediately so no swiped letters remain visible
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'validation-status';
+                statusEl.style.color = '';
+            }
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+                validationTimeout = null;
+            }
+
 
             // AUTO-SCROLL TO BOTTOM ON INTERMISSION START (Only if currently on play page)
             const playPage = document.getElementById('page-play');
@@ -2673,6 +2685,13 @@ async function _doUpdateGameState(incomingState = null) {
             const currentRoundId = `${state.room_id}_${state.current_round}`;
             window.lastRenderedIntermissionWords = currentRoundId;
             window.lastSolvingComplete = state.solving_complete;
+            // Ensure no swiped/validation text lingers below the board during intermission
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl && (statusEl.textContent || statusEl.classList.contains('status-swiping'))) {
+                statusEl.textContent = '';
+                statusEl.className = 'validation-status';
+                statusEl.style.color = '';
+            }
         } else if (state.state !== 'intermission') {
             window.lastRenderedIntermissionWords = null;
             window.lastSolvingComplete = false;
@@ -6110,6 +6129,26 @@ function updateLocalTimer() {
     const seconds = Math.ceil(remaining);
     if (seconds <= 0 || remaining <= 0) {
         setTimerWaitingState(true);
+        // At the very end of the round, clear swiped letters under the board so no text is visible
+        const statusEl = document.getElementById('word-validation-status');
+        if (statusEl) {
+            statusEl.textContent = '';
+            statusEl.className = 'validation-status';
+            statusEl.style.color = '';
+        }
+        if (validationTimeout) {
+            clearTimeout(validationTimeout);
+            validationTimeout = null;
+        }
+        if (typeof mouseState !== 'undefined' && mouseState) {
+            mouseState.isDown = false;
+            mouseState.selectedPath = [];
+            if (mouseState.visitedCells) mouseState.visitedCells.clear();
+        }
+        document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
+            c.classList.remove('selected', 'current', 'typing-highlight');
+            if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+        });
     } else {
         // Format determination: Synchronized with current room's authoritative state
         if (window.lastGameState) {
@@ -9729,6 +9768,12 @@ function showGuessingPopup() {
 function showValidationFeedback(message, isValid, isBonus = false, path = null, playSound = true) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
+    if (window.lastGameState && (window.lastGameState.state === 'intermission' || window.lastGameState.state === 'waiting')) {
+        statusEl.textContent = '';
+        statusEl.className = 'validation-status';
+        statusEl.style.color = '';
+        return;
+    }
 
     // Clear highlights, but keep active highlights if the user has already started a new swipe or typing sequence
     const isSwipingNewWord = mouseState && mouseState.isDown;
@@ -10594,7 +10639,7 @@ function clearWordInputAndSelection() {
     const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) {
         const statusEl = document.getElementById('word-validation-status');
-        if (statusEl && statusEl.classList.contains('status-swiping')) {
+        if (statusEl) {
             statusEl.textContent = '';
             statusEl.className = 'validation-status';
             statusEl.style.color = '';
@@ -11085,6 +11130,18 @@ function finishDragSelection(e) {
         c.classList.remove('selected', 'current', 'typing-highlight');
         applyDensityToCell(c);
     });
+
+    // If round ended before touch/mouse release, clear validation status immediately and suppress submission
+    const isRoundOver = window.lastGameState && (window.lastGameState.state === 'intermission' || window.lastGameState.state === 'waiting');
+    if (isRoundOver) {
+        const statusEl = document.getElementById('word-validation-status');
+        if (statusEl) {
+            statusEl.textContent = '';
+            statusEl.className = 'validation-status';
+            statusEl.style.color = '';
+        }
+        return;
+    }
 
     if (path.length >= 1) {
         try {
