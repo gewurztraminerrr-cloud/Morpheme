@@ -18700,4 +18700,87 @@ body.theme-black .combo-explorer-filter-input {
     border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
+/* Words to Work on & Combo Checker action buttons in game rooms */
+.work-on-game-btn-container,
+#work-on-game-btn-container {
+    margin: 5px 0;
+    width: 100%;
+    display: none;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.work-on-game-btn,
+#add-to-work-on-game-btn,
+#search-in-combo-game-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.25;
+    border-radius: 4px;
+    background: rgba(167, 139, 250, 0.15);
+    color: #c4b5fd;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.work-on-game-btn:hover,
+#add-to-work-on-game-btn:hover,
+#search-in-combo-game-btn:hover {
+    background: rgba(167, 139, 250, 0.28);
+    color: #ffffff;
+    border-color: rgba(167, 139, 250, 0.7);
+}
+
+.work-on-game-btn:active,
+#add-to-work-on-game-btn:active,
+#search-in-combo-game-btn:active {
+    transform: translateY(1px);
+}
+
+/* Light & White Theme high-contrast overrides */
+body.theme-white .work-on-game-btn,
+body.theme-white #add-to-work-on-game-btn,
+body.theme-white #search-in-combo-game-btn,
+body[class*="theme-light-"] .work-on-game-btn,
+body[class*="theme-light-"] #add-to-work-on-game-btn,
+body[class*="theme-light-"] #search-in-combo-game-btn,
+[class*="theme-white"] .work-on-game-btn,
+[class*="theme-white"] #add-to-work-on-game-btn,
+[class*="theme-white"] #search-in-combo-game-btn,
+[class*="theme-light-"] .work-on-game-btn,
+[class*="theme-light-"] #add-to-work-on-game-btn,
+[class*="theme-light-"] #search-in-combo-game-btn {
+    background: rgba(109, 40, 217, 0.08) !important;
+    color: #5b21b6 !important;
+    border: 1px solid rgba(109, 40, 217, 0.35) !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white .work-on-game-btn:hover,
+body.theme-white #add-to-work-on-game-btn:hover,
+body.theme-white #search-in-combo-game-btn:hover,
+body[class*="theme-light-"] .work-on-game-btn:hover,
+body[class*="theme-light-"] #add-to-work-on-game-btn:hover,
+body[class*="theme-light-"] #search-in-combo-game-btn:hover,
+[class*="theme-white"] .work-on-game-btn:hover,
+[class*="theme-white"] #add-to-work-on-game-btn:hover,
+[class*="theme-white"] #search-in-combo-game-btn:hover,
+[class*="theme-light-"] .work-on-game-btn:hover,
+[class*="theme-light-"] #add-to-work-on-game-btn:hover,
+[class*="theme-light-"] #search-in-combo-game-btn:hover {
+    background: rgba(109, 40, 217, 0.16) !important;
+    color: #4c1d95 !important;
+    border-color: rgba(109, 40, 217, 0.6) !important;
+}
+
+
 

@@ -5114,64 +5114,91 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     
     const workOnGameContainer = document.getElementById('work-on-game-btn-container');
     const workOnGameBtn = document.getElementById('add-to-work-on-game-btn');
-    if (workOnGameContainer && workOnGameBtn) {
+    const searchComboBtn = document.getElementById('search-in-combo-game-btn');
+    if (workOnGameContainer && (workOnGameBtn || searchComboBtn)) {
         if (highlightedFoundWord) {
-            workOnGameContainer.style.display = 'block';
-            workOnGameBtn.onclick = async () => {
-                const targetWord = highlightedFoundWord;
-                if (!targetWord) return;
+            workOnGameContainer.style.display = 'flex';
+            if (workOnGameBtn) {
+                workOnGameBtn.onclick = async () => {
+                    const targetWord = highlightedFoundWord;
+                    if (!targetWord) return;
 
-                // Check existence via localStorage
-                const storedRaw = localStorage.getItem('morpheme_words_to_work_on');
-                let curList = [];
-                try {
-                    if (storedRaw) curList = JSON.parse(storedRaw) || [];
-                } catch(e) {}
-
-                const alreadyThere = curList.some(item => {
-                    const w = (typeof item === 'object' && item !== null) ? item.word : item;
-                    return (w || '').toUpperCase() === targetWord;
-                });
-
-                if (alreadyThere) {
-                    if (window.showAlertModal) {
-                        window.showAlertModal('Already on List', `"${targetWord}" is already on your Words to Work on list.`);
-                    } else {
-                        alert(`"${targetWord}" is already on your Words to Work on list.`);
-                    }
-                    return;
-                }
-
-                if (typeof window.addWordToWorkOn === 'function') {
-                    const added = await window.addWordToWorkOn(targetWord);
-                    if (added && window.showAlertModal) {
-                        window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
-                    }
-                } else {
-                    // Fallback if tools.js function is not yet globally loaded
+                    // Check existence via localStorage
+                    const storedRaw = localStorage.getItem('morpheme_words_to_work_on');
+                    let curList = [];
                     try {
-                        const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(targetWord)}`);
-                        const info = await resp.json();
-                        if (info && info.valid) {
-                            curList.unshift({
-                                word: targetWord,
-                                lists: info.lists || ['NWL', 'CSW'],
-                                timestamp: Date.now()
-                            });
-                            localStorage.setItem('morpheme_words_to_work_on', JSON.stringify(curList));
-                            if (window.showAlertModal) {
-                                window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
-                            }
+                        if (storedRaw) curList = JSON.parse(storedRaw) || [];
+                    } catch(e) {}
+
+                    const alreadyThere = curList.some(item => {
+                        const w = (typeof item === 'object' && item !== null) ? item.word : item;
+                        return (w || '').toUpperCase() === targetWord;
+                    });
+
+                    if (alreadyThere) {
+                        if (window.showAlertModal) {
+                            window.showAlertModal('Already on List', `"${targetWord}" is already on your Words to Work on list.`);
                         } else {
-                            if (window.showAlertModal) {
-                                window.showAlertModal('Invalid Word', `"${targetWord}" is not a valid word and was not added.`);
-                            }
+                            alert(`"${targetWord}" is already on your Words to Work on list.`);
                         }
-                    } catch(err) {
-                        console.error('Failed to add word to work on list:', err);
+                        return;
                     }
-                }
-            };
+
+                    if (typeof window.addWordToWorkOn === 'function') {
+                        const added = await window.addWordToWorkOn(targetWord);
+                        if (added && window.showAlertModal) {
+                            window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
+                        }
+                    } else {
+                        // Fallback if tools.js function is not yet globally loaded
+                        try {
+                            const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(targetWord)}`);
+                            const info = await resp.json();
+                            if (info && info.valid) {
+                                curList.unshift({
+                                    word: targetWord,
+                                    lists: info.lists || ['NWL', 'CSW'],
+                                    timestamp: Date.now()
+                                });
+                                localStorage.setItem('morpheme_words_to_work_on', JSON.stringify(curList));
+                                if (window.showAlertModal) {
+                                    window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
+                                }
+                            } else {
+                                if (window.showAlertModal) {
+                                    window.showAlertModal('Invalid Word', `"${targetWord}" is not a valid word and was not added.`);
+                                }
+                            }
+                        } catch(err) {
+                            console.error('Failed to add word to work on list:', err);
+                        }
+                    }
+                };
+            }
+
+            if (searchComboBtn) {
+                searchComboBtn.onclick = () => {
+                    const targetWord = highlightedFoundWord;
+                    if (!targetWord) return;
+
+                    const state = window.lastGameState || {};
+                    const sp = state.spinner_params || {};
+                    const rawDict = (sp && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
+                    const isAW = state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '') || (sp && (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || '')));
+                    let targetDict = 'NWL';
+                    if (isAW) {
+                        targetDict = 'ALL';
+                    } else if (/CSW/i.test(rawDict)) {
+                        targetDict = 'CSW';
+                    } else {
+                        targetDict = 'NWL';
+                    }
+
+                    if (typeof window.searchWordInComboChecker === 'function') {
+                        window.searchWordInComboChecker(targetWord, targetDict, 'page-play');
+                    }
+                };
+            }
         } else {
             workOnGameContainer.style.display = 'none';
         }
