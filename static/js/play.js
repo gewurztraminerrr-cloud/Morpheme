@@ -423,13 +423,20 @@ const unlockAudio = () => {
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic) {
         try {
+            if (!tripleMusic.src || !tripleMusic.src.includes('/music/triple.mp3')) {
+                tripleMusic.src = tripleMusic.getAttribute('data-src') || '/music/triple.mp3';
+            }
             tripleMusic.load();
         } catch (e) {}
     }
+    ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+        document.removeEventListener(evt, unlockAudio, true);
+    });
 };
 
-document.addEventListener('click', unlockAudio, { once: true });
-document.addEventListener('touchstart', unlockAudio, { once: true });
+['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, unlockAudio, { capture: true, passive: true });
+});
 
 // Sound effects system using Web Audio API (Optimized for ultra-low latency & Bluetooth earpieces)
 const BoardAudio = {
@@ -674,6 +681,11 @@ const initAudioOnUserInteraction = () => {
         BoardAudio.ctx.resume();
     }
     BoardAudio.startKeepAlive();
+    const tripleMusic = document.getElementById('triple-music');
+    if (tripleMusic && (!tripleMusic.src || !tripleMusic.src.includes('/music/triple.mp3'))) {
+        tripleMusic.src = tripleMusic.getAttribute('data-src') || '/music/triple.mp3';
+        try { tripleMusic.load(); } catch (e) {}
+    }
 };
 document.addEventListener('click', initAudioOnUserInteraction);
 document.addEventListener('touchstart', initAudioOnUserInteraction, { passive: true });
@@ -6437,6 +6449,12 @@ function updateLocalTimer() {
     }
 }
 
+function isTripleFormat(fmt) {
+    if (!fmt) return false;
+    const str = fmt.toString().toLowerCase().trim();
+    return str === 'triple' || str.includes('triple');
+}
+
 function updateTripleMusicState(remaining) {
     const audio = document.getElementById('triple-music');
     if (!audio) return;
@@ -6458,25 +6476,56 @@ function updateTripleMusicState(remaining) {
         return;
     }
 
+    // Ensure audio element has source set, looping enabled, and is ready
+    if (!audio.src || !audio.src.includes('/music/triple.mp3')) {
+        audio.src = audio.getAttribute('data-src') || '/music/triple.mp3';
+        audio.loop = true;
+        try { audio.load(); } catch (e) {}
+    } else if (!audio.loop) {
+        audio.loop = true;
+    }
+
     const sp = state.spinner_params || {};
     const isIntermission = state.state === 'intermission';
     const isRevealed = state.spinner_params_revealed === true || state.spinner_params_revealed === 'true';
     const preferSp = isIntermission && isRevealed;
 
     const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
-    const isTriple = (factFmt && factFmt.toString().toLowerCase().trim() === 'triple');
+    const isTriple = isTripleFormat(factFmt) || (state.state === 'active' && isTripleFormat(state.current_board_format));
 
     if (state.state === 'active') {
         window._lastActiveRoundFormat = state.current_board_format || 'Normal';
     }
-    const wasTriplePrevious = (window._lastActiveRoundFormat && window._lastActiveRoundFormat.toString().toLowerCase().trim() === 'triple');
+    const wasTriplePrevious = isTripleFormat(window._lastActiveRoundFormat);
+
+    const safePlay = () => {
+        if (!audio.paused) return;
+        const p = audio.play();
+        if (p !== undefined) {
+            p.catch(e => {
+                console.warn('[play.js] Triple music play blocked/deferred:', e);
+                const retryOnGesture = () => {
+                    const st = window.lastGameState;
+                    if (st && (st.state === 'active' || (st.state === 'intermission' && remaining <= 10.0))) {
+                        audio.play().catch(() => {});
+                    }
+                    ['pointerdown', 'keydown', 'touchstart', 'click'].forEach(evt => {
+                        window.removeEventListener(evt, retryOnGesture, true);
+                    });
+                };
+                ['pointerdown', 'keydown', 'touchstart', 'click'].forEach(evt => {
+                    window.addEventListener(evt, retryOnGesture, { capture: true, once: true });
+                });
+            });
+        }
+    };
 
     if (state.state === 'active') {
         if (isTriple) {
             audio.volume = 1.0;
             if (audio.paused) {
                 audio.currentTime = 0;
-                audio.play().catch(e => console.warn('Failed to play triple music:', e));
+                safePlay();
             }
         } else {
             if (!audio.paused) {
@@ -6490,7 +6539,7 @@ function updateTripleMusicState(remaining) {
             audio.volume = fadeOutVolume;
             if (fadeOutVolume > 0) {
                 if (audio.paused) {
-                    audio.play().catch(e => console.warn('Failed to play triple music during fade-out:', e));
+                    safePlay();
                 }
             } else {
                 if (!audio.paused) {
@@ -6504,7 +6553,7 @@ function updateTripleMusicState(remaining) {
             if (fadeInVolume > 0) {
                 if (audio.paused) {
                     audio.currentTime = 0;
-                    audio.play().catch(e => console.warn('Failed to play triple music during fade-in:', e));
+                    safePlay();
                 }
             } else {
                 if (!audio.paused) {
@@ -6522,6 +6571,7 @@ function updateTripleMusicState(remaining) {
         }
     }
 }
+window.updateTripleMusicState = updateTripleMusicState;
 
 // Helper for special match timers (Tournament, Private Match)
 function updateSpecialMatchTimer(seconds) {
