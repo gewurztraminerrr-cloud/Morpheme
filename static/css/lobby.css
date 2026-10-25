@@ -1429,7 +1429,7 @@ body[class*="theme-light-"] .field-hint {
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -2761,7 +2761,7 @@ body.theme-white .lobby-journey-sticky-header {
         flex-direction: column !important;
         gap: 8px !important;
         clip-path: none !important;
-        border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.18)) !important;
         border-radius: 12px !important;
         background: var(--bg-panel) !important;
     }
@@ -3277,7 +3277,7 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
         -webkit-backdrop-filter: none !important;
     }
 
-    /* White layouts on laptops and desktops: black border surrounding the ACTIVE ROOMS content */
+    /* White layouts on laptops and desktops: razor-thin (1px) black border surrounding the ACTIVE ROOMS panel */
     [class*="theme-white"] body #mobile-panel-rooms,
     [class*="theme-white"] body .active-rooms-panel,
     [class*="theme-white"] #mobile-panel-rooms,
@@ -3292,13 +3292,13 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
     [class*="theme-light-"] .active-rooms-panel,
     body[class*="theme-light-"] #mobile-panel-rooms,
     body[class*="theme-light-"] .active-rooms-panel {
-        border: 2px solid #000000 !important;
+        border: 1px solid #000000 !important;
     }
 
-    /* Default color layout on laptops/desktops: slightly thinner (1.5px) border around the content under ACTIVE ROOMS */
+    /* Default color layout on laptops/desktops: razor-thin (1px) border surrounding the ACTIVE ROOMS panel */
     body:not([class*="theme-white"]):not([class*="theme-light-"]) #mobile-panel-rooms,
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel {
-        border: 1.5px solid rgba(var(--text-primary-rgb), 0.38) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.28) !important;
     }
 
     body:not([class*="theme-white"]):not([class*="theme-light-"]) .active-rooms-panel #selected-game-info,
