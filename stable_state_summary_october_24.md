@@ -157,12 +157,29 @@ START_OVER_POINT_OCTOBER_24
   - Shifted the Transpose button 6px to the right so that spacing above (6px), below (6px), and to the right (6px) of the buttons within the panel is perfectly equalized.
   - Bumped `play.css?v=1792897000` in `templates/index.html`.
 
+### 24. Clear Unsubmitted Swiped Letters Below Board at End of Round on Mobile
+- **Issue Resolved**: On mobile devices in game rooms, text spelling out the letters the user had swiped below the board in `#word-validation-status` (`.validation-status`, `.status-swiping`) would freeze and remain visible throughout intermission if the round ended before the letters were submitted.
+- **Root Causes**:
+  - As a user drags across board cells on mobile, `selectCell` actively updates `#word-validation-status` with the uppercase letters of the drag path.
+  - If the round expires while the player's finger is on the screen or if the user never submits the word before round end, `finishDragSelection` either does not fire or state transitions to intermission, leaving the unsubmitted letters permanently frozen under the board.
+- **Implementation**:
+  - In `static/js/play.js`:
+    1. In `updateGameState()` upon state transition from `active` to `intermission`, immediately cleared `#word-validation-status` text, class, and cancelled any pending `validationTimeout`.
+    2. In `updateGameState()` standing intermission checks (`state.state === 'intermission'`), added safeguard to clear `#word-validation-status` text and styling if any text or `.status-swiping` class is present.
+    3. In `updateLocalTimer()` when the timer counts down to 0 (`seconds <= 0 || remaining <= 0`), immediately cleared `#word-validation-status` text, reset `mouseState.isDown = false`, cleared drag selection paths, and removed active cell highlights.
+    4. In `showValidationFeedback()`, added an early return guard if `window.lastGameState.state === 'intermission'` or `'waiting'` so late network responses do not re-populate text under the board.
+    5. In `clearWordInputAndSelection()`, unconditionally cleared `#word-validation-status` text and styling.
+    6. In `finishDragSelection()`, added a guard checking if the round is over (`window.lastGameState.state === 'intermission' || window.lastGameState.state === 'waiting'`) to immediately clear `#word-validation-status` and suppress late submissions.
+  - In `templates/index.html`, bumped `play.js?v=1792898000`.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `c5eca53d` | **fix(mobile): clear swiped unsubmitted letters below board at end of round** |
+| `a69f1605` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
 | `7a19ad5d` | **fix(game_room): import copy at module level to prevent UnboundLocalError in start_next_round** |
 | `eee04f3c` | **style(play): equalize padding above, below, and to the right of Rotate/Transpose buttons in timer panel on mobile** |
 | `758400b4` | **docs: update stable state summary with matching Remaining padding** |
