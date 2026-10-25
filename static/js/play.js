@@ -5083,6 +5083,12 @@ function updateIntermissionRenderKey() {
     window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 }
 
+window.LETTER_VALUES = window.LETTER_VALUES || {
+    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
+    'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
+    'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
+};
+
 function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWords = [], allWordScores = {}, cswOnlyWords = [], addedWords = []) {
     console.log(`[displayAllWords] RENDERING. BonusWord: "${bonusWord}" | Words count: ${allWords ? allWords.length : 0}`);
     const listEl = document.getElementById('submitted-words-list');
@@ -5355,32 +5361,188 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         ? displayWords 
         : displayWords.filter(entry => entry.len.toString() === selectedLength);
 
-    // Helper to get total points for sorting
-    const getEntryPoints = (entry) => {
-        const p = allWordScores[entry.word] || allWordScores[entry.wordUpper] || 0;
-        if (typeof p === 'object' && p !== null) return (p.total !== undefined ? p.total : 0);
-        return typeof p === 'number' ? p : (parseInt(p, 10) || 0);
-    };
+    // Build finder score details lookup from state players to recover accurate bonus breakdowns
+    const finderScoreDetailsMap = new Map();
+    const curGameState = window.lastGameState;
+    if (curGameState) {
+        const playerPool = [...(curGameState.players || []), ...(curGameState.previous_players || [])];
+        for (const p of playerPool) {
+            if (p && Array.isArray(p.submitted_words)) {
+                for (const sw of p.submitted_words) {
+                    if (sw && sw.score_details) {
+                        const swWord = (sw.word || '').toUpperCase().trim();
+                        if (swWord && !finderScoreDetailsMap.has(swWord)) {
+                            finderScoreDetailsMap.set(swWord, sw.score_details);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const activeBonusCell = curGameState ? (curGameState.previous_bonus_cell || curGameState.bonus_cell) : null;
+    const activePaths = curGameState ? (curGameState.previous_all_words_paths || curGameState.all_words_paths || {}) : {};
+    let bonusCellCoord = null;
+    if (activeBonusCell) {
+        if (typeof activeBonusCell === 'object' && activeBonusCell !== null) {
+            const br = activeBonusCell.r !== undefined ? activeBonusCell.r : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 1 : 0] : -1);
+            const bc = activeBonusCell.c !== undefined ? activeBonusCell.c : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 2 : 1] : -1);
+            if (br >= 0 && bc >= 0) bonusCellCoord = { r: br, c: bc };
+        }
+    }
+
+    const curBoardFormat = curGameState ? (curGameState.previous_board_format || curGameState.current_board_format || (curGameState.spinner_params && curGameState.spinner_params.board_format) || 'Normal') : 'Normal';
+    const isValuedFormat = String(curBoardFormat).toLowerCase().includes('valued');
+    const letterValuesLookup = window.LETTER_VALUES || (typeof LETTER_VALUES !== 'undefined' ? LETTER_VALUES : {
+        'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10,
+        'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2,
+        'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
+    });
+
+    // Authoritatively pre-calculate scoring breakdowns for each word BEFORE sorting
+    for (let i = 0; i < filteredWords.length; i++) {
+        const entry = filteredWords[i];
+        const word = entry.word;
+        const wordUpper = entry.wordUpper;
+        const isBonus = entry.isBonus;
+        let pointsData = allWordScores[word] || allWordScores[wordUpper] || null;
+
+        const finderDetails = finderScoreDetailsMap.get(wordUpper);
+        if (finderDetails && (!pointsData || typeof pointsData !== 'object' || (!pointsData.bonus_letter_points && !pointsData.bonus_word_points && !pointsData.either_or_points))) {
+            pointsData = finderDetails;
+        }
+
+        // Determine bonus word points
+        let bonusWordPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_word_points !== undefined)
+            ? (pointsData.bonus_word_points || 0)
+            : (isBonus ? word.length : 0);
+
+        // Determine bonus letter points (+3)
+        let bonusLetterPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_letter_points !== undefined)
+            ? (pointsData.bonus_letter_points || 0)
+            : 0;
+
+        // If bonusLetterPts is 0, check if word's path uses bonusCellCoord
+        if (bonusLetterPts === 0 && bonusCellCoord) {
+            const wPath = activePaths[word] || activePaths[wordUpper];
+            if (Array.isArray(wPath)) {
+                const hitsBonus = wPath.some(node => {
+                    if (!node) return false;
+                    const nr = node.r !== undefined ? node.r : (Array.isArray(node) ? node[node.length === 3 ? 1 : 0] : -1);
+                    const nc = node.c !== undefined ? node.c : (Array.isArray(node) ? node[node.length === 3 ? 2 : 1] : -1);
+                    return nr === bonusCellCoord.r && nc === bonusCellCoord.c;
+                });
+                if (hitsBonus) {
+                    bonusLetterPts = 3;
+                }
+            }
+        }
+
+        let eoPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.either_or_points !== undefined)
+            ? (pointsData.either_or_points || 0)
+            : 0;
+
+        // Base points
+        let basePts = 0;
+        if (typeof pointsData === 'object' && pointsData !== null && pointsData.base !== undefined) {
+            basePts = pointsData.base;
+        } else if (typeof pointsData === 'number') {
+            basePts = Math.max(0, pointsData - bonusWordPts - bonusLetterPts - eoPts);
+        } else if (isValuedFormat) {
+            let vScore = 0;
+            let vi = 0;
+            while (vi < wordUpper.length) {
+                if (wordUpper[vi] === 'Q' && vi + 1 < wordUpper.length && wordUpper[vi + 1] === 'U') {
+                    vScore += (letterValuesLookup['Q'] || 10);
+                    vi += 2;
+                } else {
+                    vScore += (letterValuesLookup[wordUpper[vi]] || 1);
+                    vi += 1;
+                }
+            }
+            basePts = vScore;
+        } else {
+            const l = word.length;
+            if (l <= 4) basePts = 1;
+            else if (l === 5) basePts = 2;
+            else if (l === 6) basePts = 3;
+            else if (l === 7) basePts = 5;
+            else if (l === 8) basePts = 9;
+            else if (l === 9) basePts = 13;
+            else if (l === 10) basePts = 17;
+            else if (l === 11) basePts = 21;
+            else if (l === 12) basePts = 25;
+            else if (l === 13) basePts = 29;
+            else if (l === 14) basePts = 33;
+            else basePts = 37;
+        }
+
+        let totalPts = basePts + bonusWordPts + bonusLetterPts + eoPts;
+        if (typeof pointsData === 'object' && pointsData !== null && typeof pointsData.total === 'number') {
+            totalPts = Math.max(totalPts, pointsData.total);
+        }
+
+        let pointsText = totalPts;
+        if (bonusWordPts > 0 || bonusLetterPts > 0 || eoPts > 0) {
+            let parts = [basePts];
+            if (bonusWordPts > 0) parts.push(bonusWordPts);
+            if (bonusLetterPts > 0) parts.push(bonusLetterPts);
+            if (eoPts > 0) parts.push(eoPts);
+
+            if (parts.length > 1) {
+                pointsText = `${parts.join(' + ')} = ${totalPts}`;
+            } else {
+                pointsText = totalPts;
+            }
+        }
+
+        let bonusIndicator = '';
+        if (bonusLetterPts > 0) {
+            bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
+        } else if (bonusWordPts > 0 || isBonus) {
+            bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
+        } else if (eoPts > 0) {
+            bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
+        }
+
+        entry.basePts = basePts;
+        entry.bonusWordPts = bonusWordPts;
+        entry.bonusLetterPts = bonusLetterPts;
+        entry.eoPts = eoPts;
+        entry.totalPts = totalPts;
+        entry.pointsText = pointsText;
+        entry.bonusIndicator = bonusIndicator;
+    }
 
     const isSortByPoints = (window.allWordsSortMode === 'points');
 
-    // Sort the filtered subset only (using optimized comparator)
+    // Sort the filtered subset only (using authoritative pre-calculated values)
     filteredWords.sort((a, b) => {
-        // 0. Bonus Word (Absolute Top Priority)
-        if (a.isBonus) return -1;
-        if (b.isBonus) return 1;
-
         if (isSortByPoints) {
-            // Sort by Point Value (Desc)
-            const ptsA = getEntryPoints(a);
-            const ptsB = getEntryPoints(b);
-            if (ptsA !== ptsB) return ptsB - ptsA;
-
-            // Secondary: Length (Desc)
-            if (a.len !== b.len) return b.len - a.len;
+            // Primary: Point Value (Desc)
+            if (b.totalPts !== a.totalPts) {
+                return b.totalPts - a.totalPts;
+            }
+            // Secondary tie-break: Secret bonus word priority
+            if (a.isBonus) return -1;
+            if (b.isBonus) return 1;
+            // Tertiary tie-break: Length (Desc)
+            if (b.len !== a.len) {
+                return b.len - a.len;
+            }
         } else {
-            // Default: Length (Desc) - Primary sort
-            if (a.len !== b.len) return b.len - a.len;
+            // Default: Sort by Letter Length
+            // 0. Bonus Word (Absolute Top Priority)
+            if (a.isBonus) return -1;
+            if (b.isBonus) return 1;
+            // Primary: Length (Desc)
+            if (b.len !== a.len) {
+                return b.len - a.len;
+            }
+            // Secondary: Point Value (Desc)
+            if (b.totalPts !== a.totalPts) {
+                return b.totalPts - a.totalPts;
+            }
         }
 
         // Alphabetical (Asc) - (ASCII operators are 10-20x faster than localeCompare)
@@ -5459,36 +5621,6 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         });
     }
 
-    // Build finder score details lookup from state players to recover accurate bonus breakdowns
-    const finderScoreDetailsMap = new Map();
-    const curGameState = window.lastGameState;
-    if (curGameState) {
-        const playerPool = [...(curGameState.players || []), ...(curGameState.previous_players || [])];
-        for (const p of playerPool) {
-            if (p && Array.isArray(p.submitted_words)) {
-                for (const sw of p.submitted_words) {
-                    if (sw && sw.score_details) {
-                        const swWord = (sw.word || '').toUpperCase().trim();
-                        if (swWord && !finderScoreDetailsMap.has(swWord)) {
-                            finderScoreDetailsMap.set(swWord, sw.score_details);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    const activeBonusCell = curGameState ? (curGameState.previous_bonus_cell || curGameState.bonus_cell) : null;
-    const activePaths = curGameState ? (curGameState.previous_all_words_paths || curGameState.all_words_paths || {}) : {};
-    let bonusCellCoord = null;
-    if (activeBonusCell) {
-        if (typeof activeBonusCell === 'object' && activeBonusCell !== null) {
-            const br = activeBonusCell.r !== undefined ? activeBonusCell.r : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 1 : 0] : -1);
-            const bc = activeBonusCell.c !== undefined ? activeBonusCell.c : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 2 : 1] : -1);
-            if (br >= 0 && bc >= 0) bonusCellCoord = { r: br, c: bc };
-        }
-    }
-
     listEl.innerHTML = filteredWords.map(entry => {
         const word = entry.word;
         const wordUpper = entry.wordUpper;
@@ -5497,80 +5629,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const isAddedWord = addedSet.has(wordUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wordUpper));
         const isTargetFound = targetWordsSet.has(wordUpper);
         const isFoundByAny = allFoundSet.has(wordUpper);
-        let pointsData = allWordScores[word] || allWordScores[wordUpper] || null;
 
-        const finderDetails = finderScoreDetailsMap.get(wordUpper);
-        if (finderDetails && (!pointsData || typeof pointsData !== 'object' || (!pointsData.bonus_letter_points && !pointsData.bonus_word_points && !pointsData.either_or_points))) {
-            pointsData = finderDetails;
-        }
-
-        // Determine bonus word points
-        let bonusWordPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_word_points !== undefined)
-            ? (pointsData.bonus_word_points || 0)
-            : (isBonus ? word.length : 0);
-
-        // Determine bonus letter points (+3)
-        let bonusLetterPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_letter_points !== undefined)
-            ? (pointsData.bonus_letter_points || 0)
-            : 0;
-
-        // If bonusLetterPts is 0, check if word's path uses bonusCellCoord
-        if (bonusLetterPts === 0 && bonusCellCoord) {
-            const wPath = activePaths[word] || activePaths[wordUpper];
-            if (Array.isArray(wPath)) {
-                const hitsBonus = wPath.some(node => {
-                    if (!node) return false;
-                    const nr = node.r !== undefined ? node.r : (Array.isArray(node) ? node[node.length === 3 ? 1 : 0] : -1);
-                    const nc = node.c !== undefined ? node.c : (Array.isArray(node) ? node[node.length === 3 ? 2 : 1] : -1);
-                    return nr === bonusCellCoord.r && nc === bonusCellCoord.c;
-                });
-                if (hitsBonus) {
-                    bonusLetterPts = 3;
-                }
-            }
-        }
-
-        let eoPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.either_or_points !== undefined)
-            ? (pointsData.either_or_points || 0)
-            : 0;
-
-        // Base points
-        let basePts = 0;
-        if (typeof pointsData === 'object' && pointsData !== null && pointsData.base !== undefined) {
-            basePts = pointsData.base;
-        } else if (typeof pointsData === 'number') {
-            basePts = Math.max(0, pointsData - bonusWordPts - bonusLetterPts - eoPts);
-        } else {
-            const l = word.length;
-            if (l <= 4) basePts = 1;
-            else if (l === 5) basePts = 2;
-            else if (l === 6) basePts = 3;
-            else if (l === 7) basePts = 5;
-            else if (l === 8) basePts = 9;
-            else if (l === 9) basePts = 13;
-            else if (l === 10) basePts = 17;
-            else if (l === 11) basePts = 21;
-            else if (l === 12) basePts = 25;
-            else if (l === 13) basePts = 29;
-            else if (l === 14) basePts = 33;
-            else basePts = 37;
-        }
-
-        const totalPts = basePts + bonusWordPts + bonusLetterPts + eoPts;
-        let pointsText = totalPts;
-
-        if (bonusWordPts > 0 || bonusLetterPts > 0 || eoPts > 0) {
-            let parts = [basePts];
-            if (bonusWordPts > 0) parts.push(bonusWordPts);
-            if (bonusLetterPts > 0) parts.push(bonusLetterPts);
-            if (eoPts > 0) parts.push(eoPts);
-
-            if (parts.length > 1) {
-                pointsText = `${parts.join(' + ')} = ${totalPts}`;
-            } else {
-                pointsText = totalPts;
-            }
-        }
+        const totalPts = entry.totalPts;
+        const pointsText = entry.pointsText;
+        const bonusIndicator = entry.bonusIndicator;
+        const bonusLetterPts = entry.bonusLetterPts;
+        const bonusWordPts = entry.bonusWordPts;
+        const eoPts = entry.eoPts;
 
         let className = 'word-item';
 
@@ -5652,17 +5717,6 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
         const indicatorClass = isFoundByAny ? 'found-indicator present' : 'found-indicator empty';
         const indicatorIcon = isFoundByAny ? '✓' : '';
-        
-        // Bonus indicator (Left side)
-        let bonusIndicator = '';
-        if (bonusLetterPts > 0) {
-            bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
-        } else if (bonusWordPts > 0 || isBonus) {
-            bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
-        } else if (eoPts > 0) {
-            bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
-        }
-
         const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;
 
         return `<div class="${className}" data-word="${word}">
@@ -7350,9 +7404,7 @@ window.addEventListener('resize', () => {
 // Window resize listener is sufficient for board overflow checks.
 
 // Letter values for "Valued Letters" format
-const LETTER_VALUES = {
-    'A': 2, 'B': 4, 'C': 4, 'D': 3, 'E': 1, 'F': 5, 'G': 3, 'H': 5, 'I': 2, 'J': 10, 'K': 6, 'L': 3, 'M': 4, 'N': 2, 'O': 2, 'P': 4, 'Q': 10, 'R': 2, 'S': 2, 'T': 2, 'U': 4, 'V': 5, 'W': 5, 'X': 8, 'Y': 5, 'Z': 8
-};
+const LETTER_VALUES = window.LETTER_VALUES;
 
 function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     if (!cell) return;
