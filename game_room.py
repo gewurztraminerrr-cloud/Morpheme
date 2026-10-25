@@ -2346,7 +2346,7 @@ class GameRoom:
         
         # Pop compatible board from cache if available
         from board_generator import pop_compatible_cached_board
-        sp = self.next_spinner_params or self.spinner_params or {}
+        sp = getattr(self, 'frozen_revealed_params', None) or self.next_spinner_params or self.spinner_params or {}
         dict_val = sp.get('dictionary', 'NWL')
         fmt_val = sp.get('board_format', 'Normal')
         min_l_val = sp.get('min_word_length', 3)
@@ -2367,12 +2367,12 @@ class GameRoom:
         else:
             print(f"[Fallback-Rescue] Early rescue: Cache empty. Using emergency fallback board.")
             # Get emergency fallback board matching current spinner params
-            e_format = self.spinner_params.get('board_format', 'Normal') if self.spinner_params else 'Normal'
-            e_dict = self.spinner_params.get('dictionary', 'NWL') if self.spinner_params else 'NWL'
-            e_use_aw = self.spinner_params.get('use_added_words', False) if self.spinner_params else False
-            e_wc = self.spinner_params.get('word_count_range', '100-200') if self.spinner_params else '100-200'
-            e_min_len = self.spinner_params.get('min_word_length') if self.spinner_params else None
-            e_diff = self.spinner_params.get('difficulty', 'Medium') if self.spinner_params else 'Medium'
+            e_format = sp.get('board_format', 'Normal')
+            e_dict = sp.get('dictionary', 'NWL')
+            e_use_aw = sp.get('use_added_words', False) or '+ AW' in str(e_dict).upper() or '+AW' in str(e_dict).upper()
+            e_wc = sp.get('word_count_range', '100-200')
+            e_min_len = sp.get('min_word_length')
+            e_diff = sp.get('difficulty', 'Medium')
             
             fallback = get_emergency_fallback_board(
                 self.board_dimensions, e_format, self.time_limit,
@@ -2386,25 +2386,48 @@ class GameRoom:
 
         # 2. Sync spinner params
         fparams = dict(fparams) if fparams else {}
-        dict_val = fparams.get('dictionary') or (self.spinner_params.get('dictionary') if self.spinner_params else 'NWL')
-        use_aw_val = fparams.get('use_added_words') or (self.spinner_params.get('use_added_words') if self.spinner_params else False)
+        dict_val = fparams.get('dictionary') or sp.get('dictionary', 'NWL')
+        use_aw_val = fparams.get('use_added_words') or sp.get('use_added_words', False)
         if use_aw_val and '+ AW' not in str(dict_val) and '+AW' not in str(dict_val):
             dict_val = f"{dict_val} + AW"
-            
+
+        declared_target_wc = None
+        if getattr(self, 'frozen_revealed_params', None) and isinstance(self.frozen_revealed_params, dict):
+            declared_target_wc = self.frozen_revealed_params.get('word_count_range')
+        if not declared_target_wc and sp:
+            declared_target_wc = sp.get('word_count_range')
+
+        max_cap = None
+        if declared_target_wc == '50-100': max_cap = 99
+        elif declared_target_wc == '100-200': max_cap = 199
+        elif declared_target_wc == '200-300': max_cap = 299
+        elif declared_target_wc == '300-400': max_cap = 399
+        elif declared_target_wc == '400-500': max_cap = 499
+
+        if max_cap and len(fw) > max_cap:
+            sampled_set = proportionally_sample_words(fw, max_cap)
+            if fbw and fbw in fw and fbw not in sampled_set:
+                sampled_set.add(fbw)
+            fw = [w for w in fw if w in sampled_set]
+            fp = {w: p for w, p in fp.items() if w in sampled_set}
+
         actual_wc = len(fw)
-        if actual_wc < 100: wc_label = '50-100'
-        elif actual_wc < 200: wc_label = '100-200'
-        elif actual_wc < 300: wc_label = '200-300'
-        elif actual_wc < 400: wc_label = '300-400'
-        elif actual_wc < 500: wc_label = '400-500'
-        else: wc_label = '500+'
+        if declared_target_wc:
+            wc_label = declared_target_wc
+        else:
+            if actual_wc < 100: wc_label = '50-100'
+            elif actual_wc < 200: wc_label = '100-200'
+            elif actual_wc < 300: wc_label = '200-300'
+            elif actual_wc < 400: wc_label = '300-400'
+            elif actual_wc < 500: wc_label = '400-500'
+            else: wc_label = '500+'
 
         new_sp = {
             'dictionary': dict_val,
-            'difficulty': fparams.get('difficulty') or (self.spinner_params.get('difficulty') if self.spinner_params else 'Medium'),
+            'difficulty': fparams.get('difficulty') or sp.get('difficulty', 'Medium'),
             'word_count_range': wc_label,
-            'board_format': ff or (self.spinner_params.get('board_format') if self.spinner_params else 'Normal'),
-            'min_word_length': fparams.get('min_word_length') or (self.spinner_params.get('min_word_length') if self.spinner_params else 3),
+            'board_format': ff or sp.get('board_format', 'Normal'),
+            'min_word_length': fparams.get('min_word_length') or sp.get('min_word_length', 3),
             'bonus_word_length': fparams.get('bonus_word_len') or len(fbw) if fbw else 6,
             'use_added_words': use_aw_val,
             'board_dimensions': self.board_dimensions,
@@ -2420,6 +2443,8 @@ class GameRoom:
         self.spinner_params = new_sp
         self.next_spinner_params = new_sp
         self.next_round_spinner_params = new_sp
+        if getattr(self, 'frozen_revealed_params', None) and isinstance(self.frozen_revealed_params, dict):
+            self.frozen_revealed_params['word_count_range'] = wc_label
         self.spinner_params_generated = True
         self.spinner_params_revealed = True
         self._reveal_sync_complete = True
@@ -2731,16 +2756,22 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         min_word_length = max(floor_l, int(min_word_length))
         
     min_accept = 50
-    if min_word_length < 7 and target_range:
+    max_accept = 99999
+    if target_range:
         try:
-            min_accept = int(str(target_range).split('-')[0])
+            parts = str(target_range).split('-')
+            min_accept = int(parts[0])
+            if len(parts) > 1:
+                max_accept = int(parts[1]) - 1
+            elif str(target_range).endswith('+'):
+                max_accept = 99999
         except:
-            if '50' in str(target_range): min_accept = 50
-            elif '100' in str(target_range): min_accept = 100
-            elif '200' in str(target_range): min_accept = 200
-            elif '300' in str(target_range): min_accept = 300
-            elif '400' in str(target_range): min_accept = 400
-            elif '500' in str(target_range): min_accept = 500
+            if '50' in str(target_range): min_accept, max_accept = 50, 99
+            elif '100' in str(target_range): min_accept, max_accept = 100, 199
+            elif '200' in str(target_range): min_accept, max_accept = 200, 299
+            elif '300' in str(target_range): min_accept, max_accept = 300, 399
+            elif '400' in str(target_range): min_accept, max_accept = 400, 499
+            elif '500' in str(target_range): min_accept, max_accept = 500, 99999
             
     is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
     if is_aw:
@@ -2760,6 +2791,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             dictionary = 'NWL'
         target_range = '300-400'
         target_range_resolved = '300-400'
+        max_accept = 399
         fmt = 'Valued Letters'
     else:
         fmt = board_format
@@ -2768,16 +2800,15 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         # Determine starting min length based on dimensions
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         
-        # Determine target range
-        if not is_24h and use_added_words:
+        # Determine target range - strictly preserve provided target_range
+        if target_range:
+            target_range_resolved = target_range
+        elif not is_24h and use_added_words:
             use_added_words = True
             import random
             target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         elif not is_24h:
-            if target_range:
-                target_range_resolved = target_range
-            else:
-                target_range_resolved = '100-200'
+            target_range_resolved = '100-200'
         
         floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
 
@@ -2788,10 +2819,12 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if base_dict not in ['NWL', 'CSW']:
             base_dict = 'NWL'
         
-        if min_accept >= 300:
-            ranges_order = [target_range_resolved, '400-500', '300-400', '500+', '200-300', '100-200']
+        if target_range_resolved:
+            ranges_order = [target_range_resolved]
+        elif min_accept >= 300:
+            ranges_order = ['300-400', '400-500', '500+']
         else:
-            ranges_order = [target_range_resolved, '200-300', '100-200', '300-400', '50-100']
+            ranges_order = ['200-300', '100-200', '300-400', '50-100']
 
         cache_candidates = []
         for r_item in ranges_order:
@@ -2827,8 +2860,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 continue
                                 
                             actual_wc = len(cwords_filtered)
-                            if actual_wc < min_accept:
-                                print(f"[get_emergency_fallback_board] Cached board had only {actual_wc} words for min_word_length={final_min} (needed >= {min_accept}). REJECTING cached board...")
+                            if actual_wc < min_accept or actual_wc > max_accept:
+                                print(f"[get_emergency_fallback_board] Cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                                 continue
                                 
                             if actual_wc < 100: ctr_resolved = '50-100'
@@ -2886,8 +2919,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     matching_final_min = sum(1 for w in words_filtered if len(w) == final_min)
                     if matching_final_min < 3:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
-                    elif actual_wc < min_accept:
-                        print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for min_word_length={final_min} (needed >= {min_accept}). REJECTING cached board...")
+                    elif actual_wc < min_accept or actual_wc > max_accept:
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                     else:
                         if actual_wc < 100: ctr = '50-100'
                         elif actual_wc < 200: ctr = '100-200'
@@ -2937,6 +2970,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
             l_w_filt = [w for w in l_w if len(w) >= min_word_length]
             if len(l_w_filt) >= 15:
+                # If target_range_resolved was provided and generated board exceeded max_accept, sample down
+                if max_accept < 99999 and len(l_w_filt) > max_accept:
+                    sampled_set = proportionally_sample_words(l_w_filt, max_accept)
+                    if l_bw and l_bw in l_w_filt and l_bw not in sampled_set:
+                        sampled_set.add(l_bw)
+                    l_w_filt = [w for w in l_w_filt if w in sampled_set]
+                    l_p = {w: p for w, p in l_p.items() if w in sampled_set}
                 l_p_filt = {w: p for w, p in l_p.items() if w in l_w_filt}
                 eparams = {
                     'min_word_length': min_word_length,
@@ -3003,6 +3043,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if bonus_word and bonus_word not in words_filtered:
             words_filtered.append(bonus_word)
             paths_filtered[bonus_word] = [bonus_cell]
+
+    if max_accept < 99999 and len(words_filtered) > max_accept:
+        sampled_set = proportionally_sample_words(words_filtered, max_accept)
+        if bonus_word and bonus_word in words_filtered and bonus_word not in sampled_set:
+            sampled_set.add(bonus_word)
+        words_filtered = [w for w in words_filtered if w in sampled_set]
+        paths_filtered = {w: p for w, p in paths_filtered.items() if w in sampled_set}
     
     eparams = {
         'min_word_length': min_word_length,
@@ -6320,7 +6367,11 @@ class RoomManager:
                             params['min_word_length'] = actual_shortest
 
                     # Update metadata for the pending round
-                    planned_wc = target_room.next_spinner_params.get('word_count_range', '100-200') if getattr(target_room, 'next_spinner_params', None) else '100-200'
+                    planned_wc = (
+                        (target_room.frozen_revealed_params.get('word_count_range') if getattr(target_room, 'frozen_revealed_params', None) else None)
+                        or (target_room.next_spinner_params.get('word_count_range') if getattr(target_room, 'next_spinner_params', None) else None)
+                        or '100-200'
+                    )
                     max_cap = None
                     if planned_wc == '50-100': max_cap = 99
                     elif planned_wc == '100-200': max_cap = 199
@@ -7161,7 +7212,13 @@ class RoomManager:
                 room.all_words = {w for w in room.all_words if len(w) >= room.current_min_length}
 
                 # Range cap truncation
-                target_sp_range = _sp.get('word_count_range', '100-200')
+                declared_wc = None
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    declared_wc = room.frozen_revealed_params.get('word_count_range')
+                if not declared_wc and active_params:
+                    declared_wc = active_params.get('word_count_range')
+
+                target_sp_range = declared_wc or _sp.get('word_count_range', '100-200')
                 max_cap = None
                 if target_sp_range == '50-100':   max_cap = 99
                 elif target_sp_range == '100-200': max_cap = 199
