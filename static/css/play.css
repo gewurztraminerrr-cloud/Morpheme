@@ -14835,11 +14835,19 @@ body.is-desktop .left-panel-container #game-color-bar {
     display: flex !important;
     width: 100% !important;
     height: 14px !important;
-    margin-bottom: 6px !important;
+    margin-top: 0 !important;
+    margin-bottom: 2px !important;
     border-radius: 6px !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (min-width: 901px) {
+    body:not(.is-mobile) .left-panel-container #game-color-bar {
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+    }
 }
 
 body.is-desktop.theme-white .left-panel-container #game-color-bar,
