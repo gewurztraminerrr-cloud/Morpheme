@@ -2154,6 +2154,7 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     color: #4facfe;
     width: 60%;
     text-align: left;
+    padding-left: 10px;
 }
 
 .count-cell {
@@ -2161,20 +2162,22 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
     opacity: 0.9;
+    padding-right: 10px;
 }
 
-/* On mobile devices in game rooms, Remaining tab 3LW/4LW/6LW furthest to the left */
+/* On mobile devices in game rooms, Remaining tab 3LW/4LW/6LW furthest to the left with matching padding */
 body.is-mobile #remaining-words-table .len-cell,
 body.is-mobile #page-play #remaining-words-table .len-cell,
 body.is-mobile .words-panel #remaining-words-table .len-cell {
     text-align: left !important;
-    padding-left: 0 !important;
+    padding-left: 10px !important;
 }
 
 body.is-mobile #remaining-words-table .count-cell,
 body.is-mobile #page-play #remaining-words-table .count-cell,
 body.is-mobile .words-panel #remaining-words-table .count-cell {
     text-align: right !important;
+    padding-right: 10px !important;
 }
 
 #submitted-words-list {
@@ -8029,17 +8032,18 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         box-sizing: border-box !important;
     }
 
-    /* USER REQUEST: On mobile devices, in game rooms, in Remaining, put the "6LW" etc. for each row furthest to the left */
+    /* USER REQUEST: On mobile devices, in game rooms, in Remaining, put the "6LW" etc. for each row furthest to the left with matching padding */
     #page-play #remaining-words-table .len-cell,
     .words-panel #remaining-words-table .len-cell,
     #remaining-words-table .len-cell {
         text-align: left !important;
-        padding-left: 0 !important;
+        padding-left: 10px !important;
     }
     #page-play #remaining-words-table .count-cell,
     .words-panel #remaining-words-table .count-cell,
     #remaining-words-table .count-cell {
         text-align: right !important;
+        padding-right: 10px !important;
     }
 
     /* USER REQUEST: Make Players and Chat panels touch on mobile */
