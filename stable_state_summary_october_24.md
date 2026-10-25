@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-8f4a780db2a2c84f9c2b4f00e1e0abd9645ad074
+b0fb3d139898b879bbc9f6d2be5f1dedbc29e772
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792897000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792897000`, `tools.js?v=1792845000`, `play.js?v=1792898000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
@@ -178,6 +178,8 @@ START_OVER_POINT_OCTOBER_24
 
 | Commit | Summary |
 |:---|:---|
+| `b0fb3d13` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
+| `8f4a780d` | **docs: update stable state summary with unsubmitted swiped letters fix** |
 | `c5eca53d` | **fix(mobile): clear swiped unsubmitted letters below board at end of round** |
 | `a69f1605` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
 | `7a19ad5d` | **fix(game_room): import copy at module level to prevent UnboundLocalError in start_next_round** |
