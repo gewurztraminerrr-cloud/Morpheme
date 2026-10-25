@@ -522,14 +522,15 @@ window.setDefBackNavVisibility = function(visible) {
 };
 
 window.resetToolsTab = function(immediate = false) {
-    if (!window._navigatingViaDefPopup) {
-        window._defPopupNavStack = [];
-        window._navigatedFromDefPopup = false;
-        window._defPopupOriginTool = null;
-        window._defPopupOriginPage = null;
-        if (typeof window.setDefBackNavVisibility === 'function') {
-            window.setDefBackNavVisibility(false);
-        }
+    if (window._navigatingViaDefPopup) {
+        return;
+    }
+    window._defPopupNavStack = [];
+    window._navigatedFromDefPopup = false;
+    window._defPopupOriginTool = null;
+    window._defPopupOriginPage = null;
+    if (typeof window.setDefBackNavVisibility === 'function') {
+        window.setDefBackNavVisibility(false);
     }
     if (window._toolsSlideTimeout) {
         clearTimeout(window._toolsSlideTimeout);
@@ -792,6 +793,10 @@ function setupToolsNavigation() {
         const observer = new MutationObserver(() => {
             const isActive = toolsPage.classList.contains('active');
             if (isActive && !wasActive) {
+                if (window._navigatingViaDefPopup) {
+                    wasActive = isActive;
+                    return;
+                }
                 if (typeof window.resetToolsTab === 'function') {
                     window.resetToolsTab(true);
                 }
@@ -10482,7 +10487,12 @@ function getActiveToolsWordList(targetEl) {
 
 window.searchWordInComboChecker = function (word, dictionary = null, originPage = null) {
     if (!word) return;
-    const cleanWord = String(typeof word === 'object' ? (word.word || word) : word).trim().toUpperCase();
+    let cleanWord = '';
+    if (typeof word === 'object' && word !== null) {
+        cleanWord = String(word.word || word.text || word.term || '').trim().toUpperCase();
+    } else {
+        cleanWord = String(word).trim().toUpperCase();
+    }
     if (!cleanWord) return;
 
     window._navigatingViaDefPopup = true;
@@ -10537,63 +10547,6 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
         }
     }
 
-    setTimeout(() => {
-        window._navigatingViaDefPopup = false;
-    }, 150);
-
-    // Reset saved scroll positions so we land at the top of Combo Checker
-    window._savedComboScrollTop = 0;
-    if (window._savedToolScrollPositions) {
-        window._savedToolScrollPositions['combo'] = 0;
-    }
-
-    if (typeof window.showTool === 'function') {
-        window.showTool('combo');
-    }
-
-    if (typeof window.switchComboMainTab === 'function') {
-        window.switchComboMainTab('manual');
-    }
-
-    // Sync Combo Checker word list to the originating list / specified dictionary
-    let targetDict = dictionary || window._defPopupExplorerDict || window._defPopupSourceList;
-    if (targetDict) {
-        let normalizedDict = targetDict;
-        if (typeof normalizedDict === 'string') {
-            const upper = normalizedDict.toUpperCase();
-            if (upper.includes('+ AW') || upper.includes('+AW') || upper === 'AW' || upper === 'ALL' || upper === 'ADDED_WORDS') {
-                normalizedDict = 'ALL';
-            } else if (upper.includes('CSW')) {
-                normalizedDict = 'CSW';
-            } else if (upper.includes('NWL')) {
-                normalizedDict = 'NWL';
-            }
-        }
-        const comboDict = document.getElementById('combo-dict');
-        if (comboDict) {
-            const optExists = Array.from(comboDict.options).some(opt => opt.value === normalizedDict);
-            if (optExists) {
-                comboDict.value = normalizedDict;
-                try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
-            }
-        }
-    }
-
-    if (typeof window.switchComboTab === 'function') {
-        window.switchComboTab('mp');
-    }
-
-    const comboInput = document.getElementById('combo-input');
-    if (comboInput) {
-        comboInput.value = cleanWord;
-        if (typeof runComboSearch === 'function') {
-            runComboSearch();
-        } else if (typeof window.runComboSearch === 'function') {
-            window.runComboSearch();
-        }
-    }
-
-    // Scroll cleanly to the very top of Combo Checker across all platforms and scrollers
     const scrollComboToTop = () => {
         const toolsContent = document.querySelector('#page-tools .tools-content');
         if (toolsContent) toolsContent.scrollTop = 0;
@@ -10621,10 +10574,70 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
         }
     };
 
-    scrollComboToTop();
-    setTimeout(scrollComboToTop, 40);
-    setTimeout(scrollComboToTop, 120);
-    setTimeout(scrollComboToTop, 300);
+    const activateComboChecker = () => {
+        // Reset saved scroll positions so we land at the top of Combo Checker
+        window._savedComboScrollTop = 0;
+        if (window._savedToolScrollPositions) {
+            window._savedToolScrollPositions['combo'] = 0;
+        }
+
+        if (typeof window.showTool === 'function') {
+            window.showTool('combo');
+        }
+
+        if (typeof window.switchComboMainTab === 'function') {
+            window.switchComboMainTab('manual');
+        }
+
+        // Sync Combo Checker word list to the originating list / specified dictionary
+        let targetDict = dictionary || window._defPopupExplorerDict || window._defPopupSourceList;
+        if (targetDict) {
+            let normalizedDict = targetDict;
+            if (typeof normalizedDict === 'string') {
+                const upper = normalizedDict.toUpperCase();
+                if (upper.includes('+ AW') || upper.includes('+AW') || upper === 'AW' || upper === 'ALL' || upper === 'ADDED_WORDS') {
+                    normalizedDict = 'ALL';
+                } else if (upper.includes('CSW')) {
+                    normalizedDict = 'CSW';
+                } else if (upper.includes('NWL')) {
+                    normalizedDict = 'NWL';
+                }
+            }
+            const comboDict = document.getElementById('combo-dict');
+            if (comboDict) {
+                const optExists = Array.from(comboDict.options).some(opt => opt.value === normalizedDict);
+                if (optExists) {
+                    comboDict.value = normalizedDict;
+                    try { comboDict.dispatchEvent(new Event('change', { bubbles: true })); } catch (err) {}
+                }
+            }
+        }
+
+        if (typeof window.switchComboTab === 'function') {
+            window.switchComboTab('mp');
+        }
+
+        const comboInput = document.getElementById('combo-input');
+        if (comboInput) {
+            comboInput.value = cleanWord;
+            if (typeof runComboSearch === 'function') {
+                runComboSearch();
+            } else if (typeof window.runComboSearch === 'function') {
+                window.runComboSearch();
+            }
+        }
+
+        scrollComboToTop();
+    };
+
+    activateComboChecker();
+    requestAnimationFrame(activateComboChecker);
+    setTimeout(activateComboChecker, 60);
+
+    setTimeout(() => {
+        scrollComboToTop();
+        window._navigatingViaDefPopup = false;
+    }, 600);
 };
 
 window.showWordDefinitionPopup = async function (word, event) {

@@ -2207,7 +2207,7 @@ window.showPage = showPage;
         const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
         if (isMatch) {
             // Default immediately to blank content panel with side menus visible on all screen sizes
-            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
+            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function' && !window._navigatingViaDefPopup) {
                 window.resetToolsTab(true);
             } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
                 window.resetModsTab(true);
@@ -2226,7 +2226,7 @@ window.showPage = showPage;
                 updateTopMenuHeight();
             }
             const layout = page.querySelector('.tools-split-layout');
-            if (layout) {
+            if (layout && !window._navigatingViaDefPopup) {
                 layout.scrollLeft = 0;
             }
         } else {
