@@ -3625,24 +3625,29 @@ async function _doUpdateGameState(incomingState = null) {
                     if (!isFound && isCSWOnly) statusClass += ' csw-only';
                     const icon = isFound ? '✓' : '✗';
                     
-                    const playerWordObj = myPrevWords.find(pw => (typeof pw === 'string' ? pw : pw.word).toUpperCase() === w.toUpperCase());
-                    const details = (playerWordObj && playerWordObj.score_details)
+                    const wUpper = w.toUpperCase();
+                    const playerWordObj = myPrevWords.find(pw => (typeof pw === 'string' ? pw : pw.word).toUpperCase() === wUpper);
+                    const rawDetails = (playerWordObj && playerWordObj.score_details)
                         ? playerWordObj.score_details
-                        : (state.previous_all_word_scores && state.previous_all_word_scores[w]);
+                        : (state.previous_all_word_scores && (state.previous_all_word_scores[w] || state.previous_all_word_scores[wUpper]));
+                    const details = (typeof rawDetails === 'object' && rawDetails !== null) ? rawDetails : null;
                     const totalPoints = (playerWordObj && playerWordObj.points !== undefined)
                         ? playerWordObj.points
-                        : (details ? (details.total || 0) : 0);
+                        : (details ? (details.total || 0) : (typeof rawDetails === 'number' ? rawDetails : 0));
 
-                    let ptsDisplay = '';
-                    if (details) {
-                        const total = totalPoints;
-                        const base = details.base || 0;
-                        const bonus = (details.bonus_word_points || 0) + (details.bonus_letter_points || 0) + (details.either_or_points || 0);
-                        if (bonus > 0) {
-                            ptsDisplay = `${base} + ${bonus} = ${total}`;
-                        } else {
-                            ptsDisplay = total;
-                        }
+                    const isBW = Boolean(
+                        ((state.previous_bonus_word || state.bonus_word || '').toUpperCase().trim() === wUpper) ||
+                        (details && (details.bonus_word_points || 0) > 0)
+                    );
+                    const bwPts = (details && details.bonus_word_points !== undefined) ? details.bonus_word_points : (isBW ? w.length : 0);
+                    const blPts = details ? (details.bonus_letter_points || 0) : 0;
+                    const eoPts = details ? (details.either_or_points || 0) : 0;
+                    const totalBonus = bwPts + blPts + eoPts;
+
+                    let ptsDisplay = totalPoints;
+                    if (totalBonus > 0) {
+                        const base = details && details.base !== undefined ? details.base : Math.max(0, totalPoints - totalBonus);
+                        ptsDisplay = `${base} + ${totalBonus} = ${totalPoints}`;
                     }
 
                     return `<div class="word-item ${statusClass}" data-word="${w}" style="display:flex; justify-content:space-between; cursor:pointer;">
@@ -5454,6 +5459,36 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         });
     }
 
+    // Build finder score details lookup from state players to recover accurate bonus breakdowns
+    const finderScoreDetailsMap = new Map();
+    const curGameState = window.lastGameState;
+    if (curGameState) {
+        const playerPool = [...(curGameState.players || []), ...(curGameState.previous_players || [])];
+        for (const p of playerPool) {
+            if (p && Array.isArray(p.submitted_words)) {
+                for (const sw of p.submitted_words) {
+                    if (sw && sw.score_details) {
+                        const swWord = (sw.word || '').toUpperCase().trim();
+                        if (swWord && !finderScoreDetailsMap.has(swWord)) {
+                            finderScoreDetailsMap.set(swWord, sw.score_details);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const activeBonusCell = curGameState ? (curGameState.previous_bonus_cell || curGameState.bonus_cell) : null;
+    const activePaths = curGameState ? (curGameState.previous_all_words_paths || curGameState.all_words_paths || {}) : {};
+    let bonusCellCoord = null;
+    if (activeBonusCell) {
+        if (typeof activeBonusCell === 'object' && activeBonusCell !== null) {
+            const br = activeBonusCell.r !== undefined ? activeBonusCell.r : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 1 : 0] : -1);
+            const bc = activeBonusCell.c !== undefined ? activeBonusCell.c : (Array.isArray(activeBonusCell) ? activeBonusCell[activeBonusCell.length === 3 ? 2 : 1] : -1);
+            if (br >= 0 && bc >= 0) bonusCellCoord = { r: br, c: bc };
+        }
+    }
+
     listEl.innerHTML = filteredWords.map(entry => {
         const word = entry.word;
         const wordUpper = entry.wordUpper;
@@ -5462,30 +5497,78 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const isAddedWord = addedSet.has(wordUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wordUpper));
         const isTargetFound = targetWordsSet.has(wordUpper);
         const isFoundByAny = allFoundSet.has(wordUpper);
-        const pointsData = allWordScores[word] || allWordScores[wordUpper] || 0;
-        let pointsText = pointsData;
+        let pointsData = allWordScores[word] || allWordScores[wordUpper] || null;
 
-        if (typeof pointsData === 'object' && pointsData !== null) {
-            const hasBonusLetter = (pointsData.bonus_letter_points || 0) > 0;
-            const hasBonusWord = (pointsData.bonus_word_points || 0) > 0;
-            const hasEO = (pointsData.either_or_points || 0) > 0;
-            
-            if (hasBonusLetter || hasBonusWord || hasEO) {
-                let parts = [];
-                // Base
-                parts.push(pointsData.base);
-                
-                if (hasBonusWord) parts.push(pointsData.bonus_word_points);
-                if (hasBonusLetter) parts.push(pointsData.bonus_letter_points);
-                if (hasEO) parts.push(pointsData.either_or_points);
-                
-                if (parts.length > 1) {
-                    pointsText = `${parts.join(' + ')} = ${pointsData.total}`;
-                } else {
-                    pointsText = pointsData.total;
+        const finderDetails = finderScoreDetailsMap.get(wordUpper);
+        if (finderDetails && (!pointsData || typeof pointsData !== 'object' || (!pointsData.bonus_letter_points && !pointsData.bonus_word_points && !pointsData.either_or_points))) {
+            pointsData = finderDetails;
+        }
+
+        // Determine bonus word points
+        let bonusWordPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_word_points !== undefined)
+            ? (pointsData.bonus_word_points || 0)
+            : (isBonus ? word.length : 0);
+
+        // Determine bonus letter points (+3)
+        let bonusLetterPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_letter_points !== undefined)
+            ? (pointsData.bonus_letter_points || 0)
+            : 0;
+
+        // If bonusLetterPts is 0, check if word's path uses bonusCellCoord
+        if (bonusLetterPts === 0 && bonusCellCoord) {
+            const wPath = activePaths[word] || activePaths[wordUpper];
+            if (Array.isArray(wPath)) {
+                const hitsBonus = wPath.some(node => {
+                    if (!node) return false;
+                    const nr = node.r !== undefined ? node.r : (Array.isArray(node) ? node[node.length === 3 ? 1 : 0] : -1);
+                    const nc = node.c !== undefined ? node.c : (Array.isArray(node) ? node[node.length === 3 ? 2 : 1] : -1);
+                    return nr === bonusCellCoord.r && nc === bonusCellCoord.c;
+                });
+                if (hitsBonus) {
+                    bonusLetterPts = 3;
                 }
+            }
+        }
+
+        let eoPts = (typeof pointsData === 'object' && pointsData !== null && pointsData.either_or_points !== undefined)
+            ? (pointsData.either_or_points || 0)
+            : 0;
+
+        // Base points
+        let basePts = 0;
+        if (typeof pointsData === 'object' && pointsData !== null && pointsData.base !== undefined) {
+            basePts = pointsData.base;
+        } else if (typeof pointsData === 'number') {
+            basePts = Math.max(0, pointsData - bonusWordPts - bonusLetterPts - eoPts);
+        } else {
+            const l = word.length;
+            if (l <= 4) basePts = 1;
+            else if (l === 5) basePts = 2;
+            else if (l === 6) basePts = 3;
+            else if (l === 7) basePts = 5;
+            else if (l === 8) basePts = 9;
+            else if (l === 9) basePts = 13;
+            else if (l === 10) basePts = 17;
+            else if (l === 11) basePts = 21;
+            else if (l === 12) basePts = 25;
+            else if (l === 13) basePts = 29;
+            else if (l === 14) basePts = 33;
+            else basePts = 37;
+        }
+
+        const totalPts = basePts + bonusWordPts + bonusLetterPts + eoPts;
+        let pointsText = totalPts;
+
+        if (bonusWordPts > 0 || bonusLetterPts > 0 || eoPts > 0) {
+            let parts = [basePts];
+            if (bonusWordPts > 0) parts.push(bonusWordPts);
+            if (bonusLetterPts > 0) parts.push(bonusLetterPts);
+            if (eoPts > 0) parts.push(eoPts);
+
+            if (parts.length > 1) {
+                pointsText = `${parts.join(' + ')} = ${totalPts}`;
             } else {
-                pointsText = pointsData.total;
+                pointsText = totalPts;
             }
         }
 
@@ -5572,21 +5655,12 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         
         // Bonus indicator (Left side)
         let bonusIndicator = '';
-        if (typeof pointsData === 'object' && pointsData !== null) {
-            if ((pointsData.bonus_letter_points || 0) > 0) {
-                 // Try to get the actual bonus letter from the board
-                 const s = window.lastGameState;
-                 let bChar = '★';
-                 if (s && s.bonus_cell) {
-                     const r = s.bonus_cell.r, c = s.bonus_cell.c;
-                     if (s.board && s.board[r] && s.board[r][c]) bChar = s.board[r][c];
-                 }
-                 bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
-            } else if ((pointsData.bonus_word_points || 0) > 0) {
-                 bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
-            } else if ((pointsData.either_or_points || 0) > 0) {
-                 bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
-            }
+        if (bonusLetterPts > 0) {
+            bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
+        } else if (bonusWordPts > 0 || isBonus) {
+            bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
+        } else if (eoPts > 0) {
+            bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
         }
 
         const indicator = `<span class="${indicatorClass}">${indicatorIcon}</span>`;

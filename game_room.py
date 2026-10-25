@@ -2035,54 +2035,23 @@ class GameRoom:
                 # If background scoring isn't finished, perform a synchronous fallback score calculation.
                 # OPTIMIZATION: Calculate fast length-based scores instantly to avoid transition delay, and refine in background thread!
                 if not getattr(self, 'solved_words_with_scores', None) or not self.solved_words_with_scores:
-                    print(f"[GameRoom] Transitioning {self.room_id}: solved_words_with_scores missing. Scoring in background thread to prevent delay.")
+                    print(f"[GameRoom] Transitioning {self.room_id}: computing missing solved_words_with_scores.")
                     fast_scores = {}
+                    eval_board = self.board or getattr(self, 'previous_board', None)
+                    eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
                     for word in (self.all_words or []):
-                        l = len(word)
-                        s = 1
-                        if l <= 4: s = 1
-                        elif l == 5: s = 2
-                        elif l == 6: s = 3
-                        elif l == 7: s = 5
-                        elif l == 8: s = 9
-                        elif l == 9: s = 13
-                        elif l == 10: s = 17
-                        elif l == 11: s = 21
-                        elif l == 12: s = 25
-                        elif l == 13: s = 29
-                        elif l == 14: s = 33
-                        elif l >= 15: s = 37
-                        fast_scores[word] = {'total': s, 'base': s}
+                        path_v = _get_word_path(self.all_words_paths, word)
+                        fast_scores[word] = calculate_word_score(
+                            word, 
+                            self.bonus_word, 
+                            board_format=eval_fmt,
+                            bonus_cell=self.bonus_cell,
+                            board=eval_board,
+                            path=path_v,
+                            return_details=True,
+                            strict_path=True
+                        )
                     self.solved_words_with_scores = fast_scores
-                    
-                    # Spawn asynchronous thread to refine scores with full details (bonuses, paths)
-                    def compute_fallback_scores_async():
-                        try:
-                            from scoring import calculate_word_score
-                            refined_fallback = {}
-                            eval_board = self.board or getattr(self, 'previous_board', None)
-                            eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
-                            for word in (self.all_words or []):
-                                path_v = _get_word_path(self.all_words_paths, word)
-                                refined_fallback[word] = calculate_word_score(
-                                    word, 
-                                    self.bonus_word, 
-                                    board_format=eval_fmt,
-                                    bonus_cell=self.bonus_cell,
-                                    board=eval_board,
-                                    path=path_v,
-                                    return_details=True,
-                                    strict_path=True
-                                )
-                            self.solved_words_with_scores = refined_fallback
-                            self.previous_all_word_scores = dict(refined_fallback)
-                            self.previous_all_words = list(self.all_words or [])
-                            self.recalculate_total_points()
-                            print(f"[GameRoom] Fallback scoring background refinement complete for {self.room_id}")
-                        except Exception as e:
-                            print(f"[GameRoom] Fallback scoring background refinement error: {e}")
-                            
-                    threading.Thread(target=compute_fallback_scores_async, daemon=True).start()
 
                 # Snapshot board and words for intermission (Detailed Scoring Preservation)
                 if self.game_type == '3d' or (self.board and len(self.board) == 6 and isinstance(self.board[0], list) and isinstance(self.board[0][0], list)):
@@ -2602,6 +2571,11 @@ class GameRoom:
                 # Ensure found_bonus_word is set if this word is the bonus word
                 if word == self.bonus_word:
                     player.found_bonus_word = True
+            
+            # Sync authoritative bonus score into room's solved_words_with_scores
+            if hasattr(self, 'solved_words_with_scores') and isinstance(self.solved_words_with_scores, dict):
+                if res.get('bonus_word_points', 0) > 0 or res.get('bonus_letter_points', 0) > 0 or res.get('either_or_points', 0) > 0:
+                    self.solved_words_with_scores[word] = res
                 
         # 3. Update scores for each player
         for p in self.players:
@@ -5500,28 +5474,19 @@ class RoomManager:
                             room.next_round_csw_only_words = []
                             room.next_round_added_words = []
                         
-                        # Calculate length-based scores to prevent UI flashing
-                        is_valued = ('valued' in str(board_format_ret).lower())
+                        # Calculate detailed word scores (including bonus letter +3 and bonus word points)
                         scored_dict = {}
                         for w in all_words:
-                            if is_valued:
-                                v_score = get_valued_word_score(w)
-                                scored_dict[w] = {'total': v_score, 'base': v_score}
-                            else:
-                                length = len(w)
-                                if length <= 4: s = 1
-                                elif length == 5: s = 2
-                                elif length == 6: s = 3
-                                elif length == 7: s = 5
-                                elif length == 8: s = 9
-                                elif length == 9: s = 13
-                                elif length == 10: s = 17
-                                elif length == 11: s = 21
-                                elif length == 12: s = 25
-                                elif length == 13: s = 29
-                                elif length == 14: s = 33
-                                else: s = 37
-                                scored_dict[w] = {'total': s, 'base': s}
+                            path_v = _get_word_path(all_words_dict, w)
+                            scored_dict[w] = calculate_word_score(
+                                w,
+                                bonus_word=final_bonus_word,
+                                board_format=board_format_ret,
+                                bonus_cell=bonus_cell,
+                                board=board,
+                                path=path_v,
+                                return_details=True
+                            )
                         room.next_round_word_scores = scored_dict
                         
                         # Mark room search states as completed
@@ -5893,29 +5858,19 @@ class RoomManager:
                         room.next_round_uniqueness = cratio
                         room.next_round_total_words_count = len(cwords)
                         
-                        # Generate basic scores
-                        is_valued = ('valued' in str(cfmt).lower())
+                        # Generate detailed scores (including bonus letter +3 and bonus word points)
                         scored_dict = {}
                         for w in cwords:
-                            if is_valued:
-                                scored_dict[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w)}
-                            else:
-                                length = len(w)
-                                s = 0
-                                if length <= 2: s = 0
-                                elif length <= 4: s = 1
-                                elif length == 5: s = 2
-                                elif length == 6: s = 3
-                                elif length == 7: s = 5
-                                elif length == 8: s = 9
-                                elif length == 9: s = 13
-                                elif length == 10: s = 17
-                                elif length == 11: s = 21
-                                elif length == 12: s = 25
-                                elif length == 13: s = 29
-                                elif length == 14: s = 33
-                                else: s = 37
-                                scored_dict[w] = {'total': s, 'base': s}
+                            path_v = _get_word_path(cpaths, w)
+                            scored_dict[w] = calculate_word_score(
+                                w,
+                                bonus_word=cbonus_word,
+                                board_format=cfmt,
+                                bonus_cell=cbonus_cell,
+                                board=cboard,
+                                path=path_v,
+                                return_details=True
+                            )
                         room.next_round_word_scores = scored_dict
                         room.solving_complete = True
                         room.board_search_started = True
@@ -6476,30 +6431,23 @@ class RoomManager:
                     _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
                     achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag, dictionary=search_dict)
 
-                    # FAST INITIALIZATION: Length-based scores to avoid "0 point" flickering in UI
-                    is_valued = ('valued' in str(updated_format).lower())
+                    f_low = str(updated_format).lower()
+                    final_bonus_cell = bonus_cell if ('bonus letter' in f_low or 'either' in f_low) else None
+
+                    # INITIALIZATION: Calculate detailed scores with bonus letter and bonus word points
                     scored_dict = {}
                     for word in (all_words or []):
-                        if is_valued:
-                            v_score = get_valued_word_score(word)
-                            scored_dict[word] = {'total': v_score, 'base': v_score}
-                        else:
-                            length = len(word)
-                            if length <= 4: s = 1
-                            elif length == 5: s = 2
-                            elif length == 6: s = 3
-                            elif length == 7: s = 5
-                            elif length == 8: s = 9
-                            elif length == 9: s = 13
-                            elif length == 10: s = 17
-                            elif length == 11: s = 21
-                            elif length == 12: s = 25
-                            elif length == 13: s = 29
-                            elif length == 14: s = 33
-                            else: s = 37
-                            scored_dict[word] = {'total': s, 'base': s}
-                    
-                    fast_total_points = sum(pts['total'] for pts in scored_dict.values())
+                        path_v = _get_word_path(all_words_dict, word)
+                        scored_dict[word] = calculate_word_score(
+                            word,
+                            bonus_word=bonus_word,
+                            board_format=updated_format,
+                            bonus_cell=final_bonus_cell,
+                            board=board,
+                            path=path_v,
+                            return_details=True
+                        )
+                    fast_total_points = sum((pts['total'] if isinstance(pts, dict) else pts) for pts in scored_dict.values())
                     next_counts = {
                         '_round': target_room.current_round + 1,
                         **{str(l): sum(1 for w in (all_words or []) if len(w) == l) for l in range(1, 31)}
@@ -6510,9 +6458,6 @@ class RoomManager:
                     rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                     cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
                     achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=target_room.next_spinner_params.get('difficulty') if getattr(target_room, 'next_spinner_params', None) else None, min_word_length=_sb_min_len)
-
-                    f_low = str(updated_format).lower()
-                    final_bonus_cell = bonus_cell if ('bonus letter' in f_low or 'either' in f_low) else None
 
                     # CSW and AW word tagging
                     display_min = _sb_min_len
@@ -7153,27 +7098,19 @@ class RoomManager:
                     
                     # USER REQUEST: Ensure Total Points is never 0.
                     # Fast-apply length based scores for the emergency board immediately.
-                    is_valued_e = ('valued' in str(room.current_board_format).lower())
+                    # Detailed scores for the emergency board immediately
                     e_scores = {}
                     for w in e_words:
-                        if is_valued_e: e_scores[w] = {'total': get_valued_word_score(w), 'base': get_valued_word_score(w), 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
-                        else:
-                            length = len(w)
-                            s = 0
-                            if length <= 2: s = 0
-                            elif length <= 4: s = 1
-                            elif length == 5: s = 2
-                            elif length == 6: s = 3
-                            elif length == 7: s = 5
-                            elif length == 8: s = 9
-                            elif length == 9: s = 13
-                            elif length == 10: s = 17
-                            elif length == 11: s = 21
-                            elif length == 12: s = 25
-                            elif length == 13: s = 29
-                            elif length == 14: s = 33
-                            elif length >= 15: s = 37
-                            e_scores[w] = {'total': s, 'base': s, 'bonus_word_points': 0, 'bonus_letter_points': 0, 'either_or_points': 0}
+                        p_v = _get_word_path(e_paths, w)
+                        e_scores[w] = calculate_word_score(
+                            w,
+                            bonus_word=e_bonus_word,
+                            board_format=e_fmt,
+                            bonus_cell=e_bonus_c,
+                            board=e_board,
+                            path=p_v,
+                            return_details=True
+                        )
                     room.next_round_word_scores = e_scores
                 
                 # --- 3. FINAL COUNT SYNC: Ensure factual counts are promoted even if truncation was skipped ---
