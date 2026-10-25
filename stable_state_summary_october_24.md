@@ -8,21 +8,34 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-1f3816b6c74dfc872734c6a1d654ec7ddce1ed62
+e18cf32a4e21a42b1011d889241e57c6b12a2ca4
 ```
 
 ## Synchronization Status
 
 | Environment | Status | Details |
 |:---|:---|:---|
-| **Localhost** | ✅ Synchronized | Clean working tree on `main` |
+| **Localhost** | ✅ Synchronized | Clean working tree on `main` (`e18cf32a`) |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792900000`, `tools.js?v=1792902000`, `play.js?v=1792902000`, `app.js?v=1792902000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792903000`, `tools.js?v=1792902000`, `play.js?v=1792903000`, `app.js?v=1792902000`) for instant live propagation across all devices |
 
 ---
 
 ## Session Highlights & Architectural Updates (October 24, 2026)
+
+### 0. Game Board Equal Padding & Symmetric Desktop Centering Fix
+- **Problem**: On desktop displays (such as in `notcenter.png` in 6x8 games), the board grid (`#game-board`) had ~16px padding on the left side of the container card (`.board-panel`), but almost 0px padding on the right side.
+- **Root Cause**:
+  1. `.board-panel` had hardcoded `padding: 8px 16px 6px 16px !important;` on desktop. When large boards (such as 6x8) approached or exceeded `.board-panel`'s content box, CSS flexbox negative auto margins clamped `margin-left` to 0 (the 16px left-padding line), pushing the board against the right card border.
+  2. In `static/js/play.js`, `applyPanelLayout` used asymmetric panel caps (`maxLeft = 380px`, `maxRight = 420px`), shifting the center column off-center and underestimating `requiredBoardWidth` (40px padding instead of 56px).
+  3. In `static/css/play.css`, widescreen media queries assigned excessive width to side panels (`--left-panel-w: 460px; --right-panel-w: 460px;`), squeezing the center board panel.
+- **Resolution**:
+  1. Updated `body.is-desktop .board-panel` to `padding: 8px 0 6px 0 !important;` with `align-items: center !important;`, removing the asymmetric left anchor and ensuring `#game-board` with `margin: 0 auto !important;` is mathematically centered.
+  2. Added `-webkit-fit-content !important; max-width: 100% !important; align-self: center !important; justify-self: center !important;` to `#game-board` across all desktop theme variants.
+  3. Updated `applyPanelLayout` in `static/js/play.js` to calculate symmetric side panel widths (`newLeft == newRight`), reserve 56px board breathing room, and apply `grid-template-columns: ${newLeft}px 1fr ${newRight}px !important`.
+  4. Streamlined widescreen side panel variables in `play.css` (380px at 1400px+, 420px at 1600px+, 460px at 1920px+) to guarantee abundant space for any board format.
+  5. Bumped cache busters to `play.css?v=1792903000` and `play.js?v=1792903000`.
 
 ### 0. In-Game Rooms: Split "Add to Words to Work on" with "Search in Combo Checker"
 - **Horizontal Split Layout**: In game rooms (`#page-play`), when a word is highlighted/selected in the words panel, `#work-on-game-btn-container` is displayed as a responsive horizontal flex row containing two equal-width action buttons:
