@@ -2904,9 +2904,13 @@ async function _doUpdateGameState(incomingState = null) {
             let headerText = 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
 
-            const factRange = (state.state !== 'intermission' && state.current_word_count_range) 
+            let factRange = (state.state !== 'intermission' && state.current_word_count_range) 
                 ? state.current_word_count_range 
                 : ((state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || 'Random');
+            const isStateAW = state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '') || (state.spinner_params && (state.spinner_params.use_added_words === true || /\+\s*AW/i.test(state.spinner_params.dictionary || '')));
+            if (isStateAW && !['300-400', '400-500', '500+'].includes(String(factRange).trim())) {
+                factRange = '300-400';
+            }
             if (activeWordsTab === 'remaining') headerText = `Remaining (${factRange})`;
             if (activeWordsTab === 'clues') headerText = `Clues (${factRange})`;
             if (activeWordsTab === 'previous') headerText = 'Previous Day';
@@ -5651,6 +5655,9 @@ function updateParameters(state) {
         rawWordRange = rawWordRange.join('-');
     } else {
         rawWordRange = String(rawWordRange).replace(',', '-');
+    }
+    if (useAW && !['300-400', '400-500', '500+'].includes(String(rawWordRange).trim())) {
+        rawWordRange = '300-400';
     }
     const factWordRange = rawWordRange;
     

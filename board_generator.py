@@ -382,6 +382,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             if d_param not in ["NWL", "CSW"]: d_param = "NWL"
             if d_param != d_target: continue
             if bool(params.get('use_added_words', False)) != bool(use_added_words): continue
+            if bool(use_added_words) and str(params.get('word_count_range', '')) in ['50-100', '100-200', '200-300']: continue
             if str(params.get('board_format')).upper().strip() != str(board_format).upper().strip(): continue
             if int(params.get('min_word_length', 3)) != int(min_word_length): continue
             matched_row = row
@@ -399,6 +400,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                 if d_param not in ["NWL", "CSW"]: d_param = "NWL"
                 if d_param != d_target: continue
                 if bool(params.get('use_added_words', False)) != bool(use_added_words): continue
+                if bool(use_added_words) and str(params.get('word_count_range', '')) in ['50-100', '100-200', '200-300']: continue
                 if str(params.get('board_format', 'Normal')).upper().strip() != str(board_format).upper().strip(): continue
                 if int(params.get('min_word_length', 3)) != int(min_word_length): continue
                 matched_row = row
@@ -424,6 +426,12 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
 
                 all_words = data["all_words"]
+                if bool(use_added_words) and len(all_words) < 300:
+                    print(f"[BoardGen] Discarding compatible cached board for use_added_words: only {len(all_words)} words (< 300)")
+                    try: conn.close()
+                    except: pass
+                    conn = None
+                    return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len)
                 min_l_int = int(min_word_length)
                 matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
                 if matching_min_words < 5:
@@ -482,8 +490,13 @@ def pop_cached_board(param_key_str):
             try:
                 pk_data = json.loads(param_key_str)
                 pk_min = int(pk_data.get('min_word_length', 3))
+                pk_aw = bool(pk_data.get('use_added_words', False)) or ('+ AW' in str(pk_data.get('dictionary', '')).upper())
             except:
                 pk_min = 3
+                pk_aw = False
+            if pk_aw and len(all_words) < 300:
+                print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {len(all_words)} words (< 300 required for added words)")
+                continue
             matching_min_words = sum(1 for w in all_words if len(w) == pk_min)
             if matching_min_words < 3:
                 print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {matching_min_words} words of length {pk_min} (needed >= 3)")

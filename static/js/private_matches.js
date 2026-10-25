@@ -477,13 +477,19 @@
 
         container.innerHTML = matches.map(m => {
             const formattedDate = m.last_activity ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(m.last_activity) : new Date(m.last_activity * 1000).toLocaleDateString()) : '';
+            const isAw = m.parameters.use_added_words === true || /\+\s*AW/i.test(m.parameters.dictionary || '');
             const wordsRange = (() => {
                 let wr = m.parameters.word_count_range;
                 if (Array.isArray(wr)) {
-                    if (wr[1] > 900) return wr[0] + '+';
-                    return wr[0] + '-' + wr[1];
+                    if (wr[1] > 900) wr = wr[0] + '+';
+                    else wr = wr[0] + '-' + wr[1];
+                } else {
+                    wr = wr === 'random' ? '200-300' : (wr || '100-200');
                 }
-                return wr === 'random' ? '200-300' : (wr || '100-200');
+                if (isAw && !['300-400', '400-500', '500+'].includes(String(wr).trim())) {
+                    wr = '300-400';
+                }
+                return wr;
             })();
             const bonusText = (() => {
                 const b = m.parameters.bonus_word_length;
@@ -524,13 +530,19 @@
         }
 
         container.innerHTML = invites.map(inv => {
+            const isAw = inv.parameters.use_added_words === true || /\+\s*AW/i.test(inv.parameters.dictionary || '');
             const wordsRange = (() => {
                 let wr = inv.parameters.word_count_range;
                 if (Array.isArray(wr)) {
-                    if (wr[1] > 900) return wr[0] + '+';
-                    return wr[0] + '-' + wr[1];
+                    if (wr[1] > 900) wr = wr[0] + '+';
+                    else wr = wr[0] + '-' + wr[1];
+                } else {
+                    wr = wr === 'random' ? '200-300' : (wr || '100-200');
                 }
-                return wr === 'random' ? '200-300' : (wr || '100-200');
+                if (isAw && !['300-400', '400-500', '500+'].includes(String(wr).trim())) {
+                    wr = '300-400';
+                }
+                return wr;
             })();
             const bonusText = (() => {
                 const b = inv.parameters.bonus_word_length;

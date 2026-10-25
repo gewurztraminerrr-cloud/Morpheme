@@ -1742,7 +1742,7 @@ class GameRoom:
             
             is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
             if is_aw_effective:
-                min_accept = max(100, min_accept)
+                min_accept = max(300, min_accept)
             elif f_min_l >= 6:
                 min_accept = min(min_accept, 30)
             else:
@@ -1784,14 +1784,19 @@ class GameRoom:
                 else:
                     dict_val = clean_dict
                 
-                wc_label = fparams.get('word_count_range')
-                if not wc_label:
-                    if actual_wc < 100: wc_label = '50-100'
-                    elif actual_wc < 200: wc_label = '100-200'
-                    elif actual_wc < 300: wc_label = '200-300'
-                    elif actual_wc < 400: wc_label = '300-400'
-                    elif actual_wc < 500: wc_label = '400-500'
-                    else: wc_label = '500+'
+                if is_aw_effective or use_aw_val or '+ AW' in str(dict_val).upper():
+                    if actual_wc >= 500: wc_label = '500+'
+                    elif actual_wc >= 400: wc_label = '400-500'
+                    else: wc_label = '300-400'
+                else:
+                    wc_label = fparams.get('word_count_range')
+                    if not wc_label:
+                        if actual_wc < 100: wc_label = '50-100'
+                        elif actual_wc < 200: wc_label = '100-200'
+                        elif actual_wc < 300: wc_label = '200-300'
+                        elif actual_wc < 400: wc_label = '300-400'
+                        elif actual_wc < 500: wc_label = '400-500'
+                        else: wc_label = '500+'
                 
                 new_sp = {
                     'dictionary': dict_val,
@@ -1832,7 +1837,7 @@ class GameRoom:
         e_dict = source_sp.get('dictionary', 'NWL')
         e_use_aw = source_sp.get('use_added_words', False)
         e_wc = source_sp.get('word_count_range')
-        if not e_wc:
+        if not e_wc or (e_use_aw and e_wc not in ['300-400', '400-500', '500+']):
             e_wc = SpinnerSet._spin_word_count(e_dict, 6 if '6x8' in str(self.board_dimensions) else 3, 'Medium', self.board_dimensions, use_added_words=e_use_aw)
         
         e_min_len = source_sp.get('min_word_length')
@@ -2371,7 +2376,10 @@ class GameRoom:
             e_format = sp.get('board_format', 'Normal')
             e_dict = sp.get('dictionary', 'NWL')
             e_use_aw = sp.get('use_added_words', False) or '+ AW' in str(e_dict).upper() or '+AW' in str(e_dict).upper()
-            e_wc = sp.get('word_count_range', '100-200')
+            e_wc = sp.get('word_count_range')
+            if not e_wc or (e_use_aw and e_wc not in ['300-400', '400-500', '500+']):
+                import random
+                e_wc = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0] if e_use_aw else '100-200'
             e_min_len = sp.get('min_word_length')
             e_diff = sp.get('difficulty', 'Medium')
             
@@ -2413,7 +2421,13 @@ class GameRoom:
             fp = {w: p for w, p in fp.items() if w in sampled_set}
 
         actual_wc = len(fw)
-        if declared_target_wc:
+        if use_aw_val or '+ AW' in str(dict_val).upper():
+            if declared_target_wc and declared_target_wc in ['300-400', '400-500', '500+']:
+                wc_label = declared_target_wc
+            elif actual_wc >= 500: wc_label = '500+'
+            elif actual_wc >= 400: wc_label = '400-500'
+            else: wc_label = '300-400'
+        elif declared_target_wc:
             wc_label = declared_target_wc
         else:
             if actual_wc < 100: wc_label = '50-100'
@@ -2445,7 +2459,7 @@ class GameRoom:
         self.next_spinner_params = new_sp
         self.next_round_spinner_params = new_sp
         if getattr(self, 'frozen_revealed_params', None) and isinstance(self.frozen_revealed_params, dict):
-            self.frozen_revealed_params['word_count_range'] = wc_label
+            self.frozen_revealed_params['word_count_range'] = new_sp['word_count_range']
         self.spinner_params_generated = True
         self.spinner_params_revealed = True
         self._reveal_sync_complete = True
@@ -2776,7 +2790,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             
     is_aw = use_added_words or '+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper()
     if is_aw:
-        min_accept = max(100, min_accept)
+        min_accept = max(300, min_accept)
+        if max_accept < 399:
+            max_accept = 399
     elif min_word_length >= 6:
         min_accept = min(min_accept, 30)
     else:
@@ -2792,7 +2808,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             dictionary = 'NWL'
         target_range = '300-400'
         target_range_resolved = '300-400'
-        max_accept = 399
+        min_accept, max_accept = 300, 399
         fmt = 'Valued Letters'
     else:
         fmt = board_format
@@ -2802,12 +2818,21 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         min_l = 4 if '4x4' in dimensions else (5 if '4x6' in dimensions else (6 if '5x7' in dimensions else 7))
         
         # Determine target range - strictly preserve provided target_range
-        if target_range:
-            target_range_resolved = target_range
-        elif not is_24h and use_added_words:
+        if is_aw:
             use_added_words = True
-            import random
-            target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            if target_range and target_range in ['300-400', '400-500', '500+']:
+                target_range_resolved = target_range
+            else:
+                import random
+                target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            if target_range_resolved == '300-400':
+                min_accept, max_accept = 300, 399
+            elif target_range_resolved == '400-500':
+                min_accept, max_accept = 400, 499
+            elif target_range_resolved == '500+':
+                min_accept, max_accept = 500, 99999
+        elif target_range:
+            target_range_resolved = target_range
         elif not is_24h:
             target_range_resolved = '100-200'
         
@@ -2820,7 +2845,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if base_dict not in ['NWL', 'CSW']:
             base_dict = 'NWL'
         
-        if target_range_resolved:
+        if is_aw:
+            ranges_order = [target_range_resolved] if target_range_resolved in ['300-400', '400-500', '500+'] else ['300-400', '400-500', '500+']
+        elif target_range_resolved:
             ranges_order = [target_range_resolved]
         elif min_accept >= 300:
             ranges_order = ['300-400', '400-500', '500+']
@@ -2865,12 +2892,17 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 print(f"[get_emergency_fallback_board] Cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                                 continue
                                 
-                            if actual_wc < 100: ctr_resolved = '50-100'
-                            elif actual_wc < 200: ctr_resolved = '100-200'
-                            elif actual_wc < 300: ctr_resolved = '200-300'
-                            elif actual_wc < 400: ctr_resolved = '300-400'
-                            elif actual_wc < 500: ctr_resolved = '400-500'
-                            else: ctr_resolved = '500+'
+                            if is_aw or caw or '+ AW' in str(cdict).upper():
+                                if actual_wc >= 500: ctr_resolved = '500+'
+                                elif actual_wc >= 400: ctr_resolved = '400-500'
+                                else: ctr_resolved = '300-400'
+                            else:
+                                if actual_wc < 100: ctr_resolved = '50-100'
+                                elif actual_wc < 200: ctr_resolved = '100-200'
+                                elif actual_wc < 300: ctr_resolved = '200-300'
+                                elif actual_wc < 400: ctr_resolved = '300-400'
+                                elif actual_wc < 500: ctr_resolved = '400-500'
+                                else: ctr_resolved = '500+'
                             
                             # Enforce standard dictionaries for word counts < 300
                             caw_resolved = caw
@@ -2923,12 +2955,18 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     elif actual_wc < min_accept or actual_wc > max_accept:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                     else:
-                        if actual_wc < 100: ctr = '50-100'
-                        elif actual_wc < 200: ctr = '100-200'
-                        elif actual_wc < 300: ctr = '200-300'
-                        elif actual_wc < 400: ctr = '300-400'
-                        elif actual_wc < 500: ctr = '400-500'
-                        else: ctr = '500+'
+                        is_aw_ult = use_added_words or params.get('use_added_words', False) or '+ AW' in str(params.get('dictionary', '')).upper() or '+ AW' in str(dictionary).upper()
+                        if is_aw_ult:
+                            if actual_wc >= 500: ctr = '500+'
+                            elif actual_wc >= 400: ctr = '400-500'
+                            else: ctr = '300-400'
+                        else:
+                            if actual_wc < 100: ctr = '50-100'
+                            elif actual_wc < 200: ctr = '100-200'
+                            elif actual_wc < 300: ctr = '200-300'
+                            elif actual_wc < 400: ctr = '300-400'
+                            elif actual_wc < 500: ctr = '400-500'
+                            else: ctr = '500+'
                         
                         # Enforce standard dictionaries for word counts < 300
                         use_aw_val = params.get('use_added_words', False)
@@ -2969,8 +3007,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if live_res and len(live_res) >= 6:
             l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
             l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
-            l_w_filt = [w for w in l_w if len(w) >= min_word_length]
-            if len(l_w_filt) >= 15:
+            l_w_filt = [w for w in (l_w or []) if len(w) >= min_word_length]
+            min_required = 300 if is_aw else 15
+            if len(l_w_filt) >= min_required:
                 # If target_range_resolved was provided and generated board exceeded max_accept, sample down
                 if max_accept < 99999 and len(l_w_filt) > max_accept:
                     sampled_set = proportionally_sample_words(l_w_filt, max_accept)
@@ -2979,6 +3018,19 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     l_w_filt = [w for w in l_w_filt if w in sampled_set]
                     l_p = {w: p for w, p in l_p.items() if w in sampled_set}
                 l_p_filt = {w: p for w, p in l_p.items() if w in l_w_filt}
+
+                if is_aw:
+                    if len(l_w_filt) >= 500: target_range_resolved = '500+'
+                    elif len(l_w_filt) >= 400: target_range_resolved = '400-500'
+                    else: target_range_resolved = '300-400'
+                else:
+                    if len(l_w_filt) < 100: target_range_resolved = '50-100'
+                    elif len(l_w_filt) < 200: target_range_resolved = '100-200'
+                    elif len(l_w_filt) < 300: target_range_resolved = '200-300'
+                    elif len(l_w_filt) < 400: target_range_resolved = '300-400'
+                    elif len(l_w_filt) < 500: target_range_resolved = '400-500'
+                    else: target_range_resolved = '500+'
+
                 eparams = {
                     'min_word_length': min_word_length,
                     'word_count_range': target_range_resolved,
@@ -2992,7 +3044,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     bg._verify_checkerboard_safeguard(l_b)
                 else:
                     bg._break_accidental_checkerboard(l_b)
-                print(f"[get_emergency_fallback_board] Fast live generator succeeded: {len(l_w_filt)} words")
+                print(f"[get_emergency_fallback_board] Fast live generator succeeded: {len(l_w_filt)} words (range: {target_range_resolved})")
                 return l_b, l_w_filt, l_c, l_f, l_p_filt, l_r, l_bw, target_range_resolved, eparams
     except Exception as live_err:
         print(f"[get_emergency_fallback_board] Fast live generation exception: {live_err}")
@@ -3052,6 +3104,14 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         words_filtered = [w for w in words_filtered if w in sampled_set]
         paths_filtered = {w: p for w, p in paths_filtered.items() if w in sampled_set}
     
+    if is_aw and len(words_filtered) < 300:
+        use_added_words = False
+        dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').replace('AW', '').strip() or 'NWL'
+        if len(words_filtered) < 100: target_range_resolved = '50-100'
+        elif len(words_filtered) < 200: target_range_resolved = '100-200'
+        elif len(words_filtered) < 300: target_range_resolved = '200-300'
+        else: target_range_resolved = '300-400'
+
     eparams = {
         'min_word_length': min_word_length,
         'word_count_range': target_range_resolved,
@@ -3444,12 +3504,7 @@ class RoomManager:
                                         existing_room.all_words = set(existing_room.all_words_paths.keys())
 
                                         wc_cnt = len(existing_room.all_words)
-                                        if wc_cnt < 100: wc_lbl = '50-100'
-                                        elif wc_cnt < 200: wc_lbl = '100-200'
-                                        elif wc_cnt < 300: wc_lbl = '200-300'
-                                        elif wc_cnt < 400: wc_lbl = '300-400'
-                                        elif wc_cnt < 500: wc_lbl = '400-500'
-                                        else: wc_lbl = '500+'
+                                        wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                                         existing_room.spinner_params = {
                                             'dictionary': raw_dict,
@@ -3464,13 +3519,15 @@ class RoomManager:
                                             'generated_at': time.time(),
                                             '_exact_wc_calculated': True
                                         }
+                                        existing_room.spinner_params = SpinnerSet.sanitize_params(existing_room.spinner_params, existing_room.board_dimensions, existing_room.time_limit >= 7200)
+                                        wc_lbl = existing_room.spinner_params.get('word_count_range', wc_lbl)
 
                                         existing_room.current_min_length = board_min_l
                                         existing_room.current_board_format = r_fmt or 'Normal'
                                         existing_room.current_word_count_range = wc_lbl
-                                        existing_room.current_dictionary = raw_dict
+                                        existing_room.current_dictionary = existing_room.spinner_params.get('dictionary', raw_dict)
                                         existing_room.current_uniqueness = r_ratio
-                                        existing_room.use_added_words = raw_aw
+                                        existing_room.use_added_words = existing_room.spinner_params.get('use_added_words', raw_aw)
 
                                         bw_candidate = r_bonus_word
                                         if not bw_candidate or bw_candidate not in existing_room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS'):
@@ -3833,12 +3890,7 @@ class RoomManager:
 
                             # Derive truthful word count range label
                             wc_cnt = len(room.all_words)
-                            if wc_cnt < 100: wc_lbl = '50-100'
-                            elif wc_cnt < 200: wc_lbl = '100-200'
-                            elif wc_cnt < 300: wc_lbl = '200-300'
-                            elif wc_cnt < 400: wc_lbl = '300-400'
-                            elif wc_cnt < 500: wc_lbl = '400-500'
-                            else: wc_lbl = '500+'
+                            wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                             # Construct spinner params ONCE from exact board parameters
                             room.spinner_params = {
@@ -3854,13 +3906,15 @@ class RoomManager:
                                 'generated_at': time.time(),
                                 '_exact_wc_calculated': True
                             }
+                            room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, room.time_limit >= 7200)
+                            wc_lbl = room.spinner_params.get('word_count_range', wc_lbl)
 
                             room.current_min_length = board_min_l
                             room.current_board_format = r_fmt or 'Normal'
                             room.current_word_count_range = wc_lbl
-                            room.current_dictionary = raw_dict
+                            room.current_dictionary = room.spinner_params.get('dictionary', raw_dict)
                             room.current_uniqueness = r_ratio
-                            room.use_added_words = raw_aw
+                            room.use_added_words = room.spinner_params.get('use_added_words', raw_aw)
 
                             bw_candidate = r_bonus_word
                             if not bw_candidate or bw_candidate not in room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS'):
@@ -3993,12 +4047,7 @@ class RoomManager:
         # Sync counts and word_count_range label to the actual filtered set
         room.update_counts_by_len()
         _akc = room.total_words_count
-        if _akc < 100: room.current_word_count_range = '50-100'
-        elif _akc < 200: room.current_word_count_range = '100-200'
-        elif _akc < 300: room.current_word_count_range = '200-300'
-        elif _akc < 400: room.current_word_count_range = '300-400'
-        elif _akc < 500: room.current_word_count_range = '400-500'
-        else: room.current_word_count_range = '500+'
+        room.current_word_count_range = self._get_factchecked_wc_range(_akc, use_added_words=room.use_added_words, dictionary=room.current_dictionary)
 
         room.round_start_time = time.time()
         room.state = 'active'
@@ -4822,8 +4871,14 @@ class RoomManager:
 
             # Override with the ACTUAL word count from the generated board.
             _actual_wc  = len(room.all_words)
-            _use_aw_val = room.use_added_words or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
-            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val)
+            _use_aw_val = (
+                room.use_added_words
+                or (room.spinner_params.get('use_added_words', False) if isinstance(room.spinner_params, dict) else False)
+                or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                or ('+ AW' in str(room.spinner_params.get('dictionary', '')).upper() if isinstance(room.spinner_params, dict) else False)
+            )
+            _real_wc_sr = self._get_factchecked_wc_range(_actual_wc, use_added_words=_use_aw_val, dictionary=getattr(room, 'current_dictionary', None))
 
             _declared_sr = None
             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
@@ -4831,7 +4886,12 @@ class RoomManager:
             elif isinstance(room.spinner_params, dict) and getattr(room, '_spinner_params_locked', False):
                 _declared_sr = room.spinner_params.get('word_count_range')
 
+            if _use_aw_val and _declared_sr not in ['300-400', '400-500', '500+']:
+                _declared_sr = None
+
             _final_wc_sr = _declared_sr or _real_wc_sr
+            if _use_aw_val and _final_wc_sr not in ['300-400', '400-500', '500+']:
+                _final_wc_sr = '300-400'
 
             room.current_word_count_range = _final_wc_sr
             if isinstance(room.spinner_params, dict):
@@ -6371,8 +6431,10 @@ class RoomManager:
                     planned_wc = (
                         (target_room.frozen_revealed_params.get('word_count_range') if getattr(target_room, 'frozen_revealed_params', None) else None)
                         or (target_room.next_spinner_params.get('word_count_range') if getattr(target_room, 'next_spinner_params', None) else None)
-                        or '100-200'
+                        or ('300-400' if use_aw_flag else '100-200')
                     )
+                    if use_aw_flag and planned_wc not in ['300-400', '400-500', '500+']:
+                        planned_wc = '300-400'
                     max_cap = None
                     if planned_wc == '50-100': max_cap = 99
                     elif planned_wc == '100-200': max_cap = 199
@@ -6412,7 +6474,7 @@ class RoomManager:
                             _sb_min_len = _actual_min_board
 
                     _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
-                    achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag)
+                    achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag, dictionary=search_dict)
 
                     # FAST INITIALIZATION: Length-based scores to avoid "0 point" flickering in UI
                     is_valued = ('valued' in str(updated_format).lower())
@@ -6698,8 +6760,7 @@ class RoomManager:
                     elif '300' in str(target_range): min_accept = 300
                     elif '200' in str(target_range): min_accept = 200
                     elif '100' in str(target_range): min_accept = 100
-                    elif '50' in str(target_range):  min_accept = 50
-            min_accept = max(30, min_accept)
+            min_accept = max(300, min_accept) if use_aw_flag else max(30, min_accept)
 
             # INSTANT 0:00 TRANSITION: Always deliver staged board or popped cached board in <1ms!
             if not getattr(room, 'next_round_board', None):
@@ -7257,7 +7318,7 @@ class RoomManager:
                 # Word count and range label — AW boards use the same full scale as non-AW.
                 # 319 words on a board is '300-400', aligning header with board count.
                 wc_cnt  = len(room.all_words)
-                real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw)
+                real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw, dictionary=room.current_dictionary)
 
                 if room.all_words:
                     actual_shortest = min(len(w) for w in room.all_words)
@@ -7282,7 +7343,12 @@ class RoomManager:
                 if not declared_wc and active_params:
                     declared_wc = active_params.get('word_count_range')
 
+                if _use_aw and declared_wc not in ['300-400', '400-500', '500+']:
+                    declared_wc = None
+
                 final_wc = declared_wc or real_wc
+                if _use_aw and final_wc not in ['300-400', '400-500', '500+']:
+                    final_wc = '300-400'
 
                 room.current_word_count_range = final_wc
                 if isinstance(room.spinner_params, dict):
@@ -7619,11 +7685,23 @@ class RoomManager:
     def _get_factchecked_wc_range(self, count, use_added_words=False, dictionary=None):
         """Map actual word count to the exact corresponding standard range bucket.
            Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
+           For Added Words (+ AW), ranges MUST ALWAYS be 300-400, 400-500, or 500+.
         """
         try:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
+
+        is_aw = bool(use_added_words)
+        if not is_aw and dictionary:
+            dict_str = str(dictionary).upper()
+            if '+ AW' in dict_str or '+AW' in dict_str or 'ADDED' in dict_str or dict_str == 'AW':
+                is_aw = True
+
+        if is_aw:
+            if count >= 500: return '500+'
+            if count >= 400: return '400-500'
+            return '300-400'
             
         if count >= 500: return '500+'
         if count >= 400: return '400-500'
