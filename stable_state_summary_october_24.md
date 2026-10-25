@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-7d734dca82b050042e836bf2443889e4de26ffe2
+3f4ce71e4c7e814d3562e0dbcb0b8d296f1fa956
 ```
 
 ## Synchronization Status
@@ -192,6 +192,7 @@ START_OVER_POINT_OCTOBER_24
 
 | Commit | Summary |
 |:---|:---|
+| `3f4ce71e` | **docs: update stable state summary with definition-verified inflections** |
 | `ce4a1a53` | **fix(definitions): verify inflection candidates against dictionary definitions before appending** |
 | `3aefca06` | **docs: update latest commit ID in stable state summary** |
 | `7d734dca` | **docs: finalize Start Over stable point for October 24, 2026** |
