@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-1b6e0704c7c88b7e289bf50d8794bc0c14bdf881
+7080f27ced394a93660d686f2aa057e9b99913a7
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792845000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792895000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
@@ -135,12 +135,30 @@ START_OVER_POINT_OCTOBER_24
   - **Balanced Range Odds**: Re-tuned `SpinnerSet._spin_word_count` to maintain true uniform randomness across all permitted ranges (`100-200`, `200-300`, `300-400`, `400-500`, `500+`).
   - **Simulation Verified**: Verified over 5,000 parameter generations that 100-200 occurrence dropped from forced 100% to a natural ~16.7% in 6x8 grids, with balanced distribution across higher word count tiers.
 
+### 21. Intermission Countdown Loop Fix (`0:02`, `0:05`, `0:17` Reset Fix)
+- **Issue Resolved**: During intermission, the timer repeatedly got stuck in a cycle of counting down to 0:00 and snapping back to 0:02, 0:05, or 0:17 over and over again.
+- **Root Causes**:
+  - `updateLocalTimer()` in `static/js/play.js` had a re-anchor mechanism where if `remaining <= 0` but `window.lastGameState.time_remaining > 0`, it read the stale snapshot `time_remaining` and repeatedly re-anchored `localEndTime = (Date.now() / 1000) + time_remaining`, causing an endless loop.
+  - In `game_room.py`, 24-hour room intermission limits were set to 2.0s in one check and 5.0s in another, causing server-side desynchronization between `time_remaining` and `intermission_end_time`.
+- **Implementation**:
+  - Removed broken re-anchor logic in `updateLocalTimer()` so that when `remaining <= 0`, the timer cleanly clamps to `0:00`, clears the interval, and triggers a transition sync check.
+  - Unified 24-hour room intermission limits in `game_room.py` to a consistent 5.0 seconds.
+
+### 22. Remaining Tab Mobile Alignment: Length Labels Aligned Furthest to Left
+- **Issue Resolved**: On mobile devices in game rooms, the Remaining tab (`#remaining-words-table`) inherited `text-align: center !important` from `.words-panel`, causing length labels ("6LW", "7LW", etc.) to render in the middle of each row while word counts were aligned to the right.
+- **Implementation**:
+  - In `static/css/play.css`, added explicit `text-align: left !important; padding-left: 0 !important;` for `.len-cell` under `@media (max-width: 992px)` and `body.is-mobile`, placing the length labels furthest to the left while keeping counts right-aligned.
+  - Bumped `play.css?v=1792895000` in `templates/index.html`.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `7080f27c` | **style(play): align remaining words length labels furthest to the left on mobile devices** |
+| `1b6e0704` | **fix(play): eliminate intermission timer countdown loop and align 24h intermission limits** |
+| `a133fbc5` | **docs: update walkthrough and stable state summary with intermission timer fix** |
 | `1e070568` | **docs: update stable state summary for October 24, 2026 (Start Over Point)** |
 | `f53f91bb` | **Restore true random distribution for word count ranges and fix premature easy fallback bias** |
 | `06c2c7f1` | **Fix board and word list desynchronization across round transitions and intermission** |
