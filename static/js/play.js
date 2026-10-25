@@ -7067,7 +7067,7 @@ function applyPanelLayout(cellSize, cols) {
     if (!playPage && !playGrid) return;
 
     const boardGap = 4 * (cols - 1);
-    const boardPadding = 40; // desktop only
+    const boardPadding = 56; // 24px board padding + 32px panel breathing room
     const requiredBoardWidth = (cols * cellSize) + boardGap + boardPadding;
 
     let gridGap = 12;
@@ -7094,50 +7094,40 @@ function applyPanelLayout(cellSize, cols) {
 
     const availableForPanels = gridWidth - requiredBoardWidth - (gridGap * 2);
 
-    const minLeft = 160;
-    const minRight = 220;
+    const minSide = 180;
     let newLeft, newRight;
 
     console.log('[play.js] availableForPanels:', availableForPanels, 'requiredBoardWidth:', requiredBoardWidth, 'gridWidth:', gridWidth);
 
-    const maxRight = window.innerWidth >= 1920 ? 500 : window.innerWidth >= 1600 ? 460 : window.innerWidth >= 1400 ? 420 : 380;
-    const maxLeft  = window.innerWidth >= 1920 ? 460 : window.innerWidth >= 1600 ? 420 : window.innerWidth >= 1400 ? 380 : 340;
+    const maxSide = window.innerWidth >= 1920 ? 460 : window.innerWidth >= 1600 ? 420 : window.innerWidth >= 1400 ? 380 : 340;
+    const totalMax = maxSide * 2;
 
-    const totalMax = maxLeft + maxRight;
     if (availableForPanels >= totalMax) {
-        newLeft = maxLeft;
-        newRight = maxRight;
-    } else if (availableForPanels <= (minLeft + minRight)) {
-        newLeft = minLeft;
-        newRight = minRight;
+        newLeft = maxSide;
+        newRight = maxSide;
+    } else if (availableForPanels <= (minSide * 2)) {
+        newLeft = minSide;
+        newRight = minSide;
     } else {
-        // Distribute the reduction equally between both panels
-        const deficit = totalMax - availableForPanels;
-        const reduction = Math.floor(deficit / 2);
-
-        newLeft = maxLeft - reduction;
-        newRight = maxRight - reduction;
-
-        // Enforce minimum constraints and transfer excess deficit to the other panel if needed
-        if (newLeft < minLeft) {
-            newLeft = minLeft;
-            newRight = availableForPanels - minLeft;
-        } else if (newRight < minRight) {
-            newRight = minRight;
-            newLeft = availableForPanels - minRight;
-        }
+        // Distribute space equally between both panels so the center board is mathematically centered
+        const half = Math.floor(availableForPanels / 2);
+        newLeft = Math.max(minSide, Math.min(maxSide, half));
+        newRight = newLeft;
     }
 
     console.log('[play.js] setting widths: newLeft:', newLeft, 'newRight:', newRight);
-    if (playPage)  { playPage.style.setProperty('--left-panel-w',  `${newLeft}px`);  playPage.style.setProperty('--right-panel-w',  `${newRight}px`); }
-    if (playGrid)  {
-        playGrid.style.setProperty('--left-panel-w',  `${newLeft}px`);
-        playGrid.style.setProperty('--right-panel-w',  `${newRight}px`);
+    if (playPage) {
+        playPage.style.setProperty('--left-panel-w', `${newLeft}px`);
+        playPage.style.setProperty('--right-panel-w', `${newRight}px`);
+    }
+    if (playGrid) {
+        playGrid.style.setProperty('--left-panel-w', `${newLeft}px`);
+        playGrid.style.setProperty('--right-panel-w', `${newRight}px`);
         const isMobileView = window.innerWidth <= 992;
         if (isMobileView) {
             playGrid.style.gridTemplateColumns = '';
         } else {
-            playGrid.style.gridTemplateColumns = `${newLeft}px 1fr ${newRight}px`;
+            playGrid.style.setProperty('grid-template-columns', `${newLeft}px 1fr ${newRight}px`, 'important');
         }
     }
 }

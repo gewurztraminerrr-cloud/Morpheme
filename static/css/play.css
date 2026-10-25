@@ -8446,8 +8446,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         --cell-size: 64px; /* Slightly larger board cells for better legibility */
     }
     .play-grid {
-        --left-panel-w: 460px;
-        --right-panel-w: 460px;
+        --left-panel-w: 380px;
+        --right-panel-w: 380px;
         gap: 16px !important;
     }
     .player-item {
@@ -8468,8 +8468,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         --cell-size: 68px; /* Prominent board cells */
     }
     .play-grid {
-        --left-panel-w: 500px;
-        --right-panel-w: 500px;
+        --left-panel-w: 420px;
+        --right-panel-w: 420px;
         gap: 20px !important;
     }
     .player-item {
@@ -8490,8 +8490,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         --cell-size: 72px; /* Large, gorgeous high-fidelity board */
     }
     .play-grid {
-        --left-panel-w: 540px; /* Tons of space for users and scores */
-        --right-panel-w: 540px; /* Massive space for words list and tabs */
+        --left-panel-w: 460px; /* Tons of space for users and scores */
+        --right-panel-w: 460px; /* Massive space for words list and tabs */
         gap: 24px !important;
     }
     .player-item {
@@ -14978,12 +14978,18 @@ body.is-desktop .words-panel {
 }
 
 body.is-desktop .board-panel {
-    padding: 8px 16px 6px 16px !important;
+    padding: 8px 0 6px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
 }
 
 @media (min-width: 901px) {
     body:not(.is-mobile) .board-panel {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         padding-bottom: 6px !important;
+        align-items: center !important;
     }
 }
 
@@ -15209,11 +15215,14 @@ body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
         padding: 12px !important;
         border-radius: 12px !important;
         gap: 4px !important;
-        width: fit-content !important;
+        width: -webkit-fit-content !important;
         width: -moz-fit-content !important;
-        max-width: fit-content !important;
+        width: fit-content !important;
+        max-width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
+        align-self: center !important;
+        justify-self: center !important;
         box-sizing: border-box !important;
     }
 
@@ -15317,11 +15326,14 @@ body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
         padding: 12px !important;
         border-radius: 12px !important;
         gap: 4px !important;
-        width: fit-content !important;
+        width: -webkit-fit-content !important;
         width: -moz-fit-content !important;
-        max-width: fit-content !important;
+        width: fit-content !important;
+        max-width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
+        align-self: center !important;
+        justify-self: center !important;
         box-sizing: border-box !important;
     }
 }
