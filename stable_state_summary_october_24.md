@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-5c8d4dbdc8aeb4faf80e18ef5cf3dbdc1b657f0f
+0c5cad6b72f44f095c430070368d01bc3b9bfa03
 ```
 
 ## Synchronization Status
@@ -18,11 +18,26 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792897000`, `tools.js?v=1792845000`, `play.js?v=1792898000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792900000`, `tools.js?v=1792900000`, `play.js?v=1792900000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
 ## Session Highlights & Architectural Updates (October 24, 2026)
+
+### 0. In-Game Rooms: Split "Add to Words to Work on" with "Search in Combo Checker"
+- **Horizontal Split Layout**: In game rooms (`#page-play`), when a word is highlighted/selected in the words panel, `#work-on-game-btn-container` is displayed as a responsive horizontal flex row containing two equal-width action buttons:
+  - Button 1: "Add to Words to Work on" (`#add-to-work-on-game-btn`)
+  - Button 2: "Search in Combo Checker" (`#search-in-combo-game-btn`)
+- **CC Popup Logic Parity**: Clicking "Search in Combo Checker" triggers `window.searchWordInComboChecker(targetWord, targetDict, 'page-play')`, executing the identical logic previously attached to the "CC" button on definition popups:
+  - Sets `_navigatingViaDefPopup = true` to preserve back navigation.
+  - Pushes current position to `_defPopupNavStack` with `originPage: 'page-play'`.
+  - Enables Tools back button (`setDefBackNavVisibility(true)`).
+  - Navigates to Tools -> Combo Checker -> Manual Tab -> Microprocedures (MP).
+  - Resolves room dictionary: if `+ AW` is active, sets Combo Checker dictionary to `ALL`; otherwise sets `NWL` or `CSW`.
+  - Populates input with the selected word and runs search.
+  - Scrolls all desktop and mobile containers cleanly to the top.
+  - Clicking the Tools Back button seamlessly returns the user back to the active game room.
+- **Theme Contrast**: Styled with high contrast across dark themes, light themes, and pure white theme.
 
 ### 1. In-Game Guessing Notice & Submission Error Fixes
 - **Submission Error Resolution**: Resolved a Python `NameError: name 'returned_path' is not defined` inside `submit_word` in `app.py` that occurred when submitting invalid words, which previously produced an HTTP 500 "SUBMISSION ERROR" modal.
