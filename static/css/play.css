@@ -8170,7 +8170,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto 0 auto !important;
-        padding: 5px 12px !important;
+        padding: 6px 6px 6px 12px !important;
         box-sizing: border-box !important;
     }
     .play-header .timer-display {
@@ -9953,7 +9953,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     /* Make timer smaller on mobile and fit contents */
     .board-panel .timer-display,
     .play-header .timer-display {
-        padding: 6px 12px !important;
+        padding: 6px 6px 6px 12px !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
         margin: 0 auto 0 auto !important;
@@ -12828,7 +12828,7 @@ body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
     .board-panel .timer-display,
     .play-header .timer-display {
         background: rgba(var(--text-primary-rgb), 0.1) !important;
-        padding: 6px 12px !important;
+        padding: 6px 6px 6px 12px !important;
         border-radius: 8px !important;
         display: flex !important;
         flex-direction: row !important;
@@ -12931,6 +12931,12 @@ body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
         border-bottom-right-radius: 6px !important;
         border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
         margin: 0 !important;
+    }
+
+    body.is-mobile .timer-display,
+    body.is-mobile .board-panel .timer-display,
+    body.is-mobile .play-header .timer-display {
+        padding: 6px 6px 6px 12px !important;
     }
 }
 
