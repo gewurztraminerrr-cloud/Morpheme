@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-3107b587882d02be5f04f1a6fd66c76b8f23cbf3
+1f3816b6c74dfc872734c6a1d654ec7ddce1ed62
 ```
 
 ## Synchronization Status
@@ -222,6 +222,10 @@ START_OVER_POINT_OCTOBER_24
 
 | Commit | Summary |
 |:---|:---|
+| `1f3816b6` | **docs: update stable state summary and walkthrough for October 24** |
+| `3107b587` | **fix(tools): prevent resetToolsTab and MutationObserver from wiping active Combo Checker pane during def popup navigation** |
+| `0c5cad6b` | **feat(play): split Add to Words to Work on button with Search in Combo Checker in game rooms** |
+| `9479ef5b` | **docs: finalize Start Over stable point with Added Words 300+ word count enforcement** |
 | `5c8d4dbd` | **Enforce strict 300-400, 400-500, 500+ word count ranges for Added Words (+ AW) across all generation and fallback paths** |
 | `10bc3cbc` | **docs: finalize Start Over stable point with definition verification** |
 | `3f4ce71e` | **docs: update stable state summary with definition-verified inflections** |
