@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-b0fb3d139898b879bbc9f6d2be5f1dedbc29e772
+7d734dca82b050042e836bf2443889e4de26ffe2
 ```
 
 ## Synchronization Status
@@ -178,6 +178,7 @@ b0fb3d139898b879bbc9f6d2be5f1dedbc29e772
 
 | Commit | Summary |
 |:---|:---|
+| `7d734dca` | **docs: finalize Start Over stable point for October 24, 2026** |
 | `b0fb3d13` | **docs: finalize commit ID in stable state summary for October 24, 2026** |
 | `8f4a780d` | **docs: update stable state summary with unsubmitted swiped letters fix** |
 | `c5eca53d` | **fix(mobile): clear swiped unsubmitted letters below board at end of round** |
