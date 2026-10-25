@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-0c5cad6b72f44f095c430070368d01bc3b9bfa03
+3107b587882d02be5f04f1a6fd66c76b8f23cbf3
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792900000`, `tools.js?v=1792900000`, `play.js?v=1792900000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792900000`, `tools.js?v=1792902000`, `play.js?v=1792902000`, `app.js?v=1792902000`) for instant live propagation across all devices |
 
 ---
 
