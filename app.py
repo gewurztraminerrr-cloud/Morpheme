@@ -8063,6 +8063,83 @@ def format_resolved_definition(word_upper, visited=None):
 
 _AW_INFLECTIONS_CACHE = {}
 
+def extract_root_from_definition(defn):
+    if not defn:
+        return None
+    m_head = re.match(r'^([A-Z]{3,}),\s+', defn)
+    if m_head:
+        return m_head.group(1).upper()
+    m_inf = re.search(r'\b(?:plural|singular|conjugation|participle|past tense|simple past|past|gerund|diminutive|comparative|superlative|inflection|(?:alternative|obsolete|archaic|variant|comparative|superlative)\s+(?:form|spelling))\s+of\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', defn, re.I)
+    if m_inf:
+        return re.sub(r'[^A-Z]', '', m_inf.group(1).upper())
+    return None
+
+def extract_bracket_inflections(defn, root):
+    if not defn:
+        return set()
+    infs = set()
+    root = root.upper()
+    for m in re.finditer(r'\[([a-z]+)\s+([^\]]+)\]', defn, re.I):
+        content = m.group(2).strip()
+        tokens = re.split(r'[,/]|(?:\s+or\s+)|\s+', content)
+        for tok in tokens:
+            tok = tok.strip().upper()
+            if not tok:
+                continue
+            if tok.startswith('-'):
+                suf = tok[1:]
+                if root.endswith('E') and suf.startswith(('E', 'I')):
+                    infs.add(root[:-1] + suf)
+                else:
+                    infs.add(root + suf)
+            elif tok.isalpha() and len(tok) >= 2:
+                infs.add(tok)
+    return infs
+
+def is_verified_inflection(w, cand, def_w=None, def_cand=None):
+    w = w.upper().strip()
+    cand = cand.upper().strip()
+    if not w or not cand or w == cand:
+        return False
+    
+    global DEFINITIONS_CACHE
+    if def_w is None:
+        def_w = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
+    if def_cand is None:
+        def_cand = DEFINITIONS_CACHE.get(cand, '') if DEFINITIONS_CACHE else ''
+    
+    # 1. def(cand) explicitly states root is w (e.g. 'plural of adenia', 'ADENIA, ...')
+    root_c = extract_root_from_definition(def_cand)
+    if root_c and root_c == w:
+        return True
+        
+    # 2. def(w) explicitly states root is cand (e.g. 'plural of adenia' when w is ADENIAS and cand is ADENIA)
+    root_w = extract_root_from_definition(def_w)
+    if root_w and root_w == cand:
+        return True
+        
+    # 3. def(w) has bracket notation explicitly listing cand (e.g. 'MEDIUM [n MEDIA]', 'WALK [v -ED, -ING, -S]')
+    brack_w = extract_bracket_inflections(def_w, w)
+    if cand in brack_w:
+        return True
+        
+    # 4. def(cand) has bracket notation explicitly listing w
+    brack_c = extract_bracket_inflections(def_cand, cand)
+    if w in brack_c:
+        return True
+        
+    # 5. If def_cand exists and describes an independent entity without linking to w:
+    if def_cand:
+        if re.search(rf'\b{re.escape(w)}\b', def_cand, re.I):
+            return True
+        return False
+        
+    # 6. If def_cand is unindexed in DEFINITIONS_CACHE, allow ONLY if it is a regular grammatical inflection
+    if is_plural_or_inflection(w, cand):
+        return True
+        
+    return False
+
 def get_candidates_from_root(root):
     r = root.upper()
     cands = {r + 'S', r + 'ES', r + 'ED', r + 'ING', r + 'ER', r + 'EST'}
@@ -8075,31 +8152,13 @@ def get_candidates_from_root(root):
     if len(r) >= 3 and r[-1] not in 'AEIOU':
         c = r[-1]
         cands.update({r + c + 'ED', r + c + 'ING', r + c + 'ER', r + c + 'EST'})
-    if r.endswith('US'):
-        cands.add(r[:-2] + 'I')
-    elif r.endswith('A'):
-        cands.add(r + 'E')
-    elif r.endswith('UM') or r.endswith('ON'):
-        cands.add(r[:-2] + 'A')
-    elif r.endswith('EX') or r.endswith('IX'):
-        cands.add(r[:-2] + 'ICES')
-    elif r.endswith('IS'):
-        cands.add(r[:-2] + 'ES')
     return cands
 
 def get_roots_for_word(w, defn, all_words):
     roots = set()
-    if defn:
-        m = re.search(r'\b(?:plural|singular|conjugation|participle|past tense|past|gerund|diminutive|comparative|superlative)\s+(?:of|for)\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', defn, re.I)
-        if m:
-            cand = re.sub(r'[^A-Z]', '', m.group(1).upper())
-            if cand in all_words and cand != w:
-                roots.add(cand)
-        m_head = re.match(r'^([A-Z]{3,}),\s*', defn)
-        if m_head:
-            cand = m_head.group(1).upper()
-            if cand in all_words and cand != w:
-                roots.add(cand)
+    r = extract_root_from_definition(defn)
+    if r and r in all_words and r != w:
+        roots.add(r)
 
     cands = []
     if w.endswith('IES') and len(w) > 4: cands.append(w[:-3] + 'Y')
@@ -8123,16 +8182,18 @@ def get_roots_for_word(w, defn, all_words):
         if len(w) > 6 and w[-4] == w[-5]: cands.append(w[:-4])
     if w.endswith('I') and len(w) > 3: cands.append(w[:-1] + 'US')
     if w.endswith('AE') and len(w) > 3: cands.append(w[:-1])
-    if w.endswith('A') and len(w) > 4: cands.extend([w[:-1] + 'UM', w[:-1] + 'ON'])
     if w.endswith('ICES') and len(w) > 5: cands.extend([w[:-4] + 'EX', w[:-4] + 'IX'])
 
+    global DEFINITIONS_CACHE
     for c in cands:
         if c in all_words and c != w:
-            roots.add(c)
+            def_c = DEFINITIONS_CACHE.get(c, '') if DEFINITIONS_CACHE else ''
+            if is_verified_inflection(w, c, defn, def_c):
+                roots.add(c)
     return roots
 
 def get_valid_inflections_for_aw_word(w):
-    global _AW_INFLECTIONS_CACHE
+    global _AW_INFLECTIONS_CACHE, DEFINITIONS_CACHE
     w = w.upper().strip()
     if w in _AW_INFLECTIONS_CACHE:
         return _AW_INFLECTIONS_CACHE[w]
@@ -8140,13 +8201,20 @@ def get_valid_inflections_for_aw_word(w):
     all_words = getattr(word_validator, 'nwl_words', set()) | getattr(word_validator, 'csw_words', set()) | getattr(word_validator, 'long_words', set()) | getattr(word_validator, 'added_words', set())
     defn = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
     roots = get_roots_for_word(w, defn, all_words)
-    inflections = set()
-    inflections.update(get_candidates_from_root(w))
+    candidates = set()
+    candidates.update(get_candidates_from_root(w))
     for r in roots:
-        inflections.add(r)
-        inflections.update(get_candidates_from_root(r))
+        candidates.add(r)
+        candidates.update(get_candidates_from_root(r))
     
-    valid = sorted([cand for cand in inflections if cand in all_words and cand != w])
+    valid = []
+    for cand in candidates:
+        if cand in all_words and cand != w:
+            def_cand = DEFINITIONS_CACHE.get(cand, '') if DEFINITIONS_CACHE else ''
+            if is_verified_inflection(w, cand, defn, def_cand):
+                valid.append(cand)
+    
+    valid = sorted(valid)
     _AW_INFLECTIONS_CACHE[w] = valid
     return valid
 
