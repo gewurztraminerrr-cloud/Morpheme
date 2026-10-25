@@ -8,7 +8,7 @@ START_OVER_POINT_OCTOBER_24
 
 ## Latest Commit ID
 ```
-97fc2ee39055d8ceb7c6d96c50247b90737e7285
+eee04f3c492bb37ccd188d30ad906326feee6ff7
 ```
 
 ## Synchronization Status
@@ -18,7 +18,7 @@ START_OVER_POINT_OCTOBER_24
 | **Localhost** | ✅ Synchronized | Clean working tree on `main` |
 | **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_24` / `stable-2026-10-24` |
 | **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Updated to latest commit, tags fetched, PM2 process online, live HTTP 200 OK |
-| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792896000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
+| **App / Client** | ✅ Synchronized | Cache busters bumped (`howtoplay.css?v=1792844000`, `play.css?v=1792897000`, `tools.js?v=1792845000`, `play.js?v=1792871000`, `app.js?v=1792871000`) for instant live propagation across all devices |
 
 ---
 
@@ -150,12 +150,21 @@ START_OVER_POINT_OCTOBER_24
   - In `static/css/play.css`, added explicit `text-align: left !important; padding-left: 10px !important;` for `.len-cell` and `text-align: right !important; padding-right: 10px !important;` for `.count-cell` under `@media (max-width: 992px)` and `body.is-mobile`, placing the length labels furthest to the left with padding matching the count numbers on the right.
   - Bumped `play.css?v=1792896000` in `templates/index.html`.
 
+### 23. Rotate & Transpose Buttons Mobile Symmetry: Equal Top, Bottom, and Right Padding
+- **Issue Resolved**: On mobile devices in game rooms, the timer panel (`.timer-display`) containing the Rotate and Transpose buttons had 12px right padding while vertical padding around the buttons was 6px (buttons are 26px high within the 38px panel), leaving an asymmetric 12px space to the right of the Transpose button.
+- **Implementation**:
+  - In `static/css/play.css`, set `.timer-display` padding to `6px 6px 6px 12px !important;` under `@media (max-width: 992px)` and `body.is-mobile`.
+  - Shifted the Transpose button 6px to the right so that spacing above (6px), below (6px), and to the right (6px) of the buttons within the panel is perfectly equalized.
+  - Bumped `play.css?v=1792897000` in `templates/index.html`.
+
 ---
 
 ## Complete Commit History (October 24, 2026)
 
 | Commit | Summary |
 |:---|:---|
+| `eee04f3c` | **style(play): equalize padding above, below, and to the right of Rotate/Transpose buttons in timer panel on mobile** |
+| `758400b4` | **docs: update stable state summary with matching Remaining padding** |
 | `97fc2ee3` | **style(play): match left padding on len-cell with right padding on count-cell in Remaining tab on mobile** |
 | `43923e2d` | **docs: update stable state summary with Remaining tab mobile alignment** |
 | `7080f27c` | **style(play): align remaining words length labels furthest to the left on mobile devices** |
