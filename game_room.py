@@ -1649,7 +1649,7 @@ class GameRoom:
                 self.intermission_start_time = now
             elapsed = now - self.intermission_start_time
             intermission_limit = 5 if self.time_limit >= 7200 else 60
-            if elapsed >= intermission_limit - 1.2:
+            if elapsed >= intermission_limit - 0.6:
                 return 'start'
             
         # 2. Parameter Reveal (15s into intermission = 0:45 on clock)
@@ -7441,7 +7441,14 @@ class RoomManager:
                 room.next_round_initial_cell_density = None
                 
                 room.custom_end_time = 0
-                room.round_start_time = time.time()
+                # PRECISE START: don't flip to active until the intermission clock truly hits 0:00.
+                _ist = getattr(room, 'intermission_start_time', 0) or 0
+                _ilimit = 5 if room.time_limit >= 7200 else 60
+                _target_start = (_ist + _ilimit) if _ist > 0 else time.time()
+                _wait = _target_start - time.time()
+                if 0 < _wait <= 2.0:
+                    time.sleep(_wait)
+                room.round_start_time = _target_start if _wait > 0 else time.time()
                 room.state = 'active'
                 if room.time_limit >= 7200:
                     if not hasattr(room, 'evicted_users') or room.evicted_users is None:
