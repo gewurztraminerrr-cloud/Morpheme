@@ -7209,6 +7209,29 @@ class RoomManager:
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
+                # BONUS LETTER GUARD: The spun format can say "Bonus Letter" while the staged board
+                # (cache/fallback pop) carries no bonus cell. Ensure a cell exists so the green tile shows.
+                try:
+                    _fmt_l = str(room.current_board_format or '').lower()
+                    if room.time_limit < 7200 and ('bonus letter' in _fmt_l or _fmt_l.strip() == 'bonus') and not room.bonus_cell and room.board:
+                        _b = room.board
+                        if isinstance(_b[0][0], list):  # 3D board: (f, r, c)
+                            _f = random.randint(0, len(_b) - 1)
+                            room.bonus_cell = (_f, random.randint(0, len(_b[_f]) - 1), random.randint(0, len(_b[_f][0]) - 1))
+                        else:
+                            room.bonus_cell = (random.randint(0, len(_b) - 1), random.randint(0, len(_b[0]) - 1))
+                        print(f"[RoomManager] Bonus Letter format had no bonus cell for {room_id}; assigned {room.bonus_cell}")
+                        try:
+                            _solved = self.board_generator._solve_board(room.board, getattr(room, 'current_dictionary', 'NWL'), (0, 99999), display_min, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell)
+                            if _solved:
+                                _upd = {w: p for w, p in _solved.items() if w in room.all_words_paths}
+                                if len(_upd) == len(room.all_words_paths):
+                                    room.all_words_paths = _upd
+                        except Exception as _se:
+                            print(f"[RoomManager] Bonus cell re-solve failed (keeping existing paths): {_se}")
+                except Exception as _bg_err:
+                    print(f"[RoomManager] Bonus cell guard error: {_bg_err}")
+
                 # --- 4. ACCURACY ENFORCEMENT (inside lock — all_words must be consistent before state='active') ---
                 # These loops run over ~100-500 words and take < 5ms — not the bottleneck.
                 _sp     = dict(room.spinner_params) if isinstance(room.spinner_params, dict) else {}
