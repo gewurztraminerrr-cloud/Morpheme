@@ -7526,7 +7526,8 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     // Normal format → no star/highlight (no +3 scored server-side either).
     const existingStar = cell.querySelector('.bonus-star');
     const fmtLower = (boardFormat || '').toLowerCase();
-    const isBonusLetterFormat = fmtLower.includes('bonus') || fmtLower.includes('either');
+    // scoring.py awards BL whenever a bonus_cell exists (except checkerboard), so mirror that here.
+    const isBonusLetterFormat = fmtLower.includes('bonus') || fmtLower.includes('either') || (isMatch && !fmtLower.includes('checker'));
     if (isMatch && isBonusLetterFormat && !existingStar) {
         const star = document.createElement('span');
         star.className = 'bonus-star';
