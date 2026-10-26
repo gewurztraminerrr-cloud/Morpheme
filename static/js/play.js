@@ -9480,13 +9480,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             updateGameState();
                         }
                     }
-                } else if (!isPenaltyMode && !((preState.time_limit >= 7200) || (preState.room_id && (preState.room_id.includes('24h') || preState.room_id.includes('86400'))) || (preState.game_type === '24h'))) {
-                    // Optimistic Instant Feedback: Word not in dictionary, trigger failure sound immediately without waiting for network roundtrip
-                    // NOTE: In 24h rooms, the server dynamically validates & accepts valid dictionary words on the board, so do not optimistically flash red!
-                    showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, finalPath, true);
-                    optimisticColor = 'red';
-                    optimisticIsDefinitive = true;
                 }
+                // NOTE: No optimistic red flash for words missing from the local list. The server can accept
+                // valid words that the client list lacks (dynamic accept), so we wait for the server verdict
+                // instead of flashing a false "invalid" first.
             }
         }
     }
