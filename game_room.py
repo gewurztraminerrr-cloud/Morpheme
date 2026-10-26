@@ -3038,7 +3038,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         ]
         bonus_cell = (0, 0, 0)
     else:
-        rows, cols = map(int, parts[:2])
+        try:
+            rows, cols = map(int, parts[:2])
+        except (ValueError, TypeError):
+            rows, cols = 4, 4  # non-grid room (e.g. subanagrams): fall back to a 4x4 emergency grid
         # Randomly shuffled standard letter distribution to ensure unique boards
         std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
         offset = random.randint(0, len(std_letters) - 1)
@@ -5151,6 +5154,7 @@ class RoomManager:
 
     def generate_spinner_params(self, room_id, reveal=False):
         """Generate and optionally reveal next round's game parameters"""
+        from scoring import calculate_word_score
         room = self.get_room(room_id)
         if not room:
             return False
@@ -6113,6 +6117,7 @@ class RoomManager:
             # Start board generation in background thread
             def generate_in_background():
                 nonlocal bonus_word, params, launched_generated_at
+                from scoring import calculate_word_score
                 
                 # Capture params locally for thread safety
                 search_wc = params.get('word_count_range')
@@ -6686,6 +6691,7 @@ class RoomManager:
             room._round_start_init_time = time.time()
              
         print(f"[RoomManager] start_next_round processing for room {room_id}")
+        room._board_promoted_this_transition = False
         
         try:
             # Calculate min_accept for safety check
@@ -7129,7 +7135,9 @@ class RoomManager:
                     room.previous_bonus_word = (ghost_bonus or '')
                     room.previous_bonus_cell = getattr(room, 'bonus_cell', None)
                     room.previous_board_format = ghost_board_format
-                    import copy
+                    # NOTE: `copy` is imported at module level. Do NOT re-import it here: a local
+                    # `import copy` makes it a function-local name for ALL of start_next_round and
+                    # breaks 24h rooms (which skip this branch) with UnboundLocalError.
                     room.previous_board = copy.deepcopy(ghost_prev_board) if ghost_prev_board else []
                     room.previous_all_words = [w for w in (ghost_source_words or []) if len(w) >= ghost_min_len]
                     room.previous_all_words_paths = dict(ghost_all_words_paths)
@@ -7157,6 +7165,7 @@ class RoomManager:
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
+                room._board_promoted_this_transition = True
                 if getattr(room, 'game_type', None) == 'subanagrams' and room.board and isinstance(room.board[0], list):
                     actual_seq_len = len(room.board[0])
                     room.sequence_length = actual_seq_len
@@ -7505,6 +7514,19 @@ class RoomManager:
                     f.write(f"[CRITICAL] start_next_round failed for {room_id}: {transition_err}\n{traceback.format_exc()}\n")
             except Exception as log_err:
                 print(f"[RoomManager] Failed to write to debug_flow.log: {log_err}")
+            # LOOP GUARD: the new board is already live. Finish the transition so the heartbeat does not
+            # re-run start_next_round (re-rolling the board / re-evicting players) on every tick.
+            try:
+                with room._state_lock:
+                    if getattr(room, '_board_promoted_this_transition', False) and room.state != 'active' and room.board:
+                        print(f"[RoomManager] Recovering {room_id}: board promoted but transition errored. Forcing ACTIVE to stop retry loop.")
+                        room.custom_end_time = 0
+                        room.round_start_time = time.time()
+                        room.state = 'active'
+                        room.midnight_reset_occurred = False
+                        room._transition_spinner_launched = False
+            except Exception as rec_err:
+                print(f"[RoomManager] Recovery after failed transition also failed for {room_id}: {rec_err}")
             return False
 
         finally:
