@@ -10626,13 +10626,15 @@ async function fetchDefinition(word) {
             );
         }
         const roundFindersCount = roundFinders.length;
+        const isIntermission = Boolean(s && s.state === 'intermission');
+        const calcCombined = (tally) => isIntermission ? Math.max(tally, roundFindersCount) : (tally + roundFindersCount);
 
         // Immediate label while tally fetches
         fcBtn.textContent = `FC [${roundFindersCount}]`;
 
         if (!window._wordTallyCache) window._wordTallyCache = {};
         if (typeof window._wordTallyCache[cleanWord] === 'number') {
-            const totalCombined = window._wordTallyCache[cleanWord] + roundFindersCount;
+            const totalCombined = calcCombined(window._wordTallyCache[cleanWord]);
             fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
         } else {
             fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
@@ -10641,7 +10643,7 @@ async function fetchDefinition(word) {
                     const totalTally = data.count || 0;
                     window._wordTallyCache[cleanWord] = totalTally;
                     if (window._currentDefWord === cleanWord) {
-                        const totalCombined = totalTally + roundFindersCount;
+                        const totalCombined = calcCombined(totalTally);
                         fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
                     }
                 })
@@ -13048,7 +13050,8 @@ window.showFinderModal = function (word) {
                 const totalTally = data.count || 0;
                 if (!window._wordTallyCache) window._wordTallyCache = {};
                 window._wordTallyCache[wordUpper] = totalTally;
-                const totalCombined = totalTally + findersCount;
+                const isIntermission = Boolean(window.lastGameState && window.lastGameState.state === 'intermission');
+                const totalCombined = isIntermission ? Math.max(totalTally, findersCount) : (totalTally + findersCount);
                 
                 let html = `
                     <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">

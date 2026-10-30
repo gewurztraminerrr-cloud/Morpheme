@@ -7979,6 +7979,13 @@ class RoomManager:
             room.last_saved_round = target_round
             print(f"[RoomManager] SUCCESS: Saved round history for room {room.room_id} Round {target_round}")
 
+            try:
+                import app
+                if hasattr(app, '_WORD_FINDS_CACHE'):
+                    app._WORD_FINDS_CACHE.clear()
+            except Exception:
+                pass
+
             with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - SUCCESS: Saved to DB\n")
         except Exception as e:
