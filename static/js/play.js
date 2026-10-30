@@ -1285,6 +1285,7 @@ function clearGameUIAndCache() {
     window._wasEverInRoster = false;
     window.selectedAllWordsDict = 'all';
     window.selectedAllWordsLength = 'all';
+    window.allWordsSortMode = 'length';
     window.lastIntermissionRoundId = null;
     stopBounceFormat();
     stopRotatingLetters();
@@ -2725,9 +2726,10 @@ async function _doUpdateGameState(incomingState = null) {
             }
         } else if (state.state !== 'intermission') {
             window.lastRenderedIntermissionWords = null;
-            window.lastSolvingComplete = false;
+            window.lastRenderedIntermissionKey = null; // Clear render cache key outside intermission
             window.selectedAllWordsDict = 'all';
             window.selectedAllWordsLength = 'all';
+            window.allWordsSortMode = 'length';
             window.lastIntermissionRoundId = null;
             const filterContainer = document.getElementById('length-filter-container');
             if (filterContainer) filterContainer.style.display = 'none';
@@ -3130,12 +3132,14 @@ async function _doUpdateGameState(incomingState = null) {
                 if (window.lastIntermissionRoundId !== roundId) {
                     window.selectedAllWordsDict = 'all';
                     window.selectedAllWordsLength = 'all';
+                    window.allWordsSortMode = 'length';
                     window.lastIntermissionRoundId = roundId;
                 }
                 const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
                 const selectedLen = window.selectedAllWordsLength || 'all';
                 const selectedDict = window.selectedAllWordsDict || 'all';
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+                const sortMode = window.allWordsSortMode || 'length';
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -5109,7 +5113,8 @@ function updateIntermissionRenderKey() {
     const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
     const selectedLen = window.selectedAllWordsLength || 'all';
     const selectedDict = window.selectedAllWordsDict || 'all';
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+    const sortMode = window.allWordsSortMode || 'length';
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -5217,6 +5222,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
     const dictDropdown = document.getElementById('dictionary-filter-dropdown');
+    const sortBtn = document.getElementById('all-words-sort-btn');
 
     if (filterContainer) {
         filterContainer.style.display = 'flex';
@@ -5336,6 +5342,22 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
                 }
             });
             filterDropdown.dataset.listenerAdded = 'true';
+        }
+    }
+
+    if (sortBtn) {
+        window.allWordsSortMode = window.allWordsSortMode || 'length';
+        sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Letter Length' : 'Point Value';
+        if (!sortBtn.dataset.listenerAdded) {
+            sortBtn.addEventListener('click', () => {
+                window.allWordsSortMode = (window.allWordsSortMode === 'points') ? 'length' : 'points';
+                sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Letter Length' : 'Point Value';
+                updateIntermissionRenderKey();
+                if (window.lastDisplayAllWordsArgs) {
+                    displayAllWords(...window.lastDisplayAllWordsArgs);
+                }
+            });
+            sortBtn.dataset.listenerAdded = 'true';
         }
     }
 
@@ -5498,20 +5520,38 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         entry.bonusIndicator = bonusIndicator;
     }
 
-    // Standard sort: Secret Bonus Word -> Length (Desc) -> Point Value (Desc) -> Alphabetical (Asc)
+    const isSortByPoints = (window.allWordsSortMode === 'points');
+
+    // Sort the filtered subset only (using authoritative pre-calculated values)
     filteredWords.sort((a, b) => {
-        // 0. Bonus Word (Absolute Top Priority)
-        if (a.isBonus) return -1;
-        if (b.isBonus) return 1;
-        // Primary: Length (Desc)
-        if (b.len !== a.len) {
-            return b.len - a.len;
+        if (isSortByPoints) {
+            // Primary: Point Value (Desc)
+            if (b.totalPts !== a.totalPts) {
+                return b.totalPts - a.totalPts;
+            }
+            // Secondary tie-break: Secret bonus word priority
+            if (a.isBonus) return -1;
+            if (b.isBonus) return 1;
+            // Tertiary tie-break: Length (Desc)
+            if (b.len !== a.len) {
+                return b.len - a.len;
+            }
+        } else {
+            // Default: Sort by Letter Length
+            // 0. Bonus Word (Absolute Top Priority)
+            if (a.isBonus) return -1;
+            if (b.isBonus) return 1;
+            // Primary: Length (Desc)
+            if (b.len !== a.len) {
+                return b.len - a.len;
+            }
+            // Secondary: Point Value (Desc)
+            if (b.totalPts !== a.totalPts) {
+                return b.totalPts - a.totalPts;
+            }
         }
-        // Secondary: Point Value (Desc)
-        if (b.totalPts !== a.totalPts) {
-            return b.totalPts - a.totalPts;
-        }
-        // Alphabetical (Asc)
+
+        // Alphabetical (Asc) - (ASCII operators are 10-20x faster than localeCompare)
         if (a.wordUpper < b.wordUpper) return -1;
         if (a.wordUpper > b.wordUpper) return 1;
         return 0;
