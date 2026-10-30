@@ -3963,6 +3963,43 @@ def _get_word_finds(word):
     finally:
         conn.close()
 
+    # 4. Check active/in-memory rooms for live finds not yet written to round_history
+    try:
+        from game_room import room_manager
+        if room_manager and hasattr(room_manager, 'rooms'):
+            for r_id, room in list(room_manager.rooms.items()):
+                saved_key = getattr(room, '_last_saved_round_key', None)
+                current_key = f"{room.room_id}_{room.current_round}"
+                if saved_key == current_key:
+                    continue
+                players = list(room.players.values()) if isinstance(getattr(room, 'players', None), dict) else getattr(room, 'players', [])
+                for p in players:
+                    u_name = getattr(p, 'username', None)
+                    if not u_name or u_name == 'System':
+                        continue
+                    sw_list = getattr(p, 'submitted_words', []) or []
+                    for sw in sw_list:
+                        w_str = sw.get('word', '') if isinstance(sw, dict) else str(sw)
+                        if w_str.upper() == word:
+                            ts_val = (sw.get('timestamp') if isinstance(sw, dict) else None) or getattr(sw, 'get', lambda k: None)('time') or time.time()
+                            if isinstance(ts_val, (int, float)):
+                                dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                                iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            elif isinstance(ts_val, str) and ('T' in ts_val or '-' in ts_val):
+                                iso_ts = ts_val
+                            else:
+                                iso_ts = format_chicago_to_utc(str(ts_val))
+                            
+                            c_flag = getattr(p, 'country_flag', '')
+                            if not any(f['username'] == u_name and f['timestamp'] == iso_ts for f in finds):
+                                finds.append({
+                                    'username': u_name,
+                                    'country_flag': c_flag,
+                                    'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                                })
+    except Exception as active_ex:
+        print(f"[get_word_finds] Error querying active rooms: {active_ex}")
+
     # Sort finds descending by timestamp string (newest first, oldest last)
     finds.sort(key=lambda x: str(x['timestamp']), reverse=True)
     if len(_WORD_FINDS_CACHE) > 1000:

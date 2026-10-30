@@ -964,6 +964,12 @@ class GameRoom:
                 'is_bonus': is_bonus
             }
             player.submitted_words.append(word_metadata)
+            try:
+                import app
+                if hasattr(app, '_WORD_FINDS_CACHE') and final_word.upper() in app._WORD_FINDS_CACHE:
+                    del app._WORD_FINDS_CACHE[final_word.upper()]
+            except Exception:
+                pass
             if is_bonus:
                 player.found_bonus_word = True
                 print(f"[GameRoom] Player {player.username} found the BONUS WORD: {final_word}!")
@@ -1195,6 +1201,12 @@ class GameRoom:
             print(f"[Density-Error] Failed to update density: {e}")
         
         player.submitted_words.append(word_metadata)
+        try:
+            import app
+            if hasattr(app, '_WORD_FINDS_CACHE') and final_word.upper() in app._WORD_FINDS_CACHE:
+                del app._WORD_FINDS_CACHE[final_word.upper()]
+        except Exception:
+            pass
         
         # FCFS: Update shared found words list for Live Feed synchronization
         if self.game_type == 'fcfs':
