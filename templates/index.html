@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1792880000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1792836000">
     <link rel="stylesheet" href="/css/lobby.css?v=1792880000">
-    <link rel="stylesheet" href="/css/play.css?v=1792903000">
+    <link rel="stylesheet" href="/css/play.css?v=1793362000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1792220000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -3722,20 +3722,6 @@
                                 <h3 id="words-panel-title">Your Words</h3>
                                 <p class="words-stats" id="words-stats"></p>
                             </div>
-                            <div id="work-on-game-btn-container" class="work-on-game-btn-container" style="display: none;">
-                                <button id="add-to-work-on-game-btn" class="work-on-game-btn" type="button">
-                                    Add to Words to Work on
-                                </button>
-                                <button id="search-in-combo-game-btn" class="work-on-game-btn" type="button">
-                                    Search in Combo Checker
-                                </button>
-                            </div>
-                            <div id="finders-button-container" style="display: none; margin: 5px 0; width: 100%;">
-                                <button id="view-finders-btn-top" style="width: 100%; padding: 4px 5px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                                    <span>Finders: None</span>
-                                    <span>[0]</span>
-                                </button>
-                            </div>
                             <div id="length-filter-container" style="display: none; margin: 5px 0; width: 100%; gap: 6px; align-items: center;">
                                 <select id="length-filter-dropdown" style="flex: 1; min-width: 0; padding: 4px 5px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border);">
                                 </select>
@@ -3809,11 +3795,25 @@
 
                     <div class="definitions-panel">
                         <div id="definition-header" class="definition-header hidden" style="display: none;">
-                            <span id="definition-word" class="definition-word"></span>
+                            <div class="definition-word-row">
+                                <span id="definition-word" class="definition-word"></span>
+                                <span id="definition-len-badge" class="tool-def-len-badge" style="display: none;"></span>
+                            </div>
                             <div id="definition-pronunciation" class="definition-pronunciation pronunciation" style="display: none;"></div>
                         </div>
                         <div id="definition-content">
                             <p class="placeholder">Select a word to see its definition</p>
+                        </div>
+                        <div id="definition-actions" class="tool-def-actions" style="display: none;">
+                            <div class="tool-def-action-left">
+                                <a href="javascript:void(0)" id="game-def-cc-btn" class="tool-def-footer-link" title="Combo Checker (CC)">CC</a>
+                            </div>
+                            <div class="tool-def-action-center">
+                                <a href="javascript:void(0)" id="game-def-fc-btn" class="tool-def-footer-link" title="Find Count (FC)">FC [0]</a>
+                            </div>
+                            <div class="tool-def-action-right">
+                                <a href="javascript:void(0)" id="game-def-add-btn" class="tool-def-footer-link tool-def-add-link" title="Add to Words to Work on">ADD</a>
+                            </div>
                         </div>
                     </div>
                     <div class="mobile-nav-indicators">
@@ -9925,11 +9925,11 @@
     <script src="/js/forum.js?v=1792220000"></script>
     <script src="/js/app.js?v=1792902000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>
-    <script src="/js/play.js?v=1792916000"></script>
+    <script src="/js/play.js?v=1793362000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1791081000"></script>
     <script src="/js/mobile_scroller.js?v=1791082003"></script>
-    <script src="/js/tools.js?v=1792902000"></script>
+    <script src="/js/tools.js?v=1793362000"></script>
     <script src="/js/store.js?v=1792215000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1792837000"></script>

@@ -609,10 +609,10 @@
 .definitions-panel {
     background: var(--bg-panel);
     border-radius: 12px;
-    padding: 8px 12px;
-    flex: 0 0 130px !important; /* Spacious, comfortable definitions panel */
-    height: 130px !important;
-    max-height: 130px !important;
+    padding: 8px 12px 6px 12px;
+    flex: 0 0 160px !important; /* Slightly larger vertical space for definition + action buttons */
+    height: 160px !important;
+    max-height: 160px !important;
     border-top: none;
     margin-top: 0;
     display: flex;
@@ -621,6 +621,45 @@
     justify-content: flex-start;
     border-top: 1px solid rgba(var(--text-primary-rgb), 0.05);
     font-size: var(--def-font-size);
+}
+
+.definition-word-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.definitions-panel .tool-def-actions {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    padding-top: 4px;
+    margin-top: 4px;
+    flex-shrink: 0;
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.definitions-panel .tool-def-footer-link {
+    height: 24px;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.definitions-panel .tool-def-action-left,
+.definitions-panel .tool-def-action-right {
+    flex: 1 1 0%;
+    min-width: 0;
+}
+
+.definitions-panel .tool-def-action-center {
+    flex: 1.4 1 0%;
+    min-width: 0;
 }
 
 .definition-header {
@@ -8243,15 +8282,15 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
 
     .definitions-panel {
-        flex: 0 0 125px !important;
-        height: 125px !important;
-        max-height: 125px !important;
+        flex: 0 0 155px !important;
+        height: 155px !important;
+        max-height: 155px !important;
         margin-top: 10px !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding: 8px 12px !important;
+        padding: 8px 12px 6px 12px !important;
         box-sizing: border-box !important;
     }
     .definitions-panel {
@@ -8284,8 +8323,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .definitions-panel .definition-word,
     .definitions-panel #definition-word {
         text-align: left !important;
-        display: block !important;
-        width: 100% !important;
+        display: inline-block !important;
+        width: auto !important;
         color: var(--accent-color) !important;
     }
     .definitions-panel .pronunciation:not(.hidden):not(:empty):not([style*="display: none"]),

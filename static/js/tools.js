@@ -10640,6 +10640,88 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
     }, 600);
 };
 
+window.navigateToFindCount = function (word, originPage = null) {
+    if (!word) return;
+    const cleanWord = String(typeof word === 'object' ? (word.word || word) : word).trim().toUpperCase();
+    if (!cleanWord) return;
+
+    window._navigatingViaDefPopup = true;
+
+    if (typeof window.saveCurrentToolsPosition === 'function') {
+        window.saveCurrentToolsPosition(cleanWord);
+    }
+
+    const activePage = document.querySelector('.page.active');
+    const originPageId = originPage || ((activePage && activePage.id) ? activePage.id : 'page-tools');
+    const activePane = document.querySelector('#page-tools .tool-pane.active');
+    const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
+
+    if (!Array.isArray(window._defPopupNavStack)) {
+        window._defPopupNavStack = [];
+    }
+    window._defPopupNavStack.push({
+        originPage: originPageId,
+        originTool: curId,
+        wasFullListModalOpen: !!window._wasFullListModalOpen,
+        savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
+        savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
+        savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
+        savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
+        comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
+        comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
+        comboMainTab: window._activeComboMainTab || 'manual',
+        comboSubtab: window._activeComboTab || 'mp',
+        findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
+    });
+
+    window._navigatedFromDefPopup = true;
+    window._defPopupOriginTool = curId;
+    window._defPopupOriginPage = originPageId;
+
+    if (typeof window.setDefBackNavVisibility === 'function') {
+        window.setDefBackNavVisibility(true);
+    }
+
+    if (typeof window.hideWordDefinitionPopup === 'function') {
+        window.hideWordDefinitionPopup();
+    }
+    if (typeof window.closeFullListModal === 'function') {
+        window.closeFullListModal();
+    }
+
+    if (typeof window.showPage === 'function') {
+        const toolsPage = document.getElementById('page-tools');
+        if (!toolsPage || !toolsPage.classList.contains('active')) {
+            window.showPage('page-tools');
+        }
+    }
+
+    setTimeout(() => {
+        window._navigatingViaDefPopup = false;
+    }, 150);
+
+    if (window._savedToolScrollPositions) {
+        delete window._savedToolScrollPositions['find-count'];
+    }
+    window._scrollFindCountToBottom = true;
+    if (typeof window.showTool === 'function') {
+        window.showTool('find-count');
+    }
+    const fcInput = document.getElementById('find-count-input');
+    if (fcInput) {
+        fcInput.value = cleanWord;
+        if (typeof runFindCountSearch === 'function') {
+            runFindCountSearch();
+        }
+    }
+    if (typeof window.scrollToFindCountBottom === 'function') {
+        window.scrollToFindCountBottom();
+        setTimeout(() => window.scrollToFindCountBottom(), 40);
+        setTimeout(() => window.scrollToFindCountBottom(), 120);
+        setTimeout(() => window.scrollToFindCountBottom(), 300);
+    }
+};
+
 window.showWordDefinitionPopup = async function (word, event) {
     if (!word) return;
     if (event && typeof event.stopPropagation === 'function') {
@@ -10784,80 +10866,7 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (fcBtn) {
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-
-            window._navigatingViaDefPopup = true;
-
-            if (typeof window.saveCurrentToolsPosition === 'function') {
-                window.saveCurrentToolsPosition(cleanWord);
-            }
-
-            const activePage = document.querySelector('.page.active');
-            const originPageId = (activePage && activePage.id) ? activePage.id : 'page-tools';
-            const activePane = document.querySelector('#page-tools .tool-pane.active');
-            const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
-
-            if (!Array.isArray(window._defPopupNavStack)) {
-                window._defPopupNavStack = [];
-            }
-            window._defPopupNavStack.push({
-                originPage: originPageId,
-                originTool: curId,
-                wasFullListModalOpen: !!window._wasFullListModalOpen,
-                savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
-                savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
-                savedSequenceScrollTop: (typeof window._savedSequenceScrollTop === 'number') ? window._savedSequenceScrollTop : 0,
-                savedSequenceToolsContentScrollTop: (typeof window._savedSequenceToolsContentScrollTop === 'number') ? window._savedSequenceToolsContentScrollTop : 0,
-                comboWord: (curId === 'combo' && document.getElementById('combo-input')) ? document.getElementById('combo-input').value : null,
-                comboDict: (curId === 'combo' && document.getElementById('combo-dict')) ? document.getElementById('combo-dict').value : null,
-                comboMainTab: window._activeComboMainTab || 'manual',
-                comboSubtab: window._activeComboTab || 'mp',
-                findCountWord: (curId === 'find-count' && document.getElementById('find-count-input')) ? document.getElementById('find-count-input').value : null
-            });
-
-            window._navigatedFromDefPopup = true;
-            window._defPopupOriginTool = curId;
-            window._defPopupOriginPage = originPageId;
-
-            if (typeof window.setDefBackNavVisibility === 'function') {
-                window.setDefBackNavVisibility(true);
-            }
-
-            window.hideWordDefinitionPopup();
-            if (typeof window.closeFullListModal === 'function') {
-                window.closeFullListModal();
-            }
-
-            if (typeof window.showPage === 'function') {
-                const toolsPage = document.getElementById('page-tools');
-                if (!toolsPage || !toolsPage.classList.contains('active')) {
-                    window.showPage('page-tools');
-                }
-            }
-
-            setTimeout(() => {
-                window._navigatingViaDefPopup = false;
-            }, 150);
-
-            if (window._savedToolScrollPositions) {
-                delete window._savedToolScrollPositions['find-count'];
-            }
-            window._scrollFindCountToBottom = true;
-            if (typeof window.showTool === 'function') {
-                window.showTool('find-count');
-            }
-            const fcInput = document.getElementById('find-count-input');
-            if (fcInput) {
-                fcInput.value = cleanWord;
-                if (typeof runFindCountSearch === 'function') {
-                    runFindCountSearch();
-                }
-            }
-            if (typeof window.scrollToFindCountBottom === 'function') {
-                window.scrollToFindCountBottom();
-                setTimeout(() => window.scrollToFindCountBottom(), 40);
-                setTimeout(() => window.scrollToFindCountBottom(), 120);
-                setTimeout(() => window.scrollToFindCountBottom(), 300);
-            }
+            window.navigateToFindCount(cleanWord);
         };
     }
 

@@ -1334,9 +1334,13 @@ function clearGameUIAndCache() {
         wordInput.style.backgroundColor = '';
     }
     
-    const defContent = document.getElementById('definition-content');
-    if (defContent) {
-        defContent.innerHTML = '<p class="placeholder">Select a word to see its definition.</p>';
+    if (typeof clearDefinitionPanel === 'function') {
+        clearDefinitionPanel();
+    } else {
+        const defContent = document.getElementById('definition-content');
+        if (defContent) {
+            defContent.innerHTML = '<p class="placeholder">Select a word to see its definition.</p>';
+        }
     }
     
     const boardEl = document.getElementById('game-board');
@@ -2206,21 +2210,25 @@ async function _doUpdateGameState(incomingState = null) {
             const defPanelCheck = document.querySelector('.definitions-panel');
             const timerExpiredAtTransition = defPanelCheck && defPanelCheck.classList.contains('timer-flash');
             if (!timerExpiredAtTransition) {
-                const defContent = document.getElementById('definition-content');
-                if (defContent) {
-                    defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                }
-                const defHeader = document.getElementById('definition-header');
-                if (defHeader) {
-                    defHeader.classList.add('hidden');
-                    defHeader.style.display = 'none';
-                }
-                const defWord = document.getElementById('definition-word');
-                if (defWord) defWord.textContent = '';
-                const defPron = document.getElementById('definition-pronunciation');
-                if (defPron) {
-                    defPron.textContent = '';
-                    defPron.style.display = 'none';
+                if (typeof clearDefinitionPanel === 'function') {
+                    clearDefinitionPanel();
+                } else {
+                    const defContent = document.getElementById('definition-content');
+                    if (defContent) {
+                        defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                    }
+                    const defHeader = document.getElementById('definition-header');
+                    if (defHeader) {
+                        defHeader.classList.add('hidden');
+                        defHeader.style.display = 'none';
+                    }
+                    const defWord = document.getElementById('definition-word');
+                    if (defWord) defWord.textContent = '';
+                    const defPron = document.getElementById('definition-pronunciation');
+                    if (defPron) {
+                        defPron.textContent = '';
+                        defPron.style.display = 'none';
+                    }
                 }
             }
 
@@ -2278,6 +2286,10 @@ async function _doUpdateGameState(incomingState = null) {
                             defHeader.classList.add('hidden');
                             defHeader.style.display = 'none';
                         }
+                        const defActions = document.getElementById('definition-actions');
+                        if (defActions) defActions.style.display = 'none';
+                        const defLenBadge = document.getElementById('definition-len-badge');
+                        if (defLenBadge) defLenBadge.style.display = 'none';
                     }
                 } else {
                     if (!defContent.innerHTML.includes('placeholder') || defContent.innerHTML.includes('intermission-winner-card')) {
@@ -2286,6 +2298,10 @@ async function _doUpdateGameState(incomingState = null) {
                             defHeader.classList.add('hidden');
                             defHeader.style.display = 'none';
                         }
+                        const defActions = document.getElementById('definition-actions');
+                        if (defActions) defActions.style.display = 'none';
+                        const defLenBadge = document.getElementById('definition-len-badge');
+                        if (defLenBadge) defLenBadge.style.display = 'none';
                     }
                 }
             }
@@ -2775,17 +2791,21 @@ async function _doUpdateGameState(incomingState = null) {
                 // Only reset definition content if Personal Timer is NOT in expired state AND no word was pressed during intermission
                 if (!timerStillExpired) {
                     if (!window.wordPressedDuringIntermission) {
-                        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-                        if (defHeader) {
-                            defHeader.classList.add('hidden');
-                            defHeader.style.display = 'none';
-                        }
-                        const defWord = document.getElementById('definition-word');
-                        if (defWord) defWord.textContent = '';
-                        const defPron = document.getElementById('definition-pronunciation');
-                        if (defPron) {
-                            defPron.textContent = '';
-                            defPron.style.display = 'none';
+                        if (typeof clearDefinitionPanel === 'function') {
+                            clearDefinitionPanel();
+                        } else {
+                            if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+                            if (defHeader) {
+                                defHeader.classList.add('hidden');
+                                defHeader.style.display = 'none';
+                            }
+                            const defWord = document.getElementById('definition-word');
+                            if (defWord) defWord.textContent = '';
+                            const defPron = document.getElementById('definition-pronunciation');
+                            if (defPron) {
+                                defPron.textContent = '';
+                                defPron.style.display = 'none';
+                            }
                         }
                     } else {
                         console.log('[play.js] Preserving definition in panel because word was pressed during intermission.');
@@ -5132,139 +5152,6 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     }
     const availableLengths = [...lengthsSet].sort((a, b) => a - b);
     
-    const findersContainer = document.getElementById('finders-button-container');
-    const findersBtn = document.getElementById('view-finders-btn-top');
-    
-    const workOnGameContainer = document.getElementById('work-on-game-btn-container');
-    const workOnGameBtn = document.getElementById('add-to-work-on-game-btn');
-    const searchComboBtn = document.getElementById('search-in-combo-game-btn');
-    if (workOnGameContainer && (workOnGameBtn || searchComboBtn)) {
-        if (highlightedFoundWord) {
-            workOnGameContainer.style.display = 'flex';
-            if (workOnGameBtn) {
-                workOnGameBtn.onclick = async () => {
-                    const targetWord = highlightedFoundWord;
-                    if (!targetWord) return;
-
-                    // Check existence via localStorage
-                    const storedRaw = localStorage.getItem('morpheme_words_to_work_on');
-                    let curList = [];
-                    try {
-                        if (storedRaw) curList = JSON.parse(storedRaw) || [];
-                    } catch(e) {}
-
-                    const alreadyThere = curList.some(item => {
-                        const w = (typeof item === 'object' && item !== null) ? item.word : item;
-                        return (w || '').toUpperCase() === targetWord;
-                    });
-
-                    if (alreadyThere) {
-                        if (window.showAlertModal) {
-                            window.showAlertModal('Already on List', `"${targetWord}" is already on your Words to Work on list.`);
-                        } else {
-                            alert(`"${targetWord}" is already on your Words to Work on list.`);
-                        }
-                        return;
-                    }
-
-                    if (typeof window.addWordToWorkOn === 'function') {
-                        const added = await window.addWordToWorkOn(targetWord);
-                        if (added && window.showAlertModal) {
-                            window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
-                        }
-                    } else {
-                        // Fallback if tools.js function is not yet globally loaded
-                        try {
-                            const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(targetWord)}`);
-                            const info = await resp.json();
-                            if (info && info.valid) {
-                                curList.unshift({
-                                    word: targetWord,
-                                    lists: info.lists || ['NWL', 'CSW'],
-                                    timestamp: Date.now()
-                                });
-                                localStorage.setItem('morpheme_words_to_work_on', JSON.stringify(curList));
-                                if (window.showAlertModal) {
-                                    window.showAlertModal('Added to List', `"${targetWord}" was added to your Words to Work on list.`);
-                                }
-                            } else {
-                                if (window.showAlertModal) {
-                                    window.showAlertModal('Invalid Word', `"${targetWord}" is not a valid word and was not added.`);
-                                }
-                            }
-                        } catch(err) {
-                            console.error('Failed to add word to work on list:', err);
-                        }
-                    }
-                };
-            }
-
-            if (searchComboBtn) {
-                searchComboBtn.onclick = () => {
-                    const targetWord = highlightedFoundWord;
-                    if (!targetWord) return;
-
-                    const state = window.lastGameState || {};
-                    const sp = state.spinner_params || {};
-                    const rawDict = (sp && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
-                    const isAW = state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '') || (sp && (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || '')));
-                    let targetDict = 'NWL';
-                    if (isAW) {
-                        targetDict = 'ALL';
-                    } else if (/CSW/i.test(rawDict)) {
-                        targetDict = 'CSW';
-                    } else {
-                        targetDict = 'NWL';
-                    }
-
-                    if (typeof window.searchWordInComboChecker === 'function') {
-                        window.searchWordInComboChecker(targetWord, targetDict, 'page-play');
-                    }
-                };
-            }
-        } else {
-            workOnGameContainer.style.display = 'none';
-        }
-    }
-
-    if (findersContainer && findersBtn) {
-        const isSubanagrams = Boolean(window.lastGameState && window.lastGameState.game_type === 'subanagrams');
-        if (highlightedFoundWord && !isSubanagrams) {
-            findersContainer.style.display = 'block';
-            
-            const s = window.lastGameState;
-            let finders = [];
-            if (s && s.players) {
-                const sortedAll = [...s.players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
-                const rankMap = new Map();
-                sortedAll.forEach((p, idx) => { if (p && p.username) rankMap.set(p.username, idx + 1); });
-
-                finders = s.players.filter(p =>
-                    p && p.username && p.submitted_words && p.submitted_words.some(sw =>
-                        ((typeof sw === 'object' && sw !== null ? sw.word : sw) || '').toUpperCase() === highlightedFoundWord
-                    )
-                ).sort((a, b) => {
-                    const rA = rankMap.get(a.username) || 999;
-                    const rB = rankMap.get(b.username) || 999;
-                    return rA - rB;
-                });
-            }
-            
-            const findersNames = finders.map(p => p.username).join(', ') || 'None';
-            const findersCount = finders.length;
-            
-            findersBtn.innerHTML = `
-                <span>Finders: ${findersNames}</span>
-                <span style="font-weight: bold;">[${findersCount}]</span>
-            `;
-            
-            findersBtn.onclick = () => {
-                window.showFinderModal(highlightedFoundWord);
-            };
-        } else {
-            findersContainer.style.display = 'none';
-        }
-    }
 
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
@@ -5575,14 +5462,19 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             // Highlighting update - fast approach using classes on the parent
             const allItems = listEl.querySelectorAll('.word-item');
             allItems.forEach(el => el.classList.remove('finder-active'));
-            if (highlightedFoundWord) item.classList.add('finder-active');
+            if (highlightedFoundWord) {
+                item.classList.add('finder-active');
+                window.fetchDefinition(item.dataset.word);
+            } else {
+                if (typeof window.clearDefinitionPanel === 'function') {
+                    window.clearDefinitionPanel();
+                }
+            }
 
             // Optionally call updateGameState to sync other UI parts, but keep it minimal
             if (window.lastGameState) {
                 updateGameState(window.lastGameState);
             }
-            
-            window.fetchDefinition(item.dataset.word);
         });
         listEl.hasScoringListener = true;
     }
@@ -8993,20 +8885,24 @@ function clearSubmissionVisuals() {
     });
     const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
     if (!isIntermission) {
-        const defHeader = document.getElementById('definition-header');
-        if (defHeader) {
-            defHeader.classList.add('hidden');
-            defHeader.style.display = 'none';
+        if (typeof clearDefinitionPanel === 'function') {
+            clearDefinitionPanel();
+        } else {
+            const defHeader = document.getElementById('definition-header');
+            if (defHeader) {
+                defHeader.classList.add('hidden');
+                defHeader.style.display = 'none';
+            }
+            const defWord = document.getElementById('definition-word');
+            if (defWord) defWord.textContent = '';
+            const defPron = document.getElementById('definition-pronunciation');
+            if (defPron) {
+                defPron.textContent = '';
+                defPron.style.display = 'none';
+            }
+            const defContent = document.getElementById('definition-content');
+            if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
         }
-        const defWord = document.getElementById('definition-word');
-        if (defWord) defWord.textContent = '';
-        const defPron = document.getElementById('definition-pronunciation');
-        if (defPron) {
-            defPron.textContent = '';
-            defPron.style.display = 'none';
-        }
-        const defContent = document.getElementById('definition-content');
-        if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
     }
 }
 
@@ -10614,10 +10510,44 @@ function formatDefinitionWithLinks(text) {
 window.formatDefinitionWithLinks = formatDefinitionWithLinks;
 
 // Definition Logic
+function clearDefinitionPanel() {
+    window._currentDefWord = null;
+    const defHeader = document.getElementById('definition-header');
+    if (defHeader) {
+        defHeader.classList.add('hidden');
+        defHeader.style.display = 'none';
+    }
+    const defWord = document.getElementById('definition-word');
+    if (defWord) defWord.textContent = '';
+    const defLenBadge = document.getElementById('definition-len-badge');
+    if (defLenBadge) {
+        defLenBadge.textContent = '';
+        defLenBadge.style.display = 'none';
+    }
+    const defPron = document.getElementById('definition-pronunciation');
+    if (defPron) {
+        defPron.textContent = '';
+        defPron.classList.add('hidden');
+        defPron.style.display = 'none';
+    }
+    const defContent = document.getElementById('definition-content');
+    if (defContent) {
+        defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
+    }
+    const defActions = document.getElementById('definition-actions');
+    if (defActions) {
+        defActions.style.display = 'none';
+    }
+}
+window.clearDefinitionPanel = clearDefinitionPanel;
+
 async function fetchDefinition(word) {
     if (!word) return;
     if (window.isSpectatorMode) return; // Block spectators from overwriting definition panel
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
+
+    const cleanWord = String(word).trim().toUpperCase();
+    window._currentDefWord = cleanWord;
 
     // Track word selection during intermission so definition persists into next round
     if (window.lastGameState && window.lastGameState.state === 'intermission') {
@@ -10630,20 +10560,155 @@ async function fetchDefinition(word) {
     }
     const defContent = document.getElementById('definition-content');
     const defWord = document.getElementById('definition-word');
+    const defLenBadge = document.getElementById('definition-len-badge');
     const defHeader = document.getElementById('definition-header');
     const defPron = document.getElementById('definition-pronunciation');
+    const defActions = document.getElementById('definition-actions');
+    const ccBtn = document.getElementById('game-def-cc-btn');
+    const fcBtn = document.getElementById('game-def-fc-btn');
+    const addBtn = document.getElementById('game-def-add-btn');
+
     if (!defContent) return;
 
-    // Show word immediately in dedicated header
+    // Show word and length badge immediately in dedicated header
     if (defWord && defHeader) {
-        defWord.textContent = word.toUpperCase();
+        defWord.textContent = cleanWord;
         defHeader.classList.remove('hidden');
         defHeader.style.display = 'block';
+    }
+    if (defLenBadge) {
+        defLenBadge.textContent = `${cleanWord.length}L`;
+        defLenBadge.style.display = 'inline-flex';
     }
     if (defPron) {
         defPron.textContent = '';
         defPron.classList.add('hidden');
         defPron.style.display = 'none';
+    }
+
+    // Configure and display the 3 action buttons along the bottom
+    if (defActions) {
+        defActions.style.display = 'flex';
+    }
+
+    // 1. CC Button: Set dictionary and navigate to Combo Checker
+    if (ccBtn) {
+        ccBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const state = window.lastGameState || {};
+            const sp = state.spinner_params || {};
+            const rawDict = (sp && sp.dictionary) ? sp.dictionary : (state.current_dictionary || 'NWL');
+            const isAW = state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '') || (sp && (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || '')));
+            let targetDict = 'NWL';
+            if (isAW) {
+                targetDict = 'ALL';
+            } else if (/CSW/i.test(rawDict)) {
+                targetDict = 'CSW';
+            } else {
+                targetDict = 'NWL';
+            }
+
+            if (typeof window.searchWordInComboChecker === 'function') {
+                window.searchWordInComboChecker(cleanWord, targetDict, 'page-play');
+            }
+        };
+    }
+
+    // 2. FC Button: Count finders from this round and total find count including this round
+    if (fcBtn) {
+        const s = window.lastGameState;
+        let roundFinders = [];
+        if (s && s.players) {
+            roundFinders = s.players.filter(p =>
+                p && p.username && p.submitted_words && p.submitted_words.some(sw =>
+                    ((typeof sw === 'object' && sw !== null ? sw.word : sw) || '').toUpperCase() === cleanWord
+                )
+            );
+        }
+        const roundFindersCount = roundFinders.length;
+
+        // Immediate label while tally fetches
+        fcBtn.textContent = `FC [${roundFindersCount}]`;
+
+        if (!window._wordTallyCache) window._wordTallyCache = {};
+        if (typeof window._wordTallyCache[cleanWord] === 'number') {
+            const totalCombined = window._wordTallyCache[cleanWord] + roundFindersCount;
+            fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
+        } else {
+            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const totalTally = data.count || 0;
+                    window._wordTallyCache[cleanWord] = totalTally;
+                    if (window._currentDefWord === cleanWord) {
+                        const totalCombined = totalTally + roundFindersCount;
+                        fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
+                    }
+                })
+                .catch(err => {
+                    console.error('[fetchDefinition] Error fetching word tally for FC:', err);
+                });
+        }
+
+        fcBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.showFinderModal === 'function') {
+                window.showFinderModal(cleanWord);
+            }
+        };
+    }
+
+    // 3. ADD Button: Check Words to Work on list
+    if (addBtn) {
+        const storedRaw = localStorage.getItem('morpheme_words_to_work_on');
+        let curList = [];
+        try {
+            if (storedRaw) curList = JSON.parse(storedRaw) || [];
+        } catch(e) {}
+        const isAlreadyOnList = curList.some(item => {
+            const w = (typeof item === 'object' && item !== null) ? item.word : item;
+            return (w || '').toUpperCase() === cleanWord;
+        });
+
+        if (isAlreadyOnList) {
+            addBtn.textContent = 'ADDED';
+            addBtn.classList.add('is-added');
+            addBtn.style.pointerEvents = 'none';
+            addBtn.onclick = null;
+        } else {
+            addBtn.textContent = 'ADD';
+            addBtn.classList.remove('is-added');
+            addBtn.style.pointerEvents = 'auto';
+            addBtn.onclick = async (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof window.addWordToWorkOn === 'function') {
+                    const added = await window.addWordToWorkOn(cleanWord);
+                    if (added) {
+                        addBtn.textContent = 'ADDED';
+                        addBtn.classList.add('is-added');
+                        addBtn.style.pointerEvents = 'none';
+                    }
+                } else {
+                    try {
+                        const resp = await fetch(`/api/tools/word-membership?word=${encodeURIComponent(cleanWord)}`);
+                        const info = await resp.json();
+                        if (info && info.valid) {
+                            curList.unshift({
+                                word: cleanWord,
+                                lists: info.lists || ['NWL', 'CSW'],
+                                timestamp: Date.now()
+                            });
+                            localStorage.setItem('morpheme_words_to_work_on', JSON.stringify(curList));
+                            addBtn.textContent = 'ADDED';
+                            addBtn.classList.add('is-added');
+                            addBtn.style.pointerEvents = 'none';
+                        }
+                    } catch(err) {
+                        console.error('Failed to add word to work on list:', err);
+                    }
+                }
+            };
+        }
     }
 
     defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
@@ -12981,11 +13046,16 @@ window.showFinderModal = function (word) {
             .then(res => res.json())
             .then(data => {
                 const totalTally = data.count || 0;
-                const totalCombined = totalTally;
+                if (!window._wordTallyCache) window._wordTallyCache = {};
+                window._wordTallyCache[wordUpper] = totalTally;
+                const totalCombined = totalTally + findersCount;
                 
                 let html = `
                     <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
-                        <strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> ${totalCombined === 1 ? 'time' : 'times'} since Morpheme began in 2026.
+                        <div><strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> ${totalCombined === 1 ? 'time' : 'times'} since Morpheme began in 2026.</div>
+                        <div style="margin-top: 8px;">
+                            <a href="javascript:void(0)" id="modal-view-past-finders-link" style="color: #a78bfa; font-weight: 700; text-decoration: underline; font-size: 0.88rem; cursor: pointer;">View past 10 finders</a>
+                        </div>
                     </div>
                 `;
                 
@@ -13047,6 +13117,20 @@ window.showFinderModal = function (word) {
                 }
                 
                 body.innerHTML = html;
+
+                const pastFindersLink = body.querySelector('#modal-view-past-finders-link');
+                if (pastFindersLink) {
+                    pastFindersLink.onclick = (e) => {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        closeModal();
+                        if (typeof window.navigateToFindCount === 'function') {
+                            window.navigateToFindCount(wordUpper, 'page-play');
+                        }
+                    };
+                }
             })
             .catch(err => {
                 console.error('[showFinderModal] Error fetching tally:', err);
