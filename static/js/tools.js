@@ -6214,6 +6214,14 @@ function restoreOrRenderFullList(currentFilterKey) {
                 updateFullListVirtualScrollbar();
             }, 30);
         }
+    } else if (results && results.firstElementChild && results.scrollTop > 0) {
+        const curScroll = results.scrollTop;
+        const curStart = (typeof _fullListRenderedStart === 'number') ? _fullListRenderedStart : 0;
+        renderFullListInitial(curStart);
+        requestAnimationFrame(() => {
+            if (results) results.scrollTop = curScroll;
+            updateFullListVirtualScrollbar();
+        });
     } else {
         renderFullListInitial(0);
     }
@@ -6280,10 +6288,12 @@ window.openFullListModal = function() {
     const cachedWords = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
     let inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
     if (inMemoryWords) {
-        if (isNewWordList(selectedType)) {
+        if (selectedOrder === 'random') {
+            inMemoryWords = [...inMemoryWords];
+        } else if (isNewWordList(selectedType)) {
             inMemoryWords = sortNewWordsList(inMemoryWords, selectedOrder);
         } else {
-            inMemoryWords = (selectedOrder === 'random') ? shuffleWordsArray(inMemoryWords) : sortWordsAlphabetical(inMemoryWords);
+            inMemoryWords = sortWordsAlphabetical(inMemoryWords);
         }
     }
     const initialWords = (cachedWords && cachedWords.length > 0) ? cachedWords : inMemoryWords;
@@ -6300,7 +6310,9 @@ window.openFullListModal = function() {
             words = words.filter(w => w.startsWith(reqStart));
         }
         if (selectedOrder === 'random') {
-            words = shuffleWordsArray(words);
+            words = (currentWordsList && currentWordsList.length > 0 && currentWordsType === 'words_to_work_on')
+                ? [...currentWordsList]
+                : shuffleWordsArray(words);
         } else {
             words.sort((a, b) => a.localeCompare(b));
         }
@@ -6357,8 +6369,29 @@ window.openFullListModal = function() {
         .then(data => {
             clearTimeout(fetchTimeout);
             if (window._lastFullListFilterKey !== currentFilterKey) return;
-            const rawWords = data[selectedType] || data['nwl'] || data['added'] || data['new_added'] || data['csw'] || data['csw_only'] || data['likelihood'] || data['uniques'] || data['new_nwl'] || data['new_csw'] || data['all_new'] || [];
-            const processedWords = isNewWordList(selectedType) ? sortNewWordsList(rawWords, selectedOrder) : ((selectedOrder === 'random') ? shuffleWordsArray(rawWords) : rawWords);
+            let processedWords;
+            if (selectedOrder === 'random') {
+                if (currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) {
+                    // Retain the exact order of random words seen in the 10,000 list
+                    const seenWords = [...currentWordsList];
+                    const seenSet = new Set(seenWords.map(w => (typeof w === 'object' && w !== null ? (w.word || '') : w).toUpperCase().trim()));
+                    const remaining = [];
+                    for (let i = 0; i < rawWords.length; i++) {
+                        const item = rawWords[i];
+                        const w = (typeof item === 'object' && item !== null ? (item.word || '') : item).toUpperCase().trim();
+                        if (!seenSet.has(w)) {
+                            remaining.push(item);
+                        }
+                    }
+                    processedWords = seenWords.concat(shuffleWordsArray(remaining));
+                } else {
+                    processedWords = isNewWordList(selectedType) ? sortNewWordsList(rawWords, 'random') : shuffleWordsArray(rawWords);
+                }
+            } else if (isNewWordList(selectedType)) {
+                processedWords = sortNewWordsList(rawWords, selectedOrder);
+            } else {
+                processedWords = rawWords;
+            }
             _fullListAllWords = processedWords;
             if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
             window._cachedFullWordLists[currentFilterKey] = processedWords;
