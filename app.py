@@ -3974,7 +3974,11 @@ def _get_word_finds(word):
 def get_word_tally_api(word):
     word = word.upper()
     finds = _get_word_finds(word)
-    return jsonify({'word': word, 'count': len(finds)})
+    return jsonify({
+        'word': word,
+        'count': len(finds),
+        'recent': finds[:10]
+    })
 
 
 @app.route('/api/donations/recent', methods=['GET'])

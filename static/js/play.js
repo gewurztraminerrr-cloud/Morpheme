@@ -10510,6 +10510,47 @@ function formatDefinitionWithLinks(text) {
 window.formatDefinitionWithLinks = formatDefinitionWithLinks;
 
 // Definition Logic
+function calculateCombinedFindCount(data, roundFinders) {
+    const totalTally = (data && typeof data.count === 'number') ? data.count : (typeof data === 'number' ? data : 0);
+    const roundFindersCount = Array.isArray(roundFinders) ? roundFinders.length : 0;
+    if (roundFindersCount === 0) return totalTally;
+
+    const recent = (data && Array.isArray(data.recent)) ? data.recent : [];
+    const now = Date.now();
+    // Recent match window: finds recorded in the last 8 minutes
+    const recentWindowMs = 8 * 60 * 1000;
+
+    let alreadyRecorded = 0;
+    const matchedRecentIndices = new Set();
+
+    for (const rf of roundFinders) {
+        const uName = ((typeof rf === 'object' && rf !== null) ? rf.username : rf) || '';
+        if (!uName) continue;
+        const uLower = uName.toLowerCase();
+
+        for (let i = 0; i < recent.length; i++) {
+            if (matchedRecentIndices.has(i)) continue;
+            const item = recent[i];
+            if (!item || !item.username) continue;
+            if (item.username.toLowerCase() === uLower) {
+                let itemTs = 0;
+                try {
+                    itemTs = new Date(item.timestamp).getTime();
+                } catch (e) {}
+                if (itemTs && (now - itemTs) < recentWindowMs && (now - itemTs) >= -60000) {
+                    matchedRecentIndices.add(i);
+                    alreadyRecorded++;
+                    break;
+                }
+            }
+        }
+    }
+
+    const unrecorded = Math.max(0, roundFindersCount - alreadyRecorded);
+    return totalTally + unrecorded;
+}
+window.calculateCombinedFindCount = calculateCombinedFindCount;
+
 function clearDefinitionPanel() {
     window._currentDefWord = null;
     const defHeader = document.getElementById('definition-header');
@@ -10626,24 +10667,20 @@ async function fetchDefinition(word) {
             );
         }
         const roundFindersCount = roundFinders.length;
-        const isIntermission = Boolean(s && s.state === 'intermission');
-        const calcCombined = (tally) => isIntermission ? Math.max(tally, roundFindersCount) : (tally + roundFindersCount);
-
         // Immediate label while tally fetches
         fcBtn.textContent = `FC [${roundFindersCount}]`;
 
         if (!window._wordTallyCache) window._wordTallyCache = {};
-        if (typeof window._wordTallyCache[cleanWord] === 'number') {
-            const totalCombined = calcCombined(window._wordTallyCache[cleanWord]);
+        if (window._wordTallyCache[cleanWord]) {
+            const totalCombined = calculateCombinedFindCount(window._wordTallyCache[cleanWord], roundFinders);
             fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
         } else {
             fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
                 .then(res => res.json())
                 .then(data => {
-                    const totalTally = data.count || 0;
-                    window._wordTallyCache[cleanWord] = totalTally;
+                    window._wordTallyCache[cleanWord] = data;
                     if (window._currentDefWord === cleanWord) {
-                        const totalCombined = calcCombined(totalTally);
+                        const totalCombined = calculateCombinedFindCount(data, roundFinders);
                         fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
                     }
                 })
@@ -13047,11 +13084,9 @@ window.showFinderModal = function (word) {
         fetch(`/api/word_tally/${wordUpper}`)
             .then(res => res.json())
             .then(data => {
-                const totalTally = data.count || 0;
                 if (!window._wordTallyCache) window._wordTallyCache = {};
-                window._wordTallyCache[wordUpper] = totalTally;
-                const isIntermission = Boolean(window.lastGameState && window.lastGameState.state === 'intermission');
-                const totalCombined = isIntermission ? Math.max(totalTally, findersCount) : (totalTally + findersCount);
+                window._wordTallyCache[wordUpper] = data;
+                const totalCombined = calculateCombinedFindCount(data, finders);
                 
                 let html = `
                     <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
