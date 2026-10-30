@@ -1310,6 +1310,7 @@ function clearGameUIAndCache() {
     tournamentWords = [];
     tournamentScore = 0;
     selectedPlayerUsername = null;
+    playersFilterMode = 'everyone';
     
     // 2. Reset DOM elements to clean placeholders
     const tabsContainer = document.getElementById('words-tabs-container');
@@ -2100,7 +2101,7 @@ async function _doUpdateGameState(incomingState = null) {
         }
 
         // Detect transition to intermission (round end)
-        if (previousState && previousState.state === 'active' && state.state === 'intermission') {
+        if (previousState && previousState.state !== 'intermission' && state.state === 'intermission') {
             window.subanagramsCustomBoard = null;
             window.subanagramsBoardKey = null;
             stopRotatingLetters();
@@ -2234,6 +2235,13 @@ async function _doUpdateGameState(incomingState = null) {
                         defPron.style.display = 'none';
                     }
                 }
+            }
+
+            // User Request: At the start of the intermission in all game rooms, default to "VIEW ALL" (one of the 3 buttons below "Players")
+            playersFilterMode = 'everyone';
+            const playersListEl = document.getElementById('players-list');
+            if (playersListEl) {
+                playersListEl.scrollTop = 0;
             }
 
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
@@ -3924,10 +3932,10 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
         if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
         if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
-    } else if (state && state.game_type === 'accumulative') {
+    } else {
         if (headingEl) headingEl.style.removeProperty('display');
         let activePlayerCount = 0;
-        if (state.state === 'intermission' || state.intermission === true) {
+        if (state && (state.state === 'intermission' || state.intermission === true)) {
             // Intermission: Count only players who actively participated (did not DNP)
             activePlayerCount = players ? players.filter(p => 
                 p.words_count > 0 || p.score > 0 || (p.invalid_words && p.invalid_words.length > 0)
@@ -3946,14 +3954,6 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
         if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
         if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
-    } else {
-        if (headingEl) headingEl.style.removeProperty('display');
-        const playerCount = players ? players.length : 0;
-        if (headingEl) headingEl.textContent = playerCount > 0 ? `Players [${playerCount}]` : `Players`;
-        if (playerActionsRow) playerActionsRow.style.display = 'none';
-        if (findMeBtn) findMeBtn.style.display = 'none';
-        if (findFriendsBtn) findFriendsBtn.style.display = 'none';
-        if (showEveryoneBtn) showEveryoneBtn.style.display = 'none';
     }
 
     if (!players || players.length === 0) {
