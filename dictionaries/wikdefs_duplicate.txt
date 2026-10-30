@@ -793484,3 +793484,4 @@ TILCAYO	(Noun) Leopardus tilcayo, a small spotted felid, found in the Bolivian Y
 TILCAYOS	plural of tilcayo (Leopardus tilcayo, a small spotted felid, found in the Bolivian Yungas.)
 TESTINGG	Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
 TESTINGG	Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
+AEROMONIASES	plural of aeromoniasis ((pathology) infection with bacteria of the genus Aeromonas.)
