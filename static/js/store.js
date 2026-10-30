@@ -213,10 +213,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="store-banner-side-visual store-banner-visual-right" title="Click to enlarge Tournament Boggle Showcase">
-                        <img src="/static/images/morpheme_store_display.jpg" alt="Tournament Boggle Showcase" class="store-banner-showcase-img" loading="lazy">
+                    <div class="store-banner-side-visual store-banner-visual-right" title="Click to enlarge Tournament Grid Showcase">
+                        <img src="/static/images/morpheme_store_display.jpg" alt="Tournament Grid Showcase" class="store-banner-showcase-img" loading="lazy">
                         <span class="store-banner-zoom-hint" title="Click to enlarge"><i class="fas fa-search-plus"></i></span>
-                        <span class="store-banner-showcase-tag"><i class="fas fa-th"></i> Tournament Boggle Showcase</span>
+                        <span class="store-banner-showcase-tag"><i class="fas fa-th"></i> Tournament Grid Showcase</span>
                     </div>
                 </div>
             </div>
@@ -243,7 +243,7 @@
         if (visualRight) {
             visualRight.addEventListener('click', () => {
                 if (typeof window.showImageLightbox === 'function') {
-                    window.showImageLightbox('/static/images/morpheme_store_display.jpg', 'Tournament Boggle Showcase — 4×4 Grid, Dome Shaker & Official Dictionaries');
+                    window.showImageLightbox('/static/images/morpheme_store_display.jpg', 'Tournament Grid Showcase — 4×4 Grid, Dome Shaker & Official Dictionaries');
                 }
             });
         }
