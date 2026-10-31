@@ -550,6 +550,23 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` cache buster to `v=1793530000`.
 
+### 47. Removal of "FIND ME", "VIEW FRIENDS", and "VIEW ALL" Buttons in FCFS, Split Points, and Cube Rooms (`static/js/play.js`, `static/css/play.css`, `static/css/style.css`, `templates/index.html`)
+- **Scope & Context**:
+  - In FCFS (`fcfs`, `solo_fcfs`), Split Points (`split`, `solo_split`), and Cube (`3d`, `cube`, `solo_3d`, `3d_cube`, `3x3x3`) rooms, the player roster is inherently bounded and focused on real-time round dynamics rather than broad multi-page list navigation.
+  - The "FIND ME", "VIEW FRIENDS", and "VIEW ALL" filtering buttons under the Players panel only matter in Accumulative rooms (including 24-hour games and solo Accumulative).
+- **Implementation**:
+  - In `static/js/play.js`:
+    - Updated socket state receiver `_doUpdateGameState` to detect `isFCFS || isSplit || isCube` and toggle the `hide-player-filter-buttons` class on `document.body`.
+    - In `renderPlayers`: added checks for `isFCFS || isSplit || isCube`. When true, sets `playersFilterMode = 'everyone'` and explicitly sets `display: none !important` via `setProperty` on `.player-actions-row`, `#find-me-btn`, `#find-friends-btn`, and `#show-everyone-btn`.
+    - In Accumulative rooms, explicitly restores `display: flex` / `display: block` and preserves active filter mode highlighting.
+    - In `clearGameUIAndCache`: cleans up `hide-player-filter-buttons` from `document.body` and resets `playersFilterMode = 'everyone'`.
+  - In `static/css/play.css` & `static/css/style.css`:
+    - Added `body.hide-player-filter-buttons .player-actions-row, body.hide-player-filter-buttons #find-me-btn, body.hide-player-filter-buttons #find-friends-btn, body.hide-player-filter-buttons #show-everyone-btn, body.hide-player-filter-buttons .find-me-btn { display: none !important; }` to eliminate any visual pop-in or layout shift during game state transitions.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css` cache buster to `v=1793540000`.
+  - Bumped `play.css` cache buster to `v=1793540000`.
+  - Bumped `play.js` cache buster to `v=1793540000`.
+
 ---
 
 ## Verification & Validation

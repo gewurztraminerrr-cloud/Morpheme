@@ -18338,7 +18338,12 @@ body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,
 body.is-tournament-round #show-everyone-btn,
 body.is-tournament-round .chat-panel,
-body.is-tournament-round .left-panel-container .chat-panel {
+body.is-tournament-round .left-panel-container .chat-panel,
+body.hide-player-filter-buttons .player-actions-row,
+body.hide-player-filter-buttons #find-me-btn,
+body.hide-player-filter-buttons #find-friends-btn,
+body.hide-player-filter-buttons #show-everyone-btn,
+body.hide-player-filter-buttons .find-me-btn {
     display: none !important;
 }
 

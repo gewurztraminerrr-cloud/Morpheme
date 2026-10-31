@@ -1312,6 +1312,7 @@ function clearGameUIAndCache() {
     tournamentScore = 0;
     selectedPlayerUsername = null;
     playersFilterMode = 'everyone';
+    document.body.classList.remove('hide-player-filter-buttons');
     
     // 2. Reset DOM elements to clean placeholders
     const tabsContainer = document.getElementById('words-tabs-container');
@@ -2066,6 +2067,13 @@ async function _doUpdateGameState(incomingState = null) {
         window.lastGameState = state;  // Store for optimistic updates
         const isSub = state.game_type === 'subanagrams';
         document.body.classList.toggle('is-subanagrams', isSub);
+
+        const gt = (state && state.game_type) ? String(state.game_type).toLowerCase() : '';
+        const dims = (state && state.board_dimensions) ? String(state.board_dimensions).toLowerCase() : '';
+        const isFCFS = gt === 'fcfs' || gt === 'solo_fcfs';
+        const isSplit = gt === 'split' || gt === 'solo_split';
+        const isCube = gt === '3d' || gt === 'cube' || gt === 'solo_3d' || gt === '3d_cube' || dims === '3x3x3';
+        document.body.classList.toggle('hide-player-filter-buttons', isFCFS || isSplit || isCube);
         const submitBtn = document.getElementById('submit-word-btn');
         if (submitBtn) {
             submitBtn.textContent = 'Enter';
@@ -4016,15 +4024,43 @@ function renderPlayers(players, currentUser = null, state = null) {
             activePlayerCount = players ? players.length : 0;
         }
         if (headingEl) headingEl.textContent = `Players [${activePlayerCount}]`;
-        if (playerActionsRow) playerActionsRow.style.display = '';
-        if (findMeBtn) findMeBtn.style.display = 'block';
-        if (findFriendsBtn) findFriendsBtn.style.display = 'block';
-        if (showEveryoneBtn) showEveryoneBtn.style.display = 'block';
+        const gameState = state || window.lastGameState;
+        const gt = (gameState && gameState.game_type) ? String(gameState.game_type).toLowerCase() : '';
+        const dims = (gameState && gameState.board_dimensions) ? String(gameState.board_dimensions).toLowerCase() : '';
+        const isFCFS = gt === 'fcfs' || gt === 'solo_fcfs';
+        const isSplit = gt === 'split' || gt === 'solo_split';
+        const isCube = gt === '3d' || gt === 'cube' || gt === 'solo_3d' || gt === '3d_cube' || dims === '3x3x3';
+        const hidePlayerActionButtons = isFCFS || isSplit || isCube;
 
-        // Update active highlight classes dynamically
-        if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
-        if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
-        if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
+        if (hidePlayerActionButtons) {
+            playersFilterMode = 'everyone';
+            if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
+            if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
+            if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
+            if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
+        } else {
+            if (playerActionsRow) {
+                playerActionsRow.style.removeProperty('display');
+                playerActionsRow.style.display = '';
+            }
+            if (findMeBtn) {
+                findMeBtn.style.removeProperty('display');
+                findMeBtn.style.display = 'block';
+            }
+            if (findFriendsBtn) {
+                findFriendsBtn.style.removeProperty('display');
+                findFriendsBtn.style.display = 'block';
+            }
+            if (showEveryoneBtn) {
+                showEveryoneBtn.style.removeProperty('display');
+                showEveryoneBtn.style.display = 'block';
+            }
+
+            // Update active highlight classes dynamically
+            if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
+            if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
+            if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
+        }
     }
 
     if (!players || players.length === 0) {

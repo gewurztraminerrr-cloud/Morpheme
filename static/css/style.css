@@ -10785,7 +10785,12 @@ body.is-subanagrams .left-panel-container #game-color-bar,
 body.is-tournament-round .player-actions-row,
 body.is-tournament-round #find-me-btn,
 body.is-tournament-round #find-friends-btn,
-body.is-tournament-round #show-everyone-btn {
+body.is-tournament-round #show-everyone-btn,
+body.hide-player-filter-buttons .player-actions-row,
+body.hide-player-filter-buttons #find-me-btn,
+body.hide-player-filter-buttons #find-friends-btn,
+body.hide-player-filter-buttons #show-everyone-btn,
+body.hide-player-filter-buttons .find-me-btn {
     display: none !important;
 }
 
