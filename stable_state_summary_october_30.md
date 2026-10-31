@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_30
 
 ## Latest Commit ID
 ```
-119b58aeccda3eec18189774a06bcaeb91312e84
+2255fa55c37bce9879acd3ed4713f2283fe30c5f
 ```
-*(Short SHA: `119b58ae`)*
+*(Short SHA: `2255fa55`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `119b58ae` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `119b58ae` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_30` / `stable-2026-10-30` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `119b58ae` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `2255fa55` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `2255fa55` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_30` / `stable-2026-10-30` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `2255fa55` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -110,10 +110,12 @@ START_OVER_POINT_OCTOBER_30
   - If the user explicitly presses **Enter** in the "Sort rooms by proximity..." textbox (or clicks **My Rating**), the closed rooms then sort by proximity to that average rating value.
   - Switching back to the Closed Rooms tab resets the sorting back to highest average rating first.
 
-### 15. Tools: Personal Timer Pause/Resume & Mobile Scroll Stability
+### 15. Tools: Personal Timer Pause/Resume, Mobile Stacked Buttons & Scroll Stability
 - **Pause & Resume Controls (`templates/index.html`, `static/js/tools.js`, `static/css/play.css`)**:
   - Added a Pause/Resume button to Personal Timer styled with the identical blue gradient (`linear-gradient(135deg, #00d2ff, #3a7bd5)`), border radius, box shadow, and typography as Start Timer.
-  - While timer runs, Pause and Stop Timer appear side by side.
+  - On desktop and laptops, Pause and Stop Timer appear side by side.
+  - On mobile devices, buttons stack vertically in a single column (`flex-direction: column !important; width: 100% !important;`), placing each button on its own individual row on top of each other with large, readable font.
+  - Explicitly styled `#timer-stop-btn` with red gradient (`#ff4d4d` to `#d43f3f`) and Pause/Resume/Start with blue gradient (`#00d2ff` to `#3a7bd5`), preventing generic theme overrides from washing out button colors.
   - Clicking Pause freezes countdown interval, preserves remaining seconds, and toggles button in-place to "Resume".
   - Clicking Resume restarts countdown from the remaining time and toggles button in-place back to "Pause".
   - Clicking Stop Timer resets the timer, hides Pause/Resume and Stop, and reveals Start Timer.
@@ -128,9 +130,9 @@ START_OVER_POINT_OCTOBER_30
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `119b58ae` |
-| **Origin / GitHub** | ✅ Synchronized | Up to date with `origin/main` at `119b58ae` |
-| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `119b58ae`, PM2 online, HTTP 200 OK |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `2255fa55` |
+| **Origin / GitHub** | ✅ Synchronized | Up to date with `origin/main` at `2255fa55` |
+| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `2255fa55`, PM2 online, HTTP 200 OK |
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `119b58ae` |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `2255fa55` |

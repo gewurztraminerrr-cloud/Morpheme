@@ -4174,6 +4174,40 @@ body.theme-white #page-settings .mobile-bottom-nav {
     transform: translateY(1px) !important;
 }
 
+/* Personal Timer Action Buttons */
+#timer-start-btn,
+#timer-pause-btn {
+    background: linear-gradient(135deg, #00d2ff, #3a7bd5) !important;
+    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3) !important;
+    color: #fff !important;
+}
+
+#timer-start-btn:hover,
+#timer-pause-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 210, 255, 0.45) !important;
+}
+
+#timer-start-btn:active,
+#timer-pause-btn:active {
+    transform: translateY(1px) !important;
+}
+
+#timer-stop-btn {
+    background: linear-gradient(135deg, #ff4d4d, #d43f3f) !important;
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3) !important;
+    color: #fff !important;
+}
+
+#timer-stop-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(255, 77, 77, 0.45) !important;
+}
+
+#timer-stop-btn:active {
+    transform: translateY(1px) !important;
+}
+
 /* More Random Words Button on White & Light Themes */
 body[class*="theme-white"] #more-random-words-btn,
 body.theme-white #more-random-words-btn,
@@ -9365,18 +9399,23 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }
-    #tool-timer .timer-button-row {
+    #tool-timer .timer-button-row,
+    body.is-mobile #tool-timer .timer-button-row {
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 12px !important;
         width: 100% !important;
         margin-top: 25px !important;
         box-sizing: border-box !important;
     }
-    #timer-start-btn, #timer-pause-btn, #timer-stop-btn {
-        height: 50px !important;
-        font-size: 1.2rem !important;
-        border-radius: 10px !important;
+    #timer-start-btn, #timer-pause-btn, #timer-stop-btn,
+    body.is-mobile #timer-start-btn, body.is-mobile #timer-pause-btn, body.is-mobile #timer-stop-btn {
+        width: 100% !important;
+        flex: unset !important;
+        height: 52px !important;
+        font-size: 1.25rem !important;
+        border-radius: 12px !important;
         box-sizing: border-box !important;
     }
     #timer-display-container {
