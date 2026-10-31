@@ -578,19 +578,28 @@ START_OVER_POINT_OCTOBER_31
   - Bumped `style.css` cache buster to `v=1793550000`.
   - Bumped `play.css` cache buster to `v=1793550000`.
 
-### 49. AudioContext Hardware Sink Suspension & Tab Audio Indicator Cleanup on Top Menu Navigation (`static/js/app.js`, `templates/index.html`)
+### 49. AudioContext Hardware Sink Suspension, BoardAudio Keep-Alive Lifecycle & Tab Audio Indicator Cleanup (`static/js/app.js`, `static/js/play.js`, `templates/index.html`)
 - **Browser Tab Horn/Speaker Audio Indicator Fix on Desktops & Laptops**:
-  - In Chromium, WebKit, and Gecko browsers on desktop and laptop devices, navigating away from the Lobby with background music playing previously left the tab's horn-shaped audio indicator icon visible in the browser tab.
+  - In Chromium, WebKit, and Gecko browsers on desktop and laptop devices, navigating away from the Lobby with background music playing previously left the tab's horn-shaped audio indicator icon visible in the browser tab, notably when clicking "Tools".
   - **Root Cause Analysis**:
     1. Modern browser engines track `AudioContext.state === 'running'` to determine tab audibility (`TabAudioState::kAudible`). While `LobbyMusicEngine.pause()` stopped and disconnected the `AudioBufferSourceNode`, it left the underlying `AudioContext` in `state === 'running'`. This maintained an open audio hardware output sink, causing the browser to keep the speaker icon visible on the tab.
-    2. In `setupNavigation()`, clicking "How to Play & FAQ" opened `#modal-howtoplay` without invoking `showPage()` or pausing `lobbyMusicEngine`, leaving the music audibly playing in the background.
+    2. In `static/js/play.js`, `initAudioOnUserInteraction` listened on `document` for all `click`, `touchstart`, `pointerdown`, and `keydown` events. When a user clicked "Tools" (or any button or element outside gameplay), this listener triggered `BoardAudio.init()` and `BoardAudio.startKeepAlive()`, starting a continuous looping inaudible audio carrier (`gain.gain.value = 0.00001`) connected directly to `this.ctx.destination`. This immediately flagged the tab as actively audible to Chromium's audio mixer.
+    3. In `setupNavigation()`, clicking "How to Play & FAQ" opened `#modal-howtoplay` without invoking `showPage()` or pausing `lobbyMusicEngine`, leaving the music audibly playing in the background.
   - **Implementation**:
-    - **`LobbyMusicEngine.pause()` (`static/js/app.js`)**: Added explicit calls to `this.ctx.suspend()` and `window._morphemeAudioCtx.suspend()`. When the audio context is suspended, the browser immediately releases the hardware audio sink and dismisses the tab's horn-shaped speaker icon.
-    - **`LobbyMusicEngine.play()` (`static/js/app.js`)**: Added explicit checks to resume `this.ctx` and `window._morphemeAudioCtx` (`ctx.resume()`) when starting or resuming playback upon entering the Lobby.
+    - **`BoardAudio` Lifecycle Management (`static/js/play.js`)**:
+      - Added `activePage !== 'page-play'` guard in `startKeepAlive()` so the Bluetooth keep-alive carrier only runs during active match gameplay on `page-play`.
+      - Added `stopKeepAlive()`, `suspend()`, and `resume()` methods to `BoardAudio` and exposed `window.BoardAudio`.
+      - Guarded `initAudioOnUserInteraction` to only initialize and resume `BoardAudio` when `activePage === 'page-play'`, immediately suspending it if clicked on any other page.
+      - Added `BoardAudio.suspend()` call in `clearGameUIAndCache()`.
+    - **Navigation Audio Synchronization (`static/js/app.js`)**:
+      - In `showPage(pageId)`, explicitly calls `BoardAudio.suspend()` whenever `pageId !== 'page-play'`, and `BoardAudio.resume()` when entering `page-play`.
+      - In `LobbyMusicEngine.pause()`, explicitly calls `this.ctx.suspend()`, `window._morphemeAudioCtx.suspend()`, and `BoardAudio.suspend()`.
+      - In `LobbyMusicEngine.play()`, checks and resumes `this.ctx` and `window._morphemeAudioCtx` (`ctx.resume()`) when starting or resuming playback upon entering the Lobby.
     - **Top Navigation "How to Play & FAQ" Modal (`static/js/app.js`)**: Updated `setupNavigation()` to call `window.lobbyMusicEngine.pause()` when `#modal-howtoplay` is opened.
     - **Modal Dismissal Synchronization (`static/js/app.js`)**: Updated `setupModalListeners()` so that closing `#modal-howtoplay` (via the close button, Escape key, or backdrop click) triggers `handleLobbyMusicState()`, cleanly resuming background music if the user returns to the Lobby.
   - **Cache Busters (`templates/index.html`)**:
-    - Bumped `app.js` cache buster to `v=1793560000`.
+    - Bumped `app.js` cache buster to `v=1793570000`.
+    - Bumped `play.js` cache buster to `v=1793570000`.
 
 ---
 

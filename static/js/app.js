@@ -1347,6 +1347,11 @@ class LobbyMusicEngine {
         if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.suspend === 'function' && window._morphemeAudioCtx.state === 'running') {
             try { window._morphemeAudioCtx.suspend().catch(() => {}); } catch(e) {}
         }
+        if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
+            try { BoardAudio.suspend(); } catch(e) {}
+        } else if (window.BoardAudio && typeof window.BoardAudio.suspend === 'function') {
+            try { window.BoardAudio.suspend(); } catch(e) {}
+        }
     }
 
     setVolume(vol) {
@@ -2308,6 +2313,22 @@ window.showPage = showPage;
     }
     if (typeof handleLobbyMusicState === 'function') {
         handleLobbyMusicState();
+    }
+
+    if (pageId !== 'page-play') {
+        if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
+            BoardAudio.suspend();
+        } else if (window.BoardAudio && typeof window.BoardAudio.suspend === 'function') {
+            window.BoardAudio.suspend();
+        }
+    } else {
+        if (typeof BoardAudio !== 'undefined') {
+            if (typeof BoardAudio.init === 'function') BoardAudio.init();
+            if (typeof BoardAudio.resume === 'function') BoardAudio.resume();
+        } else if (window.BoardAudio) {
+            if (typeof window.BoardAudio.init === 'function') window.BoardAudio.init();
+            if (typeof window.BoardAudio.resume === 'function') window.BoardAudio.resume();
+        }
     }
 
     if (pageId === 'page-play') {

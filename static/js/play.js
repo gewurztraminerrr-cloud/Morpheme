@@ -465,7 +465,12 @@ const BoardAudio = {
             } catch (_) {}
             
             this.preRenderBuffers();
-            this.startKeepAlive();
+            const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+            if (activePage === 'page-play') {
+                this.startKeepAlive();
+            } else {
+                this.suspend();
+            }
         }
     },
 
@@ -541,6 +546,8 @@ const BoardAudio = {
 
     startKeepAlive() {
         if (!this.ctx || this.keepAliveNode) return;
+        const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+        if (activePage !== 'page-play') return;
         try {
             // Continuous inaudible silent audio carrier:
             // Prevents Bluetooth wireless earpieces & mobile OS audio stacks (CoreAudio/AudioTrack)
@@ -562,6 +569,35 @@ const BoardAudio = {
             this.keepAliveGain = gain;
         } catch (e) {
             console.warn('[BoardAudio] Keep-alive stream setup warning:', e);
+        }
+    },
+
+    stopKeepAlive() {
+        if (this.keepAliveNode) {
+            try { this.keepAliveNode.stop(); } catch(e) {}
+            try { this.keepAliveNode.disconnect(); } catch(e) {}
+            this.keepAliveNode = null;
+        }
+        if (this.keepAliveGain) {
+            try { this.keepAliveGain.disconnect(); } catch(e) {}
+            this.keepAliveGain = null;
+        }
+    },
+
+    suspend() {
+        this.stopKeepAlive();
+        if (this.ctx && typeof this.ctx.suspend === 'function' && this.ctx.state === 'running') {
+            try { this.ctx.suspend().catch(() => {}); } catch(e) {}
+        }
+    },
+
+    resume() {
+        if (this.ctx && typeof this.ctx.resume === 'function' && this.ctx.state === 'suspended') {
+            try { this.ctx.resume().catch(() => {}); } catch(e) {}
+        }
+        const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+        if (activePage === 'page-play') {
+            this.startKeepAlive();
         }
     },
     
@@ -672,11 +708,17 @@ const BoardAudio = {
         }
     }
 };
+window.BoardAudio = BoardAudio;
 
-// Warm up and resume AudioContext on user interaction
+// Warm up and resume AudioContext on user interaction ONLY when in page-play
 const initAudioOnUserInteraction = () => {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    if (activePage === 'page-loading' && !window._gatewayPassed) return;
+    if (activePage !== 'page-play') {
+        if (BoardAudio.ctx && BoardAudio.ctx.state === 'running') {
+            BoardAudio.suspend();
+        }
+        return;
+    }
     BoardAudio.init();
     if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
         BoardAudio.ctx.resume();
@@ -1277,6 +1319,9 @@ function clearGameUIAndCache() {
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic && !tripleMusic.paused) {
         tripleMusic.pause();
+    }
+    if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
+        BoardAudio.suspend();
     }
     window.lastGameState = null;
     window.lastDisplayAllWordsArgs = null;
