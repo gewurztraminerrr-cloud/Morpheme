@@ -388,6 +388,15 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css`, `style.css`, `mobile_scroller.js`, and `tools.js` cache busters to `v=1793462000`.
 
+### 37. 24-Hour Room 12:00 AM Midnight Reset Popup: Advisory to Wait a Minute (`static/js/play.js`, `templates/index.html`)
+- **Pre-pended Advisory Instruction to 24h Reset Popup Explanation**:
+  - In `static/js/play.js` under `ejectToLobby("daily_reset")`, updated the explanation message body of the 12:00 AM midnight reset modal (`title = "24-Hour Room Reset (12:00 AM)"`).
+  - Added the explicit advisory sentence at the very beginning of the explanation:
+    `"Please wait a minute before returning to the room you were in to see the next round. The 24-hour round has concluded at 12:00 AM midnight. You have been returned to the Lobby while the room resets for the new day.<br><br>Entering the room again will show you the new round!"`
+  - Guarantees players are immediately advised to allow the brief 1-minute server-side transition window to settle before re-entering the 24h room to start the new day's round.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.js` cache buster to `v=1793463000`.
+
 ---
 
 ## Verification & Validation

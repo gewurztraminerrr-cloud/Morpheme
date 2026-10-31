@@ -1009,7 +1009,7 @@ async function ejectToLobby(reason = "inactivity") {
 
         title = "24-Hour Room Reset (12:00 AM)";
         message = `
-            The 24-hour round has concluded at 12:00 AM midnight. You have been returned to the Lobby while the room resets for the new day.
+            Please wait a minute before returning to the room you were in to see the next round. The 24-hour round has concluded at 12:00 AM midnight. You have been returned to the Lobby while the room resets for the new day.
             <br><br>
             Entering the room again will show you the new round!
         `;
