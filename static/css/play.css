@@ -9328,24 +9328,23 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 12px !important;
+        gap: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        margin: 0 !important;
     }
     #tool-unscramble .unscramble-must-have-group > .unscramble-must-have-label {
-        margin: 0 !important;
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        color: rgba(255, 255, 255, 0.7) !important;
-        text-transform: uppercase !important;
-        white-space: nowrap !important;
+        display: none !important;
     }
-    #tool-unscramble .unscramble-must-have-group > select {
-        width: 110px !important;
-        max-width: 130px !important;
-        flex: 0 0 110px !important;
+    #tool-unscramble .unscramble-must-have-group > select,
+    #tool-unscramble #unscramble-must-have {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
         box-sizing: border-box !important;
         margin: 0 !important;
+        height: 40px !important;
+        text-align-last: center !important;
     }
     .unscramble-container {
         flex-direction: column !important;
@@ -11922,20 +11921,19 @@ body .board-cell.tile-flash-purple * {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 8px !important;
-        margin-left: 4px !important;
+        gap: 0 !important;
+        margin: 0 !important;
     }
 
     #tool-unscramble .unscramble-must-have-group > .unscramble-must-have-label {
-        font-size: 0.82rem !important;
-        margin: 0 !important;
-        white-space: nowrap !important;
+        display: none !important;
     }
 
     #tool-unscramble #unscramble-must-have {
-        width: 100px !important;
+        width: 180px !important;
         height: 38px !important;
         font-size: 0.88rem !important;
+        text-align-last: center !important;
     }
 
     #tool-unscramble #unscramble-gen-btn {

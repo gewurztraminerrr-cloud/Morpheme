@@ -309,6 +309,19 @@ START_OVER_POINT_OCTOBER_30
   - Updated `renderChat(messages)` to prefix the username with `#<placement> ` when available, keeping profile clicking intact via `data-username` and clean-name regex stripping.
   - Bumped `play.js` cache buster to `v=1793425000`.
 
+### 31. Tools Unscramble: Mobile Full-Width Dropdown & Desktop Lighter Color Theme Panel Division (`templates/index.html`, `static/css/play.css`, `static/css/style.css`)
+- **Mobile Dropdown Full Available Space & "MUST HAVE: ANY" Default Text**:
+  - In `templates/index.html`, updated `#unscramble-must-have` options to display `"MUST HAVE: ANY"` for value `""` (selected by default) and `"MUST HAVE: <Letter>"` for letters A-Z (`"MUST HAVE: A"` through `"MUST HAVE: Z"`).
+  - Removed the side label `<span class="unscramble-must-have-label">` from the markup and hid any remaining instances via CSS (`display: none !important;`).
+  - In `static/css/play.css`, configured `.unscramble-must-have-group` and `#unscramble-must-have` on mobile viewports (`max-width: 650px`) to span 100% of the available row width (`width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; text-align-last: center !important; height: 40px !important; margin: 0 !important; gap: 0 !important;`), matching the horizontal length and appearance of "Len: 7", "All (Full)", and "New Game".
+- **Desktop Light Theme Left and Right Panel Emphasized Division**:
+  - In `static/css/style.css`, removed `.unscramble-container` from lines 607-610 where it had previously received a solid white background (`#ffffff !important`) and border (`1px solid #cbd5e1 !important`), which had grouped both panels into a single enclosing white card and eliminated the division between them.
+  - Set `#tool-unscramble .unscramble-container` to `background: transparent !important; border: none !important; box-shadow: none !important;` on all white and light themes (`theme-white`, `[class*="theme-white"]`, `[class*="theme-light-"]`).
+  - Added Section 16b in `static/css/style.css` styling `.unscramble-game-area` (left panel) and `#unscramble-found-container` (right panel) as independent bounded cards with distinct white/card backgrounds (`#ffffff` on white, `var(--bg-primary)` + `linear-gradient(var(--bg-panel), var(--bg-panel))` on light themes), 1.5px solid contrasting borders (`#cbd5e1` on white, `var(--card-border)` on light), and subtle drop shadows (`0 6px 24px rgba(0,0,0,0.08)` / `0 10px 30px rgba(0,0,0,0.1)`).
+  - The 14px gap between the two panels now exposes the page background (the same contrasting color used above them around the control panel), emphasizing the clean division between the left and right panels exactly matching Subanagrams in Tools.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css` and `play.css` cache busters to `v=1793426000`.
+
 ---
 
 ## Verification & Validation

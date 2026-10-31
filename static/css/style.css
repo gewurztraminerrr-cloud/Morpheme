@@ -604,11 +604,6 @@ select option {
     body.is-desktop.theme-white #page-tools .list-scroll-area,
     body.is-desktop[class*="theme-white"] #page-tools .list-scroll-area,
 
-    body:not(.is-mobile).theme-white #page-tools .unscramble-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools .unscramble-container,
-    body.is-desktop.theme-white #page-tools .unscramble-container,
-    body.is-desktop[class*="theme-white"] #page-tools .unscramble-container,
-
     body:not(.is-mobile).theme-white #page-tools .unscramble-game-area,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .unscramble-game-area,
     body.is-desktop.theme-white #page-tools .unscramble-game-area,
@@ -686,16 +681,20 @@ select option {
 
     body:not(.is-mobile).theme-white #unscramble-jumbled,
     body:not(.is-mobile)[class*="theme-white"] #unscramble-jumbled,
+    body:not(.is-mobile)[class*="theme-light-"] #unscramble-jumbled,
     body.is-desktop.theme-white #unscramble-jumbled,
-    body.is-desktop[class*="theme-white"] #unscramble-jumbled {
+    body.is-desktop[class*="theme-white"] #unscramble-jumbled,
+    body.is-desktop[class*="theme-light-"] #unscramble-jumbled {
         color: #b45309 !important;
         text-shadow: none !important;
     }
 
     body:not(.is-mobile).theme-white #unscramble-count-info,
     body:not(.is-mobile)[class*="theme-white"] #unscramble-count-info,
+    body:not(.is-mobile)[class*="theme-light-"] #unscramble-count-info,
     body.is-desktop.theme-white #unscramble-count-info,
-    body.is-desktop[class*="theme-white"] #unscramble-count-info {
+    body.is-desktop[class*="theme-white"] #unscramble-count-info,
+    body.is-desktop[class*="theme-light-"] #unscramble-count-info {
         color: #64748b !important;
     }
 
@@ -706,6 +705,13 @@ select option {
         background: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
         color: #0f172a !important;
+    }
+
+    body:not(.is-mobile)[class*="theme-light-"] #unscramble-input,
+    body.is-desktop[class*="theme-light-"] #unscramble-input {
+        background: var(--bg-primary) !important;
+        border: 1.5px solid var(--card-border) !important;
+        color: var(--text-primary) !important;
     }
 
     body:not(.is-mobile).theme-white #tool-find-count .history-table th,
@@ -10412,6 +10418,105 @@ body.theme-white .cube-replay-face-label,
 [class*="theme-light-"] .cube-replay-face-label {
     color: #0f172a !important;
     font-weight: 900 !important;
+}
+
+/* 16b. Tools: Unscramble on White/Light Themes */
+body.theme-white #tool-unscramble .combo-control-panel,
+[class*="theme-white"] #tool-unscramble .combo-control-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[class*="theme-light-"] #tool-unscramble .combo-control-panel {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+
+body.theme-white #tool-unscramble .unscramble-container,
+[class*="theme-white"] #tool-unscramble .unscramble-container,
+[class*="theme-light-"] #tool-unscramble .unscramble-container,
+body.is-desktop.theme-white #tool-unscramble .unscramble-container,
+body.is-desktop[class*="theme-white"] #tool-unscramble .unscramble-container,
+body.is-desktop[class*="theme-light-"] #tool-unscramble .unscramble-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.theme-white #tool-unscramble .unscramble-game-area,
+[class*="theme-white"] #tool-unscramble .unscramble-game-area {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+[class*="theme-light-"] #tool-unscramble .unscramble-game-area {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-white #unscramble-found-container,
+[class*="theme-white"] #unscramble-found-container {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+[class*="theme-light-"] #unscramble-found-container {
+    background: var(--bg-primary) !important;
+    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
+    border: 1.5px solid var(--card-border) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-white #unscramble-found-container h3,
+[class*="theme-white"] #unscramble-found-container h3 {
+    color: #475569 !important;
+    border-bottom: 1.5px solid #cbd5e1 !important;
+}
+
+[class*="theme-light-"] #unscramble-found-container h3 {
+    color: var(--text-primary) !important;
+    border-bottom: 1.5px solid var(--card-border) !important;
+}
+
+body.theme-white #unscramble-length,
+[class*="theme-white"] #unscramble-length,
+body.theme-white #unscramble-dict,
+[class*="theme-white"] #unscramble-dict,
+body.theme-white #unscramble-must-have,
+[class*="theme-white"] #unscramble-must-have {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-light-"] #unscramble-length,
+[class*="theme-light-"] #unscramble-dict,
+[class*="theme-light-"] #unscramble-must-have {
+    background: var(--bg-primary) !important;
+    border: 1.5px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+
+body.theme-white #unscramble-gen-btn,
+[class*="theme-white"] #unscramble-gen-btn,
+[class*="theme-light-"] #unscramble-gen-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
+}
+
+body.theme-white #unscramble-found-container .clickable-word-link,
+[class*="theme-white"] #unscramble-found-container .clickable-word-link,
+[class*="theme-light-"] #unscramble-found-container .clickable-word-link {
+    color: #15803d !important;
 }
 
 /* 17. Toggle Switches: Green "ON" State and Red "OFF" State */
