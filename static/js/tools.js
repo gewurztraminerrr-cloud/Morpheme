@@ -7940,6 +7940,80 @@ function revealManualWords(forceShow = false) {
     if (revealBtn) revealBtn.innerText = "Hide Words";
 }
 
+// --- Helper: Setup CC, FC, ADD buttons along bottom of panel (matching definition pop-ups) ---
+
+window.setupWordDefActionButtons = function (prefix, word, dictionary = null) {
+    const actionsEl = document.getElementById(`${prefix}-actions`);
+    if (!actionsEl) return;
+    if (!word) {
+        actionsEl.style.display = 'none';
+        return;
+    }
+    const cleanWord = String(word).trim().toUpperCase();
+    const ccBtn = document.getElementById(`${prefix}-cc-btn`);
+    const fcBtn = document.getElementById(`${prefix}-fc-btn`);
+    const addBtn = document.getElementById(`${prefix}-add-btn`);
+    const addedBadge = document.getElementById(`${prefix}-added-badge`);
+    const actionRightEl = actionsEl.querySelector('.tool-def-action-right');
+
+    actionsEl.style.display = 'flex';
+
+    if (ccBtn) {
+        ccBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.searchWordInComboChecker === 'function') {
+                window.searchWordInComboChecker(cleanWord, dictionary, 'page-tools');
+            }
+        };
+    }
+
+    if (fcBtn) {
+        fcBtn.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.navigateToFindCount === 'function') {
+                window.navigateToFindCount(cleanWord, 'page-tools');
+            }
+        };
+    }
+
+    const currentList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
+    const isAlreadyOnList = currentList.some(item => {
+        const w = (typeof item === 'object' && item !== null) ? item.word : item;
+        return (w || '').toUpperCase() === cleanWord;
+    });
+
+    if (addBtn) {
+        if (isAlreadyOnList) {
+            if (actionRightEl) actionRightEl.style.display = 'none';
+            addBtn.style.display = 'none';
+            addBtn.textContent = 'ADD';
+            addBtn.classList.remove('is-added');
+            if (addedBadge) addedBadge.style.display = 'none';
+            addBtn.onclick = null;
+        } else {
+            if (actionRightEl) actionRightEl.style.display = 'flex';
+            addBtn.style.display = 'inline-flex';
+            addBtn.style.pointerEvents = 'auto';
+            addBtn.style.opacity = '1';
+            addBtn.textContent = 'ADD';
+            addBtn.classList.remove('is-added');
+            if (addedBadge) addedBadge.style.display = 'none';
+            addBtn.onclick = async (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof addWordToWorkOn === 'function') {
+                    const ok = await addWordToWorkOn(cleanWord);
+                    if (ok) {
+                        addBtn.textContent = 'ADDED';
+                        addBtn.classList.add('is-added');
+                        addBtn.style.pointerEvents = 'none';
+                        if (addedBadge) addedBadge.style.display = 'none';
+                    }
+                }
+            };
+        }
+    }
+};
+
 // --- Random Word Tool Logic ---
 
 function setupRandomWordTool() {
@@ -7965,6 +8039,7 @@ async function generateRandomWord() {
     const dictEl = document.getElementById('random-dict');
     const displayEl = document.getElementById('random-word-display');
     const genBtn = document.getElementById('random-gen-btn');
+    const actionsEl = document.getElementById('random-word-actions');
 
     const length = lengthEl ? lengthEl.value : 'all';
     const contains = containsEl ? containsEl.value : 'all';
@@ -7973,6 +8048,7 @@ async function generateRandomWord() {
     genBtn.innerText = "Generating...";
     genBtn.disabled = true;
     displayEl.innerHTML = ''; // Clear while loading
+    if (actionsEl) actionsEl.style.display = 'none';
     const defEl = document.getElementById('random-word-definition');
     if (defEl) defEl.innerHTML = '';
 
@@ -7983,6 +8059,7 @@ async function generateRandomWord() {
 
         if (data.error) {
             displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">${data.error}</span>`;
+            if (actionsEl) actionsEl.style.display = 'none';
             return;
         }
 
@@ -8027,9 +8104,15 @@ async function generateRandomWord() {
             }, 100);
         }
 
+        // Setup CC, FC, ADD buttons along bottom of panel
+        if (typeof window.setupWordDefActionButtons === 'function') {
+            window.setupWordDefActionButtons('random-word', word, dictionary);
+        }
+
     } catch (err) {
         console.error("Random word fetch failed:", err);
         displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">Error loading random word.</span>`;
+        if (actionsEl) actionsEl.style.display = 'none';
     } finally {
         genBtn.innerText = "Generate Random Word";
         genBtn.disabled = false;
@@ -8788,6 +8871,7 @@ async function runValidationCheck() {
     const dictEl = document.getElementById('valid-dict');
     const displayEl = document.getElementById('valid-result-display');
     const checkBtn = document.getElementById('valid-check-btn');
+    const actionsEl = document.getElementById('valid-word-actions');
 
     const word = inputEl.value.trim();
     const dictionary = dictEl.value;
@@ -8797,6 +8881,7 @@ async function runValidationCheck() {
     displayEl.innerText = '';
     const defEl = document.getElementById('valid-definition-display');
     if (defEl) defEl.style.opacity = '0';
+    if (actionsEl) actionsEl.style.display = 'none';
 
     checkBtn.innerText = "Checking...";
     checkBtn.disabled = true;
@@ -8814,6 +8899,7 @@ async function runValidationCheck() {
         if (data.error) {
             displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">${data.error}</span>`;
             if (defEl) defEl.style.opacity = '0';
+            if (actionsEl) actionsEl.style.display = 'none';
             return;
         }
 
@@ -8871,9 +8957,17 @@ async function runValidationCheck() {
             }
         }
 
+        // Setup CC, FC, ADD buttons along bottom of panel if word is valid
+        if (data.is_valid && typeof window.setupWordDefActionButtons === 'function') {
+            window.setupWordDefActionButtons('valid-word', data.word, dictionary);
+        } else if (actionsEl) {
+            actionsEl.style.display = 'none';
+        }
+
     } catch (err) {
         console.error("Validation check failed:", err);
         displayEl.innerHTML = `<span style="font-size: 1.5rem; color: #f43f5e;">Error checking word.</span>`;
+        if (actionsEl) actionsEl.style.display = 'none';
     } finally {
         checkBtn.innerText = "Validate";
         checkBtn.disabled = false;

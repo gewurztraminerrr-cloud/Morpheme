@@ -201,6 +201,16 @@ START_OVER_POINT_OCTOBER_30
   - Reduced moderator list grid gap (`8px !important;`) and list item padding (`10px 14px !important;`).
 - Applied consistently under both `@media (max-width: 900px)` and `body.is-mobile`. Desktop and laptop views (`> 900px`) remain completely untouched.
 
+### 23. Tools: "CC", "FC", and "ADD" Action Buttons in Random Word and Is Valid
+- **Bottom Panel Word Actions Matching Definition Pop-ups (`templates/index.html`, `static/js/tools.js`, `static/css/play.css`)**:
+  - Integrated the exact three bottom action buttons (**CC**, **FC**, and **ADD**) along the bottom of the word content panels in both **Random Word** (`#random-word-actions`) and **Is Valid** (`#valid-word-actions`).
+  - Separated with a subtle top border line matching definition pop-up modals (`border-top: 1px solid rgba(var(--text-primary-rgb), 0.12);`, and light-theme border `#cbd5e1`).
+  - **CC (Combo Checker)**: Navigates smoothly to Combo Checker searching the word with its selected dictionary, and tracks navigation stack for instant back-navigation.
+  - **FC (Find Count)**: Navigates directly to Find Count with the word entered and history tracking.
+  - **ADD / ADDED**: Checks the user's "Words to Work on" list via `getWordsToWorkOn()`. If the word is already on their list, the ADD container is cleanly hidden allowing CC and FC to expand symmetrically across the full width (identical to definition pop-up behavior). If not yet on the list, clicking ADD instantly adds the word to the user's study list, updates the button label to "ADDED", and adds class `.is-added` with emerald green styling (`#10b981`) and pointer events disabled.
+  - Sized for responsive touch and desktop clicks: `32px` on desktop and `30px` on mobile with `6px` border-radius.
+  - In Is Valid, buttons show when a word is confirmed valid (`IS VALID`) and cleanly hide if the word is invalid (`IS NOT VALID`) or during validation check loading. In Random Word, buttons display upon word generation and clear during loading.
+
 ---
 
 ## Verification & Validation
