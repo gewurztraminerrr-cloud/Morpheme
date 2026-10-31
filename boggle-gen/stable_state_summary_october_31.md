@@ -539,14 +539,16 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Centered all elements horizontally inside `#setting-subpage-corner-cutoff` (title, description, meter card, and hitbox preview box).
   - Constrained layout width cleanly (`max-width: 480px` on container/description and `max-width: 440px` on cards) to ensure aesthetic proportions.
   - Enlarged the preview tile to `120px` x `120px` with a `2.6rem` font size for an attractive, high-clarity visual demonstration.
-- **Merged Description & Height Handling**:
+- **Merged Description & Unified 52px Scrollable Height Logic**:
   - Moved the text from the previous callout box directly into `.setting-subpage-desc`: *"Adjust the diagonal selectable space of a tile for easier mousing and swiping. This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!"*
   - Removed the redundant separate callout div.
-  - Explicitly configured `max-height: none !important; height: auto !important; overflow-y: visible !important;` for `#setting-subpage-corner-cutoff .setting-subpage-desc` so the longer merged description text is fully readable without truncation or scrollbars across all screen sizes.
+  - Shortened the vertical length of the description in Tile Selectable Space using the unified `max-height: 52px` box logic shared by descriptions across all pages in the app (Tools, Settings, Mods, Profile, and Forum).
+  - Configured `overflow-y: auto`, `-webkit-overflow-scrolling: touch`, `touch-action: pan-y`, and thin styled scrollbars (`::-webkit-scrollbar` and `scrollbar-width: thin`) so that when a description exceeds standard length (> 2 lines), users can smoothly scroll inside the compact box to read the rest of the text without displacing controls.
+  - Added responsive mobile height confinement (`max-height: 46px !important`) under 900px viewports.
 - **Theme Support**:
-  - Added dedicated White and Light theme styles (`body.theme-white .preview-hitbox-container`, `body.theme-white .preview-hitbox-tile`, `[class*="theme-light-"]`) to ensure crisp borders, contrast, and letter visibility across all dark, light, and white themes.
+  - Added dedicated White and Light theme styles (`body.theme-white .preview-hitbox-container`, `body.theme-white .preview-hitbox-tile`, `[class*="theme-light-"]`, and custom scrollbar track/thumb styling) to ensure crisp borders, contrast, and letter visibility across all dark, light, and white themes.
 - **Cache Busters (`templates/index.html`)**:
-  - Bumped `play.css` cache buster to `v=1793520000`.
+  - Bumped `play.css` cache buster to `v=1793530000`.
 
 ---
 

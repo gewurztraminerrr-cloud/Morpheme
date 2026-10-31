@@ -20583,8 +20583,23 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     border-radius: 8px !important;
     background: rgba(var(--text-primary-rgb), 0.04) !important;
     box-sizing: border-box !important;
-    text-align: left !important;
-    width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
+}
+
+.setting-subpage-desc::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+}
+.setting-subpage-desc::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+.setting-subpage-desc::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.25) !important;
+    border-radius: 4px !important;
+}
+.setting-subpage-desc::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-primary-rgb), 0.45) !important;
 }
 
 .setting-subpage-content {
@@ -21082,9 +21097,10 @@ body.theme-white .color-dot.active {
 }
 
 #setting-subpage-corner-cutoff .setting-subpage-desc {
-    max-height: none !important;
-    height: auto !important;
-    overflow-y: visible !important;
+    max-height: 52px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
     max-width: 480px !important;
     text-align: center !important;
 }
@@ -21103,6 +21119,14 @@ body.theme-white .color-dot.active {
 @media (max-width: 900px) {
     .setting-subpage {
         max-width: 100% !important;
+    }
+    .setting-subpage-desc,
+    #setting-subpage-corner-cutoff .setting-subpage-desc {
+        max-height: 46px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.3 !important;
+        padding: 5px 10px !important;
+        margin: 0 auto 12px auto !important;
     }
     .settings-subnav-menu {
         grid-template-columns: 1fr;
@@ -21125,6 +21149,14 @@ body[class*="theme-light-"] .setting-subpage-desc,
     color: #475569 !important;
     border-color: #cbd5e1 !important;
     background: #f8fafc !important;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent !important;
+}
+
+body.theme-white .setting-subpage-desc::-webkit-scrollbar-thumb,
+[class*="theme-white"] .setting-subpage-desc::-webkit-scrollbar-thumb,
+body[class*="theme-light-"] .setting-subpage-desc::-webkit-scrollbar-thumb,
+[class*="theme-light-"] .setting-subpage-desc::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25) !important;
 }
 
 body.theme-white .setting-subpage-back-btn,
