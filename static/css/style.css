@@ -12303,4 +12303,16 @@ h2.page-title-header::selection,
     text-shadow: none !important;
 }
 
+@media (max-width: 900px) {
+    #setting-subpage-allow-invites .invitations-mobile-break {
+        display: block !important;
+        margin-top: 2px;
+    }
+}
+
+body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
+    display: block !important;
+    margin-top: 2px;
+}
+
 

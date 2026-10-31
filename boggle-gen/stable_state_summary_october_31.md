@@ -567,6 +567,17 @@ d8f5a8080649580449bf9cad293f5216f9c55519
   - Bumped `play.css` cache buster to `v=1793540000`.
   - Bumped `play.js` cache buster to `v=1793540000`.
 
+### 48. Allow Game Invitations: Mobile Line Break for "Invitations" (`templates/index.html`, `static/css/play.css`, `static/css/style.css`)
+- **Visual Spacing & Toggle Switch Separation on Mobile**:
+  - In Settings → Gameplay & Preferences → Allow Game Invitations (`#setting-subpage-allow-invites`), the toggle row label `Allow Room Match Invitations` previously extended across narrow mobile viewports, touching the toggle piece.
+  - Wrapped `Invitations` in a dedicated responsive span `<span class="invitations-mobile-break">Invitations</span>`.
+  - Configured `@media (max-width: 900px)` and `body.is-mobile` to render `.invitations-mobile-break` as `display: block !important` with `margin-top: 2px`, cleanly placing "Invitations" on the line directly underneath "Allow Room Match" and creating over 220px of breathing room from the toggle switch.
+  - On desktop viewports (> 900px), `.invitations-mobile-break` remains `display: inline`, seamlessly preserving the single-line format.
+  - Added `gap: 16px;` to `.setting-toggle-row` across both CSS and inline styles.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css` cache buster to `v=1793550000`.
+  - Bumped `play.css` cache buster to `v=1793550000`.
+
 ---
 
 ## Verification & Validation

@@ -20649,6 +20649,7 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     width: 100%;
     box-sizing: border-box;
     transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -21144,6 +21145,15 @@ body.theme-white .color-dot.active {
     .setting-select-row select {
         width: 100% !important;
     }
+    #setting-subpage-allow-invites .invitations-mobile-break {
+        display: block !important;
+        margin-top: 2px;
+    }
+}
+
+body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
+    display: block !important;
+    margin-top: 2px;
 }
 
 /* Light / White Theme Overrides */
