@@ -2209,10 +2209,28 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     font-size: 0.95rem;
 }
 
+.remaining-legend {
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-align: center;
+    color: var(--text-secondary, rgba(var(--text-primary-rgb), 0.7));
+    margin: 2px auto 8px auto;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .remaining-legend {
+        font-size: 0.60rem !important;
+        letter-spacing: -0.1px !important;
+    }
+}
+
 .len-cell {
     font-weight: 700;
     color: #4facfe;
-    width: 60%;
+    width: auto;
+    white-space: nowrap;
     text-align: left;
     padding-left: 10px;
 }
@@ -2223,6 +2241,7 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     font-weight: 600;
     opacity: 0.9;
     padding-right: 10px;
+    white-space: nowrap;
 }
 
 /* On mobile devices in game rooms, Remaining tab 3LW/4LW/6LW furthest to the left with matching padding */

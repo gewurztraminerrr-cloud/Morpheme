@@ -3404,21 +3404,27 @@ async function _doUpdateGameState(incomingState = null) {
         const showRemainingInClues = is24H && activeWordsTab === 'clues' && window._cluesShowRemaining;
         if ((remainingListEl && activeWordsTab === 'remaining') || showRemainingInClues) {
             let myFoundStrs = [];
+            const isIntermission = state.state === 'intermission';
             if (state.game_type === 'fcfs') {
                 myFoundStrs = allPlayerFoundStrs;
             } else if (currentUser) {
                 const me = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
-                if (me && me.submitted_words) {
-                    myFoundStrs = me.submitted_words.map(w => (typeof w === 'string' ? w : w.word).toUpperCase());
+                if (me) {
+                    const pWords = (isIntermission && me.previous_submitted_words && me.previous_submitted_words.length > 0)
+                        ? me.previous_submitted_words
+                        : (me.submitted_words || me.previous_submitted_words || []);
+                    myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
                 }
             }
 
             // User Request Fix: Persistence - Keep showing the previous round's remaining words 
             // for the ENTIRE intermission. We only switch to the new round data when state is 'active'.
-            const isIntermission = state.state === 'intermission';
             const showRealtimeCounts = !isIntermission && state.total_counts_by_len;
             
             let countsByLen = {};
+            let totalByLenMap = {};
+            let foundByLenMap = {};
+
             if (showRealtimeCounts) {
                 // Real-time mode: calculate remaining from server totals minus found words
                 const totalByLen = state.total_counts_by_len || {};
@@ -3450,32 +3456,60 @@ async function _doUpdateGameState(incomingState = null) {
                 });
                 
                 validFound.forEach(w => {
-                    const wordStr = (typeof w === 'string' ? w : w.word);
+                    const wordStr = (typeof w === 'string' ? w : (w && w.word) || '');
                     const l = wordStr ? wordStr.length : 0;
                     if (l > 0) foundByLen[l] = (foundByLen[l] || 0) + 1;
                 });
                 
                 for (let i = 1; i <= 30; i++) {
                     const serverTotalForLen = (totalByLen[i] !== undefined ? totalByLen[i] : (totalByLen[String(i)] !== undefined ? totalByLen[String(i)] : 0));
+                    totalByLenMap[i] = serverTotalForLen;
+                    foundByLenMap[i] = foundByLen[i] || 0;
                     countsByLen[i] = Math.max(0, serverTotalForLen - (foundByLen[i] || 0));
                 }
 
                 // HEADER SYNC is handled by updateGameStatsHeader to avoid fighting/duplicate labels
             } else {
-                // Intermission/Clues fallback: calculate from explicit list
-                const remainingWords = allWords.filter(w => !myFoundStrs.includes(w.toUpperCase()));
-                for (let i = 3; i <= 30; i++) countsByLen[i] = 0;
-                remainingWords.forEach(w => {
-                    const len = w.length;
-                    if (len >= 3 && len <= 30) countsByLen[len]++;
-                });
+                // Intermission/Clues fallback: calculate from explicit list or previous_total_counts_by_len
+                const prevTotals = state.previous_total_counts_by_len || state.total_counts_by_len || {};
+                for (let i = 1; i <= 30; i++) {
+                    totalByLenMap[i] = (prevTotals[i] !== undefined ? prevTotals[i] : (prevTotals[String(i)] !== undefined ? prevTotals[String(i)] : 0));
+                    foundByLenMap[i] = 0;
+                    countsByLen[i] = 0;
+                }
+
+                if (allWords && allWords.length > 0) {
+                    for (let i = 1; i <= 30; i++) totalByLenMap[i] = 0;
+                    allWords.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word) || '');
+                        const len = str.length;
+                        if (len >= 1 && len <= 30) totalByLenMap[len] = (totalByLenMap[len] || 0) + 1;
+                    });
+                }
+
+                if (myFoundStrs && myFoundStrs.length > 0) {
+                    myFoundStrs.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word) || '');
+                        const len = str.length;
+                        if (len >= 1 && len <= 30) foundByLenMap[len] = (foundByLenMap[len] || 0) + 1;
+                    });
+                }
+
+                for (let i = 1; i <= 30; i++) {
+                    const tot = totalByLenMap[i] || 0;
+                    const fnd = foundByLenMap[i] || 0;
+                    countsByLen[i] = Math.max(0, tot - fnd);
+                }
             }
 
             let html = '<table id="remaining-words-table">';
             const minLen = state.current_min_length || 3;
             for (let i = minLen; i <= 30; i++) {
-                // Show rows from minLen to 20
-                html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${countsByLen[i] || 0}</td></tr>`;
+                const total = totalByLenMap[i] || 0;
+                const found = foundByLenMap[i] || 0;
+                const missed = countsByLen[i] || 0;
+                const pct = total > 0 ? Math.round((found / total) * 100) : 0;
+                html += `<tr><td class="len-cell">${i}LW</td><td class="count-cell">${found} + ${missed} = ${total}&nbsp;&nbsp;(${pct}%)</td></tr>`;
             }
             html += '</table>';
             
@@ -3494,6 +3528,15 @@ async function _doUpdateGameState(incomingState = null) {
         if (cluesToggleBtn) {
             cluesToggleBtn.style.display = is24H ? 'block' : 'none';
             cluesToggleBtn.textContent = window._cluesShowRemaining ? 'Return to Clues' : 'Remaining';
+        }
+
+        const cluesTabTitle = document.getElementById('clues-tab-title');
+        if (cluesTabTitle) {
+            cluesTabTitle.textContent = (is24H && window._cluesShowRemaining) ? 'Remaining' : 'Clues';
+        }
+        const cluesLegend = document.getElementById('clues-remaining-legend');
+        if (cluesLegend) {
+            cluesLegend.style.display = (is24H && window._cluesShowRemaining) ? 'block' : 'none';
         }
 
         const cluesTabsEl = document.getElementById('clues-length-tabs');

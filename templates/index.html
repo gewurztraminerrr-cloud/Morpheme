@@ -3737,6 +3737,7 @@
                         <div id="tab-content-remaining" class="tab-content">
                             <div class="words-header-group">
                                 <h3>Remaining</h3>
+                                <p class="remaining-legend">[found] + [missed] = [letter length total count]&nbsp;&nbsp;[percent found]</p>
                             </div>
                             <div id="remaining-words-list">
                                 <p class="placeholder">Calculating counts...</p>
@@ -3745,9 +3746,12 @@
 
 
                         <div id="tab-content-clues" class="tab-content">
-                            <div class="words-header-group" style="display: flex; justify-content: space-between; align-items: center;">
-                                <h3>Clues</h3>
-                                <button id="clues-toggle-remaining-btn" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; display: none;">Remaining</button>
+                            <div class="words-header-group">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h3 id="clues-tab-title">Clues</h3>
+                                    <button id="clues-toggle-remaining-btn" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); cursor: pointer; display: none;">Remaining</button>
+                                </div>
+                                <p id="clues-remaining-legend" class="remaining-legend" style="display: none;">[found] + [missed] = [letter length total count]&nbsp;&nbsp;[percent found]</p>
                             </div>
                             <div id="clues-length-tabs" class="clues-length-tabs" style="display: none;"></div>
                             <div id="clues-list" class="clues-grid">
