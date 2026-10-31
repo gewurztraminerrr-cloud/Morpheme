@@ -165,6 +165,15 @@ START_OVER_POINT_OCTOBER_30
   - Substantially increases visible screen real estate for the MP and LIC results tables below.
   - Desktop and laptop viewports (`> 900px`) remain completely untouched.
 
+### 20. Mods: Lobby Notice Mobile Screen-Fit Layout
+- **Complete Viewport Screen Fit Without Scrolling (`templates/index.html`, `static/css/play.css`)**:
+  - Re-engineered the mobile layout for Lobby Notice (`#mod-tab-notice`) under `@media (max-width: 900px)` and `body.is-mobile` to fit all components completely on screen across all mobile devices (from iPhone SE up to large smartphones) without vertical scrolling.
+  - **Tool Header Note**: Compacted padding (`4px 8px`), margin (`0 0 6px 0`), and font size (`0.74rem`).
+  - **Live Announcement Card**: Slimmed card padding (`8px 10px`), reduced header row spacing, and compact preview box (`min-height: 32px; max-height: 52px; padding: 6px 8px; font-size: 0.78rem`).
+  - **Compose Card**: Reduced padding to `8px 10px; margin-bottom: 6px;`, set `#notice-status-area:empty` to `display: none` to eliminate empty dead space, and sized the announcement textarea compactly (`height: 72px; min-height: 68px; max-height: 85px; font-size: 16px; padding: 6px 8px;` with `0.78rem` placeholder) to prevent iOS auto-zoom while fitting gracefully.
+  - **Side-by-Side Action Buttons**: Replaced the previous 100% full-width stacked buttons with a sleek single-row flex layout (`.mod-notice-buttons`): `📢 Broadcast Notice` expands flexibly and `Clear Notice` is sized compactly (`flex: 0 0 105px`), both with unified `36px` height matching other mobile tool buttons.
+  - Total content height reduced from over 650px down to ~320px, fitting comfortably well within the visible viewport above the bottom navigation bar on all phones. Desktop/laptop displays (`> 900px`) remain 100% untouched.
+
 ---
 
 ## Verification & Validation
