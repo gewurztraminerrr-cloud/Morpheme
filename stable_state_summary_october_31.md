@@ -479,6 +479,19 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `play.css` cache buster to `v=1793495000`.
   - Bumped `settings.js` cache buster to `v=1793495000`.
 
+### 43. Tools Mobile Bottom Navigation Docking & DOM Hierarchy Balancing (`templates/index.html`)
+- **Root Cause of Floating / Scrolling Back Buttons in Tools**:
+  - In `templates/index.html`, `<div class="mobile-bottom-nav tools-bottom-nav">` was erroneously nested inside `.tools-content` rather than as a direct sibling child of `.tools-content-column`.
+  - As a result:
+    - On tall tools (e.g., Unscramble, Subanagrams), the back button was pushed down to the end of the scrollable content, forcing mobile users to scroll to the very bottom to see it.
+    - On short tools (e.g., Personal Timer, Random Word), the back button floated in the upper half of the screen directly beneath the short form controls.
+- **Permanent Viewport Bottom Docking Restored**:
+  - Balanced closing tags in `templates/index.html` by properly terminating `#tool-unscramble` and `.tools-content` before `.tools-bottom-nav`.
+  - `.tools-content-column` (`display: flex; flex-direction: column; height: 100%; overflow: hidden;`) now cleanly hosts `.tools-content` (`flex: 1 1 0px; min-height: 0; overflow-y: auto;`) and `.mobile-bottom-nav` (`flex: 0 0 auto; width: 100%;`).
+  - Across all tools (long or short), `.tools-content` scrolls independently while the full-width "← Back" button remains firmly anchored along the bottom edge of the mobile viewport at all times.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793505000`.
+
 ---
 
 ## Verification & Validation
