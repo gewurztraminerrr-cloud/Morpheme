@@ -13313,12 +13313,27 @@ window.showNotepadPopup = function(username) {
     if (!player) return;
 
     // Get all valid submitted words and sort by length descending (largest words first)
-    const rawWords = player.submitted_words || [];
+    const rawWords = (player.submitted_words && player.submitted_words.length > 0)
+        ? player.submitted_words
+        : (player.previous_submitted_words || []);
     const words = [...rawWords].sort((a, b) => {
         const wordA = (typeof a === 'object' ? a.word : a) || '';
         const wordB = (typeof b === 'object' ? b.word : b) || '';
         return (wordB.length - wordA.length) || wordA.localeCompare(wordB);
     });
+
+    // Determine dictionaries active in this round
+    const cswOnlyList = (state.state === 'intermission'
+        ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words)
+        : state.csw_only_words) || [];
+    const cswOnlySet = new Set(cswOnlyList.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()));
+
+    const addedList = (state.state === 'intermission'
+        ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words)
+        : state.added_words) || [];
+    const addedSet = new Set(addedList.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()));
+
+    const scores = (state.state === 'intermission' ? state.previous_all_word_scores : state.all_word_scores) || state.previous_all_word_scores || state.all_word_scores;
 
     // Create notepad modal overlay if it doesn't already exist
     let modal = document.getElementById('notepad-modal');
@@ -13352,11 +13367,43 @@ window.showNotepadPopup = function(username) {
                         </div>
                     ` : words.map((w, idx) => {
                         const wordText = (typeof w === 'object' ? w.word : w) || '';
-                        const pts = (typeof w === 'object' ? w.points : 0) || 0;
+                        const wordUpper = wordText.toUpperCase().trim();
+                        let pts = (typeof w === 'object' ? w.points : 0) || 0;
+                        if (!pts && scores) {
+                            const sc = scores[wordText] || scores[wordUpper];
+                            if (sc !== undefined) {
+                                pts = (typeof sc === 'object' && sc !== null) ? (sc.total || 0) : Number(sc) || 0;
+                            }
+                        }
+
+                        // Determine dictionary memberships for this word
+                        const dicts = [];
+                        const isAW = addedSet.has(wordUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wordUpper));
+                        const isCSWOnly = cswOnlySet.has(wordUpper);
+
+                        if (isAW) {
+                            dicts.push('AW');
+                        } else if (isCSWOnly) {
+                            dicts.push('CSW');
+                        } else {
+                            // Standard English word belongs to both NWL and CSW
+                            dicts.push('NWL');
+                            dicts.push('CSW');
+                        }
+
+                        const dictStackHtml = `
+                            <span class="notepad-dict-stack">
+                                ${dicts.map(d => `<span class="notepad-dict-tag notepad-dict-tag-${d.toLowerCase()}">${d}</span>`).join('')}
+                            </span>
+                        `;
+
                         return `
                             <div class="notepad-word-line">
                                 <span class="notepad-word"><span class="notepad-word-num">${idx + 1}.</span>${wordText}</span>
-                                <span class="notepad-word-points">${pts} pts</span>
+                                <div class="notepad-word-right">
+                                    <span class="notepad-word-points">${pts} pts</span>
+                                    ${dictStackHtml}
+                                </div>
                             </div>
                         `;
                     }).join('')}
