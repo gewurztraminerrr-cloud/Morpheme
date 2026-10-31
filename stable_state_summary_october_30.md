@@ -174,6 +174,20 @@ START_OVER_POINT_OCTOBER_30
   - **Side-by-Side Action Buttons**: Replaced the previous 100% full-width stacked buttons with a sleek single-row flex layout (`.mod-notice-buttons`): `📢 Broadcast Notice` expands flexibly and `Clear Notice` is sized compactly (`flex: 0 0 105px`), both with unified `36px` height matching other mobile tool buttons.
   - Total content height reduced from over 650px down to ~320px, fitting comfortably well within the visible viewport above the bottom navigation bar on all phones. Desktop/laptop displays (`> 900px`) remain 100% untouched.
 
+### 21. Mods: Ban/Timeout User Reduced Description Padding on Mobile & Aesthetic Textboxes on All Platforms
+- **Aesthetic Textbox & Control Modernization Across All Platforms (`static/css/play.css`)**:
+  - Replaced primitive, unstyled default browser textboxes with cohesive, theme-integrated modern controls across desktop, laptop, tablet, and mobile.
+  - `#timeout-username-input` and `#ban-username-input`: Styled with `var(--input-bg)` and `1.5px solid var(--input-border)`, `8px` border-radius (`6px` on mobile), `40px` height (`36px` on mobile), subtle inset shadow, theme-adaptive text color, and bespoke glow outlines on focus (amber `#f59e0b` for Timeout, crimson `#f43f5e` for Ban).
+  - `.timeout-duration-box` & `#timeout-hours-input`: Redesigned duration container into an aesthetic pill control with centered typography and an embedded dark-contrast number input (`#f59e0b` bold text, `28px` height, `6px` radius).
+  - `#timeout-reason-input` & `#ban-reason-input`: Styled textareas with matching background, borders, `8px` radius (`6px` on mobile), subtle inset shadows, and themed focus ring glows.
+  - Buttons (`#timeout-user-btn`, `#check-timeout-btn`, `#lift-timeout-btn`, `#ban-user-btn`): Unified height to `40px` on desktop (`36px` on mobile) with `8px` radius (`6px` on mobile) for flawless horizontal row alignment.
+- **Reduced Description Padding & Compact Layout on Mobile (`static/css/play.css`)**:
+  - Compacted `#mod-tab-ban .tool-header p`: `padding: 4px 8px; margin: 0 0 4px 0; font-size: 0.74rem;`.
+  - Collapsed empty status text area (`#mod-tab-ban #ban-status-area:empty` to `display: none;`), eliminating 35px of dead blank space directly under the top description.
+  - Reduced description bottom margins inside cards (`.mod-action-card p: margin-bottom: 6px; font-size: 0.76rem;`).
+  - Sized action cards to `padding: 8px 10px; margin-bottom: 8px; border-radius: 8px;`.
+  - Significantly compresses vertical spacing on mobile screens, bringing the Permanent Ban & Erase section into full view without extensive scrolling.
+
 ---
 
 ## Verification & Validation
