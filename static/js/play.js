@@ -2684,14 +2684,10 @@ async function _doUpdateGameState(incomingState = null) {
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
             renderFCFSNotepads(state.players, state);
         } else {
-            // Render previous day's board if the user is on the previous tab
             let grayed = state.state === 'intermission' || state.state === 'waiting';
             let boardToRender = state.board;
             if ((state.state === 'intermission' || state.state === 'waiting') && state.previous_board && state.previous_board.length > 0) {
                 boardToRender = state.previous_board;
-            } else if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0) {
-                boardToRender = state.previous_board;
-                grayed = true;
             }
             if ((!boardToRender || boardToRender.length === 0) && window.lastGameState && window.lastGameState.board) {
                 boardToRender = window.lastGameState.board;
@@ -8435,12 +8431,9 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
  */
 function reapplyBoardHighlights() {
     let board = window.lastGameState ? window.lastGameState.board : null;
-    if (activeWordsTab === 'previous' && window.lastGameState && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
-        board = window.lastGameState.previous_board;
-    }
     if (!board) return;
 
-    const isCurrentActiveRound = window.lastGameState && window.lastGameState.state === 'active' && activeWordsTab !== 'previous';
+    const isCurrentActiveRound = window.lastGameState && window.lastGameState.state === 'active';
     if (isCurrentActiveRound) {
         // Clear stale intermission/review word selection when an active round is running
         highlightedFoundWord = null;
@@ -10607,10 +10600,6 @@ document.addEventListener('click', (e) => {
         if (window.lastGameState && window.lastGameState.board) {
             let boardToRender = window.lastGameState.board;
             let isIntermission = window.lastGameState.state === 'intermission';
-            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
-                boardToRender = window.lastGameState.previous_board;
-                isIntermission = true;
-            }
             const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
             renderBoard(boardToRender, isIntermission, is3D);
         }
@@ -10626,10 +10615,6 @@ document.addEventListener('click', (e) => {
         if (window.lastGameState && window.lastGameState.board) {
             let boardToRender = window.lastGameState.board;
             let isIntermission = window.lastGameState.state === 'intermission';
-            if (activeWordsTab === 'previous' && window.lastGameState.previous_board && window.lastGameState.previous_board.length > 0) {
-                boardToRender = window.lastGameState.previous_board;
-                isIntermission = true;
-            }
             const is3D = window.lastGameState.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
             renderBoard(boardToRender, isIntermission, is3D);
         }

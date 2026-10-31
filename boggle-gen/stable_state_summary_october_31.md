@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-ff24bd2ce8484a5ad7bb50764007ae369fa9a511
+b8fd4aaca50cacc4a550d59167880a7fee2f478f
 ```
-*(Short SHA: `ff24bd2c`)*
+*(Short SHA: `b8fd4aac`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `ff24bd2c` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `ff24bd2c` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `ff24bd2c` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `b8fd4aac` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `b8fd4aac` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `b8fd4aac` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -621,6 +621,19 @@ ff24bd2ce8484a5ad7bb50764007ae369fa9a511
 - **Comprehensive Global Lexicographical Audit of Added Words**:
   - Audited all 542,245 Added Words and 827,616 definitions.
   - Found that out of 217,614 roots referenced across Added Words, 1,267 confirmed verb roots have an inflected form in Added Words but lack one or more standard regular inflected forms (`-S`/`-ES`, `-ED`, or `-ING`) in historical word lists (totaling 1,983 inflected word entries).
+
+### 51. 24h Rooms: Normal Main Playable Board Preserved on "Previous" Tab (`static/js/play.js`, `templates/index.html`)
+- **Normal Playable Board Preservation During Previous Day Review**:
+  - In 24h rooms, when the user clicked the "Previous" tab to view yesterday's game history, the main playable board previously became greyed out (`.board-cell.grayed`).
+  - **Root Cause**:
+    - In `_doUpdateGameState` (`static/js/play.js`), an `else if (activeWordsTab === 'previous' && state.previous_board && state.previous_board.length > 0)` branch was setting `boardToRender = state.previous_board;` and `grayed = true;`. While the mid-round active board shield prevented the board tiles from swapping mid-round, `grayed = true` was passed to `renderBoard()`, causing all main board cells to receive the greyed-out style (`.board-cell.grayed`).
+    - Similar overrides in `reapplyBoardHighlights()` and transpose/rotate event listeners unnecessarily swapped board references and toggled `isIntermission = true` when on the Previous tab.
+  - **Implementation**:
+    - Removed the main board `grayed = true` override when `activeWordsTab === 'previous'`. The main board now cleanly displays the active current playable board with standard, crisp interactive styling.
+    - Preserved independent rendering of the smaller Previous board from yesterday directly inside the tab container (`#prev-board-container`) via `renderPreviousBoard()`.
+    - Cleaned up `reapplyBoardHighlights()`, transpose, and rotate event listeners in `play.js` so they target the active board consistently.
+  - **Cache Busters (`templates/index.html`)**:
+    - Bumped `play.js` cache buster to `v=1793580000`.
 
 ---
 
