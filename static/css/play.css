@@ -11649,6 +11649,10 @@ body .board-cell.tile-flash-purple * {
         max-width: 100% !important;
     }
 
+    #tool-find-count .combo-control-panel {
+        margin-bottom: 0px !important;
+    }
+
     #tool-sequence .seq-results-container,
     #tool-lists .lists-container,
     .seq-results-container,

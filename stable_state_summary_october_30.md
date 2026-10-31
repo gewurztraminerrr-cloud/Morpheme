@@ -222,8 +222,15 @@ START_OVER_POINT_OCTOBER_30
   - **Base & Standard Desktop Breakpoints (Chrome, Safari, Edge)**:
     - Base desktop rule: `margin-left: 11px;` with `gap: 4px` (left spacing = 15px) and `padding-left: 15px;` (right spacing = 15px).
     - Compact/mid desktop rule (`901px - 1380px`): `margin-left: 5.5px !important;` with `gap: 2.5px` (left spacing = 8px) and `padding-left: 8px !important;` (right spacing = 8px).
-  - Updated stylesheet cache buster in `templates/index.html` to `v=1793420000`.
-  - Verified across Firefox and Chrome using headless browser automated pixel diagnostics.
+### 25. Tools: Random Word "Contains Any" Rename & Find Count Input Spacing Adjustment
+- **Random Word "Contains Any" Label Rename (`templates/index.html`)**:
+  - Renamed the letter filter dropdown (`#random-contains`) default option text from `"Contains All"` to `"Contains Any"`.
+  - Maintained `value="all"` and the underlying API query logic (`/api/tools/random_word?contains=all`) intact across all platforms so words containing any letters remain generated without alteration.
+- **Find Count Input Panel Spacing Adjustment (`templates/index.html`, `static/css/play.css`)**:
+  - Increased spacing above the word input panel: Increased `.suggested-words-section` bottom margin from `20px` to `32px`, placing the submit textbox visibly further away from the random words table, the "More random words" button, and the dictionary filter select dropdown.
+  - Decreased spacing below the word input panel: Reduced `#find-count-results-container` top margin from `25px` down to `10px`, and set mobile `#tool-find-count .combo-control-panel` bottom margin to `0px !important` (overriding the generic mobile `12px !important`), bringing the submit textbox and search button into tight proximity (`10px` gap) with the `"The word 'ALOHA' has been found 0 times..."` results summary message.
+  - Bumped stylesheet cache buster in `templates/index.html` for `play.css` to `v=1793420000`.
+  - Verified across desktop and mobile layouts via headless browser captures.
 
 ---
 
