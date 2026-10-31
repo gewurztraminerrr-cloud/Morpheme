@@ -1234,8 +1234,11 @@ class LobbyMusicEngine {
 
         // If already playing smoothly via Web Audio, do NOT duplicate playback
         if (this.isPlaying && this.source) {
-            if (this.ctx && this.ctx.state === 'suspended') {
+            if (this.ctx && typeof this.ctx.resume === 'function' && this.ctx.state === 'suspended') {
                 this.ctx.resume().catch(() => {});
+            }
+            if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.resume === 'function' && window._morphemeAudioCtx.state === 'suspended') {
+                window._morphemeAudioCtx.resume().catch(() => {});
             }
             const htmlAudio = document.getElementById('lobby-music');
             if (htmlAudio && !htmlAudio.paused) {
@@ -1245,8 +1248,11 @@ class LobbyMusicEngine {
         }
 
         if (this.ctx) {
-            if (this.ctx.state === 'suspended') {
+            if (typeof this.ctx.resume === 'function' && this.ctx.state === 'suspended') {
                 this.ctx.resume().catch(() => {});
+            }
+            if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.resume === 'function' && window._morphemeAudioCtx.state === 'suspended') {
+                window._morphemeAudioCtx.resume().catch(() => {});
             }
 
             if (this.buffer) {
@@ -1332,6 +1338,14 @@ class LobbyMusicEngine {
         const fallbackAudio = document.getElementById('lobby-music');
         if (fallbackAudio && !fallbackAudio.paused) {
             try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; } catch(e) {}
+        }
+
+        // Suspend AudioContext to release hardware audio sink so browser tab horn icon is immediately removed
+        if (this.ctx && typeof this.ctx.suspend === 'function' && this.ctx.state === 'running') {
+            try { this.ctx.suspend().catch(() => {}); } catch(e) {}
+        }
+        if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.suspend === 'function' && window._morphemeAudioCtx.state === 'running') {
+            try { window._morphemeAudioCtx.suspend().catch(() => {}); } catch(e) {}
         }
     }
 
@@ -1865,6 +1879,9 @@ function setupNavigation() {
                 if (typeof window.leaveLobbyPresence === 'function') {
                     window.leaveLobbyPresence();
                 }
+                if (window.lobbyMusicEngine) {
+                    window.lobbyMusicEngine.pause();
+                }
                 const modal = document.getElementById('modal-howtoplay');
                 if (modal) {
                     modal.classList.add('forced-show');
@@ -1873,6 +1890,13 @@ function setupNavigation() {
                     if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
                 }
                 return;
+            }
+
+            // If modal-howtoplay was open, close it
+            const htpModal = document.getElementById('modal-howtoplay');
+            if (htpModal && !htpModal.classList.contains('hidden')) {
+                htpModal.classList.remove('forced-show');
+                htpModal.classList.add('hidden');
             }
 
             // NAVIGATION GUARD FOR ACTIVE MATCHES
@@ -1988,24 +2012,27 @@ function setupModalListeners() {
     const closeBtn = document.getElementById('close-howtoplay');
 
     if (modal && closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        const closeHowToPlay = () => {
             modal.classList.remove('forced-show');
             modal.classList.add('hidden');
-        });
+            if (typeof handleLobbyMusicState === 'function') {
+                handleLobbyMusicState();
+            }
+        };
+
+        closeBtn.addEventListener('click', closeHowToPlay);
 
         // Close on escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                modal.classList.remove('forced-show');
-                modal.classList.add('hidden');
+                closeHowToPlay();
             }
         });
 
         // Close on click outside (optional, but nice)
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.classList.remove('forced-show');
-                modal.classList.add('hidden');
+                closeHowToPlay();
             }
         });
     }

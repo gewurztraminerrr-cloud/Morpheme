@@ -578,6 +578,20 @@ d8f5a8080649580449bf9cad293f5216f9c55519
   - Bumped `style.css` cache buster to `v=1793550000`.
   - Bumped `play.css` cache buster to `v=1793550000`.
 
+### 49. AudioContext Hardware Sink Suspension & Tab Audio Indicator Cleanup on Top Menu Navigation (`static/js/app.js`, `templates/index.html`)
+- **Browser Tab Horn/Speaker Audio Indicator Fix on Desktops & Laptops**:
+  - In Chromium, WebKit, and Gecko browsers on desktop and laptop devices, navigating away from the Lobby with background music playing previously left the tab's horn-shaped audio indicator icon visible in the browser tab.
+  - **Root Cause Analysis**:
+    1. Modern browser engines track `AudioContext.state === 'running'` to determine tab audibility (`TabAudioState::kAudible`). While `LobbyMusicEngine.pause()` stopped and disconnected the `AudioBufferSourceNode`, it left the underlying `AudioContext` in `state === 'running'`. This maintained an open audio hardware output sink, causing the browser to keep the speaker icon visible on the tab.
+    2. In `setupNavigation()`, clicking "How to Play & FAQ" opened `#modal-howtoplay` without invoking `showPage()` or pausing `lobbyMusicEngine`, leaving the music audibly playing in the background.
+  - **Implementation**:
+    - **`LobbyMusicEngine.pause()` (`static/js/app.js`)**: Added explicit calls to `this.ctx.suspend()` and `window._morphemeAudioCtx.suspend()`. When the audio context is suspended, the browser immediately releases the hardware audio sink and dismisses the tab's horn-shaped speaker icon.
+    - **`LobbyMusicEngine.play()` (`static/js/app.js`)**: Added explicit checks to resume `this.ctx` and `window._morphemeAudioCtx` (`ctx.resume()`) when starting or resuming playback upon entering the Lobby.
+    - **Top Navigation "How to Play & FAQ" Modal (`static/js/app.js`)**: Updated `setupNavigation()` to call `window.lobbyMusicEngine.pause()` when `#modal-howtoplay` is opened.
+    - **Modal Dismissal Synchronization (`static/js/app.js`)**: Updated `setupModalListeners()` so that closing `#modal-howtoplay` (via the close button, Escape key, or backdrop click) triggers `handleLobbyMusicState()`, cleanly resuming background music if the user returns to the Lobby.
+  - **Cache Busters (`templates/index.html`)**:
+    - Bumped `app.js` cache buster to `v=1793560000`.
+
 ---
 
 ## Verification & Validation
