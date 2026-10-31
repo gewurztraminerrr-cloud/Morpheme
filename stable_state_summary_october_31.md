@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-b8fd4aaca50cacc4a550d59167880a7fee2f478f
+c29934a5175dca91797a617d7e175cda861ac5da
 ```
-*(Short SHA: `b8fd4aac`)*
+*(Short SHA: `c29934a5`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `b8fd4aac` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `b8fd4aac` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `b8fd4aac` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `c29934a5` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `c29934a5` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `c29934a5` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -634,6 +634,39 @@ b8fd4aaca50cacc4a550d59167880a7fee2f478f
     - Cleaned up `reapplyBoardHighlights()`, transpose, and rotate event listeners in `play.js` so they target the active board consistently.
   - **Cache Busters (`templates/index.html`)**:
     - Bumped `play.js` cache buster to `v=1793580000`.
+
+### 52. Tools: Mobile Screen Fitting & Internal Scrolling for Sequence Search (`static/css/play.css`, `static/js/tools.js`, `templates/index.html`)
+- **Zero Outer Scroll on Mobile for Sequence Tool**:
+  - In Tools $\rightarrow$ Sequence (`#tool-sequence`), previously on mobile screens (`@media (max-width: 900px)` / `body.is-mobile`), the results panel was fixed to a height of 380px with 15px margins. Combined with the top navigation, page title, tool description, and 2-column input grid, the results container overflowed the screen viewport, forcing users to scroll the outer window down to see the lower half of the results panel.
+  - **CSS Optimization (`static/css/play.css`)**:
+    - Removed obsolete fixed 380px height from `.seq-results-container`.
+    - Added `#page-tools #tool-sequence.tool-pane.active` and `body.is-mobile #page-tools #tool-sequence.tool-pane.active` to full flex column mode (`flex: 1 1 0px !important; height: 100% !important; overflow: hidden !important;`).
+    - Configured `#page-tools .tools-content:has(#tool-sequence.active)` and `.has-sequence-active` to eliminate outer page scroll (`overflow-y: hidden !important; height: 100% !important; flex: 1 1 0px !important;`).
+    - Made `#page-tools #tool-sequence .seq-results-container` dynamically flex to fit the exact remaining vertical space (`flex: 1 1 0px !important; height: 100% !important; max-height: 100% !important; overflow: hidden !important; margin: 0 !important;`).
+    - Positioned `.list-scroll-area-wrapper` and `#seq-list-results` to scroll smoothly and internally (`overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;`) while hiding default browser scrollbars.
+    - Preserved the styled gradient custom scrollbar thumb (`#seq-scrollbar-thumb`).
+  - **JavaScript Synchronization (`static/js/tools.js`)**:
+    - Added `has-sequence-active` class toggling to `window.showTool` and `window.resetToolsTab`.
+    - Initialized custom scrollbar tracking for `#seq-list-results`.
+  - **Cache Busters (`templates/index.html`)**:
+    - Bumped `play.css` cache buster to `v=1793590000`.
+    - Bumped `tools.js` cache buster to `v=1793590000`.
+
+### 53. Lobby: Desktop Active Rooms Margin/Padding & Side-by-Side Controls Layout (`static/css/lobby.css`, `templates/index.html`)
+- **Desktop/Laptop Active Rooms Breathing Room & Side-by-Side Grid**:
+  - In Lobby on desktop and laptop devices (`@media (min-width: 901px)` and `body.is-desktop`):
+    - Added comfortable 10px vertical margins and 12px internal padding to the main `ACTIVE ROOMS` panel (`#mobile-panel-rooms` / `.active-rooms-panel`), ensuring it does not press against the top header divider or bottom lobby chat bar.
+    - Repositioned the two sub-panels ("Set Rating Limits" panel and "Sort rooms by proximity to average rating" panel) to sit side-by-side (left-and-right) in a proportional 2-column grid (`grid-template-columns: minmax(0, 0.65fr) minmax(0, 1fr)`) instead of stacked vertically on top of each other, making "Set Rating Limits" smaller horizontally (~219px) than "Sort rooms..." (~337px).
+    - Matched the border styling of `.create-room-panel` to `.rating-filter-container` exactly (`1.5px solid rgba(var(--text-primary-rgb), 0.38)` in dark themes, `2px` in white theme).
+    - Enforced `min-width: 0 !important; width: 0 !important; flex: 1 1 0 !important;` on `.rating-input` and `overflow: hidden !important;` on `.create-room-panel`, completely confining `Min Rating` and `Max Rating` to their panel with zero spillover into the adjacent panel.
+    - Formatted `Open Rooms`, `Closed Rooms`, and `My Rating` to stack their text vertically (`Open` over `Rooms`, `Closed` over `Rooms`, `My Rating` over value) with `height: 34px`.
+    - Increased `#rating-filter` vertical height to `34px`, eliminating all empty dead space between the textbox and buttons.
+    - Flex-stretched both sub-panels to match heights identically (`87.2px`) with bottom-aligned action buttons.
+    - Wrapped rating filter buttons in `.rating-filter-buttons-row` to evenly distribute button widths and eliminate empty grid gaps when `#my-rating-btn` is hidden for guests.
+  - On mobile screens (`body.is-mobile` / `@media (max-width: 900px)`):
+    - Ensured `.active-rooms-controls-row` falls back to `display: flex !important; flex-direction: column !important;`, keeping the controls stacked vertically with standard mobile touch sizing.
+  - **Cache Busters (`templates/index.html`)**:
+    - Bumped `lobby.css` cache busters to `v=1793630000`.
 
 ---
 
