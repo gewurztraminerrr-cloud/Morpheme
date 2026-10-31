@@ -544,6 +544,61 @@
     width: 25px;
 }
 
+.player-rank.rank-1,
+.player-rank.rank-gold {
+    color: #ffd700 !important;
+    opacity: 1 !important;
+}
+
+.player-rank.rank-2,
+.player-rank.rank-silver {
+    color: #c0c0c0 !important;
+    opacity: 1 !important;
+}
+
+.player-rank.rank-3,
+.player-rank.rank-bronze {
+    color: #cd7f32 !important;
+    opacity: 1 !important;
+}
+
+/* Light / White themes */
+[class*="theme-white"] .player-rank.rank-1,
+[class*="theme-light-"] .player-rank.rank-1,
+body.theme-white .player-rank.rank-1,
+body[class*="theme-light-"] .player-rank.rank-1,
+[class*="theme-white"] .player-rank.rank-gold,
+[class*="theme-light-"] .player-rank.rank-gold,
+body.theme-white .player-rank.rank-gold,
+body[class*="theme-light-"] .player-rank.rank-gold {
+    color: #b8860b !important;
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .player-rank.rank-2,
+[class*="theme-light-"] .player-rank.rank-2,
+body.theme-white .player-rank.rank-2,
+body[class*="theme-light-"] .player-rank.rank-2,
+[class*="theme-white"] .player-rank.rank-silver,
+[class*="theme-light-"] .player-rank.rank-silver,
+body.theme-white .player-rank.rank-silver,
+body[class*="theme-light-"] .player-rank.rank-silver {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .player-rank.rank-3,
+[class*="theme-light-"] .player-rank.rank-3,
+body.theme-white .player-rank.rank-3,
+body[class*="theme-light-"] .player-rank.rank-3,
+[class*="theme-white"] .player-rank.rank-bronze,
+[class*="theme-light-"] .player-rank.rank-bronze,
+body.theme-white .player-rank.rank-bronze,
+body[class*="theme-light-"] .player-rank.rank-bronze {
+    color: #a0522d !important;
+    opacity: 1 !important;
+}
+
 .rating-square {
     display: inline-block;
     width: 15px;

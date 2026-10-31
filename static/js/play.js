@@ -3970,10 +3970,12 @@ function renderDailyScoreSums() {
         // Find the absolute rank of this player in the main unfiltered list
         const absRank = players.findIndex(orig => orig.username === p.username) + 1;
         const isMe = p.username.toLowerCase().trim() === currentUserNameNormalized;
+        const rankClass = (absRank === 1) ? ' rank-1 rank-gold' : (absRank === 2) ? ' rank-2 rank-silver' : (absRank === 3) ? ' rank-bronze rank-3' : ` rank-${absRank}`;
+        const rankStyle = (absRank === 1) ? 'color: #ffd700; opacity: 1;' : (absRank === 2) ? 'color: #c0c0c0; opacity: 1;' : (absRank === 3) ? 'color: #cd7f32; opacity: 1;' : 'opacity: 0.8;';
         
         html += `
             <div class="score-sum-row ${isMe ? 'is-me-row' : ''}" data-username="${p.username.toLowerCase().trim()}" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; background: ${isMe ? 'rgba(var(--text-primary-rgb), 0.15)' : 'var(--input-bg)'}; border: 1px solid ${isMe ? 'var(--text-primary)' : 'var(--input-border)'};">
-                <span class="player-rank" style="font-weight: bold; width: 45px; opacity: 0.8;">#${absRank}</span>
+                <span class="player-rank${rankClass}" style="font-weight: bold; width: 45px; ${rankStyle}">#${absRank}</span>
                 <span class="player-name" style="flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${isMe ? 'font-weight: bold;' : ''}">${p.username}</span>
                 <span class="player-score" style="font-weight: bold;">${p.score_sum} pts</span>
             </div>
@@ -4129,10 +4131,13 @@ function renderPlayers(players, currentUser = null, state = null) {
         const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
         const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
 
+        const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank}`;
+        const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #c0c0c0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : '';
+
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
-                <span class="player-rank">#${rank}</span>
+                <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
                 <span class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
                 <span class="player-username" style="text-align: left !important;">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>

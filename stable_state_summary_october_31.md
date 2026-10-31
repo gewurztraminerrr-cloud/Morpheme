@@ -407,6 +407,19 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `leaderboard.js` cache buster to `v=1793464000`.
 
+### 39. Game Room Top Placement Numbers: Gold, Silver, and Bronze Styling (#1, #2, #3) (`static/css/play.css`, `static/js/play.js`, `templates/index.html`)
+- **Top 3 Placement Text Coloration**:
+  - In `static/js/play.js` under `renderPlayers()` (the main room player table showing users in room during active rounds and users who played during intermission) and `renderDailyScoreSums()` (24h cumulative player table):
+    - Added dedicated rank classes `rank-1 rank-gold`, `rank-2 rank-silver`, `rank-3 rank-bronze` (and fallback `rank-${rank}`) to `.player-rank`.
+    - Set `#1` to Gold (`#ffd700`), `#2` to Silver (`#c0c0c0`), and `#3` to Bronze (`#cd7f32`) with full opacity (`opacity: 1`), keeping ranks `#4` and beyond at default muted opacity.
+  - In `static/css/play.css`:
+    - Added theme-aware styles supporting all 39 themes:
+      - Dark themes: `#ffd700` (Gold), `#c0c0c0` (Silver), `#cd7f32` (Bronze).
+      - White and light themes (`theme-white`, `theme-light-*`): high-contrast `#b8860b` (Dark Goldenrod), `#64748b` (Cool Slate Silver), and `#a0522d` (Sienna Bronze).
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793465000`.
+  - Bumped `play.js` cache buster to `v=1793465000`.
+
 ---
 
 ## Verification & Validation
