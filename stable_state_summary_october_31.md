@@ -369,6 +369,12 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` cache buster to `v=1793459000`.
 
+### 35. Game Room Word Selection: Spaced FC Ratio Format (`static/js/play.js`, `templates/index.html`)
+- **Find Count Spaced Format**:
+  - In `static/js/play.js` inside `fetchDefinition(word)`, updated the FC button label formatting from unspaced slash `FC [${roundFindersCount}/${totalCombined}]` to spaced slash `FC [${roundFindersCount} / ${totalCombined}]` (e.g. `FC [2 / 13]` rather than `FC [2/13]`), improving readability when selecting words under All Words, Words, and Remaining.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.js` cache buster to `v=1793460000`.
+
 ---
 
 ## Verification & Validation

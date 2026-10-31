@@ -10943,7 +10943,7 @@ async function fetchDefinition(word) {
         if (!window._wordTallyCache) window._wordTallyCache = {};
         if (window._wordTallyCache[cleanWord]) {
             const totalCombined = calculateCombinedFindCount(window._wordTallyCache[cleanWord], roundFinders);
-            fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
+            fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
         } else {
             fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
                 .then(res => res.json())
@@ -10951,7 +10951,7 @@ async function fetchDefinition(word) {
                     window._wordTallyCache[cleanWord] = data;
                     if (window._currentDefWord === cleanWord) {
                         const totalCombined = calculateCombinedFindCount(data, roundFinders);
-                        fcBtn.textContent = `FC [${roundFindersCount}/${totalCombined}]`;
+                        fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
                     }
                 })
                 .catch(err => {
