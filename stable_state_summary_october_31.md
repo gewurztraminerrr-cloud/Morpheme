@@ -492,6 +492,20 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` cache buster to `v=1793505000`.
 
+### 44. Tab Visual Harmonization Across All Color Layouts & Mobile Devices (Tools, Mods, Settings Main Tabs) (`static/css/style.css`, `static/css/play.css`, `templates/index.html`)
+- **Harmonized Tab Dividers & Removed Box Shapes Across Themes**:
+  - In Tools (`#page-tools`), Mods (`#page-mods`), and Settings (`#page-settings` main category navigation), eliminated the opaque rectangular cards (`background: rgba(0, 0, 0, 0.05)`, border outlines, and box shadows) on unselected `.tool-nav-btn` tabs in white and light-colored layouts.
+  - Divided all unselected tabs with a subtle partial horizontal line (`::after` with `left: 8px; right: 8px; height: 1px; background: rgba(var(--text-primary-rgb), 0.12);`) that does not extend completely from left to right.
+  - Preserved the vibrant blue card highlight (`rgba(37, 99, 235, 0.12)` background, `rgba(37, 99, 235, 0.5)` border, `#2563eb` titles) when a tab is selected (`.tool-nav-btn.active`).
+- **Extended Partial Line Dividers to Mobile Devices**:
+  - Under `@media (max-width: 900px)` in `static/css/play.css`, replaced bulky solid cards on `.tool-nav-btn` with transparent backgrounds, subtle padding, and the partial horizontal line divider (`:not(:last-child)::after`).
+  - Mobile screens now display the exact same clean, elegant divided-line look as laptop/desktop screens regardless of theme (dark, white, light themes).
+- **Settings Sub-Tabs Strictly Protected**:
+  - Ensured that Sub-tabs in Settings (`.settings-subnav-btn` in Appearance, Audio & Sounds, and Gameplay & Preferences) remain untouched as distinct cards with card backgrounds, borders, and right chevron arrows (`›`), preserving their distinct sub-navigation visual identity.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css` cache buster to `v=1793510000`.
+  - Bumped `play.css` cache buster to `v=1793510000`.
+
 ---
 
 ## Verification & Validation

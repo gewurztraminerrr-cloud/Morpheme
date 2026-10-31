@@ -475,38 +475,67 @@ select option {
 }
 
 [class*="theme-white"] .tool-nav-btn,
-[class*="theme-light-"] .tool-nav-btn {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+[class*="theme-light-"] .tool-nav-btn,
+body.theme-white .tool-nav-btn,
+body[class*="theme-light-"] .tool-nav-btn {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
 }
 
 [class*="theme-white"] .tool-nav-btn:hover,
-[class*="theme-light-"] .tool-nav-btn:hover {
-    background: rgba(0, 0, 0, 0.08) !important;
-    border-color: rgba(0, 0, 0, 0.2) !important;
+[class*="theme-light-"] .tool-nav-btn:hover,
+body.theme-white .tool-nav-btn:hover,
+body[class*="theme-light-"] .tool-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: transparent !important;
 }
 
 [class*="theme-white"] .tool-nav-btn.active,
-[class*="theme-light-"] .tool-nav-btn.active {
+[class*="theme-light-"] .tool-nav-btn.active,
+body.theme-white .tool-nav-btn.active,
+body[class*="theme-light-"] .tool-nav-btn.active {
     background: rgba(37, 99, 235, 0.12) !important;
-    border-color: rgba(37, 99, 235, 0.5) !important;
+    border: 1px solid rgba(37, 99, 235, 0.5) !important;
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.15) !important;
     color: #2563eb !important;
 }
 
 [class*="theme-white"] .tool-nav-btn.active .tool-btn-title,
-[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title {
+[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title,
+body.theme-white .tool-nav-btn.active .tool-btn-title,
+body[class*="theme-light-"] .tool-nav-btn.active .tool-btn-title {
     color: #2563eb !important;
 }
 
-[class*="theme-white"] .tool-btn-title,
-[class*="theme-light-"] .tool-btn-title {
-    color: var(--text-primary) !important;
+[class*="theme-white"] .tool-nav-btn.active .tool-btn-desc,
+[class*="theme-light-"] .tool-nav-btn.active .tool-btn-desc,
+body.theme-white .tool-nav-btn.active .tool-btn-desc,
+body[class*="theme-light-"] .tool-nav-btn.active .tool-btn-desc {
+    color: rgba(37, 99, 235, 0.85) !important;
 }
 
-[class*="theme-white"] .tool-btn-desc,
-[class*="theme-light-"] .tool-btn-desc {
-    color: rgba(0, 0, 0, 0.7) !important;
+[class*="theme-white"] .tool-nav-btn:not(.active) .tool-btn-title,
+[class*="theme-light-"] .tool-nav-btn:not(.active) .tool-btn-title,
+body.theme-white .tool-nav-btn:not(.active) .tool-btn-title,
+body[class*="theme-light-"] .tool-nav-btn:not(.active) .tool-btn-title {
+    color: var(--text-primary) !important;
+    opacity: 0.85 !important;
+}
+
+[class*="theme-white"] .tool-nav-btn:not(.active) .tool-btn-desc,
+[class*="theme-light-"] .tool-nav-btn:not(.active) .tool-btn-desc,
+body.theme-white .tool-nav-btn:not(.active) .tool-btn-desc,
+body[class*="theme-light-"] .tool-nav-btn:not(.active) .tool-btn-desc {
+    color: rgba(0, 0, 0, 0.6) !important;
+    opacity: 0.75 !important;
+}
+
+[class*="theme-white"] .tool-nav-btn:not(.active):hover .tool-btn-title,
+[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title,
+body.theme-white .tool-nav-btn:not(.active):hover .tool-btn-title,
+body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
+    opacity: 1 !important;
 }
 
 /* Control Panels & Dashboard Cards for Light Themes */
