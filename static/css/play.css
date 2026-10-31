@@ -2210,40 +2210,19 @@ body:not(.is-subanagrams) #shuffle-board-btn {
 }
 
 .remaining-legend {
-    font-size: 0.52rem;
-    font-size: clamp(0.44rem, 2.3cqw, 0.54rem);
-    font-weight: 500;
-    text-align: center;
-    color: var(--text-secondary, rgba(var(--text-primary-rgb), 0.7));
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
     margin: 2px auto 8px auto;
-    letter-spacing: -0.15px;
-    white-space: nowrap;
+    overflow: visible;
 }
 
-@container wordspanel (max-width: 360px) {
-    .remaining-legend {
-        font-size: 0.48rem;
-        letter-spacing: -0.2px;
-    }
-}
-
-body.is-mobile .remaining-legend {
-    font-size: 0.46rem !important;
-    letter-spacing: -0.2px !important;
-}
-
-@media (max-width: 600px) {
-    .remaining-legend {
-        font-size: 0.46rem !important;
-        letter-spacing: -0.2px !important;
-    }
-}
-
-@media (max-width: 360px) {
-    .remaining-legend {
-        font-size: 0.42rem !important;
-        letter-spacing: -0.25px !important;
-    }
+.remaining-legend-text {
+    fill: var(--text-secondary, rgba(var(--text-primary-rgb), 0.7));
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14.5px;
 }
 
 .len-cell {
