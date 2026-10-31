@@ -315,6 +315,14 @@ window.showTool = function(toolId) {
         } else {
             content.classList.remove('has-lists-active');
         }
+        if (toolId === 'sequence') {
+            content.classList.add('has-sequence-active');
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('seq-list-results', 'seq-scrollbar-track', 'seq-scrollbar-thumb');
+            }
+        } else {
+            content.classList.remove('has-sequence-active');
+        }
         if (toolId === 'work-on') {
             content.classList.add('has-work-on-active');
             if (typeof initCustomScrollbarForElement === 'function') {
@@ -555,6 +563,7 @@ window.resetToolsTab = function(immediate = false) {
             });
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
+            content.classList.remove('has-sequence-active');
         }
         return;
     }
@@ -572,6 +581,7 @@ window.resetToolsTab = function(immediate = false) {
             });
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
+            content.classList.remove('has-sequence-active');
         }
         window._toolsSlideTimeout = null;
     }, 320);

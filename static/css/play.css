@@ -9687,34 +9687,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Sequence and Subanagrams Tool Results Vertical Height Fix for Mobile */
-    .seq-results-container {
-        height: 380px !important;
-        max-height: 380px !important;
-        flex: 0 0 auto !important;
-        margin-top: 15px !important;
-        margin-bottom: 15px !important;
-        overflow-y: hidden !important;
-    }
-    .seq-results-container .result-section {
-        flex: 0 0 auto !important;
-        height: auto !important;
-        min-height: auto !important;
-        overflow: visible !important;
-    }
-    .seq-results-container .horizontal-scroll-container {
-        height: 260px !important;
-        min-height: 260px !important;
-    }
-    .seq-results-container .group-column {
-        height: 100% !important;
-        max-height: 240px !important;
-    }
-    .seq-results-container .group-table-container {
-        max-height: 200px !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
+    /* Sequence Tool Results Vertical Height Fix for Mobile is configured in the mobile tools section below */
 
     /* Profile layout stack vertically on mobile */
     .profile-layout {
@@ -13197,9 +13170,11 @@ body .board-cell.tile-flash-purple * {
         font-size: 0.8rem !important;
     }
 
-    /* Lists Tool Mobile Layout: fit table on screen, remove outer scroll, reduce description padding */
+    /* Lists & Sequence Tool Mobile Layout: fit table on screen, remove outer scroll, reduce description padding */
     #page-tools .tools-content:has(#tool-lists.active),
-    #page-tools .tools-content.has-lists-active {
+    #page-tools .tools-content.has-lists-active,
+    #page-tools .tools-content:has(#tool-sequence.active),
+    #page-tools .tools-content.has-sequence-active {
         display: flex !important;
         flex-direction: column !important;
         overflow-y: hidden !important;
@@ -13212,7 +13187,9 @@ body .board-cell.tile-flash-purple * {
     }
 
     #page-tools #tool-lists.tool-pane.active,
-    body.is-mobile #page-tools #tool-lists.tool-pane.active {
+    body.is-mobile #page-tools #tool-lists.tool-pane.active,
+    #page-tools #tool-sequence.tool-pane.active,
+    body.is-mobile #page-tools #tool-sequence.tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 0px !important;
@@ -13225,13 +13202,15 @@ body .board-cell.tile-flash-purple * {
     }
 
     /* Reduce padding/margin below description to give maximum room for the table */
-    #page-tools #tool-lists .tool-header {
+    #page-tools #tool-lists .tool-header,
+    #page-tools #tool-sequence .tool-header {
         flex: 0 0 auto !important;
         margin-bottom: 2px !important;
         padding: 0 !important;
     }
 
-    #page-tools #tool-lists .tool-header p {
+    #page-tools #tool-lists .tool-header p,
+    #page-tools #tool-sequence .tool-header p {
         margin: 0 0 6px 0 !important;
         padding: 5px 10px !important;
         font-size: 0.76rem !important;
@@ -13374,6 +13353,90 @@ body .board-cell.tile-flash-purple * {
         width: 100% !important;
     }
 
+    /* Sequence Results container: fits entire remaining screen on mobile */
+    #page-tools #tool-sequence .seq-results-container,
+    body.is-mobile #page-tools #tool-sequence .seq-results-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-sequence .seq-results-container > div:first-child {
+        flex: 0 0 auto !important;
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+    }
+
+    #page-tools #tool-sequence .list-scroll-area-wrapper,
+    body.is-mobile #page-tools #tool-sequence .list-scroll-area-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-sequence .list-scroll-area,
+    body.is-mobile #page-tools #tool-sequence .list-scroll-area,
+    #page-tools #tool-sequence #seq-list-results,
+    body.is-mobile #page-tools #tool-sequence #seq-list-results {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 8px !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    #page-tools #tool-sequence .list-scroll-area::-webkit-scrollbar,
+    body.is-mobile #page-tools #tool-sequence .list-scroll-area::-webkit-scrollbar,
+    #page-tools #tool-sequence #seq-list-results::-webkit-scrollbar,
+    body.is-mobile #page-tools #tool-sequence #seq-list-results::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    #page-tools #tool-sequence #seq-scrollbar-track {
+        display: block !important;
+        position: absolute !important;
+        right: 4px !important;
+        top: 6px !important;
+        bottom: 6px !important;
+        width: 10px !important;
+        background: rgba(var(--text-primary-rgb), 0.08) !important;
+        border-radius: 5px !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        z-index: 50 !important;
+    }
+
+    #page-tools #tool-sequence #seq-scrollbar-thumb {
+        position: absolute !important;
+        top: 0 !important;
+        left: 1px !important;
+        width: 6px !important;
+        min-height: 28px !important;
+        background: linear-gradient(180deg, #a78bfa, #7c3aed) !important;
+        border-radius: 4px !important;
+        border: 1px solid rgba(167, 139, 250, 0.85) !important;
+        box-shadow: 0 0 8px rgba(167, 139, 250, 0.45) !important;
+        touch-action: none !important;
+    }
+
     /* Table / panel fits entire remaining screen */
     #page-tools #tool-lists .lists-container,
     body.is-mobile #page-tools #tool-lists .lists-container {
@@ -13479,7 +13542,9 @@ body.is-mobile #page-tools .tools-content.has-lists-active,
 body.is-mobile #page-tools .tools-content:has(#tool-new-users.active),
 body.is-mobile #page-tools .tools-content.has-new-users-active,
 body.is-mobile #page-tools .tools-content:has(#tool-work-on.active),
-body.is-mobile #page-tools .tools-content.has-work-on-active {
+body.is-mobile #page-tools .tools-content.has-work-on-active,
+body.is-mobile #page-tools .tools-content:has(#tool-sequence.active),
+body.is-mobile #page-tools .tools-content.has-sequence-active {
     display: flex !important;
     flex-direction: column !important;
     overflow-y: hidden !important;
@@ -13491,20 +13556,23 @@ body.is-mobile #page-tools .tools-content.has-work-on-active {
 }
 
 body.is-mobile #page-tools #new-users-table-scroll,
-body.is-mobile #page-tools #work-on-table-scroll {
+body.is-mobile #page-tools #work-on-table-scroll,
+body.is-mobile #page-tools #seq-list-results {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
 
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar,
-body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar {
+body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar,
+body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
 }
 
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb,
-body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
+body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb,
+body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb {
     display: none !important;
 }
 
