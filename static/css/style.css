@@ -1608,7 +1608,7 @@ body.theme-white .header {
     gap: 12px;
     padding-left: 15px;
     border-left: 1px solid rgba(var(--text-primary-rgb), 0.2);
-    margin-left: 10px;
+    margin-left: 11px;
     flex-shrink: 0;
 }
 
@@ -9128,7 +9128,7 @@ main.pages,
     }
     .user-display:not(.hidden) {
         gap: 6px !important;
-        margin-left: auto !important;
+        margin-left: 5.5px !important;
         padding-left: 8px !important;
         border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
         flex-shrink: 0 !important;
@@ -10566,6 +10566,7 @@ body.is-tournament-round #show-everyone-btn {
     }
     html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
         gap: 12px !important;
+        margin-left: 9px !important;
         padding-left: 15px !important;
         border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
     }
@@ -10631,6 +10632,7 @@ body.is-tournament-round #show-everyone-btn {
     }
     html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
         gap: 8px !important;
+        margin-left: 6px !important;
         padding-left: 10px !important;
         border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
     }
@@ -10696,7 +10698,9 @@ body.is-tournament-round #show-everyone-btn {
     }
     html.is-firefox-desktop body:not(.is-mobile) .user-display:not(.hidden) {
         gap: 6px !important;
+        margin-left: 5px !important;
         padding-left: 8px !important;
+        border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
     }
     html.is-firefox-desktop body:not(.is-mobile) #username-display {
         font-size: 0.83rem !important;
@@ -10761,6 +10765,7 @@ body.is-tournament-round #show-everyone-btn {
         }
         body:not(.is-mobile) .user-display:not(.hidden) {
             gap: 12px !important;
+            margin-left: 9px !important;
             padding-left: 15px !important;
             border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
         }
@@ -10825,6 +10830,7 @@ body.is-tournament-round #show-everyone-btn {
         }
         body:not(.is-mobile) .user-display:not(.hidden) {
             gap: 8px !important;
+            margin-left: 6px !important;
             padding-left: 10px !important;
             border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
         }
@@ -10889,7 +10895,9 @@ body.is-tournament-round #show-everyone-btn {
         }
         body:not(.is-mobile) .user-display:not(.hidden) {
             gap: 6px !important;
+            margin-left: 5px !important;
             padding-left: 8px !important;
+            border-left: 1px solid rgba(var(--text-primary-rgb), 0.25) !important;
         }
         body:not(.is-mobile) #username-display {
             font-size: 0.83rem !important;

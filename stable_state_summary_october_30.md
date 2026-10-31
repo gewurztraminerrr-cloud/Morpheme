@@ -211,6 +211,20 @@ START_OVER_POINT_OCTOBER_30
   - Sized for responsive touch and desktop clicks: `32px` on desktop and `30px` on mobile with `6px` border-radius.
   - In Is Valid, buttons show when a word is confirmed valid (`IS VALID`) and cleanly hide if the word is invalid (`IS NOT VALID`) or during validation check loading. In Random Word, buttons display upon word generation and clear during loading.
 
+### 24. Desktop: Equalized Left and Right Padding for Vertical Separator Line Between Donate and Logged-in Username
+- **Symmetrical Spacing on Desktop & Firefox Normalization (`static/css/style.css`, `templates/index.html`)**:
+  - Resolved an asymmetry issue on desktop displays—specifically prominent in desktop Firefox where the distance between the Donate tab and the vertical line (`border-left` of `.user-display`) was compressed to just 4px (or expanded excessively when `margin-left: auto` was active), while the distance to the username on the right side of the line was 10px–15px.
+  - Eliminated `margin-left: auto !important` on `.user-display` across desktop media queries (`@media (min-width: 901px) and (max-width: 1380px)`), replacing it with mathematically balanced `margin-left` values that account for the flex container's `gap`.
+  - **Firefox Desktop Breakpoints (`html.is-firefox-desktop` & `@supports (-moz-appearance: none)`)**:
+    - Large Desktop (`> 1380px`): Sized `.nav` gap to `6px`, `.user-display` `margin-left: 9px !important;` (left spacing = `6px + 9px = 15px`) and `padding-left: 15px !important;` (right spacing = `15px`), producing exact 15px:15px symmetry.
+    - Mid-size Desktop & Laptops (`1101px - 1380px`): Sized `.nav` gap to `4px`, `.user-display` `margin-left: 6px !important;` (left spacing = `4px + 6px = 10px`) and `padding-left: 10px !important;` (right spacing = `10px`), producing exact 10px:10px symmetry.
+    - Compact Desktop & Smaller Laptop Screens (`901px - 1100px`): Sized `.nav` gap to `3px`, `.user-display` `margin-left: 5px !important;` (left spacing = `3px + 5px = 8px`) and `padding-left: 8px !important;` (right spacing = `8px`), producing exact 8px:8px symmetry.
+  - **Base & Standard Desktop Breakpoints (Chrome, Safari, Edge)**:
+    - Base desktop rule: `margin-left: 11px;` with `gap: 4px` (left spacing = 15px) and `padding-left: 15px;` (right spacing = 15px).
+    - Compact/mid desktop rule (`901px - 1380px`): `margin-left: 5.5px !important;` with `gap: 2.5px` (left spacing = 8px) and `padding-left: 8px !important;` (right spacing = 8px).
+  - Updated stylesheet cache buster in `templates/index.html` to `v=1793420000`.
+  - Verified across Firefox and Chrome using headless browser automated pixel diagnostics.
+
 ---
 
 ## Verification & Validation
@@ -223,4 +237,5 @@ START_OVER_POINT_OCTOBER_30
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` updated to latest commit |
+
 
