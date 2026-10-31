@@ -230,7 +230,24 @@ START_OVER_POINT_OCTOBER_30
   - Increased spacing above the word input panel: Increased `.suggested-words-section` bottom margin from `20px` to `32px`, placing the submit textbox visibly further away from the random words table, the "More random words" button, and the dictionary filter select dropdown.
   - Decreased spacing below the word input panel: Reduced `#find-count-results-container` top margin from `25px` down to `10px`, and set mobile `#tool-find-count .combo-control-panel` bottom margin to `0px !important` (overriding the generic mobile `12px !important`), bringing the submit textbox and search button into tight proximity (`10px` gap) with the `"The word 'ALOHA' has been found 0 times..."` results summary message.
   - Bumped stylesheet cache buster in `templates/index.html` for `play.css` to `v=1793420000`.
-  - Verified across desktop and mobile layouts via headless browser captures.
+### 26. Game Header & Lobby: Bold Values for Spinner Set, Multiplayer Subanagrams, and Active Rooms Selected Game Type Panel
+- **Spinner Set & Multiplayer Subanagrams Parameter Values (`static/css/play.css`)**:
+  - Enforced `font-weight: 700 !important;` on all parameter value spans inside `.game-params`:
+    - `#param-diff` (e.g. `Easy`, `Medium`, `Hard`, or letters count in Subanagrams)
+    - `#param-min` (e.g. `3L`, `4L`)
+    - `#param-dict` (e.g. `CSW`, `TWL`, `ENABLE`)
+    - `#param-range` (e.g. `300-400`, `50-100`)
+    - `#param-format` (e.g. `Normal`, `Totally Random`)
+    - `#param-bonus` (e.g. `8L`, `7L`)
+  - Preserved parameter labels (`Diff:`, `Letters:`, `Min:`, `Dict:`, `Words:`, `Format:`, `Bonus:`) and pipe separators (`|`) at `font-weight: 500`, explicitly styling `#param-diff-label { font-weight: 500 !important; }`.
+  - Automatically covers standard game header rooms and Multiplayer Subanagrams across both desktop and mobile layouts.
+- **Lobby Active Rooms "Select a game type" Panel (`templates/index.html`, `static/js/app.js`, `static/css/lobby.css`)**:
+  - In `handleShowRoomsInline` (`templates/index.html`) and `updateActiveRoomsPanel` (`static/js/app.js`), wrapped constant parameter values in `<strong>` tags when a "Show Rooms" button is selected under ACTIVE ROOMS:
+    - Displays: `Board: <strong>6x8</strong> | Time: <strong>45s</strong>`
+    - Preserves `"Board:"`, `"Time:"`, and the pipe separator `" | "` as regular/unbold (weight 500).
+  - Added `.selected-game-params strong { font-size: inherit !important; font-weight: 700 !important; }` in `static/css/lobby.css` to guarantee clean baseline alignment and exact font sizing.
+  - Bumped cache busters in `templates/index.html` for `play.css`, `lobby.css`, and `app.js` to `v=1793421000`.
+  - Verified across desktop and mobile views with headless Chrome captures.
 
 ---
 

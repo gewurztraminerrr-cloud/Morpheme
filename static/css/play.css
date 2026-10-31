@@ -69,13 +69,24 @@
 
 #param-bonus {
     color: #32cd32; /* Lime green */
-    font-weight: 700;
+    font-weight: 700 !important;
 }
 
 #param-diff {
     color: var(--diff-color, inherit);
-    font-weight: 700;
+    font-weight: 700 !important;
     transition: color 0.3s ease;
+}
+
+#param-min,
+#param-dict,
+#param-range,
+#param-format {
+    font-weight: 700 !important;
+}
+
+#param-diff-label {
+    font-weight: 500 !important;
 }
 
 .game-params.reveal-new,

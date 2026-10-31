@@ -3352,7 +3352,7 @@ function updateActiveRoomsPanel(gameType, time, dimensions) {
         infoDiv.innerHTML = `
             <span class="selected-game-type"><strong>${gameType}</strong></span>
             <span class="selected-game-sep"> &bull; </span>
-            <span class="selected-game-params">Board: ${dimensions} | Time: ${time}</span>
+            <span class="selected-game-params">Board: <strong>${dimensions}</strong> | Time: <strong>${time}</strong></span>
         `;
     }
 

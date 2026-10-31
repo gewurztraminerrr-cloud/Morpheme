@@ -662,6 +662,11 @@
     font-weight: 700 !important;
 }
 
+.selected-game-params strong {
+    font-size: inherit !important;
+    font-weight: 700 !important;
+}
+
 
 
 #rooms-placeholder-view {

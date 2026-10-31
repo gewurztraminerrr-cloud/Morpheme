@@ -175,10 +175,10 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1793420000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1792880000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793420000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1792880000">
-    <link rel="stylesheet" href="/css/play.css?v=1793420000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1793421000">
+    <link rel="stylesheet" href="/css/play.css?v=1793421000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1792220000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -632,7 +632,7 @@
             // 1. Immediately update header info
             var infoEl = document.getElementById('selected-game-info');
             if (infoEl) {
-                infoEl.innerHTML = '<span class="selected-game-type"><strong>' + (gameNames[gameType] || gameType) + '</strong></span><span class="selected-game-sep"> &bull; </span><span class="selected-game-params">Board: ' + boardDimensions + ' | Time: ' + timeStr + '</span>';
+                infoEl.innerHTML = '<span class="selected-game-type"><strong>' + (gameNames[gameType] || gameType) + '</strong></span><span class="selected-game-sep"> &bull; </span><span class="selected-game-params">Board: <strong>' + boardDimensions + '</strong> | Time: <strong>' + timeStr + '</strong></span>';
             }
 
             // 2. Immediately render/prepare room list structure
@@ -9987,7 +9987,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1792204000"></script>
     <script src="/js/forum.js?v=1792220000"></script>
-    <script src="/js/app.js?v=1792902000"></script>
+    <script src="/js/app.js?v=1793421000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>
     <script src="/js/play.js?v=1793365000"></script>
     <script src="/js/tournaments.js?v=1789333000"></script>
