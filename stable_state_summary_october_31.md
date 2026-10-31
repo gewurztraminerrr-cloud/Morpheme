@@ -419,7 +419,7 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `play.css` cache buster to `v=1793466000`.
   - Bumped `play.js` cache buster to `v=1793465000`.
 
-### 40. Settings Restructuring: Sub-Tabs & Dedicated Individual Setting Pages (`templates/index.html`, `static/js/settings.js`, `static/css/play.css`)
+### 40. Settings Restructuring: Sub-Tabs, Visual Organization & Color Swatch Visibility (`templates/index.html`, `static/js/settings.js`, `static/css/play.css`)
 - **Sub-Tabs Architecture Across All 3 Settings Tabs**:
   - Restructured all 3 tabs (**Appearance**, **Audio & Sounds**, and **Gameplay & Preferences**) in Settings to feature sub-navigation menus leading to dedicated individual pages for every setting.
   - On desktops and laptops (>=900px), the 3 main Settings tabs are anchored on the left sidebar (`.tools-sidebar`), and clicking any tab displays the individual setting buttons leading to the content to the right of the main menu.
@@ -431,12 +431,18 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - The title of each setting is placed **directly above** the description.
   - Each setting description is confined to the standard `.tool-header p` box format (`font-size: 0.82rem; color: var(--muted-text); padding: 6px 12px; border: 1px solid rgba(var(--text-primary-rgb), 0.16); border-radius: 8px; background: rgba(var(--text-primary-rgb), 0.04); max-height: 52px; overflow-y: auto`).
   - Top header stays clean as `Settings - <TabTitle>` without appending hyphenated sub-setting names.
-- **Divider Removal & Front-of-Screen No-Scroll Optimization**:
-  - Removed all non-dividing divider lines, redundant outer card borders, and unnecessary spacing.
-  - Arranged controls (e.g. 39 themes in 3 compact rows, Board Size 2x2 slider grid beside the live preview board) so all content fits on the front of each page without vertical scrolling.
+- **Color Swatch Visibility & Live Preview Tiles**:
+  - Resolved missing color options in "Highlight as you Type" and "Highlight as you Mouse/Swipe" by adding CSS rules for `.color-dot` (36px circular swatches, 2.5px crisp borders, 1.18x hover scale, and a luminous glowing halo ring with 1.22x active scale).
+  - Added live preview tiles (`.typing-preview-tile` and `.mouse-preview-tile`) bound dynamically to `var(--highlight-typing-color)` and `var(--highlight-mouse-color)` so selected colors preview instantly on game tiles.
+- **Bell & Beep Pill Selectors**:
+  - Replaced unstyled browser buttons with sleek, interactive `.bell-btn` sound selector pills featuring play icons (`▶ Bell 1`, `▶ Beep 1`), hover micro-interactions, and active state coloration.
+- **Aesthetic Alignment & Front-of-Screen No-Scroll Optimization**:
+  - Standardized `.setting-subpage` width at `max-width: 720px; width: 100%` so headers, descriptions, cards, toggles, and sliders share identical edge margins across desktop, laptop, and mobile screens.
+  - Enclosed setting groups in `.setting-card` panels with consistent borders, rounded corners (14px), and internal spacing.
+  - Arranged Board Size into a side-by-side split view on desktop (2x2 slider grid on left, Live Preview board on right) and scaled 3D cube preview to fit front-of-screen without vertical scrolling.
 - **Cache Busters (`templates/index.html`)**:
-  - Bumped `play.css` cache buster to `v=1793467000`.
-  - Bumped `settings.js` cache buster to `v=1793467000`.
+  - Bumped `play.css` cache buster to `v=1793475000`.
+  - Bumped `settings.js` cache buster to `v=1793475000`.
 
 ---
 

@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793462000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793421000">
-    <link rel="stylesheet" href="/css/play.css?v=1793467000">
+    <link rel="stylesheet" href="/css/play.css?v=1793475000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -5896,7 +5896,8 @@
                                 <p class="setting-subpage-desc">Choose your preferred color scheme.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <div class="theme-selector-grid" style="margin-top: 4px; max-width: 900px; box-sizing: border-box;">
+                                <div class="setting-card">
+                                    <div class="theme-selector-grid" style="margin: 0; box-sizing: border-box;">
                                     <button class="theme-btn" data-theme="default"
                                         style="background: #1a1a2e; border: 2px solid #fff;" title="Default"></button>
                                     <button class="theme-btn" data-theme="black" style="background: #000000;"
@@ -5972,6 +5973,7 @@
                                     <button class="theme-btn" data-theme="dark-brown" style="background: #2b1812;"
                                         title="Dark Dark Brown"></button>
                                 </div>
+                                </div>
                             </div>
                         </div>
 
@@ -5982,9 +5984,9 @@
                                 <h3 class="setting-subpage-title">Board Size</h3>
                                 <p class="setting-subpage-desc">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
                             </div>
-                            <div class="setting-subpage-content board-size-split-view" style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
-                                <div style="flex: 1 1 320px; min-width: 280px; display: flex; flex-direction: column; gap: 10px;">
-                                    <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; box-sizing: border-box;">
+                            <div class="setting-subpage-content board-size-split-view">
+                                <div style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="dimension-sliders-grid">
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                                 <span style="font-weight: 600; font-size: 0.9rem;">4x4 Grid</span>
@@ -6014,11 +6016,12 @@
                                             <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; justify-content: flex-start; margin-top: 4px;">
-                                        <button id="btn-reset-board-sizes" class="mini-action-btn secondary" style="padding: 7px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 8px;">Set to Default Sizes</button>
+                                    <div style="display: flex; justify-content: flex-start; margin-top: 2px;">
+                                        <button id="btn-reset-board-sizes" type="button" class="mini-action-btn secondary">Set to Default Sizes</button>
                                     </div>
                                 </div>
-                                <div class="preview-board-container" style="margin-top: 0; flex: 0 0 auto; display: flex; justify-content: center;">
+                                <div class="preview-board-container">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Live Preview</div>
                                     <div class="preview-board" id="preview-board">
                                         <div class="board-cell">A</div>
                                         <div class="board-cell">B</div>
@@ -6049,7 +6052,7 @@
                                 <p class="setting-subpage-desc">Adjust the size of the 3D game board.</p>
                             </div>
                             <div class="setting-subpage-content" id="setting-panel-cube-scale">
-                                <div class="setting-slider-container" style="max-width: 460px;">
+                                <div class="setting-card">
                                     <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (150px)</span>
                                         <span id="setting-cube-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">220px</span>
@@ -6057,8 +6060,8 @@
                                     </div>
                                     <input type="range" id="setting-cube-size" min="150" max="300" value="220" style="width: 100%;">
                                 </div>
-                                <div class="settings-preview-box" style="min-height: calc(var(--cube-container-size) + 30px); max-height: 260px; overflow: visible; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; margin-top: 15px;">
-                                    <div class="cube-container" style="margin: 0;">
+                                <div class="settings-preview-box" style="height: 220px; min-height: 220px; max-height: 220px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                    <div class="cube-container" style="margin: 0; transform: scale(0.65); transform-origin: center center;">
                                         <div class="cube" style="animation: cube-preview-spin 10s linear infinite;">
                                             <div class="cube-face face-front"><div class="cube-cell">A</div><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div></div>
                                             <div class="cube-face face-back"><div class="cube-cell">J</div><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div></div>
@@ -6086,7 +6089,7 @@
                                 <p class="setting-subpage-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds.</p>
                             </div>
                             <div class="setting-subpage-content" id="setting-panel-subanagrams-tile-size">
-                                <div class="setting-slider-container" style="max-width: 480px;">
+                                <div class="setting-card">
                                     <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (44px)</span>
                                         <span id="val-subanagrams-tile-size" class="preview-value" style="color: var(--primary); font-weight: 700;">64px</span>
@@ -6115,8 +6118,8 @@
                                 <h3 class="setting-subpage-title">Chat Text Size</h3>
                                 <p class="setting-subpage-desc">Adjust the font size of chat messages.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
-                                <div class="setting-slider-container">
+                            <div class="setting-subpage-content">
+                                <div class="setting-card">
                                     <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (10px)</span>
                                         <span id="setting-chat-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">13px</span>
@@ -6124,7 +6127,8 @@
                                     </div>
                                     <input type="range" id="setting-chat-size" min="10" max="24" value="13" style="width: 100%;">
                                 </div>
-                                <div class="settings-preview-box" style="margin-top: 14px; padding: 14px 18px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                                <div class="settings-preview-box" style="padding: 16px 20px; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Chat Preview</div>
                                     <div id="preview-chat-text" class="settings-preview-text" style="line-height: 1.5;">
                                         <span style="font-weight: 700; color: #ffd700;">Player:</span> This is a sample chat message.
                                     </div>
@@ -6139,8 +6143,8 @@
                                 <h3 class="setting-subpage-title">Definition Text Size</h3>
                                 <p class="setting-subpage-desc">Adjust the font size of word definitions.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
-                                <div class="setting-slider-container">
+                            <div class="setting-subpage-content">
+                                <div class="setting-card">
                                     <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (11px)</span>
                                         <span id="setting-def-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">15px</span>
@@ -6148,7 +6152,8 @@
                                     </div>
                                     <input type="range" id="setting-def-size" min="11" max="26" value="15" style="width: 100%;">
                                 </div>
-                                <div class="settings-preview-box" style="margin-top: 14px; padding: 14px 18px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                                <div class="settings-preview-box" style="padding: 16px 20px; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Definition Preview</div>
                                     <div style="color: var(--accent-color); font-weight: 700; font-size: 1.1em; margin-bottom: 4px;">Example</div>
                                     <div id="preview-def-text" class="settings-preview-text" style="line-height: 1.5;">
                                         (n.) A representative form or pattern.
@@ -6164,14 +6169,20 @@
                                 <h3 class="setting-subpage-title">Word Flash Effect</h3>
                                 <p class="setting-subpage-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty) on submission.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
-                                <label for="setting-word-flash" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                            <div class="setting-subpage-content">
+                                <label for="setting-word-flash" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Word Flash Animation</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-word-flash" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
+                                <div class="word-flash-legend">
+                                    <span style="font-size: 0.8rem; font-weight: 700; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.5px;">Flash Colors:</span>
+                                    <div class="flash-badge valid"><span>●</span> Valid Word</div>
+                                    <div class="flash-badge bonus"><span>●</span> Bonus Word</div>
+                                    <div class="flash-badge penalty"><span>●</span> Invalid / Penalty</div>
+                                </div>
                             </div>
                         </div>
 
@@ -6182,46 +6193,38 @@
                                 <h3 class="setting-subpage-title">Highlight as you Type</h3>
                                 <p class="setting-subpage-desc">Highlight letters on the board as you type in the input box.</p>
                             </div>
-                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 14px; max-width: 540px;">
-                                <label for="setting-highlight-typing" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                            <div class="setting-subpage-content">
+                                <label for="setting-highlight-typing" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Typing Highlight</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-highlight-typing" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-                                <div id="highlight-color-picker" style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%;">
-                                    <div class="meta-label" style="font-size: 0.88rem; opacity: 0.8; font-weight: 600;">Typing Color</div>
-                                    <div class="color-dot-grid"
-                                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                        <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
-                                            title="Yellow"></button>
-                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
-                                            title="Cyan"></button>
-                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
-                                            title="Lime"></button>
-                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
-                                            title="Pink"></button>
-                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
-                                            title="Orange"></button>
-                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
-                                            title="Red"></button>
-                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
-                                            title="Purple"></button>
-                                        <button class="color-dot" data-color="#3399ff" style="background: #3399ff;"
-                                            title="Blue"></button>
-                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
-                                            title="Mint"></button>
-                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
-                                            title="Gold"></button>
-                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;"
-                                            title="Light Grey"></button>
-                                        <button class="color-dot" data-color="#888888" style="background: #888888;"
-                                            title="Medium Grey"></button>
-                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;"
-                                            title="Dark Grey"></button>
-                                        <button class="color-dot" data-color="#000000" style="background: #000000;"
-                                            title="Black"></button>
+                                <div id="highlight-color-picker" class="setting-card">
+                                    <div class="setting-card-title">Typing Highlight Color</div>
+                                    <div class="color-dot-grid">
+                                        <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;" title="Yellow"></button>
+                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;" title="Cyan"></button>
+                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;" title="Lime"></button>
+                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;" title="Pink"></button>
+                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;" title="Orange"></button>
+                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;" title="Red"></button>
+                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;" title="Purple"></button>
+                                        <button class="color-dot" data-color="#3399ff" style="background: #3399ff;" title="Blue"></button>
+                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;" title="Mint"></button>
+                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;" title="Gold"></button>
+                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;" title="Light Grey"></button>
+                                        <button class="color-dot" data-color="#888888" style="background: #888888;" title="Medium Grey"></button>
+                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;" title="Dark Grey"></button>
+                                        <button class="color-dot" data-color="#000000" style="background: #000000;" title="Black"></button>
+                                    </div>
+                                    <div class="highlight-preview-box">
+                                        <div class="typing-preview-tile">A</div>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span style="font-weight: 700; font-size: 0.9rem;">Board Highlight Preview</span>
+                                            <span style="font-size: 0.8rem; color: var(--muted-text);">Active tile color when typing words</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -6234,46 +6237,38 @@
                                 <h3 class="setting-subpage-title">Highlight as you Mouse/Swipe</h3>
                                 <p class="setting-subpage-desc">Highlight letters on the board as you drag or swipe over them.</p>
                             </div>
-                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 14px; max-width: 540px;">
-                                <label for="setting-highlight-mouse" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                            <div class="setting-subpage-content">
+                                <label for="setting-highlight-mouse" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Mousing / Swiping Highlight</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-highlight-mouse" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-                                <div id="highlight-mouse-color-picker" style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%;">
-                                    <div class="meta-label" style="font-size: 0.88rem; opacity: 0.8; font-weight: 600;">Mousing Color</div>
-                                    <div class="color-dot-grid"
-                                        style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                        <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
-                                            title="Blue"></button>
-                                        <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"
-                                            title="Yellow"></button>
-                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;"
-                                            title="Cyan"></button>
-                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;"
-                                            title="Lime"></button>
-                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;"
-                                            title="Pink"></button>
-                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;"
-                                            title="Orange"></button>
-                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;"
-                                            title="Red"></button>
-                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;"
-                                            title="Purple"></button>
-                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;"
-                                            title="Mint"></button>
-                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;"
-                                            title="Gold"></button>
-                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;"
-                                            title="Light Grey"></button>
-                                        <button class="color-dot" data-color="#888888" style="background: #888888;"
-                                            title="Medium Grey"></button>
-                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;"
-                                            title="Dark Grey"></button>
-                                        <button class="color-dot" data-color="#000000" style="background: #000000;"
-                                            title="Black"></button>
+                                <div id="highlight-mouse-color-picker" class="setting-card">
+                                    <div class="setting-card-title">Mousing / Swiping Highlight Color</div>
+                                    <div class="color-dot-grid">
+                                        <button class="color-dot active" data-color="#409cff" style="background: #409cff;" title="Blue"></button>
+                                        <button class="color-dot" data-color="#ffcc00" style="background: #ffcc00;" title="Yellow"></button>
+                                        <button class="color-dot" data-color="#00ffff" style="background: #00ffff;" title="Cyan"></button>
+                                        <button class="color-dot" data-color="#00ff00" style="background: #00ff00;" title="Lime"></button>
+                                        <button class="color-dot" data-color="#ff66cc" style="background: #ff66cc;" title="Pink"></button>
+                                        <button class="color-dot" data-color="#ff9900" style="background: #ff9900;" title="Orange"></button>
+                                        <button class="color-dot" data-color="#ff4d4d" style="background: #ff4d4d;" title="Red"></button>
+                                        <button class="color-dot" data-color="#b366ff" style="background: #b366ff;" title="Purple"></button>
+                                        <button class="color-dot" data-color="#00ff99" style="background: #00ff99;" title="Mint"></button>
+                                        <button class="color-dot" data-color="#ffd700" style="background: #ffd700;" title="Gold"></button>
+                                        <button class="color-dot" data-color="#d4d4d4" style="background: #d4d4d4;" title="Light Grey"></button>
+                                        <button class="color-dot" data-color="#888888" style="background: #888888;" title="Medium Grey"></button>
+                                        <button class="color-dot" data-color="#4a4a4a" style="background: #4a4a4a;" title="Dark Grey"></button>
+                                        <button class="color-dot" data-color="#000000" style="background: #000000;" title="Black"></button>
+                                    </div>
+                                    <div class="highlight-preview-box">
+                                        <div class="mouse-preview-tile">M</div>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span style="font-weight: 700; font-size: 0.9rem;">Board Highlight Preview</span>
+                                            <span style="font-size: 0.8rem; color: var(--muted-text);">Active tile color when swiping or hovering</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -6286,11 +6281,11 @@
                                 <h3 class="setting-subpage-title">Synesthesia</h3>
                                 <p class="setting-subpage-desc">Tailor the color of each individual letter on the game board.</p>
                             </div>
-                            <div class="setting-subpage-content synesthesia-section" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
+                            <div class="setting-subpage-content synesthesia-section">
                                 <div style="display: flex; justify-content: flex-start;">
-                                    <button id="setting-synesthesia-reset" class="mini-action-btn secondary" style="padding: 5px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 6px; cursor: pointer;">Reset All to Black</button>
+                                    <button id="setting-synesthesia-reset" type="button" class="mini-action-btn secondary">Reset All to Black</button>
                                 </div>
-                                <div id="synesthesia-letters-grid" style="margin-top: 0 !important; padding: 10px !important; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
+                                <div id="synesthesia-letters-grid">
                                     <!-- Letters A-Z injected by settings.js -->
                                 </div>
                             </div>
@@ -6335,7 +6330,7 @@
                                 <h3 class="setting-subpage-title">Lobby Music</h3>
                                 <p class="setting-subpage-desc">Play background music when in the lobby.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-lobby-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Lobby Background Music</span>
                                     <span class="toggle-switch">
@@ -6353,7 +6348,7 @@
                                 <h3 class="setting-subpage-title">Triple Format Music</h3>
                                 <p class="setting-subpage-desc">Play background music when the format is Triple.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-triple-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Triple Format Music</span>
                                     <span class="toggle-switch">
@@ -6371,7 +6366,7 @@
                                 <h3 class="setting-subpage-title">Board Sound Effects</h3>
                                 <p class="setting-subpage-desc">Play sound effects when pressing, swiping, and validating words during play.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-board-sounds" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable In-Game Sound Effects</span>
                                     <span class="toggle-switch">
@@ -6389,31 +6384,29 @@
                                 <h3 class="setting-subpage-title">Next Round Notification</h3>
                                 <p class="setting-subpage-desc">Play a bell or a set of beeps 10 seconds before a new round starts.</p>
                             </div>
-                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 16px; max-width: 520px;">
-                                <label for="setting-next-round-bell" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                            <div class="setting-subpage-content">
+                                <label for="setting-next-round-bell" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Next Round Audio Alert</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-next-round-bell">
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-                                <div id="bell-selection-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 14px; width: 100%;">
-                                    <!-- Row 1: Bells -->
-                                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%;">
-                                        <div class="meta-label" style="font-size: 0.85rem; opacity: 0.8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Bell Sound</div>
+                                <div id="bell-selection-container" class="setting-card">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <div class="setting-card-title">Select Bell Sound</div>
                                         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                            <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
                                         </div>
                                     </div>
-                                    <!-- Row 2: Beeps -->
-                                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%;">
-                                        <div class="meta-label" style="font-size: 0.85rem; opacity: 0.8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Beep Sound</div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                                        <div class="setting-card-title">Select Beep Sound</div>
                                         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                            <button class="bell-btn" data-bell="beep1">Beep 1 <span class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="beep2">Beep 2 <span class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="beep3">Beep 3 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="beep1">Beep 1 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="beep2">Beep 2 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" type="button" data-bell="beep3">Beep 3 <span class="play-icon">▶</span></button>
                                         </div>
                                     </div>
                                 </div>
@@ -6427,7 +6420,7 @@
                                 <h3 class="setting-subpage-title">Intermission Vibration Alert</h3>
                                 <p class="setting-subpage-desc">Vibrate mobile devices 10 seconds before a new round starts.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-vibration-alert" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Vibration on Mobile</span>
                                     <span class="toggle-switch">
@@ -6477,20 +6470,23 @@
                                 <h3 class="setting-subpage-title">Tile Selectable Space (Octagon vs Diamond)</h3>
                                 <p class="setting-subpage-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</p>
                             </div>
-                            <div class="setting-subpage-content" style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
-                                <div class="setting-slider-container" style="flex: 1 1 300px; max-width: 480px;">
-                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                        <span>Square (0%)</span>
-                                        <span id="setting-corner-cutoff-val" class="preview-value" style="color: var(--primary); font-weight: 700;">39%</span>
-                                        <span>Diamond (50%)</span>
+                            <div class="setting-subpage-content" style="display: flex; gap: 20px; align-items: flex-start; flex-direction: row; flex-wrap: nowrap;">
+                                <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="setting-card">
+                                        <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                            <span>Square (0%)</span>
+                                            <span id="setting-corner-cutoff-val" class="preview-value" style="color: var(--primary); font-weight: 700;">39%</span>
+                                            <span>Diamond (50%)</span>
+                                        </div>
+                                        <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39" style="width: 100%;">
                                     </div>
-                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39" style="width: 100%;">
-                                    <div class="slider-instruction" style="font-size: 0.82rem; color: var(--text-secondary, #94a3b8); margin-top: 10px; line-height: 1.4; font-style: italic;">
+                                    <div style="font-size: 0.82rem; color: var(--muted-text); line-height: 1.45; padding: 12px 16px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 12px;">
                                         💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
                                     </div>
                                 </div>
-                                <div class="preview-hitbox-container" style="flex: 0 0 auto; display: flex; justify-content: center; align-items: center;">
-                                    <div class="preview-hitbox-tile" style="position: relative; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900;">
+                                <div class="preview-hitbox-container" style="flex: 0 0 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Hitbox Preview</div>
+                                    <div class="preview-hitbox-tile" style="position: relative; width: 100px; height: 100px; background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.25); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900;">
                                         <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
                                         <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(39% 0%, 61% 0%, 100% 39%, 100% 61%, 61% 100%, 39% 100%, 0% 61%, 0% 39%);"></div>
                                     </div>
@@ -6505,8 +6501,13 @@
                                 <h3 class="setting-subpage-title">Time Zone</h3>
                                 <p class="setting-subpage-desc">Choose your preferred time zone for recorded match history, round logs, and profile activity.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
-                                <select id="setting-timezone-select" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 8px; padding: 6px 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                            <div class="setting-subpage-content">
+                                <div class="setting-select-row">
+                                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                                        <span style="font-weight: 700; font-size: 0.95rem;">Display Time Zone</span>
+                                        <span style="font-size: 0.8rem; color: var(--muted-text);">Used for all timestamps across match logs and history</span>
+                                    </div>
+                                    <select id="setting-timezone-select" >
                                         <option value="auto">Auto (Device Local)</option>
                                         <option value="UTC">UTC (Universal Time)</option>
                                         <option value="America/New_York">US Eastern Time (ET)</option>
@@ -6536,6 +6537,7 @@
                                         <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
                                         <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
                                     </select>
+                                </div>
                             </div>
                         </div>
 
@@ -6546,7 +6548,7 @@
                                 <h3 class="setting-subpage-title">Allow Private Messages</h3>
                                 <p class="setting-subpage-desc">Allow other players to send you private messages. When disabled, the "Message" button on your profile will be hidden from everyone.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-allow-pm" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Allow Incoming Private Messages</span>
                                     <span class="toggle-switch">
@@ -6564,7 +6566,7 @@
                                 <h3 class="setting-subpage-title">Allow Game Invitations</h3>
                                 <p class="setting-subpage-desc">Allow other players to send you "With Friends" room invitations. When disabled, players cannot invite you to matches.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-allow-invites" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Allow Room Match Invitations</span>
                                     <span class="toggle-switch">
@@ -6582,7 +6584,7 @@
                                 <h3 class="setting-subpage-title">Lobby Guide ("What am I looking at?")</h3>
                                 <p class="setting-subpage-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</p>
                             </div>
-                            <div class="setting-subpage-content" style="max-width: 500px;">
+                            <div class="setting-subpage-content">
                                 <label for="setting-lobby-guide-toggle" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Show Lobby Explanation Banner</span>
                                     <span class="toggle-switch">
@@ -9932,7 +9934,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1793467000"></script>
+    <script src="/js/settings.js?v=1793475000"></script>
     <script src="/js/forum.js?v=1793427000"></script>
     <script src="/js/app.js?v=1793421000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>
