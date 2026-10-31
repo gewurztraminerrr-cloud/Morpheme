@@ -8169,6 +8169,10 @@ def is_verified_inflection(w, cand, def_w=None, def_cand=None):
     root_w = extract_root_from_definition(def_w)
     if root_w and root_w == cand:
         return True
+
+    # 2.5 Both def(w) and def(cand) explicitly share the same root (sibling inflections)
+    if root_w and root_c and root_w == root_c:
+        return True
         
     # 3. def(w) has bracket notation explicitly listing cand (e.g. 'MEDIUM [n MEDIA]', 'WALK [v -ED, -ING, -S]')
     brack_w = extract_bracket_inflections(def_w, w)
@@ -8265,6 +8269,12 @@ def get_valid_inflections_for_aw_word(w):
             def_cand = DEFINITIONS_CACHE.get(cand, '') if DEFINITIONS_CACHE else ''
             if is_verified_inflection(w, cand, defn, def_cand):
                 valid.append(cand)
+            elif roots:
+                for r in roots:
+                    def_r = DEFINITIONS_CACHE.get(r, '') if DEFINITIONS_CACHE else ''
+                    if is_verified_inflection(r, cand, def_r, def_cand):
+                        valid.append(cand)
+                        break
     
     valid = sorted(valid)
     _AW_INFLECTIONS_CACHE[w] = valid

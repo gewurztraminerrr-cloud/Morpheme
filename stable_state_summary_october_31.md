@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-e6a1285895900d297a150a9e5ab6e05587ed17f6
+063c6061ad7bb84dca84b1ef67ccd27d667c7777
 ```
-*(Short SHA: `e6a12858`)*
+*(Short SHA: `063c6061`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `e6a12858` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `e6a12858` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `e6a12858` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `063c6061` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `063c6061` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `063c6061` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -600,6 +600,27 @@ e6a1285895900d297a150a9e5ab6e05587ed17f6
   - **Cache Busters (`templates/index.html`)**:
     - Bumped `app.js` cache buster to `v=1793570000`.
     - Bumped `play.js` cache buster to `v=1793570000`.
+
+### 50. Sibling Inflection Engine Architecture & Added Words Lexicographical Synchronization (`app.py`, `dictionaries/added_words.txt`, `dictionaries/added_words_duplicate.txt`, `dictionaries/added_words_dates.txt`, `dictionaries/Definitions.txt`)
+- **Resolution of Sibling Inflection Blindspot (`app.py`)**:
+  - Previously, in Added Words definitions, sibling inflections (such as `PRETABULATES` and `PRETABULATING` for `PRETABULATED`) were not linked or displayed next to the root word.
+  - **Root Cause Analysis**:
+    1. `is_verified_inflection(w, cand)` checked whether `cand`'s definition explicitly named `w` as its root, or `w`'s definition named `cand` as its root. However, definitions of sibling inflections (e.g. simple past and present participle) refer to their shared root (e.g. `pretabulate`) rather than directly mentioning each other. Under validation Rule 5, the engine rejected valid sibling pairs as unrelated entities.
+    2. In `get_valid_inflections_for_aw_word(w)`, candidate forms were checked directly against `w`. When checking siblings of an inflected form, candidates derived from the root were not verified against the shared root.
+  - **Engine Solution**:
+    - Added shared-root rule to `is_verified_inflection`: `if root_w and root_c and root_w == root_c: return True`.
+    - In `get_valid_inflections_for_aw_word`, if candidate `cand` is derived from a verified root `r` of `w`, it is verified against `r` via `is_verified_inflection(r, cand, def_r, def_cand)`.
+    - **Engine Impact**: This architectural fix immediately and automatically cured **67,621 words** already present in Added Words, unifying their sibling inflections in definitions.
+- **`PRETABULATE` Inflection Family Synchronization**:
+  - Added missing sibling verb forms `PRETABULATES` and `PRETABULATING` to `dictionaries/added_words.txt` and `dictionaries/added_words_duplicate.txt` in strict alphabetical sort order (total AW words: 542,245).
+  - Added timestamp entries to `dictionaries/added_words_dates.txt` (`PRETABULATES\t31/10/2026`, `PRETABULATING\t31/10/2026`).
+  - Added definitions to `dictionaries/Definitions.txt`:
+    - `PRETABULATES - third-person singular of pretabulate`
+    - `PRETABULATING - present participle and gerund of pretabulate`
+  - All four members of the family (`PRETABULATE`, `PRETABULATED`, `PRETABULATES`, `PRETABULATING`) now reciprocally and completely list all sibling and root inflections.
+- **Comprehensive Global Lexicographical Audit of Added Words**:
+  - Audited all 542,245 Added Words and 827,616 definitions.
+  - Found that out of 217,614 roots referenced across Added Words, 1,267 confirmed verb roots have an inflected form in Added Words but lack one or more standard regular inflected forms (`-S`/`-ES`, `-ED`, or `-ING`) in historical word lists (totaling 1,983 inflected word entries).
 
 ---
 

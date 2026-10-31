@@ -577314,6 +577314,8 @@ PRESYSTOLIC - (physiology) Preceding the systole or contraction of the heart; re
 PRETA - A hungry ghost (a supernatural being in Buddhist folklore, the spirit of a greedy person whose divine retribution is never to be sated)
 PRETABULATE - To tabulate prior to some other process
 PRETABULATED - simple past and past participle of pretabulate
+PRETABULATES - third-person singular of pretabulate
+PRETABULATING - present participle and gerund of pretabulate
 PRETABULATION - Before tabulation.
 PRETABULATIONS - plural of pretabulation (Before tabulation.)
 PRETALK - A talk given in advance, such as encouragement before a sports match, or explanatory material prior to hypnosis.
