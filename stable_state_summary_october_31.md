@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-9462d4378db7a99afebb5166539dbbb9727c9a3d
+d61c2423a86873a8d6c41183df9657632586fe86
 ```
-*(Short SHA: `9462d437`)*
+*(Short SHA: `d61c2423`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `9462d437` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `9462d437` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `9462d437` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `d61c2423` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `d61c2423` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `d61c2423` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -339,6 +339,20 @@ START_OVER_POINT_OCTOBER_31
   - In `static/css/forum.css`, added specialized styling for `#forum-post-root.forum-item-highlight-gold` with appropriate padding, negative margin, and rounded corners on desktop and mobile.
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `forum.css` and `forum.js` cache busters to `v=1793427000`.
+
+### 33. Solo & With Friends: Unfeasible Configuration Safeguard & Advisory Modal (`static/js/private_matches.js`, `app.py`, `game_room.py`, `static/js/play.js`, `templates/index.html`)
+- **Unfeasible Configuration Detection**:
+  - Implemented client and server-side feasibility validation (`checkBoardConfigFeasibility` in JavaScript, `check_board_config_feasibility` in Python) to intercept combinations where finding a compliant board takes too long or is not mathematically achievable (e.g. 6x8 grid with 8-letter minimum and 500+ word counts, or similar extreme combinations on smaller grids).
+- **Polite Advisory Modal Popup**:
+  - When an unfeasible combination is selected and the user clicks 'Start Solo Match' or 'Send Invite', the system halts submission and displays a clean, themed modal popup (`window.showAlertModal`):
+    - Title: **Configuration Notice**
+    - Message: *'Finding a board that meets these specific criteria (e.g. 6X8, 8-letter minimum, and 500+ words) takes too long and may not be achievable. We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away.'*
+  - The user remains in the Lobby with their selections preserved for easy adjustment.
+- **Server API & Live Room Safeguards**:
+  - Validated parameters in `/api/solo-match/create` and `/api/private-match/create`, returning HTTP 400 with the advisory message if unfeasible.
+  - In `game_room.py` and `static/js/play.js`, added fallback handling for `board_gen_failed`: if board generation in a solo room ever fails or times out, the room state notifies the client, produces the advisory modal, and cleanly ejects to the Lobby without leaving the player stuck on a blank board.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.js` and `private_matches.js` cache busters to `v=1793428000`.
 
 ---
 

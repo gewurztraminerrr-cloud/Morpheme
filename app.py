@@ -7183,6 +7183,8 @@ def get_room_state(room_id):
                 'last_round_placements': getattr(room, 'last_round_placements', {}),
                 'winners_history': getattr(room, 'winners_history', []),
                 'previous_day_history': getattr(room, 'previous_day_history', {}),
+                'board_gen_failed': getattr(room, 'board_gen_failed', False),
+                'board_gen_error': getattr(room, 'board_gen_error', ''),
             }
         # END LOCK — JSON serialization happens outside to avoid holding lock during encoding
         resp = jsonify(snapshot)
@@ -12895,14 +12897,79 @@ def save_tournament_draft():
 
 
 
+def check_board_config_feasibility(parameters):
+    if not isinstance(parameters, dict):
+        return True, ""
+    
+    dims = str(parameters.get('board_dimensions') or '4x4').lower().replace(' ', '')
+    min_len_raw = parameters.get('min_word_length')
+    range_str = str(parameters.get('word_count_range') or '').strip()
+    dict_str = str(parameters.get('dictionary') or '').upper()
+    is_aw = ('+ AW' in dict_str) or ('+AW' in dict_str) or (dict_str in ['AW', 'ADDED_WORDS'])
+
+    if min_len_raw is None or str(min_len_raw).lower() in ['random', 'none', 'null', 'nan']:
+        return True, ""
+    if not range_str or range_str.lower() in ['random', 'none', 'null', 'nan']:
+        return True, ""
+
+    try:
+        min_len = int(min_len_raw)
+    except (ValueError, TypeError):
+        return True, ""
+
+    is_unfeasible = False
+    if dims in ['6x8', '3x3x3']:
+        if min_len >= 8 and range_str in ['300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 7 and range_str in ['400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 6 and not is_aw and range_str == '500+':
+            is_unfeasible = True
+    elif dims == '5x7':
+        if min_len >= 7 and range_str in ['200-300', '300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 6 and range_str in ['300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 5 and range_str == '500+':
+            is_unfeasible = True
+    elif dims == '4x6':
+        if min_len >= 6 and range_str in ['200-300', '300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 5 and range_str in ['300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 4 and range_str == '500+':
+            is_unfeasible = True
+    elif dims == '4x4':
+        if min_len >= 5 and range_str in ['200-300', '300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif min_len >= 4 and range_str in ['300-400', '400-500', '500+']:
+            is_unfeasible = True
+        elif range_str == '500+':
+            is_unfeasible = True
+
+    if is_unfeasible:
+        msg = f"Finding a board that meets these specific criteria (<strong>{dims.upper()}</strong>, <strong>{min_len}-letter minimum</strong>, and <strong>{range_str} words</strong>) takes too long and may not be achievable.<br><br>We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away."
+        return False, msg
+
+    return True, ""
+
 @app.route('/api/solo-match/create', methods=['POST'])
 def create_solo_match():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
         
-    data = request.json
+    data = request.json or {}
     parameters = data.get('parameters', {})
     participants = data.get('participants', [])
+
+    feasible, msg = check_board_config_feasibility(parameters)
+    if not feasible:
+        return jsonify({
+            'success': False,
+            'title': 'Configuration Notice',
+            'error': msg,
+            'message': msg
+        }), 400
     
     print(f"[app.py] Creating Solo Match for {session.get('username')} (ID: {session.get('user_id')})")
     print(f"[app.py] Params: {parameters}")
@@ -13075,17 +13142,26 @@ def create_private_match():
     if session.get('is_guest'):
         return jsonify({'error': 'Guests cannot use this feature'}), 403
         
-    data = request.json
+    data = request.json or {}
     match_type = data.get('match_type')
     parameters = data.get('parameters', {})
     
+    feasible, msg = check_board_config_feasibility(parameters)
+    if not feasible:
+        return jsonify({
+            'success': False,
+            'title': 'Configuration Notice',
+            'error': msg,
+            'message': msg
+        }), 400
+        
     participants = data.get('participants', [])
     
     try:
         match_id = private_match_manager.create_match(session['user_id'], match_type, parameters, participants)
         return jsonify({'success': True, 'match_id': match_id})
     except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'message': str(e)}), 400
     except Exception as e:
         import traceback
         traceback.print_exc()

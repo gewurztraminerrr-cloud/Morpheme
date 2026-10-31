@@ -185,6 +185,66 @@
         renderBots();
     };
 
+    function checkBoardConfigFeasibility(params) {
+        if (!params) return { feasible: true };
+        const dims = String(params.board_dimensions || '4x4').toLowerCase().replace(/\s+/g, '');
+        const minLen = parseInt(params.min_word_length, 10);
+        const range = String(params.word_count_range || '').trim();
+        const dict = String(params.dictionary || '').toUpperCase();
+        const isAw = dict.includes('+ AW') || dict.includes('+AW') || dict === 'AW' || dict === 'ADDED_WORDS';
+
+        // If min_word_length or word_count_range is 'random', SpinnerSet will automatically pick achievable combinations
+        if (isNaN(minLen) || !range || range === 'random') {
+            return { feasible: true };
+        }
+
+        let isUnfeasible = false;
+
+        if (dims === '6x8' || dims === '3x3x3') {
+            if (minLen >= 8 && ['300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 7 && ['400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 6 && !isAw && range === '500+') {
+                isUnfeasible = true;
+            }
+        } else if (dims === '5x7') {
+            if (minLen >= 7 && ['200-300', '300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 6 && ['300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 5 && range === '500+') {
+                isUnfeasible = true;
+            }
+        } else if (dims === '4x6') {
+            if (minLen >= 6 && ['200-300', '300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 5 && ['300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 4 && range === '500+') {
+                isUnfeasible = true;
+            }
+        } else if (dims === '4x4') {
+            if (minLen >= 5 && ['200-300', '300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (minLen >= 4 && ['300-400', '400-500', '500+'].includes(range)) {
+                isUnfeasible = true;
+            } else if (range === '500+') {
+                isUnfeasible = true;
+            }
+        }
+
+        if (isUnfeasible) {
+            return {
+                feasible: false,
+                title: 'Configuration Notice',
+                message: `Finding a board that meets these specific criteria (<strong>${dims.toUpperCase()}</strong>, <strong>${minLen}-letter minimum</strong>, and <strong>${range} words</strong>) takes too long and may not be achievable.<br><br>We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away.`
+            };
+        }
+
+        return { feasible: true };
+    }
+
     async function startSoloMatch() {
         const getVal = (id, def = 'random') => {
             const el = document.getElementById(id);
@@ -206,6 +266,16 @@
             board_format: getVal('sf-config-format', 'random'),
             word_count_range: getVal('sf-config-range', 'random')
         };
+
+        const feasibility = checkBoardConfigFeasibility(params);
+        if (!feasibility.feasible) {
+            if (window.showAlertModal) {
+                window.showAlertModal(feasibility.title, feasibility.message);
+            } else {
+                alert(feasibility.message.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+            }
+            return;
+        }
 
         const participants = soloBots.map(b => ({ username: b.username, is_ai: true, ai_rating: b.rating }));
 
@@ -231,7 +301,13 @@
                     window.startGamePolling();
                 }
             } else {
-                alert(data.error);
+                const title = data.title || 'Configuration Notice';
+                const msg = data.message || data.error || 'Failed to create solo match.';
+                if (window.showAlertModal) {
+                    window.showAlertModal(title, msg);
+                } else {
+                    alert(msg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+                }
             }
         } catch (e) {
             console.error(e);
@@ -264,6 +340,16 @@
             word_count_range: getVal('sf-config-range', 'random')
         };
 
+        const feasibility = checkBoardConfigFeasibility(params);
+        if (!feasibility.feasible) {
+            if (window.showAlertModal) {
+                window.showAlertModal(feasibility.title, feasibility.message);
+            } else {
+                alert(feasibility.message.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+            }
+            return;
+        }
+
         const participants = usernames.map(u => ({ username: u, is_ai: false }));
         // Include bots if any
         soloBots.forEach(b => {
@@ -282,8 +368,13 @@
                 loadPrivateMatches();
                 showInviteSentToast();
             } else {
-                if (window.showAlertModal) window.showAlertModal('Error', data.error || 'Failed to send invitation.');
-                else alert(data.error);
+                const title = data.title || 'Configuration Notice';
+                const msg = data.message || data.error || 'Failed to send invitation.';
+                if (window.showAlertModal) {
+                    window.showAlertModal(title, msg);
+                } else {
+                    alert(msg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''));
+                }
             }
         } catch (e) {
             console.error(e);
@@ -781,13 +872,21 @@
         }
     };
 
-    // Global event delegation for Start Solo Match to ensure it works in SPA navigation
+    // Global event delegation for Start Solo Match and Send Invite to ensure they work in SPA navigation
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('#start-solo-btn');
         if (btn) {
             e.preventDefault();
             console.log('[private_matches.js] Global delegation intercepted Start Solo Match click');
             startSoloMatch();
+            return;
+        }
+        const inviteBtn = e.target.closest('#invite-friends-btn');
+        if (inviteBtn) {
+            e.preventDefault();
+            console.log('[private_matches.js] Global delegation intercepted Send Invite click');
+            sendFriendsInvite();
+            return;
         }
     });
 

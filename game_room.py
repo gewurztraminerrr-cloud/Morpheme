@@ -4878,6 +4878,9 @@ class RoomManager:
             
             if board is None:
                 print(f"[RoomManager] ERROR: Board generation failed!")
+                if getattr(room, 'is_solo', False):
+                    room.board_gen_failed = True
+                    room.board_gen_error = "Finding a board that meets these specific criteria takes too long and may not be achievable.<br><br>We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away."
                 return False
                 
             # ATOMICITY: Apply new round data with strict display filtering

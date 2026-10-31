@@ -1945,6 +1945,22 @@ async function _doUpdateGameState(incomingState = null) {
 
         if (!state) return;
 
+        if (state.board_gen_failed) {
+            console.warn('[play.js] Board generation failed for room. Ejecting to lobby with notice.');
+            stopPolling();
+            window.currentRoomId = null;
+            localStorage.removeItem('last_joined_room');
+            if (window.showAlertModal) {
+                window.showAlertModal('Configuration Notice', state.board_gen_error || 'Finding a board that meets these specific criteria takes too long and may not be achievable.<br><br>We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away.');
+            }
+            if (window.showPage) {
+                window.showPage('page-lobby');
+            } else if (window.navigateToPage) {
+                window.navigateToPage('lobby');
+            }
+            return;
+        }
+
         if (window._waitGraceTimeout) {
             clearTimeout(window._waitGraceTimeout);
             window._waitGraceTimeout = null;
