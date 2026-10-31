@@ -5001,7 +5001,10 @@ function renderRoomAchievementsData(data, reqSeq, card, previousScroll, isOpenin
         });
 
         // Average and Period specific labels
-        document.getElementById('ach-avg-perf').textContent = stats.avg_perf || '-';
+        const achAvgPerfEl = document.getElementById('ach-avg-perf');
+        if (achAvgPerfEl) {
+            achAvgPerfEl.textContent = stats.avg_perf || '-';
+        }
         const achGreatestPeEl = document.getElementById('ach-greatest-pe');
         if (achGreatestPeEl) {
             achGreatestPeEl.textContent = stats.max_pe || '0';
