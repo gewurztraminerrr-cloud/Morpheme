@@ -144,6 +144,15 @@ START_OVER_POINT_OCTOBER_30
 - **Desktop Single-Row & Responsive Wrap Layout (`static/css/play.css`)**:
   - On desktop and laptop viewports, `#tool-random .combo-control-panel .input-row` displays all four controls side-by-side in a neat horizontal flex row with `gap: 8px` and `flex-wrap: wrap !important;` to ensure responsive resilience without truncation.
 
+### 18. Tools: Sequence Search Mobile Compact Layout & Spacing
+- **Compact 2-Column Grid Matching Lists Tool (`static/css/play.css`)**:
+  - On mobile devices (`@media (max-width: 900px)` and `body.is-mobile`), `#tool-sequence .combo-control-panel` adopts the space-saving 2-column grid layout matching Lists in Tools (`grid-template-columns: 1fr 1fr; gap: 6px;` with compact `36px` element heights, `0.82rem` font size, and `border-radius: 6px`).
+  - Symmetrically sorted elements into:
+    - Row 1: Sequence textbox (`seq-input`) and search mode dropdown (`seq-mode`, Contains/Starts/Ends) side-by-side.
+    - Row 2: Dictionary dropdown (`seq-dict`) and length dropdown (`seq-length`) side-by-side.
+    - Row 3: Search button (`seq-search-btn`) spanning both columns (`grid-column: 1 / -1; width: 100%`).
+  - Replaces the previous 5-row vertical stack, reducing control panel height by over 120px and expanding immediate visibility and scroll area for search results on mobile devices.
+
 ---
 
 ## Verification & Validation
