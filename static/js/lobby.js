@@ -6,6 +6,7 @@ let lobbyStatsInterval = null;
 let currentLobbyConfig = null;
 window.currentLobbyConfig = null;
 window.activeRatingFilterValue = null;
+window.closedRoomsSortByProximity = false;
 
 function formatLobbyTime(seconds) {
     const s = parseInt(seconds);
@@ -674,6 +675,10 @@ function setupLobbyEvents() {
     window.setRoomFilterTab = function(tab) {
         window._currentLobbyPanel = 'rooms';
         window.currentRoomFilterTab = (tab === 'closed') ? 'closed' : 'open';
+        if (window.currentRoomFilterTab === 'closed') {
+            // Default to highest average rating first when Closed Rooms is pressed
+            window.closedRoomsSortByProximity = false;
+        }
         const openBtn = document.getElementById('open-rooms-filter-btn');
         const closedBtn = document.getElementById('closed-rooms-filter-btn');
         if (openBtn) {
@@ -736,9 +741,13 @@ function setupLobbyEvents() {
             const val = input.value.trim();
             if (val === '') {
                 window.activeRatingFilterValue = null;
+                window.closedRoomsSortByProximity = false;
             } else {
                 const parsed = parseInt(val);
                 window.activeRatingFilterValue = isNaN(parsed) ? null : parsed;
+                if (window.activeRatingFilterValue !== null) {
+                    window.closedRoomsSortByProximity = true;
+                }
             }
             
             console.log('[Lobby] Rating filter search executed. Value:', window.activeRatingFilterValue);
@@ -848,6 +857,9 @@ function setupLobbyEvents() {
                         input.value = cleanRating;
                     }
                     window.activeRatingFilterValue = cleanRating ? parseInt(cleanRating, 10) : null;
+                    if (window.activeRatingFilterValue !== null) {
+                        window.closedRoomsSortByProximity = true;
+                    }
                     console.log('[Lobby] My Rating clicked. Value:', userRating);
                     fetchAndRenderRooms(
                         activeConfig.gameType,
@@ -1204,13 +1216,16 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
             if (a._isUserInRoom && !b._isUserInRoom) return -1;
             if (!a._isUserInRoom && b._isUserInRoom) return 1;
 
+            const isClosedTab = (activeTab === 'closed');
+            const applyProximity = (!isClosedTab || Boolean(window.closedRoomsSortByProximity));
+
             const targetRating = window.activeRatingFilterValue;
-            if (targetRating !== null && !isNaN(targetRating)) {
+            if (applyProximity && targetRating !== null && !isNaN(targetRating)) {
                 const diffA = Math.abs(a.display_average_rating - targetRating);
                 const diffB = Math.abs(b.display_average_rating - targetRating);
                 return diffA - diffB;
             }
-            // Default when proximity filter is empty: highest average rating first
+            // Default when proximity filter is empty or when Closed Rooms defaults: highest average rating first
             return (b.display_average_rating || 0) - (a.display_average_rating || 0);
         });
 
