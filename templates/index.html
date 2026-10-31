@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793462000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793421000">
-    <link rel="stylesheet" href="/css/play.css?v=1793466000">
+    <link rel="stylesheet" href="/css/play.css?v=1793467000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -5843,16 +5843,59 @@
                             <h2>Appearance</h2>
                             <p>Customize the visual layout, themes, sizes, and styling of the game.</p>
                         </div>
-                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
-                            <!-- App Theme -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Layout / App Theme</div>
-                                        <div class="setting-desc">Choose your preferred color scheme.</div>
-                                    </div>
-                                </div>
-                                <!-- Expanded Theme Selector Grid -->
+
+                        <!-- Sub-navigation Menu for Appearance -->
+                        <div id="setting-subnav-appearance" class="settings-subnav-menu">
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'theme')">
+                                <div class="settings-subnav-title">Layout / App Theme</div>
+                                <div class="settings-subnav-desc">Choose your preferred color scheme</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'board-size')">
+                                <div class="settings-subnav-title">Board Size</div>
+                                <div class="settings-subnav-desc">Configure tile sizes for 4x4, 4x6, 5x7, and 6x8 grids</div>
+                            </button>
+                            <button class="settings-subnav-btn desktop-only-setting" type="button" onclick="window.showSettingSubTab('appearance', 'cube-scale')">
+                                <div class="settings-subnav-title">Cube Scale (3D)</div>
+                                <div class="settings-subnav-desc">Adjust the size of the 3D game board</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'subanagrams-tile-size')">
+                                <div class="settings-subnav-title">Subanagrams Tile Size</div>
+                                <div class="settings-subnav-desc">Adjust letter tile sizes for multiplayer Subanagrams</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'chat-size')">
+                                <div class="settings-subnav-title">Chat Text Size</div>
+                                <div class="settings-subnav-desc">Adjust font size of chat messages</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'def-size')">
+                                <div class="settings-subnav-title">Definition Text Size</div>
+                                <div class="settings-subnav-desc">Adjust font size of word definitions</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'word-flash')">
+                                <div class="settings-subnav-title">Word Flash Effect</div>
+                                <div class="settings-subnav-desc">Flash word trace tiles on the board on submission</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'highlight-typing')">
+                                <div class="settings-subnav-title">Highlight as you Type</div>
+                                <div class="settings-subnav-desc">Highlight letters on the board as you type in the input box</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'highlight-mouse')">
+                                <div class="settings-subnav-title">Highlight as you Mouse/Swipe</div>
+                                <div class="settings-subnav-desc">Highlight letters on the board as you drag or swipe over them</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('appearance', 'synesthesia')">
+                                <div class="settings-subnav-title">Synesthesia</div>
+                                <div class="settings-subnav-desc">Tailor the color of each individual letter on the game board</div>
+                            </button>
+                        </div>
+
+                        <!-- 1. Subpage: Layout / App Theme -->
+                        <div id="setting-subpage-theme" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Layout / App Theme</h3>
+                                <p class="setting-subpage-desc">Choose your preferred color scheme.</p>
+                            </div>
+                            <div class="setting-subpage-content">
                                 <div class="theme-selector-grid" style="margin-top: 4px; max-width: 900px; box-sizing: border-box;">
                                     <button class="theme-btn" data-theme="default"
                                         style="background: #1a1a2e; border: 2px solid #fff;" title="Default"></button>
@@ -5930,55 +5973,52 @@
                                         title="Dark Dark Brown"></button>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Board Size -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Board Size</div>
-                                        <div class="setting-desc">Configure the precise tile size for each board dimension. Morpheme will automatically apply these values when you enter a room of the corresponding size.</div>
-                                    </div>
-                                </div>
-
-                                <div class="dimension-sizes-section" style="margin-top: 15px; width: 100%; box-sizing: border-box;">
-                                    <div class="setting-title" style="font-size: 1.1rem; margin-bottom: 5px;">Dimension-Specific Sizes</div>
-                                    <div class="setting-desc" style="margin-bottom: 15px;">Set distinct tile scales so you don't have to adjust the slider each time you change rooms. The 2D example board below will demonstrate the selected size.</div>
-                                    <div class="dimension-sliders-grid" style="width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span style="font-weight: 600;">4x4 Grid</span>
-                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold;">82px</span>
+                        <!-- 2. Subpage: Board Size -->
+                        <div id="setting-subpage-board-size" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Board Size</h3>
+                                <p class="setting-subpage-desc">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
+                            </div>
+                            <div class="setting-subpage-content board-size-split-view" style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+                                <div style="flex: 1 1 320px; min-width: 280px; display: flex; flex-direction: column; gap: 10px;">
+                                    <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; box-sizing: border-box;">
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.9rem;">4x4 Grid</span>
+                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">82px</span>
                                             </div>
                                             <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="82" style="width: 100%;">
                                         </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span style="font-weight: 600;">4x6 Grid</span>
-                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold;">82px</span>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.9rem;">4x6 Grid</span>
+                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">82px</span>
                                             </div>
                                             <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="82" style="width: 100%;">
                                         </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span style="font-weight: 600;">5x7 Grid</span>
-                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold;">65px</span>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.9rem;">5x7 Grid</span>
+                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">65px</span>
                                             </div>
                                             <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="65" style="width: 100%;">
                                         </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span style="font-weight: 600;">6x8 Grid</span>
-                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold;">54px</span>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.9rem;">6x8 Grid</span>
+                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">54px</span>
                                             </div>
                                             <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; justify-content: center; margin-top: 8px; margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: flex-start; margin-top: 4px;">
                                         <button id="btn-reset-board-sizes" class="mini-action-btn secondary" style="padding: 7px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 8px;">Set to Default Sizes</button>
                                     </div>
                                 </div>
-
-                                <div class="preview-board-container" style="margin-top: 0;">
+                                <div class="preview-board-container" style="margin-top: 0; flex: 0 0 auto; display: flex; justify-content: center;">
                                     <div class="preview-board" id="preview-board">
                                         <div class="board-cell">A</div>
                                         <div class="board-cell">B</div>
@@ -5999,26 +6039,26 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- 3D Cube Scale (Desktops & Laptops Only) -->
-                            <div class="setting-panel desktop-only-setting" id="setting-panel-cube-scale">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Cube Scale (3D)</div>
-                                        <div class="setting-desc">Adjust the size of the 3D game board.</div>
-                                    </div>
-                                    <div id="setting-cube-size-val" class="preview-value">220px</div>
-                                </div>
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
+                        <!-- 3. Subpage: Cube Scale (3D) -->
+                        <div id="setting-subpage-cube-scale" class="setting-subpage desktop-only-setting" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Cube Scale (3D)</h3>
+                                <p class="setting-subpage-desc">Adjust the size of the 3D game board.</p>
+                            </div>
+                            <div class="setting-subpage-content" id="setting-panel-cube-scale">
+                                <div class="setting-slider-container" style="max-width: 460px;">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (150px)</span>
+                                        <span id="setting-cube-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">220px</span>
                                         <span>Large (300px)</span>
                                     </div>
-                                    <input type="range" id="setting-cube-size" min="150" max="300" value="220">
+                                    <input type="range" id="setting-cube-size" min="150" max="300" value="220" style="width: 100%;">
                                 </div>
-                                <!-- Cube Preview -->
-                                <div class="settings-preview-box" style="min-height: calc(var(--cube-container-size) + 40px); overflow: visible; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; margin-top: 20px;">
-                                     <div class="cube-container" style="margin: 0;">
+                                <div class="settings-preview-box" style="min-height: calc(var(--cube-container-size) + 30px); max-height: 260px; overflow: visible; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; margin-top: 15px;">
+                                    <div class="cube-container" style="margin: 0;">
                                         <div class="cube" style="animation: cube-preview-spin 10s linear infinite;">
                                             <div class="cube-face face-front"><div class="cube-cell">A</div><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div></div>
                                             <div class="cube-face face-back"><div class="cube-cell">J</div><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div></div>
@@ -6027,33 +6067,34 @@
                                             <div class="cube-face face-top"><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div><div class="cube-cell">S</div></div>
                                             <div class="cube-face face-bottom"><div class="cube-cell">T</div><div class="cube-cell">U</div><div class="cube-cell">V</div><div class="cube-cell">W</div><div class="cube-cell">X</div><div class="cube-cell">Y</div><div class="cube-cell">Z</div><div class="cube-cell">A</div><div class="cube-cell">B</div></div>
                                         </div>
-                                     </div>
-                                     <style>
+                                    </div>
+                                    <style>
                                         @keyframes cube-preview-spin {
                                             from { transform: rotateX(-20deg) rotateY(0deg); }
                                             to { transform: rotateX(-20deg) rotateY(360deg); }
                                         }
-                                     </style>
+                                    </style>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Subanagrams Tile Size -->
-                            <div class="setting-panel" id="setting-panel-subanagrams-tile-size">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Subanagrams Tile Size</div>
-                                        <div class="setting-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds.</div>
-                                    </div>
-                                    <div id="val-subanagrams-tile-size" class="preview-value">64px</div>
-                                </div>
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
+                        <!-- 4. Subpage: Subanagrams Tile Size -->
+                        <div id="setting-subpage-subanagrams-tile-size" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Subanagrams Tile Size</h3>
+                                <p class="setting-subpage-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds.</p>
+                            </div>
+                            <div class="setting-subpage-content" id="setting-panel-subanagrams-tile-size">
+                                <div class="setting-slider-container" style="max-width: 480px;">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (44px)</span>
+                                        <span id="val-subanagrams-tile-size" class="preview-value" style="color: var(--primary); font-weight: 700;">64px</span>
                                         <span>Large (96px)</span>
                                     </div>
                                     <input type="range" id="setting-subanagrams-tile-size" min="44" max="96" value="64" style="width: 100%;">
                                 </div>
-                                <div class="settings-preview-box" style="margin-top: 15px; padding: 20px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px; overflow-x: auto;">
+                                <div class="settings-preview-box" style="margin-top: 15px; padding: 16px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px; overflow-x: auto;">
                                     <div class="subanagrams-preview-board" id="subanagrams-preview-board" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
                                         <div class="board-cell subanagrams-preview-cell">S</div>
                                         <div class="board-cell subanagrams-preview-cell">U</div>
@@ -6065,86 +6106,92 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Chat Text Size -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Chat Text Size</div>
-                                        <div class="setting-desc">Adjust the font size of chat messages.</div>
-                                    </div>
-                                    <div id="setting-chat-size-val" class="preview-value">13px</div>
-                                </div>
+                        <!-- 5. Subpage: Chat Text Size -->
+                        <div id="setting-subpage-chat-size" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Chat Text Size</h3>
+                                <p class="setting-subpage-desc">Adjust the font size of chat messages.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
                                 <div class="setting-slider-container">
-                                    <div class="slider-label-row">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (10px)</span>
+                                        <span id="setting-chat-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">13px</span>
                                         <span>Large (24px)</span>
                                     </div>
-                                    <input type="range" id="setting-chat-size" min="10" max="24" value="13">
+                                    <input type="range" id="setting-chat-size" min="10" max="24" value="13" style="width: 100%;">
                                 </div>
-                                <!-- Chat Preview -->
-                                <div class="settings-preview-box">
+                                <div class="settings-preview-box" style="margin-top: 14px; padding: 14px 18px; background: rgba(0,0,0,0.2); border-radius: 10px;">
                                     <div id="preview-chat-text" class="settings-preview-text" style="line-height: 1.5;">
                                         <span style="font-weight: 700; color: #ffd700;">Player:</span> This is a sample chat message.
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Definition Text Size -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Definition Text Size</div>
-                                        <div class="setting-desc">Adjust the font size of word definitions.</div>
-                                    </div>
-                                    <div id="setting-def-size-val" class="preview-value">15px</div>
-                                </div>
+                        <!-- 6. Subpage: Definition Text Size -->
+                        <div id="setting-subpage-def-size" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Definition Text Size</h3>
+                                <p class="setting-subpage-desc">Adjust the font size of word definitions.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
                                 <div class="setting-slider-container">
-                                    <div class="slider-label-row">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Small (11px)</span>
+                                        <span id="setting-def-size-val" class="preview-value" style="color: var(--primary); font-weight: 700;">15px</span>
                                         <span>Large (26px)</span>
                                     </div>
-                                    <input type="range" id="setting-def-size" min="11" max="26" value="15">
+                                    <input type="range" id="setting-def-size" min="11" max="26" value="15" style="width: 100%;">
                                 </div>
-                                <!-- Definition Preview -->
-                                <div class="settings-preview-box">
-                                    <div style="color: var(--accent-color); font-weight: 700; font-size: 1.2em; margin-bottom: 4px;">Example</div>
+                                <div class="settings-preview-box" style="margin-top: 14px; padding: 14px 18px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                                    <div style="color: var(--accent-color); font-weight: 700; font-size: 1.1em; margin-bottom: 4px;">Example</div>
                                     <div id="preview-def-text" class="settings-preview-text" style="line-height: 1.5;">
                                         (n.) A representative form or pattern.
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Word Flash Effect -->
-                            <div class="setting-panel">
-                                <label for="setting-word-flash" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Word Flash Effect</div>
-                                        <div class="setting-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty) on submission.</div>
-                                    </div>
+                        <!-- 7. Subpage: Word Flash Effect -->
+                        <div id="setting-subpage-word-flash" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Word Flash Effect</h3>
+                                <p class="setting-subpage-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty) on submission.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-word-flash" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Word Flash Animation</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-word-flash" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Highlight While Typing -->
-                            <div class="setting-panel">
-                                <label for="setting-highlight-typing" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Highlight as you Type</div>
-                                        <div class="setting-desc">Highlight letters on the board as you type in the input box.</div>
-                                    </div>
+                        <!-- 8. Subpage: Highlight as you Type -->
+                        <div id="setting-subpage-highlight-typing" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Highlight as you Type</h3>
+                                <p class="setting-subpage-desc">Highlight letters on the board as you type in the input box.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 14px; max-width: 540px;">
+                                <label for="setting-highlight-typing" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Typing Highlight</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-highlight-typing" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-                                <!-- Color Picker: Typing -->
-                                <div id="highlight-color-picker"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
-                                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Typing Color</div>
+                                <div id="highlight-color-picker" style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%;">
+                                    <div class="meta-label" style="font-size: 0.88rem; opacity: 0.8; font-weight: 600;">Typing Color</div>
                                     <div class="color-dot-grid"
                                         style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
                                         <button class="color-dot active" data-color="#ffcc00" style="background: #ffcc00;"
@@ -6178,23 +6225,25 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Highlight While Mousing -->
-                            <div class="setting-panel">
-                                <label for="setting-highlight-mouse" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Highlight as you Mouse/Swipe</div>
-                                        <div class="setting-desc">Highlight letters on the board as you drag or swipe over them.</div>
-                                    </div>
+                        <!-- 9. Subpage: Highlight as you Mouse/Swipe -->
+                        <div id="setting-subpage-highlight-mouse" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Highlight as you Mouse/Swipe</h3>
+                                <p class="setting-subpage-desc">Highlight letters on the board as you drag or swipe over them.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 14px; max-width: 540px;">
+                                <label for="setting-highlight-mouse" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Mousing / Swiping Highlight</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-highlight-mouse" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-                                <!-- Color Picker: Mousing -->
-                                <div id="highlight-mouse-color-picker"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
-                                    <div class="meta-label" style="font-size: 0.9rem; opacity: 0.7; font-weight: 500;">Mousing Color</div>
+                                <div id="highlight-mouse-color-picker" style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%;">
+                                    <div class="meta-label" style="font-size: 0.88rem; opacity: 0.8; font-weight: 600;">Mousing Color</div>
                                     <div class="color-dot-grid"
                                         style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
                                         <button class="color-dot active" data-color="#409cff" style="background: #409cff;"
@@ -6227,112 +6276,23 @@
                                             title="Black"></button>
                                     </div>
                                 </div>
-                                <style>
-                                    .color-dot {
-                                        width: 24px;
-                                        height: 24px;
-                                        border-radius: 50%;
-                                        cursor: pointer;
-                                        border: 2px solid rgba(0, 0, 0, 0.3);
-                                        transition: transform 0.2s, box-shadow 0.2s;
-                                    }
-
-                                    .color-dot[data-color="#000000"],
-                                    .color-dot[data-color="#4a4a4a"] {
-                                        border-color: rgba(255, 255, 255, 0.35);
-                                    }
-
-                                    .color-dot:hover {
-                                        transform: scale(1.2);
-                                    }
-
-                                    .color-dot.active {
-                                        transform: scale(1.3);
-                                        border-color: #fff;
-                                        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-                                    }
-                                </style>
                             </div>
+                        </div>
 
-                            <!-- Synesthesia Panel -->
-                            <div class="setting-panel">
-                                <div class="setting-header" style="padding-bottom: 8px;">
-                                    <div>
-                                        <div class="setting-title">Synesthesia</div>
-                                        <div class="setting-desc">Tailor the color of each individual letter on the game board.</div>
-                                    </div>
+                        <!-- 10. Subpage: Synesthesia -->
+                        <div id="setting-subpage-synesthesia" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
+                                <h3 class="setting-subpage-title">Synesthesia</h3>
+                                <p class="setting-subpage-desc">Tailor the color of each individual letter on the game board.</p>
+                            </div>
+                            <div class="setting-subpage-content synesthesia-section" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
+                                <div style="display: flex; justify-content: flex-start;">
+                                    <button id="setting-synesthesia-reset" class="mini-action-btn secondary" style="padding: 5px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 6px; cursor: pointer;">Reset All to Black</button>
                                 </div>
-                                <div class="synesthesia-section" style="display: flex; flex-direction: column; gap: 4px; width: 100%; margin-top: 0; box-sizing: border-box;">
-                                    <div style="display: flex; justify-content: flex-start;">
-                                        <button id="setting-synesthesia-reset" class="mini-action-btn secondary"
-                                            style="padding: 4px 10px; font-size: 0.75rem;">Reset All to Black</button>
-                                    </div>
-                                    <div id="synesthesia-letters-grid" style="margin-top: 0 !important; padding-top: 4px !important; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
-                                        <!-- Letters A-Z injected by settings.js -->
-                                    </div>
+                                <div id="synesthesia-letters-grid" style="margin-top: 0 !important; padding: 10px !important; background: rgba(0,0,0,0.2); border-radius: 12px; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;">
+                                    <!-- Letters A-Z injected by settings.js -->
                                 </div>
-
-                                <style>
-                                    .synesthesia-unit {
-                                        display: flex;
-                                        flex-direction: column;
-                                        align-items: center;
-                                        gap: 4px;
-                                        background: rgba(255, 255, 255, 0.03);
-                                        padding: 2px 4px 6px 4px;
-                                        border-radius: 8px;
-                                        border: 1px solid rgba(255, 255, 255, 0.08);
-                                        transition: all 0.2s;
-                                    }
-
-                                    .synesthesia-unit:hover {
-                                        background: rgba(255, 255, 255, 0.08);
-                                        border-color: rgba(255, 255, 255, 0.2);
-                                        transform: translateY(-2px);
-                                    }
-
-                                    .synesthesia-unit label {
-                                        font-size: 0.95rem;
-                                        line-height: 1.1;
-                                        margin: 0;
-                                        padding: 0;
-                                        font-weight: 800;
-                                        color: #fff;
-                                    }
-
-                                    .synesthesia-unit input[type="color"] {
-                                        width: 32px;
-                                        height: 32px;
-                                        border: 2px solid rgba(255, 255, 255, 0.2);
-                                        background: none;
-                                        cursor: pointer;
-                                        border-radius: 6px;
-                                        padding: 0;
-                                        overflow: hidden;
-                                    }
-
-                                    .synesthesia-unit input[type="color"]::-webkit-color-swatch-wrapper {
-                                        padding: 0;
-                                    }
-
-                                    .synesthesia-unit input[type="color"]::-webkit-color-swatch {
-                                        border: none;
-                                        border-radius: 4px;
-                                    }
-
-                                    body.theme-white .synesthesia-unit {
-                                        background: rgba(0, 0, 0, 0.03);
-                                        border-color: rgba(0, 0, 0, 0.1);
-                                    }
-
-                                    body.theme-white .synesthesia-unit label {
-                                        color: #333;
-                                    }
-
-                                    body.theme-white .synesthesia-unit input[type="color"] {
-                                        border-color: rgba(0, 0, 0, 0.1);
-                                    }
-                                </style>
                             </div>
                         </div>
                     </div>
@@ -6343,178 +6303,133 @@
                             <h2>Audio & Sounds</h2>
                             <p>Manage background music, sound effects, and next round alerts.</p>
                         </div>
-                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
-                            <!-- Lobby Music Setting -->
-                            <div class="setting-panel">
-                                <label for="setting-lobby-music" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Lobby Music</div>
-                                        <div class="setting-desc">Play background music when in the lobby.</div>
-                                    </div>
+
+                        <!-- Sub-navigation Menu for Audio -->
+                        <div id="setting-subnav-audio" class="settings-subnav-menu">
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'lobby-music')">
+                                <div class="settings-subnav-title">Lobby Music</div>
+                                <div class="settings-subnav-desc">Play background music when in the lobby</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'triple-music')">
+                                <div class="settings-subnav-title">Triple Format Music</div>
+                                <div class="settings-subnav-desc">Play background music when the format is Triple</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'board-sounds')">
+                                <div class="settings-subnav-title">Board Sound Effects</div>
+                                <div class="settings-subnav-desc">Play sound effects when pressing, swiping, and validating words</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'next-round-bell')">
+                                <div class="settings-subnav-title">Next Round Notification</div>
+                                <div class="settings-subnav-desc">Play a bell or a set of beeps 10 seconds before a new round starts</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'vibration-alert')">
+                                <div class="settings-subnav-title">Intermission Vibration Alert</div>
+                                <div class="settings-subnav-desc">Vibrate mobile devices 10 seconds before a new round starts</div>
+                            </button>
+                        </div>
+
+                        <!-- 1. Subpage: Lobby Music -->
+                        <div id="setting-subpage-lobby-music" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Lobby Music</h3>
+                                <p class="setting-subpage-desc">Play background music when in the lobby.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-lobby-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Lobby Background Music</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-lobby-music" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Triple Format Music Setting -->
-                            <div class="setting-panel">
-                                <label for="setting-triple-music" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Triple Format Music</div>
-                                        <div class="setting-desc">Play background music when the format is Triple.</div>
-                                    </div>
+                        <!-- 2. Subpage: Triple Format Music -->
+                        <div id="setting-subpage-triple-music" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Triple Format Music</h3>
+                                <p class="setting-subpage-desc">Play background music when the format is Triple.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-triple-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Triple Format Music</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-triple-music" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Board Sound Effects -->
-                            <div class="setting-panel">
-                                <label for="setting-board-sounds" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Board Sound Effects</div>
-                                        <div class="setting-desc">Play sound effects when pressing, swiping, and validating words during play.</div>
-                                    </div>
+                        <!-- 3. Subpage: Board Sound Effects -->
+                        <div id="setting-subpage-board-sounds" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Board Sound Effects</h3>
+                                <p class="setting-subpage-desc">Play sound effects when pressing, swiping, and validating words during play.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-board-sounds" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable In-Game Sound Effects</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-board-sounds" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Next Round Notification -->
-                            <div class="setting-panel">
-                                <label for="setting-next-round-bell" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Next Round Notification</div>
-                                        <div class="setting-desc">Play a bell or a set of beeps 10 seconds before a new round starts.</div>
-                                    </div>
+                        <!-- 4. Subpage: Next Round Notification -->
+                        <div id="setting-subpage-next-round-bell" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Next Round Notification</h3>
+                                <p class="setting-subpage-desc">Play a bell or a set of beeps 10 seconds before a new round starts.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; gap: 16px; max-width: 520px;">
+                                <label for="setting-next-round-bell" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Next Round Audio Alert</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-next-round-bell">
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
-
-                                <div id="bell-selection-container"
-                                    style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+                                <div id="bell-selection-container" style="display: flex; flex-direction: column; align-items: flex-start; gap: 14px; width: 100%;">
                                     <!-- Row 1: Bells -->
-                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                                        <div class="meta-label"
-                                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                            Select Bell Sound</div>
-                                        <div
-                                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                            <button class="bell-btn" data-bell="bell1">Bell 1 <span
-                                                    class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="bell2">Bell 2 <span
-                                                    class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="bell3">Bell 3 <span
-                                                    class="play-icon">▶</span></button>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%;">
+                                        <div class="meta-label" style="font-size: 0.85rem; opacity: 0.8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Bell Sound</div>
+                                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                            <button class="bell-btn" data-bell="bell1">Bell 1 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="bell2">Bell 2 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="bell3">Bell 3 <span class="play-icon">▶</span></button>
                                         </div>
                                     </div>
-
                                     <!-- Row 2: Beeps -->
-                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                                        <div class="meta-label"
-                                            style="font-size: 0.85rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                            Select Beep Sound</div>
-                                        <div
-                                            style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                            <button class="bell-btn" data-bell="beep1">Beep 1 <span
-                                                    class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="beep2">Beep 2 <span
-                                                    class="play-icon">▶</span></button>
-                                            <button class="bell-btn" data-bell="beep3">Beep 3 <span
-                                                    class="play-icon">▶</span></button>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%;">
+                                        <div class="meta-label" style="font-size: 0.85rem; opacity: 0.8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Beep Sound</div>
+                                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                            <button class="bell-btn" data-bell="beep1">Beep 1 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="beep2">Beep 2 <span class="play-icon">▶</span></button>
+                                            <button class="bell-btn" data-bell="beep3">Beep 3 <span class="play-icon">▶</span></button>
                                         </div>
                                     </div>
                                 </div>
-
-                                <style>
-                                    .bell-btn {
-                                        background: rgba(255, 255, 255, 0.05);
-                                        border: 1px solid rgba(255, 255, 255, 0.15);
-                                        color: #fff;
-                                        padding: 8px 16px;
-                                        border-radius: 8px;
-                                        cursor: pointer;
-                                        transition: all 0.2s;
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 8px;
-                                        font-size: 0.9rem;
-                                        font-weight: 500;
-                                    }
-
-                                    .bell-btn:hover {
-                                        background: rgba(255, 255, 255, 0.15);
-                                        transform: translateY(-1px);
-                                    }
-
-                                    .bell-btn.active {
-                                        background: #409cff;
-                                        border-color: #fff;
-                                        box-shadow: 0 0 15px rgba(64, 156, 255, 0.4);
-                                    }
-
-                                    .play-icon {
-                                        font-size: 0.7rem;
-                                        background: rgba(255, 255, 255, 0.2);
-                                        width: 18px;
-                                        height: 18px;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
-                                        border-radius: 50%;
-                                    }
-
-                                    body.theme-white .bell-btn {
-                                        background: rgba(0, 0, 0, 0.05);
-                                        border-color: rgba(0, 0, 0, 0.1);
-                                        color: #333;
-                                    }
-
-                                    body.theme-white .bell-btn:hover {
-                                        background: rgba(0, 0, 0, 0.1);
-                                    }
-
-                                    body.theme-white .bell-btn.active {
-                                        background: #409cff;
-                                        color: #fff;
-                                        border-color: #2a7fd1;
-                                    }
-
-                                    body.theme-white .play-icon {
-                                        background: rgba(0, 0, 0, 0.1);
-                                        color: #333;
-                                    }
-
-                                    body.theme-white .bell-btn.active .play-icon {
-                                        background: rgba(255, 255, 255, 0.3);
-                                        color: #fff;
-                                    }
-
-                                    body.theme-white .meta-label {
-                                        color: #555 !important;
-                                    }
-
-                                    body.theme-white #bell-selection-container {
-                                        border-top-color: rgba(0, 0, 0, 0.1) !important;
-                                    }
-                                </style>
                             </div>
+                        </div>
 
-                            <!-- Intermission Vibration Alert -->
-                            <div class="setting-panel">
-                                <label for="setting-vibration-alert" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Intermission Vibration Alert</div>
-                                        <div class="setting-desc">Vibrate mobile devices 10 seconds before a new round starts.</div>
-                                    </div>
+                        <!-- 5. Subpage: Intermission Vibration Alert -->
+                        <div id="setting-subpage-vibration-alert" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Intermission Vibration Alert</h3>
+                                <p class="setting-subpage-desc">Vibrate mobile devices 10 seconds before a new round starts.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-vibration-alert" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Vibration on Mobile</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-vibration-alert">
                                         <span class="slider round"></span>
@@ -6530,45 +6445,68 @@
                             <h2>Gameplay & Preferences</h2>
                             <p>Configure game options and tile interaction hitboxes.</p>
                         </div>
-                        <div class="settings-tab-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
-                            <!-- Selectable Tile Space Configuration -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Tile Selectable Space (Octagon vs Diamond)</div>
-                                        <div class="setting-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</div>
-                                    </div>
-                                    <div id="setting-corner-cutoff-val" class="preview-value">39%</div>
-                                </div>
 
-                                <div class="setting-slider-container">
-                                    <div class="slider-label-row">
+                        <!-- Sub-navigation Menu for Gameplay -->
+                        <div id="setting-subnav-gameplay" class="settings-subnav-menu">
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'corner-cutoff')">
+                                <div class="settings-subnav-title">Tile Selectable Space (Octagon vs Diamond)</div>
+                                <div class="settings-subnav-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'timezone')">
+                                <div class="settings-subnav-title">Time Zone</div>
+                                <div class="settings-subnav-desc">Choose your preferred time zone for match history, logs, and activity</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'allow-pm')">
+                                <div class="settings-subnav-title">Allow Private Messages</div>
+                                <div class="settings-subnav-desc">Allow other players to send you private messages</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'allow-invites')">
+                                <div class="settings-subnav-title">Allow Game Invitations</div>
+                                <div class="settings-subnav-desc">Allow other players to send you match invitations</div>
+                            </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'lobby-guide')">
+                                <div class="settings-subnav-title">Lobby Guide ("What am I looking at?")</div>
+                                <div class="settings-subnav-desc">Display the explanation banner at the top of the Lobby</div>
+                            </button>
+                        </div>
+
+                        <!-- 1. Subpage: Tile Selectable Space -->
+                        <div id="setting-subpage-corner-cutoff" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Tile Selectable Space (Octagon vs Diamond)</h3>
+                                <p class="setting-subpage-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+                                <div class="setting-slider-container" style="flex: 1 1 300px; max-width: 480px;">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                         <span>Square (0%)</span>
-                                        <span>Octagon (30%)</span>
+                                        <span id="setting-corner-cutoff-val" class="preview-value" style="color: var(--primary); font-weight: 700;">39%</span>
                                         <span>Diamond (50%)</span>
                                     </div>
-                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39">
-                                    <div class="slider-instruction" style="font-size: 0.85rem; color: var(--text-secondary, #94a3b8); margin-top: 12px; line-height: 1.4; font-style: italic;">
+                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39" style="width: 100%;">
+                                    <div class="slider-instruction" style="font-size: 0.82rem; color: var(--text-secondary, #94a3b8); margin-top: 10px; line-height: 1.4; font-style: italic;">
                                         💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
                                     </div>
                                 </div>
-
-                                <div class="preview-hitbox-container" style="margin-top: 20px; display: flex; justify-content: center;">
-                                    <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900;">
+                                <div class="preview-hitbox-container" style="flex: 0 0 auto; display: flex; justify-content: center; align-items: center;">
+                                    <div class="preview-hitbox-tile" style="position: relative; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900;">
                                         <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
                                         <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(39% 0%, 61% 0%, 100% 39%, 100% 61%, 61% 100%, 39% 100%, 0% 61%, 0% 39%);"></div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Time Zone Selection -->
-                            <div class="setting-panel">
-                                <div class="setting-header">
-                                    <div>
-                                        <div class="setting-title">Time Zone</div>
-                                        <div class="setting-desc">Choose your preferred time zone for recorded match history, round logs, and profile activity.</div>
-                                    </div>
-                                    <select id="setting-timezone-select" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 8px; padding: 6px 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                        <!-- 2. Subpage: Time Zone -->
+                        <div id="setting-subpage-timezone" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Time Zone</h3>
+                                <p class="setting-subpage-desc">Choose your preferred time zone for recorded match history, round logs, and profile activity.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <select id="setting-timezone-select" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 8px; padding: 6px 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
                                         <option value="auto">Auto (Device Local)</option>
                                         <option value="UTC">UTC (Universal Time)</option>
                                         <option value="America/New_York">US Eastern Time (ET)</option>
@@ -6598,44 +6536,55 @@
                                         <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
                                         <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
                                     </select>
-                                </div>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Allow Private Messages -->
-                            <div class="setting-panel">
-                                <label for="setting-allow-pm" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Allow Private Messages</div>
-                                        <div class="setting-desc">Allow other players to send you private messages. When disabled, the "Message" button on your profile will be hidden from everyone.</div>
-                                    </div>
+                        <!-- 3. Subpage: Allow Private Messages -->
+                        <div id="setting-subpage-allow-pm" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Allow Private Messages</h3>
+                                <p class="setting-subpage-desc">Allow other players to send you private messages. When disabled, the "Message" button on your profile will be hidden from everyone.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-allow-pm" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Allow Incoming Private Messages</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-allow-pm" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Toggle: Allow Game Invitations -->
-                            <div class="setting-panel">
-                                <label for="setting-allow-invites" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Allow Game Invitations</div>
-                                        <div class="setting-desc">Allow other players to send you "With Friends" room invitations. When disabled, players cannot invite you to matches.</div>
-                                    </div>
+                        <!-- 4. Subpage: Allow Game Invitations -->
+                        <div id="setting-subpage-allow-invites" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Allow Game Invitations</h3>
+                                <p class="setting-subpage-desc">Allow other players to send you "With Friends" room invitations. When disabled, players cannot invite you to matches.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-allow-invites" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Allow Room Match Invitations</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-allow-invites" checked>
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
                             </div>
+                        </div>
 
-                            <!-- Lobby Guide Banner ("What am I looking at?") -->
-                            <div class="setting-panel">
-                                <label for="setting-lobby-guide-toggle" class="setting-header" style="cursor: pointer;">
-                                    <div>
-                                        <div class="setting-title">Lobby Guide ("What am I looking at?")</div>
-                                        <div class="setting-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</div>
-                                    </div>
+                        <!-- 5. Subpage: Lobby Guide ("What am I looking at?") -->
+                        <div id="setting-subpage-lobby-guide" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Lobby Guide ("What am I looking at?")</h3>
+                                <p class="setting-subpage-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</p>
+                            </div>
+                            <div class="setting-subpage-content" style="max-width: 500px;">
+                                <label for="setting-lobby-guide-toggle" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Show Lobby Explanation Banner</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-lobby-guide-toggle" checked>
                                         <span class="slider round"></span>
@@ -6643,8 +6592,7 @@
                                 </label>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
 
                 <div class="mobile-bottom-nav settings-bottom-nav">
                     <button id="settings-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
@@ -9984,7 +9932,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1792204000"></script>
+    <script src="/js/settings.js?v=1793467000"></script>
     <script src="/js/forum.js?v=1793427000"></script>
     <script src="/js/app.js?v=1793421000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>

@@ -419,6 +419,25 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `play.css` cache buster to `v=1793466000`.
   - Bumped `play.js` cache buster to `v=1793465000`.
 
+### 40. Settings Restructuring: Sub-Tabs & Dedicated Individual Setting Pages (`templates/index.html`, `static/js/settings.js`, `static/css/play.css`)
+- **Sub-Tabs Architecture Across All 3 Settings Tabs**:
+  - Restructured all 3 tabs (**Appearance**, **Audio & Sounds**, and **Gameplay & Preferences**) in Settings to feature sub-navigation menus leading to dedicated individual pages for every setting.
+  - On desktops and laptops (>=900px), the 3 main Settings tabs are anchored on the left sidebar (`.tools-sidebar`), and clicking any tab displays the individual setting buttons leading to the content to the right of the main menu.
+  - **Appearance (10 settings)**: Layout / App Theme, Board Size, Cube Scale (3D) [desktop only], Subanagrams Tile Size, Chat Text Size, Definition Text Size, Word Flash Effect, Highlight as you Type, Highlight as you Mouse/Swipe, Synesthesia.
+  - **Audio & Sounds (5 settings)**: Lobby Music, Triple Format Music, Board Sound Effects, Next Round Notification, Intermission Vibration Alert.
+  - **Gameplay & Preferences (5 settings)**: Tile Selectable Space (Octagon vs Diamond), Time Zone, Allow Private Messages, Allow Game Invitations, Lobby Guide ("What am I looking at?").
+- **Individual Setting Sub-Pages with Back Navigation**:
+  - Each individual setting resides in its own `.setting-subpage` with a clean `← Back` button returning directly to the sub-tab menu list.
+  - The title of each setting is placed **directly above** the description.
+  - Each setting description is confined to the standard `.tool-header p` box format (`font-size: 0.82rem; color: var(--muted-text); padding: 6px 12px; border: 1px solid rgba(var(--text-primary-rgb), 0.16); border-radius: 8px; background: rgba(var(--text-primary-rgb), 0.04); max-height: 52px; overflow-y: auto`).
+  - Top header stays clean as `Settings - <TabTitle>` without appending hyphenated sub-setting names.
+- **Divider Removal & Front-of-Screen No-Scroll Optimization**:
+  - Removed all non-dividing divider lines, redundant outer card borders, and unnecessary spacing.
+  - Arranged controls (e.g. 39 themes in 3 compact rows, Board Size 2x2 slider grid beside the live preview board) so all content fits on the front of each page without vertical scrolling.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793467000`.
+  - Bumped `settings.js` cache buster to `v=1793467000`.
+
 ---
 
 ## Verification & Validation
@@ -431,5 +450,6 @@ d61c2423a86873a8d6c41183df9657632586fe86
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to latest commit |
+
 
 

@@ -1088,6 +1088,15 @@ function debounce(func, wait) {
         content.querySelectorAll('.tool-pane').forEach(pane => {
             if (pane.id === `setting-tab-${tabId}`) {
                 pane.classList.add('active');
+                // Ensure subnav menu and header are visible, and any subpages hidden
+                const subnav = pane.querySelector('.settings-subnav-menu');
+                const tabHeader = pane.querySelector('.tool-header');
+                if (subnav) subnav.style.display = '';
+                if (tabHeader) tabHeader.style.display = '';
+                pane.querySelectorAll('.setting-subpage').forEach(page => {
+                    page.style.display = 'none';
+                    page.classList.remove('active');
+                });
             } else {
                 pane.classList.remove('active');
             }
@@ -1101,6 +1110,55 @@ function debounce(func, wait) {
                 layout.scrollTo({ left: layout.clientWidth || layout.scrollWidth, behavior: 'smooth' });
             }
         }
+    };
+
+    window.showSettingSubTab = function(tabId, subPageId) {
+        const pane = document.getElementById(`setting-tab-${tabId}`);
+        if (!pane) return;
+
+        // Hide sub-navigation menu and main tab header
+        const subnav = pane.querySelector('.settings-subnav-menu');
+        const tabHeader = pane.querySelector('.tool-header');
+        if (subnav) subnav.style.display = 'none';
+        if (tabHeader) tabHeader.style.display = 'none';
+
+        // Hide all subpages in this tab
+        pane.querySelectorAll('.setting-subpage').forEach(page => {
+            page.style.display = 'none';
+            page.classList.remove('active');
+        });
+
+        // Show the selected subpage
+        const targetPage = document.getElementById(`setting-subpage-${subPageId}`);
+        if (targetPage) {
+            targetPage.style.display = 'block';
+            targetPage.classList.add('active');
+        }
+
+        // Scroll content area to top
+        const toolsContent = document.querySelector('#page-settings .tools-content');
+        if (toolsContent) toolsContent.scrollTop = 0;
+    };
+
+    window.backToSettingSubMenu = function(tabId) {
+        const pane = document.getElementById(`setting-tab-${tabId}`);
+        if (!pane) return;
+
+        // Hide all subpages in this tab
+        pane.querySelectorAll('.setting-subpage').forEach(page => {
+            page.style.display = 'none';
+            page.classList.remove('active');
+        });
+
+        // Show subnav menu and tab tool-header
+        const subnav = pane.querySelector('.settings-subnav-menu');
+        const tabHeader = pane.querySelector('.tool-header');
+        if (subnav) subnav.style.display = '';
+        if (tabHeader) tabHeader.style.display = '';
+
+        // Reset scroll position
+        const toolsContent = document.querySelector('#page-settings .tools-content');
+        if (toolsContent) toolsContent.scrollTop = 0;
     };
 
     window.resetSettingsTab = function(immediate = false) {
@@ -1117,10 +1175,26 @@ function debounce(func, wait) {
             titleHeader.classList.remove('title-hidden');
         }
 
+        const resetPanes = () => {
+            if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (content) {
+                content.querySelectorAll('.tool-pane').forEach(pane => {
+                    pane.classList.remove('active');
+                    const subnav = pane.querySelector('.settings-subnav-menu');
+                    const tabHeader = pane.querySelector('.tool-header');
+                    if (subnav) subnav.style.display = '';
+                    if (tabHeader) tabHeader.style.display = '';
+                    pane.querySelectorAll('.setting-subpage').forEach(page => {
+                        page.style.display = 'none';
+                        page.classList.remove('active');
+                    });
+                });
+            }
+        };
+
         if (immediate) {
             if (layoutEl) layoutEl.scrollLeft = 0;
-            if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
-            if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            resetPanes();
             return;
         }
 
@@ -1129,8 +1203,7 @@ function debounce(func, wait) {
         }
 
         window._settingsSlideTimeout = setTimeout(() => {
-            if (sidebar) sidebar.querySelectorAll('.tool-nav-btn').forEach(btn => btn.classList.remove('active'));
-            if (content) content.querySelectorAll('.tool-pane').forEach(pane => pane.classList.remove('active'));
+            resetPanes();
             window._settingsSlideTimeout = null;
         }, 320);
     };
@@ -1153,6 +1226,15 @@ function debounce(func, wait) {
         const settingsBackBtn = document.getElementById('settings-mobile-back-btn');
         if (settingsBackBtn) {
             settingsBackBtn.addEventListener('click', () => {
+                const activePane = document.querySelector('#page-settings .tool-pane.active');
+                if (activePane) {
+                    const activeSubpage = activePane.querySelector('.setting-subpage.active');
+                    if (activeSubpage && activeSubpage.style.display !== 'none') {
+                        const tabId = activePane.id.replace('setting-tab-', '');
+                        window.backToSettingSubMenu(tabId);
+                        return;
+                    }
+                }
                 if (typeof window.resetSettingsTab === 'function') {
                     window.resetSettingsTab(false);
                 } else {
