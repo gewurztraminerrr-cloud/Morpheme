@@ -10581,6 +10581,7 @@ def tools_random_word():
     """Returns a random word based on length and dictionary."""
     dict_name = request.args.get('dictionary', 'NWL')
     length_filter = request.args.get('length', 'all')
+    contains_filter = request.args.get('contains', 'all')
     
     dictionary = load_tools_dictionary(dict_name)
     if not dictionary:
@@ -10593,10 +10594,17 @@ def tools_random_word():
             target_len = int(length_filter)
         except ValueError:
             pass
+
+    # Filter by required letter
+    contains_char = None
+    if contains_filter and contains_filter.lower() not in ('all', 'contains', ''):
+        c = contains_filter.strip().upper()
+        if len(c) == 1 and c.isalpha():
+            contains_char = c
             
     load_definitions() # Ensure definitions are loaded to prevent slow API fallbacks
     filtered_words = dictionary['words']
-    print(f"[RandomWord] target_len: {target_len}, total words in dict: {len(filtered_words)}")
+    print(f"[RandomWord] target_len: {target_len}, contains: {contains_char}, total words in dict: {len(filtered_words)}")
     if target_len:
         filtered_words = [w for w in filtered_words if len(w) == target_len]
         print(f"[RandomWord] filtered words count: {len(filtered_words)}")
@@ -10606,9 +10614,16 @@ def tools_random_word():
         else:
             filtered_words = [w for w in filtered_words if w in DEFINITIONS_CACHE]
         print(f"[RandomWord] filtered words count (with definitions check): {len(filtered_words)}")
+
+    if contains_char:
+        filtered_words = [w for w in filtered_words if contains_char in w.upper()]
+        print(f"[RandomWord] filtered words count after contains '{contains_char}': {len(filtered_words)}")
         
     if not filtered_words:
-        return jsonify({'error': 'No words found for the specified criteria'}), 404
+        msg = 'No words found for the specified criteria'
+        if contains_char:
+            msg = f'No words found containing "{contains_char}" for the specified criteria'
+        return jsonify({'error': msg}), 404
         
     import random
     random_word = random.choice(filtered_words)

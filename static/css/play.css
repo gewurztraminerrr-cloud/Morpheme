@@ -12739,6 +12739,50 @@ body .board-cell.tile-flash-purple * {
         width: 100% !important;
     }
 
+    /* Random Word Tool Mobile Controls: Compact 2-column grid matching Lists tool */
+    #page-tools #tool-random .combo-control-panel,
+    body.is-mobile #page-tools #tool-random .combo-control-panel {
+        flex: 0 0 auto !important;
+        padding: 8px 10px !important;
+        margin-bottom: 12px !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel .input-row,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel .input-row > select,
+    #page-tools #tool-random .combo-control-panel .input-row > button,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row > select,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row > button {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-random #random-dict,
+    body.is-mobile #page-tools #tool-random #random-dict {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random #random-gen-btn,
+    body.is-mobile #page-tools #tool-random #random-gen-btn {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+    }
+
     /* Table / panel fits entire remaining screen */
     #page-tools #tool-lists .lists-container,
     body.is-mobile #page-tools #tool-lists .lists-container {
@@ -14017,6 +14061,39 @@ body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
     body.is-desktop #page-tools #tool-lists #list-update-btn {
         flex: 0 0 auto !important;
         grid-column: auto !important;
+        width: auto !important;
+        padding: 0 20px !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel .input-row,
+    body.is-desktop #page-tools #tool-random .combo-control-panel .input-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random #random-length {
+        flex: 0 1 160px !important;
+        min-width: 130px !important;
+    }
+
+    #page-tools #tool-random #random-contains {
+        flex: 0 1 130px !important;
+        min-width: 110px !important;
+    }
+
+    #page-tools #tool-random #random-dict {
+        flex: 0 1 155px !important;
+        min-width: 125px !important;
+    }
+
+    #page-tools #tool-random #random-gen-btn,
+    body.is-desktop #page-tools #tool-random #random-gen-btn {
+        flex: 0 0 auto !important;
         width: auto !important;
         padding: 0 20px !important;
     }

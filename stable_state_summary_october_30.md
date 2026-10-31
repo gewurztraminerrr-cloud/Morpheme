@@ -131,15 +131,29 @@ START_OVER_POINT_OCTOBER_30
   - On desktops and laptops (`@media (min-width: 901px)` and `body:not(.is-mobile)`), random words continue running horizontally in a single bar side-by-side (`flex-direction: row !important; flex: 1 1 0 !important;`).
   - **Reordered Placement Above Search Input (`templates/index.html`)**: Moved the Random Words table, "More random words" button, and dictionary filter dropdown above the "ENTER WORD..." textbox and Search button for quicker suggestion discovery and immediate tap-to-search interaction.
 
+### 17. Tools: Random Word Generator "Contains" Letter Filter & Mobile Compact Layout
+- **"Contains" Letter Filter Dropdown (`templates/index.html`, `static/js/tools.js`, `app.py`)**:
+  - Added a `<select id="random-contains">` dropdown menu to the Random Word tool positioned between the length filter and dictionary filter.
+  - Defaults to `Contains` (value `"all"`, no letter restriction) and lists letters `A` through `Z`.
+  - Frontend `generateRandomWord()` in `static/js/tools.js` retrieves `contains` and passes `&contains=${encodeURIComponent(contains)}` to `/api/tools/random_word`.
+  - Backend `tools_random_word()` in `app.py` accepts the `contains` query parameter, validates single alphabet characters, and filters words so that the selected letter is present on every generated word.
+- **Mobile Compact Spacing Symmetry with Lists Tool (`static/css/play.css`)**:
+  - On mobile devices (`@media (max-width: 900px)` and `body.is-mobile`), `#tool-random .combo-control-panel` adopts a 2-column grid layout matching the Lists tool (`grid-template-columns: 1fr 1fr; gap: 6px;`).
+  - Controls are sized compactly with `height: 36px`, `font-size: 0.82rem`, and `border-radius: 6px`.
+  - Top row displays `random-length` and `random-contains` side-by-side; `random-dict` and `random-gen-btn` span both columns (`grid-column: 1 / -1`) to maximize tap target clarity and space efficiency.
+- **Desktop Single-Row & Responsive Wrap Layout (`static/css/play.css`)**:
+  - On desktop and laptop viewports, `#tool-random .combo-control-panel .input-row` displays all four controls side-by-side in a neat horizontal flex row with `gap: 8px` and `flex-wrap: wrap !important;` to ensure responsive resilience without truncation.
+
 ---
 
 ## Verification & Validation
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `9ba53013` |
-| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` at `9ba53013` |
-| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `9ba53013`, PM2 online, HTTP/2 200 OK |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` |
+| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` |
+| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249`, PM2 online, HTTP/2 200 OK |
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `9ba53013` |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` updated to latest commit |
+

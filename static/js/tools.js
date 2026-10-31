@@ -7961,12 +7961,14 @@ function setupRandomWordTool() {
 
 async function generateRandomWord() {
     const lengthEl = document.getElementById('random-length');
+    const containsEl = document.getElementById('random-contains');
     const dictEl = document.getElementById('random-dict');
     const displayEl = document.getElementById('random-word-display');
     const genBtn = document.getElementById('random-gen-btn');
 
-    const length = lengthEl.value;
-    const dictionary = dictEl.value;
+    const length = lengthEl ? lengthEl.value : 'all';
+    const contains = containsEl ? containsEl.value : 'all';
+    const dictionary = dictEl ? dictEl.value : 'CSW';
 
     genBtn.innerText = "Generating...";
     genBtn.disabled = true;
@@ -7975,7 +7977,7 @@ async function generateRandomWord() {
     if (defEl) defEl.innerHTML = '';
 
     try {
-        const url = `/api/tools/random_word?length=${length}&dictionary=${dictionary}`;
+        const url = `/api/tools/random_word?length=${encodeURIComponent(length)}&dictionary=${encodeURIComponent(dictionary)}&contains=${encodeURIComponent(contains)}`;
         const response = await fetch(url);
         const data = await response.json();
 
