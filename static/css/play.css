@@ -9832,19 +9832,24 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
 
     .history-review-main {
         display: flex !important;
-        flex-direction: column-reverse !important; /* Stack vertically with board at top and walkthrough at bottom */
-        padding: 10px 14px 14px 14px !important;
-        gap: 10px !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        padding: 6px 14px 12px 14px !important;
+        gap: 8px !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
         overflow: hidden !important;
         overflow-y: hidden !important;
         touch-action: none !important;
     }
 
     .review-board-main {
+        order: 1 !important;
+        flex: 0 0 auto !important;
         width: 100% !important;
         padding: 6px !important;
         border-radius: 14px !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 0 !important;
         display: grid !important;
         justify-content: center !important;
         align-content: center !important;
@@ -9854,17 +9859,21 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
 
     .history-walkthrough-section {
+        order: 2 !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
         width: 100% !important;
-        height: auto !important;
-        flex: none !important;
+        display: flex !important;
+        flex-direction: column !important;
         overflow: hidden !important;
         touch-action: none !important;
     }
 
     .walkthrough-list {
-        height: 132px !important; /* Exactly 3 visible words at a time */
-        max-height: 132px !important;
-        min-height: 132px !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         padding-left: 10px !important;
@@ -9873,10 +9882,20 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         scrollbar-width: none !important;
         box-sizing: border-box !important;
         touch-action: pan-y !important; /* Words list is the ONLY scrollable element in Round Replay */
+        transition: max-height 0.25s ease, height 0.25s ease;
     }
     .walkthrough-list::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
+    }
+
+    /* When user presses Watch Replay, collapse vertical length of words list to 3 visible words */
+    .history-review-modal.replay-active .walkthrough-list,
+    .walkthrough-list.collapsed-3 {
+        flex: none !important;
+        height: 132px !important;
+        max-height: 132px !important;
+        min-height: 132px !important;
     }
 
     .walkthrough-item {
@@ -9912,9 +9931,10 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
 
     /* Mobile: Timeline heading on its own row, Watch Replay + hint side-by-side below */
     .history-walkthrough-section .section-header {
-        gap: 10px !important;
-        margin-bottom: 12px !important;
-        padding: 12px 14px !important;
+        flex: 0 0 auto !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+        padding: 10px 14px !important;
         background: rgba(255,255,255,0.04) !important;
         border-radius: 14px !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
@@ -9924,7 +9944,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .history-walkthrough-section .section-header h3 {
         font-size: 1.05rem !important;
         margin: 0 !important;
-        padding-bottom: 10px !important;
+        padding-bottom: 8px !important;
         border-bottom: 1px solid rgba(255,255,255,0.1) !important;
     }
 

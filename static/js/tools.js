@@ -3701,6 +3701,7 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
     // Choose IDs based on which UI is available
     const useOverlay = !!overlay;
     const prefix = useOverlay ? 'review' : 'integrated';
+    const replayModal = overlay ? overlay.querySelector('.history-review-modal') : null;
 
     const closeReplay = () => {
         if (overlay) {
@@ -3709,6 +3710,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             document.body.classList.remove('replay-overlay-open');
             document.documentElement.classList.remove('replay-overlay-open');
         }
+        if (replayModal) replayModal.classList.remove('replay-active');
+        const wl = document.getElementById(`${prefix}-walkthrough-list`);
+        if (wl) wl.classList.remove('collapsed-3');
         if (integratedPanel) {
             integratedPanel.classList.add('hidden');
         }
@@ -4113,6 +4117,12 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             startBtn.classList.remove('hidden');
             startBtn.innerText = "▶ Watch Replay";
         }
+        if (replayModal) replayModal.classList.remove('replay-active');
+        if (walkthroughList) walkthroughList.classList.remove('collapsed-3');
+        if (typeof window.updateReplayScroller === 'function') {
+            setTimeout(window.updateReplayScroller, 50);
+            setTimeout(window.updateReplayScroller, 200);
+        }
         if (!keepProgressUI) {
             if (progressUI) progressUI.classList.add('hidden');
             if (progressBar) {
@@ -4148,6 +4158,14 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
                 progressBar.style.width = '0%';
                 progressBar.offsetHeight; // Force reflow
                 progressBar.style.transition = '';
+            }
+
+            // On mobile devices, collapse words list to 3 visible words during replay
+            if (replayModal) replayModal.classList.add('replay-active');
+            if (walkthroughList) walkthroughList.classList.add('collapsed-3');
+            if (typeof window.updateReplayScroller === 'function') {
+                setTimeout(window.updateReplayScroller, 50);
+                setTimeout(window.updateReplayScroller, 250);
             }
 
             startBtn.classList.add('hidden');

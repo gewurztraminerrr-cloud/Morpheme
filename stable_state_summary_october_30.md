@@ -280,6 +280,20 @@ START_OVER_POINT_OCTOBER_30
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` and `tools.js` cache busters to `v=1793423000`.
 
+### 29. Round Replay: Mobile Layout Moved Up Below Header & Dynamic 3-Word Collapse on "Watch Replay"
+- **Mobile Layout Moved Up Below Header (`static/css/play.css`)**:
+  - Replaced bottom-anchored `column-reverse` flex alignment on `.history-review-main` with top-anchored `display: flex !important; flex-direction: column !important; justify-content: flex-start !important;`.
+  - Positioned `#review-board-container` immediately below `.overlay-header` using `order: 1 !important; flex: 0 0 auto !important; margin-bottom: 0 !important;`.
+  - Positioned `.history-walkthrough-section` directly under the board using `order: 2 !important; flex: 1 1 0 !important; min-height: 0 !important; display: flex !important; flex-direction: column !important;`.
+  - Allowed `#review-walkthrough-list` to expand into all the freed-up vertical space (`flex: 1 1 0 !important; min-height: 0 !important; height: auto !important; max-height: none !important;`), giving users extensive visible scrollable words when browsing round history.
+- **Dynamic Collapse to 3 Words on "Watch Replay" (`static/css/play.css`, `static/js/tools.js`)**:
+  - When the user clicks "Watch Replay" (`startBtn`), `.history-review-modal` receives `.replay-active` and `#review-walkthrough-list` receives `.collapsed-3`.
+  - On mobile, `.replay-active .walkthrough-list` and `.walkthrough-list.collapsed-3` collapse to `height: 132px !important; max-height: 132px !important; min-height: 132px !important; flex: none !important;`, displaying exactly 3 words at a time while the replay animation and progress bar (`#replay-progress-container`) run.
+  - When replay finishes or "Show All" (`skipBtn`) is clicked, `.replay-active` and `.collapsed-3` are removed, expanding the words list back into the full vertical space.
+  - Calls `window.updateReplayScroller()` to smoothly recompute track height and thumb proportions across expansions and collapses.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` and `tools.js` cache busters to `v=1793424000`.
+
 ---
 
 ## Verification & Validation
