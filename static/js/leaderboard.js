@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="lb-attribution">
-                * Leaderboards update in real-time. Only non-24h rooms are tracked.
+                * Leaderboards update in real-time. Only non-24h and non-multiplayer Subanagrams rooms are tracked.
             </div>
 
             <!-- Mobile Vertical Scroller Track & Thumb -->

@@ -397,6 +397,16 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.js` cache buster to `v=1793463000`.
 
+### 38. Leaderboards Footer Note: Non-24h & Non-Multiplayer Subanagrams Tracking (`static/js/leaderboard.js`, `templates/index.html`)
+- **Updated Attribution Notice**:
+  - In `static/js/leaderboard.js` (`.lb-attribution`), updated the bottom disclaimer notice from:
+    `"* Leaderboards update in real-time. Only non-24h rooms are tracked."`
+    to:
+    `"* Leaderboards update in real-time. Only non-24h and non-multiplayer Subanagrams rooms are tracked."`
+  - Accurately clarifies that both 24-hour and multiplayer Subanagrams rooms are excluded from the competitive grid leaderboards ladder.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `leaderboard.js` cache buster to `v=1793464000`.
+
 ---
 
 ## Verification & Validation
