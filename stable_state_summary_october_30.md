@@ -263,6 +263,23 @@ START_OVER_POINT_OCTOBER_30
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `style.css`, `play.css`, `mobile_scroller.js`, and `tools.js` cache busters to `v=1793422000`.
 
+### 28. Round Replay: Mobile 3 Visible Words & Strict Words-Only Scroll Lock
+- **3 Visible Words at a Time (`static/css/play.css`)**:
+  - Calibrated `#review-walkthrough-list` height on mobile to `132px` (`height: 132px !important; max-height: 132px !important; min-height: 132px !important;`) with each `.walkthrough-item` fixed at `44px` (`height: 44px !important; min-height: 44px !important; max-height: 44px !important; box-sizing: border-box !important; padding: 10px 0 !important;`).
+  - Displays exactly 3 words at a time across all board dimensions (4x4, 4x6, 5x7, 6x8, 3D), with additional words smoothly accessible via vertical scrolling.
+- **Strict Words-Only Scrolling (`static/css/play.css`, `static/js/tools.js`)**:
+  - Ensured the entire Round Replay page / modal is locked and NOT scrollable:
+    - `#history-review-overlay`: `overflow: hidden !important; touch-action: none !important;`
+    - `.history-review-modal`: `overflow: hidden !important; touch-action: none !important;`
+    - `.history-review-layout`: `overflow: hidden !important; overflow-y: hidden !important; touch-action: none !important;`
+    - `.history-review-main`: `overflow: hidden !important; overflow-y: hidden !important; touch-action: none !important;`
+    - `body.replay-overlay-open`, `html.replay-overlay-open`: `overflow: hidden !important; touch-action: none !important;`
+  - In `static/js/tools.js`, added `replay-overlay-open` class toggling to body/html on overlay open/close, and bound a non-passive `touchmove` listener on `#history-review-overlay` that calls `e.preventDefault()` on touches outside `#review-walkthrough-list` and `.m-scroller-track`.
+  - Configured `touch-action: pan-y !important;` exclusively on `.walkthrough-list` and `.walkthrough-item`, ensuring only the found words list can scroll.
+  - Adjusted `.m-scroller-track-overlay .m-scroller-thumb` with `min-height: 32px !important;` for responsive dragging within the 132px word list.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` and `tools.js` cache busters to `v=1793423000`.
+
 ---
 
 ## Verification & Validation

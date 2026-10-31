@@ -9784,21 +9784,46 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
 
     /* Round Replay Overlay readability overhaul on mobile */
+    body.replay-overlay-open,
+    html.replay-overlay-open {
+        overflow: hidden !important;
+        touch-action: none !important;
+    }
+
+    #history-review-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        touch-action: none !important;
+    }
+
     .history-review-modal {
         width: 100% !important;
         height: 100% !important;
         max-height: 100vh !important;
         border-radius: 0 !important;
         border: none !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        touch-action: none !important;
     }
 
     .history-review-layout {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        display: block !important;
-        height: calc(100vh - 70px) !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
         padding-right: 0 !important; /* whole-page scroller removed; scroller placed on words only */
         scrollbar-width: none !important; /* suppress thin default browser scrollbar */
+        touch-action: none !important;
     }
     .history-review-layout::-webkit-scrollbar {
         display: none !important;
@@ -9808,32 +9833,38 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .history-review-main {
         display: flex !important;
         flex-direction: column-reverse !important; /* Stack vertically with board at top and walkthrough at bottom */
-        padding: 12px 14px 16px 14px !important;
-        gap: 12px !important;
-        overflow-y: visible !important;
+        padding: 10px 14px 14px 14px !important;
+        gap: 10px !important;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        touch-action: none !important;
     }
 
     .review-board-main {
         width: 100% !important;
         padding: 6px !important;
         border-radius: 14px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 2px !important;
         display: grid !important;
         justify-content: center !important;
         align-content: center !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
+        touch-action: none !important;
     }
 
     .history-walkthrough-section {
         width: 100% !important;
         height: auto !important;
         flex: none !important;
+        overflow: hidden !important;
+        touch-action: none !important;
     }
 
     .walkthrough-list {
-        height: 180px !important;
-        max-height: 180px !important;
-        min-height: 180px !important;
+        height: 132px !important; /* Exactly 3 visible words at a time */
+        max-height: 132px !important;
+        min-height: 132px !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         padding-left: 10px !important;
@@ -9841,6 +9872,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         position: relative !important;
         scrollbar-width: none !important;
         box-sizing: border-box !important;
+        touch-action: pan-y !important; /* Words list is the ONLY scrollable element in Round Replay */
     }
     .walkthrough-list::-webkit-scrollbar {
         display: none !important;
@@ -9850,8 +9882,11 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .walkthrough-item {
         padding: 10px 0 !important;
         gap: 12px !important;
+        height: 44px !important;
         min-height: 44px !important;
+        max-height: 44px !important;
         box-sizing: border-box !important;
+        touch-action: pan-y !important;
     }
 
     .walkthrough-time {
@@ -9877,18 +9912,19 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
 
     /* Mobile: Timeline heading on its own row, Watch Replay + hint side-by-side below */
     .history-walkthrough-section .section-header {
-        gap: 14px !important;
-        margin-bottom: 20px !important;
-        padding: 16px !important;
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+        padding: 12px 14px !important;
         background: rgba(255,255,255,0.04) !important;
         border-radius: 14px !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
+        touch-action: none !important;
     }
 
     .history-walkthrough-section .section-header h3 {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
         margin: 0 !important;
-        padding-bottom: 12px !important;
+        padding-bottom: 10px !important;
         border-bottom: 1px solid rgba(255,255,255,0.1) !important;
     }
 
@@ -10023,6 +10059,9 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
     .m-scroller-track.m-scroller-track-overlay {
         z-index: 2147483647 !important;
+    }
+    .m-scroller-track.m-scroller-track-overlay .m-scroller-thumb {
+        min-height: 32px !important;
     }
     .m-scroller-thumb {
         position: absolute;

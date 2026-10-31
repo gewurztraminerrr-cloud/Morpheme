@@ -3706,6 +3706,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         if (overlay) {
             overlay.classList.add('hidden');
             overlay.classList.remove('forced-show');
+            document.body.classList.remove('replay-overlay-open');
+            document.documentElement.classList.remove('replay-overlay-open');
         }
         if (integratedPanel) {
             integratedPanel.classList.add('hidden');
@@ -3714,11 +3716,24 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             clearInterval(window.replayInterval);
             window.replayInterval = null;
         }
+        if (typeof window.updateReplayScroller === 'function') {
+            window.updateReplayScroller();
+        }
     };
 
     if (useOverlay) {
         overlay.classList.add('forced-show');
         overlay.classList.remove('hidden');
+        document.body.classList.add('replay-overlay-open');
+        document.documentElement.classList.add('replay-overlay-open');
+        if (!overlay._touchBound) {
+            overlay._touchBound = true;
+            overlay.addEventListener('touchmove', (e) => {
+                if (!e.target.closest('#review-walkthrough-list, .m-scroller-track')) {
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+        }
         if (typeof window.updateReplayScroller === 'function') {
             setTimeout(window.updateReplayScroller, 50);
             setTimeout(window.updateReplayScroller, 250);
