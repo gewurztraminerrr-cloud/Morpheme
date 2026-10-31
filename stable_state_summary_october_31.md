@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-e90427da70fc82c8cdd24d9513d3cbebd308436f
+9462d4378db7a99afebb5166539dbbb9727c9a3d
 ```
-*(Short SHA: `e90427da`)*
+*(Short SHA: `9462d437`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `e90427da` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `e90427da` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `e90427da` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `9462d437` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `9462d437` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `9462d437` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -321,6 +321,24 @@ e90427da70fc82c8cdd24d9513d3cbebd308436f
   - The 14px gap between the two panels now exposes the page background (the same contrasting color used above them around the control panel), emphasizing the clean division between the left and right panels exactly matching Subanagrams in Tools.
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `style.css` and `play.css` cache busters to `v=1793426000`.
+
+### 32. Forum User Search: Direct Thread Navigation, Auto-Scroll, and Gold Pulse Highlighting (`static/js/forum.js`, `static/css/forum.css`, `templates/index.html`)
+- **Direct Navigation & Selection from User Search**:
+  - In `static/js/forum.js`, tracked user search state using `this.isUserSearch` (set to `true` during `handleUserSearch` and reset to `false` in `selectCategory`, `selectRespondersCategory`, and `resetToEmptyState`).
+  - Stored post card metadata attributes in `renderPosts()`: `data-type` (`"post"` or `"comment"`), `data-comment-id` (for comments), `data-post-number`, and `data-is-user-search`.
+  - When a user clicks a post or comment card from user search results, `loadPostDetail(postId, options)` is invoked with target highlighting options:
+    - If selecting a comment/reply: `{ highlightCommentId: commentId, highlightPostNumber: postNumber }`.
+    - If selecting a root thread post: `{ highlightCommentId: null, highlightPostNumber: postNumber || 1, highlightPostId: postId }`.
+- **Target Post Resolution & Gold Pulse Animation**:
+  - In `highlightTargetPost(options)`, scoped selectors to `#forum-view-post`:
+    - For comments, targets `#forum-comment-<id>` with fallback to `#forum-comments-list [data-post-number="<num>"]`.
+    - For root thread posts, targets `#forum-post-root`.
+    - Smoothly scrolls to the element (`block: 'start'` for `#forum-post-root`, `block: 'center'` for comments).
+    - Removes and reapplies `forum-item-highlight-gold` to trigger the 3.5s golden glow pulse animation (`outline: 3px solid #fbbf24`, `box-shadow: 0 0 24px rgba(251, 191, 36, 0.8)`, and golden background wash), identical to reply notifications.
+  - Added a secondary 450ms scroll check in `loadPostDetail` to re-verify viewport centering after asynchronous rendering and dynamic images settle.
+  - In `static/css/forum.css`, added specialized styling for `#forum-post-root.forum-item-highlight-gold` with appropriate padding, negative margin, and rounded corners on desktop and mobile.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `forum.css` and `forum.js` cache busters to `v=1793427000`.
 
 ---
 

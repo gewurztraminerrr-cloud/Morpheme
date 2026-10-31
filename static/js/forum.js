@@ -1473,6 +1473,7 @@ const Forum = {
 
     selectRespondersCategory: async function () {
         this.currentCategoryId = 'responders';
+        this.isUserSearch = false;
         this.hasNewResponders = false;
 
         // Immediately stop highlighting "View Responses" and "Forum" in top menu
@@ -1698,6 +1699,7 @@ const Forum = {
 
     selectCategory: async function (catId) {
         this.currentCategoryId = catId;
+        this.isUserSearch = false;
         const category = this.categories.find(c => c.id === catId);
 
         // Update UI
@@ -1774,6 +1776,7 @@ const Forum = {
         // Clear active category
         document.querySelectorAll('.forum-cat-item').forEach(item => item.classList.remove('active'));
         this.currentCategoryId = null;
+        this.isUserSearch = true;
 
         // Update UI Header
         document.getElementById('forum-category-title').textContent = `Posts by ${username}`;
@@ -1844,7 +1847,12 @@ const Forum = {
             const excerpt = rawContent.length > 100 ? (rawContent.slice(0, 100).trimEnd() + '...') : rawContent;
             
             return `
-                <div class="forum-post-card ${post.is_pinned ? 'is-pinned' : ''}" data-id="${postId}">
+                <div class="forum-post-card ${post.is_pinned ? 'is-pinned' : ''}" 
+                     data-id="${postId}" 
+                     data-type="${post.type || ''}" 
+                     data-comment-id="${isComment ? (post.id || '') : ''}" 
+                     data-post-number="${post.post_number || ''}" 
+                     data-is-user-search="${this.isUserSearch ? 'true' : 'false'}">
                     <div class="post-card-header">
                         <span class="post-card-title">${pinnedBadge}${closedBadge}${numBadge}${isComment ? 'Re: ' : ''}${this.escapeHtml(post.title)}</span>
                         <span class="post-card-meta">
@@ -1882,8 +1890,30 @@ const Forum = {
             card.addEventListener('click', (e) => {
                 // Ignore clicks on user links
                 if (e.target.closest('.forum-user-clickable')) return;
-                const postId = parseInt(card.getAttribute('data-id'));
-                this.loadPostDetail(postId);
+                const postId = parseInt(card.getAttribute('data-id'), 10);
+                const isUserSearchCard = (card.getAttribute('data-is-user-search') === 'true') || Boolean(card.getAttribute('data-type'));
+                const postType = card.getAttribute('data-type');
+                const commentIdAttr = card.getAttribute('data-comment-id');
+                const commentId = commentIdAttr ? parseInt(commentIdAttr, 10) : null;
+                const postNumberAttr = card.getAttribute('data-post-number');
+                const postNumber = postNumberAttr ? parseInt(postNumberAttr, 10) : null;
+
+                let options = null;
+                if (isUserSearchCard) {
+                    if (postType === 'comment' || commentId) {
+                        options = {
+                            highlightCommentId: commentId,
+                            highlightPostNumber: postNumber
+                        };
+                    } else {
+                        options = {
+                            highlightCommentId: null,
+                            highlightPostNumber: postNumber || 1,
+                            highlightPostId: postId
+                        };
+                    }
+                }
+                this.loadPostDetail(postId, options);
             });
         });
     },
@@ -1897,10 +1927,20 @@ const Forum = {
             this.renderPostDetail(data.post, data.comments, false, data.user_bookmark);
             this.showPostView();
 
-            if (options && (options.highlightCommentId || options.highlightPostNumber)) {
+            if (options && (options.highlightCommentId || options.highlightPostNumber || options.highlightPostId)) {
                 setTimeout(() => {
                     this.highlightTargetPost(options);
                 }, 150);
+                setTimeout(() => {
+                    let el = null;
+                    if (options.highlightCommentId) el = document.getElementById(`forum-comment-${options.highlightCommentId}`);
+                    if (!el && options.highlightCommentId && options.highlightPostNumber) el = document.querySelector(`#forum-comments-list [data-post-number="${options.highlightPostNumber}"]`);
+                    if (!el && (!options.highlightCommentId || options.highlightPostId)) el = document.getElementById('forum-post-root');
+                    if (!el && options.highlightPostNumber) el = document.querySelector(`#forum-view-post [data-post-number="${options.highlightPostNumber}"]`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: el.id === 'forum-post-root' ? 'start' : 'center' });
+                    }
+                }, 450);
             }
         } catch (err) {
             console.error("[Forum] Failed to load post detail:", err);
@@ -1913,12 +1953,18 @@ const Forum = {
         if (options.highlightCommentId) {
             targetEl = document.getElementById(`forum-comment-${options.highlightCommentId}`);
         }
+        if (!targetEl && options.highlightCommentId && options.highlightPostNumber) {
+            targetEl = document.querySelector(`#forum-comments-list [data-post-number="${options.highlightPostNumber}"]`);
+        }
+        if (!targetEl && (!options.highlightCommentId || options.highlightPostId)) {
+            targetEl = document.getElementById('forum-post-root');
+        }
         if (!targetEl && options.highlightPostNumber) {
-            targetEl = document.querySelector(`[data-post-number="${options.highlightPostNumber}"]`);
+            targetEl = document.querySelector(`#forum-view-post [data-post-number="${options.highlightPostNumber}"]`);
         }
 
         if (targetEl) {
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetEl.scrollIntoView({ behavior: 'smooth', block: targetEl.id === 'forum-post-root' ? 'start' : 'center' });
             targetEl.classList.remove('forum-item-highlight-gold');
             void targetEl.offsetWidth; // Force reflow
             targetEl.classList.add('forum-item-highlight-gold');
@@ -3567,6 +3613,7 @@ const Forum = {
     resetToEmptyState: function () {
         this.currentCategoryId = null;
         this.currentPostId = null;
+        this.isUserSearch = false;
 
         // Ensure list view is active, skipping mobile auto-scroll to main
         this.showListView(true);
