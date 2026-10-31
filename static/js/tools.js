@@ -10228,9 +10228,11 @@ async function runFindCountSearch() {
 // ==========================================
 let personalTimerInterval = null;
 let personalTimerSeconds = 0;
+let personalTimerPaused = false;
 
 function setupPersonalTimer() {
     const startBtn = document.getElementById('timer-start-btn');
+    const pauseBtn = document.getElementById('timer-pause-btn');
     const stopBtn = document.getElementById('timer-stop-btn');
     const displayContainer = document.getElementById('timer-display-container');
     const displayLabel = document.getElementById('timer-countdown-display');
@@ -10249,6 +10251,29 @@ function setupPersonalTimer() {
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
+    function runCountdownStep() {
+        personalTimerSeconds--;
+        if (personalTimerSeconds <= 0) {
+            // Time is up
+            clearInterval(personalTimerInterval);
+            personalTimerInterval = null;
+            displayLabel.textContent = "00:00:00";
+            if (pauseBtn) pauseBtn.style.display = 'none';
+
+            // Flash definitions panel
+            if (defPanel) {
+                defPanel.classList.add('timer-flash');
+                if (defHeader) defHeader.style.display = 'none';
+                if (defContent) defContent.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100%; text-align: center;">
+                        <h2 style="font-size: 2.5rem; color: #fff; text-shadow: 0 0 20px rgba(0,0,0,0.9); font-weight: 900; text-transform: uppercase; letter-spacing: 5px; animation: textPulse 1s infinite; margin: 0;">Time is up!</h2>
+                    </div>`;
+            }
+        } else {
+            displayLabel.textContent = formatTime(personalTimerSeconds);
+        }
+    }
+
     startBtn.addEventListener('click', () => {
         const h = parseInt(hoursInput.value) || 0;
         const m = parseInt(minutesInput.value) || 0;
@@ -10260,9 +10285,14 @@ function setupPersonalTimer() {
         }
 
         personalTimerSeconds = totalSecs;
+        personalTimerPaused = false;
 
         // UI Update
         startBtn.style.display = 'none';
+        if (pauseBtn) {
+            pauseBtn.textContent = 'Pause';
+            pauseBtn.style.display = 'block';
+        }
         stopBtn.style.display = 'block';
         displayContainer.style.display = 'block';
         displayLabel.textContent = formatTime(personalTimerSeconds);
@@ -10273,37 +10303,47 @@ function setupPersonalTimer() {
         if (defPanel) defPanel.classList.remove('timer-flash');
 
         clearInterval(personalTimerInterval);
-        personalTimerInterval = setInterval(() => {
-            personalTimerSeconds--;
-            if (personalTimerSeconds <= 0) {
-                // Time is up
-                clearInterval(personalTimerInterval);
-                displayLabel.textContent = "00:00:00";
-
-                // Flash definitions panel
-                if (defPanel) {
-                    defPanel.classList.add('timer-flash');
-                    if (defHeader) defHeader.style.display = 'none';
-                    if (defContent) defContent.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; text-align: center;">
-                            <h2 style="font-size: 2.5rem; color: #fff; text-shadow: 0 0 20px rgba(0,0,0,0.9); font-weight: 900; text-transform: uppercase; letter-spacing: 5px; animation: textPulse 1s infinite; margin: 0;">Time is up!</h2>
-                        </div>`;
-                }
-            } else {
-                displayLabel.textContent = formatTime(personalTimerSeconds);
-            }
-        }, 1000);
+        personalTimerInterval = setInterval(runCountdownStep, 1000);
     });
+
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            if (!personalTimerPaused) {
+                // Pause countdown
+                clearInterval(personalTimerInterval);
+                personalTimerInterval = null;
+                personalTimerPaused = true;
+                pauseBtn.textContent = 'Resume';
+            } else {
+                // Resume countdown
+                if (personalTimerSeconds > 0) {
+                    personalTimerPaused = false;
+                    pauseBtn.textContent = 'Pause';
+                    clearInterval(personalTimerInterval);
+                    personalTimerInterval = setInterval(runCountdownStep, 1000);
+                }
+            }
+        });
+    }
 
     stopBtn.addEventListener('click', () => {
         clearInterval(personalTimerInterval);
+        personalTimerInterval = null;
+        personalTimerPaused = false;
+        personalTimerSeconds = 0;
+
         startBtn.style.display = 'block';
+        if (pauseBtn) {
+            pauseBtn.textContent = 'Pause';
+            pauseBtn.style.display = 'none';
+        }
         stopBtn.style.display = 'none';
         displayContainer.style.display = 'none';
         hoursInput.disabled = false;
         minutesInput.disabled = false;
 
         if (defPanel) defPanel.classList.remove('timer-flash');
+        if (defHeader) defHeader.style.display = '';
     });
 }
 

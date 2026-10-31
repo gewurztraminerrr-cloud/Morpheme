@@ -8,17 +8,18 @@ START_OVER_POINT_OCTOBER_30
 
 ## Latest Commit ID
 ```
-d3cb860a59c5750aaf225a51fa1733b3c291ef89
+119b58aeccda3eec18189774a06bcaeb91312e84
 ```
+*(Short SHA: `119b58ae`)*
 
 ## Synchronization Status
 
-| Environment | Status | Details |
-|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | Clean working tree on `main`, fast-forwarded and synchronized with remote |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_30` / `stable-2026-10-30` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset to latest origin/main, tags fetched, PM2 process reloaded and online, live HTTP/2 200 OK |
-| **App / Client** | ✅ Synchronized | Synchronized across desktop, mobile, tablet, and responsive game room interfaces |
+| Environment | Status | Commit / Tag | Verification Details |
+|:---|:---|:---|:---|
+| **Localhost** | ✅ Synchronized | `119b58ae` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `119b58ae` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_30` / `stable-2026-10-30` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `119b58ae` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
 
@@ -71,14 +72,65 @@ d3cb860a59c5750aaf225a51fa1733b3c291ef89
   - Enabled `triple.mp3` sound playback in game rooms upon finding triple-value or high-tier words.
   - Added user gesture autoplay recovery so audio permissions seamlessly initialize on first interaction across desktop and mobile browsers.
 
+### 9. Intermission Default View & Player Notepads
+- **Intermission "VIEW ALL" Default (`static/js/play.js`)**:
+  - At the start of intermission in all game rooms, the middle player control button below "Players" automatically defaults to "VIEW ALL".
+- **Dictionary Source Tags in Notepads (`templates/index.html`, `static/css/play.css`, `static/js/play.js`)**:
+  - In player notepads during intermission, dictionary tags (`NWL`, `CSW`, or stacked vertically if both) are displayed in small, crisp typography directly next to the point value of each word.
+
+### 10. Achievements UI Refinement
+- **Exceptional Performances Cleanup (`templates/index.html`)**:
+  - Removed the `AVERAGE PERF` metric from the header banner of "EXCEPTIONAL PERFORMANCES" in every user's Achievements window.
+
+### 11. Header Parameters Display
+- **Time Unit Formatting & Bold Parameters (`templates/index.html`, `static/css/play.css`)**:
+  - Replaced seconds with standard units in room headers: `86400s` -> `24h`, `600s` -> `10m`, and `180s` -> `3m`.
+  - Styled parameter values below room type (e.g., `Accumulative`, `4x4`, `45s`) with bold font weight while preserving thin, un-bolded pipe dividers.
+
+### 12. Remaining Tab Formula & Responsive Legend
+- **Row Arithmetic Display (`static/js/play.js`, `static/css/play.css`)**:
+  - Formatted each row in Remaining (all public and 24h rooms) as:
+    `7LW                    51 + 49 = 100  (51%)`
+    with left-aligned `.len-cell`, right-aligned `.count-cell`, and two non-breaking spaces before `(51%)`.
+- **Responsive Vector Legend (`templates/index.html`, `static/css/play.css`)**:
+  - Above the Remaining table, displays the explanatory legend:
+    `[found] + [missed] = [total words]  [percent found]`
+  - Built as an inline responsive vector SVG (`viewBox="0 0 380 16"` with `width: 100%`) that automatically stretches to match the table margins across all devices.
+  - Scaled with safety padding so the beginning `[` and ending `]` brackets never clip or spill outside the panel on any mobile device, tablet, laptop, or desktop display.
+
+### 13. Lobby Sliding Drawer Equal Width Layout
+- **Equal Horizontal Width for Players in Lobby & Lobby Chat (`static/css/lobby.css`)**:
+  - Updated `.lobby-slide-body` on desktops and laptops to `grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)`.
+  - Increased horizontal space for the `PLAYERS IN LOBBY` panel of online users so user chips spread out across 50% of the drawer.
+  - Decreased the horizontal width of `Lobby Chat` messages to match, making the horizontal length of both elements exactly equal.
+
+### 14. Closed Rooms Default Sorting & Proximity Activation
+- **Closed Rooms Default Order (`static/js/lobby.js`)**:
+  - When the **Closed Rooms** button is clicked, it defaults to showing rooms with the **highest average rating first**.
+  - If the user explicitly presses **Enter** in the "Sort rooms by proximity..." textbox (or clicks **My Rating**), the closed rooms then sort by proximity to that average rating value.
+  - Switching back to the Closed Rooms tab resets the sorting back to highest average rating first.
+
+### 15. Tools: Personal Timer Pause/Resume & Mobile Scroll Stability
+- **Pause & Resume Controls (`templates/index.html`, `static/js/tools.js`, `static/css/play.css`)**:
+  - Added a Pause/Resume button to Personal Timer styled with the identical blue gradient (`linear-gradient(135deg, #00d2ff, #3a7bd5)`), border radius, box shadow, and typography as Start Timer.
+  - While timer runs, Pause and Stop Timer appear side by side.
+  - Clicking Pause freezes countdown interval, preserves remaining seconds, and toggles button in-place to "Resume".
+  - Clicking Resume restarts countdown from the remaining time and toggles button in-place back to "Pause".
+  - Clicking Stop Timer resets the timer, hides Pause/Resume and Stop, and reveals Start Timer.
+- **Mobile Scroll Stability (`templates/index.html`, `static/css/play.css`)**:
+  - Moved `.mobile-bottom-nav.tools-bottom-nav` inside `.tools-content-column` so `.tools-split-layout` contains exactly 2 panels instead of a phantom 3rd pane.
+  - Added `touch-action: pan-y !important;` and `overscroll-behavior-x: none !important;` to `.tools-content`, `.tools-content-column`, `.tool-pane`, and `#tool-timer`.
+  - Added strict `box-sizing: border-box !important;` and `overflow-x: hidden !important;` across `#tool-timer` and `#timer-display-container`, preventing any horizontal jitter, shift, or wobble when scrolling vertically on mobile devices.
+
 ---
 
 ## Verification & Validation
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` |
-| **Origin / GitHub** | ✅ Synchronized | Up to date with `origin/main` |
-| **Remote Production** | ✅ Synchronized | Deployed to 132.148.72.249, PM2 online, HTTP 200 OK |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `119b58ae` |
+| **Origin / GitHub** | ✅ Synchronized | Up to date with `origin/main` at `119b58ae` |
+| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `119b58ae`, PM2 online, HTTP 200 OK |
+| **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `119b58ae` |

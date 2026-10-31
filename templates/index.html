@@ -4275,10 +4275,12 @@
                                         style="width: 120px; height: 80px; text-align: center; font-size: 3rem; border-radius: 12px; background: rgba(0,0,0,0.3); border: 2px solid rgba(0,210,255,0.3); color: #00d2ff;">
                                 </div>
                             </div>
-                            <div class="input-row" style="margin-top: 40px;">
+                            <div class="input-row timer-button-row" style="margin-top: 40px; display: flex; gap: 15px; width: 100%; box-sizing: border-box;">
                                 <button id="timer-start-btn"
                                     style="flex: 1; height: 70px; font-size: 1.5rem; font-weight: 800; border-radius: 15px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border: none; box-shadow: 0 4px 15px rgba(0,210,255,0.3); cursor: pointer; transition: transform 0.2s;">Start
                                     Timer</button>
+                                <button id="timer-pause-btn"
+                                    style="flex: 1; height: 70px; font-size: 1.5rem; font-weight: 800; border-radius: 15px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border: none; box-shadow: 0 4px 15px rgba(0,210,255,0.3); cursor: pointer; transition: transform 0.2s; display: none;">Pause</button>
                                 <button id="timer-stop-btn"
                                     style="flex: 1; height: 70px; font-size: 1.5rem; font-weight: 800; border-radius: 15px; background: linear-gradient(135deg, #ff4d4d, #d43f3f); color: #fff; border: none; box-shadow: 0 4px 15px rgba(255,77,77,0.3); cursor: pointer; transition: transform 0.2s; display: none;">Stop
                                     Timer</button>
@@ -5271,10 +5273,10 @@
                         </div>
 
                     </div>
-                </div>
 
-                <div class="mobile-bottom-nav tools-bottom-nav">
-                    <button id="tools-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
+                    <div class="mobile-bottom-nav tools-bottom-nav">
+                        <button id="tools-mobile-back-btn" class="bottom-back-btn" type="button">← Back</button>
+                    </div>
                 </div>
             </div>
         </div>

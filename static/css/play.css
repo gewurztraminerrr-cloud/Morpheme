@@ -8785,6 +8785,9 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        overscroll-behavior-x: none !important;
         display: block !important;
         margin: 0 !important;
     }
@@ -9344,28 +9347,59 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         height: 60px !important;
         font-size: 1.8rem !important;
     }
+    #tool-timer {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        overscroll-behavior-x: none !important;
+    }
     #tool-timer .combo-control-panel {
         padding: 15px !important;
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
-    #timer-start-btn, #timer-stop-btn {
+    #tool-timer .timer-button-row {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin-top: 25px !important;
+        box-sizing: border-box !important;
+    }
+    #timer-start-btn, #timer-pause-btn, #timer-stop-btn {
         height: 50px !important;
         font-size: 1.2rem !important;
         border-radius: 10px !important;
+        box-sizing: border-box !important;
     }
     #timer-display-container {
         padding: 20px !important;
         margin-top: 20px !important;
         border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
     #timer-countdown-display {
         font-size: 3rem !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
     }
     #tool-timer .input-row:first-child {
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
         gap: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     #tool-timer .input-row:first-child > div {
         display: flex !important;
