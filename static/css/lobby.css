@@ -2149,7 +2149,7 @@ body.theme-white .lobby-journey-sticky-header {
 
 .lobby-slide-body {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 14px;
     height: 340px;
     padding: 12px 14px;
@@ -2165,6 +2165,7 @@ body.theme-white .lobby-journey-sticky-header {
     padding: 10px;
     overflow: hidden;
     box-sizing: border-box;
+    min-width: 0;
 }
 
 .lobby-half-header {
