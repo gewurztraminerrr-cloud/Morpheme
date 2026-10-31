@@ -151,7 +151,19 @@ START_OVER_POINT_OCTOBER_30
     - Row 1: Sequence textbox (`seq-input`) and search mode dropdown (`seq-mode`, Contains/Starts/Ends) side-by-side.
     - Row 2: Dictionary dropdown (`seq-dict`) and length dropdown (`seq-length`) side-by-side.
     - Row 3: Search button (`seq-search-btn`) spanning both columns (`grid-column: 1 / -1; width: 100%`).
-  - Replaces the previous 5-row vertical stack, reducing control panel height by over 120px and expanding immediate visibility and scroll area for search results on mobile devices.
+### 19. Tools: Combo Checker Mobile Compact 2-Column Layout & Slim MP/LIC Tabs
+- **Compact 2-Column Input & Dictionary Layout (`static/css/play.css`)**:
+  - On mobile devices (`@media (max-width: 900px)` and `body.is-mobile`), `#tool-combo .combo-unified-panel .combo-control-panel .input-row` adopts a space-saving 2-column grid layout (`grid-template-columns: 1fr 1fr; gap: 6px;`).
+  - Row 1: `ENTER LETTERS TO CHECK...` input (`#combo-input`) and dictionary dropdown (`#combo-dict`) side-by-side.
+  - Row 2: Check button (`#combo-search-btn`) spanning both columns (`grid-column: 1 / -1; width: 100%`).
+  - Vertically reduced element heights to `36px` (`min-height: 36px`, `max-height: 36px`), compact padding (`0 8px`), and `border-radius: 6px`.
+  - Blue control panel box (`.combo-unified-panel .combo-control-panel`) padding reduced from `12px 14px` to `8px 10px; margin-bottom: 8px; border-radius: 10px;`.
+  - Styled `#combo-input::placeholder` with `text-transform: none; font-size: 0.78rem` so "Enter letters to check..." fits cleanly without truncation on small screens, while maintaining `16px` font-size on the active input to prevent iOS Safari auto-zoom.
+- **Slim MP and LIC Segmented Tabs (`static/css/play.css`)**:
+  - Compacted `.combo-tabs-header`: `padding: 3px; margin: 0 auto 8px auto; max-width: 280px; gap: 4px; border-radius: 8px;`.
+  - Compacted `.combo-tab-btn`: height reduced to `30px` (`min-height: 30px`, `max-height: 30px`), `padding: 4px 10px`, `font-size: 0.82rem`, and `border-radius: 6px`.
+  - Substantially increases visible screen real estate for the MP and LIC results tables below.
+  - Desktop and laptop viewports (`> 900px`) remain completely untouched.
 
 ---
 
