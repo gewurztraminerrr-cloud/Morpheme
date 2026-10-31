@@ -1133,6 +1133,14 @@ function debounce(func, wait) {
         if (targetPage) {
             targetPage.style.display = 'block';
             targetPage.classList.add('active');
+
+            if (subPageId === 'board-size') {
+                const previewBoard = document.getElementById('preview-board');
+                const sizes = (window.userSettings && window.userSettings.board_sizes) ? window.userSettings.board_sizes : { '4x4': 82 };
+                if (previewBoard) {
+                    previewBoard.style.setProperty('--cell-size', `${sizes['4x4'] || 82}px`);
+                }
+            }
         }
 
         // Scroll content area to top

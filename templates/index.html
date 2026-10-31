@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793462000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793421000">
-    <link rel="stylesheet" href="/css/play.css?v=1793475000">
+    <link rel="stylesheet" href="/css/play.css?v=1793485000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -5979,49 +5979,14 @@
 
                         <!-- 2. Subpage: Board Size -->
                         <div id="setting-subpage-board-size" class="setting-subpage" style="display: none;">
-                            <div class="setting-subpage-header">
-                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Board Size</h3>
-                                <p class="setting-subpage-desc">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
+                            <div class="setting-subpage-header" style="align-items: center; text-align: center;">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')" style="align-self: flex-start;">← Back</button>
+                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Board Size</h3>
+                                <p class="setting-subpage-desc" style="text-align: center; margin: 0 auto 14px auto; max-width: 540px;">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
                             </div>
-                            <div class="setting-subpage-content board-size-split-view">
-                                <div style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px;">
-                                    <div class="dimension-sliders-grid">
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                                <span style="font-weight: 600; font-size: 0.9rem;">4x4 Grid</span>
-                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">82px</span>
-                                            </div>
-                                            <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="82" style="width: 100%;">
-                                        </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                                <span style="font-weight: 600; font-size: 0.9rem;">4x6 Grid</span>
-                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">82px</span>
-                                            </div>
-                                            <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="82" style="width: 100%;">
-                                        </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                                <span style="font-weight: 600; font-size: 0.9rem;">5x7 Grid</span>
-                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">65px</span>
-                                            </div>
-                                            <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="65" style="width: 100%;">
-                                        </div>
-                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 12px 14px; border-radius: 10px; box-sizing: border-box;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                                <span style="font-weight: 600; font-size: 0.9rem;">6x8 Grid</span>
-                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold; font-size: 0.9rem;">54px</span>
-                                            </div>
-                                            <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; justify-content: flex-start; margin-top: 2px;">
-                                        <button id="btn-reset-board-sizes" type="button" class="mini-action-btn secondary">Set to Default Sizes</button>
-                                    </div>
-                                </div>
-                                <div class="preview-board-container">
-                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Live Preview</div>
+                            <div class="setting-subpage-content" style="align-items: center; width: 100%;">
+                                <div class="preview-board-container" style="margin: 0 auto 12px auto;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Live Preview</div>
                                     <div class="preview-board" id="preview-board">
                                         <div class="board-cell">A</div>
                                         <div class="board-cell">B</div>
@@ -6039,6 +6004,41 @@
                                         <div class="board-cell">N</div>
                                         <div class="board-cell">O</div>
                                         <div class="board-cell">P</div>
+                                    </div>
+                                </div>
+                                <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; margin: 0 auto;">
+                                    <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.88rem;">4x4 Grid</span>
+                                                <span id="val-dim-4x4" style="color: var(--primary); font-weight: bold; font-size: 0.88rem;">82px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="4x4" min="30" max="110" value="82" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.88rem;">4x6 Grid</span>
+                                                <span id="val-dim-4x6" style="color: var(--primary); font-weight: bold; font-size: 0.88rem;">82px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="4x6" min="30" max="110" value="82" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.88rem;">5x7 Grid</span>
+                                                <span id="val-dim-5x7" style="color: var(--primary); font-weight: bold; font-size: 0.88rem;">65px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="5x7" min="30" max="110" value="65" style="width: 100%;">
+                                        </div>
+                                        <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; box-sizing: border-box;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                                <span style="font-weight: 600; font-size: 0.88rem;">6x8 Grid</span>
+                                                <span id="val-dim-6x8" style="color: var(--primary); font-weight: bold; font-size: 0.88rem;">54px</span>
+                                            </div>
+                                            <input type="range" class="dim-size-slider" data-dim="6x8" min="30" max="110" value="54" style="width: 100%;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: center; margin-top: 2px;">
+                                        <button id="btn-reset-board-sizes" type="button" class="mini-action-btn secondary">Set to Default Sizes</button>
                                     </div>
                                 </div>
                             </div>
@@ -9934,7 +9934,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1793475000"></script>
+    <script src="/js/settings.js?v=1793485000"></script>
     <script src="/js/forum.js?v=1793427000"></script>
     <script src="/js/app.js?v=1793421000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>

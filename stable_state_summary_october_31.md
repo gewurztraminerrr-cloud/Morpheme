@@ -444,6 +444,22 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `play.css` cache buster to `v=1793475000`.
   - Bumped `settings.js` cache buster to `v=1793475000`.
 
+### 41. Centered Board Size Functioning Preview, Light Theme Meter Line Visibility, & Centered Audio/Gameplay Sub-tabs (`templates/index.html`, `static/css/play.css`, `static/js/settings.js`)
+- **Centered & Functioning Example Board in Board Size**:
+  - Centered title "Board Size", header description, functioning example board (`#preview-board`), 2x2 slider grid, and the "Set to Default Sizes" button.
+  - Placed the functioning example board directly below the header description so on mobile devices the preview board is immediately visible without scrolling.
+  - Eliminated hardcoded fixed `46px !important` cell dimensions, restoring full dynamic responsiveness: adjusting any slider (4x4, 4x6, 5x7, 6x8) updates `--cell-size` in real time with dynamic font size (`calc(var(--cell-size) * 0.55)`), border radius, and full touch/mouse cell selection interaction.
+  - Scoped subpage flex styling to `.setting-subpage.active` ensuring inactive subpages stay properly hidden.
+- **High-Contrast Meter Line (Slider Track) on Light-Colored Layouts**:
+  - Added high-contrast rules for `input[type=range]::-webkit-slider-runnable-track` and `::-moz-range-track` across all light and white themes (`body.theme-white`, `body[class*="theme-light-"]`, etc.): set background to `#cbd5e1` with a crisp `1.5px solid #94a3b8` border, guaranteeing the meter line is clearly visible on Subanagrams Tile Size, Cube Scale, Chat Text Size, Definition Text Size, and Board Size.
+  - Styled `.dim-slider-box` and `.settings-preview-box` as crisp white cards with `#e2e8f0` borders in light themes.
+- **Centered Audio & Sounds and Gameplay & Preferences on Desktop/Laptop**:
+  - Enforced centered subpage column layout (`margin: 0 auto; max-width: 580px; align-items: center;`) on desktop/laptop displays (>=900px) for all 5 sub-tabs of Audio & Sounds and all 5 sub-tabs of Gameplay & Preferences.
+  - Top-left aligned `← Back` buttons with centered titles, descriptions, toggle rows, select dropdowns, and card containers.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793485000`.
+  - Bumped `settings.js` cache buster to `v=1793485000`.
+
 ---
 
 ## Verification & Validation
