@@ -129,6 +129,7 @@ START_OVER_POINT_OCTOBER_30
   - Removed accidental `history-table` class from `.random-words-table` in `templates/index.html`. Previously, `.history-table` forced mobile columns to `width: 22% !important; word-break: break-word !important;`, which caused words to break character-by-character vertically into a single-pixel column, elongating the table by hundreds of pixels vertically.
   - On mobile devices (`@media (max-width: 900px)` and `body.is-mobile`), random words run cleanly row-by-row (`flex-direction: column !important; width: 100% !important;`), with each word centered on its own individual row with a subtle divider line, generous touch target padding (`10px 12px`), and clear font size (`0.95rem`), completely eliminating any vertical squishing or character breaking.
   - On desktops and laptops (`@media (min-width: 901px)` and `body:not(.is-mobile)`), random words continue running horizontally in a single bar side-by-side (`flex-direction: row !important; flex: 1 1 0 !important;`).
+  - **Reordered Placement Above Search Input (`templates/index.html`)**: Moved the Random Words table, "More random words" button, and dictionary filter dropdown above the "ENTER WORD..." textbox and Search button for quicker suggestion discovery and immediate tap-to-search interaction.
 
 ---
 
@@ -136,9 +137,9 @@ START_OVER_POINT_OCTOBER_30
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `c427827d` |
-| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` at `c427827d` |
-| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `c427827d`, PM2 online, HTTP/2 200 OK |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `9ba53013` |
+| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` at `9ba53013` |
+| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `9ba53013`, PM2 online, HTTP/2 200 OK |
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `c427827d` |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `9ba53013` |
