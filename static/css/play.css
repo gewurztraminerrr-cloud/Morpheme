@@ -10093,40 +10093,91 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
 /* Old in-page leaderboard scroller replaced by body-attached .m-scroller (mobile_scroller.js) */
 .lb-mobile-scrollbar-track { display: none !important; }
 
-.m-scroller-track { display: none; }
-@media (max-width: 992px) {
-    .m-scroller-track {
-        position: fixed;
-        right: 2px;
-        width: 16px;
-        background: rgba(255, 255, 255, 0.10);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 8px;
-        z-index: 2147483000;
-        touch-action: none;
-    }
-    .m-scroller-track.m-scroller-track-overlay {
-        z-index: 2147483647 !important;
-    }
-    .m-scroller-track.m-scroller-track-overlay .m-scroller-thumb {
-        min-height: 32px !important;
-    }
-    .m-scroller-thumb {
-        position: absolute;
-        top: 0;
-        left: 1px;
-        width: 12px;
-        min-height: 40px;
-        background: linear-gradient(180deg, #409cff, #2980b9);
-        border: 1px solid rgba(64, 156, 255, 0.7);
-        border-radius: 6px;
-        box-shadow: 0 0 8px rgba(64, 156, 255, 0.5);
-        touch-action: none;
-    }
-    .m-scroller-thumb.dragging {
-        background: linear-gradient(180deg, #60adff, #3498db);
-        box-shadow: 0 0 12px rgba(64, 156, 255, 0.8);
-    }
+/* Vertical scroller track and thumb (.m-scroller) for Leaderboards, Tournaments, and Round Replay */
+.m-scroller-track {
+    position: fixed;
+    right: 2px;
+    width: 16px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    z-index: 2147483000;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+    display: none;
+}
+
+.m-scroller-track.m-scroller-track-overlay {
+    z-index: 2147483647 !important;
+    width: 14px !important;
+    border-radius: 7px !important;
+}
+
+.m-scroller-track.m-scroller-track-overlay .m-scroller-thumb {
+    width: 10px !important;
+    min-height: 36px !important;
+    border-radius: 5px !important;
+}
+
+.m-scroller-thumb {
+    position: absolute;
+    top: 0;
+    left: 1px;
+    width: 12px;
+    min-height: 40px;
+    background: linear-gradient(180deg, #409cff, #2980b9);
+    border: 1px solid rgba(64, 156, 255, 0.7);
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(64, 156, 255, 0.5);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.m-scroller-thumb:hover,
+.m-scroller-thumb.dragging {
+    background: linear-gradient(180deg, #60adff, #3498db);
+    box-shadow: 0 0 12px rgba(64, 156, 255, 0.8);
+    cursor: grabbing;
+}
+
+/* Light & White Themes for .m-scroller */
+[class*="theme-white"] .m-scroller-track,
+[class*="theme-light-"] .m-scroller-track,
+body.theme-white .m-scroller-track {
+    background: rgba(0, 0, 0, 0.07) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+[class*="theme-white"] .m-scroller-thumb,
+[class*="theme-light-"] .m-scroller-thumb,
+body.theme-white .m-scroller-thumb {
+    background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important;
+    border: 1px solid rgba(37, 99, 235, 0.8) !important;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+[class*="theme-white"] .m-scroller-thumb:hover,
+[class*="theme-white"] .m-scroller-thumb.dragging,
+[class*="theme-light-"] .m-scroller-thumb:hover,
+[class*="theme-light-"] .m-scroller-thumb.dragging,
+body.theme-white .m-scroller-thumb:hover,
+body.theme-white .m-scroller-thumb.dragging {
+    background: linear-gradient(180deg, #60a5fa, #2563eb) !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
+}
+
+.walkthrough-list {
+    padding-right: 22px !important;
+    scrollbar-width: none !important;
+}
+.walkthrough-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 /* Mobile full-bleed board styling */

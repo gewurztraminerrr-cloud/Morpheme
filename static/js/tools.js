@@ -3720,6 +3720,8 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             clearInterval(window.replayInterval);
             window.replayInterval = null;
         }
+        const overlayTrack = document.querySelector('.m-scroller-track.m-scroller-track-overlay');
+        if (overlayTrack) overlayTrack.style.display = 'none';
         if (typeof window.updateReplayScroller === 'function') {
             window.updateReplayScroller();
         }

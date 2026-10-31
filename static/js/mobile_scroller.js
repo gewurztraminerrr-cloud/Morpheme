@@ -50,10 +50,9 @@
                 (replayOverlay.classList.contains('forced-show') || replayOverlay.offsetParent !== null || window.getComputedStyle(replayOverlay).display !== 'none');
 
             if (isOverlayTarget) {
-                // Round Replay overlay custom scroller
+                // Round Replay overlay custom scroller (active across desktops, laptops, tablets, and mobile)
                 const isRendered = el && (el.offsetParent !== null || window.getComputedStyle(el).display !== 'none');
-                const visible = window.innerWidth <= MOBILE_MAX &&
-                    isReplayOpen &&
+                const visible = isReplayOpen &&
                     isRendered &&
                     (el.scrollHeight > el.clientHeight + 5);
 
@@ -81,7 +80,7 @@
             track.style.top = Math.max(0, r.top + 4) + 'px';
             track.style.height = Math.max(40, r.height - 8) + 'px';
             if (isOverlayTarget) {
-                track.style.right = Math.max(2, Math.round(window.innerWidth - r.right + 2)) + 'px';
+                track.style.right = Math.max(2, Math.round(window.innerWidth - r.right + 4)) + 'px';
             } else {
                 track.style.right = '2px';
             }

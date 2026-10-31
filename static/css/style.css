@@ -3891,35 +3891,16 @@ body.theme-white .header {
     min-height: 0;
     max-height: none;
     overflow-y: auto;
-    padding-right: 14px;
+    padding-right: 22px;
     padding-bottom: 24px;
-    scrollbar-width: thin;
-    scrollbar-color: #409cff rgba(255, 255, 255, 0.10);
+    scrollbar-width: none !important;
     box-sizing: border-box;
 }
 
 .walkthrough-list::-webkit-scrollbar {
-    width: 14px;
-}
-
-.walkthrough-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 7px;
-}
-
-.walkthrough-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #409cff, #2980b9);
-    border: 1px solid rgba(64, 156, 255, 0.7);
-    border-radius: 6px;
-    box-shadow: 0 0 8px rgba(64, 156, 255, 0.5);
-    min-height: 40px;
-}
-
-.walkthrough-list::-webkit-scrollbar-thumb:hover,
-.walkthrough-list::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(180deg, #60adff, #3498db);
-    box-shadow: 0 0 12px rgba(64, 156, 255, 0.8);
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 

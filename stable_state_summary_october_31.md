@@ -367,13 +367,26 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - On desktops and laptops (`@media (min-width: 993px)` and `body.is-desktop`), expanded `.chat-panel.expanded` now spans full width (`left: 0 !important; right: 0 !important; width: 100% !important; height: 100% !important; bottom: 0 !important; padding: 10px !important;`), cleanly filling the left panel with no wasted margins.
   - Increased bottom padding on desktop collapsed chat panel from `4px` to `10px`, ensuring ample clearance from the rounded bottom corners.
 - **Cache Busters (`templates/index.html`)**:
-  - Bumped `play.css` cache buster to `v=1793459000`.
-
 ### 35. Game Room Word Selection: Spaced FC Ratio Format (`static/js/play.js`, `templates/index.html`)
 - **Find Count Spaced Format**:
   - In `static/js/play.js` inside `fetchDefinition(word)`, updated the FC button label formatting from unspaced slash `FC [${roundFindersCount}/${totalCombined}]` to spaced slash `FC [${roundFindersCount} / ${totalCombined}]` (e.g. `FC [2 / 13]` rather than `FC [2/13]`), improving readability when selecting words under All Words, Words, and Remaining.
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.js` cache buster to `v=1793460000`.
+
+### 36. Round Replay: Desktop & Laptop Words List Scroller Thumb (`static/js/mobile_scroller.js`, `static/js/tools.js`, `static/css/play.css`, `static/css/style.css`, `templates/index.html`)
+- **Desktop & Laptop Scroller Thumb Support**:
+  - In `static/js/mobile_scroller.js`, removed the mobile screen width restriction (`window.innerWidth <= MOBILE_MAX`) specifically for the Round Replay overlay target (`isOverlayTarget`), making the custom vertical scroller track and draggable thumb available across all devices (desktops, laptops, tablets, and phones).
+  - Aligned the scroller track with the right boundary of `#review-walkthrough-list` using `track.style.right = Math.max(2, Math.round(window.innerWidth - r.right + 4)) + 'px'`, providing a 4px inset from the border.
+  - Added real-time tracking for list scrolling, mouse wheel navigation, track clicks, and mouse drag interactions (`mousedown`, `mousemove`, `mouseup`) with smooth ratio updates.
+- **Immediate Concealment on Modal Close**:
+  - In `static/js/tools.js`, updated `closeReplay()` to explicitly set `.m-scroller-track.m-scroller-track-overlay` to `display: none` immediately upon closing, ensuring zero latency when dismissed via the close button, background click, or Escape key.
+- **Theming & Global Styling**:
+  - In `static/css/play.css`, moved `.m-scroller-track` and `.m-scroller-thumb` out of the `@media (max-width: 992px)` block to make them available globally.
+  - Styled the overlay thumb with a gradient background (`linear-gradient(180deg, #409cff, #2980b9)`), glowing border, and hover/drag effects (`linear-gradient(180deg, #60adff, #3498db)` with `cursor: grab` / `cursor: grabbing`).
+  - Added dedicated theme overrides for white and light themes (`theme-white`, `theme-light-*`), rendering a vibrant royal blue thumb (`linear-gradient(180deg, #3b82f6, #1d4ed8)`) and high-contrast track (`rgba(0, 0, 0, 0.07)`).
+  - Updated `.walkthrough-list` across `static/css/play.css` and `static/css/style.css` to enforce `padding-right: 22px !important;` and suppress default browser scrollbars (`scrollbar-width: none !important; ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }`), preventing duplicate scrollbar thumbs.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css`, `style.css`, `mobile_scroller.js`, and `tools.js` cache busters to `v=1793462000`.
 
 ---
 
