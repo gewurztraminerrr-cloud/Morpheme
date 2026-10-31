@@ -413,11 +413,10 @@ d61c2423a86873a8d6c41183df9657632586fe86
     - Added dedicated rank classes `rank-1 rank-gold`, `rank-2 rank-silver`, `rank-3 rank-bronze` (and fallback `rank-${rank}`) to `.player-rank`.
     - Set `#1` to Gold (`#ffd700`), `#2` to Silver (`#c0c0c0`), and `#3` to Bronze (`#cd7f32`) with full opacity (`opacity: 1`), keeping ranks `#4` and beyond at default muted opacity.
   - In `static/css/play.css`:
-    - Added theme-aware styles supporting all 39 themes:
-      - Dark themes: `#ffd700` (Gold), `#c0c0c0` (Silver), `#cd7f32` (Bronze).
-      - White and light themes (`theme-white`, `theme-light-*`): high-contrast `#b8860b` (Dark Goldenrod), `#64748b` (Cool Slate Silver), and `#a0522d` (Sienna Bronze).
+    - Enforced pure Gold `#ffd700 !important` with crisp edge shadow (`text-shadow: 0 0 1px rgba(0, 0, 0, 0.4)`) across all 39 themes (including light and white themes), ensuring 1st place always displays as brilliant gold rather than a murky dark goldenrod or bronze on light layouts.
+    - Preserved Silver (`#c0c0c0` in dark themes; `#888888` on light themes for contrast) and Bronze (`#cd7f32` across all themes).
 - **Cache Busters (`templates/index.html`)**:
-  - Bumped `play.css` cache buster to `v=1793465000`.
+  - Bumped `play.css` cache buster to `v=1793466000`.
   - Bumped `play.js` cache buster to `v=1793465000`.
 
 ---
