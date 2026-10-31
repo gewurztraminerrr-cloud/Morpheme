@@ -523,10 +523,15 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Theme & Cross-Device Styling**:
   - Fully styled for Dark mode, White theme (`theme-white`), and all Light themes (`theme-light-*`).
   - Adjusted `.lobby-grid` and `.lobby-chat-drawer` z-indexes so dropdowns float cleanly above closed lobby drawers.
+- **Selection Dismissal, Comma-Gating & Added Friend Exclusion**:
+  - When the user selects/clicks a friend from the popup, the popup is dismissed immediately and remains closed if the user presses or clicks on the input again, until a comma is typed.
+  - When a comma is typed (or if the user presses the textbox again after typing a comma), the popup displays the remaining friends list, strictly excluding all friends already added to the input.
+  - Typing a search character after a comma continues to filter from the remaining un-added friends only.
+  - If all friends from the user's friend list have been added, the popup cleanly shows `All friends from your list have been added.`
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `style.css` cache buster to `v=1793515000`.
   - Bumped `lobby.css` cache buster to `v=1793515000`.
-  - Bumped `private_matches.js` cache buster to `v=1793515000`.
+  - Bumped `private_matches.js` cache buster to `v=1793520000`.
 
 ---
 

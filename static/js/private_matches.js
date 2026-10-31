@@ -2,6 +2,10 @@
     let soloBots = [];
     let userFriendsCache = null;
     let isFetchingFriends = false;
+    let waitingForComma = false;
+    let selectionValueAtClose = '';
+    let selectionCommaCount = 0;
+
     let friendsDropdownState = {
         matches: [],
         selectedIndex: -1,
@@ -46,12 +50,31 @@
         return parts[parts.length - 1].trim();
     }
 
-    function filterFriends(friends, query) {
+    function getAddedUsernames(val) {
+        if (!val) return new Set();
+        const parts = val.split(',');
+        const added = new Set();
+        // Tokens before the last comma represent already added users
+        for (let i = 0; i < parts.length - 1; i++) {
+            const u = parts[i].trim().toLowerCase();
+            if (u) added.add(u);
+        }
+        return added;
+    }
+
+    function filterFriends(friends, query, excludedUsernames = new Set()) {
         if (friends === null) return null; // Not logged in
         if (!Array.isArray(friends)) return [];
-        if (!query) return friends;
+
+        // Exclude friends who have already been added to the input
+        let remaining = friends.filter(f => {
+            const unameLower = (f.username || '').toLowerCase();
+            return !excludedUsernames.has(unameLower);
+        });
+
+        if (!query) return remaining;
         const qLower = query.toLowerCase();
-        return friends.filter(f => {
+        return remaining.filter(f => {
             const uname = (f.username || '').toLowerCase();
             return uname.startsWith(qLower);
         });
@@ -68,7 +91,7 @@
         friendsDropdownState.query = '';
     }
 
-    function renderFriendsDropdown(friends, query, selectedIdx = 0) {
+    function renderFriendsDropdown(friends, query, selectedIdx = 0, hasExcludedFriends = false) {
         const dropdown = document.getElementById('friends-invite-dropdown');
         if (!dropdown) return;
 
@@ -85,12 +108,18 @@
         }
 
         if (friends.length === 0) {
+            let emptyMessage = 'No friends found on your list.';
+            if (query) {
+                emptyMessage = `No friends starting with "<strong>${escapeHtml(query)}</strong>"`;
+            } else if (hasExcludedFriends) {
+                emptyMessage = 'All friends from your list have been added.';
+            }
             dropdown.innerHTML = `
                 <div class="friends-dropdown-header">
                     <span>Friends (0)</span>
                 </div>
                 <div class="friends-dropdown-empty">
-                    ${query ? `No friends starting with "<strong>${escapeHtml(query)}</strong>"` : 'No friends found on your list.'}
+                    ${emptyMessage}
                 </div>
             `;
             dropdown.classList.remove('hidden');
@@ -158,6 +187,10 @@
         prefix.push(friend.username);
 
         input.value = prefix.join(', ');
+        selectionValueAtClose = input.value;
+        selectionCommaCount = (input.value.match(/,/g) || []).length;
+        waitingForComma = true;
+
         hideFriendsDropdown();
         input.focus();
 
@@ -193,26 +226,52 @@
         const dropdown = document.getElementById('friends-invite-dropdown');
         if (!input || !dropdown) return;
 
-        const showDropdownWithMatches = async () => {
+        const showDropdownWithMatches = async (isPressEvent = false) => {
+            if (isPressEvent && waitingForComma) {
+                hideFriendsDropdown();
+                return;
+            }
+
             const friends = await fetchFriendsList();
             const token = getCurrentQueryToken(input.value);
-            const matches = filterFriends(friends, token);
-            renderFriendsDropdown(matches, token, 0);
+            const addedUsernames = getAddedUsernames(input.value);
+            const matches = filterFriends(friends, token, addedUsernames);
+            renderFriendsDropdown(matches, token, 0, addedUsernames.size > 0);
         };
 
         // When pressing / focusing / clicking textbox
-        input.addEventListener('focus', showDropdownWithMatches);
-        input.addEventListener('click', showDropdownWithMatches);
+        input.addEventListener('focus', () => showDropdownWithMatches(true));
+        input.addEventListener('click', () => showDropdownWithMatches(true));
 
         // When typing
-        input.addEventListener('input', showDropdownWithMatches);
+        input.addEventListener('input', () => {
+            const val = input.value;
+            const currentCommaCount = (val.match(/,/g) || []).length;
+
+            if (waitingForComma) {
+                if (currentCommaCount > selectionCommaCount) {
+                    // User typed a comma!
+                    waitingForComma = false;
+                } else if (!val || !selectionValueAtClose || !val.startsWith(selectionValueAtClose)) {
+                    // User backspaced or changed away from selected username
+                    waitingForComma = false;
+                } else {
+                    // Keep popup closed until comma is typed
+                    hideFriendsDropdown();
+                    return;
+                }
+            }
+
+            showDropdownWithMatches(false);
+        });
 
         // Keyboard navigation
         input.addEventListener('keydown', (e) => {
             if (dropdown.classList.contains('hidden')) {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    if (waitingForComma) return;
                     e.preventDefault();
-                    showDropdownWithMatches();
+                    showDropdownWithMatches(false);
                 }
                 return;
             }
@@ -302,6 +361,9 @@
                     fetchFriendsList();
                 } else {
                     hideFriendsDropdown();
+                    waitingForComma = false;
+                    selectionValueAtClose = '';
+                    selectionCommaCount = 0;
                 }
             });
         });
@@ -661,6 +723,9 @@
             const data = await res.json();
             if (data.success) {
                 input.value = "";
+                waitingForComma = false;
+                selectionValueAtClose = '';
+                selectionCommaCount = 0;
                 hideFriendsDropdown();
                 loadPrivateMatches();
                 showInviteSentToast();
