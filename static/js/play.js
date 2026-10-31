@@ -385,6 +385,7 @@ let cachedTimerValueEl = null;    // Cache for high-frequency updates
 let cachedBoardPanelEl = null;
 let lastPlayersHtml = null;       // Cache for renderPlayers
 const playerRatingCache = new Map(); // Cache for Chat Colors
+window._lastRoundPlacements = new Map(); // Cache for Chat Placement Numbers
 /* --- Distributed Board Generation (DBG) --- */
 const DICE_CONFIG_4x4 = [
     "AAEEGN", "ABBJOO", "ACHOPS", "AFFKPS",
@@ -2652,6 +2653,15 @@ async function _doUpdateGameState(incomingState = null) {
             console.error('[play.js] Error in renderPlayers:', pErr);
         }
 
+        // Update placements map for chatbox
+        try {
+            if (typeof updateRoundPlacementsMap === 'function') {
+                updateRoundPlacementsMap(state);
+            }
+        } catch (plErr) {
+            console.error('[play.js] Error in updateRoundPlacementsMap:', plErr);
+        }
+
         // Update chat
         if (state.chat_messages) {
             try {
@@ -4172,6 +4182,53 @@ function resetChat() {
     }
 }
 
+function updateRoundPlacementsMap(state) {
+    if (!state) return;
+    if (!window._lastRoundPlacements) {
+        window._lastRoundPlacements = new Map();
+    }
+    if (state.last_round_placements && typeof state.last_round_placements === 'object') {
+        const entries = Object.entries(state.last_round_placements);
+        if (entries.length > 0) {
+            window._lastRoundPlacements.clear();
+            entries.forEach(([u, p]) => {
+                if (u && p) window._lastRoundPlacements.set(u.toLowerCase().trim(), Number(p));
+            });
+            return;
+        }
+    }
+    // Fallback: derive from players if intermission
+    if (state.state === 'intermission' && Array.isArray(state.players)) {
+        const played = state.players.filter(p => 
+            p && (p.score > 0 || p.words_count > 0 || (p.submitted_words && p.submitted_words.length > 0) || (p.invalid_words && p.invalid_words.length > 0))
+        );
+        if (played.length > 0) {
+            played.sort((a, b) => (b.score - a.score) || ((b.rating || 0) - (a.rating || 0)));
+            window._lastRoundPlacements.clear();
+            played.forEach((p, idx) => {
+                if (p.username) window._lastRoundPlacements.set(p.username.toLowerCase().trim(), idx + 1);
+            });
+            return;
+        }
+    }
+    // Fallback: derive from winners_history[0]
+    if (state.winners_history && state.winners_history.length > 0) {
+        const latest = state.winners_history[0];
+        if (latest && Array.isArray(latest.all_players) && latest.all_players.length > 0) {
+            const played = latest.all_players.filter(p => p && ((p.score !== undefined ? p.score : 0) > 0 || (p.words_count || 0) > 0));
+            if (played.length > 0) {
+                played.sort((a, b) => ((b.score || 0) - (a.score || 0)) || ((b.rating || 0) - (a.rating || 0)));
+                window._lastRoundPlacements.clear();
+                played.forEach((p, idx) => {
+                    const uname = typeof p === 'string' ? p : p.username;
+                    if (uname) window._lastRoundPlacements.set(uname.toLowerCase().trim(), idx + 1);
+                });
+            }
+        }
+    }
+}
+window.updateRoundPlacementsMap = updateRoundPlacementsMap;
+
 function renderChat(messages) {
     const listEl = document.getElementById('chat-history');
     if (!listEl) return;
@@ -4187,7 +4244,9 @@ function renderChat(messages) {
     const latestMsg = messages[messages.length - 1];
     const latestTimestamp = latestMsg ? (latestMsg.time || 0) : 0;
     const latestText = latestMsg ? (latestMsg.message || '') : '';
-    const chatSig = `${messages.length}_${latestTimestamp}_${latestText}`;
+    const latestPlacement = latestMsg ? (latestMsg.placement || '') : '';
+    const placementsCount = window._lastRoundPlacements ? window._lastRoundPlacements.size : 0;
+    const chatSig = `${messages.length}_${latestTimestamp}_${latestText}_${latestPlacement}_${placementsCount}`;
     
     if (chatSig === window._lastChatSignature && messages.length > 0) return;
     window._lastChatSignature = chatSig;
@@ -4261,6 +4320,16 @@ function renderChat(messages) {
             </div>`;
         }
 
+        // Determine placement prefix (User Request: e.g. "#13 jeffb (1200): Hello, everybody!")
+        // If user did not play the round (DNP, spectator, or unranked), omit placement prefix.
+        let placement = msg.placement;
+        if (placement === undefined || placement === null) {
+            if (window._lastRoundPlacements && username) {
+                placement = window._lastRoundPlacements.get(username.toLowerCase().trim());
+            }
+        }
+        const placementPrefix = (placement && Number(placement) > 0) ? `#${placement} ` : '';
+
         // Determine User Color from Rating Cache or message property
         let rating = msg.rating;
         if (rating === undefined || rating === null) {
@@ -4283,7 +4352,7 @@ function renderChat(messages) {
 
         return `
         <div class="chat-message">
-            <span class="chat-user" data-username="${username}" style="color: ${userColor};">${username}${ratingSuffix}:</span>
+            <span class="chat-user" data-username="${username}" style="color: ${userColor};">${placementPrefix}${username}${ratingSuffix}:</span>
             <span class="chat-text">${safeText}</span>
         </div>`;
     }).join('');
@@ -4300,7 +4369,7 @@ function renderChat(messages) {
                 window.showMiniProfile(username);
             } else {
                 const rawName = userEl.innerText.trim();
-                const cleanName = rawName.endsWith(':') ? rawName.slice(0, -1) : rawName;
+                const cleanName = rawName.replace(/^#\d+\s+/, '').replace(/\s*\([^)]*\):?$/, '').replace(/:$/, '').trim();
                 if (window.showMiniProfile) window.showMiniProfile(cleanName);
             }
         };
@@ -4364,12 +4433,18 @@ async function sendChatMessage() {
         }
     }
 
+    let myPlacement = null;
+    if (window._lastRoundPlacements && myUsername) {
+        myPlacement = window._lastRoundPlacements.get(myUsername.toLowerCase().trim()) || null;
+    }
+
     // Create optimistic message object for 0ms visual feedback
     const optimisticMsg = {
         username: myUsername,
         message: message,
         time: Date.now() / 1000,
         rating: myRating,
+        placement: myPlacement,
         is_optimistic: true
     };
 
@@ -4397,7 +4472,7 @@ async function sendChatMessage() {
     fetch(`/api/room/${roomId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ message, placement: myPlacement })
     }).then(async resp => {
         const data = await resp.json().catch(() => ({}));
         if (!resp.ok) {

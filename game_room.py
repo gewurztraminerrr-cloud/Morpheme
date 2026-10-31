@@ -304,6 +304,7 @@ class GameRoom:
     previous_total_words: int = 0
     previous_total_counts_by_len: Dict = field(default_factory=dict)
     _did_6x8_fallback_rescue: bool = False
+    last_round_placements: Dict[str, int] = field(default_factory=dict)
     @property
     def round_end_time(self):
         """Absolute timestamp when the current round expires"""
@@ -349,7 +350,7 @@ class GameRoom:
         # INITIALIZE LOCKS
         self._state_lock = threading.RLock() # Reentrant to prevent deadlocks during transition
             
-    def add_chat_message(self, username, message, is_system=False, image=None, color=None, is_winner=False, rating=None):
+    def add_chat_message(self, username, message, is_system=False, image=None, color=None, is_winner=False, rating=None, placement=None):
         """Add chat message to room"""
         if rating is None and not is_system and username and username.upper() != 'SYSTEM':
             # Try to look up the user's rating from active players/spectators
@@ -363,6 +364,21 @@ class GameRoom:
                         rating = s.rating
                         break
 
+        if placement is None and not is_system and username and username.upper() != 'SYSTEM':
+            uname_lower = username.lower()
+            if hasattr(self, 'last_round_placements') and uname_lower in self.last_round_placements:
+                placement = self.last_round_placements[uname_lower]
+            elif getattr(self, 'winners_history', None) and len(self.winners_history) > 0:
+                latest = self.winners_history[0]
+                all_p = latest.get('all_players', [])
+                for idx, p in enumerate(all_p):
+                    p_name = p.get('username') if isinstance(p, dict) else getattr(p, 'username', '')
+                    if p_name and p_name.lower() == uname_lower:
+                        p_score = p.get('score', 0) if isinstance(p, dict) else getattr(p, 'score', 0)
+                        if p_score > 0:
+                            placement = idx + 1
+                        break
+
         self.chat_messages.append({
             'username': username,
             'message': message,
@@ -371,7 +387,8 @@ class GameRoom:
             'is_winner': is_winner,
             'color': color,
             'time': time.time(),
-            'rating': rating
+            'rating': rating,
+            'placement': placement
         })
         # Keep only last 30 messages
         if len(self.chat_messages) > 30:
@@ -2128,11 +2145,33 @@ class GameRoom:
                         })
                 self.last_round_human_participants = len([p for p in all_candidate_players if not getattr(p, 'is_ai', False)])
                 
+                # Authoritative round placements for chat and results (participants sorted by score desc, rating desc)
+                sorted_snapshots = sorted(
+                    intermission_player_snapshots,
+                    key=lambda x: (x.get('score', 0), x.get('rating', 1200)),
+                    reverse=True
+                )
+                self.last_round_placements = {
+                    p['username'].lower(): idx + 1 for idx, p in enumerate(sorted_snapshots)
+                }
+
                 # Asynchronous Post-Round Processing
                 def process_results_async():
                     try:
                         if self.game_type == 'split':
                             self.calculate_split_scores()
+                            for snap in intermission_player_snapshots:
+                                p_obj = self.get_player(snap['user_id'])
+                                if p_obj:
+                                    snap['score'] = p_obj.score
+                            sorted_snaps = sorted(
+                                intermission_player_snapshots,
+                                key=lambda x: (x.get('score', 0), x.get('rating', 1200)),
+                                reverse=True
+                            )
+                            self.last_round_placements = {
+                                p['username'].lower(): idx + 1 for idx, p in enumerate(sorted_snaps)
+                            }
                         
                         # Winners History
                         active_pool = [p for p in self.players if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words))]
@@ -2160,7 +2199,7 @@ class GameRoom:
                                 'round': self.current_round,
                                 'game_type': getattr(self, 'game_type', 'accumulative'),
                                 'winners': winners_data,
-                                'all_players': sorted([{'username': p.username, 'score': p.score} for p in (active_pool or self.players)], key=lambda x: x['score'], reverse=True),
+                                'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': getattr(p, 'rating', 1200)} for p in (active_pool or self.players)], key=lambda x: (x['score'], x['rating']), reverse=True),
                                 'score': max_score,
                                 'board': [list(row) for row in self.board] if self.board else [],
                                 'words': winner_words,

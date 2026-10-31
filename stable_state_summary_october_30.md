@@ -294,6 +294,21 @@ START_OVER_POINT_OCTOBER_30
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` and `tools.js` cache busters to `v=1793424000`.
 
+### 30. Game Room Chatbox Placement Numbers (`game_room.py`, `app.py`, `static/js/play.js`, `templates/index.html`)
+- **Chatbox Placement Prefix**:
+  - In `#chat-history`, displays the user's placement from the round using a number sign (`#`) followed by their placement before their username: `#<placement> <username> (<rating>): <message>` (e.g. `"#13 jeffb (1200): Hello, everybody!"`).
+  - If a user did not play the round (DNP, spectator, or unranked), the placement number prefix is omitted: `<username> (<rating>): <message>` (e.g. `"jeffb (1200): Hello, everybody!"`).
+- **Backend Tracking & Placement Calculation (`game_room.py`, `app.py`)**:
+  - In `GameRoom`, added `last_round_placements: Dict[str, int] = field(default_factory=dict)` storing the 1-based placement of all round participants sorted by score descending, breaking ties with rating descending.
+  - Excluded players who did not play (DNP with 0 score, 0 words submitted, and 0 invalid words) and spectators from `last_round_placements`.
+  - Updated `add_chat_message` to record `'placement': placement` directly in message dicts, resolving automatically from `self.last_round_placements` or `self.winners_history[0]['all_players']`.
+  - In `app.py`, added `last_round_placements` to `/api/room/<room_id>/state` snapshot, and updated `/api/room/<room_id>/chat` to accept and record `placement`.
+- **Frontend Live & Optimistic Handling (`static/js/play.js`, `templates/index.html`)**:
+  - Added `updateRoundPlacementsMap(state)` to populate `window._lastRoundPlacements` dynamically from server state, with client fallbacks for intermission players and `winners_history[0]`.
+  - Updated `sendChatMessage()` to inject `placement` into optimistic chat messages for 0ms visual feedback and send it in the chat API payload.
+  - Updated `renderChat(messages)` to prefix the username with `#<placement> ` when available, keeping profile clicking intact via `data-username` and clean-name regex stripping.
+  - Bumped `play.js` cache buster to `v=1793425000`.
+
 ---
 
 ## Verification & Validation

@@ -7180,6 +7180,7 @@ def get_room_state(room_id):
                     {'username': s.username, 'rating': s.rating, 'user_id': s.user_id} for s in room.spectators
                 ] if hasattr(room, 'spectators') else [],
                 'chat_messages': getattr(room, 'chat_messages', []),
+                'last_round_placements': getattr(room, 'last_round_placements', {}),
                 'winners_history': getattr(room, 'winners_history', []),
                 'previous_day_history': getattr(room, 'previous_day_history', {}),
             }
@@ -7369,8 +7370,19 @@ def submit_chat_message(room_id):
     if rating is None:
         rating = 1200
     _USER_RATING_CACHE[str(user_id)] = rating
+
+    req_placement = None
+    if request.is_json and isinstance(request.json, dict):
+        p_val = request.json.get('placement')
+        try:
+            if p_val is not None:
+                req_placement = int(p_val)
+                if req_placement <= 0:
+                    req_placement = None
+        except (ValueError, TypeError):
+            req_placement = None
         
-    room.add_chat_message(session['username'], message, image=image, rating=rating)
+    room.add_chat_message(session['username'], message, image=image, rating=rating, placement=req_placement)
     room.update_player_activity(session['user_id'])
     
     return jsonify({
