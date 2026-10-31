@@ -125,10 +125,10 @@ START_OVER_POINT_OCTOBER_30
   - Added strict `box-sizing: border-box !important;` and `overflow-x: hidden !important;` across `#tool-timer` and `#timer-display-container`, preventing any horizontal jitter, shift, or wobble when scrolling vertically on mobile devices.
 
 ### 16. Tools: Find Count Random Words Table Mobile Layout Fix
-- **Mobile Display & Vertical Elongation Fix (`templates/index.html`, `static/css/play.css`)**:
+- **Mobile Row-by-Row Display & Vertical Elongation Fix (`templates/index.html`, `static/css/play.css`)**:
   - Removed accidental `history-table` class from `.random-words-table` in `templates/index.html`. Previously, `.history-table` forced mobile columns to `width: 22% !important; word-break: break-word !important;`, which caused words to break character-by-character vertically into a single-pixel column, elongating the table by hundreds of pixels vertically.
-  - Made the horizontal flex table layout (`display: flex !important; flex-direction: row !important;`) universal across all viewports in `static/css/play.css`, rather than limiting it to `@media (min-width: 901px)`.
-  - Added mobile responsive styling under `@media (max-width: 900px)` with `overflow-x: auto !important; -webkit-overflow-scrolling: touch !important;`, `width: max-content !important; min-width: 100% !important;`, and `padding: 8px 12px !important; white-space: nowrap !important;` so random words are clearly displayed, fully legible, and smoothly scrollable on all mobile devices without vertical elongation or truncation.
+  - On mobile devices (`@media (max-width: 900px)` and `body.is-mobile`), random words run cleanly row-by-row (`flex-direction: column !important; width: 100% !important;`), with each word centered on its own individual row with a subtle divider line, generous touch target padding (`10px 12px`), and clear font size (`0.95rem`), completely eliminating any vertical squishing or character breaking.
+  - On desktops and laptops (`@media (min-width: 901px)` and `body:not(.is-mobile)`), random words continue running horizontally in a single bar side-by-side (`flex-direction: row !important; flex: 1 1 0 !important;`).
 
 ---
 
@@ -136,9 +136,9 @@ START_OVER_POINT_OCTOBER_30
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `7697e6ee` |
-| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` at `7697e6ee` |
-| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `7697e6ee`, PM2 online, HTTP/2 200 OK |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at `c427827d` |
+| **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` at `c427827d` |
+| **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249` at `c427827d`, PM2 online, HTTP/2 200 OK |
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `7697e6ee` |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_30` and `stable-2026-10-30` pointing to `c427827d` |
