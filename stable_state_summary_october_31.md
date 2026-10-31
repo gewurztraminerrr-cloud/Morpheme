@@ -354,6 +354,21 @@ d61c2423a86873a8d6c41183df9657632586fe86
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.js` and `private_matches.js` cache busters to `v=1793428000`.
 
+### 34. Game Room Chatbox: Desktop & Laptop Largest Size Layout & Button/Counter Visibility (`static/css/play.css`, `templates/index.html`)
+- **Root Cause Resolution for Largest Settings Chat Size (24px)**:
+  - When users enlarged the chat font size to the maximum (24px) in Settings, `#chat-input` without `min-width: 0` retained an intrinsic content width of ~266px based on its font size.
+  - In addition, on desktops and laptops where the left panel is constrained (350px - 380px), expanding the chatbox previously applied `width: calc(100% - 20px); left: 10px; right: 10px;`, making it 20px narrower than collapsed. The oversized input combined with the character counter and send button overflowed the container horizontally, pushing the Send button 40px+ beyond the right edge behind `overflow: hidden`, and squishing the character counter.
+  - The input also had a fixed 28px height, causing 24px text to clip vertically, while the bottom padding of the chat panel was clamped to just 4px, crowding the controls into the curved bottom border.
+- **Flexibility & Clipping Fixes**:
+  - In `static/css/play.css`, configured `.chat-input-section` with `width: 100%`, `min-width: 0`, and `align-items: center`.
+  - Configured `#chat-input` with `flex: 1 1 0% !important; min-width: 0 !important; width: 0 !important; height: auto; min-height: 32px;` and comfortable `padding: 4px 8px;`, ensuring it smoothly shrinks and gives full guaranteed room for the counter and Send button regardless of font size.
+  - Styled `.chat-input-char-counter` and `#room-chat-counter` with `flex-shrink: 0 !important; white-space: nowrap !important; font-weight: 700; font-size: 0.74rem;`, keeping it crisp and legible.
+  - Redesigned `#chat-send-btn` with `flex-shrink: 0 !important; min-height: 32px; padding: 0 12px; font-weight: 700; border-radius: 6px; background: #2563eb; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2);`, ensuring high contrast, clean visibility, and a distinct hover state (`#1d4ed8`) on both dark and light/white themes.
+  - On desktops and laptops (`@media (min-width: 993px)` and `body.is-desktop`), expanded `.chat-panel.expanded` now spans full width (`left: 0 !important; right: 0 !important; width: 100% !important; height: 100% !important; bottom: 0 !important; padding: 10px !important;`), cleanly filling the left panel with no wasted margins.
+  - Increased bottom padding on desktop collapsed chat panel from `4px` to `10px`, ensuring ample clearance from the rounded bottom corners.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793459000`.
+
 ---
 
 ## Verification & Validation
