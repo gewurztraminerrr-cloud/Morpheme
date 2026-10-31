@@ -506,6 +506,28 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `style.css` cache buster to `v=1793510000`.
   - Bumped `play.css` cache buster to `v=1793510000`.
 
+### 45. Real-Time Friends Autocomplete Dropdown Window for "With Friends" Matches (`static/js/private_matches.js`, `static/css/style.css`, `static/css/lobby.css`, `templates/index.html`)
+- **Interactive Autocomplete Dropdown Window**:
+  - In Lobby (`#page-lobby`) under the matchmaker panel `#sf-tab-friends`:
+    - When a user selects the "With Friends" tab and presses/focuses/clicks the "Enter username..." textbox (`#friends-invite-input`), a small glassmorphic floating window (`#friends-invite-dropdown`) displays all of the user's friends to choose from.
+    - As the user types (e.g. typing "M"), the list dynamically filters in real-time to show only friends whose username starts with "M" (case-insensitive prefix match).
+    - When subsequent characters are typed (e.g. "Ma"), the list filters further (showing only "Mark", "Mary", "Maya", etc.), and updates on backspace.
+    - Matched characters in usernames are prominently highlighted with `<strong>` tags.
+  - Multi-friend comma-separated invites are supported (e.g., `Alice, M` filters based on `M`, selecting a friend completes to `Alice, Mary`).
+- **Complete Keyboard & Touch Navigation**:
+  - Supports keyboard navigation: `ArrowDown` and `ArrowUp` cycle through matches with blue focus highlights, `Enter` or `Tab` selects the highlighted friend, and `Escape` dismisses the dropdown.
+  - Direct clicks or mobile taps on an item select the friend, populate the input, and close the dropdown.
+  - Smooth mobile scrolling with touchmove detection prevents accidental selections while scrolling long friend lists.
+  - Clicking/tapping outside the input and dropdown cleanly dismisses the dropdown.
+  - Displays empty state feedback (`No friends starting with "..."` or `No friends found`) when queries yield no results or the friend list is empty.
+- **Theme & Cross-Device Styling**:
+  - Fully styled for Dark mode, White theme (`theme-white`), and all Light themes (`theme-light-*`).
+  - Adjusted `.lobby-grid` and `.lobby-chat-drawer` z-indexes so dropdowns float cleanly above closed lobby drawers.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css` cache buster to `v=1793515000`.
+  - Bumped `lobby.css` cache buster to `v=1793515000`.
+  - Bumped `private_matches.js` cache buster to `v=1793515000`.
+
 ---
 
 ## Verification & Validation
@@ -518,6 +540,7 @@ d61c2423a86873a8d6c41183df9657632586fe86
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to latest commit |
+
 
 
 

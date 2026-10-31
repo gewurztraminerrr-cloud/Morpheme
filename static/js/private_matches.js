@@ -1,5 +1,293 @@
 (function () {
     let soloBots = [];
+    let userFriendsCache = null;
+    let isFetchingFriends = false;
+    let friendsDropdownState = {
+        matches: [],
+        selectedIndex: -1,
+        query: ''
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    async function fetchFriendsList(force = false) {
+        if (userFriendsCache && !force) return userFriendsCache;
+        if (isFetchingFriends) return userFriendsCache || [];
+        isFetchingFriends = true;
+        try {
+            const res = await fetch('/api/friends/list');
+            if (res.ok) {
+                const data = await res.json();
+                userFriendsCache = data.friends || [];
+                return userFriendsCache;
+            } else if (res.status === 401) {
+                userFriendsCache = null;
+                return null;
+            }
+        } catch (e) {
+            console.warn('[private_matches] Failed to fetch friends list:', e);
+        } finally {
+            isFetchingFriends = false;
+        }
+        return userFriendsCache || [];
+    }
+
+    function getCurrentQueryToken(val) {
+        if (!val) return '';
+        const parts = val.split(',');
+        return parts[parts.length - 1].trim();
+    }
+
+    function filterFriends(friends, query) {
+        if (friends === null) return null; // Not logged in
+        if (!Array.isArray(friends)) return [];
+        if (!query) return friends;
+        const qLower = query.toLowerCase();
+        return friends.filter(f => {
+            const uname = (f.username || '').toLowerCase();
+            return uname.startsWith(qLower);
+        });
+    }
+
+    function hideFriendsDropdown() {
+        const dropdown = document.getElementById('friends-invite-dropdown');
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+            dropdown.innerHTML = '';
+        }
+        friendsDropdownState.matches = [];
+        friendsDropdownState.selectedIndex = -1;
+        friendsDropdownState.query = '';
+    }
+
+    function renderFriendsDropdown(friends, query, selectedIdx = 0) {
+        const dropdown = document.getElementById('friends-invite-dropdown');
+        if (!dropdown) return;
+
+        if (friends === null) {
+            dropdown.innerHTML = `
+                <div class="friends-dropdown-empty">
+                    Please log in to view your friends list.
+                </div>
+            `;
+            dropdown.classList.remove('hidden');
+            friendsDropdownState.matches = [];
+            friendsDropdownState.selectedIndex = -1;
+            return;
+        }
+
+        if (friends.length === 0) {
+            dropdown.innerHTML = `
+                <div class="friends-dropdown-header">
+                    <span>Friends (0)</span>
+                </div>
+                <div class="friends-dropdown-empty">
+                    ${query ? `No friends starting with "<strong>${escapeHtml(query)}</strong>"` : 'No friends found on your list.'}
+                </div>
+            `;
+            dropdown.classList.remove('hidden');
+            friendsDropdownState.matches = [];
+            friendsDropdownState.selectedIndex = -1;
+            return;
+        }
+
+        friendsDropdownState.matches = friends;
+        friendsDropdownState.selectedIndex = Math.max(0, Math.min(selectedIdx, friends.length - 1));
+        friendsDropdownState.query = query;
+
+        const itemsHtml = friends.map((friend, idx) => {
+            const uname = friend.username || '';
+            const qLen = query.length;
+            let nameHtml;
+            if (qLen > 0 && uname.toLowerCase().startsWith(query.toLowerCase())) {
+                const matched = uname.slice(0, qLen);
+                const rest = uname.slice(qLen);
+                nameHtml = `<strong>${escapeHtml(matched)}</strong>${escapeHtml(rest)}`;
+            } else {
+                nameHtml = escapeHtml(uname);
+            }
+
+            const initial = uname ? uname[0].toUpperCase() : '?';
+            const avatarStyle = friend.avatar_url ? `style="background-image: url('${friend.avatar_url}');"` : '';
+            const flagHtml = window.getFlagHtml ? window.getFlagHtml(friend.country_flag) : (friend.country_flag || '');
+            const onlineDot = friend.is_online ? '<span class="friends-dropdown-online" title="Online"></span>' : '';
+
+            return `
+                <div class="friends-dropdown-item ${idx === friendsDropdownState.selectedIndex ? 'active' : ''}" data-index="${idx}" role="option">
+                    <div class="friends-dropdown-avatar" ${avatarStyle}>${friend.avatar_url ? '' : initial}</div>
+                    ${flagHtml ? `<span class="friends-dropdown-flag">${flagHtml}</span>` : ''}
+                    <span class="friends-dropdown-name">${nameHtml}</span>
+                    ${onlineDot}
+                </div>
+            `;
+        }).join('');
+
+        dropdown.innerHTML = `
+            <div class="friends-dropdown-header">
+                <span>Friends (${friends.length})</span>
+            </div>
+            <div class="friends-dropdown-list">
+                ${itemsHtml}
+            </div>
+        `;
+
+        dropdown.classList.remove('hidden');
+
+        const activeItem = dropdown.querySelector(`.friends-dropdown-item[data-index="${friendsDropdownState.selectedIndex}"]`);
+        if (activeItem) {
+            activeItem.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function selectFriendItem(friend) {
+        if (!friend || !friend.username) return;
+        const input = document.getElementById('friends-invite-input');
+        if (!input) return;
+
+        const parts = input.value.split(',');
+        parts.pop(); // Remove partial query
+        const prefix = parts.map(p => p.trim()).filter(p => p);
+        prefix.push(friend.username);
+
+        input.value = prefix.join(', ');
+        hideFriendsDropdown();
+        input.focus();
+
+        if (typeof input.setSelectionRange === 'function') {
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+        }
+    }
+
+    function updateDropdownSelection(newIndex) {
+        const dropdown = document.getElementById('friends-invite-dropdown');
+        if (!dropdown || dropdown.classList.contains('hidden') || friendsDropdownState.matches.length === 0) return;
+
+        const count = friendsDropdownState.matches.length;
+        if (newIndex < 0) newIndex = count - 1;
+        if (newIndex >= count) newIndex = 0;
+
+        friendsDropdownState.selectedIndex = newIndex;
+
+        const items = dropdown.querySelectorAll('.friends-dropdown-item');
+        items.forEach((item, idx) => {
+            if (idx === newIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    function initFriendsDropdown() {
+        const input = document.getElementById('friends-invite-input');
+        const dropdown = document.getElementById('friends-invite-dropdown');
+        if (!input || !dropdown) return;
+
+        const showDropdownWithMatches = async () => {
+            const friends = await fetchFriendsList();
+            const token = getCurrentQueryToken(input.value);
+            const matches = filterFriends(friends, token);
+            renderFriendsDropdown(matches, token, 0);
+        };
+
+        // When pressing / focusing / clicking textbox
+        input.addEventListener('focus', showDropdownWithMatches);
+        input.addEventListener('click', showDropdownWithMatches);
+
+        // When typing
+        input.addEventListener('input', showDropdownWithMatches);
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            if (dropdown.classList.contains('hidden')) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    showDropdownWithMatches();
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                updateDropdownSelection(friendsDropdownState.selectedIndex + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                updateDropdownSelection(friendsDropdownState.selectedIndex - 1);
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                if (friendsDropdownState.matches && friendsDropdownState.matches.length > 0) {
+                    const sel = friendsDropdownState.matches[friendsDropdownState.selectedIndex];
+                    if (sel) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectFriendItem(sel);
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                hideFriendsDropdown();
+            }
+        });
+
+        // Touch and click handling for dropdown items
+        let touchStartY = 0;
+        let isTouchScroll = false;
+
+        dropdown.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches[0]) {
+                touchStartY = e.touches[0].clientY;
+                isTouchScroll = false;
+            }
+        }, { passive: true });
+
+        dropdown.addEventListener('touchmove', (e) => {
+            if (e.touches && e.touches[0]) {
+                if (Math.abs(e.touches[0].clientY - touchStartY) > 8) {
+                    isTouchScroll = true;
+                }
+            }
+        }, { passive: true });
+
+        dropdown.addEventListener('touchend', (e) => {
+            if (isTouchScroll) return;
+            const item = e.target.closest('.friends-dropdown-item');
+            if (item) {
+                const idx = parseInt(item.dataset.index, 10);
+                if (!isNaN(idx) && friendsDropdownState.matches[idx]) {
+                    e.preventDefault();
+                    selectFriendItem(friendsDropdownState.matches[idx]);
+                }
+            }
+        });
+
+        dropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.friends-dropdown-item');
+            if (item) {
+                const idx = parseInt(item.dataset.index, 10);
+                if (!isNaN(idx) && friendsDropdownState.matches[idx]) {
+                    selectFriendItem(friendsDropdownState.matches[idx]);
+                }
+            }
+        });
+
+        // Outside click handler
+        document.addEventListener('pointerdown', (e) => {
+            if (!dropdown.classList.contains('hidden')) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    hideFriendsDropdown();
+                }
+            }
+        });
+    }
 
     function init() {
         // Tab switching
@@ -10,6 +298,11 @@
                 const tab = btn.dataset.sfTab;
                 document.querySelectorAll('.sf-tab-content').forEach(c => c.classList.add('hidden'));
                 document.getElementById('sf-tab-' + tab).classList.remove('hidden');
+                if (tab === 'friends') {
+                    fetchFriendsList();
+                } else {
+                    hideFriendsDropdown();
+                }
             });
         });
 
@@ -47,6 +340,9 @@
         if (inviteBtn) {
             inviteBtn.addEventListener('click', sendFriendsInvite);
         }
+
+        // Friends Autocomplete Dropdown
+        initFriendsDropdown();
 
         // Initial Load
         loadPrivateMatches();
@@ -365,6 +661,7 @@
             const data = await res.json();
             if (data.success) {
                 input.value = "";
+                hideFriendsDropdown();
                 loadPrivateMatches();
                 showInviteSentToast();
             } else {
@@ -896,4 +1193,5 @@
         init();
     }
     window.initPrivateMatches = init;
+    window.refreshPrivateMatchesFriends = () => fetchFriendsList(true);
 })();

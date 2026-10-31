@@ -78,6 +78,8 @@
         margin-bottom: 3px !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 100 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -2049,8 +2051,12 @@ body.theme-white .lobby-journey-sticky-header {
     margin-top: 2px !important;
     margin-bottom: 0 !important;
     position: relative;
-    z-index: 500;
+    z-index: 50;
     box-sizing: border-box;
+}
+
+.lobby-chat-drawer.open {
+    z-index: 2500 !important;
 }
 
 .lobby-chat-toggle-btn {
