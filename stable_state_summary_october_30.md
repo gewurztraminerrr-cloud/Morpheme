@@ -131,10 +131,10 @@ START_OVER_POINT_OCTOBER_30
   - On desktops and laptops (`@media (min-width: 901px)` and `body:not(.is-mobile)`), random words continue running horizontally in a single bar side-by-side (`flex-direction: row !important; flex: 1 1 0 !important;`).
   - **Reordered Placement Above Search Input (`templates/index.html`)**: Moved the Random Words table, "More random words" button, and dictionary filter dropdown above the "ENTER WORD..." textbox and Search button for quicker suggestion discovery and immediate tap-to-search interaction.
 
-### 17. Tools: Random Word Generator "Contains" Letter Filter & Mobile Compact Layout
-- **"Contains" Letter Filter Dropdown (`templates/index.html`, `static/js/tools.js`, `app.py`)**:
+### 17. Tools: Random Word Generator "Contains All" Letter Filter & Mobile Compact Layout
+- **"Contains All" Letter Filter Dropdown (`templates/index.html`, `static/js/tools.js`, `app.py`)**:
   - Added a `<select id="random-contains">` dropdown menu to the Random Word tool positioned between the length filter and dictionary filter.
-  - Defaults to `Contains` (value `"all"`, no letter restriction) and lists letters `A` through `Z`.
+  - Defaults to `Contains All` (value `"all"`, no letter restriction) and lists letters `A` through `Z`.
   - Frontend `generateRandomWord()` in `static/js/tools.js` retrieves `contains` and passes `&contains=${encodeURIComponent(contains)}` to `/api/tools/random_word`.
   - Backend `tools_random_word()` in `app.py` accepts the `contains` query parameter, validates single alphabet characters, and filters words so that the selected letter is present on every generated word.
 - **Mobile Compact Spacing Symmetry with Lists Tool (`static/css/play.css`)**:

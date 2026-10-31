@@ -10597,7 +10597,7 @@ def tools_random_word():
 
     # Filter by required letter
     contains_char = None
-    if contains_filter and contains_filter.lower() not in ('all', 'contains', ''):
+    if contains_filter and contains_filter.lower() not in ('all', 'contains', 'contains all', ''):
         c = contains_filter.strip().upper()
         if len(c) == 1 and c.isalpha():
             contains_char = c
