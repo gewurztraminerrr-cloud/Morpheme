@@ -78,13 +78,18 @@
 
             const r = el.getBoundingClientRect();
             track.style.display = 'block';
-            track.style.top = Math.max(0, r.top + 6) + 'px';
-            track.style.height = Math.max(40, r.height - 12) + 'px';
+            track.style.top = Math.max(0, r.top + 4) + 'px';
+            track.style.height = Math.max(40, r.height - 8) + 'px';
+            if (isOverlayTarget) {
+                track.style.right = Math.max(2, Math.round(window.innerWidth - r.right + 2)) + 'px';
+            } else {
+                track.style.right = '2px';
+            }
 
             if (dragging) return;
             const trackH = track.clientHeight;
             const ratio = el.clientHeight / el.scrollHeight;
-            const thumbH = Math.max(40, Math.min(trackH, trackH * ratio));
+            const thumbH = Math.max(30, Math.min(trackH, trackH * ratio));
             thumb.style.height = thumbH + 'px';
             const maxScroll = el.scrollHeight - el.clientHeight;
             const maxTop = Math.max(0, trackH - thumbH);
@@ -172,9 +177,9 @@
     function init() {
         attachScroller('page-leaderboards');
         attachScroller('page-tournaments');
-        // Round Replay overlay layout on mobile
+        // Round Replay words walkthrough list on mobile
         attachScroller({
-            getTarget: () => document.querySelector('#history-review-overlay .history-review-layout'),
+            getTarget: () => document.querySelector('#history-review-overlay #review-walkthrough-list'),
             isOverlay: true
         });
     }

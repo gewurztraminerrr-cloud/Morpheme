@@ -247,7 +247,21 @@ START_OVER_POINT_OCTOBER_30
     - Preserves `"Board:"`, `"Time:"`, and the pipe separator `" | "` as regular/unbold (weight 500).
   - Added `.selected-game-params strong { font-size: inherit !important; font-weight: 700 !important; }` in `static/css/lobby.css` to guarantee clean baseline alignment and exact font sizing.
   - Bumped cache busters in `templates/index.html` for `play.css`, `lobby.css`, and `app.js` to `v=1793421000`.
-  - Verified across desktop and mobile views with headless Chrome captures.
+### 27. Round Replay: Mobile 4x4 Tile Sizing, Word Scroller & Desktop/Laptop Bottom Word Visibility Fix
+- **Mobile 4x4 Board Demonstration Resizing (`static/js/tools.js`)**:
+  - Calibrated 4x4 mobile cell size calculation (`tools.js`) to use 6-column metrics (`effectiveCols = 6`), rendering tiles at the exact same size as the 4x6 demonstration.
+  - Aligns 4x4 vertical board height with 4x6, 5x7, 6x8, and 3D Cube demonstrations (~200px–225px), preventing oversized boards from pushing words offscreen.
+- **Mobile Walkthrough List Height & Dedicated Words Scroller (`static/css/play.css`, `static/js/mobile_scroller.js`)**:
+  - Set `#review-walkthrough-list` height on mobile to `180px` (`height: 180px !important; max-height: 180px !important; min-height: 180px !important; overflow-y: auto !important;`), ensuring exactly 4 found words are visible at a time consistently across all board dimensions (4x4, 4x6, 5x7, 6x8, 3D).
+  - Removed whole-page scroller track and thumb on `.history-review-layout` (`padding-right: 0 !important;`).
+  - Attached custom vertical scroller track and draggable gradient thumb directly to `#review-walkthrough-list` (`mobile_scroller.js`), positioned over the right edge of the words list (`padding-right: 22px !important;`).
+- **Desktop & Laptop Bottom Word Visibility & Draggable Scrollbar Thumb Fix (`static/css/style.css`)**:
+  - Resolved parent container clipping where `.walkthrough-list`'s hardcoded `max-height: 500px` exceeded the available modal height, causing the bottom words (last 2 words) and the bottom of the scrollbar thumb to extend outside `.history-review-main`'s `overflow: hidden` boundary.
+  - Updated `.history-review-modal` to `height: 85vh; max-height: 90vh;`.
+  - Configured flex layout across `.history-review-layout`, `.history-review-main` (`align-items: stretch; min-height: 0;`), `.history-walkthrough-section` (`min-height: 0; flex: 1;`), and `.walkthrough-list` (`flex: 1 1 0; min-height: 0; max-height: none; overflow-y: auto; padding-bottom: 24px;`).
+  - Ensured all words—including the very last words found—are fully visible upon scrolling to the bottom, with the scrollbar thumb remaining completely visible and draggable.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `style.css`, `play.css`, `mobile_scroller.js`, and `tools.js` cache busters to `v=1793422000`.
 
 ---
 

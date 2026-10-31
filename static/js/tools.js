@@ -3861,7 +3861,9 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
             }
 
             // Calculate max cell size to fit width and height constraints
-            const maxCellW = (availWidth - (cols - 1) * gap - 20) / cols;
+            // On mobile devices, make 4x4 board demonstration tiles the same size as 4x6 demonstration
+            const effectiveCols = (window.innerWidth <= 900 && rows === 4 && cols === 4) ? 6 : cols;
+            const maxCellW = (availWidth - (effectiveCols - 1) * gap - 20) / effectiveCols;
             const maxCellH = (availHeight - (rows - 1) * gap - 20) / rows;
 
             // Optimal cell size (capped for aesthetics on 4x4)

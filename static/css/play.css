@@ -9797,7 +9797,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         -webkit-overflow-scrolling: touch !important;
         display: block !important;
         height: calc(100vh - 70px) !important;
-        padding-right: 18px !important; /* reserve space so content does not overlap mobile scroller thumb */
+        padding-right: 0 !important; /* whole-page scroller removed; scroller placed on words only */
         scrollbar-width: none !important; /* suppress thin default browser scrollbar */
     }
     .history-review-layout::-webkit-scrollbar {
@@ -9808,16 +9808,20 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .history-review-main {
         display: flex !important;
         flex-direction: column-reverse !important; /* Stack vertically with board at top and walkthrough at bottom */
-        padding: 15px !important;
-        gap: 20px !important;
+        padding: 12px 14px 16px 14px !important;
+        gap: 12px !important;
         overflow-y: visible !important;
     }
 
     .review-board-main {
         width: 100% !important;
-        padding: 8px !important;
-        border-radius: 16px !important;
-        margin-bottom: 10px !important;
+        padding: 6px !important;
+        border-radius: 14px !important;
+        margin-bottom: 4px !important;
+        display: grid !important;
+        justify-content: center !important;
+        align-content: center !important;
+        box-sizing: border-box !important;
     }
 
     .history-walkthrough-section {
@@ -9827,14 +9831,27 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
 
     .walkthrough-list {
-        max-height: none !important; /* Expand full list in vertical scroll */
-        min-height: auto !important;
-        overflow-y: visible !important;
+        height: 180px !important;
+        max-height: 180px !important;
+        min-height: 180px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-left: 10px !important;
+        padding-right: 22px !important;
+        position: relative !important;
+        scrollbar-width: none !important;
+        box-sizing: border-box !important;
+    }
+    .walkthrough-list::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
     }
 
     .walkthrough-item {
-        padding: 12px 0 !important;
+        padding: 10px 0 !important;
         gap: 12px !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
     }
 
     .walkthrough-time {
