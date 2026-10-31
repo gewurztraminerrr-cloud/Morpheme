@@ -5927,7 +5927,18 @@ function updateParameters(state) {
                 window._displayedParams.time = '2m';
             } else {
                 window._displayedParams.dims = factBoardDims;
-                window._displayedParams.time = (factTimeLimit === 120) ? '2m' : (factTimeLimit + 's');
+                const tl = parseInt(factTimeLimit, 10);
+                if (tl === 86400 || tl >= 7200) {
+                    window._displayedParams.time = '24h';
+                } else if (tl === 600) {
+                    window._displayedParams.time = '10m';
+                } else if (tl === 180) {
+                    window._displayedParams.time = '3m';
+                } else if (tl === 120) {
+                    window._displayedParams.time = '2m';
+                } else {
+                    window._displayedParams.time = (tl || factTimeLimit) + 's';
+                }
             }
             window._displayedParams.min = factMinLen + 'L';
             window._displayedParams.dict = factDict;
@@ -5984,7 +5995,13 @@ function updateParameters(state) {
                 headerMetaBoard.style.display = isSubanagrams ? 'none' : '';
             }
             if (document.getElementById('param-board')) document.getElementById('param-board').textContent = window._displayedParams.dims;
-            if (document.getElementById('param-time')) document.getElementById('param-time').textContent = isSubanagrams ? `Practice | ${window._displayedParams.time}` : window._displayedParams.time;
+            if (document.getElementById('param-time')) {
+                if (isSubanagrams) {
+                    document.getElementById('param-time').innerHTML = `<span>Practice</span> <span class="header-meta-sep">|</span> <span>${window._displayedParams.time}</span>`;
+                } else {
+                    document.getElementById('param-time').textContent = window._displayedParams.time;
+                }
+            }
             
             // Populate the new label above Spinner Set
             if (document.getElementById('label-game-type')) document.getElementById('label-game-type').textContent = document.getElementById('game-title').textContent;

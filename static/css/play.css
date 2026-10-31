@@ -25,6 +25,27 @@
     font-weight: 800;
 }
 
+.header-meta {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.header-meta #param-board,
+.header-meta #param-time,
+.spinner-set-label #label-board,
+.spinner-set-label #label-time {
+    font-weight: 700 !important;
+}
+
+.header-meta .header-meta-sep,
+.spinner-set-label .header-meta-sep {
+    font-weight: 300 !important;
+    opacity: 0.55;
+    margin: 0 1px;
+    display: inline-block;
+}
+
 .game-params {
     font-size: 1rem;
     opacity: 0.9;
