@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793515000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793515000">
-    <link rel="stylesheet" href="/css/play.css?v=1793510000">
+    <link rel="stylesheet" href="/css/play.css?v=1793520000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -6467,30 +6467,25 @@
 
                         <!-- 1. Subpage: Tile Selectable Space -->
                         <div id="setting-subpage-corner-cutoff" class="setting-subpage" style="display: none;">
-                            <div class="setting-subpage-header">
-                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Tile Selectable Space (Octagon vs Diamond)</h3>
-                                <p class="setting-subpage-desc">Adjust the diagonal selectable space of a tile for easier mousing and swiping.</p>
+                            <div class="setting-subpage-header" style="align-items: center; text-align: center;">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')" style="align-self: flex-start;">← Back</button>
+                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Tile Selectable Space (Octagon vs Diamond)</h3>
+                                <p class="setting-subpage-desc" style="text-align: center; margin: 0 auto 16px auto; max-width: 480px; line-height: 1.5; max-height: none !important; height: auto !important; overflow-y: visible !important;">Adjust the diagonal selectable space of a tile for easier mousing and swiping. This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!</p>
                             </div>
-                            <div class="setting-subpage-content" style="display: flex; gap: 20px; align-items: flex-start; flex-direction: row; flex-wrap: nowrap;">
-                                <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 12px;">
-                                    <div class="setting-card">
-                                        <div class="slider-label-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                            <span>Square (0%)</span>
-                                            <span id="setting-corner-cutoff-val" class="preview-value" style="color: var(--primary); font-weight: 700;">39%</span>
-                                            <span>Diamond (50%)</span>
-                                        </div>
-                                        <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39" style="width: 100%;">
+                            <div class="setting-subpage-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 16px; margin: 0 auto;">
+                                <div class="setting-card" style="width: 100%; max-width: 440px; box-sizing: border-box; margin: 0 auto;">
+                                    <div class="slider-label-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 0.88rem; font-weight: 600;">Square (0%)</span>
+                                        <span id="setting-corner-cutoff-val" class="preview-value" style="color: var(--primary); font-weight: 700; font-size: 0.95rem;">39%</span>
+                                        <span style="font-size: 0.88rem; font-weight: 600;">Diamond (50%)</span>
                                     </div>
-                                    <div style="font-size: 0.82rem; color: var(--muted-text); line-height: 1.45; padding: 12px 16px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 12px;">
-                                        💡 <b>Selectable Hitbox Adjuster:</b> This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!
-                                    </div>
+                                    <input type="range" id="setting-corner-cutoff" min="0" max="50" value="39" style="width: 100%;">
                                 </div>
-                                <div class="preview-hitbox-container" style="flex: 0 0 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
-                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Hitbox Preview</div>
-                                    <div class="preview-hitbox-tile" style="position: relative; width: 100px; height: 100px; background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.25); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900;">
+                                <div class="preview-hitbox-container settings-preview-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 440px; box-sizing: border-box; padding: 20px 24px; border-radius: 14px; background: rgba(0,0,0,0.2); border: 1px solid rgba(var(--text-primary-rgb), 0.1); margin: 0 auto;">
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--muted-text); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.6px; text-align: center;">Hitbox Preview</div>
+                                    <div class="preview-hitbox-tile" style="position: relative; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; font-weight: 900; margin: 0 auto;">
                                         <span style="z-index: 10; pointer-events: none; opacity: 0.4;">M</span>
-                                        <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(39% 0%, 61% 0%, 100% 39%, 100% 61%, 61% 100%, 39% 100%, 0% 61%, 0% 39%);"></div>
+                                        <div id="preview-hitbox-shape" style="position: absolute; inset: 0; background: rgba(64, 156, 255, 0.4); border: 3px solid #409cff; z-index: 5; transition: clip-path 0.1s ease; clip-path: polygon(39% 0%, 61% 0%, 100% 39%, 100% 61%, 61% 100%, 39% 100%, 0% 61%, 0% 39%); border-radius: 3px;"></div>
                                     </div>
                                 </div>
                             </div>
