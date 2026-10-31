@@ -14837,6 +14837,90 @@ body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb {
         white-space: nowrap !important;
     }
 
+    /* Mod Moderator Access compact padding and spacing on mobile */
+    #mod-tab-access {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #mod-tab-access .tool-header {
+        margin-bottom: 4px !important;
+    }
+
+    #mod-tab-access .tool-header p {
+        padding: 4px 8px !important;
+        margin: 0 0 4px 0 !important;
+        font-size: 0.74rem !important;
+        line-height: 1.25 !important;
+        max-height: 42px !important;
+    }
+
+    #mod-tab-access #mod-status-area:empty {
+        display: none !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #mod-tab-access #mod-status-area:not(:empty) {
+        min-height: 18px !important;
+        margin-bottom: 4px !important;
+        font-size: 0.8rem !important;
+    }
+
+    #mod-tab-access .mod-add-section {
+        padding: 8px 10px !important;
+        margin-top: 2px !important;
+        margin-bottom: 8px !important;
+        gap: 6px !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    #mod-tab-access #new-mod-username {
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+        padding: 0 10px !important;
+        font-size: 16px !important; /* Preserves iOS auto-zoom prevention */
+        border-radius: 6px !important;
+        box-sizing: border-box !important;
+    }
+
+    #mod-tab-access #new-mod-username::placeholder {
+        font-size: 0.78rem !important;
+    }
+
+    #mod-tab-access #add-mod-btn,
+    #mod-tab-access .add-mod-btn {
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+        padding: 0 12px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        border-radius: 6px !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    #mod-tab-access .mod-list-title {
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+        font-size: 0.88rem !important;
+    }
+
+    #mod-tab-access .mod-list {
+        gap: 8px !important;
+    }
+
+    #mod-tab-access .mod-item {
+        padding: 10px 14px !important;
+        border-radius: 8px !important;
+    }
+
     /* Mobile settings & appearance panels width constraint */
     #page-settings,
     #page-settings * {
@@ -15309,6 +15393,90 @@ body.is-mobile #mod-tab-notice #clear-notice-btn {
     align-items: center !important;
     justify-content: center !important;
     white-space: nowrap !important;
+}
+
+/* Mod Moderator Access compact padding and spacing on mobile */
+body.is-mobile #mod-tab-access {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #mod-tab-access .tool-header {
+    margin-bottom: 4px !important;
+}
+
+body.is-mobile #mod-tab-access .tool-header p {
+    padding: 4px 8px !important;
+    margin: 0 0 4px 0 !important;
+    font-size: 0.74rem !important;
+    line-height: 1.25 !important;
+    max-height: 42px !important;
+}
+
+body.is-mobile #mod-tab-access #mod-status-area:empty {
+    display: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.is-mobile #mod-tab-access #mod-status-area:not(:empty) {
+    min-height: 18px !important;
+    margin-bottom: 4px !important;
+    font-size: 0.8rem !important;
+}
+
+body.is-mobile #mod-tab-access .mod-add-section {
+    padding: 8px 10px !important;
+    margin-top: 2px !important;
+    margin-bottom: 8px !important;
+    gap: 6px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #mod-tab-access #new-mod-username {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 16px !important; /* Preserves iOS auto-zoom prevention */
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #mod-tab-access #new-mod-username::placeholder {
+    font-size: 0.78rem !important;
+}
+
+body.is-mobile #mod-tab-access #add-mod-btn,
+body.is-mobile #mod-tab-access .add-mod-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 0 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.is-mobile #mod-tab-access .mod-list-title {
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
+    font-size: 0.88rem !important;
+}
+
+body.is-mobile #mod-tab-access .mod-list {
+    gap: 8px !important;
+}
+
+body.is-mobile #mod-tab-access .mod-item {
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
 }
 
 body.is-mobile #page-tools,

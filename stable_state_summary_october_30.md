@@ -188,6 +188,19 @@ START_OVER_POINT_OCTOBER_30
   - Sized action cards to `padding: 8px 10px; margin-bottom: 8px; border-radius: 8px;`.
   - Significantly compresses vertical spacing on mobile screens, bringing the Permanent Ban & Erase section into full view without extensive scrolling.
 
+### 22. Mods: Moderator Access Reduced Padding Above and Below Add Moderator Panel on Mobile
+- **Eliminated Dead Void Above Panel (`static/css/play.css`)**:
+  - Overrode `#mod-tab-access .tool-header p` with compact padding (`4px 8px`), tight margin (`0 0 4px 0`), and responsive typography (`0.74rem`).
+  - Added `#mod-tab-access #mod-status-area:empty { display: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }`, eliminating 35px of vacant blank space above the panel when no status message is active.
+- **Compacted Add Moderator Panel & Eliminated 55px Void Below Panel (`static/css/play.css`)**:
+  - Overrode `.mod-add-section` desktop margin (`margin-bottom: 40px !important;` reduced to `margin-bottom: 8px !important;`).
+  - Compacted panel container padding from `20px` / `12px` down to `8px 10px !important;` with a tight `gap: 6px !important;` and `border-radius: 8px !important;`.
+  - Unified `#new-mod-username` input height to `36px !important` with `16px` font size (preventing iOS Safari auto-zoom) and `0.78rem` placeholder.
+  - Sized `#add-mod-btn` to `36px !important` with `0.82rem` font size and `6px` radius.
+  - Compacted `#mod-tab-access .mod-list-title` margins to `margin-top: 6px !important; margin-bottom: 6px !important; font-size: 0.88rem !important;`.
+  - Reduced moderator list grid gap (`8px !important;`) and list item padding (`10px 14px !important;`).
+- Applied consistently under both `@media (max-width: 900px)` and `body.is-mobile`. Desktop and laptop views (`> 900px`) remain completely untouched.
+
 ---
 
 ## Verification & Validation
