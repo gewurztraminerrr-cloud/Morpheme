@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793421000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793462000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793421000">
-    <link rel="stylesheet" href="/css/play.css?v=1793485000">
+    <link rel="stylesheet" href="/css/play.css?v=1793495000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -5985,28 +5985,7 @@
                                 <p class="setting-subpage-desc" style="text-align: center; margin: 0 auto 14px auto; max-width: 540px;">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
                             </div>
                             <div class="setting-subpage-content" style="align-items: center; width: 100%;">
-                                <div class="preview-board-container" style="margin: 0 auto 12px auto;">
-                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Live Preview</div>
-                                    <div class="preview-board" id="preview-board">
-                                        <div class="board-cell">A</div>
-                                        <div class="board-cell">B</div>
-                                        <div class="board-cell">C</div>
-                                        <div class="board-cell">D</div>
-                                        <div class="board-cell">E</div>
-                                        <div class="board-cell">F</div>
-                                        <div class="board-cell">G</div>
-                                        <div class="board-cell">H</div>
-                                        <div class="board-cell">I</div>
-                                        <div class="board-cell">J</div>
-                                        <div class="board-cell">K</div>
-                                        <div class="board-cell">L</div>
-                                        <div class="board-cell">M</div>
-                                        <div class="board-cell">N</div>
-                                        <div class="board-cell">O</div>
-                                        <div class="board-cell">P</div>
-                                    </div>
-                                </div>
-                                <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; margin: 0 auto;">
+                                <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; margin: 0 auto 16px auto;">
                                     <div class="dimension-sliders-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
                                         <div class="dim-slider-box" style="background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; box-sizing: border-box;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
@@ -6041,6 +6020,27 @@
                                         <button id="btn-reset-board-sizes" type="button" class="mini-action-btn secondary">Set to Default Sizes</button>
                                     </div>
                                 </div>
+                                <div class="preview-board-container" style="margin: 0 auto 12px auto;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Live Preview</div>
+                                    <div class="preview-board" id="preview-board">
+                                        <div class="board-cell">A</div>
+                                        <div class="board-cell">B</div>
+                                        <div class="board-cell">C</div>
+                                        <div class="board-cell">D</div>
+                                        <div class="board-cell">E</div>
+                                        <div class="board-cell">F</div>
+                                        <div class="board-cell">G</div>
+                                        <div class="board-cell">H</div>
+                                        <div class="board-cell">I</div>
+                                        <div class="board-cell">J</div>
+                                        <div class="board-cell">K</div>
+                                        <div class="board-cell">L</div>
+                                        <div class="board-cell">M</div>
+                                        <div class="board-cell">N</div>
+                                        <div class="board-cell">O</div>
+                                        <div class="board-cell">P</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -6060,8 +6060,8 @@
                                     </div>
                                     <input type="range" id="setting-cube-size" min="150" max="300" value="220" style="width: 100%;">
                                 </div>
-                                <div class="settings-preview-box" style="height: 220px; min-height: 220px; max-height: 220px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
-                                    <div class="cube-container" style="margin: 0; transform: scale(0.65); transform-origin: center center;">
+                                <div class="settings-preview-box" style="height: 380px; min-height: 380px; max-height: 420px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: 14px; border: 1px solid rgba(var(--text-primary-rgb), 0.1);">
+                                    <div class="cube-container" style="margin: 0; transform: scale(0.85); transform-origin: center center;">
                                         <div class="cube" style="animation: cube-preview-spin 10s linear infinite;">
                                             <div class="cube-face face-front"><div class="cube-cell">A</div><div class="cube-cell">B</div><div class="cube-cell">C</div><div class="cube-cell">D</div><div class="cube-cell">E</div><div class="cube-cell">F</div><div class="cube-cell">G</div><div class="cube-cell">H</div><div class="cube-cell">I</div></div>
                                             <div class="cube-face face-back"><div class="cube-cell">J</div><div class="cube-cell">K</div><div class="cube-cell">L</div><div class="cube-cell">M</div><div class="cube-cell">N</div><div class="cube-cell">O</div><div class="cube-cell">P</div><div class="cube-cell">Q</div><div class="cube-cell">R</div></div>
@@ -9934,7 +9934,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1793485000"></script>
+    <script src="/js/settings.js?v=1793495000"></script>
     <script src="/js/forum.js?v=1793427000"></script>
     <script src="/js/app.js?v=1793421000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>

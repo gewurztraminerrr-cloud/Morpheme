@@ -1102,6 +1102,9 @@ function debounce(func, wait) {
             }
         });
 
+        const bottomNav = document.querySelector('#page-settings .settings-bottom-nav');
+        if (bottomNav) bottomNav.classList.remove('show-setting-back');
+
         // Trigger scroll to content area on mobile with smooth sliding animation
         const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
@@ -1143,6 +1146,9 @@ function debounce(func, wait) {
             }
         }
 
+        const bottomNav = document.querySelector('#page-settings .settings-bottom-nav');
+        if (bottomNav) bottomNav.classList.add('show-setting-back');
+
         // Scroll content area to top
         const toolsContent = document.querySelector('#page-settings .tools-content');
         if (toolsContent) toolsContent.scrollTop = 0;
@@ -1163,6 +1169,9 @@ function debounce(func, wait) {
         const tabHeader = pane.querySelector('.tool-header');
         if (subnav) subnav.style.display = '';
         if (tabHeader) tabHeader.style.display = '';
+
+        const bottomNav = document.querySelector('#page-settings .settings-bottom-nav');
+        if (bottomNav) bottomNav.classList.remove('show-setting-back');
 
         // Reset scroll position
         const toolsContent = document.querySelector('#page-settings .tools-content');
@@ -1198,6 +1207,8 @@ function debounce(func, wait) {
                     });
                 });
             }
+            const bottomNav = document.querySelector('#page-settings .settings-bottom-nav');
+            if (bottomNav) bottomNav.classList.remove('show-setting-back');
         };
 
         if (immediate) {

@@ -3451,7 +3451,9 @@ body.theme-white #page-settings .mobile-bottom-nav {
     .mobile-bottom-nav {
         display: none !important;
     }
-    .tools-bottom-nav.show-def-back {
+    .tools-bottom-nav.show-def-back,
+    .settings-bottom-nav.show-setting-back,
+    #page-settings:has(.setting-subpage.active) .settings-bottom-nav {
         display: flex !important;
         flex: 0 0 auto !important;
         width: 100% !important;
@@ -3467,13 +3469,19 @@ body.theme-white #page-settings .mobile-bottom-nav {
         align-items: center !important;
     }
     [class*="theme-white"] .tools-bottom-nav.show-def-back,
-    body.theme-white .tools-bottom-nav.show-def-back {
+    body.theme-white .tools-bottom-nav.show-def-back,
+    [class*="theme-white"] .settings-bottom-nav.show-setting-back,
+    body.theme-white .settings-bottom-nav.show-setting-back,
+    [class*="theme-white"] #page-settings:has(.setting-subpage.active) .settings-bottom-nav,
+    body.theme-white #page-settings:has(.setting-subpage.active) .settings-bottom-nav {
         background: #ffffff !important;
         border-top: 1.5px solid #cbd5e1 !important;
         border-left: 1px solid #cbd5e1 !important;
         box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
     }
-    [class*="theme-light-"] .tools-bottom-nav.show-def-back {
+    [class*="theme-light-"] .tools-bottom-nav.show-def-back,
+    [class*="theme-light-"] .settings-bottom-nav.show-setting-back,
+    [class*="theme-light-"] #page-settings:has(.setting-subpage.active) .settings-bottom-nav {
         background: var(--bg-primary) !important;
         background-image: linear-gradient(var(--bg-panel, rgba(0,0,0,0.08)), var(--bg-panel, rgba(0,0,0,0.08))) !important;
         border-top: 1.5px solid var(--card-border, rgba(0, 0, 0, 0.16)) !important;
@@ -20487,36 +20495,14 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     margin-bottom: 16px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center !important;
+    text-align: center !important;
     width: 100%;
     box-sizing: border-box;
 }
 
 .setting-subpage-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(var(--text-primary-rgb), 0.08);
-    border: 1.5px solid rgba(var(--text-primary-rgb), 0.2);
-    color: var(--text-primary);
-    padding: 7px 16px;
-    border-radius: 9px;
-    font-size: 0.84rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 14px;
-    outline: none;
-}
-
-.setting-subpage-back-btn:hover {
-    background: rgba(var(--text-primary-rgb), 0.16);
-    border-color: rgba(var(--text-primary-rgb), 0.38);
-    transform: translateX(-2px);
-}
-
-.setting-subpage-back-btn:active {
-    transform: translateX(0);
+    display: none !important;
 }
 
 .setting-subpage-title {
@@ -20526,15 +20512,20 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     margin: 0 0 8px 0;
     padding: 0;
     line-height: 1.25;
+    text-align: center !important;
+    width: 100% !important;
 }
 
 /* Description confined to .tool-header p space */
 .setting-subpage-desc {
     font-size: 0.82rem !important;
     color: var(--muted-text) !important;
-    margin: 0 0 16px 0 !important;
+    margin: 0 auto 16px auto !important;
     line-height: 1.35 !important;
     opacity: 0.95 !important;
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 600px !important;
     max-height: 52px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -20880,12 +20871,17 @@ body.theme-white .color-dot.active {
     transform: translateY(-1px) !important;
 }
 
-/* Cube Scale Compact 3D Preview */
+/* Cube Scale Expanded 3D Preview */
 #setting-subpage-cube-scale .settings-preview-box {
-    max-height: 200px !important;
-    height: 200px !important;
+    min-height: 380px !important;
+    height: 380px !important;
+    max-height: 440px !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.1) !important;
     overflow: hidden !important;
+}
+
+#setting-subpage-cube-scale .cube-container {
+    transform: scale(0.85) !important;
 }
 
 /* Word Flash Legend */

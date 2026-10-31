@@ -460,6 +460,25 @@ d61c2423a86873a8d6c41183df9657632586fe86
   - Bumped `play.css` cache buster to `v=1793485000`.
   - Bumped `settings.js` cache buster to `v=1793485000`.
 
+### 42. Settings Subtab Redesign: Meters Above Board, Centered Titles/Descriptions, Expanded Cube Preview, and Full-Width Bottom Back Navigation on All Devices (`templates/index.html`, `static/css/play.css`, `static/js/settings.js`)
+- **Meters Positioned Above Example Board in Board Size**:
+  - Reordered `#setting-subpage-board-size` so the dimension meters (2x2 slider grid for 4x4, 4x6, 5x7, 6x8) and the "Set to Default Sizes" button sit directly above the live example board.
+  - Users can now adjust tile size meters with the functioning example board visible immediately below, updating responsively in real time.
+- **Centered Titles & Descriptions Across All Subtabs**:
+  - Enforced global centering for all subtab headers (`.setting-subpage-header` `align-items: center !important`, `text-align: center !important`).
+  - Centered all subpage titles (`.setting-subpage-title` `text-align: center !important`, `width: 100% !important`) and descriptions (`.setting-subpage-desc` `text-align: center !important`, `margin: 0 auto 16px auto !important`).
+- **Expanded Vertical Space in Cube Scale (3D)**:
+  - Expanded the 3D rotating preview box in `#setting-subpage-cube-scale` from a constrained 200px to `380px` (`min-height: 380px !important; height: 380px !important; max-height: 440px !important`).
+  - Increased cube container scale from 0.65 to 0.85, providing generous vertical breathing room for the spinning 3D isometric cube.
+- **Removed Top "← Back" Buttons & Added Full-Width Bottom Back Button on Desktop/Laptops**:
+  - Completely eliminated `.setting-subpage-back-btn` across all devices (`display: none !important;`).
+  - On laptops and desktops, mimicked the mobile bottom navigation panel by displaying `.settings-bottom-nav` docked at the bottom of the content column whenever a subpage is active (`.show-setting-back` / `#page-settings:has(.setting-subpage.active)`).
+  - Stretched the `.bottom-back-btn` across the entire content-panel window (`width: 100% !important`), styled with backdrop blur, subtle borders, and full dark/white/light theme adaptability.
+  - Clicking the bottom back button smoothly returns the user from any subpage to the sub-navigation menu.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793495000`.
+  - Bumped `settings.js` cache buster to `v=1793495000`.
+
 ---
 
 ## Verification & Validation
@@ -472,6 +491,7 @@ d61c2423a86873a8d6c41183df9657632586fe86
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to latest commit |
+
 
 
 
