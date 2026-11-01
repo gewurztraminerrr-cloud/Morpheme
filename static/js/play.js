@@ -11066,7 +11066,12 @@ async function fetchDefinition(word) {
                 );
             }
             const roundFindersCount = roundFinders.length;
-            const isSub = (s && s.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+            const isSub = !!(
+                (s && (s.game_type === 'subanagrams' || (s.room_id && s.room_id.includes('subanagrams')))) ||
+                (window.currentRoomId && window.currentRoomId.includes('subanagrams')) ||
+                (window.location.hash && window.location.hash.includes('subanagrams')) ||
+                document.body.classList.contains('is-subanagrams')
+            );
 
             // Immediate label while tally fetches
             fcBtn.textContent = `FC [${roundFindersCount}]`;
@@ -13461,7 +13466,12 @@ window.showFinderModal = function (word) {
         title.textContent = `Who found "${wordUpper}"?`;
 
         const s = window.lastGameState || {};
-        const isSubanagrams = (s.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+        const isSubanagrams = !!(
+            (s && (s.game_type === 'subanagrams' || (s.room_id && s.room_id.includes('subanagrams')))) ||
+            (window.currentRoomId && window.currentRoomId.includes('subanagrams')) ||
+            (window.location.hash && window.location.hash.includes('subanagrams')) ||
+            document.body.classList.contains('is-subanagrams')
+        );
         const playersList = Array.isArray(s.players) ? s.players : [];
 
         // Sort all players to establish round placement

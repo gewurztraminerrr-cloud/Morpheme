@@ -747,7 +747,7 @@ START_OVER_POINT_OCTOBER_31
   - Title tooltip set to: `Find Count (FC: Room / Outside)`.
   - Leverages `window._wordTallyCache` for instant 0ms rendering with network fetch fallback.
 - **Cache Busters (`templates/index.html`)**:
-  - Bumped `play.js` cache buster to `v=1793720000`.
+  - Bumped `play.js` cache buster to `v=1793730000`.
 
 ---
 
