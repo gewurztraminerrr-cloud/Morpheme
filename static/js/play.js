@@ -10971,7 +10971,9 @@ window.clearDefinitionPanel = clearDefinitionPanel;
 async function fetchDefinition(word) {
     if (!word) return;
     const s = window.lastGameState;
-    const is24H = !!(s && ((s.time_limit >= 7200) || (s.room_id && (s.room_id.includes('24h') || s.room_id.includes('86400'))) || (s.game_type === '24h')));
+    const is24H = !!((s && ((s.time_limit >= 7200) || (s.room_id && (s.room_id.includes('24h') || s.room_id.includes('86400'))) || (s.game_type === '24h'))) ||
+        (window.currentRoomId && (window.currentRoomId.includes('24h') || window.currentRoomId.includes('86400'))) ||
+        (window.location.hash && (window.location.hash.includes('24h') || window.location.hash.includes('86400'))));
     if (window.isSpectatorMode && !is24H) return; // Block spectators from overwriting definition panel in non-24h active play
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
 
