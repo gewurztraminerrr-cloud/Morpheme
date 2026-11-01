@@ -697,6 +697,42 @@ START_OVER_POINT_OCTOBER_31
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `forum.js` cache buster to `v=1793650000`.
 
+### 56. Subanagrams Multiplayer Board Letter Horizontal Padding & Input/Shuffle Clearance (`static/css/play.css`, `templates/index.html`)
+- **Board Letter Breathing Room**:
+  - In `static/css/play.css`, added `padding-left: 20px !important; padding-right: 20px !important; box-sizing: border-box !important;` to `.is-subanagrams-board` on desktop/laptop, and `16px` on mobile screens.
+  - Prevents outer letter tiles from pressing against the board mat borders across all responsive breakpoints.
+- **Input and Shuffle Button Clearance**:
+  - Balanced desktop and laptop spacing for the input controls below the board: added left padding to the Enter word textbox and right padding to the Shuffle button.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793680000`.
+
+### 57. Tools: Find Count Clickable Definition & Blue Link Styling (`static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Clickable Searched Word**:
+  - In `static/js/tools.js`, wrapped the searched word in `"The word \"[word]\" has been found X times..."` in a clickable span with `title` and `onclick` routing to `window.lookupWord`, `window.showWordDefinitionPopup`, or `window.fetchDefinition`.
+  - Clicking/tapping the word immediately opens the definition popup with full dictionary badges, pronunciation, and Combo Checker link.
+- **Prominent Blue Link Styling**:
+  - Styled `.find-count-word-link` with sky blue (`#38bdf8`) on dark themes and deep sky blue (`#0284c7`) on white/light themes, with underline and hover states for immediate link discoverability.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `tools.js` and `play.css` cache busters to `v=1793690000`.
+
+### 58. 24h Rooms: Full Word Definition Header & FC Navigation to Tools (`static/js/play.js`, `static/css/play.css`, `templates/index.html`)
+- **Complete Word Definition Card in 24h Rooms**:
+  - In 24h rooms under Words (both "Found" and "Previous Day" tabs), clicking any word now displays the complete definition card matching non-24h rooms:
+    - `#definition-header` displaying the word title (`#definition-word`).
+    - Length badge (`#definition-len-badge`) formatted as `<length>L` (e.g. `5L`).
+    - Pronunciation (`#definition-pronunciation`).
+    - Full definition text (`#definition-content`).
+    - Footer action buttons (`#definition-actions`: `CC`, `FC`, `ADD`).
+  - Spectators in 24h rooms can freely inspect word definitions (`if (window.isSpectatorMode && !is24H) return;`).
+  - Preserved `#definition-header` and `#definition-actions` visibility during live polling updates in `updateGameState`.
+  - Word toggling: clicking an already selected word unselects it and cleanly clears the definitions panel via `window.clearDefinitionPanel()`.
+  - In `static/css/play.css`, enforced `.definition-header:not(.hidden):not([style*="display: none"]) { display: block !important; }`.
+- **FC Button Navigation to Find Count in Tools**:
+  - In 24h rooms, the FC button displays `FC` (without round finder tallies) and routes via `window.navigateToFindCount(cleanWord, 'page-play')`.
+  - Seamlessly switches to Tools -> Find Count, populates the input with the selected word, triggers the search, and displays `← Back` to return directly to the 24h room.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.css` cache buster to `v=1793700000` and `play.js` cache buster to `v=1793710000`.
+
 ---
 
 ## Verification & Validation
@@ -709,6 +745,7 @@ START_OVER_POINT_OCTOBER_31
 | **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
 | **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to latest commit |
+
 
 
 
