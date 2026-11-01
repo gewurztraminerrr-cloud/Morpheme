@@ -8102,8 +8102,8 @@ class RoomManager:
         """
         try:
             # USER REQUEST: Do not include words found in 24h rooms or Subanagrams in the word tally file
-            if room.time_limit >= 7200 or getattr(room, 'game_type', None) == 'subanagrams' or room.is_solo:
-                print(f"[WordTally] Skipping tally for {room.game_type} room: {room.room_id}")
+            if getattr(room, 'time_limit', 0) >= 7200 or getattr(room, 'game_type', None) in ('subanagrams', '24h') or '24h' in str(getattr(room, 'room_id', '')) or '86400' in str(getattr(room, 'room_id', '')) or getattr(room, 'is_solo', False):
+                print(f"[WordTally] Skipping tally for {getattr(room, 'game_type', 'unknown')} room: {getattr(room, 'room_id', '')}")
                 return
 
             import collections

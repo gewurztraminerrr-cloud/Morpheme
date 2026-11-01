@@ -3862,12 +3862,15 @@ def _get_word_finds(word):
     conn.row_factory = sqlite3.Row
     finds = []
     try:
-        # 1. Query round_history
+        # 1. Query round_history (Excluding 24h rooms and Multiplayer Subanagrams)
         cursor = conn.execute("""
             SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE rh.words_json LIKE ?
+              AND (rh.round_duration IS NULL OR rh.round_duration < 7200)
+              AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))
+              AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))
         """, (f'%"{word}"%',))
         
         for row in cursor.fetchall():
@@ -3968,6 +3971,15 @@ def _get_word_finds(word):
         from game_room import room_manager
         if room_manager and hasattr(room_manager, 'rooms'):
             for r_id, room in list(room_manager.rooms.items()):
+                # Exclude 24h rooms and Multiplayer Subanagrams
+                if getattr(room, 'time_limit', 0) >= 7200:
+                    continue
+                if getattr(room, 'game_type', None) in ('subanagrams', '24h'):
+                    continue
+                r_id_str = str(getattr(room, 'room_id', ''))
+                if '24h' in r_id_str or '86400' in r_id_str:
+                    continue
+
                 saved_key = getattr(room, '_last_saved_round_key', None)
                 current_key = f"{room.room_id}_{room.current_round}"
                 if saved_key == current_key:
@@ -5157,13 +5169,17 @@ def get_public_profile(username):
     cursor = conn.execute('SELECT config_key, rating FROM user_ratings WHERE user_id = ?', (user_id,))
     config_ratings = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # Get matching rounds for calculations (Excluding 24h rounds with duration >= 7200)
+    # Get matching rounds for calculations (Excluding 24h rounds with duration >= 7200 and Subanagrams)
     cursor_all = conn.execute(f'''
         SELECT room_id, game_type, round_number, board_json, words_json, total_score, 
                round_start_time, round_duration, timestamp, user_rating, performance_ratio, id,
                wpm, total_words_avail, board_dimensions, board_format
         FROM round_history
-        WHERE user_id = ? AND round_duration < 7200 AND total_score > 0 {time_filter}
+        WHERE user_id = ? 
+          AND (round_duration IS NULL OR round_duration < 7200)
+          AND (game_type IS NULL OR (game_type != 'subanagrams' AND game_type != '24h'))
+          AND (room_id IS NULL OR (room_id NOT LIKE '%24h%' AND room_id NOT LIKE '%86400%'))
+          AND total_score > 0 {time_filter}
         ORDER BY timestamp DESC, id DESC
     ''', (user_id,))
     all_rows = cursor_all.fetchall()
@@ -5284,7 +5300,7 @@ def get_public_profile(username):
     for cfg_key, rating in config_ratings.items():
         try:
             gtype, dims, dur = cfg_key.split('|')
-            if int(dur) >= 7200:
+            if int(dur) >= 7200 or gtype in ('subanagrams', '24h'):
                 continue
             matching = [p for p in processed_all if p['game_type'] == gtype and p['dimensions'] == dims and p['round_duration'] == int(dur)]
             # Multiplayer only for games_played, wins, point_sum
@@ -5379,6 +5395,21 @@ def get_public_profile(username):
 @app.route('/api/profile/<username>/achievements/<game_type>/<board_dimensions>/<int:time_limit>', methods=['GET'])
 def get_room_achievements(username, game_type, board_dimensions, time_limit):
     """Fetch personal achievements and stats for a specific user and room configuration"""
+    # 24h rooms and Multiplayer Subanagrams do not record achievements
+    if time_limit >= 7200 or game_type == 'subanagrams':
+        return jsonify({
+            'username': username,
+            'rating': 1200,
+            'global_stats': {
+                "high_score": 0, "max_words": 0, "longest_word": "", 
+                "best_word": {"word": "", "points": 0},
+                "games_played": 0, "total_score": 0, "total_words": 0, "wins": 0,
+                "win_rate": 0.0
+            },
+            'stats': None,
+            'message': 'Achievements are not recorded for 24h rooms or Multiplayer Subanagrams.'
+        })
+
     import json
     from flask import request
     period = request.args.get('period', 'all').lower()
@@ -12082,6 +12113,21 @@ def get_leaderboard_data():
     dims       = request.args.get('board_dimensions', 'all')
     time_limit = request.args.get('time_limit', 'all')
 
+    # 24h rooms and Multiplayer Subanagrams do not record leaderboard information
+    if game_type == 'subanagrams' or (time_limit != 'all' and str(time_limit).isdigit() and int(time_limit) >= 7200):
+        return jsonify({
+            'best_scores': [],
+            'best_words': [],
+            'best_pes': [],
+            'best_pcts': [],
+            'best_ratings': [],
+            'avg_scores': [],
+            'current_ratings': [],
+            'most_games': [],
+            'best_avg_pcts': [],
+            'best_obscure': []
+        })
+
     # --- TTL Cache check ---
     cache_key = f"{period}|{game_type}|{dims}|{time_limit}"
     now = _t.time()
@@ -12091,11 +12137,13 @@ def get_leaderboard_data():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
-        # Base filters: exclude Guests, 24h rooms (>= 7200s), and Valued Letters format rounds
+        # Base filters: exclude Guests, 24h rooms (>= 7200s), Multiplayer Subanagrams, and Valued Letters format rounds
         params = []
         where_clauses = [
             "u.username NOT LIKE 'Guest_%'",
-            "rh.round_duration < 7200",
+            "(rh.round_duration IS NULL OR rh.round_duration < 7200)",
+            "(rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))",
+            "(rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))",
             "LOWER(COALESCE(rh.board_format, '')) NOT LIKE '%valued%'"
         ]
 
