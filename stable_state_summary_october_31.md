@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-02c07f4a00ad76fa870897949ee980029e826bd2
+4907f4d74cc7c1dbe8a052a21211b924de2d059e
 ```
-*(Short SHA: `02c07f4a`)*
+*(Short SHA: `4907f4d7`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `02c07f4a` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `02c07f4a` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `02c07f4a` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `4907f4d7` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `4907f4d7` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `4907f4d7` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -681,6 +681,21 @@ START_OVER_POINT_OCTOBER_31
   - Added exact-match auto-selection so typing a word (e.g., `ALANYL`) immediately highlights it and renders its MP connections on the right.
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `tools.js` cache buster to `v=1793640000`.
+
+### 55. Forum: Post Number References Prefixed with "p" (`static/js/forum.js`, `app.py`, `templates/index.html`)
+- **Avoid Collisions with Room Placements**:
+  - Standalone `#<NUM>` references (e.g., `#3` in `"I got #3!!"`) are no longer parsed as forum post links or counted as responses.
+  - All post number references in the Forum UI now use the format `p#<NUM>` (e.g., `p#24`, `p#1`, `p#3`).
+- **Frontend Linking & Badges (`static/js/forum.js`)**:
+  - `renderContentWithLinks`: Updated standalone number regex `/(?<![>&\w#@/])[pP]#(\d+)\b(?![^<]*>)/g` to match `p#<NUM>` and `P#<NUM>` while avoiding false matches inside HTML tags or on room placements `#<NUM>`.
+  - Mentions format as `@username p#<NUM>` while gracefully parsing both new `@username p#<NUM>` and legacy `@username #<NUM>` formats.
+  - Replying to posts/comments automatically inserts `@username p#<NUM>\n`.
+  - Badges, hover preview cards, mobile preview dialogs, responders popups, and response counters all display `p#<NUM>`.
+- **Backend Mentions & Lookup (`app.py`)**:
+  - `extract_forum_mentions`: Regex updated to `r'(?<![\w.])[@&]([A-Za-z0-9_]+)(?:\s*(?:[pP]#|#)(\d+))?'` to support `p#` mentions.
+  - `post_lookup`: Pre-populates both `p#<NUM>` and `#{NUM}` keys for full backward and forward compatibility.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `forum.js` cache buster to `v=1793650000`.
 
 ---
 
