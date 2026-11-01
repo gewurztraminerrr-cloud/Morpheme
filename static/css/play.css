@@ -774,6 +774,11 @@ body[class*="theme-light-"] .player-rank.rank-silver {
     margin-bottom: 0 !important;
 }
 
+.definition-header:not(.hidden):not([style*="display: none"]),
+#definition-header:not(.hidden):not([style*="display: none"]) {
+    display: block !important;
+}
+
 #definition-content {
     flex: 1;
     overflow-y: auto;

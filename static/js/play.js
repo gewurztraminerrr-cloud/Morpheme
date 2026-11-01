@@ -2640,6 +2640,28 @@ async function _doUpdateGameState(incomingState = null) {
             if (specPanel) specPanel.style.display = 'none';
             const defContent = document.getElementById('definition-content');
             if (defContent) defContent.style.display = '';
+
+            // If currently defining a word, ensure defHeader and defActions remain visible
+            if (window._currentDefWord) {
+                const defHeader = document.getElementById('definition-header');
+                if (defHeader) {
+                    defHeader.classList.remove('hidden');
+                    defHeader.style.setProperty('display', 'block', 'important');
+                }
+                const defWord = document.getElementById('definition-word');
+                if (defWord && !defWord.textContent) {
+                    defWord.textContent = window._currentDefWord;
+                }
+                const defLenBadge = document.getElementById('definition-len-badge');
+                if (defLenBadge && (!defLenBadge.textContent || defLenBadge.style.display === 'none')) {
+                    defLenBadge.textContent = `${window._currentDefWord.length}L`;
+                    defLenBadge.style.setProperty('display', 'inline-flex', 'important');
+                }
+                const defActions = document.getElementById('definition-actions');
+                if (defActions) {
+                    defActions.style.setProperty('display', 'flex', 'important');
+                }
+            }
         }
 
         if (state.error) {
@@ -3110,10 +3132,10 @@ async function _doUpdateGameState(incomingState = null) {
             wordsStats.style.display = activeWordsTab === 'found' ? 'block' : 'none';
         }
 
-        // Toggle Definitions Panel Visibility (Confined to Found/Words tab on all devices)
+        // Toggle Definitions Panel Visibility (Found/Words and Previous Day tabs on all devices)
         const defPanelEl = document.querySelector('.definitions-panel');
         if (defPanelEl) {
-            defPanelEl.style.display = activeWordsTab === 'found' ? '' : 'none';
+            defPanelEl.style.display = (activeWordsTab === 'found' || activeWordsTab === 'previous') ? '' : 'none';
         }
 
         // 2. Render Tab Contents
@@ -3363,7 +3385,13 @@ async function _doUpdateGameState(incomingState = null) {
                             const word = item.dataset.word.toUpperCase();
                             highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
                             updateGameState();
-                            window.fetchDefinition(item.dataset.word);
+                            if (highlightedFoundWord) {
+                                window.fetchDefinition(item.dataset.word);
+                            } else {
+                                if (typeof window.clearDefinitionPanel === 'function') {
+                                    window.clearDefinitionPanel();
+                                }
+                            }
                         };
                     });
                 }
@@ -3459,7 +3487,13 @@ async function _doUpdateGameState(incomingState = null) {
                                 const word = item.dataset.word.toUpperCase();
                                 highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
                                 updateGameState();
-                                window.fetchDefinition(item.dataset.word);
+                                if (highlightedFoundWord) {
+                                    window.fetchDefinition(item.dataset.word);
+                                } else {
+                                    if (typeof window.clearDefinitionPanel === 'function') {
+                                        window.clearDefinitionPanel();
+                                    }
+                                }
                             };
                         });
 
@@ -10936,7 +10970,9 @@ window.clearDefinitionPanel = clearDefinitionPanel;
 
 async function fetchDefinition(word) {
     if (!word) return;
-    if (window.isSpectatorMode) return; // Block spectators from overwriting definition panel
+    const s = window.lastGameState;
+    const is24H = !!(s && ((s.time_limit >= 7200) || (s.room_id && (s.room_id.includes('24h') || s.room_id.includes('86400'))) || (s.game_type === '24h')));
+    if (window.isSpectatorMode && !is24H) return; // Block spectators from overwriting definition panel in non-24h active play
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
 
     const cleanWord = String(word).trim().toUpperCase();
@@ -10967,21 +11003,21 @@ async function fetchDefinition(word) {
     if (defWord && defHeader) {
         defWord.textContent = cleanWord;
         defHeader.classList.remove('hidden');
-        defHeader.style.display = 'block';
+        defHeader.style.setProperty('display', 'block', 'important');
     }
     if (defLenBadge) {
         defLenBadge.textContent = `${cleanWord.length}L`;
-        defLenBadge.style.display = 'inline-flex';
+        defLenBadge.style.setProperty('display', 'inline-flex', 'important');
     }
     if (defPron) {
         defPron.textContent = '';
         defPron.classList.add('hidden');
-        defPron.style.display = 'none';
+        defPron.style.setProperty('display', 'none', 'important');
     }
 
     // Configure and display the 3 action buttons along the bottom
     if (defActions) {
-        defActions.style.display = 'flex';
+        defActions.style.setProperty('display', 'flex', 'important');
     }
 
     // 1. CC Button: Set dictionary and navigate to Combo Checker
@@ -11009,44 +11045,55 @@ async function fetchDefinition(word) {
 
     // 2. FC Button: Count finders from this round and total find count including this round
     if (fcBtn) {
-        const s = window.lastGameState;
-        let roundFinders = [];
-        if (s && s.players) {
-            roundFinders = s.players.filter(p =>
-                p && p.username && p.submitted_words && p.submitted_words.some(sw =>
-                    ((typeof sw === 'object' && sw !== null ? sw.word : sw) || '').toUpperCase() === cleanWord
-                )
-            );
-        }
-        const roundFindersCount = roundFinders.length;
-        // Immediate label while tally fetches
-        fcBtn.textContent = `FC [${roundFindersCount}]`;
-
-        if (!window._wordTallyCache) window._wordTallyCache = {};
-        if (window._wordTallyCache[cleanWord]) {
-            const totalCombined = calculateCombinedFindCount(window._wordTallyCache[cleanWord], roundFinders);
-            fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
+        if (is24H) {
+            fcBtn.textContent = 'FC';
+            fcBtn.title = 'Search word in Find Count (Tools)';
+            fcBtn.onclick = (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof window.navigateToFindCount === 'function') {
+                    window.navigateToFindCount(cleanWord, 'page-play');
+                }
+            };
         } else {
-            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
-                .then(res => res.json())
-                .then(data => {
-                    window._wordTallyCache[cleanWord] = data;
-                    if (window._currentDefWord === cleanWord) {
-                        const totalCombined = calculateCombinedFindCount(data, roundFinders);
-                        fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
-                    }
-                })
-                .catch(err => {
-                    console.error('[fetchDefinition] Error fetching word tally for FC:', err);
-                });
-        }
-
-        fcBtn.onclick = (e) => {
-            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            if (typeof window.showFinderModal === 'function') {
-                window.showFinderModal(cleanWord);
+            let roundFinders = [];
+            if (s && s.players) {
+                roundFinders = s.players.filter(p =>
+                    p && p.username && p.submitted_words && p.submitted_words.some(sw =>
+                        ((typeof sw === 'object' && sw !== null ? sw.word : sw) || '').toUpperCase() === cleanWord
+                    )
+                );
             }
-        };
+            const roundFindersCount = roundFinders.length;
+            // Immediate label while tally fetches
+            fcBtn.textContent = `FC [${roundFindersCount}]`;
+            fcBtn.title = 'Find Count (FC)';
+
+            if (!window._wordTallyCache) window._wordTallyCache = {};
+            if (window._wordTallyCache[cleanWord]) {
+                const totalCombined = calculateCombinedFindCount(window._wordTallyCache[cleanWord], roundFinders);
+                fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
+            } else {
+                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        window._wordTallyCache[cleanWord] = data;
+                        if (window._currentDefWord === cleanWord) {
+                            const totalCombined = calculateCombinedFindCount(data, roundFinders);
+                            fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('[fetchDefinition] Error fetching word tally for FC:', err);
+                    });
+            }
+
+            fcBtn.onclick = (e) => {
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                if (typeof window.showFinderModal === 'function') {
+                    window.showFinderModal(cleanWord);
+                }
+            };
+        }
     }
 
     // 3. ADD Button: Check Words to Work on list
@@ -11902,10 +11949,10 @@ document.addEventListener('click', (e) => {
             content.classList.toggle('active', activeWordsTab === tabId);
         });
 
-        // Toggle Definitions Panel Visibility (Confined to Found/Words tab on all devices)
+        // Toggle Definitions Panel Visibility (Found/Words and Previous Day tabs on all devices)
         const defPanel = document.querySelector('.definitions-panel');
         if (defPanel) {
-            defPanel.style.display = activeWordsTab === 'found' ? '' : 'none';
+            defPanel.style.display = (activeWordsTab === 'found' || activeWordsTab === 'previous') ? '' : 'none';
         }
 
         // Refresh state visualization
