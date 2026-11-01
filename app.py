@@ -11297,7 +11297,7 @@ def get_forum_post_detail(post_id):
         mentioned_nums = set()
         for txt in all_contents:
             if txt:
-                for match in re.finditer(r'(?:[@&][A-Za-z0-9_]+\s*#|#)(\d+)\b', txt):
+                for match in re.finditer(r'(?:[@&][A-Za-z0-9_]+\s*(?:[pP]#|#)|[pP]#)(\d+)\b', txt):
                     try:
                         mentioned_nums.add(int(match.group(1)))
                     except (ValueError, TypeError):
@@ -11315,9 +11315,8 @@ def get_forum_post_detail(post_id):
                 WHERE p.category_id = ? AND p.post_number IN ({placeholders})
             ''', [cat_id] + num_list).fetchall()
             for r in p_rows:
-                key = f"#{r['post_number']}"
                 r_urls = parse_image_urls(r['image_url'])
-                post_lookup[key] = {
+                p_item = {
                     'type': 'post',
                     'item_id': r['id'],
                     'thread_id': r['id'],
@@ -11332,6 +11331,8 @@ def get_forum_post_detail(post_id):
                     'image_urls': r_urls,
                     'image_url': r_urls[0] if r_urls else None
                 }
+                post_lookup[f"p#{r['post_number']}"] = p_item
+                post_lookup[f"#{r['post_number']}"] = p_item
 
             c_rows = conn.execute(f'''
                 SELECT c.id, c.post_id, c.post_number, p.category_id, p.title, c.content, c.timestamp, c.image_url,
@@ -11342,9 +11343,8 @@ def get_forum_post_detail(post_id):
                 WHERE p.category_id = ? AND c.post_number IN ({placeholders})
             ''', [cat_id] + num_list).fetchall()
             for r in c_rows:
-                key = f"#{r['post_number']}"
                 r_urls = parse_image_urls(r['image_url'])
-                post_lookup[key] = {
+                c_item = {
                     'type': 'comment',
                     'item_id': r['id'],
                     'thread_id': r['post_id'],
@@ -11359,6 +11359,8 @@ def get_forum_post_detail(post_id):
                     'image_urls': r_urls,
                     'image_url': r_urls[0] if r_urls else None
                 }
+                post_lookup[f"p#{r['post_number']}"] = c_item
+                post_lookup[f"#{r['post_number']}"] = c_item
 
         user_bookmark = None
         if 'user_id' in session and not session.get('is_guest'):
@@ -11682,13 +11684,14 @@ def extract_forum_mentions(text):
     """
     Extracts all (@username, post_number_or_none) mentions from text.
     Matches:
-      @username #123
+      @username p#123 / @username P#123
+      @username #123 (legacy)
       @username
     Avoids matching email addresses (e.g. foo@bar.com).
     """
     if not text:
         return []
-    pattern = re.compile(r'(?<![\w.])[@&]([A-Za-z0-9_]+)(?:\s*#(\d+))?')
+    pattern = re.compile(r'(?<![\w.])[@&]([A-Za-z0-9_]+)(?:\s*(?:[pP]#|#)(\d+))?')
     matches = []
     for m in pattern.finditer(text):
         uname = m.group(1)

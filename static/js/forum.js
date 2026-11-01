@@ -1613,7 +1613,7 @@ const Forum = {
                                 <span class="post-card-title responder-title">
                                     ${this.escapeHtml(r.category_name)} 
                                     <span class="forum-user-clickable" data-username="${this.escapeHtml(r.recipient_username)}" title="View ${this.escapeHtml(r.recipient_username)}'s Profile">@${this.escapeHtml(r.recipient_username)}</span>
-                                    #${r.post_number} by 
+                                    p#${r.post_number} by 
                                     <span class="forum-user-clickable" data-username="${this.escapeHtml(r.responder_username)}" title="View ${this.escapeHtml(r.responder_username)}'s Profile">${flagHtml}<strong>${this.escapeHtml(r.responder_username)}</strong></span>
                                 </span>
                                 <span class="post-card-meta">
@@ -1838,7 +1838,7 @@ const Forum = {
             const isComment = post.type === 'comment';
             const postId = post.post_id || post.id;
             const hasImages = (post.image_url || (post.image_urls && post.image_urls.length > 0));
-            const numBadge = post.post_number ? `<span class="forum-post-number-badge">#${post.post_number}</span>` : '';
+            const numBadge = post.post_number ? `<span class="forum-post-number-badge">p#${post.post_number}</span>` : '';
             const pinnedBadge = post.is_pinned ? `<span class="forum-pinned-badge">📌 PINNED</span>` : '';
             const isClosed = Boolean(post.is_closed || (!isComment && (1 + (post.comment_count || 0)) >= 500));
             const closedBadge = isClosed ? `<span class="forum-closed-badge">🔒 CLOSED</span>` : '';
@@ -2001,17 +2001,17 @@ const Forum = {
                 <div class="forum-responses-popup-item" data-comment-id="${c.id}" data-post-number="${c.post_number || ''}" role="button" tabindex="0">
                     <div class="forum-responses-popup-item-head">
                         <strong>${this.escapeHtml(c.username)}</strong>
-                        <span class="forum-post-number-badge">#${c.post_number || '?'}</span>
+                        <span class="forum-post-number-badge">p#${c.post_number || '?'}</span>
                         <span class="forum-responses-popup-date">${cDate}</span>
                     </div>
-                    <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet).replace(/((?:@|&amp;)[A-Za-z0-9_]+\s*#\d+(?:\s*\(Thread\))?)/g, '<span class="forum-mention-tag">$1</span>')}</div>
+                    <div class="forum-responses-popup-snippet">${this.escapeHtml(snippet).replace(/((?:@|&amp;)[A-Za-z0-9_]+\s*(?:[pP]#|#)\d+(?:\s*\(Thread\))?)/g, '<span class="forum-mention-tag">$1</span>')}</div>
                 </div>`;
         }).join('');
 
         overlay.innerHTML = `
-            <div class="forum-responses-popup" role="dialog" aria-label="Responses to #${postNumber}">
+            <div class="forum-responses-popup" role="dialog" aria-label="Responses to p#${postNumber}">
                 <div class="forum-responses-popup-header">
-                    <span>Responses to #${postNumber} (${resps.length})</span>
+                    <span>Responses to p#${postNumber} (${resps.length})</span>
                     <button type="button" class="forum-responses-popup-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="forum-responses-popup-list">${items}</div>
@@ -2181,9 +2181,9 @@ const Forum = {
             }
         });
 
-        // Map each post number -> comments that respond to it (via "@user #N" or standalone "#N" references)
+        // Map each post number -> comments that respond to it (via "@user p#N", legacy "@user #N", or standalone "p#N" references)
         this.currentResponsesMap = {};
-        const respRegex = /(?:[@&][A-Za-z0-9_]+\s*#|#)(\d+)\b/g;
+        const respRegex = /(?:[@&][A-Za-z0-9_]+\s*(?:[pP]#|#)|[pP]#)(\d+)\b/g;
         comments.forEach(c => {
             const seen = new Set();
             let m;
@@ -2198,8 +2198,8 @@ const Forum = {
         const buildNumBadge = (num) => {
             if (!num) return '';
             const resps = this.currentResponsesMap[num] || [];
-            if (resps.length === 0) return `<span class="forum-post-number-badge">#${num}</span>`;
-            return `<span class="forum-post-number-badge has-responses" data-resp-num="${num}" role="button" tabindex="0" title="View ${resps.length} ${resps.length === 1 ? 'response' : 'responses'} to #${num}">#${num} <span class="forum-resp-count">💬 ${resps.length}</span></span>`;
+            if (resps.length === 0) return `<span class="forum-post-number-badge">p#${num}</span>`;
+            return `<span class="forum-post-number-badge has-responses" data-resp-num="${num}" role="button" tabindex="0" title="View ${resps.length} ${resps.length === 1 ? 'response' : 'responses'} to p#${num}">p#${num} <span class="forum-resp-count">💬 ${resps.length}</span></span>`;
         };
 
         const isClosed = Boolean((post && post.is_closed) || (1 + comments.length) >= 500);
@@ -2763,7 +2763,7 @@ const Forum = {
         const input = document.getElementById('forum-reply-popup-input');
         if (!input) return;
 
-        const tag = `@${username} #${postNumber}\n`;
+        const tag = `@${username} p#${postNumber}\n`;
         const currentVal = input.value;
         const cleanTag = tag.trim();
 
@@ -3241,27 +3241,28 @@ const Forum = {
             return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="forum-clickable-link" onclick="event.stopPropagation();">${match}</a>`;
         });
 
-        // Regex for @username (#NUM)? or &username (#NUM)?
-        const mentionRegex = /(?<![\w.])([@&][A-Za-z0-9_]+)(?:\s*#(\d+)(\s*\(Thread\))?)?/g;
+        // Regex for @username (p#NUM)? or &username (p#NUM)? (also allow legacy #NUM)
+        const mentionRegex = /(?<![\w.])([@&][A-Za-z0-9_]+)(?:\s*(?:[pP]#|#)(\d+)(\s*\(Thread\))?)?/g;
         processed = processed.replace(mentionRegex, (match, tag, numStr, threadSuffix) => {
             if (numStr) {
-                const lookupKey = `#${numStr}`;
+                const lookupKey = `p#${numStr}`;
+                const legacyKey = `#${numStr}`;
                 const hasTarget = (this.currentPostsByNumber && this.currentPostsByNumber.has(parseInt(numStr, 10))) ||
-                                  (this.currentPostLookup && this.currentPostLookup[lookupKey]);
+                                  (this.currentPostLookup && (this.currentPostLookup[lookupKey] || this.currentPostLookup[legacyKey]));
                 const isOpening = (this.currentPostsByNumber && this.currentPostsByNumber.get(parseInt(numStr, 10))?.isOpeningPost) ||
-                                  (this.currentPostLookup && this.currentPostLookup[lookupKey]?.type === 'post');
+                                  (this.currentPostLookup && (this.currentPostLookup[lookupKey]?.type === 'post' || this.currentPostLookup[legacyKey]?.type === 'post'));
                 const label = isOpening ? ' (Thread)' : (threadSuffix || '');
-                return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">#${numStr}</a>${label}</span>`;
+                return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">p#${numStr}</a>${label}</span>`;
             }
             // Standalone @username or &username
             const uname = tag.slice(1);
             return `<span class="forum-mention-tag forum-user-clickable" data-username="${this.escapeHtml(uname)}" title="View ${this.escapeHtml(uname)}'s Profile">${tag}</span>`;
         });
 
-        // Match standalone #NUM (e.g. "#14") not already wrapped in a link or tag
-        const standaloneNumRegex = /(?<![&\w#@/])#(\d+)\b(?![^<]*>)/g;
+        // Match standalone p#NUM (e.g. "p#14", "P#14") not already wrapped in a link or tag
+        const standaloneNumRegex = /(?<![>&\w#@/])[pP]#(\d+)\b(?![^<]*>)/g;
         processed = processed.replace(standaloneNumRegex, (match, numStr) => {
-            return `<a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">#${numStr}</a>`;
+            return `<a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">p#${numStr}</a>`;
         });
 
         return processed;
@@ -3273,9 +3274,11 @@ const Forum = {
         if (this.currentPostsByNumber && this.currentPostsByNumber.has(num)) {
             return this.currentPostsByNumber.get(num);
         }
-        const key = `#${num}`;
-        if (this.currentPostLookup && this.currentPostLookup[key]) {
-            return this.currentPostLookup[key];
+        if (this.currentPostLookup) {
+            const key = `p#${num}`;
+            const legacyKey = `#${num}`;
+            if (this.currentPostLookup[key]) return this.currentPostLookup[key];
+            if (this.currentPostLookup[legacyKey]) return this.currentPostLookup[legacyKey];
         }
         return null;
     },
@@ -3318,7 +3321,7 @@ const Forum = {
         const resps = (this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [];
         const respCount = resps.length;
         const respBadgeHtml = respCount > 0
-            ? `<span class="reply-preview-resp-count" title="${respCount} ${respCount === 1 ? 'response' : 'responses'} to #${postNumber}">💬 ${respCount}</span>`
+            ? `<span class="reply-preview-resp-count" title="${respCount} ${respCount === 1 ? 'response' : 'responses'} to p#${postNumber}">💬 ${respCount}</span>`
             : '';
 
         const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
@@ -3350,7 +3353,7 @@ const Forum = {
                     </div>
                 </div>
                 <div class="reply-preview-meta">
-                    <span class="reply-preview-badge">#${postNumber}</span>
+                    <span class="reply-preview-badge">p#${postNumber}</span>
                     ${respBadgeHtml}
                 </div>
             </div>
@@ -3440,7 +3443,7 @@ const Forum = {
         const resps = (this.currentResponsesMap && this.currentResponsesMap[postNumber]) || [];
         const respCount = resps.length;
         const respBadgeHtml = respCount > 0
-            ? `<span class="reply-preview-resp-count" role="button" tabindex="0" title="View ${respCount} ${respCount === 1 ? 'response' : 'responses'} to #${postNumber}">💬 ${respCount}</span>`
+            ? `<span class="reply-preview-resp-count" role="button" tabindex="0" title="View ${respCount} ${respCount === 1 ? 'response' : 'responses'} to p#${postNumber}">💬 ${respCount}</span>`
             : '';
 
         const rawContent = postData.content || (postData.title ? postData.title : 'No content available.');
@@ -3465,7 +3468,7 @@ const Forum = {
         overlay.id = 'forum-reply-mobile-overlay';
         overlay.className = 'forum-reply-mobile-overlay';
         overlay.innerHTML = `
-            <div class="forum-reply-mobile-card" role="dialog" aria-label="Post #${postNumber} Preview">
+            <div class="forum-reply-mobile-card" role="dialog" aria-label="Post p#${postNumber} Preview">
                 <div class="reply-mobile-header">
                     <div class="reply-mobile-author-box">
                         ${avatarHtml}
@@ -3476,7 +3479,7 @@ const Forum = {
                     </div>
                     <div class="reply-mobile-header-right">
                         <div class="reply-mobile-badges">
-                            <span class="reply-preview-badge">#${postNumber}</span>
+                            <span class="reply-preview-badge">p#${postNumber}</span>
                             ${respBadgeHtml}
                         </div>
                         <button type="button" class="reply-mobile-close-btn" aria-label="Close">&times;</button>
@@ -3543,8 +3546,9 @@ const Forum = {
 
     navigateToPostNumber: function (postNumber) {
         const num = parseInt(postNumber, 10);
-        const lookupKey = `#${num}`;
-        const target = this.currentPostLookup ? this.currentPostLookup[lookupKey] : null;
+        const lookupKey = `p#${num}`;
+        const legacyKey = `#${num}`;
+        const target = this.currentPostLookup ? (this.currentPostLookup[lookupKey] || this.currentPostLookup[legacyKey]) : null;
 
         // If target is in current thread or found in currentPostsByNumber
         if (this.currentPostsByNumber && this.currentPostsByNumber.has(num)) {
@@ -3557,7 +3561,7 @@ const Forum = {
         }
 
         if (!target) {
-            alert(`Post #${postNumber} no longer exists or could not be found.`);
+            alert(`Post p#${postNumber} no longer exists or could not be found.`);
             return;
         }
 
