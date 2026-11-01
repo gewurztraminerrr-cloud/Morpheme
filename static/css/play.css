@@ -16712,11 +16712,23 @@ body.is-desktop .word-input-section #submit-word-btn {
 }
 
 /* Multiplayer Subanagrams: Enter and Shuffle buttons on desktop and widen container */
-body.is-desktop.is-subanagrams .word-input-section {
+body.is-desktop.is-subanagrams .word-input-section,
+body:not(.is-mobile).is-subanagrams .word-input-section {
     max-width: 680px !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+}
+
+@media (min-width: 769px) {
+    body.is-subanagrams .word-input-section {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        box-sizing: border-box !important;
+    }
 }
 
 body.is-desktop .word-input-row {
