@@ -10272,12 +10272,23 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
     // Flash highlighted tiles that traced the word (instead of full-screen flash)
     const shouldFlash = window.userSettings ? (window.userSettings.word_flash !== false) : true;
     let targetPath = path;
-    if ((!targetPath || targetPath.length === 0) && message) {
+    const isSub = window.lastGameState && (window.lastGameState.game_type === 'subanagrams' || (window.lastGameState.board && window.lastGameState.board.length === 1 && !Array.isArray(window.lastGameState.board[0][0])));
+    let matchedWord = null;
+    if (message) {
         const wordMatch = message.match(/^([A-Z]+)\s+/i);
-        if (wordMatch && window.lastGameState && window.lastGameState.all_words_paths) {
-            const wUpper = wordMatch[1].toUpperCase();
-            targetPath = window.lastGameState.all_words_paths[wUpper];
+        if (wordMatch) {
+            matchedWord = wordMatch[1].toUpperCase();
         }
+    }
+    if ((!targetPath || targetPath.length === 0) && matchedWord) {
+        if (isSub && window.lastGameState && window.lastGameState.board) {
+            targetPath = typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(matchedWord, window.lastGameState.board) : null;
+        } else if (window.lastGameState && window.lastGameState.all_words_paths) {
+            targetPath = window.lastGameState.all_words_paths[matchedWord];
+        }
+    }
+    if (isSub && (!targetPath || targetPath.length === 0) && !isActuallyValid && window.lastGameState && window.lastGameState.board && window.lastGameState.board[0]) {
+        targetPath = window.lastGameState.board[0].map((_, cIdx) => ({ r: 0, c: cIdx }));
     }
 
     if (shouldFlash && targetPath && targetPath.length > 0) {

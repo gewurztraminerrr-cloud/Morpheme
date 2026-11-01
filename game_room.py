@@ -152,6 +152,20 @@ def verify_board_words_consistency(board, words, paths=None):
     if not board or not words:
         return True  # Nothing to verify or empty
 
+    # Subanagrams / 1D rack verification (< 0.1ms)
+    is_sub = (len(board) == 1 and isinstance(board[0], list)) or (isinstance(board, list) and len(board) > 0 and isinstance(board[0], str))
+    if is_sub:
+        from collections import Counter
+        raw_seq = "".join(board[0] if isinstance(board[0], list) else board).upper()
+        expanded_seq = raw_seq.replace('Q', 'QU')
+        seq_cnt = Counter(expanded_seq)
+        sample = list(words)[:10]
+        for w in sample:
+            w_cnt = Counter(w.upper())
+            if not all(seq_cnt[c] >= cnt for c, cnt in w_cnt.items()):
+                return False
+        return True
+
     is_3d = (len(board) == 6 and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list))
     
     # 1. Path-based instant verification (< 0.1ms)
@@ -2781,6 +2795,24 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         bg = _room_manager_instance.board_generator
     else:
         bg = BoardGenerator()
+
+    if str(dimensions).lower() == 'subanagrams':
+        from subanagrams_generator import generate_subanagrams_board_and_words
+        sp = SpinnerSet.generate_subanagrams_params()
+        res = generate_subanagrams_board_and_words(sp)
+        if res:
+            b_board, b_words, b_bonus, fparams = res
+            return (
+                b_board,
+                b_words,
+                (0, 0),
+                fparams.get('board_format', 'Normal'),
+                {w: [] for w in b_words},
+                0.5,
+                b_bonus,
+                fparams.get('word_count_range', '100-200'),
+                fparams
+            )
         
     floor_l = 3
     if '4x6' in dimensions:
@@ -7077,70 +7109,86 @@ class RoomManager:
                     )
 
                 if not room.next_round_board or not room.next_round_words or not is_staging_consistent:
-                    if not is_staging_consistent and room.next_round_board and room.next_round_words:
-                        print(f"[REMAINING-STABILIZER] CRITICAL: Board and words desynchronization detected for {room_id} at promotion! Discarding mismatched staging and forcing emergency fallback.")
+                    if getattr(room, 'game_type', None) == 'subanagrams':
+                        from subanagrams_generator import generate_subanagrams_board_and_words
+                        sp = getattr(room, 'next_spinner_params', None) or getattr(room, 'spinner_params', None) or SpinnerSet.generate_subanagrams_params()
+                        sub_res = generate_subanagrams_board_and_words(sp)
+                        if sub_res:
+                            b_board, b_words, b_bonus, fparams = sub_res
+                            room.next_round_board = b_board
+                            room.next_round_words = b_words
+                            room.next_round_word_paths = {w: [] for w in b_words}
+                            room.next_round_total_words_count = len(b_words)
+                            room.next_round_bonus = b_bonus
+                            room.next_round_bonus_word = b_bonus
+                            room.next_round_word_scores = {}
+                            if isinstance(room.spinner_params, dict) and isinstance(fparams, dict):
+                                room.spinner_params.update(fparams)
                     else:
-                        print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing INSTANT emergency fallback (cache or pre-built).")
-                    if room.time_limit >= 7200:
-                        room.current_board_format = 'Valued Letters'
-                        room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
-                        room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
-
-                    e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
-                    e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
-                    e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
-                    e_target_range = room.spinner_params.get('word_count_range') if room.spinner_params else None
-                    if not e_target_range:
-                        e_target_range = random.choice(['100-200', '200-300', '300-400'])
-                    # Use the always-instant emergency fallback (cache → pre-built). Never blocks.
-                    e_fallback = get_emergency_fallback_board(
-                        room.board_dimensions, e_fmt_target, room.time_limit,
-                        dictionary=room.current_dictionary,
-                        use_added_words=getattr(room, 'use_added_words', False),
-                        target_range=e_target_range,
-                        min_word_length=e_min_len or 3,
-                        difficulty=e_diff
-                    )
-                    if e_fallback and len(e_fallback) >= 8:
-                        if len(e_fallback) >= 9:
-                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr, e_params = e_fallback
+                        if not is_staging_consistent and room.next_round_board and room.next_round_words:
+                            print(f"[REMAINING-STABILIZER] CRITICAL: Board and words desynchronization detected for {room_id} at promotion! Discarding mismatched staging and forcing emergency fallback.")
                         else:
-                            e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_fallback
+                            print(f"[REMAINING-STABILIZER] Staging empty for {room_id} at promotion. Forcing INSTANT emergency fallback (cache or pre-built).")
+                        if room.time_limit >= 7200:
+                            room.current_board_format = 'Valued Letters'
+                            room.current_dictionary = room.spinner_params.get('dictionary', 'NWL')
+                            room.current_min_length = int(room.spinner_params.get('min_word_length', 3))
+
+                        e_min_len = room.spinner_params.get('min_word_length') if room.spinner_params else None
+                        e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
+                        e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
+                        e_target_range = room.spinner_params.get('word_count_range') if room.spinner_params else None
+                        if not e_target_range:
+                            e_target_range = random.choice(['100-200', '200-300', '300-400'])
+                        # Use the always-instant emergency fallback (cache → pre-built). Never blocks.
+                        e_fallback = get_emergency_fallback_board(
+                            room.board_dimensions, e_fmt_target, room.time_limit,
+                            dictionary=room.current_dictionary,
+                            use_added_words=getattr(room, 'use_added_words', False),
+                            target_range=e_target_range,
+                            min_word_length=e_min_len or 3,
+                            difficulty=e_diff
+                        )
+                        if e_fallback and len(e_fallback) >= 8:
+                            if len(e_fallback) >= 9:
+                                e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr, e_params = e_fallback
+                            else:
+                                e_board, e_words, e_bonus_c, e_fmt, e_paths, e_ratio, e_bonus_word, e_tr = e_fallback
+                                e_params = {}
+                        else:
+                            # Absolute last resort: tiny pre-built board (should never reach here)
+                            print(f"[REMAINING-STABILIZER] get_emergency_fallback_board returned nothing for {room_id}. Using hardcoded micro-board.")
+                            dims_parts = room.board_dimensions.split('x')
+                            rows_n, cols_n = int(dims_parts[0]), int(dims_parts[1]) if len(dims_parts) >= 2 else (4, 4)
+                            e_board = [['S','T','A','R'],['E','D','L','I'],['N','E','R','S'],['A','N','T','S']][:rows_n]
+                            e_board = [row[:cols_n] for row in e_board]
+                            e_words = ['ANTS', 'RANT', 'RANT', 'STAR', 'TARS', 'LEND', 'REND']
+                            e_bonus_c = (0, 0)
+                            e_fmt = e_fmt_target
+                            e_paths = {}
+                            e_ratio = 0.2
+                            e_bonus_word = 'LANDERS'
+                            e_tr = e_target_range
                             e_params = {}
-                    else:
-                        # Absolute last resort: tiny pre-built board (should never reach here)
-                        print(f"[REMAINING-STABILIZER] get_emergency_fallback_board returned nothing for {room_id}. Using hardcoded micro-board.")
-                        dims_parts = room.board_dimensions.split('x')
-                        rows_n, cols_n = int(dims_parts[0]), int(dims_parts[1]) if len(dims_parts) >= 2 else (4, 4)
-                        e_board = [['S','T','A','R'],['E','D','L','I'],['N','E','R','S'],['A','N','T','S']][:rows_n]
-                        e_board = [row[:cols_n] for row in e_board]
-                        e_words = ['ANTS', 'RANT', 'RANT', 'STAR', 'TARS', 'LEND', 'REND']
-                        e_bonus_c = (0, 0)
-                        e_fmt = e_fmt_target
-                        e_paths = {}
-                        e_ratio = 0.2
-                        e_bonus_word = 'LANDERS'
-                        e_tr = e_target_range
-                        e_params = {}
+                            
+                        if e_params and not getattr(room, 'was_revealed_this_intermission', False) and not getattr(room, 'spinner_params_revealed', False):
+                            print(f"[REMAINING-STABILIZER] Aligning room spinner parameters to match popped fallback board: {e_params}")
+                            room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
+                            room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
+                            room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
+                            room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
+                            room.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
+                            
+                            room.current_dictionary = e_params.get('dictionary', 'NWL')
+                            room.current_board_format = e_params.get('board_format', 'Normal')
+                            room.current_min_length = e_params.get('min_word_length', 3)
+                            room.use_added_words = e_params.get('use_added_words', False)
                         
-                    if e_params and not getattr(room, 'was_revealed_this_intermission', False) and not getattr(room, 'spinner_params_revealed', False):
-                        print(f"[REMAINING-STABILIZER] Aligning room spinner parameters to match popped fallback board: {e_params}")
-                        room.spinner_params['dictionary'] = e_params.get('dictionary', 'NWL')
-                        room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
-                        room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
-                        room.spinner_params['use_added_words'] = e_params.get('use_added_words', False)
-                        room.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
-                        
-                        room.current_dictionary = e_params.get('dictionary', 'NWL')
-                        room.current_board_format = e_params.get('board_format', 'Normal')
-                        room.current_min_length = e_params.get('min_word_length', 3)
-                        room.use_added_words = e_params.get('use_added_words', False)
-                    
-                    room.next_round_board = e_board
-                    room.next_round_words = e_words
-                    room.next_round_word_paths = e_paths
-                    room.next_round_total_words_count = len(e_words)
-                    room.next_round_bonus = e_bonus_word
+                        room.next_round_board = e_board
+                        room.next_round_words = e_words
+                        room.next_round_word_paths = e_paths
+                        room.next_round_total_words_count = len(e_words)
+                        room.next_round_bonus = e_bonus_word
                     room.next_round_format = e_fmt
                     room.next_round_bonus_cell = e_bonus_c
                     room.next_round_uniqueness = e_ratio
@@ -7235,7 +7283,7 @@ class RoomManager:
                 room.all_words = set(room.all_words_paths.keys())
                 
                 # ACTIVE INTEGRITY SHIELD: Auto-heal if active words ever mismatch active board
-                if room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
+                if getattr(room, 'game_type', None) != 'subanagrams' and room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
                     print(f"[RoomManager] CRITICAL WARNING: Active board and words mismatch detected for {room_id} post-promotion! Auto-healing word list...")
                     _bg = self.board_generator
                     solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min)

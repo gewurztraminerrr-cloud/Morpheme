@@ -7057,7 +7057,7 @@ def get_room_state(room_id):
             board_to_send = (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board
             
             # INTERMISSION INTEGRITY SHIELD: Guarantee displayed board and words match 100%
-            if is_intermission and board_to_send and words_to_return:
+            if is_intermission and board_to_send and words_to_return and getattr(room, 'game_type', None) != 'subanagrams':
                 from game_room import verify_board_words_consistency
                 prev_paths = getattr(room, 'previous_all_words_paths', None) or getattr(room, 'all_words_paths', None)
                 if not verify_board_words_consistency(board_to_send, words_to_return, prev_paths):
