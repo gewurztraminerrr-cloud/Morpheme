@@ -10353,7 +10353,7 @@ async function runFindCountSearch() {
             const rawWord = String(data.word || word || '').trim().toUpperCase();
             const escapedWord = rawWord.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const safeJsWord = rawWord.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            const wordLink = `<span class="clickable-word-link" onclick="if(window.lookupWord){window.lookupWord('${safeJsWord}',event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeJsWord}',event);}else if(window.fetchDefinition){window.fetchDefinition('${safeJsWord}');}" title="Click to view definition for ${escapedWord}" style="font-weight: 700; cursor: pointer;">${escapedWord}</span>`;
+            const wordLink = `<span class="clickable-word-link find-count-word-link" onclick="if(window.lookupWord){window.lookupWord('${safeJsWord}',event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeJsWord}',event);}else if(window.fetchDefinition){window.fetchDefinition('${safeJsWord}');}" title="Click to view definition for ${escapedWord}" style="color: #38bdf8; font-weight: 700; text-decoration: underline; cursor: pointer;">${escapedWord}</span>`;
 
             if (data.is_valid) {
                 summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.`;

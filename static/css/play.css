@@ -13620,6 +13620,44 @@ body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb {
     transform: translateY(0);
 }
 
+#find-count-summary .clickable-word-link,
+.find-count-word-link {
+    color: #38bdf8 !important;
+    text-decoration: underline !important;
+    text-decoration-color: rgba(56, 189, 248, 0.6) !important;
+    text-underline-offset: 3px;
+    cursor: pointer !important;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+#find-count-summary .clickable-word-link:hover,
+.find-count-word-link:hover {
+    color: #7dd3fc !important;
+    text-decoration-color: #7dd3fc !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+}
+
+body.theme-white #find-count-summary .clickable-word-link,
+body.theme-white .find-count-word-link,
+[class*="theme-white"] #find-count-summary .clickable-word-link,
+[class*="theme-white"] .find-count-word-link,
+[class*="theme-light-"] #find-count-summary .clickable-word-link,
+[class*="theme-light-"] .find-count-word-link {
+    color: #0284c7 !important;
+    text-decoration-color: rgba(2, 132, 199, 0.6) !important;
+}
+
+body.theme-white #find-count-summary .clickable-word-link:hover,
+body.theme-white .find-count-word-link:hover,
+[class*="theme-white"] #find-count-summary .clickable-word-link:hover,
+[class*="theme-white"] .find-count-word-link:hover,
+[class*="theme-light-"] #find-count-summary .clickable-word-link:hover,
+[class*="theme-light-"] .find-count-word-link:hover {
+    color: #0369a1 !important;
+    text-decoration-color: #0369a1 !important;
+    background: rgba(2, 132, 199, 0.1) !important;
+}
+
 /* Widescreen Panel Adaptations using CSS Container Queries */
 
 @container leftpanel (max-width: 280px) {
