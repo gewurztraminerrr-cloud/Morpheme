@@ -8,17 +8,17 @@ START_OVER_POINT_OCTOBER_31
 
 ## Latest Commit ID
 ```
-c29934a5175dca91797a617d7e175cda861ac5da
+02c07f4a00ad76fa870897949ee980029e826bd2
 ```
-*(Short SHA: `c29934a5`)*
+*(Short SHA: `02c07f4a`)*
 
 ## Synchronization Status
 
 | Environment | Status | Commit / Tag | Verification Details |
 |:---|:---|:---|:---|
-| **Localhost** | ✅ Synchronized | `c29934a5` | Working tree on `main`, zero uncommitted code changes |
-| **GitHub (`origin/main`)** | ✅ Synchronized | `c29934a5` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `c29934a5` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
+| **Localhost** | ✅ Synchronized | `02c07f4a` | Working tree on `main`, zero uncommitted code changes |
+| **GitHub (`origin/main`)** | ✅ Synchronized | `02c07f4a` | Pushed to `origin/main` & tags `START_OVER_POINT_OCTOBER_31` / `stable-2026-10-31` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | `02c07f4a` | Reset to latest origin/main, PM2 online, Waitress bound, live HTTP/2 200 OK |
 | **App (Mobile WebView)** | ✅ Synchronized | `https://morpheme.games/` | Flutter app loads live synchronized webview with native audio/haptic bridges |
 
 ---
@@ -667,6 +667,20 @@ c29934a5175dca91797a617d7e175cda861ac5da
     - Ensured `.active-rooms-controls-row` falls back to `display: flex !important; flex-direction: column !important;`, keeping the controls stacked vertically with standard mobile touch sizing.
   - **Cache Busters (`templates/index.html`)**:
     - Bumped `lobby.css` cache busters to `v=1793630000`.
+
+### 54. Tools: MP Explorer 1MP Multi-Extremity Deletions & Configuration Persistence (`app.py`, `static/js/tools.js`, `templates/index.html`)
+- **Backend MP Explorer Heuristic & Fallback (`app.py`)**:
+  - Resolved issue where 6-letter words like `ALANYL` were excluded from MP Explorer under `CSW, 6 Letters, 1 MP, Both`.
+  - In Morpheme rules, extremity deletions are free (0 MP). `ALANYL` connects backwards to `NYALA` via 1 MP (drop `LY` free leaving `NALA`, insert `Y` = 1 MP) and forwards to 12 words (`ALAND`, `ALANE`, `ALANG`, etc.).
+  - Added fast path 6 to `check_word_has_mp` testing multi-letter extremity deletions down to substrings $\ge 4$ letters plus 1 insertion.
+  - Added robust fallback to `get_combo_payload_for_word` across 0MP, 1MP, 2MP, and 3MP checks, guaranteeing 100% mathematical parity with Manual Combo Checker.
+- **Frontend Dropdown & Textbox Persistence (`static/js/tools.js`)**:
+  - Removed `forceReset` wipe that cleared `#combo-explorer-filter` when changing dropdown options (Dictionary, Length, MP Value, Direction, Order).
+  - Preserved the entered filter text in the textbox while allowing users to manually backspace or clear it.
+  - Automatically re-evaluates the right-hand connections panel when dropdowns change, querying connections for the active word under the new parameters.
+  - Added exact-match auto-selection so typing a word (e.g., `ALANYL`) immediately highlights it and renders its MP connections on the right.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `tools.js` cache buster to `v=1793640000`.
 
 ---
 
