@@ -10683,7 +10683,7 @@ body.theme-white .m-scroller-thumb.dragging {
         min-height: unset !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
-        padding: 12px 8px !important;
+        padding: 12px 16px !important;
         margin: 8px auto !important;
         background: transparent !important;
         border: none !important;
@@ -16916,6 +16916,16 @@ body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
         margin-right: auto !important;
         align-self: center !important;
         justify-self: center !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Multiplayer Subanagrams: Generous padding to the right and left of the letters */
+    body.is-subanagrams .board-panel .game-board.is-subanagrams-board,
+    body.is-subanagrams #game-board.is-subanagrams-board,
+    .board-panel .game-board.is-subanagrams-board,
+    #game-board.is-subanagrams-board {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
         box-sizing: border-box !important;
     }
 

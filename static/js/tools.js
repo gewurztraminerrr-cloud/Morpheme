@@ -10350,11 +10350,15 @@ async function runFindCountSearch() {
         }
         
         if (summaryEl) {
+            const rawWord = String(data.word || word || '').trim().toUpperCase();
+            const escapedWord = rawWord.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const safeJsWord = rawWord.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const wordLink = `<span class="clickable-word-link" onclick="if(window.lookupWord){window.lookupWord('${safeJsWord}',event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeJsWord}',event);}else if(window.fetchDefinition){window.fetchDefinition('${safeJsWord}');}" title="Click to view definition for ${escapedWord}" style="font-weight: 700; cursor: pointer;">${escapedWord}</span>`;
+
             if (data.is_valid) {
-                summaryEl.innerText = `The word "${data.word}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.`;
+                summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.`;
             } else {
-                const escapedWord = (data.word || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${escapedWord}" is not a valid word in Morpheme's dictionaries.</span>`;
+                let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${wordLink}" is not a valid word in Morpheme's dictionaries.</span>`;
                 if (data.count > 0) {
                     html += `<br><span style="font-size: 0.95rem; opacity: 0.95;">However, it has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} in custom rounds or historical matches.</span>`;
                 }
