@@ -749,18 +749,33 @@ START_OVER_POINT_OCTOBER_31
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.js` cache buster to `v=1793730000`.
 
+### 60. Exclude 24h Rooms and Multiplayer Subanagrams from Find Count, Leaderboards, and Achievements (`app.py`, `game_room.py`)
+- **Find Count Exclusion (`_get_word_finds` in `app.py`)**:
+  - **Step 1 (`round_history` database query)**: Added explicit exclusions `AND (rh.round_duration IS NULL OR rh.round_duration < 7200) AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h')) AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))`. Historical words played in 24h rooms or Subanagrams are strictly excluded from Find Count queries.
+  - **Step 4 (live in-memory rooms)**: Added guards skipping active rooms where `time_limit >= 7200`, `game_type in ('subanagrams', '24h')`, or `room_id` contains `'24h'` or `'86400'`.
+- **Leaderboards Exclusion (`get_leaderboard_data` in `app.py`)**:
+  - Route short-circuit: If `game_type == 'subanagrams'` or `(time_limit != 'all' and int(time_limit) >= 7200)`, immediately returns empty lists for all 10 leaderboard categories.
+  - Base SQL filters: Added bulletproof conditions `(rh.round_duration IS NULL OR rh.round_duration < 7200)`, `(rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))`, and `(rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))` to prevent any records from 24h rooms or Subanagrams from appearing in Best Scores, Best Words, Best PE, Best Pct Found, Best Ratings, Avg Scores, Obscure Words, Avg Pct Found, Most Games Played, or Current Ratings.
+- **Achievements & Profile Stats Exclusion (`get_room_achievements`, `get_user_stats` in `app.py`)**:
+  - `get_room_achievements`: Returns zeroed stats and informational message `"Achievements are not recorded for 24h rooms or Multiplayer Subanagrams."` if `time_limit >= 7200 or game_type == 'subanagrams'`.
+  - `get_user_stats`: Filtered out 24h and subanagrams rooms from `round_history` queries and skipped them in `config_stats`.
+- **Game Room Engine Guards (`game_room.py`)**:
+  - `log_word_tally`: Guard strengthened to skip tally logging for any room with `time_limit >= 7200`, `game_type in ('subanagrams', '24h')`, or `'24h'`/`'86400'` in `room_id`.
+  - `save_round_history`: Guard explicitly prevents saving any round history for `subanagrams`.
+
 ---
 
 ## Verification & Validation
 
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Clean working tree on `main` |
+| **Local Working Tree** | ✅ Clean | Clean working tree on `main` at commit `bac2188a` |
 | **Origin / GitHub** | ✅ Synchronized | Synchronized with `origin/main` |
 | **Remote Production** | ✅ Synchronized | Deployed to `132.148.72.249`, PM2 online, HTTP/2 200 OK |
-| **Mobile App (WebView)** | ✅ Synchronized | Points directly to `https://morpheme.games/` |
-| **Dictionary Line Count & Integrity** | ✅ Verified | Byte-exact synchronization of dictionary text files and SQLite databases |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to latest commit |
+| **Find Count Live Verification** | ✅ Verified | `/api/word_tally/BATTING` verified live on production returning `count: 0` (24h room excluded) |
+| **Leaderboards Live Verification** | ✅ Verified | `/api/leaderboard?game_type=subanagrams` and `time_limit=86400` verified live returning empty categories |
+| **Achievements Live Verification** | ✅ Verified | `/api/profile/jeffy/achievements/...` verified live returning 0 games with exclusion message |
+| **Git Tags** | ✅ Tagged | `START_OVER_POINT_OCTOBER_31` and `stable-2026-10-31` updated to commit `bac2188a` |
 
 
 
