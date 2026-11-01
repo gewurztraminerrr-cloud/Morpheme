@@ -11066,13 +11066,17 @@ async function fetchDefinition(word) {
                 );
             }
             const roundFindersCount = roundFinders.length;
+            const isSub = (s && s.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+
             // Immediate label while tally fetches
             fcBtn.textContent = `FC [${roundFindersCount}]`;
-            fcBtn.title = 'Find Count (FC)';
+            fcBtn.title = isSub ? 'Find Count (FC: Room / Outside)' : 'Find Count (FC)';
 
             if (!window._wordTallyCache) window._wordTallyCache = {};
             if (window._wordTallyCache[cleanWord]) {
-                const totalCombined = calculateCombinedFindCount(window._wordTallyCache[cleanWord], roundFinders);
+                const tallyData = window._wordTallyCache[cleanWord];
+                const outsideCount = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
+                const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(tallyData, roundFinders);
                 fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
             } else {
                 fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
@@ -11080,7 +11084,8 @@ async function fetchDefinition(word) {
                     .then(data => {
                         window._wordTallyCache[cleanWord] = data;
                         if (window._currentDefWord === cleanWord) {
-                            const totalCombined = calculateCombinedFindCount(data, roundFinders);
+                            const outsideCount = (data && typeof data.count === 'number') ? data.count : 0;
+                            const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(data, roundFinders);
                             fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
                         }
                     })
@@ -13455,20 +13460,19 @@ window.showFinderModal = function (word) {
 
         title.textContent = `Who found "${wordUpper}"?`;
 
-        // Use current game state to find players
-        if (!window.lastGameState || !window.lastGameState.players || window.lastGameState.game_type === 'subanagrams') {
-            return;
-        }
+        const s = window.lastGameState || {};
+        const isSubanagrams = (s.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+        const playersList = Array.isArray(s.players) ? s.players : [];
 
         // Sort all players to establish round placement
-        const sortedAllPlayers = [...window.lastGameState.players].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
+        const sortedAllPlayers = [...playersList].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
         const playerRankMap = new Map();
         sortedAllPlayers.forEach((p, idx) => {
             playerRankMap.set(p.username, idx + 1);
         });
 
-        const finders = window.lastGameState.players.filter(p =>
-            p.submitted_words && p.submitted_words.some(sw =>
+        const finders = playersList.filter(p =>
+            p && p.submitted_words && p.submitted_words.some(sw =>
                 (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
             )
         ).sort((a, b) => {
@@ -13479,105 +13483,119 @@ window.showFinderModal = function (word) {
 
         const findersCount = finders.length;
 
-        // Fetch tally
-        body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Loading tally...</p>';
-        
-        fetch(`/api/word_tally/${wordUpper}`)
-            .then(res => res.json())
-            .then(data => {
-                if (!window._wordTallyCache) window._wordTallyCache = {};
-                window._wordTallyCache[wordUpper] = data;
-                const totalCombined = calculateCombinedFindCount(data, finders);
-                
-                let html = `
-                    <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
-                        <div><strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> ${totalCombined === 1 ? 'time' : 'times'} since Morpheme began in 2026.</div>
-                        <div style="margin-top: 8px;">
-                            <a href="javascript:void(0)" id="modal-view-past-finders-link" style="color: #a78bfa; font-weight: 700; text-decoration: underline; font-size: 0.88rem; cursor: pointer;">View past 10 finders</a>
-                        </div>
-                    </div>
-                `;
-                
-                if (findersCount === 0) {
-                    html += '<p class="placeholder" style="padding: 20px; text-align: center;">No one found this word on this round.</p>';
-                } else {
-                    html += finders.map(p => {
-                        const rating = p.rating || 0;
-                        const score = p.score || 0;
-                        const rank = playerRankMap.get(p.username) || 999;
-                        const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
-                        
-                        const swObj = p.submitted_words ? p.submitted_words.find(sw =>
-                            (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
-                        ) : null;
-                        const wordPts = (swObj && typeof swObj === 'object' && typeof swObj.points === 'number') ? swObj.points : defaultWordVal;
-                        
-                        // Placement Badge Styling
-                        let badgeBg = 'rgba(255,255,255,0.05)';
-                        let badgeColor = 'var(--text-secondary)';
-                        let rankText = `#${rank}`;
-                        if (rank === 1) {
-                            badgeBg = 'rgba(255, 215, 0, 0.15)';
-                            badgeColor = '#FFD700';
-                            rankText = '1st';
-                        } else if (rank === 2) {
-                            badgeBg = 'rgba(192, 192, 192, 0.15)';
-                            badgeColor = '#E0E0E0';
-                            rankText = '2nd';
-                        } else if (rank === 3) {
-                            badgeBg = 'rgba(205, 127, 50, 0.15)';
-                            badgeColor = '#CD7F32';
-                            rankText = '3rd';
-                        } else {
-                            const j = rank % 10, k = rank % 100;
-                            let suffix = "th";
-                            if (j === 1 && k !== 11) suffix = "st";
-                            else if (j === 2 && k !== 12) suffix = "nd";
-                            else if (j === 3 && k !== 13) suffix = "rd";
-                            rankText = rank + suffix;
-                        }
-                        
-                        return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 22px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; font-size: 0.75rem; font-weight: 800;">
-                                        ${rankText}
-                                    </div>
-                                    <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22; cursor: pointer;" title="View Mini-Profile"></div>
-                                    <span style="font-weight: 700; font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" title="View Mini-Profile">${p.username}</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${wordPts} pts</span>
-                                    <span style="opacity: 0.4; font-size: 0.8rem; font-weight: 600;">⭐ ${rating}</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
-                body.innerHTML = html;
+        const renderModalContent = (data) => {
+            const outsideCount = (data && typeof data.count === 'number') ? data.count : (typeof data === 'number' ? data : 0);
+            const totalCombined = isSubanagrams ? outsideCount : calculateCombinedFindCount(data, finders);
+            
+            const timeStr = (count) => count === 1 ? 'time' : 'times';
+            const countMsg = isSubanagrams ?
+                `<div><strong>${wordUpper}</strong> has been found <strong>${outsideCount}</strong> ${timeStr(outsideCount)} outside of the multiplayer subanagrams room since Morpheme began in 2026.</div>` :
+                `<div><strong>${wordUpper}</strong> has been found <strong>${totalCombined}</strong> ${timeStr(totalCombined)} since Morpheme began in 2026.</div>`;
 
-                const pastFindersLink = body.querySelector('#modal-view-past-finders-link');
-                if (pastFindersLink) {
-                    pastFindersLink.onclick = (e) => {
-                        if (e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                        closeModal();
-                        if (typeof window.navigateToFindCount === 'function') {
-                            window.navigateToFindCount(wordUpper, 'page-play');
-                        }
-                    };
-                }
-            })
-            .catch(err => {
-                console.error('[showFinderModal] Error fetching tally:', err);
-                body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Error loading tally.</p>';
-            });
+            let html = `
+                <div style="padding: 14px 16px; font-size: 0.95rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;">
+                    ${countMsg}
+                    <div style="margin-top: 8px;">
+                        <a href="javascript:void(0)" id="modal-view-past-finders-link" style="color: #a78bfa; font-weight: 700; text-decoration: underline; font-size: 0.88rem; cursor: pointer;">View past 10 finders</a>
+                    </div>
+                </div>
+            `;
+            
+            if (findersCount === 0) {
+                html += '<p class="placeholder" style="padding: 20px; text-align: center;">No one found this word on this round.</p>';
+            } else {
+                html += finders.map(p => {
+                    const rating = p.rating || 0;
+                    const score = p.score || 0;
+                    const rank = playerRankMap.get(p.username) || 999;
+                    const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                    
+                    const swObj = p.submitted_words ? p.submitted_words.find(sw =>
+                        (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
+                    ) : null;
+                    const wordPts = (swObj && typeof swObj === 'object' && typeof swObj.points === 'number') ? swObj.points : defaultWordVal;
+                    
+                    // Placement Badge Styling
+                    let badgeBg = 'rgba(255,255,255,0.05)';
+                    let badgeColor = 'var(--text-secondary)';
+                    let rankText = `#${rank}`;
+                    if (rank === 1) {
+                        badgeBg = 'rgba(255, 215, 0, 0.15)';
+                        badgeColor = '#FFD700';
+                        rankText = '1st';
+                    } else if (rank === 2) {
+                        badgeBg = 'rgba(192, 192, 192, 0.15)';
+                        badgeColor = '#E0E0E0';
+                        rankText = '2nd';
+                    } else if (rank === 3) {
+                        badgeBg = 'rgba(205, 127, 50, 0.15)';
+                        badgeColor = '#CD7F32';
+                        rankText = '3rd';
+                    } else {
+                        const j = rank % 10, k = rank % 100;
+                        let suffix = "th";
+                        if (j === 1 && k !== 11) suffix = "st";
+                        else if (j === 2 && k !== 12) suffix = "nd";
+                        else if (j === 3 && k !== 13) suffix = "rd";
+                        rankText = rank + suffix;
+                    }
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); margin-bottom: 4px; border-radius: 6px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 22px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; font-size: 0.75rem; font-weight: 800;">
+                                    ${rankText}
+                                </div>
+                                <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22; cursor: pointer;" title="View Mini-Profile"></div>
+                                <span style="font-weight: 700; font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" title="View Mini-Profile">${p.username}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color, #a855f7);">${wordPts} pts</span>
+                                <span style="opacity: 0.4; font-size: 0.8rem; font-weight: 600;">⭐ ${rating}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            body.innerHTML = html;
+
+            const pastFindersLink = body.querySelector('#modal-view-past-finders-link');
+            if (pastFindersLink) {
+                pastFindersLink.onclick = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    closeModal();
+                    if (typeof window.navigateToFindCount === 'function') {
+                        window.navigateToFindCount(wordUpper, 'page-play');
+                    }
+                };
+            }
+        };
 
         modal.classList.remove('hidden');
+        modal.classList.add('forced-show');
         modal.style.display = 'flex';
+        window._hasPriorityModal = true;
+
+        if (window._wordTallyCache && window._wordTallyCache[wordUpper]) {
+            renderModalContent(window._wordTallyCache[wordUpper]);
+        } else {
+            body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Loading tally...</p>';
+            fetch(`/api/word_tally/${wordUpper}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!window._wordTallyCache) window._wordTallyCache = {};
+                    window._wordTallyCache[wordUpper] = data;
+                    renderModalContent(data);
+                })
+                .catch(err => {
+                    console.error('[showFinderModal] Error fetching tally:', err);
+                    body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Error loading tally.</p>';
+                });
+        }
     }
 };
 

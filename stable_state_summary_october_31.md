@@ -733,6 +733,22 @@ START_OVER_POINT_OCTOBER_31
 - **Cache Busters (`templates/index.html`)**:
   - Bumped `play.css` cache buster to `v=1793700000` and `play.js` cache buster to `v=1793710000`.
 
+### 59. Multiplayer Subanagrams: FC Word Find Count Modal & Outside Finders Tally (`static/js/play.js`, `templates/index.html`)
+- **Unblock FC Modal in Subanagrams**:
+  - In `static/js/play.js`, removed the early abort `if (... || window.lastGameState.game_type === 'subanagrams') return;` in `window.showFinderModal`.
+  - Pressing `FC` on the word definition card in Multiplayer Subanagrams now reliably opens the `Who found "[word]"` modal.
+- **Outside Finders Tally & Round Finders Display**:
+  - Because Subanagrams practice rounds do not record word finds to the central database, the find tally is retrieved directly from `/api/word_tally/${word}` (`data.count`) without adding round finders.
+  - The modal header clearly displays: `[WORD] has been found X times outside of the multiplayer subanagrams room since Morpheme began in 2026.`.
+  - Includes `View past 10 finders` link that routes to Tools -> Find Count with the `← Back` button.
+  - Below the header, lists the players in the Subanagrams round who found the word, showing their placement badges, points, usernames, and ratings (or `"No one found this word on this round."`).
+- **Definition Card FC Button Format**:
+  - On the definition card, `fcBtn` formats as `FC [roundFinders / outsideCount]` (e.g. `FC [1 / 37]`).
+  - Title tooltip set to: `Find Count (FC: Room / Outside)`.
+  - Leverages `window._wordTallyCache` for instant 0ms rendering with network fetch fallback.
+- **Cache Busters (`templates/index.html`)**:
+  - Bumped `play.js` cache buster to `v=1793720000`.
+
 ---
 
 ## Verification & Validation
