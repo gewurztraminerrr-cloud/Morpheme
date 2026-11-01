@@ -1337,14 +1337,14 @@ function setupComboExplorer() {
 
     if (!lengthSelect || !mpSelect) return;
 
-    lengthSelect.addEventListener('change', () => loadComboExplorerWords(true));
-    mpSelect.addEventListener('change', () => loadComboExplorerWords(true));
+    lengthSelect.addEventListener('change', () => loadComboExplorerWords());
+    mpSelect.addEventListener('change', () => loadComboExplorerWords());
 
     if (dirSelect) {
         dirSelect.addEventListener('change', () => {
             _comboExplorerWordsCache.clear();
             _comboExplorerMatchesCache.clear();
-            loadComboExplorerWords(true);
+            loadComboExplorerWords();
         });
     }
 
@@ -1359,7 +1359,7 @@ function setupComboExplorer() {
         expDictSelect.addEventListener('change', () => {
             _comboExplorerWordsCache.clear();
             _comboExplorerMatchesCache.clear();
-            loadComboExplorerWords(true);
+            loadComboExplorerWords();
         });
     }
 
@@ -1405,7 +1405,7 @@ function setupComboExplorer() {
         initCustomScrollbarForElement('combo-explorer-response-list', 'combo-explorer-response-track', 'combo-explorer-response-thumb');
     }
 
-    loadComboExplorerWords(false);
+    loadComboExplorerWords();
 }
 
 function applyComboExplorerFilter() {
@@ -1425,6 +1425,30 @@ function applyComboExplorerFilter() {
     
     const countBadge = document.getElementById('combo-explorer-input-count');
     if (countBadge) countBadge.textContent = _comboExplorerDisplayWords.length.toLocaleString();
+
+    const exactMatch = _comboExplorerDisplayWords.find(w => w === filterText);
+    if (exactMatch) {
+        _comboExplorerSelectedWord = exactMatch;
+        window.selectComboExplorerWord(exactMatch);
+    } else if (_comboExplorerDisplayWords.length === 1 && filterText.length >= 3) {
+        _comboExplorerSelectedWord = _comboExplorerDisplayWords[0];
+        window.selectComboExplorerWord(_comboExplorerDisplayWords[0]);
+    } else if (_comboExplorerSelectedWord && !_comboExplorerDisplayWords.includes(_comboExplorerSelectedWord)) {
+        _comboExplorerSelectedWord = null;
+        const respTitle = document.getElementById('combo-explorer-response-title');
+        const respList = document.getElementById('combo-explorer-response-list');
+        const respCount = document.getElementById('combo-explorer-response-count');
+        if (respTitle) respTitle.textContent = 'MP Connections';
+        if (respCount) respCount.textContent = '0';
+        if (respList) {
+            respList.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic;">
+                    Select an input word on the left to display its matching MP words.
+                </div>`;
+        }
+        _comboExplorerMatches = [];
+        _comboExplorerDisplayMatches = [];
+    }
     
     renderComboExplorerInputWords(true);
 }
@@ -1450,7 +1474,7 @@ function applyComboExplorerOrdering() {
     renderComboExplorerMatches();
 }
 
-async function loadComboExplorerWords(forceReset = false) {
+async function loadComboExplorerWords(preserveWord = null) {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
     const expDictSelect = document.getElementById('combo-explorer-dict') || document.getElementById('combo-dict');
@@ -1477,16 +1501,30 @@ async function loadComboExplorerWords(forceReset = false) {
     if (inputCount) inputCount.textContent = '...';
     inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading words...</div>';
 
-    _comboExplorerSelectedWord = null;
-    _comboExplorerMatches = [];
-    _comboExplorerDisplayMatches = [];
-    if (respTitle) respTitle.textContent = 'MP Connections';
-    if (respCount) respCount.textContent = '0';
-    if (respList) {
-        respList.innerHTML = `
-            <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic;">
-                Select an input word on the left to display its matching MP words.
-            </div>`;
+    const prevWord = (preserveWord !== null)
+        ? preserveWord
+        : (_comboExplorerSelectedWord || (filterInput ? filterInput.value.trim().toUpperCase() : ''));
+
+    if (prevWord) {
+        if (respTitle) {
+            respTitle.innerHTML = `${mp}MP from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${prevWord}', event)" title="Click to view definition">${prevWord}</span>`;
+        }
+        if (respCount) respCount.textContent = '...';
+        if (respList) {
+            respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading matches...</div>';
+        }
+    } else {
+        _comboExplorerSelectedWord = null;
+        _comboExplorerMatches = [];
+        _comboExplorerDisplayMatches = [];
+        if (respTitle) respTitle.textContent = 'MP Connections';
+        if (respCount) respCount.textContent = '0';
+        if (respList) {
+            respList.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic;">
+                    Select an input word on the left to display its matching MP words.
+                </div>`;
+        }
     }
 
     let words = [];
@@ -1582,11 +1620,26 @@ async function loadComboExplorerWords(forceReset = false) {
     if (myReqId !== _comboExplorerWordsRequestId) return;
 
     _comboExplorerWords = words;
-    if (filterInput && forceReset) {
-        filterInput.value = '';
-    }
 
     applyComboExplorerOrdering();
+
+    if (prevWord && _comboExplorerWords.includes(prevWord)) {
+        _comboExplorerSelectedWord = prevWord;
+        window.selectComboExplorerWord(prevWord);
+    } else if (filterInput && filterInput.value.trim().length >= 3 && _comboExplorerDisplayWords.length === 1) {
+        _comboExplorerSelectedWord = _comboExplorerDisplayWords[0];
+        window.selectComboExplorerWord(_comboExplorerDisplayWords[0]);
+    } else {
+        _comboExplorerSelectedWord = null;
+        if (respTitle) respTitle.textContent = 'MP Connections';
+        if (respCount) respCount.textContent = '0';
+        if (respList) {
+            respList.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic;">
+                    Select an input word on the left to display its matching MP words.
+                </div>`;
+        }
+    }
 }
 window.loadComboExplorerWords = loadComboExplorerWords;
 

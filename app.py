@@ -9383,7 +9383,7 @@ def get_combo_payload_for_word(search_term, dict_name):
     return result_payload, 200
 
 
-def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both'):
+def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both', base_dict_name='CSW'):
     """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp."""
     source_len = len(w)
     dict_set = dict_data['set']
@@ -9402,6 +9402,18 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                     sub2 = w[::-1][start:start+l]
                     if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
                         return True
+        try:
+            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
+            if status_code == 200:
+                mp_matches = combo_res.get('mp_groups', {}).get(0, []) or combo_res.get('mp_groups', {}).get('0', [])
+                valid_matches = [m for m in mp_matches if len(m) != 4]
+                if direction == 'forwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 0)[0] == 0]
+                elif direction == 'backwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], 0)[0] == 0]
+                return len(valid_matches) > 0
+        except Exception:
+            pass
         return False
 
     if target_mp == 1:
@@ -9448,15 +9460,52 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                             sub = s[:i] + c + s[i+1:]
                             if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
                                 return True
+            # Fast path 6: drop extremity letters leaving substring of length >= 4, then insert 1 letter
+            if source_len >= 5:
+                for sub_len in range(4, source_len):
+                    for start in range(source_len - sub_len + 1):
+                        sub = s[start:start+sub_len]
+                        for i in range(len(sub) + 1):
+                            for char in common_chars:
+                                ins = sub[:i] + char + sub[i:]
+                                if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
+                                    return True
 
+        # Fallback to get_combo_payload_for_word to ensure 100% accuracy with Manual
+        try:
+            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
+            if status_code == 200:
+                mp_matches = combo_res.get('mp_groups', {}).get(1, []) or combo_res.get('mp_groups', {}).get('1', [])
+                valid_matches = [m for m in mp_matches if len(m) != 4]
+                if direction == 'forwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 1)[0] == 1]
+                elif direction == 'backwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], 1)[0] == 1]
+                return len(valid_matches) > 0
+        except Exception:
+            pass
         return False
 
     if target_mp >= 2:
         # Any word with 0MP or 1MP connections also has 2MP and 3MP connections
-        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
+        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
             return True
-        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
+        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
             return True
+        # Fallback to get_combo_payload_for_word for full accuracy with Manual
+        try:
+            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
+            if status_code == 200:
+                mp_matches = combo_res.get('mp_groups', {}).get(target_mp, []) or combo_res.get('mp_groups', {}).get(str(target_mp), [])
+                valid_matches = [m for m in mp_matches if len(m) != 4]
+                if direction == 'forwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, target_mp)[0] == target_mp]
+                elif direction == 'backwards':
+                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], target_mp)[0] == target_mp]
+                return len(valid_matches) > 0
+        except Exception:
+            pass
+        return False
 
     return False
 
@@ -9561,7 +9610,7 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in sorted(words_of_len):
-            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
                 verified_words.append(w)
         input_words = verified_words
     else:
@@ -9580,7 +9629,7 @@ def tools_combo_explorer():
             dict_lens_int = dict_lens.astype(np.int16)
 
             for w in words_of_len:
-                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction):
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
                     verified_words.append(w)
                     
             COMBO_EXPLORER_CACHE[cache_key] = verified_words
