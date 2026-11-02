@@ -10442,28 +10442,82 @@ window.unlockTimerAudio = function () {
     } catch (e) { return null; }
 };
 
-// Synthesized gong: low fundamental plus inharmonic partials with a long decay
+// Synthesized gong (tam-tam style): mallet strike + inharmonic partials with beating pairs,
+// upper partials that "bloom" after the strike, slight pitch settle, and a short reverb tail.
 window.playTimerGong = function () {
     const ctx = window.unlockTimerAudio();
     if (!ctx) return;
     const now = ctx.currentTime;
+    const total = 9;
+
     const master = ctx.createGain();
-    master.gain.setValueAtTime(0.0001, now);
-    master.gain.exponentialRampToValueAtTime(0.9, now + 0.01);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + 5.5);
-    master.connect(ctx.destination);
-    const base = 110;
-    [[1, 1.0, 5.0], [1.504, 0.6, 4.2], [2.0, 0.5, 3.6], [2.74, 0.35, 2.8], [3.76, 0.25, 2.0], [5.4, 0.15, 1.3]].forEach(([ratio, amp, dur]) => {
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(base * ratio, now);
-        g.gain.setValueAtTime(amp, now);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-        osc.connect(g);
-        g.connect(master);
-        osc.start(now);
-        osc.stop(now + dur + 0.1);
+    master.gain.value = 0.2;
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.frequency.setValueAtTime(7000, now);
+    tone.frequency.exponentialRampToValueAtTime(1800, now + total);
+    master.connect(tone);
+
+    // Short synthetic room reverb (decaying noise impulse response)
+    const irLen = Math.floor(ctx.sampleRate * 2.2);
+    const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+        const d = ir.getChannelData(c);
+        for (let i = 0; i < irLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLen, 2.5);
+    }
+    const reverb = ctx.createConvolver();
+    reverb.buffer = ir;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.35;
+    tone.connect(ctx.destination);
+    tone.connect(reverb);
+    reverb.connect(wet);
+    wet.connect(ctx.destination);
+
+    // Mallet strike transient
+    const nLen = Math.floor(ctx.sampleRate * 0.25);
+    const nBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
+    const nd = nBuf.getChannelData(0);
+    for (let i = 0; i < nLen; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nLen, 3);
+    const noise = ctx.createBufferSource();
+    noise.buffer = nBuf;
+    const nf = ctx.createBiquadFilter();
+    nf.type = 'bandpass';
+    nf.frequency.value = 900;
+    nf.Q.value = 0.7;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.9, now);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    noise.connect(nf);
+    nf.connect(ng);
+    ng.connect(master);
+    noise.start(now);
+
+    // [ratio, amplitude, attack (s), decay (s)] - inharmonic tam-tam-like spectrum
+    const base = 82;
+    const partials = [
+        [1.00, 1.00, 0.012, 8.5], [1.59, 0.70, 0.02, 7.5], [2.14, 0.65, 0.04, 6.8],
+        [2.30, 0.55, 0.06, 6.2], [2.65, 0.50, 0.10, 5.6], [2.92, 0.45, 0.14, 5.2],
+        [3.50, 0.38, 0.22, 4.6], [4.07, 0.32, 0.30, 4.0], [4.60, 0.26, 0.40, 3.5],
+        [5.43, 0.20, 0.55, 3.0], [6.80, 0.14, 0.70, 2.4], [8.20, 0.09, 0.85, 1.8]
+    ];
+    partials.forEach(([ratio, amp, attack, decay], idx) => {
+        // Two slightly detuned oscillators per partial produce the gong's slow "wah-wah" beating
+        [0, 1].forEach(k => {
+            const f = base * ratio * (k === 0 ? 1 : 1 + 0.0035 + idx * 0.0003);
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f * 1.03, now);
+            osc.frequency.exponentialRampToValueAtTime(f, now + 0.5);
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(amp * 0.5, now + attack);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
+            osc.connect(g);
+            g.connect(master);
+            osc.start(now);
+            osc.stop(now + attack + decay + 0.1);
+        });
     });
 };
 
