@@ -307,7 +307,7 @@ def format_chicago_to_utc(chicago_ts_str):
             dt = dt.replace(tzinfo=datetime.timezone.utc)
             return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
             
-        dt = dt.replace(tzinfo=ZoneInfo("America/Chicago"))
+        dt = dt.replace(tzinfo=DAILY_TZ)
         utc_dt = dt.astimezone(datetime.timezone.utc)
         return utc_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
     except Exception as e:
@@ -419,6 +419,8 @@ def load_word_date_pairs(file_path, default_fallback_date=None):
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
+# Fixed UTC-5 ("CDT forever"): daylight saving no longer observed.
+DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-5), "CDT")
 RATING_AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rating_audit.log')
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
@@ -5148,7 +5150,7 @@ def get_public_profile(username):
     period = request.args.get('period', 'all').lower()
     
     # Calculate Chicago local time boundaries
-    chicago_tz = ZoneInfo("America/Chicago")
+    chicago_tz = DAILY_TZ
     chicago_now = datetime.datetime.now(chicago_tz)
     chicago_today_str = chicago_now.strftime('%Y-%m-%d')
     chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
@@ -5492,7 +5494,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         except: continue
 
     # 2. Filter by Period for the lists - Enforce Calendar Day logic
-    chicago_tz = ZoneInfo("America/Chicago")
+    chicago_tz = DAILY_TZ
     chicago_now = datetime.datetime.now(chicago_tz)
     chicago_today_str = chicago_now.strftime('%Y-%m-%d')
     chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
@@ -10755,7 +10757,7 @@ def tools_wotd():
     import hashlib
     
     # Standardize to Chicago timezone matching the rest of the game platform
-    chicago_tz = ZoneInfo("America/Chicago")
+    chicago_tz = DAILY_TZ
     today_str = datetime.now(chicago_tz).strftime('%Y-%m-%d')
     
     global _WOTD_CACHE
@@ -12161,7 +12163,7 @@ def get_leaderboard_data():
                 where_clauses.append("(rh.game_type != 'accumulative' OR rh.round_duration != 600)")
 
         # Calculate Chicago local time boundaries
-        chicago_tz = ZoneInfo("America/Chicago")
+        chicago_tz = DAILY_TZ
         chicago_now = datetime.datetime.now(chicago_tz)
         chicago_today_str = chicago_now.strftime('%Y-%m-%d')
         chicago_week_ago_str = (chicago_now - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')

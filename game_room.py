@@ -13,6 +13,10 @@ from typing import List, Dict
 import os
 import fcntl
 
+# Fixed UTC-5 ("CDT forever"): daylight saving no longer observed, so the
+# daily 12:00 AM reset for 24h rooms never shifts.
+DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-5), "CDT")
+
 # GLOBAL WORD TALLY CONTROLLER
 # Absolute path ensures consistency across Gunicorn/Flask environments
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
@@ -829,7 +833,7 @@ class GameRoom:
         if self.state == 'active' and self.time_limit >= 7200:
             import datetime
             from zoneinfo import ZoneInfo
-            tz = ZoneInfo("America/Chicago")
+            tz = DAILY_TZ
             now_tz = datetime.datetime.now(tz)
             next_midnight = datetime.datetime.combine(now_tz.date() + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
             delta = (next_midnight - now_tz).total_seconds()
@@ -852,7 +856,7 @@ class GameRoom:
         if self.time_limit >= 7200:
             import datetime
             from zoneinfo import ZoneInfo
-            tz = ZoneInfo("America/Chicago")
+            tz = DAILY_TZ
             now_tz = datetime.datetime.now(tz)
             next_midnight = datetime.datetime.combine(now_tz.date() + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
             return next_midnight.timestamp()
@@ -2010,7 +2014,7 @@ class GameRoom:
                 if self.round_start_time > 0:
                     import datetime
                     from zoneinfo import ZoneInfo
-                    tz = ZoneInfo("America/Chicago")
+                    tz = DAILY_TZ
                     round_start_dt = datetime.datetime.fromtimestamp(self.round_start_time, tz)
                     now_dt = datetime.datetime.fromtimestamp(now, tz)
                     if now > self.round_start_time and now_dt.date() > round_start_dt.date():
@@ -3660,7 +3664,7 @@ class RoomManager:
                     import json
                     import datetime
                     from zoneinfo import ZoneInfo
-                    tz = ZoneInfo("America/Chicago")
+                    tz = DAILY_TZ
                     
                     try:
                         with get_db() as conn:
@@ -7917,7 +7921,7 @@ class RoomManager:
                 
                 # Robust Timestamping for 24h rooms in America/Chicago timezone
                 from zoneinfo import ZoneInfo
-                tz = ZoneInfo("America/Chicago")
+                tz = DAILY_TZ
                 now = datetime.datetime.now(tz)
                 # If a daily room ended just after midnight, the results belong to "Yesterday"
                 if room.time_limit >= 7200 and now.hour == 0 and now.minute < 10:
