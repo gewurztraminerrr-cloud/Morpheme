@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793630000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793550000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793630000">
-    <link rel="stylesheet" href="/css/play.css?v=1793700000">
+    <link rel="stylesheet" href="/css/play.css?v=1793740000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -6327,6 +6327,10 @@
                                 <div class="settings-subnav-title">Intermission Vibration Alert</div>
                                 <div class="settings-subnav-desc">Vibrate mobile devices 10 seconds before a new round starts</div>
                             </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('audio', 'timer-alarm')">
+                                <div class="settings-subnav-title">Personal Timer Alarm</div>
+                                <div class="settings-subnav-desc">Hear the gong and see the red flash that signal the Personal Timer is done</div>
+                            </button>
                         </div>
 
                         <!-- 1. Subpage: Lobby Music -->
@@ -6434,6 +6438,26 @@
                                         <span class="slider round"></span>
                                     </span>
                                 </label>
+                            </div>
+                        </div>
+
+                        <!-- 6. Subpage: Personal Timer Alarm -->
+                        <div id="setting-subpage-timer-alarm" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
+                                <h3 class="setting-subpage-title">Personal Timer Alarm</h3>
+                                <p class="setting-subpage-desc">When the Personal Timer in Tools reaches 00:00:00, a gong sounds and the definition panel flashes red.</p>
+                            </div>
+                            <div class="setting-subpage-content">
+                                <div class="setting-card">
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        <div class="setting-card-title">Time's Up Demonstration</div>
+                                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                            <button class="bell-btn" type="button" onclick="window.demoTimerAlarm()">Play Gong <span class="play-icon">▶</span></button>
+                                        </div>
+                                        <div id="timer-alarm-demo-flash" style="border-radius: 10px; padding: 18px; text-align: center; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; border: 1px solid rgba(var(--text-primary-rgb), 0.15);">Time is up!</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -9935,7 +9959,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1793495000"></script>
+    <script src="/js/settings.js?v=1793740000"></script>
     <script src="/js/forum.js?v=1793650000"></script>
     <script src="/js/app.js?v=1793570000"></script>
     <script src="/js/lobby.js?v=1792345100"></script>
@@ -9943,7 +9967,7 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1793462000"></script>
-    <script src="/js/tools.js?v=1793690000"></script>
+    <script src="/js/tools.js?v=1793740000"></script>
     <script src="/js/store.js?v=1792215000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1792837000"></script>

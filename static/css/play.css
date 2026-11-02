@@ -21488,3 +21488,5 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     color: #1e293b !important;
 }
 
+
+#timer-alarm-demo-flash.timer-flash { color: #ffffff !important; text-shadow: 0 0 20px rgba(0,0,0,0.8); }

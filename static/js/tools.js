@@ -10430,6 +10430,56 @@ let personalTimerInterval = null;
 let personalTimerSeconds = 0;
 let personalTimerPaused = false;
 
+// Shared AudioContext for the Time's-Up gong (unlocked by a user gesture)
+window._timerAudioCtx = window._timerAudioCtx || null;
+window.unlockTimerAudio = function () {
+    try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        if (!window._timerAudioCtx) window._timerAudioCtx = new AC();
+        if (window._timerAudioCtx.state === 'suspended') window._timerAudioCtx.resume();
+        return window._timerAudioCtx;
+    } catch (e) { return null; }
+};
+
+// Synthesized gong: low fundamental plus inharmonic partials with a long decay
+window.playTimerGong = function () {
+    const ctx = window.unlockTimerAudio();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.9, now + 0.01);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 5.5);
+    master.connect(ctx.destination);
+    const base = 110;
+    [[1, 1.0, 5.0], [1.504, 0.6, 4.2], [2.0, 0.5, 3.6], [2.74, 0.35, 2.8], [3.76, 0.25, 2.0], [5.4, 0.15, 1.3]].forEach(([ratio, amp, dur]) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(base * ratio, now);
+        g.gain.setValueAtTime(amp, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(now);
+        osc.stop(now + dur + 0.1);
+    });
+};
+
+// Demo (Settings -> Audio & Sounds): gong together with the red flash
+window.demoTimerAlarm = function () {
+    window.playTimerGong();
+    const box = document.getElementById('timer-alarm-demo-flash');
+    if (box) {
+        box.classList.remove('timer-flash');
+        void box.offsetWidth;
+        box.classList.add('timer-flash');
+        clearTimeout(window._timerDemoFlashTimeout);
+        window._timerDemoFlashTimeout = setTimeout(() => box.classList.remove('timer-flash'), 5000);
+    }
+};
+
 function setupPersonalTimer() {
     const startBtn = document.getElementById('timer-start-btn');
     const pauseBtn = document.getElementById('timer-pause-btn');
@@ -10460,7 +10510,8 @@ function setupPersonalTimer() {
             displayLabel.textContent = "00:00:00";
             if (pauseBtn) pauseBtn.style.display = 'none';
 
-            // Flash definitions panel
+            // Flash definitions panel (red) and sound the gong at the same moment
+            if (typeof window.playTimerGong === 'function') window.playTimerGong();
             if (defPanel) {
                 defPanel.classList.add('timer-flash');
                 if (defHeader) defHeader.style.display = 'none';
@@ -10501,6 +10552,7 @@ function setupPersonalTimer() {
 
         // Reset any previous flashing
         if (defPanel) defPanel.classList.remove('timer-flash');
+        if (typeof window.unlockTimerAudio === 'function') window.unlockTimerAudio();
 
         clearInterval(personalTimerInterval);
         personalTimerInterval = setInterval(runCountdownStep, 1000);

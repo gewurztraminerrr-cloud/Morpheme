@@ -432,7 +432,7 @@ function debounce(func, wait) {
         // Next Round Bell Type
         if (settings.next_round_bell_type) {
             const type = settings.next_round_bell_type;
-            const bellBtns = document.querySelectorAll('.bell-btn');
+            const bellBtns = document.querySelectorAll('.bell-btn[data-bell]');
             bellBtns.forEach(btn => {
                 if (btn.getAttribute('data-bell') === type) btn.classList.add('active');
                 else btn.classList.remove('active');
@@ -940,7 +940,7 @@ function debounce(func, wait) {
         });
     }
 
-    const bellBtns = document.querySelectorAll('.bell-btn');
+    const bellBtns = document.querySelectorAll('.bell-btn[data-bell]');
     bellBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const bell = btn.getAttribute('data-bell');
