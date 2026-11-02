@@ -21129,6 +21129,12 @@ body.theme-white .color-dot.active {
     color: #f87171;
 }
 
+.flash-badge.already {
+    background: rgba(142, 68, 173, 0.18);
+    border: 1px solid #8e44ad;
+    color: #c084fc;
+}
+
 /* Synesthesia Grid & Reset Button */
 #setting-subpage-synesthesia #synesthesia-letters-grid {
     display: grid !important;
