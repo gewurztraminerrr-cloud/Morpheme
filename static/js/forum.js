@@ -3252,6 +3252,10 @@ const Forum = {
                 const isOpening = (this.currentPostsByNumber && this.currentPostsByNumber.get(parseInt(numStr, 10))?.isOpeningPost) ||
                                   (this.currentPostLookup && (this.currentPostLookup[lookupKey]?.type === 'post' || this.currentPostLookup[legacyKey]?.type === 'post'));
                 const label = isOpening ? ' (Thread)' : (threadSuffix || '');
+                if (!hasTarget) {
+                    // Referenced post no longer exists: keep the text but don't make it a link
+                    return `<span class="forum-mention-tag">${tag} p#${numStr}</span>${threadSuffix || ''}`;
+                }
                 return `<span class="forum-mention-tag">${tag} <a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">p#${numStr}</a>${label}</span>`;
             }
             // Standalone @username or &username
@@ -3262,6 +3266,11 @@ const Forum = {
         // Match standalone p#NUM (e.g. "p#14", "P#14") not already wrapped in a link or tag
         const standaloneNumRegex = /(?<![>&\w#@/])[pP]#(\d+)\b(?![^<]*>)/g;
         processed = processed.replace(standaloneNumRegex, (match, numStr) => {
+            const lookupKey = `p#${numStr}`;
+            const legacyKey = `#${numStr}`;
+            const exists = (this.currentPostsByNumber && this.currentPostsByNumber.has(parseInt(numStr, 10))) ||
+                           (this.currentPostLookup && (this.currentPostLookup[lookupKey] || this.currentPostLookup[legacyKey]));
+            if (!exists) return match; // Only link to existing posts
             return `<a href="#" class="forum-post-link" data-post-number="${numStr}" onclick="event.preventDefault(); event.stopPropagation(); Forum.handleReplyLinkClick(${numStr}, event);">p#${numStr}</a>`;
         });
 
