@@ -12434,7 +12434,7 @@ def get_leaderboard_data():
                 SELECT user_id, rating, config_key,
                        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY rating DESC) as rn
                 FROM user_ratings
-                WHERE config_key LIKE ?
+                WHERE config_key LIKE ? AND ABS(rating - 1200) >= 0.5
             ) ur_best ON ur_best.user_id = u.id AND ur_best.rn = 1
             WHERE {base_where}
             GROUP BY u.id
