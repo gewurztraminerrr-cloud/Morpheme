@@ -12421,6 +12421,12 @@ def get_leaderboard_data():
                    COALESCE(ur_best.rating, 1200) as rating,
                    COALESCE(u.games_played, 0) as user_total_games,
                    COUNT(rh.id) as period_games,
+                   SUM(CASE WHEN EXISTS (
+                       SELECT 1 FROM round_history rh2
+                       WHERE rh2.room_id = rh.room_id
+                         AND rh2.round_number = rh.round_number
+                         AND rh2.user_id != rh.user_id
+                   ) THEN 1 ELSE 0 END) as multi_games,
                    ur_best.config_key,
                    rh.game_type, rh.board_dimensions, rh.round_duration
             FROM round_history rh
@@ -12440,8 +12446,10 @@ def get_leaderboard_data():
         for r in current_ratings_rows:
             d = dict(r)
             rating_val = d.get('rating', 1200)
-            total_games = max(d.get('user_total_games', 0), d.get('period_games', 0))
-            # Rule: If rating is 1200, must have over 10 games played to be included
+            total_games = d.get('multi_games', 0) or 0
+            # Rule: If rating is 1200, must have over 10 games played against other
+            # players (rounds shared with at least one other player) to be included.
+            # Solo rounds and the raw games_played counter are not counted.
             if rating_val == 1200 and total_games <= 10:
                 continue
 
