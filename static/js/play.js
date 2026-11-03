@@ -5104,28 +5104,34 @@ function initPlayDOMElements() {
 
     const findFriendsBtn = document.getElementById('find-friends-btn');
     if (findFriendsBtn) {
-        findFriendsBtn.addEventListener('click', async () => {
-            playersFilterMode = 'friends';
-            
-            // Fetch friends list if not loaded
-            if (userFriendsCache.length === 0) {
-                try {
-                    const resp = await fetch('/api/friends/list');
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        if (data.friends) {
-                            userFriendsCache = data.friends;
-                        }
+        // Always pull the latest Friends list from the server so adds/removes
+        // (mini-profile, profile, other devices) are reflected immediately.
+        window.refreshPlayersFriendsCache = async function () {
+            try {
+                const resp = await fetch('/api/friends/list', { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (Array.isArray(data.friends)) {
+                        userFriendsCache = data.friends;
                     }
-                } catch (e) {
-                    console.error('Failed to fetch friends for filtering:', e);
                 }
+            } catch (e) {
+                console.error('Failed to fetch friends for filtering:', e);
             }
-            
-            // Re-render players immediately
-            if (window.lastGameState) {
+            if (playersFilterMode === 'friends' && window.lastGameState) {
                 const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
                 renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+            }
+        };
+
+        findFriendsBtn.addEventListener('click', async () => {
+            playersFilterMode = 'friends';
+
+            // Fetch latest friends list first so accurate status is displayed immediately
+            await window.refreshPlayersFriendsCache();
+            if (window.lastGameState) {
+                const cu = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+                renderPlayers(window.lastGameState.players, cu, window.lastGameState);
             }
         });
     }

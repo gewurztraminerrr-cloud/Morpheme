@@ -9370,6 +9370,9 @@ async function handleFriendAction(username, btn) {
 
         if (data.success) {
             updateFriendButtonStatus(username, btn);
+            if (typeof window.refreshPlayersFriendsCache === 'function') {
+                window.refreshPlayersFriendsCache();
+            }
         } else if (data.error) {
             alert(data.error);
         }
