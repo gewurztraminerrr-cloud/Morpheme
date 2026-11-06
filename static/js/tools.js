@@ -6472,6 +6472,8 @@ window.openFullListModal = function() {
         .then(data => {
             clearTimeout(fetchTimeout);
             if (window._lastFullListFilterKey !== currentFilterKey) return;
+            if (data && data.error) throw new Error(data.error);
+            const rawWords = (data && data[selectedType]) || [];
             let processedWords;
             if (selectedOrder === 'random') {
                 if (currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) {
