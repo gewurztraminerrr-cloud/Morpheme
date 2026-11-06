@@ -590,8 +590,10 @@ body[class*="theme-light-"] .player-rank.rank-1,
 [class*="theme-light-"] .player-rank.rank-gold,
 body.theme-white .player-rank.rank-gold,
 body[class*="theme-light-"] .player-rank.rank-gold {
-    color: #d97706 !important;
+    color: #ffd700 !important;
     opacity: 1 !important;
+    text-shadow: -1px 0 0 #000, 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000,
+                 -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
 }
 
 [class*="theme-white"] .player-rank.rank-2,
