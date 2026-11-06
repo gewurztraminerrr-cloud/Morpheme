@@ -20662,15 +20662,17 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     text-align: left;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     gap: 5px;
-    width: 100%;
-    box-sizing: border-box;
+    width: 100% !important;
+    box-sizing: border-box !important;
     color: var(--text-primary);
     user-select: none;
     -webkit-user-select: none;
     outline: none;
+    position: relative;
 }
 
 .settings-subnav-btn:hover {
@@ -20688,22 +20690,28 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     font-size: 0.96rem;
     font-weight: 700;
     color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .settings-subnav-title::after {
-    content: "→";
-    font-size: 1.1rem;
-    opacity: 0.45;
-    transition: transform 0.2s, opacity 0.2s, color 0.2s;
+    content: "→" !important;
+    font-size: 1.1rem !important;
+    opacity: 0.45 !important;
+    margin-left: auto !important;
+    padding-left: 10px !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s, opacity 0.2s, color 0.2s !important;
 }
 
 .settings-subnav-btn:hover .settings-subnav-title::after {
-    transform: translateX(4px);
-    opacity: 1;
-    color: var(--accent-color, #409cff);
+    transform: translateX(4px) !important;
+    opacity: 1 !important;
+    color: var(--accent-color, #409cff) !important;
 }
 
 .settings-subnav-desc {
@@ -20711,6 +20719,40 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     color: var(--muted-text);
     line-height: 1.35;
     opacity: 0.85;
+}
+
+/* Settings Sidebar Tabs: right-aligned navigation arrows */
+#page-settings .tools-sidebar .tool-nav-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#page-settings .tools-sidebar .tool-btn-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#page-settings .tools-sidebar .tool-btn-title::after {
+    content: "→" !important;
+    font-size: 1.1rem !important;
+    opacity: 0.45 !important;
+    margin-left: auto !important;
+    padding-left: 8px !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s, opacity 0.2s, color 0.2s !important;
+}
+
+#page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
+#page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after {
+    transform: translateX(3px) !important;
+    opacity: 1 !important;
+    color: #4facfe !important;
 }
 
 /* Individual Sub-Page — Standardized Max Width so all headers, descriptions, cards, and controls line up perfectly */
@@ -21402,6 +21444,25 @@ body.theme-white .settings-subnav-title,
 body[class*="theme-light-"] .settings-subnav-title,
 [class*="theme-light-"] .settings-subnav-title {
     color: #0f172a;
+}
+
+body.theme-white #page-settings .tools-sidebar .tool-btn-title::after,
+[class*="theme-white"] #page-settings .tools-sidebar .tool-btn-title::after,
+body[class*="theme-light-"] #page-settings .tools-sidebar .tool-btn-title::after,
+[class*="theme-light-"] #page-settings .tools-sidebar .tool-btn-title::after {
+    color: #0f172a !important;
+}
+
+body.theme-white #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
+[class*="theme-white"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
+body[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
+[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
+body.theme-white #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
+[class*="theme-white"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
+body[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
+[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after {
+    color: #2563eb !important;
+    opacity: 1 !important;
 }
 
 body.theme-white .setting-toggle-row,
