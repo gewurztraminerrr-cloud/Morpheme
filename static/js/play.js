@@ -4046,8 +4046,8 @@ function renderDailyScoreSums() {
         // Find the absolute rank of this player in the main unfiltered list
         const absRank = players.findIndex(orig => orig.username === p.username) + 1;
         const isMe = p.username.toLowerCase().trim() === currentUserNameNormalized;
-        const rankClass = (absRank === 1) ? ' rank-1 rank-gold' : (absRank === 2) ? ' rank-2 rank-silver' : (absRank === 3) ? ' rank-bronze rank-3' : ` rank-${absRank}`;
-        const rankStyle = (absRank === 1) ? 'color: #ffd700; opacity: 1;' : (absRank === 2) ? 'color: #c0c0c0; opacity: 1;' : (absRank === 3) ? 'color: #cd7f32; opacity: 1;' : 'opacity: 0.8;';
+        const rankClass = (absRank === 1) ? ' rank-1 rank-gold' : (absRank === 2) ? ' rank-2 rank-silver' : (absRank === 3) ? ' rank-bronze rank-3' : ` rank-${absRank} rank-other`;
+        const rankStyle = (absRank === 1) ? 'color: #ffd700; opacity: 1;' : (absRank === 2) ? 'color: #e2e8f0; opacity: 1;' : (absRank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
         
         html += `
             <div class="score-sum-row ${isMe ? 'is-me-row' : ''}" data-username="${p.username.toLowerCase().trim()}" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; background: ${isMe ? 'rgba(var(--text-primary-rgb), 0.15)' : 'var(--input-bg)'}; border: 1px solid ${isMe ? 'var(--text-primary)' : 'var(--input-border)'};">
@@ -4235,8 +4235,8 @@ function renderPlayers(players, currentUser = null, state = null) {
         const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
         const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
 
-        const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank}`;
-        const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #c0c0c0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : '';
+        const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank} rank-other`;
+        const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #e2e8f0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
 
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">

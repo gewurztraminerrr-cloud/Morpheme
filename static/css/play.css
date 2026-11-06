@@ -540,8 +540,9 @@
 
 .player-rank {
     font-weight: 700;
-    opacity: 0.6;
+    opacity: 0.9;
     width: 25px;
+    color: #60a5fa !important;
 }
 
 .player-rank.rank-1,
@@ -553,7 +554,7 @@
 
 .player-rank.rank-2,
 .player-rank.rank-silver {
-    color: #c0c0c0 !important;
+    color: #e2e8f0 !important;
     opacity: 1 !important;
 }
 
@@ -563,7 +564,36 @@
     opacity: 1 !important;
 }
 
-/* Light / White themes adjustments for Silver legibility against light backgrounds */
+.player-rank.rank-other {
+    color: #60a5fa !important;
+    opacity: 0.9 !important;
+}
+
+/* Light / White themes adjustments for ranks */
+[class*="theme-white"] .player-rank,
+[class*="theme-light-"] .player-rank,
+body.theme-white .player-rank,
+body[class*="theme-light-"] .player-rank,
+[class*="theme-white"] .player-rank.rank-other,
+[class*="theme-light-"] .player-rank.rank-other,
+body.theme-white .player-rank.rank-other,
+body[class*="theme-light-"] .player-rank.rank-other {
+    color: #2563eb !important;
+    opacity: 0.9 !important;
+}
+
+[class*="theme-white"] .player-rank.rank-1,
+[class*="theme-light-"] .player-rank.rank-1,
+body.theme-white .player-rank.rank-1,
+body[class*="theme-light-"] .player-rank.rank-1,
+[class*="theme-white"] .player-rank.rank-gold,
+[class*="theme-light-"] .player-rank.rank-gold,
+body.theme-white .player-rank.rank-gold,
+body[class*="theme-light-"] .player-rank.rank-gold {
+    color: #d97706 !important;
+    opacity: 1 !important;
+}
+
 [class*="theme-white"] .player-rank.rank-2,
 [class*="theme-light-"] .player-rank.rank-2,
 body.theme-white .player-rank.rank-2,
@@ -572,7 +602,19 @@ body[class*="theme-light-"] .player-rank.rank-2,
 [class*="theme-light-"] .player-rank.rank-silver,
 body.theme-white .player-rank.rank-silver,
 body[class*="theme-light-"] .player-rank.rank-silver {
-    color: #888888 !important;
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .player-rank.rank-3,
+[class*="theme-light-"] .player-rank.rank-3,
+body.theme-white .player-rank.rank-3,
+body[class*="theme-light-"] .player-rank.rank-3,
+[class*="theme-white"] .player-rank.rank-bronze,
+[class*="theme-light-"] .player-rank.rank-bronze,
+body.theme-white .player-rank.rank-bronze,
+body[class*="theme-light-"] .player-rank.rank-bronze {
+    color: #c2410c !important;
     opacity: 1 !important;
 }
 
