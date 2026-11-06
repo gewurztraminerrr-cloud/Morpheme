@@ -63,11 +63,18 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 - **Instant Mini-Profile Add/Remove Sync**:
   - Adding or removing a friend via the mini-profile immediately executes `window.refreshPlayersFriendsCache()`, instantly refreshing the in-room players table if the user currently has the "View Friends" filter active.
 
-### 7. Lists Tool "View Full List" Modal Uncapped Word Streaming (`tools.js`, `index.html`)
-- **Full Dictionary Word Pool Loading**:
-  - Resolved an issue in `openFullListModal` where `rawWords` was not properly assigned from `data[selectedType]`, causing the full-list fetch to pause at 10,000 words.
-  - Enabled smooth uncapped retrieval and virtual scrolling for entire dictionaries (e.g. 100,000+ words).
-  - Maintained the exact sequence of the initial words shown in the main Lists view when Random order is active, followed by the complete randomized remainder of the dictionary.
+### 7. Lists Tool "View Full List" Modal Full Pool & Order Integrity (`tools.js`, `index.html`)
+- **Full Dictionary Uncapped Word Streaming**:
+  - Resolved cache poisoning and fetch error handling in `openFullListModal` so the full, uncapped lexicon (`no_limit=true`, e.g. 199,429 words for NWL, 279,000+ words for CSW) streams and displays seamlessly without pausing or truncating at 10,000 words.
+  - Eliminated premature `"(full stream paused)"` warning state by properly retrieving server dictionary response keys.
+- **Random Order 10,000 Word Prefix Preservation**:
+  - When **Random** order is selected, the first 10,000 words in View Full List match the exact 10,000 words shown in the main Lists tool.
+  - All remaining words from the dictionary are shuffled and appended seamlessly after the initial 10,000 words with zero duplicates and zero missing words.
+  - When **Alphabetical** order is selected, words are sorted alphabetically across the entire dictionary.
+- **Cache Management & Virtual Scrolling**:
+  - `fetchListsData` now only caches lists into `_cachedFullWordLists` if the entire list was returned without server truncation (`!data.is_truncated`), ensuring the full modal view never mistakenly uses a truncated 10,000-word cache.
+  - Dynamic virtual scrollbar tracks overall progress and allows instantaneous jumping and smooth scrolling across hundreds of thousands of words.
+  - Bumped cache buster in `templates/index.html` to `v=1793820000`.
 
 ---
 
@@ -85,6 +92,7 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `7d889d02` | Forum: only link p#N references to posts that still exist |
 | `f9af906c` | Update View Friends table immediately upon adding/removing friends and on button click |
 | `553af311` | Fix View Full List modal to load all words beyond 10,000 |
+| `3f344644` | Fix View Full List modal to display entire word pool and preserve initial 10,000 words in Random order |
 
 ---
 
@@ -93,7 +101,7 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | Test / Check | Result | Verification Notes |
 |:---|:---|:---|
 | **Local Working Tree** | ✅ Clean | Working tree clean on `main` |
-| **Origin / GitHub** | ✅ Synchronized | Pushed to GitHub repository |
-| **Remote Production** | ✅ Synchronized | Fast-forward deployed to `132.148.72.249`, PM2 online |
+| **Origin / GitHub** | ✅ Synchronized | Pushed to GitHub repository (`origin/main`) |
+| **Remote Production** | ✅ Synchronized | Fast-forward deployed to `132.148.72.249`, PM2 online (`morpheme`) |
 | **Production Health** | ✅ Verified | HTTP/2 200 OK |
 | **Git Tags** | ✅ Tagged | `START_OVER_POINT_NOVEMBER_6` and `stable-2026-11-06` |
