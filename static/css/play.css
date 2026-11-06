@@ -4351,20 +4351,32 @@ body.theme-white #page-settings .mobile-bottom-nav {
 }
 
 /* Personal Timer Action Buttons */
-#timer-start-btn,
+#timer-start-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35) !important;
+    color: #fff !important;
+}
+
+#timer-start-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5) !important;
+}
+
+#timer-start-btn:active {
+    transform: translateY(1px) !important;
+}
+
 #timer-pause-btn {
     background: linear-gradient(135deg, #00d2ff, #3a7bd5) !important;
     box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3) !important;
     color: #fff !important;
 }
 
-#timer-start-btn:hover,
 #timer-pause-btn:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 6px 20px rgba(0, 210, 255, 0.45) !important;
 }
 
-#timer-start-btn:active,
 #timer-pause-btn:active {
     transform: translateY(1px) !important;
 }
@@ -9786,31 +9798,68 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 12px !important;
+        gap: 10px !important;
         width: 100% !important;
-        margin-top: 25px !important;
+        margin-top: 14px !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
     }
     #timer-start-btn, #timer-pause-btn, #timer-stop-btn,
     body.is-mobile #timer-start-btn, body.is-mobile #timer-pause-btn, body.is-mobile #timer-stop-btn {
         width: 100% !important;
         flex: unset !important;
-        height: 52px !important;
-        font-size: 1.25rem !important;
-        border-radius: 12px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        border-radius: 9px !important;
+        margin: 0 !important;
+        padding: 0 16px !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
-    #timer-display-container {
-        padding: 20px !important;
-        margin-top: 20px !important;
+    #tool-timer .timer-demo-row,
+    body.is-mobile #tool-timer .timer-demo-row {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
+        margin-bottom: 2px !important;
+    }
+    #tool-timer #timer-preview-sound-btn,
+    body.is-mobile #tool-timer #timer-preview-sound-btn {
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        padding: 0 12px !important;
+        font-size: 0.8rem !important;
+        border-radius: 7px !important;
+    }
+    #tool-timer #timer-alarm-demo-flash,
+    body.is-mobile #tool-timer #timer-alarm-demo-flash {
+        padding: 4px 12px !important;
+        font-size: 0.76rem !important;
+        letter-spacing: 1px !important;
+        border-radius: 7px !important;
+    }
+    #timer-display-container,
+    body.is-mobile #timer-display-container {
+        padding: 14px 10px !important;
+        margin-top: 12px !important;
         border-radius: 12px !important;
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }
-    #timer-countdown-display {
+    #timer-countdown-display,
+    body.is-mobile #timer-countdown-display {
         font-size: 3rem !important;
+        line-height: 1.1 !important;
         white-space: nowrap !important;
         word-break: keep-all !important;
     }

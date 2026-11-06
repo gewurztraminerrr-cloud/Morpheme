@@ -10511,23 +10511,42 @@ window.unlockTimerAudio = function () {
     } catch (e) { return null; }
 };
 
-// Synthesized gong (tam-tam style): mallet strike + inharmonic partials with beating pairs,
-// upper partials that "bloom" after the strike, slight pitch settle, and a short reverb tail.
+// Authentic gong sound ("Bells, Gong, Long Tail 01"):
+// Plays the master-rendered gong recording with long resonant tail.
 window.playTimerGong = function () {
+    try {
+        if (!window._gongAudioElement) {
+            window._gongAudioElement = new Audio('/audio/gong.wav');
+            window._gongAudioElement.preload = 'auto';
+        }
+        window._gongAudioElement.currentTime = 0;
+        const playPromise = window._gongAudioElement.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => {
+                console.warn('[Personal Timer] Audio play blocked, falling back to synthesis:', e);
+                window.playSynthesizedGong();
+            });
+        }
+    } catch (e) {
+        window.playSynthesizedGong();
+    }
+};
+
+// Web Audio synthesis fallback
+window.playSynthesizedGong = function () {
     const ctx = window.unlockTimerAudio();
     if (!ctx) return;
     const now = ctx.currentTime;
     const total = 9;
 
     const master = ctx.createGain();
-    master.gain.value = 0.2;
+    master.gain.value = 0.22;
     const tone = ctx.createBiquadFilter();
     tone.type = 'lowpass';
     tone.frequency.setValueAtTime(7000, now);
     tone.frequency.exponentialRampToValueAtTime(1800, now + total);
     master.connect(tone);
 
-    // Short synthetic room reverb (decaying noise impulse response)
     const irLen = Math.floor(ctx.sampleRate * 2.2);
     const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
     for (let c = 0; c < 2; c++) {
@@ -10543,7 +10562,6 @@ window.playTimerGong = function () {
     reverb.connect(wet);
     wet.connect(ctx.destination);
 
-    // Mallet strike transient
     const nLen = Math.floor(ctx.sampleRate * 0.25);
     const nBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
     const nd = nBuf.getChannelData(0);
@@ -10562,7 +10580,6 @@ window.playTimerGong = function () {
     ng.connect(master);
     noise.start(now);
 
-    // [ratio, amplitude, attack (s), decay (s)] - inharmonic tam-tam-like spectrum
     const base = 82;
     const partials = [
         [1.00, 1.00, 0.012, 8.5], [1.59, 0.70, 0.02, 7.5], [2.14, 0.65, 0.04, 6.8],
@@ -10571,7 +10588,6 @@ window.playTimerGong = function () {
         [5.43, 0.20, 0.55, 3.0], [6.80, 0.14, 0.70, 2.4], [8.20, 0.09, 0.85, 1.8]
     ];
     partials.forEach(([ratio, amp, attack, decay], idx) => {
-        // Two slightly detuned oscillators per partial produce the gong's slow "wah-wah" beating
         [0, 1].forEach(k => {
             const f = base * ratio * (k === 0 ? 1 : 1 + 0.0035 + idx * 0.0003);
             const osc = ctx.createOscillator();
@@ -10590,7 +10606,7 @@ window.playTimerGong = function () {
     });
 };
 
-// Demo (Settings -> Audio & Sounds): gong together with the red flash
+// Demo: gong together with the red-flashing "Time's up!" notice
 window.demoTimerAlarm = function () {
     window.playTimerGong();
     const box = document.getElementById('timer-alarm-demo-flash');
@@ -10600,6 +10616,14 @@ window.demoTimerAlarm = function () {
         box.classList.add('timer-flash');
         clearTimeout(window._timerDemoFlashTimeout);
         window._timerDemoFlashTimeout = setTimeout(() => box.classList.remove('timer-flash'), 5000);
+    }
+    const defPanel = document.querySelector('.definitions-panel');
+    if (defPanel) {
+        defPanel.classList.remove('timer-flash');
+        void defPanel.offsetWidth;
+        defPanel.classList.add('timer-flash');
+        clearTimeout(window._defDemoFlashTimeout);
+        window._defDemoFlashTimeout = setTimeout(() => defPanel.classList.remove('timer-flash'), 5000);
     }
 };
 
@@ -10614,8 +10638,14 @@ function setupPersonalTimer() {
     const defPanel = document.querySelector('.definitions-panel');
     const defContent = document.getElementById('definition-content');
     const defHeader = document.getElementById('definition-header');
-
     if (!startBtn) return;
+
+    try {
+        if (!window._gongAudioElement) {
+            window._gongAudioElement = new Audio('/audio/gong.wav');
+            window._gongAudioElement.preload = 'auto';
+        }
+    } catch (e) {}
 
     function formatTime(totalSeconds) {
         const h = Math.floor(totalSeconds / 3600);
