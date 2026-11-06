@@ -20721,39 +20721,6 @@ body[class*="theme-light-"] #search-in-combo-game-btn:hover,
     opacity: 0.85;
 }
 
-/* Settings Sidebar Tabs: right-aligned navigation arrows */
-#page-settings .tools-sidebar .tool-nav-btn {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-#page-settings .tools-sidebar .tool-btn-title {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-#page-settings .tools-sidebar .tool-btn-title::after {
-    content: "→" !important;
-    font-size: 1.1rem !important;
-    opacity: 0.45 !important;
-    margin-left: auto !important;
-    padding-left: 8px !important;
-    flex-shrink: 0 !important;
-    transition: transform 0.2s, opacity 0.2s, color 0.2s !important;
-}
-
-#page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
-#page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after {
-    transform: translateX(3px) !important;
-    opacity: 1 !important;
-    color: #4facfe !important;
-}
 
 /* Individual Sub-Page — Standardized Max Width so all headers, descriptions, cards, and controls line up perfectly */
 .setting-subpage {
@@ -21446,24 +21413,6 @@ body[class*="theme-light-"] .settings-subnav-title,
     color: #0f172a;
 }
 
-body.theme-white #page-settings .tools-sidebar .tool-btn-title::after,
-[class*="theme-white"] #page-settings .tools-sidebar .tool-btn-title::after,
-body[class*="theme-light-"] #page-settings .tools-sidebar .tool-btn-title::after,
-[class*="theme-light-"] #page-settings .tools-sidebar .tool-btn-title::after {
-    color: #0f172a !important;
-}
-
-body.theme-white #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
-[class*="theme-white"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
-body[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
-[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn.active .tool-btn-title::after,
-body.theme-white #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
-[class*="theme-white"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
-body[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after,
-[class*="theme-light-"] #page-settings .tools-sidebar .tool-nav-btn:hover .tool-btn-title::after {
-    color: #2563eb !important;
-    opacity: 1 !important;
-}
 
 body.theme-white .setting-toggle-row,
 [class*="theme-white"] .setting-toggle-row,
