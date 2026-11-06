@@ -5473,6 +5473,7 @@ let listsDataLoaded = false;
 let currentWordsList = [];
 let currentWordsRenderedCount = 0;
 let currentWordsType = '';
+let currentWordsOrder = 'alphabetical';
 const WORDS_PAGE_SIZE = 200; // Smaller chunks for buttery-smooth mobile rendering
 let currentProgressiveLoadId = 0;
 let listsFetchAbortController = null;
@@ -5930,7 +5931,7 @@ function renderFullListInitial(startIndex, targetWordToHighlight = null) {
     resultsEl.innerHTML = generateFullListItemsHtml(slice);
 
     if (countEl) {
-        countEl.textContent = `${total.toLocaleString()} words`;
+        countEl.textContent = `Showing ${total.toLocaleString()} words`;
     }
 
     updateFullListVirtualScrollbar();
@@ -6361,7 +6362,7 @@ window.openFullListModal = function() {
     const selectedType = (typeof currentWordsType !== 'undefined' && currentWordsType) ? currentWordsType : (typeSelect ? typeSelect.value : 'nwl');
     const selectedLength = lengthSelect ? lengthSelect.value : 'all';
     const selectedStart = startSelect ? startSelect.value : 'all';
-    const selectedOrder = orderSelect ? orderSelect.value : 'alphabetical';
+    const selectedOrder = (typeof currentWordsOrder !== 'undefined' && currentWordsOrder) ? currentWordsOrder : (orderSelect ? orderSelect.value : 'alphabetical');
     const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${selectedOrder}`;
 
     const titleEl = document.getElementById('list-display-title');
@@ -6387,20 +6388,20 @@ window.openFullListModal = function() {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    // Prioritize showing any already available words immediately!
-    const cachedWords = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
-    let inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
-    if (inMemoryWords) {
-        if (selectedOrder === 'random') {
-            inMemoryWords = [...inMemoryWords];
-        } else if (isNewWordList(selectedType)) {
-            inMemoryWords = sortNewWordsList(inMemoryWords, selectedOrder);
-        } else {
-            inMemoryWords = sortWordsAlphabetical(inMemoryWords);
+    // 1. If full word list is already cached, restore immediately with all words!
+    const cachedFullList = window._cachedFullWordLists && window._cachedFullWordLists[currentFilterKey];
+    if (cachedFullList && (cachedFullList._isFull || cachedFullList.length > 10000 || (!window.listsServerTruncated && cachedFullList.length > 0))) {
+        _fullListAllWords = cachedFullList;
+        window.isFullListLoading = false;
+        initFullListVirtualScrollbar();
+        restoreOrRenderFullList(currentFilterKey);
+        if (fullListCount) {
+            fullListCount.textContent = `Showing ${_fullListAllWords.length.toLocaleString()} words`;
         }
+        return;
     }
-    const initialWords = (cachedWords && cachedWords.length > 0) ? cachedWords : inMemoryWords;
 
+    // 2. Handle Words to Work on client-side
     if (selectedType === 'words_to_work_on') {
         const items = typeof getWordsToWorkOn === 'function' ? getWordsToWorkOn() : [];
         let words = items.map(it => (typeof it === 'object' && it !== null) ? it.word : it).filter(Boolean).map(w => String(w).toUpperCase().trim());
@@ -6419,41 +6420,63 @@ window.openFullListModal = function() {
         } else {
             words.sort((a, b) => a.localeCompare(b));
         }
+        words._isFull = true;
         _fullListAllWords = words;
         if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
         window._cachedFullWordLists[currentFilterKey] = words;
         window.isFullListLoading = false;
         initFullListVirtualScrollbar();
         restoreOrRenderFullList(currentFilterKey);
+        if (fullListCount) {
+            fullListCount.textContent = `Showing ${words.length.toLocaleString()} words`;
+        }
         return;
     }
 
-    if (initialWords && initialWords.length > 0) {
-        _fullListAllWords = initialWords;
+    // 3. Check in-memory words from the main Lists tool view
+    const inMemoryWords = (typeof currentWordsList !== 'undefined' && currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) ? currentWordsList : null;
+
+    if (inMemoryWords && !window.listsServerTruncated) {
+        // Complete word set fits within server limit (<= 10,000 words), no network fetch needed
+        inMemoryWords._isFull = true;
+        _fullListAllWords = inMemoryWords;
         if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
-        window._cachedFullWordLists[currentFilterKey] = initialWords;
+        window._cachedFullWordLists[currentFilterKey] = inMemoryWords;
+        window.isFullListLoading = false;
         initFullListVirtualScrollbar();
         restoreOrRenderFullList(currentFilterKey);
-
-        if (!window.listsServerTruncated || (cachedWords && cachedWords.length > (inMemoryWords ? inMemoryWords.length : 0))) {
-            window.isFullListLoading = false;
-            return;
-        }
-
         if (fullListCount) {
-            fullListCount.innerHTML = `Showing ${initialWords.length.toLocaleString()} words <span style="font-size:0.8rem; opacity:0.8;">(loading full set…)</span>`;
+            fullListCount.textContent = `Showing ${inMemoryWords.length.toLocaleString()} words`;
+        }
+        return;
+    }
+
+    if (inMemoryWords && inMemoryWords.length > 0) {
+        // Maintain first 10,000 words visible immediately while streaming remaining words in background
+        _fullListAllWords = inMemoryWords;
+        initFullListVirtualScrollbar();
+        restoreOrRenderFullList(currentFilterKey);
+        if (fullListCount) {
+            fullListCount.innerHTML = `Showing ${inMemoryWords.length.toLocaleString()} words <span style="font-size:0.8rem; opacity:0.8;">(loading full set…)</span>`;
         }
     } else {
         // No words in memory yet, show prioritized loading indicator
         _fullListRenderedStart = 0;
         _fullListRenderedEnd = 0;
-        results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading word list…</span><span style="font-size: 0.85rem; opacity: 0.75; font-weight: 500; margin-top: -4px;">Prioritizing full list display</span></div>';
+        results.innerHTML = '<div class="full-list-loading-state" style="padding: 48px 20px; text-align: center; color: #c4b5fd; font-size: 1rem; font-weight: 700; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div class="full-list-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Loading full word list…</span></div>';
         results.scrollTop = 0;
         if (fullListCount) {
             fullListCount.textContent = `Loading…`;
         }
     }
 
+    if (window.isFullListLoading && window._lastFullListFilterKey === currentFilterKey) {
+        return;
+    }
+    if (window._fullListAbortController) {
+        try { window._fullListAbortController.abort(); } catch(e) {}
+        window._fullListAbortController = null;
+    }
     window.isFullListLoading = true;
 
     let url = `/api/tools/lists?list_type=${selectedType}&order=${selectedOrder}&no_limit=true`;
@@ -6462,7 +6485,8 @@ window.openFullListModal = function() {
     url += `&t=${Date.now()}`;
 
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 60000);
+    window._fullListAbortController = controller;
+    const fetchTimeout = setTimeout(() => controller.abort(), 90000);
 
     fetch(url, { signal: controller.signal })
         .then(r => {
@@ -6471,13 +6495,31 @@ window.openFullListModal = function() {
         })
         .then(data => {
             clearTimeout(fetchTimeout);
+            if (window._fullListAbortController === controller) {
+                window._fullListAbortController = null;
+            }
             if (window._lastFullListFilterKey !== currentFilterKey) return;
             if (data && data.error) throw new Error(data.error);
-            const rawWords = (data && data[selectedType]) || [];
+
+            const rawWords = (data && (
+                data[selectedType] ||
+                (selectedType === 'all' ? data['all_words'] : null) ||
+                (selectedType === 'likelihood' ? data['nwl_likelihood'] : null) ||
+                data['all_words'] ||
+                data['nwl'] ||
+                data['csw'] ||
+                data['added'] ||
+                data['uniques'] ||
+                data['new_added'] ||
+                data['new_nwl'] ||
+                data['new_csw'] ||
+                data['all_new']
+            )) || [];
+
             let processedWords;
             if (selectedOrder === 'random') {
                 if (currentWordsList && currentWordsList.length > 0 && currentWordsType === selectedType) {
-                    // Retain the exact order of random words seen in the 10,000 list
+                    // Maintain the first 10,000 words in View Full List as that shown in Lists
                     const seenWords = [...currentWordsList];
                     const seenSet = new Set(seenWords.map(w => (typeof w === 'object' && w !== null ? (w.word || '') : w).toUpperCase().trim()));
                     const remaining = [];
@@ -6488,24 +6530,35 @@ window.openFullListModal = function() {
                             remaining.push(item);
                         }
                     }
-                    processedWords = seenWords.concat(shuffleWordsArray(remaining));
+                    const shuffledRemaining = isNewWordList(selectedType) ? sortNewWordsList(remaining, 'random') : shuffleWordsArray(remaining);
+                    processedWords = seenWords.concat(shuffledRemaining);
                 } else {
                     processedWords = isNewWordList(selectedType) ? sortNewWordsList(rawWords, 'random') : shuffleWordsArray(rawWords);
                 }
             } else if (isNewWordList(selectedType)) {
                 processedWords = sortNewWordsList(rawWords, selectedOrder);
-            } else {
+            } else if (selectedType && selectedType.includes('likelihood')) {
                 processedWords = rawWords;
+            } else {
+                processedWords = sortWordsAlphabetical(rawWords);
             }
+
+            processedWords._isFull = true;
             _fullListAllWords = processedWords;
             if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
             window._cachedFullWordLists[currentFilterKey] = processedWords;
             window.isFullListLoading = false;
             initFullListVirtualScrollbar();
             restoreOrRenderFullList(currentFilterKey);
+            if (fullListCount) {
+                fullListCount.textContent = `Showing ${processedWords.length.toLocaleString()} words`;
+            }
         })
         .catch(err => {
             clearTimeout(fetchTimeout);
+            if (err && err.name === 'AbortError' && window._lastFullListFilterKey !== currentFilterKey) {
+                return;
+            }
             console.error('[Full List] Failed to fetch full word list:', err);
             window.isFullListLoading = false;
             if (_fullListAllWords && _fullListAllWords.length > 0) {
@@ -6930,10 +6983,12 @@ async function fetchListsData(typeOverride) {
         currentWordsList = words;
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
+        currentWordsOrder = selectedOrder;
         window.listsServerTruncated = false;
 
         const currentFilterKey = `${selectedType}_${selectedLength}_${selectedStart}_${selectedOrder}`;
         if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
+        words._isFull = true;
         window._cachedFullWordLists[currentFilterKey] = words;
 
         if (!words || words.length === 0) {
@@ -7016,21 +7071,30 @@ async function fetchListsData(typeOverride) {
         }
         currentWordsRenderedCount = 0;
         currentWordsType = selectedType;
+        currentWordsOrder = selectedOrder;
         window.listsServerTruncated = data.is_truncated || false;
 
         const modalEl = document.getElementById('full-list-modal');
         const modalIsOpen = modalEl && !modalEl.classList.contains('hidden');
         const activeFilterKey = `${selectedType}_${lengthSelect ? lengthSelect.value : 'all'}_${startSelect ? startSelect.value : 'all'}_${selectedOrder}`;
-        if (modalIsOpen && window._lastFullListFilterKey === activeFilterKey) {
-            _fullListAllWords = currentWordsList;
+        if (!data.is_truncated) {
+            currentWordsList._isFull = true;
             if (!window._cachedFullWordLists) window._cachedFullWordLists = {};
             window._cachedFullWordLists[activeFilterKey] = currentWordsList;
-            window.isFullListLoading = false;
-            initFullListVirtualScrollbar();
-            restoreOrRenderFullList(activeFilterKey);
-            const fullListCount = document.getElementById('full-list-modal-count');
-            if (fullListCount) {
-                fullListCount.textContent = `Showing ${currentWordsList.length.toLocaleString()} words`;
+        }
+
+        if (modalIsOpen && window._lastFullListFilterKey === activeFilterKey) {
+            if (!data.is_truncated) {
+                _fullListAllWords = currentWordsList;
+                window.isFullListLoading = false;
+                initFullListVirtualScrollbar();
+                restoreOrRenderFullList(activeFilterKey);
+                const fullListCount = document.getElementById('full-list-modal-count');
+                if (fullListCount) {
+                    fullListCount.textContent = `Showing ${currentWordsList.length.toLocaleString()} words`;
+                }
+            } else {
+                window.openFullListModal();
             }
         }
 
