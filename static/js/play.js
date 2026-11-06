@@ -1360,6 +1360,10 @@ function clearGameUIAndCache() {
     document.body.classList.remove('hide-player-filter-buttons');
     
     // 2. Reset DOM elements to clean placeholders
+    document.querySelectorAll('.tab-content').forEach(tc => {
+        tc.style.removeProperty('display');
+    });
+
     const tabsContainer = document.getElementById('words-tabs-container');
     if (tabsContainer) {
         if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
@@ -3042,23 +3046,11 @@ async function _doUpdateGameState(incomingState = null) {
             }
         }
 
-        // words-panel-title
+        // words-panel-title (Found/Words tab header)
         if (wordsPanelHeader) {
-            let headerText = 'Words';
+            let headerText = is24H ? 'Your Words' : 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
-
-            let factRange = (state.state !== 'intermission' && state.current_word_count_range) 
-                ? state.current_word_count_range 
-                : ((state.spinner_params && state.spinner_params.word_count_range) || state.current_word_count_range || 'Random');
-            const isStateAW = state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '') || (state.spinner_params && (state.spinner_params.use_added_words === true || /\+\s*AW/i.test(state.spinner_params.dictionary || '')));
-            if (isStateAW && !['300-400', '400-500', '500+'].includes(String(factRange).trim())) {
-                factRange = '300-400';
-            }
-            if (activeWordsTab === 'remaining') headerText = `Remaining (${factRange})`;
-            if (activeWordsTab === 'clues') headerText = `Clues (${factRange})`;
-            if (activeWordsTab === 'previous') headerText = 'Previous Day';
-            if (activeWordsTab === 'history') headerText = 'Past Winners';
-            if (state.state === 'intermission' && activeWordsTab === 'found') headerText = 'All Words';
+            if (state.state === 'intermission') headerText = 'All Words';
             wordsPanelHeader.textContent = headerText;
         }
 
@@ -3121,6 +3113,7 @@ async function _doUpdateGameState(incomingState = null) {
         tabContents.forEach(content => {
             const tabId = content.id.replace('tab-content-', '');
             content.classList.toggle('active', activeWordsTab === tabId);
+            content.style.removeProperty('display');
         });
 
         tabBtns.forEach(btn => {
@@ -11965,6 +11958,7 @@ document.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-content').forEach(content => {
             const tabId = content.id.replace('tab-content-', '');
             content.classList.toggle('active', activeWordsTab === tabId);
+            content.style.removeProperty('display');
         });
 
         // Toggle Definitions Panel Visibility (Found/Words and Previous Day tabs on all devices)
@@ -12144,11 +12138,14 @@ async function initTournamentPlay() {
     const tabsContainer = document.getElementById('words-tabs-container');
     if (tabsContainer) tabsContainer.style.display = 'none';
 
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => {
+        tc.classList.remove('active');
+        tc.style.removeProperty('display');
+    });
     const foundContent = document.getElementById('tab-content-found');
     if (foundContent) {
         foundContent.classList.add('active');
-        foundContent.style.display = 'block';
+        foundContent.style.removeProperty('display');
     }
 
     const wordsPanelHeader = document.getElementById('words-panel-title');
