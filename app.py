@@ -7202,10 +7202,13 @@ def get_room_state(room_id):
                         'country_flag': p.country_flag,
                         'joined_mid_round': getattr(p, 'joined_mid_round', False),
                         'has_exceptional_round': (getattr(room, 'state', '') == 'intermission' and getattr(p, 'has_exceptional_round', False)),
-                        'performance_efficiency': getattr(p, 'performance_efficiency', 0.0)
                     } for p, data in sorted(
                         [(p, get_incremental_data(p)) for p in room.players], 
-                        key=lambda x: x[1][1], 
+                        key=lambda x: (
+                            0 if (room.state == 'intermission' and x[1][1] == 0 and len(x[1][0]) == 0 and len(getattr(x[0], 'invalid_words', [])) == 0) else 1,
+                            x[1][1],
+                            getattr(x[0], 'rating', 1200)
+                        ), 
                         reverse=True
                     )
                 ],

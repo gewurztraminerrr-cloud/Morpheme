@@ -4062,6 +4062,41 @@ function renderDailyScoreSums() {
     listEl.innerHTML = html;
 }
 
+function isPlayerDNP(p, st) {
+    const s = st || (typeof state !== 'undefined' ? state : null) || window.lastGameState;
+    const isIntermission = s && (s.state === 'intermission' || s.intermission === true);
+    if (!isIntermission) return false;
+    const score = (p && p.score !== undefined && p.score !== null) ? Number(p.score) : 0;
+    const wordsCount = Number((p && p.words_count) || (p && p.submitted_words ? p.submitted_words.length : 0) || 0);
+    const invalidCount = Number((p && p.invalid_words ? p.invalid_words.length : 0));
+    return score === 0 && wordsCount === 0 && invalidCount === 0;
+}
+window.isPlayerDNP = isPlayerDNP;
+
+function compareGameRoomPlayers(a, b, st) {
+    const aDnp = isPlayerDNP(a, st);
+    const bDnp = isPlayerDNP(b, st);
+
+    // Place users who have "0 pts" (and all active participants) first ahead of "DNP" users
+    if (aDnp !== bDnp) {
+        return aDnp ? 1 : -1;
+    }
+
+    // Both are non-DNP or both are DNP:
+    // 1. Sort by score (Highest First)
+    const aScore = (a && a.score !== undefined && a.score !== null) ? Number(a.score) : 0;
+    const bScore = (b && b.score !== undefined && b.score !== null) ? Number(b.score) : 0;
+    if (bScore !== aScore) {
+        return bScore - aScore;
+    }
+
+    // 2. Break ties with Rating (Highest First)
+    const aRating = (a && a.rating !== undefined && a.rating !== null) ? Number(a.rating) : 1200;
+    const bRating = (b && b.rating !== undefined && b.rating !== null) ? Number(b.rating) : 1200;
+    return bRating - aRating;
+}
+window.compareGameRoomPlayers = compareGameRoomPlayers;
+
 function renderPlayers(players, currentUser = null, state = null) {
     console.log('[RenderPlayers] Players:', players && players.length);
     const listEl = document.getElementById('players-list');
@@ -4149,8 +4184,8 @@ function renderPlayers(players, currentUser = null, state = null) {
         }
     });
 
-    // Sort players by score (Highest First), break ties with Rating
-    const sortedPlayers = [...uniquePlayers].sort((a, b) => (b.score - a.score) || (b.rating - a.rating));
+    // Sort players by score (Highest First), placing users with "0 pts" first ahead of "DNP" users, break ties with Rating
+    const sortedPlayers = [...uniquePlayers].sort((a, b) => compareGameRoomPlayers(a, b, state));
 
     // Attach click handler via event delegation parent or recreate list
     // Recreating list is fine here
@@ -4252,7 +4287,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 ${trophyHtml}
                 <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${(p.score === 0 && p.words_count === 0 && (!p.invalid_words || p.invalid_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
+                <span class="player-score-val">${isPlayerDNP(p, state) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
             </div>
         </div>
         `;
@@ -8600,8 +8635,8 @@ function renderSplitNotepads(players, state) {
     // User requested: "Each user has its own square, resembling a notepad... scrollable"
     // "highest scoring user listed first"
 
-    // Sort players by score
-    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+    // Sort players by score, placing users with "0 pts" first ahead of "DNP" users
+    const sortedPlayers = [...players].sort((a, b) => compareGameRoomPlayers(a, b, state));
 
     // Set container style for notepads
     boardEl.className = 'split-notepads-container';
@@ -8661,7 +8696,7 @@ function renderSplitNotepads(players, state) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // Tabs
@@ -8871,8 +8906,8 @@ function renderFCFSNotepads(players, state) {
     // Capture container scroll position before clearing
     const containerScrollTop = boardEl.scrollTop;
 
-    // Sort players by score
-    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+    // Sort players by score, placing users with "0 pts" first ahead of "DNP" users
+    const sortedPlayers = [...players].sort((a, b) => compareGameRoomPlayers(a, b, state));
 
     // Reuse Split Points container styles
     boardEl.className = 'split-notepads-container fcfs-mode';
@@ -8908,7 +8943,7 @@ function renderFCFSNotepads(players, state) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${(p.score === 0 && (!p.submitted_words || p.submitted_words.length === 0) && (state && state.state === 'intermission')) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `<strong>${p.username}</strong> <span>${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>`;
         notepad.appendChild(header);
 
         // No Tabs for FCFS

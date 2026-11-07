@@ -2217,7 +2217,7 @@ class GameRoom:
                                 'round': self.current_round,
                                 'game_type': getattr(self, 'game_type', 'accumulative'),
                                 'winners': winners_data,
-                                'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': getattr(p, 'rating', 1200)} for p in (active_pool or self.players)], key=lambda x: (x['score'], x['rating']), reverse=True),
+                                'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': getattr(p, 'rating', 1200)} for p in (active_pool or self.players)], key=lambda x: (1 if (x['score'] > 0 or any(getattr(p, 'submitted_words', []) or getattr(p, 'invalid_words', []) for p in (active_pool or self.players) if p.username == x['username'])) else 0, x['score'], x['rating']), reverse=True),
                                 'score': max_score,
                                 'board': [list(row) for row in self.board] if self.board else [],
                                 'words': winner_words,
