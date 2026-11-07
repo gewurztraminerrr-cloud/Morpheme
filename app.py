@@ -10166,6 +10166,7 @@ def tools_subanagrams_random():
     if request.method == 'POST':
         data = request.json or {}
         dict_name = data.get('dictionary', 'CSW')
+        must_have = (data.get('must_have') or '').upper().strip()
         try:
             target_len = int(data.get('length', 8))
         except (ValueError, TypeError):
@@ -10178,6 +10179,7 @@ def tools_subanagrams_random():
         custom_words = data.get('custom_words', [])
     else:
         dict_name = request.args.get('dictionary', 'CSW')
+        must_have = (request.args.get('must_have') or '').upper().strip()
         try:
             target_len = int(request.args.get('length', 8))
         except (ValueError, TypeError):
@@ -10205,18 +10207,30 @@ def tools_subanagrams_random():
             VOWELS = 'AEIOU'
             min_vowels = max(1, target_len // 4)
             for _ in range(50):
-                selected = random.choices(BAG, k=target_len)
+                if must_have:
+                    selected = [must_have] + random.choices(BAG, k=max(0, target_len - 1))
+                else:
+                    selected = random.choices(BAG, k=target_len)
                 vowel_count = sum(1 for c in selected if c in VOWELS)
                 if vowel_count >= min_vowels and vowel_count < target_len:
                     random.shuffle(selected)
                     shuffled_letters = "".join(selected)
                     break
             else:
-                shuffled_letters = "".join(random.choices(BAG, k=target_len))
+                if must_have:
+                    selected = [must_have] + random.choices(BAG, k=max(0, target_len - 1))
+                    random.shuffle(selected)
+                    shuffled_letters = "".join(selected)
+                else:
+                    shuffled_letters = "".join(random.choices(BAG, k=target_len))
         else:
             # Word of Max Length Guaranteed: Pick a random word of target length from custom_words
             candidates = [w for w in custom_words if len(w) == target_len]
+            if must_have:
+                candidates = [w for w in candidates if must_have in w]
             if not candidates:
+                if must_have:
+                    return jsonify({'error': f'No words of length {target_len} containing "{must_have}" found in "Words to Work on".'}), 400
                 available_lens = sorted(list(set(len(w) for w in custom_words)))
                 if available_lens:
                     return jsonify({'error': f'No words of length {target_len} found in "Words to Work on". Available lengths: {", ".join(str(l) for l in available_lens)}.'}), 400
@@ -10272,21 +10286,33 @@ def tools_subanagrams_random():
         VOWELS = 'AEIOU'
         min_vowels = max(1, target_len // 4)
         for _ in range(50):
-            selected = random.choices(BAG, k=target_len)
+            if must_have:
+                selected = [must_have] + random.choices(BAG, k=max(0, target_len - 1))
+            else:
+                selected = random.choices(BAG, k=target_len)
             vowel_count = sum(1 for c in selected if c in VOWELS)
             if vowel_count >= min_vowels and vowel_count < target_len:
                 random.shuffle(selected)
                 shuffled_letters = "".join(selected)
                 break
         else:
-            shuffled_letters = "".join(random.choices(BAG, k=target_len))
+            if must_have:
+                selected = [must_have] + random.choices(BAG, k=max(0, target_len - 1))
+                random.shuffle(selected)
+                shuffled_letters = "".join(selected)
+            else:
+                shuffled_letters = "".join(random.choices(BAG, k=target_len))
     else:
         # Full Word Guaranteed: Pick a random dictionary word of target length and shuffle
         candidates = [word_list[i] for i in range(len(word_list)) if lens[i] == target_len]
-        if not candidates:
+        if must_have:
+            candidates = [w for w in candidates if must_have in w]
+        if not candidates and not must_have:
             candidates = [word_list[i] for i in range(len(word_list)) if lens[i] >= 6]
             
         if not candidates:
+            if must_have:
+                return jsonify({'error': f'No words of length {target_len} containing "{must_have}" found.'}), 404
             return jsonify({'error': 'No words available in dictionary'}), 400
             
         chosen_word = random.choice(candidates)

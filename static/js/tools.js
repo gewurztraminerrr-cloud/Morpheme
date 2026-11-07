@@ -8369,6 +8369,7 @@ function setupSubanagramsTool() {
     const dictSelectRandom = document.getElementById('sub-dict-random');
     const minLenSelectRandom = document.getElementById('sub-min-len-random');
     const modeSelect = document.getElementById('sub-gen-mode');
+    const mustHaveSelectRandom = document.getElementById('sub-must-have-random');
     // Practice section controls
     const wordInput = document.getElementById('sub-word-input');
     const submitBtn = document.getElementById('sub-submit-word-btn');
@@ -8393,6 +8394,10 @@ function setupSubanagramsTool() {
         return manualActive
             ? parseInt(minLenSelect ? minLenSelect.value : '2') || 2
             : parseInt(minLenSelectRandom ? minLenSelectRandom.value : '2') || 2;
+    }
+    // Helper: get active must have letter
+    function getMustHave() {
+        return mustHaveSelectRandom ? (mustHaveSelectRandom.value || '').trim().toUpperCase() : '';
     }
 
     // Tab switching
@@ -8440,9 +8445,10 @@ function setupSubanagramsTool() {
             const dict = getDict();
             const mode = modeSelect ? modeSelect.value : 'word';
             const minLen = getMinLen();
+            const mustHave = getMustHave();
             const lettersDisplay = document.getElementById('sub-letters-display');
             if (lettersDisplay) window.applyDynamicSequenceStyle(lettersDisplay, len);
-            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen, mustHave);
         });
     }
     clampMinLen();
@@ -8459,7 +8465,8 @@ function setupSubanagramsTool() {
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
                 const mode = modeSelect ? modeSelect.value : 'word';
-                generateRandomSubanagrams(len, dict, mode, true, minLen);
+                const mustHave = getMustHave();
+                generateRandomSubanagrams(len, dict, mode, true, minLen, mustHave);
             }
         });
     }
@@ -8480,7 +8487,8 @@ function setupSubanagramsTool() {
             } else {
                 const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
                 const mode = modeSelect ? modeSelect.value : 'word';
-                generateRandomSubanagrams(len, dict, mode, false, minLen);
+                const mustHave = getMustHave();
+                generateRandomSubanagrams(len, dict, mode, false, minLen, mustHave);
             }
         });
     }
@@ -8491,7 +8499,8 @@ function setupSubanagramsTool() {
             const dict = getDict();
             const mode = modeSelect ? modeSelect.value : 'word';
             const minLen = getMinLen();
-            generateRandomSubanagrams(len, dict, mode, false, minLen);
+            const mustHave = getMustHave();
+            generateRandomSubanagrams(len, dict, mode, false, minLen, mustHave);
         });
     }
 
@@ -8514,7 +8523,19 @@ function setupSubanagramsTool() {
             const dict = getDict();
             const mode = modeSelect.value;
             const minLen = getMinLen();
-            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
+            const mustHave = getMustHave();
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen, mustHave);
+        });
+    }
+
+    if (mustHaveSelectRandom) {
+        mustHaveSelectRandom.addEventListener('change', () => {
+            const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
+            const dict = getDict();
+            const mode = modeSelect ? modeSelect.value : 'word';
+            const minLen = getMinLen();
+            const mustHave = getMustHave();
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen, mustHave);
         });
     }
 
@@ -8523,6 +8544,7 @@ function setupSubanagramsTool() {
         const dict = getDict();
         const mode = modeSelect ? modeSelect.value : 'word';
         const minLen = getMinLen();
+        const mustHave = getMustHave();
         if (_subCurrentLetters) {
             if (_subIsRevealed) {
                 findAndRevealAllSubanagrams(_subCurrentLetters, dict, minLen);
@@ -8531,7 +8553,7 @@ function setupSubanagramsTool() {
             }
         } else {
             const len = lengthSelect ? parseInt(lengthSelect.value) || 8 : 8;
-            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen);
+            generateRandomSubanagrams(len, dict, mode, _subIsRevealed, minLen, mustHave);
         }
     }
     if (dictSelect) dictSelect.addEventListener('change', onDictChange);
@@ -8641,13 +8663,17 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
     }
 }
 
-async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false, minLength = 2) {
+async function generateRandomSubanagrams(length, dictionary, mode = 'word', instantReveal = false, minLength = 2, mustHave = null) {
     if (_subAbortController) {
         try { _subAbortController.abort(); } catch (e) {}
     }
     _subAbortController = new AbortController();
     const signal = _subAbortController.signal;
     _isSubLoading = true;
+
+    if (mustHave === null || mustHave === undefined) {
+        mustHave = (document.getElementById('sub-must-have-random')?.value || '').trim().toUpperCase();
+    }
 
     const lettersDisplay = document.getElementById('sub-letters-display');
     const countInfo = document.getElementById('sub-count-info');
@@ -8680,12 +8706,13 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
                     dictionary: dictionary,
                     mode: mode,
                     min_length: minLength,
+                    must_have: mustHave,
                     custom_words: customWords
                 }),
                 signal: signal
             });
         } else {
-            response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}&min_length=${minLength}`, {
+            response = await fetch(`/api/tools/subanagrams/random?length=${length}&dictionary=${dictionary}&mode=${mode}&min_length=${minLength}&must_have=${encodeURIComponent(mustHave || '')}`, {
                 signal: signal
             });
         }
