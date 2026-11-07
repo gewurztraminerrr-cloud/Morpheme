@@ -9730,15 +9730,18 @@ def get_combo_payload_for_word(search_term, dict_name):
     return result_payload, 200
 
 
-def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both', base_dict_name='CSW'):
-    """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp."""
+def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both', base_dict_name='CSW', target_diff=None):
+    """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp with optional target_diff."""
     source_len = len(w)
     dict_set = dict_data['set']
     
     if target_mp == 0:
+        if target_diff == 0:
+            return False
         min_sub_len = 5 if source_len >= 5 else 3
-        for l in range(min_sub_len, source_len + 1):
-            if l == 4:
+        lengths_to_check = [source_len - target_diff] if target_diff is not None else range(min_sub_len, source_len + 1)
+        for l in lengths_to_check:
+            if l < min_sub_len or l > source_len or l == 4:
                 continue
             for start in range(source_len - l + 1):
                 if direction in ('both', 'forwards'):
@@ -9754,6 +9757,8 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
             if status_code == 200:
                 mp_matches = combo_res.get('mp_groups', {}).get(0, []) or combo_res.get('mp_groups', {}).get('0', [])
                 valid_matches = [m for m in mp_matches if len(m) != 4]
+                if target_diff is not None:
+                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
                 if direction == 'forwards':
                     valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 0)[0] == 0]
                 elif direction == 'backwards':
@@ -9771,35 +9776,36 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
         if direction in ('both', 'backwards'):
             dirs.append(w[::-1])
         for s in dirs:
-            # Fast path 1: drop extremity letter
-            if source_len > 5:
+            # Fast path 1: drop extremity letter (diff = 1)
+            if (target_diff is None or target_diff == 1) and source_len > 5:
                 d1 = s[1:]
                 if len(d1) != 4 and d1 in dict_set and not is_plural_or_inflection(w, d1):
                     return True
                 d2 = s[:-1]
                 if len(d2) != 4 and d2 in dict_set and not is_plural_or_inflection(w, d2):
                     return True
-            # Fast path 2: add or insert letter anywhere
-            for i in range(len(s) + 1):
-                for char in common_chars:
-                    ins = s[:i] + char + s[i:]
-                    if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
-                        return True
-            # Fast path 3: adjacent transposition
-            if source_len != 4:
+            # Fast path 2: add or insert letter anywhere (diff = 1)
+            if target_diff is None or target_diff == 1:
+                for i in range(len(s) + 1):
+                    for char in common_chars:
+                        ins = s[:i] + char + s[i:]
+                        if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
+                            return True
+            # Fast path 3: adjacent transposition (diff = 0)
+            if (target_diff is None or target_diff == 0) and source_len != 4:
                 for i in range(len(s) - 1):
                     if s[i] != s[i+1]:
                         trans = s[:i] + s[i+1] + s[i] + s[i+2:]
                         if len(trans) != 4 and trans in dict_set and not is_plural_or_inflection(w, trans):
                             return True
-            # Fast path 4: interior deletion
-            if source_len > 5:
+            # Fast path 4: interior deletion (diff = 1)
+            if (target_diff is None or target_diff == 1) and source_len > 5:
                 for i in range(1, len(s) - 1):
                     sub = s[:i] + s[i+1:]
                     if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
                         return True
-            # Fast path 5: single letter substitution
-            if source_len != 4:
+            # Fast path 5: single letter substitution (diff = 0)
+            if (target_diff is None or target_diff == 0) and source_len != 4:
                 for i in range(len(s)):
                     orig = s[i]
                     for c in common_chars:
@@ -9810,6 +9816,9 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
             # Fast path 6: drop extremity letters leaving substring of length >= 4, then insert 1 letter
             if source_len >= 5:
                 for sub_len in range(4, source_len):
+                    diff = abs(source_len - (sub_len + 1))
+                    if target_diff is not None and diff != target_diff:
+                        continue
                     for start in range(source_len - sub_len + 1):
                         sub = s[start:start+sub_len]
                         for i in range(len(sub) + 1):
@@ -9824,6 +9833,8 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
             if status_code == 200:
                 mp_matches = combo_res.get('mp_groups', {}).get(1, []) or combo_res.get('mp_groups', {}).get('1', [])
                 valid_matches = [m for m in mp_matches if len(m) != 4]
+                if target_diff is not None:
+                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
                 if direction == 'forwards':
                     valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 1)[0] == 1]
                 elif direction == 'backwards':
@@ -9834,17 +9845,20 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
         return False
 
     if target_mp >= 2:
-        # Any word with 0MP or 1MP connections also has 2MP and 3MP connections
-        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-            return True
-        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-            return True
+        # Any word with 0MP or 1MP connections also has 2MP and 3MP connections (only when target_diff is None)
+        if target_diff is None:
+            if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                return True
+            if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                return True
         # Fallback to get_combo_payload_for_word for full accuracy with Manual
         try:
             combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
             if status_code == 200:
                 mp_matches = combo_res.get('mp_groups', {}).get(target_mp, []) or combo_res.get('mp_groups', {}).get(str(target_mp), [])
                 valid_matches = [m for m in mp_matches if len(m) != 4]
+                if target_diff is not None:
+                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
                 if direction == 'forwards':
                     valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, target_mp)[0] == target_mp]
                 elif direction == 'backwards':
@@ -9889,6 +9903,8 @@ def tools_combo_explorer():
     direction = str(data.get('direction', 'both')).lower().strip()
     if direction not in ('forwards', 'backwards', 'both'):
         direction = 'both'
+    diff_val = str(data.get('difference', 'all')).strip().lower()
+    target_diff = int(diff_val) if diff_val in ('0', '1', '2', '3') else None
     random_order = bool(data.get('random', False))
     selected_word = data.get('word', '').upper().strip()
 
@@ -9910,6 +9926,10 @@ def tools_combo_explorer():
         mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
         matches_list = [m for m in mp_matches if len(m) != 4]
 
+        # Filter matches by difference if specified
+        if target_diff is not None:
+            matches_list = [m for m in matches_list if abs(len(selected_word) - len(m)) == target_diff]
+
         # Filter matches by direction (forwards, backwards, both)
         if direction == 'forwards':
             matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m, target_mp)[0] == target_mp]
@@ -9917,18 +9937,17 @@ def tools_combo_explorer():
             matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m[::-1], target_mp)[0] == target_mp]
 
         if not random_order:
-            matches_list.sort(key=lambda w: (-len(w), w))
+            matches_list.sort(key=lambda w: (abs(len(selected_word) - len(w)), -len(w), w))
         else:
             import random
-            from itertools import groupby
-            # Group by length descending, and shuffle words within the same length group
-            by_len = {}
+            by_diff_len = {}
             for m in matches_list:
-                by_len.setdefault(len(m), []).append(m)
-            sorted_lens = sorted(by_len.keys(), reverse=True)
+                key = (abs(len(selected_word) - len(m)), len(m))
+                by_diff_len.setdefault(key, []).append(m)
+            sorted_keys = sorted(by_diff_len.keys(), key=lambda k: (k[0], -k[1]))
             new_matches = []
-            for l in sorted_lens:
-                sub = by_len[l]
+            for k in sorted_keys:
+                sub = by_diff_len[k]
                 random.shuffle(sub)
                 new_matches.extend(sub)
             matches_list = new_matches
@@ -9936,6 +9955,7 @@ def tools_combo_explorer():
             'word': selected_word,
             'length': len(selected_word),
             'mp': target_mp,
+            'difference': diff_val if target_diff is not None else 'all',
             'direction': direction,
             'dictionary': dict_name,
             'matches': matches_list,
@@ -9957,11 +9977,11 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in sorted(words_of_len):
-            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
                 verified_words.append(w)
         input_words = verified_words
     else:
-        cache_key = (dict_name, length, target_mp, direction)
+        cache_key = (dict_name, length, target_mp, direction, target_diff)
         if cache_key in COMBO_EXPLORER_CACHE:
             input_words = COMBO_EXPLORER_CACHE[cache_key]
         else:
@@ -9976,7 +9996,7 @@ def tools_combo_explorer():
             dict_lens_int = dict_lens.astype(np.int16)
 
             for w in words_of_len:
-                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
                     verified_words.append(w)
                     
             COMBO_EXPLORER_CACHE[cache_key] = verified_words
@@ -9990,6 +10010,7 @@ def tools_combo_explorer():
     return jsonify({
         'length': length,
         'mp': target_mp,
+        'difference': diff_val if target_diff is not None else 'all',
         'direction': direction,
         'dictionary': dict_name,
         'words': res_words,

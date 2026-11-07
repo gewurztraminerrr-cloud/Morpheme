@@ -1311,23 +1311,37 @@ function _comboExplorerShuffle(arr) {
     return a;
 }
 
-function _sortMatchesByLength(matches, isRandom) {
+function _sortMatchesByLength(matches, isRandom, selectedWord = _comboExplorerSelectedWord) {
     if (!matches || matches.length === 0) return [];
+    const selLen = selectedWord ? selectedWord.length : 0;
+    const getDiff = (w) => (selLen ? Math.abs(w.length - selLen) : 0);
+
     if (!isRandom) {
         return [...matches].sort((a, b) => {
-            if (b.length !== a.length) return b.length - a.length;
+            const diffA = getDiff(a);
+            const diffB = getDiff(b);
+            if (diffA !== diffB) return diffA - diffB; // Smaller difference first (0, 1, 2, 3)
+            if (b.length !== a.length) return b.length - a.length; // Longer matches first within same difference
             return a.localeCompare(b);
         });
     }
-    const byLen = new Map();
+
+    const groups = new Map();
     matches.forEach(m => {
-        if (!byLen.has(m.length)) byLen.set(m.length, []);
-        byLen.get(m.length).push(m);
+        const diff = getDiff(m);
+        const key = `${diff}_${m.length}`;
+        if (!groups.has(key)) groups.set(key, { diff, len: m.length, words: [] });
+        groups.get(key).words.push(m);
     });
-    const sortedLens = Array.from(byLen.keys()).sort((a, b) => b - a);
+
+    const sortedGroupKeys = Array.from(groups.values()).sort((a, b) => {
+        if (a.diff !== b.diff) return a.diff - b.diff;
+        return b.len - a.len;
+    });
+
     const result = [];
-    sortedLens.forEach(l => {
-        result.push(..._comboExplorerShuffle(byLen.get(l)));
+    sortedGroupKeys.forEach(g => {
+        result.push(..._comboExplorerShuffle(g.words));
     });
     return result;
 }
@@ -1335,6 +1349,7 @@ function _sortMatchesByLength(matches, isRandom) {
 function setupComboExplorer() {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
+    const diffSelect = document.getElementById('combo-explorer-difference');
     const dirSelect = document.getElementById('combo-explorer-direction');
     const orderSelect = document.getElementById('combo-explorer-order');
     const randomBtn = document.getElementById('combo-explorer-random-btn');
@@ -1347,6 +1362,14 @@ function setupComboExplorer() {
 
     lengthSelect.addEventListener('change', () => loadComboExplorerWords());
     mpSelect.addEventListener('change', () => loadComboExplorerWords());
+
+    if (diffSelect) {
+        diffSelect.addEventListener('change', () => {
+            _comboExplorerWordsCache.clear();
+            _comboExplorerMatchesCache.clear();
+            loadComboExplorerWords();
+        });
+    }
 
     if (dirSelect) {
         dirSelect.addEventListener('change', () => {
@@ -1475,7 +1498,7 @@ function applyComboExplorerOrdering() {
         _comboExplorerDisplayWords = [...base].sort();
     }
     if (_comboExplorerMatches && _comboExplorerMatches.length > 0) {
-        _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom);
+        _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom, _comboExplorerSelectedWord);
     }
 
     renderComboExplorerInputWords(true);
@@ -1485,6 +1508,7 @@ function applyComboExplorerOrdering() {
 async function loadComboExplorerWords(preserveWord = null) {
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
+    const diffSelect = document.getElementById('combo-explorer-difference');
     const expDictSelect = document.getElementById('combo-explorer-dict') || document.getElementById('combo-dict');
     const inputList = document.getElementById('combo-explorer-input-list');
     const inputCount = document.getElementById('combo-explorer-input-count');
@@ -1503,9 +1527,11 @@ async function loadComboExplorerWords(preserveWord = null) {
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
+    const difference = diffSelect ? diffSelect.value : 'all';
 
+    const diffTitle = (difference !== 'all') ? `, Diff ${difference}` : '';
     const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
-    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${dirTitle})`;
+    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${diffTitle}${dirTitle})`;
     if (inputCount) inputCount.textContent = '...';
     inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading words...</div>';
 
@@ -1513,9 +1539,10 @@ async function loadComboExplorerWords(preserveWord = null) {
         ? preserveWord
         : (_comboExplorerSelectedWord || (filterInput ? filterInput.value.trim().toUpperCase() : ''));
 
+    const diffLabel = (difference !== 'all') ? ` (Diff ${difference})` : '';
     if (prevWord) {
         if (respTitle) {
-            respTitle.innerHTML = `${mp}MP from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${prevWord}', event)" title="Click to view definition">${prevWord}</span>`;
+            respTitle.innerHTML = `${mp}MP${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${prevWord}', event)" title="Click to view definition">${prevWord}</span>`;
         }
         if (respCount) respCount.textContent = '...';
         if (respList) {
@@ -1575,6 +1602,7 @@ async function loadComboExplorerWords(preserveWord = null) {
                     length: length,
                     mp: mp,
                     direction: direction,
+                    difference: difference,
                     custom_words: eligibleOfLen
                 })
             });
@@ -1592,7 +1620,7 @@ async function loadComboExplorerWords(preserveWord = null) {
             }
         }
     } else {
-        const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
+        const cacheKey = `${dictionary}_${length}_${mp}_${direction}_${difference}`;
         if (_comboExplorerWordsCache.has(cacheKey)) {
             words = _comboExplorerWordsCache.get(cacheKey);
         } else {
@@ -1605,7 +1633,8 @@ async function loadComboExplorerWords(preserveWord = null) {
                         dictionary: dictionary,
                         length: length,
                         mp: mp,
-                        direction: direction
+                        direction: direction,
+                        difference: difference
                     })
                 });
                 const data = await resp.json();
@@ -1694,6 +1723,7 @@ window.selectComboExplorerWord = async function(word) {
 
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
+    const diffSelect = document.getElementById('combo-explorer-difference');
     const expDictSelect = document.getElementById('combo-explorer-dict') || document.getElementById('combo-dict');
     const respTitle = document.getElementById('combo-explorer-response-title');
     const respList = document.getElementById('combo-explorer-response-list');
@@ -1704,15 +1734,17 @@ window.selectComboExplorerWord = async function(word) {
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
+    const difference = diffSelect ? diffSelect.value : 'all';
     const safeWord = String(word).trim().toUpperCase();
 
+    const diffLabel = (difference !== 'all') ? ` (Diff ${difference})` : '';
     if (respTitle) {
-        respTitle.innerHTML = `${mp}MP from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${safeWord}', event)" title="Click to view definition">${safeWord}</span>`;
+        respTitle.innerHTML = `${mp}MP${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${safeWord}', event)" title="Click to view definition">${safeWord}</span>`;
     }
     if (respCount) respCount.textContent = '...';
     if (respList) respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading matches...</div>';
 
-    const cacheKey = `${dictionary}_${word}_${mp}_${direction}`;
+    const cacheKey = `${dictionary}_${word}_${mp}_${direction}_${difference}`;
     let matches = [];
 
     if (_comboExplorerMatchesCache.has(cacheKey)) {
@@ -1727,7 +1759,8 @@ window.selectComboExplorerWord = async function(word) {
                     length: length,
                     mp: mp,
                     word: word,
-                    direction: direction
+                    direction: direction,
+                    difference: difference
                 })
             });
             const data = await resp.json();
@@ -1742,8 +1775,13 @@ window.selectComboExplorerWord = async function(word) {
         }
     }
 
-    _comboExplorerMatches = (matches || []).filter(m => m.length !== 4);
-    _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom);
+    let validMatches = (matches || []).filter(m => m.length !== 4);
+    if (difference !== 'all') {
+        const d = parseInt(difference, 10);
+        validMatches = validMatches.filter(m => Math.abs(m.length - word.length) === d);
+    }
+    _comboExplorerMatches = validMatches;
+    _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom, word);
 
     renderComboExplorerMatches();
 };
@@ -1755,14 +1793,17 @@ function renderComboExplorerMatches() {
     const mp = mpSelect ? mpSelect.value : '1';
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
+    const diffSelect = document.getElementById('combo-explorer-difference');
+    const diffVal = diffSelect ? diffSelect.value : 'all';
     const dirPhrase = (direction === 'forwards') ? ' forward' : ((direction === 'backwards') ? ' backward' : '');
+    const diffPhrase = (diffVal !== 'all') ? ` diff ${diffVal}` : '';
 
     if (!listEl) return;
 
     if (!_comboExplorerDisplayMatches || _comboExplorerDisplayMatches.length === 0) {
         listEl.innerHTML = `
             <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem;">
-                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection${dirPhrase} ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
+                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection${dirPhrase}${diffPhrase} ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
             </div>`;
         if (countBadge) countBadge.textContent = '0';
         if (typeof listEl._updateCustomScrollbar === 'function') {

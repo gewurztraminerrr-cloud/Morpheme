@@ -5665,7 +5665,7 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
         width: auto !important;
         min-width: auto !important;
         white-space: nowrap !important;
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         font-weight: 600 !important;
     }
 
@@ -5675,8 +5675,8 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
-        font-size: 0.82rem !important;
-        padding: 3px 6px !important;
+        font-size: 0.8rem !important;
+        padding: 3px 5px !important;
         height: 30px !important;
         border-radius: 6px !important;
     }
@@ -20082,7 +20082,7 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
         overscroll-behavior: contain !important;
     }
 
-    /* All 5 Explorer Dropdowns in ONE single row on desktop/laptop */
+    /* All 6 Explorer Dropdowns in ONE single row on desktop/laptop */
     #combo-explorer-section .combo-explorer-controls,
     .combo-explorer-controls {
         flex: 0 0 auto !important;
@@ -20121,13 +20121,21 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
         width: auto !important;
         min-width: auto !important;
         white-space: nowrap !important;
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         font-weight: 600 !important;
     }
 
     #combo-explorer-section .combo-explorer-select,
     .combo-explorer-select {
         flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        font-size: 0.8rem !important;
+        padding: 3px 5px !important;
+        height: 30px !important;
+        border-radius: 6px !important;
+    }
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
