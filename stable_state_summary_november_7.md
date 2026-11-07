@@ -211,9 +211,14 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_7
    - Recalculated round 2410 (`SHARKLIKE` base points 13 vs 22 with bonus addition) and updated all 1,774 rounds in `round_history` across production and local environments.
    - Updated `game_room.py` and `app.py` so future rounds and API endpoints strictly evaluate base score excluding bonus points.
    - `PERTUSSISES` (21 pts base) now properly supersedes `SHARKLIKE` (13 pts base) on Leaderboards and Achievements.
-12. **Profile "BEST WORDS" Tab & Adaptive Good Find Logic**:
+12. **Profile "BEST WORDS" Tab & Adaptive Good Find Logic (Conveyor Belt)**:
    - Added "BEST WORDS" tab directly to the right of "EXCEPTIONAL ROUNDS" on user profiles (`templates/index.html`, `static/js/tools.js`).
    - Adaptive good find baseline: accepts 7L+ words (like `SERENADE`) for players who normally find 3-6 letter words, while requiring 9L+ or obscure CSW words for players who regularly find simple 8L words.
-   - Displays Word, Points, Length, Mode, Board, and Date with interactive replay on click via `watchRoundHistory`.
+   - **Conveyor Belt Mechanics**:
+     - Ordered strictly by recency (`timestamp DESC`, with points and word length as secondary tiebreakers for finds within the same round).
+     - Newest finds always enter at the very top. Older entries shift down.
+     - When the limit of 50 entries is reached, the oldest entries at the bottom fall off the belt.
+     - If an existing word is found again in a newer round, its entry refreshes and moves to the top.
+   - Displays Word, Points, Length, Mode, Board, and Date with interactive replay on click via `watchRoundHistory` (caching `best_words_rounds`).
    - Fixed unauthenticated visitor profile crash (`typeof null === 'object'`).
 

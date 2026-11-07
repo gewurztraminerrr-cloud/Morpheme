@@ -3559,7 +3559,7 @@ async function renderProfile(user) {
             const bwHeader = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Best Words (Relative Good Finds)</span>
-                    <span style="font-size: 0.85rem; font-weight: 700; color: #ffd700;">Top ${displayWords.length} Finds</span>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #ffd700;">Latest ${displayWords.length} Finds</span>
                 </div>
             `;
             bestWordsList.innerHTML = bwHeader + window.bestWordsGridHeader + displayWords.map(w => window.renderBestWordGridItem(w)).join('');
@@ -3567,7 +3567,11 @@ async function renderProfile(user) {
     }
 
     // Cache all rounds for review (recent, exceptional, and best words)
-    window.lastRenderedRounds = [...(user.recent_rounds || []), ...(user.exceptional_rounds || [])];
+    window.lastRenderedRounds = [
+        ...(user.recent_rounds || []),
+        ...(user.exceptional_rounds || []),
+        ...(user.best_words_rounds || [])
+    ];
 
     // Render Ratings Grid (32 setups)
     renderRatingsGrid(user.config_ratings || {}, user);

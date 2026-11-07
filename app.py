@@ -5465,21 +5465,34 @@ def get_public_profile(username):
             is_good_find = (w_len >= 7)
 
         if is_good_find:
-            if w_text not in qualified_words or w_pts > qualified_words[w_text]['points']:
+            if w_text not in qualified_words:
                 qualified_words[w_text] = item
+            else:
+                # Keep the latest find of this word (conveyor belt recency)
+                if item['timestamp'] > qualified_words[w_text]['timestamp']:
+                    qualified_words[w_text] = item
+                elif item['timestamp'] == qualified_words[w_text]['timestamp'] and item['points'] > qualified_words[w_text]['points']:
+                    qualified_words[w_text] = item
 
     # If user has no words qualifying under the threshold yet, provide top base-point finds as fallback
     if not qualified_words and user_words_pool:
         for item in user_words_pool:
             w_text = item['word']
-            if w_text not in qualified_words or item['points'] > qualified_words[w_text]['points']:
+            if w_text not in qualified_words:
                 qualified_words[w_text] = item
+            else:
+                if item['timestamp'] > qualified_words[w_text]['timestamp']:
+                    qualified_words[w_text] = item
 
+    # Conveyor belt: newest entries at the top, oldest entries at the bottom fall out
     profile_best_words = sorted(
         qualified_words.values(),
-        key=lambda x: (x['points'], x['length'], x['timestamp']),
+        key=lambda x: (x['timestamp'], x['points'], x['length']),
         reverse=True
     )[:50]
+
+    best_word_game_ids = {w['game_id'] for w in profile_best_words if w.get('game_id')}
+    best_words_rounds = [p for p in standard_rounds if p['game_id'] in best_word_game_ids]
 
     conn.close()
     session_info = room_manager.find_user_session(user[0])
@@ -5515,6 +5528,7 @@ def get_public_profile(username):
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'best_words': profile_best_words,
+        'best_words_rounds': best_words_rounds,
         'config_ratings': config_stats,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
