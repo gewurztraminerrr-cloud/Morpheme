@@ -66,6 +66,7 @@ class Player:
     ai_rating: int = 1200
     has_abandoned: bool = False
     cell_density: List = field(default_factory=list)
+    game_room_chat: bool = True
 
     @property
     def is_registered(self) -> bool:
@@ -421,7 +422,7 @@ class GameRoom:
                 print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
                 self.check_and_update_state()
     
-    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200, game_room_chat=True):
         """Add player to room"""
         if not is_ai and user_id:
             try:
@@ -468,6 +469,8 @@ class GameRoom:
                 if rating is not None and not is_guest:
                     existing_player.rating = rating
                 existing_player.is_guest = is_guest
+                if game_room_chat is not None:
+                    existing_player.game_room_chat = game_room_chat
                 # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
                 if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
                     round_started_at = getattr(self, 'round_start_time', 0)
@@ -500,6 +503,8 @@ class GameRoom:
                 quitter.last_active = time.time()
                 quitter.country_flag = country_flag
                 quitter.is_guest = is_guest
+                if game_room_chat is not None:
+                    quitter.game_room_chat = game_room_chat
                 if not getattr(quitter, 'cell_density', None):
                     self._initialize_player_density_grid(quitter)
                 self.players = [p for p in self.players if str(p.user_id) != uid_str and str(p.username).lower() != uname_lower]
@@ -544,6 +549,8 @@ class GameRoom:
                 if rating is not None and not is_guest:
                     existing_player.rating = rating
                 existing_player.is_guest = is_guest
+                if game_room_chat is not None:
+                    existing_player.game_room_chat = game_room_chat
                 
                 # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
                 if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
@@ -581,7 +588,8 @@ class GameRoom:
                 country_flag=country_flag, 
                 is_guest=is_guest,
                 is_ai=is_ai,
-                ai_rating=ai_rating
+                ai_rating=ai_rating,
+                game_room_chat=game_room_chat
             )
             if manual_accessed:
                 player.joined_mid_round = True
@@ -911,7 +919,8 @@ class GameRoom:
                     'is_guest': p.is_guest,
                     'is_ai': p.is_ai,
                     'ai_rating': p.ai_rating,
-                    'has_abandoned': p.has_abandoned
+                    'has_abandoned': p.has_abandoned,
+                    'game_room_chat': getattr(p, 'game_room_chat', True)
                 })
             players_json = json.dumps(players_data)
             
@@ -3724,6 +3733,7 @@ class RoomManager:
                                             p.is_ai = d.get('is_ai', False)
                                             p.ai_rating = d.get('ai_rating', 1200)
                                             p.has_abandoned = d.get('has_abandoned', False)
+                                            p.game_room_chat = d.get('game_room_chat', True)
                                             restored_players.append(p)
                                         room.players = restored_players
                                         
@@ -5131,7 +5141,8 @@ class RoomManager:
                                     'is_guest': p.is_guest,
                                     'is_ai': p.is_ai,
                                     'ai_rating': p.ai_rating,
-                                    'has_abandoned': p.has_abandoned
+                                    'has_abandoned': p.has_abandoned,
+                                    'game_room_chat': getattr(p, 'game_room_chat', True)
                                 })
                             players_json = json.dumps(players_data)
                             
@@ -7479,7 +7490,8 @@ class RoomManager:
                                     'found_bonus_word': p.found_bonus_word, 'last_active': p.last_active,
                                     'input_method': p.input_method, 'country_flag': p.country_flag,
                                     'joined_mid_round': p.joined_mid_round, 'has_exceptional_round': p.has_exceptional_round,
-                                    'is_guest': p.is_guest, 'is_ai': p.is_ai, 'ai_rating': p.ai_rating, 'has_abandoned': p.has_abandoned
+                                    'is_guest': p.is_guest, 'is_ai': p.is_ai, 'ai_rating': p.ai_rating, 'has_abandoned': p.has_abandoned,
+                                    'game_room_chat': getattr(p, 'game_room_chat', True)
                                 })
                             players_json = json.dumps(players_data)
                             with get_db() as conn:

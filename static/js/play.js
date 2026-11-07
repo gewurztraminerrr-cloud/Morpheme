@@ -4289,6 +4289,29 @@ function renderPlayers(players, currentUser = null, state = null) {
         const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
         const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
 
+        // Chat disabled icon logic (Crossed-out horn: user cannot read chats)
+        const isSelf = (p.username === (state.your_username || window.currentUsername) || (state.your_user_id && p.user_id === state.your_user_id));
+        let hasChatDisabled = false;
+        if (isSelf) {
+            if (window.userSettings && window.userSettings.game_room_chat !== undefined) {
+                hasChatDisabled = (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false');
+            } else {
+                try {
+                    const cached = localStorage.getItem('morpheme_game_room_chat');
+                    if (cached !== null) {
+                        hasChatDisabled = (cached === 'false' || cached === false);
+                    } else {
+                        hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+                    }
+                } catch (e) {
+                    hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+                }
+            }
+        } else {
+            hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+        }
+        const chatDisabledHtml = hasChatDisabled ? `<span title="Chat disabled (cannot read chats)" class="chat-disabled-icon">🔇</span>` : '';
+
         const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank} rank-other`;
         const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #e2e8f0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
 
@@ -4304,6 +4327,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 <span class="player-flag">${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
                 <span class="player-input-icon">${inputIcon}</span>
                 ${trophyHtml}
+                ${chatDisabledHtml}
                 <div style="flex:1;"></div>
                 <span class="player-words-count">${p.words_count} words</span>
                 <span class="player-score-val">${isPlayerDNP(p, state) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
@@ -4348,6 +4372,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         });
     });
 }
+window.renderPlayers = renderPlayers;
 
 // Chat Logic
 let lastChatTimestamp = 0;
@@ -4717,6 +4742,16 @@ function applyGameRoomChatSetting() {
         if (chatPanel && !isTournament) {
             chatPanel.style.removeProperty('display');
         }
+    }
+
+    if (typeof lastPlayersHtml !== 'undefined') {
+        lastPlayersHtml = '';
+    }
+    if (window.lastGameState && Array.isArray(window.lastGameState.players) && typeof renderPlayers === 'function') {
+        try {
+            const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+            renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+        } catch (e) {}
     }
 }
 window.applyGameRoomChatSetting = applyGameRoomChatSetting;

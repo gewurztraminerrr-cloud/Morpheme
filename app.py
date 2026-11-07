@@ -3738,6 +3738,21 @@ def allowed_file(filename):
 
 # ... (rest of file) ...
 
+def get_user_chat_setting(user_id=None):
+    if 'game_room_chat' in session:
+        return bool(session['game_room_chat'])
+    if user_id and not session.get('is_guest'):
+        try:
+            with sqlite3.connect(DB_PATH, timeout=10) as conn:
+                row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'game_room_chat'", (user_id,)).fetchone()
+                if row:
+                    val_bool = (str(row[0]).lower() in ['true', '1'])
+                    session['game_room_chat'] = val_bool
+                    return val_bool
+        except Exception:
+            pass
+    return True
+
 # Settings Endpoints
 @app.route('/api/save_setting', methods=['POST'])
 @app.route('/api/settings/update', methods=['POST'])
@@ -3752,6 +3767,20 @@ def update_setting():
     if key == 'lobby_guide_dismissed':
         session['lobby_guide_dismissed'] = str(value)
         session.modified = True
+
+    if key == 'game_room_chat':
+        val_bool = (str(value).lower() in ['true', '1'])
+        session['game_room_chat'] = val_bool
+        session.modified = True
+        uid = session.get('user_id')
+        if uid and 'room_manager' in globals():
+            try:
+                for room in list(room_manager.rooms.values()):
+                    p = room.get_player(uid)
+                    if p:
+                        p.game_room_chat = val_bool
+            except Exception:
+                pass
 
     if 'user_id' not in session or session.get('is_guest'):
         return jsonify({'success': True})
@@ -6597,6 +6626,7 @@ def get_room_state(room_id):
 
             p_obj = room.get_player(uid)
             if p_obj:
+                p_obj.game_room_chat = get_user_chat_setting(uid)
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
                 _gap = time.time() - p_obj._last_seen_before_update
                 if _gap >= 15.0:
@@ -7236,6 +7266,7 @@ def get_room_state(room_id):
                         'country_flag': p.country_flag,
                         'joined_mid_round': getattr(p, 'joined_mid_round', False),
                         'has_exceptional_round': (getattr(room, 'state', '') == 'intermission' and getattr(p, 'has_exceptional_round', False)),
+                        'game_room_chat': getattr(p, 'game_room_chat', True),
                     } for p, data in sorted(
                         [(p, get_incremental_data(p)) for p in room.players], 
                         key=lambda x: (

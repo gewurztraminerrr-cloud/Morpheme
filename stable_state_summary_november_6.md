@@ -141,6 +141,15 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 - **Crisp CSS Rendering**:
   - Added `image-rendering: -webkit-optimize-contrast; image-rendering: auto;` and backface stabilization to `.image-lightbox-content img`, `.profile-avatar.large`, `.mini-avatar`, `.post-image-item img`, `.comment-image-item img`, `.preview-thumb`, and `.reply-preview-thumb` to prevent subpixel blurring in both thumbnail and enlarged modal views.
 
+### 17. Game Room Chat Disabled Crossed-Out Horn Icon (`game_room.py`, `app.py`, `play.js`, `play.css`)
+- **Icon Presence & Seamless Coexistence**:
+  - Added a crossed-out horn icon (`🔇`, title `"Chat disabled (cannot read chats)"`) to the bottom-left corner of player cards (`.player-row-bottom`) for any user who has disabled game room chat.
+  - Sits cleanly alongside the country flag and device input method icon (`[Flag] [Input] [🏆] [🔇]`).
+  - **Zero Interference with Trophy Icon**: The presence logic and position of the 🏆 trophy icon for exceptional performances during intermission are completely unaffected. When a player with disabled chat earns an exceptional performance, both the trophy and crossed-out horn icons render side-by-side with clean flex spacing, while the flexible spacer `<div style="flex:1;"></div>` pushes the words count and score cleanly to the right.
+- **Real-Time Client & Server Synchronization**:
+  - Added `game_room_chat` to the `Player` dataclass in `game_room.py` and serialized it in `/api/room/<room_id>/state`.
+  - Toggling the setting in Settings immediately updates the player's active room state in memory and calls `applyGameRoomChatSetting()`, which instantly refreshes the player list without waiting for polling.
+
 ---
 
 ## Full Commit History (November 6, 2026)
@@ -170,6 +179,7 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `c5689261` | docs(faq): add What music is playing in the Lobby? (Simon Patterson - Thump) |
 | `8ab0e881` | feat(settings): allow user to disable game room chat in Gameplay & Preferences |
 | `36ecea8f` | fix(settings): correct game room chat toggle display state in desktop view |
+| `d9eecdc9` | fix(images): preserve high resolution and crisp rendering for profile and forum images |
 
 ---
 
@@ -194,3 +204,9 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
      - Preserving PNG original files untouched without downscaling or lossy compression.
      - Preserving aspect ratio and high 0.95 quality when scaling oversized 4000x3000 images down to 2560px max dimension.
      - Global availability of `window.compressImage` and `window.Forum`.
+8. **Chat Disabled Crossed-Out Horn Icon**:
+   - Automated Selenium test (`scratch/test_chat_disabled_icon.py`) verified:
+     - Presence of crossed-out horn `🔇` icon when chat is disabled, with tooltip "Chat disabled (cannot read chats)".
+     - Non-interference and harmonious coexistence with exceptional performance 🏆 trophy icon in intermission.
+     - Disappearance of trophy icon during active rounds while crossed-out horn remains persistent.
+     - Instant DOM re-rendering upon calling `applyGameRoomChatSetting()`.
