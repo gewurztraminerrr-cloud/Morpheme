@@ -234,28 +234,31 @@
 }
 
 .forum-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    margin: 0;
-    padding: 22px 30px 18px 30px;
-    border-bottom: 1px solid var(--input-border);
-    background: transparent;
-    box-sizing: border-box;
-    width: 100%;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 20px 30px !important;
+    border-bottom: 1px solid var(--input-border) !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
 }
 
 .header-titles {
     flex: 1;
     min-width: 0;
     margin-right: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .header-titles h2 {
     font-size: 1.65rem;
     margin-top: 0;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     color: var(--text-primary);
     line-height: 1.2;
 }
@@ -267,6 +270,15 @@
     margin-top: 0;
     margin-bottom: 0;
     line-height: 1.35;
+}
+
+.forum-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
 }
 
 #forum-category-desc.forum-desc-scrolling-box {
