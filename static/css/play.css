@@ -6362,7 +6362,7 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
 .split-notepads-container,
 #game-board.split-notepads-container,
 .game-board.split-notepads-container {
-    padding: 6px 8px 16px 8px !important;
+    padding: 6px 20px 16px 8px !important;
     background: transparent !important;
     border-radius: 12px;
     width: 100%;
@@ -6385,17 +6385,14 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     touch-action: pan-y !important;
     box-sizing: border-box;
     margin: 0 !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+    scrollbar-width: none !important;
 }
 
-.split-notepads-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.split-notepads-container::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, 0.3);
-    border-radius: 4px;
+.split-notepads-container::-webkit-scrollbar,
+#game-board.split-notepads-container::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
 }
 
 @media (max-width: 992px) {
@@ -6431,7 +6428,8 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
         gap: 12px !important;
-        padding: 4px 6px 20px 6px !important;
+        padding: 4px 18px 20px 6px !important;
+        scrollbar-width: none !important;
         margin: 0 !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
@@ -10468,6 +10466,31 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     width: 10px !important;
     min-height: 36px !important;
     border-radius: 5px !important;
+}
+
+.m-scroller-track.m-scroller-track-notepads {
+    z-index: 1000 !important;
+    width: 14px !important;
+    border-radius: 7px !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(56, 189, 248, 0.28) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+.m-scroller-track.m-scroller-track-notepads .m-scroller-thumb {
+    width: 10px !important;
+    left: 1px !important;
+    min-height: 38px !important;
+    border-radius: 5px !important;
+    background: linear-gradient(180deg, #38bdf8, #2563eb) !important;
+    border: 1px solid rgba(56, 189, 248, 0.8) !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
+}
+
+.m-scroller-track.m-scroller-track-notepads .m-scroller-thumb:hover,
+.m-scroller-track.m-scroller-track-notepads .m-scroller-thumb.dragging {
+    background: linear-gradient(180deg, #7dd3fc, #3b82f6) !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.9) !important;
 }
 
 .m-scroller-thumb {

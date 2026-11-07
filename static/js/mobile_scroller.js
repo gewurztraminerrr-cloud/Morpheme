@@ -7,12 +7,14 @@
     function attachScroller(targetSpec) {
         let getTarget;
         let isOverlayTarget = false;
+        let isNotepadsTarget = false;
 
         if (typeof targetSpec === 'string') {
             getTarget = () => document.getElementById(targetSpec);
         } else if (typeof targetSpec === 'object' && typeof targetSpec.getTarget === 'function') {
             getTarget = targetSpec.getTarget;
             isOverlayTarget = !!targetSpec.isOverlay;
+            isNotepadsTarget = !!targetSpec.isNotepads;
         } else {
             return;
         }
@@ -21,6 +23,9 @@
         track.className = 'm-scroller-track';
         if (isOverlayTarget) {
             track.classList.add('m-scroller-track-overlay');
+        }
+        if (isNotepadsTarget) {
+            track.classList.add('m-scroller-track-notepads');
         }
         const thumb = document.createElement('div');
         thumb.className = 'm-scroller-thumb';
@@ -60,6 +65,24 @@
                     track.style.display = 'none';
                     return;
                 }
+            } else if (isNotepadsTarget) {
+                // Split Points and FCFS Intermission Notepads Scroller (active across desktops, laptops, tablets, and mobile)
+                const playPage = document.getElementById('page-play');
+                const isPlayActive = !playPage || playPage.classList.contains('active') || window.currentPageId === 'page-play';
+                const isRendered = el && (el.offsetParent !== null || window.getComputedStyle(el).display !== 'none');
+                const isAnyModalOpen = isReplayOpen || !!document.querySelector('.overlay:not(.hidden), .modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), #full-list-modal:not(.hidden)');
+
+                const isSplitNotepads = el.classList.contains('split-notepads-container');
+                const visible = isPlayActive &&
+                    !isAnyModalOpen &&
+                    isRendered &&
+                    isSplitNotepads &&
+                    (el.scrollHeight > el.clientHeight + 8);
+
+                if (!visible) {
+                    track.style.display = 'none';
+                    return;
+                }
             } else {
                 // Background page scroller (leaderboards / tournaments)
                 const isAnyModalOpen = isReplayOpen || !!document.querySelector('.overlay:not(.hidden), .modal-overlay:not(.hidden), .mini-profile-overlay:not(.hidden), #full-list-modal:not(.hidden)');
@@ -79,7 +102,7 @@
             track.style.display = 'block';
             track.style.top = Math.max(0, r.top + 4) + 'px';
             track.style.height = Math.max(40, r.height - 8) + 'px';
-            if (isOverlayTarget) {
+            if (isOverlayTarget || isNotepadsTarget) {
                 track.style.right = Math.max(2, Math.round(window.innerWidth - r.right + 4)) + 'px';
             } else {
                 track.style.right = '2px';
@@ -88,7 +111,7 @@
             if (dragging) return;
             const trackH = track.clientHeight;
             const ratio = el.clientHeight / el.scrollHeight;
-            const thumbH = Math.max(30, Math.min(trackH, trackH * ratio));
+            const thumbH = Math.max(34, Math.min(trackH, trackH * ratio));
             thumb.style.height = thumbH + 'px';
             const maxScroll = el.scrollHeight - el.clientHeight;
             const maxTop = Math.max(0, trackH - thumbH);
@@ -171,6 +194,9 @@
         if (isOverlayTarget) {
             window.updateReplayScroller = update;
         }
+        if (isNotepadsTarget) {
+            window.updateNotepadsScroller = update;
+        }
     }
 
     function init() {
@@ -180,6 +206,11 @@
         attachScroller({
             getTarget: () => document.querySelector('#history-review-overlay #review-walkthrough-list'),
             isOverlay: true
+        });
+        // Split Points and FCFS Intermission Notepads Scroller
+        attachScroller({
+            getTarget: () => document.getElementById('game-board'),
+            isNotepads: true
         });
     }
 
