@@ -22,86 +22,125 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 
 ---
 
-## Session Highlights & Architectural Updates (November 2 – November 6, 2026)
+## Session Highlights & Architectural Updates (November 6, 2026)
 
-### 1. Personal Timer Audial Signal & Red Flash (`tools.js`, `settings.js`, `index.html`, `play.css`)
-- **Web Audio Gong Synthesis**:
-  - Implemented authentic synthesized gong sound effect triggered immediately when Personal Timer reaches `00:00:00`.
-  - Gong incorporates strike transient noise, 12 inharmonic detuned partial frequency pairs, non-linear harmonic bloom, and exponential decay reverb.
-  - Automatically unlocks the browser `AudioContext` on timer start or user interaction.
-- **Synchronized Definition Panel Flash**:
-  - Combined the gong audio playback with an intense red pulsating outline and flash animation (`.timer-flash`) across the Definitions panel when time expires.
-- **Preview & Demonstration Controls**:
-  - **Tools > Personal Timer**: Added a dedicated `Preview Time's Up Sound` button (`#timer-preview-sound-btn`) directly inside the Personal Timer tool interface.
-  - **Settings > Audio & Sounds**: Added a dedicated `Personal Timer Alarm` settings subpage (`#setting-subpage-timer-alarm`) with a `Play Demo Alarm` button and preview flash demonstration.
+### 1. Global Timezone Adherence & Abbreviation Standardization (`app.js`, `tools.js`, `settings.js`, `tournaments.js`, `index.html`, `app.py`, `game_room.py`)
+- **Strict Timezone Code Mapping**:
+  - Replaced browser seasonal standard/daylight strings (`CST`/`CDT`, `EST`/`EDT`, `PST`/`PDT`, `MST`/`MDT`) with unified abbreviations adhering to user selection:
+    - **CT** for Central Time
+    - **ET** for Eastern Time
+    - **PT** for Pacific Time
+    - **MT** for Mountain Time
+    - **AKT** for Alaska Time
+    - **HST** for Hawaii Time
+    - **UTC** for Universal Time
+  - Centralized in `window.TIMEZONE_ABBR_MAP` and `window.getAppTimezoneAbbr(tz, rawAbbr)`.
+- **Canada Central Option**:
+  - Added **Canada Central (Winnipeg - CT)** (`America/Winnipeg`) to both Settings and Profile timezone selectors, alongside Canada Eastern (Toronto - ET) and Canada Pacific (Vancouver - PT), honoring local Manitoba year-round offset rules.
+- **Tools Timezone Alignment**:
+  - **Tools -> New Users**: Member registration dates (e.g. for user *Ffoet*) now format with the viewer's selected timezone abbreviation (`... CT`).
+  - **Tools -> Find Count**: Found-at timestamps (e.g. for *POLYENIC*, *CREOLIST*) now format with the viewer's selected timezone abbreviation (`... CT`).
+- **Dynamic Tool Date Refresh**:
+  - Implemented `window.refreshCurrentToolDates()` to instantly re-render open tool panes (New Users, Find Count, Profile Round History) whenever the user changes their timezone in Settings or Profile.
+- **Backend Sync & Profile Cache Invalidation**:
+  - Synchronized `users.timezone` and `user_settings.setting_value` in `/api/settings/update`, `/api/profile/update`, and `get_profile`.
+  - Added cache invalidation for `_PROFILE_CACHE` so saved preferences are never wiped on page refresh.
+  - Replaced static offset in `format_chicago_to_utc` with `zoneinfo.ZoneInfo("America/Chicago")` for accurate date-specific daylight saving evaluation.
 
-### 2. Fixed UTC-5 Daily Resets & Non-DST Room Timings (`game_room.py`, `app.py`)
-- **Fixed `DAILY_TZ` Implementation**:
-  - Replaced dynamic `ZoneInfo("America/Chicago")` (which shifts to UTC-6 during Standard Time) with a permanent fixed UTC-5 timezone (`datetime.timezone(datetime.timedelta(hours=-5), "CDT")`).
-- **Eliminated 1-Hour Drift in 24h Rooms**:
-  - 24h rooms now consistently calculate next midnight, remaining round countdown, and round reset at 12:00 AM UTC-5 regardless of external daylight saving adjustments.
-  - Synchronized daily and weekly boundaries across profile statistics, achievements, round history timestamps, and leaderboards.
+### 2. "WHAT AM I LOOKING AT?" Demonstration Board & Intuition Quote (`lobby.js`, `index.html`)
+- **Core Skill Quote**:
+  - Added the intuition and pattern flow quote directly adjacent to word demonstrations in the guide:
+    > *"This game requires a strong intuitive sense of probability that pieces together almost instantaneously on first glance of a board. The more you play, the stronger this ability will get. If you commit to learning the words, the pieces come together and the patterns flow like liquid."*
+- **Example Word Replacement**:
+  - Replaced demonstration word `"TRAP"` with `"WONDERS"` across the animated guide demo board in both HTML structure and interactive path scripting.
 
-### 3. Word Flash Effect "Already Found" Purple Legend (`index.html`, `play.css`)
-- **Settings Appearance Update**:
-  - Updated the "Word Flash Effect" settings subpage description and visual legend to explicitly document the purple flash for words that have already been found.
-  - Added `.flash-badge.already` with matching purple styling (`#8e44ad` / `#c084fc`) aligned with the on-board `#8e44ad` tile flash.
+### 3. Forum Category Navigation Scroll Position Retention (`forum.js`)
+- **Scroll Memory**:
+  - Implemented category scroll memory in `categoryScrollPositions` dictionary.
+  - When browsing threads in any forum category and clicking "Back to Category", the container scroll position is restored cleanly rather than snapping to the top.
 
-### 4. Leaderboard "Current Top Rated Active Players" Inactive & Default 1200 Filtering (`app.py`)
-- **Default 1200 Rating Exclusion**:
-  - Updated leaderboard rating aggregation so that players whose ratings have never moved off the default 1200 (such as players with 0 multiplayer games or unrated play) are excluded from the "Current Top Rated Active Players" table.
-  - Best ratings are strictly selected from configurations where `ABS(rating - 1200) >= 0.5`.
+### 4. Instant "VIEW ALL" Transition for Game Room Players List (`play.js`)
+- **Eliminated Round-Boundary Lag**:
+  - Implemented `resetPlayersToViewAll()` in `static/js/play.js`.
+  - Triggers immediately at the exact instant `round_start` or `round_over` packets arrive, resetting the players list filter to "VIEW ALL" with zero perceptible delay.
 
-### 5. Forum Dead Post Reference Handling (`forum.js`, `index.html`)
-- **Link Conversion for `p#N` References**:
-  - Updated `renderContentWithLinks` in `static/js/forum.js` for both standalone `p#N` references and `@user p#N` reply tags.
-  - If the referenced post or comment number `p#N` no longer exists in the thread or category lookup, it renders as clean non-clickable plain text rather than an active link pointing to a non-existent post.
+### 5. Wiktionary Inflection Cross-Reference for Definition Popups (`app.py`)
+- **Comprehensive Fallback**:
+  - Enhanced `is_verified_inflection` in `app.py` with an automated fallback to Wiktionary HTML extraction when WordNet lacks grammatical inflections (e.g. `LEGERING` and `LEGERED` from base verb `leger`).
+  - Resolves base lemmas and displays complete definitions in game room and tool definition popups.
 
-### 6. View Friends Real-Time Synchronization in Game Rooms (`play.js`, `tools.js`, `index.html`)
-- **Immediate Refresh on "View Friends" Click**:
-  - Clicking `View Friends` under Players in game rooms now immediately fetches a fresh friends list from `/api/friends/list` (`cache: 'no-store'`) before rendering, eliminating stale local cache issues.
-- **Instant Mini-Profile Add/Remove Sync**:
-  - Adding or removing a friend via the mini-profile immediately executes `window.refreshPlayersFriendsCache()`, instantly refreshing the in-room players table if the user currently has the "View Friends" filter active.
+### 6. Scoreboard Sorting: Active 0-Point Players Ahead of DNP (`game_room.py`)
+- **Player Status Hierarchy**:
+  - Refined scoreboard sorting logic: players with 0 points who actively played are ranked strictly above Did Not Play (DNP) players.
 
-### 7. Lists Tool "View Full List" Modal Full Pool & Order Integrity (`tools.js`, `index.html`)
-- **Full Dictionary Uncapped Word Streaming**:
-  - Resolved cache poisoning and fetch error handling in `openFullListModal` so the full, uncapped lexicon (`no_limit=true`, e.g. 199,429 words for NWL, 279,000+ words for CSW) streams and displays seamlessly without pausing or truncating at 10,000 words.
-  - Eliminated premature `"(full stream paused)"` warning state by properly retrieving server dictionary response keys.
-- **Random Order 10,000 Word Prefix Preservation**:
-  - When **Random** order is selected, the first 10,000 words in View Full List match the exact 10,000 words shown in the main Lists tool.
-  - All remaining words from the dictionary are shuffled and appended seamlessly after the initial 10,000 words with zero duplicates and zero missing words.
-  - When **Alphabetical** order is selected, words are sorted alphabetically across the entire dictionary.
-- **Cache Management & Virtual Scrolling**:
-  - `fetchListsData` now only caches lists into `_cachedFullWordLists` if the entire list was returned without server truncation (`!data.is_truncated`), ensuring the full modal view never mistakenly uses a truncated 10,000-word cache.
-  - Dynamic virtual scrollbar tracks overall progress and allows instantaneous jumping and smooth scrolling across hundreds of thousands of words.
-  - Bumped cache buster in `templates/index.html` to `v=1793820000`.
+### 7. Multiplayer Subanagrams Mobile & Desktop Layout Refinements (`index.html`, `style.css`)
+- **Random Tab "MUST HAVE" Dropdown**:
+  - Integrated "MUST HAVE" letter selector into the Random tab controls for Subanagrams.
+  - Compacted desktop controls into a single row and paired inputs cleanly on mobile devices.
+
+### 8. Tools & Store Mobile UI Densification (`style.css`, `index.html`, `tools.js`)
+- **2-Column Tool Grid**:
+  - Refactored mobile controls for Unscramble, Is Valid, and Lists tools into compact 2-column layouts matching unified design language.
+  - Extended Unscramble "must-have" input to full width.
+  - Added dedicated custom scrollbar thumb to the desktop Morpheme Store.
+
+### 9. High-Contrast Podium Styling for Light Themes (`style.css`)
+- **1st Place Contrast**:
+  - Styled 1st place in light themes with vibrant gold/yellow `#facc15` and crisp dark outline `#1f2937`.
+  - Styled 4th+ places in distinct sky blue `#0284c7`, preventing visual confusion with 2nd place silver.
+
+### 10. 24h Rooms Clues Tab Isolation (`style.css`, `game_room.py`)
+- **Clues Tab Overflow Fix**:
+  - Enforced strict `.tab-content` display rules for 24h room Clues tab, eliminating title and content bleed into adjacent game tabs.
+
+### 11. Settings Drawer Navigation Hierarchy (`style.css`, `settings.js`)
+- **Arrow Streamlining**:
+  - Removed navigation arrows from sidebar category tabs, preserving arrows strictly on interactive action buttons within subpages.
+  - Right-aligned navigation chevrons consistently across desktop and laptop screens.
+
+### 12. Personal Timer Audial Gong & UI Consolidation (`tools.js`, `index.html`, `style.css`)
+- **Authentic Synthesized Gong**:
+  - Built Web Audio gong synthesizer with inharmonic detuned partials, harmonic bloom, and exponential decay reverb.
+  - Added preview audio button in Personal Timer tool and consolidated alarm preview controls.
+  - Added pulsating red flash animation across Definitions panel upon timer expiry.
 
 ---
 
-## Commit History (November 2 – November 6, 2026)
+## Full Commit History (November 6, 2026)
 
 | Commit ID | Message |
 |:---|:---|
-| `c856e99f` | feat(timer): gong + red flash when Personal Timer hits 00:00:00; demo in Settings > Audio & Sounds |
-| `b2987880` | feat(timer): realistic gong synthesis; add Preview Time's Up Sound button to Personal Timer |
-| `b0462b23` | Fix 24h room reset and daily boundaries to fixed UTC-5 (no DST) |
-| `f178b5d9` | Word Flash Effect settings: add purple Already Found legend |
-| `7540142f` | Leaderboard current ratings: 1200-rated players need >10 rounds against other players |
-| `730c8302` | Leaderboard current ratings: hide 1200-rated players whose ratings never moved off 1200 |
-| `b7a2c251` | Leaderboard current ratings: ignore untouched default 1200 configs when picking best rating |
-| `7d889d02` | Forum: only link p#N references to posts that still exist |
-| `f9af906c` | Update View Friends table immediately upon adding/removing friends and on button click |
-| `553af311` | Fix View Full List modal to load all words beyond 10,000 |
-| `3f344644` | Fix View Full List modal to display entire word pool and preserve initial 10,000 words in Random order |
+| `e66082a2` | Adhere to user selected timezone throughout application and standardize abbreviations |
+| `c18c0e5f` | Update WHAT AM I LOOKING AT guide: replace TRAP with WONDERS and add pattern flow quote |
+| `1fd551c7` | Keep scroll position when returning from thread to category list in forum |
+| `9c57bd65` | Instantly change Players list to VIEW ALL at start and end of round |
+| `c29ed66b` | Allow Wiktionary inflection cross-reference in is_verified_inflection for LEGERING and related words |
+| `a6df2055` | Place users with 0 pts ahead of DNP users in game rooms |
+| `8f9b8477` | Fit Subanagrams desktop random controls on single row and pair MUST HAVE with Random on mobile |
+| `8f24e3f9` | Organize Subanagrams mobile controls and add desktop Store custom scroller with thumb |
+| `7e651362` | Subanagrams: add MUST HAVE dropdown to Random tab and reorganize mobile layout |
+| `0c91ea48` | Tools: extend Unscramble must-have full-width, compact Subanagrams mobile controls, and add desktop Store scroller thumb |
+| `79e376cb` | Tools mobile: compact 2-column layout and shrunk controls for Unscramble and Is Valid matching Lists in Tools |
+| `fc09a21b` | Light themes: style #1 place with vibrant yellow and crisp black outline |
+| `83bf346a` | Players list & score sum: style 4th+ places in distinct sky blue, distinct from 2nd silver |
+| `9d3561c8` | 24h rooms: fix Clues tab layout by enforcing strict tab-content visibility and removing title bleed |
+| `11a21449` | Settings: remove arrows from sidebar category tabs, keeping arrows only on settings buttons within them |
+| `19673cf1` | Settings: move navigation arrows to right side across tabs and buttons on desktop and laptop |
+| `f126e947` | Personal Timer: add authentic gong audio, green start button, compact mobile layout, and relocate demo box from settings |
+| `b66c42ad` | docs: establish Start Over stable point for November 6 (START_OVER_POINT_NOVEMBER_6) |
 
 ---
 
 ## Verification & Validation
 
-| Test / Check | Result | Verification Notes |
-|:---|:---|:---|
-| **Local Working Tree** | ✅ Clean | Working tree clean on `main` |
-| **Origin / GitHub** | ✅ Synchronized | Pushed to GitHub repository (`origin/main`) |
-| **Remote Production** | ✅ Synchronized | Fast-forward deployed to `132.148.72.249`, PM2 online (`morpheme`) |
-| **Production Health** | ✅ Verified | HTTP/2 200 OK |
-| **Git Tags** | ✅ Tagged | `START_OVER_POINT_NOVEMBER_6` and `stable-2026-11-06` |
+1. **Timezone Adherence**:
+   - Automated Selenium test (`verify_timezone.py` / `test_timezone.html`) verified `formatAppDate`, `formatTournamentStartDate`, `formatTimeoutTimestamp`, and `getAppTimezoneAbbr` across CT, ET, PT, MT, AKT, HST, and UTC.
+   - Tested live production at `https://morpheme.games` with headless Chrome confirming `05/11/2026 5:12 PM CT` (Chicago) and `05/11/2026 6:12 PM CT` (Winnipeg) with zero CST/EST bleed.
+2. **WHAT AM I LOOKING AT Guide**:
+   - Verified demonstration board rendering word `WONDERS` and intuition quote live on production.
+3. **Forum Category Scroll Retention**:
+   - Verified category list scroll position retention across navigation transitions.
+4. **Instant VIEW ALL Transition**:
+   - Verified instant player list state change on round start and round end.
+5. **Wiktionary Fallback**:
+   - Verified live on `/api/definition?word=LEGERED` returning complete grammatical definition.
