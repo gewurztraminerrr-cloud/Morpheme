@@ -2511,19 +2511,23 @@ function selectGuideWordPath(wordKey, btnElement) {
             desc: 'Start at <strong>P(0,3)</strong> → diagonal down-left to <strong>A(1,2)</strong> → horizontal left to <strong>R(1,1)</strong> → diagonal down-left to <strong>O(2,0)</strong> → vertical up to <strong>L(1,0)</strong> → diagonal down-right to <strong>E(2,1)</strong>. Fluid multi-angle connection.',
             pts: '+3 Points'
         },
-        'trap': {
-            word: 'TRAP',
+        'wonders': {
+            word: 'WONDERS',
             tiles: [
-                { id: 'gb-0-1', num: 1 },
-                { id: 'gb-1-1', num: 2 },
-                { id: 'gb-1-2', num: 3 },
-                { id: 'gb-0-3', num: 4 }
+                { id: 'gb-3-0', num: 1 },
+                { id: 'gb-2-0', num: 2 },
+                { id: 'gb-3-1', num: 3 },
+                { id: 'gb-3-2', num: 4 },
+                { id: 'gb-2-1', num: 5 },
+                { id: 'gb-1-1', num: 6 },
+                { id: 'gb-0-0', num: 7 }
             ],
-            type: 'Diagonal & Directional Angle',
-            desc: 'Start at <strong>T(0,1)</strong> → down to <strong>R(1,1)</strong> → right to <strong>A(1,2)</strong> → diagonal up-right to <strong>P(0,3)</strong>. Diagonal navigation mixed with orthogonal shifts.',
-            pts: '+1 Point'
+            type: 'Multi-Directional Ascending Curve',
+            desc: 'Start at <strong>W(3,0)</strong> → vertical up to <strong>O(2,0)</strong> → diagonal down-right to <strong>N(3,1)</strong> → horizontal right to <strong>D(3,2)</strong> → diagonal up-left to <strong>E(2,1)</strong> → vertical up to <strong>R(1,1)</strong> → diagonal up-left to <strong>S(0,0)</strong>. Fluid multi-angle connection spanning across the board.',
+            pts: '+5 Points'
         }
     };
+    paths['trap'] = paths['wonders'];
     paths['stop'] = paths['stamp'];
     paths['slow'] = paths['parole'];
 
