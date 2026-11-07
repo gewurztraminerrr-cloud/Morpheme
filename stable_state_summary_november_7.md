@@ -2,9 +2,9 @@
 
 ## Latest Feature Commit ID
 ```
-5f04e8b2 Fix forum category header padding, alignment, and button spacing for Chrome and desktop
+338f955f Guarantee equal padding on Multiplayer Subanagrams letter sequence across all themes
 ```
-*(Full hash: `5f04e8b2a16d56df3c6c06aeb734ba972e35359a`)*
+*(Full hash: `338f955f36e4b85cceb701f4094a973cb439bb7f`)*
 
 ## Start Over Point Tag
 ```
@@ -16,7 +16,7 @@ START_OVER_POINT_NOVEMBER_7
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, HEAD at `5f04e8b2` |
+| localhost      | ✅ Synchronized | Working tree clean, HEAD at `338f955f` |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, mobile layouts |
