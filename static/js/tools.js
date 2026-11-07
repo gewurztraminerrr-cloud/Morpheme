@@ -1372,11 +1372,12 @@ function setupComboExplorer() {
             const mpSelect = document.getElementById('combo-explorer-mp');
             const dirSelect = document.getElementById('combo-explorer-direction');
             const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
-            const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
+            const mpVal = mpSelect ? mpSelect.value : '0';
+            const mpLabel = (mpVal === 'all') ? 'All MP' : `${mpVal}MP`;
             const direction = dirSelect ? dirSelect.value : 'both';
             const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
             const inputTitle = document.getElementById('combo-explorer-input-title');
-            if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${diffTitle}${dirTitle})`;
+            if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mpLabel}${diffTitle}${dirTitle})`;
 
             if (_comboExplorerSelectedWord) {
                 window.selectComboExplorerWord(_comboExplorerSelectedWord);
@@ -1536,7 +1537,8 @@ async function loadComboExplorerWords(preserveWord = null) {
     const myReqId = ++_comboExplorerWordsRequestId;
 
     const length = parseInt(lengthSelect.value, 10) || 7;
-    const mp = parseInt(mpSelect.value, 10);
+    const mpVal = mpSelect ? mpSelect.value : '0';
+    const mpLabel = (mpVal === 'all') ? 'All MP' : `${mpVal}MP`;
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
@@ -1544,7 +1546,7 @@ async function loadComboExplorerWords(preserveWord = null) {
 
     const diffTitle = (difference !== 'all') ? `, Diff ${difference}` : '';
     const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
-    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${diffTitle}${dirTitle})`;
+    if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mpLabel}${diffTitle}${dirTitle})`;
     if (inputCount) inputCount.textContent = '...';
     inputList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading words...</div>';
 
@@ -1555,7 +1557,7 @@ async function loadComboExplorerWords(preserveWord = null) {
     const diffLabel = (difference !== 'all') ? ` (Diff ${difference})` : '';
     if (prevWord) {
         if (respTitle) {
-            respTitle.innerHTML = `${mp}MP${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${prevWord}', event)" title="Click to view definition">${prevWord}</span>`;
+            respTitle.innerHTML = `${mpLabel}${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${prevWord}', event)" title="Click to view definition">${prevWord}</span>`;
         }
         if (respCount) respCount.textContent = '...';
         if (respList) {
@@ -1613,7 +1615,7 @@ async function loadComboExplorerWords(preserveWord = null) {
                 body: JSON.stringify({
                     dictionary: dictionary,
                     length: length,
-                    mp: mp,
+                    mp: mpVal,
                     direction: direction,
                     custom_words: eligibleOfLen
                 })
@@ -1632,7 +1634,7 @@ async function loadComboExplorerWords(preserveWord = null) {
             }
         }
     } else {
-        const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
+        const cacheKey = `${dictionary}_${length}_${mpVal}_${direction}`;
         if (_comboExplorerWordsCache.has(cacheKey)) {
             words = _comboExplorerWordsCache.get(cacheKey);
         } else {
@@ -1644,7 +1646,7 @@ async function loadComboExplorerWords(preserveWord = null) {
                     body: JSON.stringify({
                         dictionary: dictionary,
                         length: length,
-                        mp: mp,
+                        mp: mpVal,
                         direction: direction
                     })
                 });
@@ -1741,7 +1743,8 @@ window.selectComboExplorerWord = async function(word) {
     const respCount = document.getElementById('combo-explorer-response-count');
 
     const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
-    const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
+    const mpVal = mpSelect ? mpSelect.value : '0';
+    const mpLabel = (mpVal === 'all') ? 'All MP' : `${mpVal}MP`;
     const dictionary = expDictSelect ? expDictSelect.value : 'CSW';
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
@@ -1750,12 +1753,12 @@ window.selectComboExplorerWord = async function(word) {
 
     const diffLabel = (difference !== 'all') ? ` (Diff ${difference})` : '';
     if (respTitle) {
-        respTitle.innerHTML = `${mp}MP${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${safeWord}', event)" title="Click to view definition">${safeWord}</span>`;
+        respTitle.innerHTML = `${mpLabel}${diffLabel} from <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${safeWord}', event)" title="Click to view definition">${safeWord}</span>`;
     }
     if (respCount) respCount.textContent = '...';
     if (respList) respList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.85rem;">Loading matches...</div>';
 
-    const cacheKey = `${dictionary}_${word}_${mp}_${direction}_${difference}`;
+    const cacheKey = `${dictionary}_${word}_${mpVal}_${direction}_${difference}`;
     let matches = [];
 
     if (_comboExplorerMatchesCache.has(cacheKey)) {
@@ -1768,7 +1771,7 @@ window.selectComboExplorerWord = async function(word) {
                 body: JSON.stringify({
                     dictionary: dictionary,
                     length: length,
-                    mp: mp,
+                    mp: mpVal,
                     word: word,
                     direction: direction,
                     difference: difference
@@ -1801,7 +1804,8 @@ function renderComboExplorerMatches() {
     const listEl = document.getElementById('combo-explorer-response-list');
     const countBadge = document.getElementById('combo-explorer-response-count');
     const mpSelect = document.getElementById('combo-explorer-mp');
-    const mp = mpSelect ? mpSelect.value : '1';
+    const mpVal = mpSelect ? mpSelect.value : '0';
+    const mpLabel = (mpVal === 'all') ? 'All MP' : `${mpVal}MP`;
     const dirSelect = document.getElementById('combo-explorer-direction');
     const direction = dirSelect ? dirSelect.value : 'both';
     const diffSelect = document.getElementById('combo-explorer-difference');
@@ -1814,7 +1818,7 @@ function renderComboExplorerMatches() {
     if (!_comboExplorerDisplayMatches || _comboExplorerDisplayMatches.length === 0) {
         listEl.innerHTML = `
             <div style="padding: 24px; text-align: center; color: #64748b; font-size: 0.85rem;">
-                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection${dirPhrase}${diffPhrase} ${mp}MP words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
+                ${_comboExplorerSelectedWord ? `No non-plural, non-inflection${dirPhrase}${diffPhrase} ${mpLabel} words found for <span class="clickable-word-link combo-explorer-title-word" onclick="window.lookupWord('${_comboExplorerSelectedWord}', event)" title="Click to view definition">${_comboExplorerSelectedWord}</span>.` : 'Select an input word on the left to display its matching MP words.'}
             </div>`;
         if (countBadge) countBadge.textContent = '0';
         if (typeof listEl._updateCustomScrollbar === 'function') {

@@ -9897,10 +9897,14 @@ def tools_combo_explorer():
         length = int(data.get('length', 7))
     except (ValueError, TypeError):
         length = 7
-    try:
-        target_mp = int(data.get('mp', 1))
-    except (ValueError, TypeError):
-        target_mp = 1
+    mp_raw = str(data.get('mp', '0')).strip().lower()
+    if mp_raw in ('all', '*'):
+        target_mp = 'all'
+    else:
+        try:
+            target_mp = int(mp_raw)
+        except (ValueError, TypeError):
+            target_mp = 0
     direction = str(data.get('direction', 'both')).lower().strip()
     if direction not in ('forwards', 'backwards', 'both'):
         direction = 'both'
@@ -9924,7 +9928,15 @@ def tools_combo_explorer():
         combo_res, status_code = get_combo_payload_for_word(selected_word, base_dict_name)
         if status_code != 200:
             return jsonify(combo_res), status_code
-        mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
+        if target_mp == 'all':
+            mp_matches = []
+            for g_mp in (0, 1, 2, 3):
+                words_in_g = combo_res.get('mp_groups', {}).get(str(g_mp), []) or combo_res.get('mp_groups', {}).get(g_mp, [])
+                for m in words_in_g:
+                    if m not in mp_matches and len(m) != 4:
+                        mp_matches.append(m)
+        else:
+            mp_matches = combo_res.get('mp_groups', {}).get(str(target_mp), []) or combo_res.get('mp_groups', {}).get(target_mp, [])
         matches_list = [m for m in mp_matches if len(m) != 4]
 
         # Filter matches by difference if specified
@@ -9933,9 +9945,15 @@ def tools_combo_explorer():
 
         # Filter matches by direction (forwards, backwards, both)
         if direction == 'forwards':
-            matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m, target_mp)[0] == target_mp]
+            if target_mp == 'all':
+                matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m, 3)[0] <= 3]
+            else:
+                matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m, target_mp)[0] == target_mp]
         elif direction == 'backwards':
-            matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m[::-1], target_mp)[0] == target_mp]
+            if target_mp == 'all':
+                matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m[::-1], 3)[0] <= 3]
+            else:
+                matches_list = [m for m in matches_list if calculate_morpheme_metric(selected_word, m[::-1], target_mp)[0] == target_mp]
 
         if not random_order:
             matches_list.sort(key=lambda w: (abs(len(selected_word) - len(w)), -len(w), w))
@@ -9978,8 +9996,14 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in sorted(words_of_len):
-            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                verified_words.append(w)
+            if target_mp == 'all':
+                if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                    verified_words.append(w)
+                elif check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                    verified_words.append(w)
+            else:
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                    verified_words.append(w)
         input_words = verified_words
     else:
         cache_key = (dict_name, length, target_mp, direction)
@@ -9997,8 +10021,14 @@ def tools_combo_explorer():
             dict_lens_int = dict_lens.astype(np.int16)
 
             for w in words_of_len:
-                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                    verified_words.append(w)
+                if target_mp == 'all':
+                    if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                        verified_words.append(w)
+                    elif check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                        verified_words.append(w)
+                else:
+                    if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
+                        verified_words.append(w)
                     
             COMBO_EXPLORER_CACHE[cache_key] = verified_words
             input_words = verified_words
