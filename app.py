@@ -9760,33 +9760,6 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                     sub2 = w[::-1][start:start+l]
                     if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
                         return True
-
-        # 3. Superwords (diff = 1)
-        if target_diff is None or target_diff == 1:
-            common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-            dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
-            for s in dirs:
-                for c in common_chars:
-                    cand1 = s + c
-                    if len(cand1) != 4 and cand1 in dict_set and not is_plural_or_inflection(w, cand1):
-                        return True
-                    cand2 = c + s
-                    if len(cand2) != 4 and cand2 in dict_set and not is_plural_or_inflection(w, cand2):
-                        return True
-
-        # 4. Superwords (diff = 2)
-        if target_diff is None or target_diff == 2:
-            common_2 = ['LY', 'AL', 'IC', 'TY', 'RY', 'EN', 'UN', 'RE', 'IN', 'DE', 'EM', 'AN', 'ON', 'OR', 'ER', 'ES', 'ED', 'ST', 'AT', 'TE']
-            dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
-            for s in dirs:
-                for ext in common_2:
-                    cand1 = s + ext
-                    if len(cand1) != 4 and cand1 in dict_set and not is_plural_or_inflection(w, cand1):
-                        return True
-                    cand2 = ext + s
-                    if len(cand2) != 4 and cand2 in dict_set and not is_plural_or_inflection(w, cand2):
-                        return True
-
         return False
 
     if target_mp == 1:
