@@ -12470,8 +12470,7 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
         padding: 8px 12px !important;
     }
 
-    #tool-subanagrams #sub-panel-manual > div,
-    #tool-subanagrams #sub-panel-random > div {
+    #tool-subanagrams #sub-panel-manual > div {
         display: flex !important;
         flex-direction: row !important;
         gap: 8px !important;
@@ -12480,6 +12479,17 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
         align-items: center !important;
         justify-content: center !important;
         flex-wrap: wrap !important;
+    }
+
+    #tool-subanagrams #sub-panel-random > div {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 5px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-wrap: nowrap !important;
     }
 
     #tool-subanagrams #sub-panel-manual #sub-input {
@@ -12510,46 +12520,60 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     }
 
     #tool-subanagrams #sub-panel-random #sub-length {
-        width: 170px !important;
+        width: 148px !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
+        font-size: 0.79rem !important;
+        padding: 0 4px !important;
+        text-align-last: center !important;
     }
 
     #tool-subanagrams #sub-panel-random #sub-dict-random {
-        width: 180px !important;
+        width: 155px !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
+        font-size: 0.79rem !important;
+        padding: 0 4px !important;
+        text-align-last: center !important;
     }
 
     #tool-subanagrams #sub-panel-random #sub-min-len-random {
-        width: 165px !important;
+        width: 142px !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
+        font-size: 0.79rem !important;
+        padding: 0 4px !important;
+        text-align-last: center !important;
     }
 
     #tool-subanagrams #sub-panel-random #sub-gen-mode {
-        width: 220px !important;
+        width: 130px !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
+        font-size: 0.79rem !important;
+        padding: 0 4px !important;
+        text-align-last: center !important;
     }
 
     #tool-subanagrams #sub-panel-random .sub-must-have-group {
-        width: 175px !important;
+        width: 135px !important;
         height: 38px !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     #tool-subanagrams #sub-panel-random #sub-must-have-random {
         width: 100% !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
+        font-size: 0.79rem !important;
+        padding: 0 4px !important;
+        text-align-last: center !important;
     }
 
     #tool-subanagrams #sub-panel-random #sub-random-btn {
         width: auto !important;
-        min-width: 110px !important;
+        min-width: 95px !important;
         height: 38px !important;
-        font-size: 0.88rem !important;
-        padding: 0 16px !important;
+        font-size: 0.84rem !important;
+        padding: 0 12px !important;
+        white-space: nowrap !important;
     }
 
     /* Subanagrams Dual-Panel Container */
@@ -13725,17 +13749,26 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     }
 
     #page-tools #tool-subanagrams #sub-panel-random .sub-must-have-group,
-    #page-tools #tool-subanagrams #sub-panel-random #sub-must-have-random,
-    body.is-mobile #page-tools #tool-subanagrams #sub-panel-random .sub-must-have-group,
-    body.is-mobile #page-tools #tool-subanagrams #sub-panel-random #sub-must-have-random {
-        grid-column: 1 / -1 !important;
+    body.is-mobile #page-tools #tool-subanagrams #sub-panel-random .sub-must-have-group {
+        grid-column: 1 / 2 !important;
         width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    #page-tools #tool-subanagrams #sub-panel-random #sub-must-have-random,
+    body.is-mobile #page-tools #tool-subanagrams #sub-panel-random #sub-must-have-random {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
     }
 
     #page-tools #tool-subanagrams #sub-panel-random #sub-random-btn,
     body.is-mobile #page-tools #tool-subanagrams #sub-panel-random #sub-random-btn {
-        grid-column: 1 / -1 !important;
+        grid-column: 2 / 3 !important;
         width: 100% !important;
+        margin: 0 !important;
     }
 
     /* Sequence Results container: fits entire remaining screen on mobile */
