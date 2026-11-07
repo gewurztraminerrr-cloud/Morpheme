@@ -354,6 +354,11 @@ window.showTool = function(toolId) {
         } else {
             content.classList.remove('has-combo-active');
         }
+        if (toolId === 'store') {
+            content.classList.add('has-store-active');
+        } else {
+            content.classList.remove('has-store-active');
+        }
     }
 
     // Trigger lazy loads & dynamic style refreshes
