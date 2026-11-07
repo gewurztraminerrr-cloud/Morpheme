@@ -7777,15 +7777,23 @@ def lookup_raw_definition_online(word_upper):
 
     return None
 
+_WIKI_DB_CACHE = {}
+
 def lookup_wiki_definition_from_db(word):
+    if not word:
+        return None
+    w_upper = word.upper().strip()
+    if w_upper in _WIKI_DB_CACHE:
+        return _WIKI_DB_CACHE[w_upper]
     try:
         conn = sqlite3.connect(DB_PATH, timeout=10)
         cursor = conn.cursor()
-        cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (word.upper(),))
+        cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
         row = cursor.fetchone()
         conn.close()
-        if row:
-            return row[0]
+        res = row[0] if row else None
+        _WIKI_DB_CACHE[w_upper] = res
+        return res
     except Exception as e:
         print(f"[Definitions] Error querying local wiki definition: {e}")
     return None
@@ -8220,6 +8228,26 @@ def is_verified_inflection(w, cand, def_w=None, def_cand=None):
     if w in brack_c:
         return True
         
+    # 4.5 Wiktionary verification: if def_cand or def_w has standalone definitions (e.g. historical Scrabble noun glosses),
+    # check if Wiktionary identifies either candidate or word as a grammatical inflection of the root or each other.
+    wiki_c = lookup_wiki_definition_from_db(cand)
+    root_c_wiki = extract_root_from_definition(wiki_c) if wiki_c else None
+    if root_c_wiki:
+        if root_c_wiki == w:
+            return True
+        if root_w and root_c_wiki == root_w:
+            return True
+
+    wiki_w = lookup_wiki_definition_from_db(w)
+    root_w_wiki = extract_root_from_definition(wiki_w) if wiki_w else None
+    if root_w_wiki:
+        if root_w_wiki == cand:
+            return True
+        if root_c and root_w_wiki == root_c:
+            return True
+        if root_c_wiki and root_w_wiki == root_c_wiki:
+            return True
+
     # 5. If def_cand exists and describes an independent entity without linking to w:
     if def_cand:
         if re.search(rf'\b{re.escape(w)}\b', def_cand, re.I):
@@ -8249,6 +8277,10 @@ def get_candidates_from_root(root):
 def get_roots_for_word(w, defn, all_words):
     roots = set()
     r = extract_root_from_definition(defn)
+    if not r:
+        wiki_w = lookup_wiki_definition_from_db(w)
+        if wiki_w:
+            r = extract_root_from_definition(wiki_w)
     if r and r in all_words and r != w:
         roots.add(r)
 
