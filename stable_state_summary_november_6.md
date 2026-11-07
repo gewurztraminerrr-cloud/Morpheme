@@ -150,6 +150,15 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
   - Added `game_room_chat` to the `Player` dataclass in `game_room.py` and serialized it in `/api/room/<room_id>/state`.
   - Toggling the setting in Settings immediately updates the player's active room state in memory and calls `applyGameRoomChatSetting()`, which instantly refreshes the player list without waiting for polling.
 
+### 18. Forum "Start a New Thread" Page: Mobile Zero-Scroll Fit & Desktop Full Page Extension (`templates/index.html`, `static/css/forum.css`)
+- **Mobile Viewport Fit Without Vertical Scrolling**:
+  - On mobile devices (`@media (max-width: 820px)` and `.is-mobile`), the entire "Start a New Thread" page (`#forum-view-create`), the card container (`.forum-create-card`), title, "What's on your mind?" input, "Details" textarea, "Attach Images" group, "Publish Thread" action button, and "← Cancel" bottom bar fit completely within the screen height with zero vertical scrolling (`scrollHeight == clientHeight`).
+  - Added streamlined mobile padding (`10px 12px`), compact form gaps (`6px`), optimized input heights, flexible textarea min-height (`60px`), and full-width touch-friendly buttons.
+- **Desktop & Laptop Full Page Extension**:
+  - On desktop and laptop screens (>= 821px), the `.forum-create-card` and form flex layout stretch to occupy 100% of the available vertical height in `.forum-main`.
+  - Completely eliminates the empty void below the form card.
+  - The Details `textarea` (`#forum-post-content`) flexibly expands (`flex: 1 1 auto; height: 100%; min-height: 140px;`) while anchoring the "Publish Thread" button and "← Cancel" bottom bar cleanly at the bottom.
+
 ---
 
 ## Full Commit History (November 6, 2026)
@@ -180,6 +189,8 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `8ab0e881` | feat(settings): allow user to disable game room chat in Gameplay & Preferences |
 | `36ecea8f` | fix(settings): correct game room chat toggle display state in desktop view |
 | `d9eecdc9` | fix(images): preserve high resolution and crisp rendering for profile and forum images |
+| `2884f3d6` | feat(play): add crossed-out horn icon in game room for users with chat disabled |
+| `44fe2da9` | feat(forum): fit create thread page on mobile without vertical scrolling and extend to full page on desktop |
 
 ---
 
@@ -210,3 +221,8 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
      - Non-interference and harmonious coexistence with exceptional performance 🏆 trophy icon in intermission.
      - Disappearance of trophy icon during active rounds while crossed-out horn remains persistent.
      - Instant DOM re-rendering upon calling `applyGameRoomChatSetting()`.
+9. **Forum Start a New Thread Mobile Fit & Desktop Full Page Extension**:
+   - Automated Selenium test suite (`scratch/test_forum_create_layout.py`) verified:
+     - **Mobile Viewports (390x844, 375x667, 412x915)**: `scrollBodyHasScroll == False` (`scrollHeight == clientHeight`), all elements including form card, title, title input, details textarea, image upload section, Publish Thread button, and Cancel bottom bar fit within the viewport with zero vertical scrolling.
+     - **Desktop & Laptop Viewports (1280x850, 1440x900)**: `scrollBodyHasScroll == False`, form card fills 100% of available height in `.forum-main`, empty space below the form is eliminated, and Details textarea dynamically expands to fill available height.
+
