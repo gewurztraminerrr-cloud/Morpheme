@@ -1,16 +1,48 @@
 
 window.initTournamentsPage = function () {
     console.log('Initializing Tournaments Page');
+
+    // Fast-path: Render cached tournament state immediately to avoid blank flashes
+    if (window.currentTournamentState) {
+        try { renderTournament(window.currentTournamentState); } catch (e) {}
+    } else {
+        try {
+            const cached = sessionStorage.getItem('morpheme_tournament_state');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                window.currentTournamentState = parsed;
+                currentTournamentState = parsed;
+                renderTournament(parsed);
+            }
+        } catch (e) {}
+    }
+
     fetchTournamentStatus();
 
     // Set up polling while on the page
-    if (!window.tournamentPollInterval) {
-        window.tournamentPollInterval = setInterval(() => {
-            const page = document.getElementById('page-tournaments');
-            if (page && page.classList.contains('active')) {
-                fetchTournamentStatus();
-            }
-        }, 30000); // 30s poll
+    if (window.tournamentPollInterval) {
+        clearInterval(window.tournamentPollInterval);
+    }
+    window.tournamentPollInterval = setInterval(() => {
+        const page = document.getElementById('page-tournaments');
+        if (page && page.classList.contains('active')) {
+            fetchTournamentStatus();
+        }
+    }, 15000); // 15s poll for fresher state
+};
+
+window.stopTournamentPolling = function () {
+    if (window.tournamentPollInterval) {
+        clearInterval(window.tournamentPollInterval);
+        window.tournamentPollInterval = null;
+    }
+    if (window._tournamentAbortController) {
+        try { window._tournamentAbortController.abort(); } catch (e) {}
+        window._tournamentAbortController = null;
+    }
+    if (window._tournamentRetryTimer) {
+        clearTimeout(window._tournamentRetryTimer);
+        window._tournamentRetryTimer = null;
     }
 };
 
@@ -99,28 +131,94 @@ function formatTournamentStartDate(epochSeconds) {
 }
 window.formatTournamentStartDate = formatTournamentStartDate;
 
-async function fetchTournamentStatus() {
+window._tournamentFetchInProgress = false;
+
+async function fetchTournamentStatus(retryCount = 0) {
+    if (window._tournamentFetchInProgress && retryCount === 0) {
+        return; // Prevent duplicate concurrent initial calls
+    }
+    window._tournamentFetchInProgress = true;
+
+    if (window._tournamentAbortController) {
+        try { window._tournamentAbortController.abort(); } catch (e) {}
+    }
+    const controller = new AbortController();
+    window._tournamentAbortController = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second request timeout
+
     try {
-        const response = await fetch('/api/tournament/status', { cache: 'no-store' });
-        if (!response.ok) throw new Error("Failed to fetch status");
+        const response = await fetch('/api/tournament/status', {
+            cache: 'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
         const data = await response.json();
         currentTournamentState = data;
         window.currentTournamentState = data;
+
+        try {
+            sessionStorage.setItem('morpheme_tournament_state', JSON.stringify(data));
+        } catch (e) {}
+
         if (data && data.user_status && data.user_status.matchup && data.user_status.matchup.user_id) {
             window.currentUserId = data.user_status.matchup.user_id;
             try { localStorage.setItem('morpheme_user_id', String(data.user_status.matchup.user_id)); } catch (e) {}
         }
+
         renderTournament(data);
         updateNavHighlight(data.user_status?.has_turn, data.status, data.user_status);
+        window._tournamentRetryCount = 0;
     } catch (e) {
-        console.error("Error loading tournament:", e);
+        clearTimeout(timeoutId);
+        console.warn(`[Tournament] Error fetching status (attempt ${retryCount + 1}):`, e.message || e);
+
+        // If we already have rendered data on screen, NEVER destroy the UI with an error message!
+        // Instead, schedule a fast background retry.
+        if (window.currentTournamentState) {
+            if (retryCount < 2) {
+                const nextDelay = (retryCount + 1) * 2000;
+                window._tournamentRetryTimer = setTimeout(() => {
+                    fetchTournamentStatus(retryCount + 1);
+                }, nextDelay);
+            }
+            window._tournamentFetchInProgress = false;
+            return;
+        }
+
+        // No cached data exists yet: try up to 3 automatic retries
+        if (retryCount < 3) {
+            const nextDelay = (retryCount + 1) * 1500;
+            const actionArea = document.getElementById('tournament-action-area');
+            if (actionArea && !actionArea.querySelector('.loading-spinner')) {
+                actionArea.innerHTML = `<p class="placeholder" style="display:flex; align-items:center; justify-content:center; gap:8px;"><span class="loading-spinner"></span> Connecting to tournament...</p>`;
+            }
+            window._tournamentRetryTimer = setTimeout(() => {
+                fetchTournamentStatus(retryCount + 1);
+            }, nextDelay);
+            window._tournamentFetchInProgress = false;
+            return;
+        }
+
+        // All retries failed and no cached data: display graceful error with retry button
         const actionArea = document.getElementById('tournament-action-area');
         if (actionArea) {
-            actionArea.innerHTML = `<p style="color:var(--accent-color)">Error loading tournament info. Please refresh.</p>`;
+            actionArea.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <p style="color:var(--accent-color); font-weight:600; margin-bottom:12px;">Unable to load tournament information</p>
+                    <button class="primary-action" onclick="window.fetchTournamentStatus(0)" style="padding: 8px 20px; font-size: 0.95rem; border-radius: 8px; cursor: pointer;">
+                        ↻ Retry Now
+                    </button>
+                </div>
+            `;
         }
+    } finally {
+        window._tournamentFetchInProgress = false;
     }
 }
+window.fetchTournamentStatus = fetchTournamentStatus;
 
 function updateNavHighlight(hasTurn, status, userStatus) {
     const btn = document.getElementById('nav-tournaments-btn');

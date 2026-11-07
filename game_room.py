@@ -1654,6 +1654,16 @@ class GameRoom:
                     # STEP 2: Cache miss — spawn background thread; do NOT block Waitress thread!
                     def _watchdog_gen():
                         try:
+                            if str(_dims).lower() == 'subanagrams':
+                                fb = get_emergency_fallback_board(_dims, _fmt, _room_ref.time_limit, dictionary=_dict, use_added_words=_use_aw, target_range=_range, min_word_length=_min_len, difficulty=_diff)
+                                if fb:
+                                    if len(fb) >= 9:
+                                        f_b, f_w, f_c, f_f, f_p, f_r, f_bw, _, f_params = fb
+                                    else:
+                                        f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params = fb
+                                    _stage_board((f_b, f_w, f_c, f_f, f_p, f_r, f_bw, f_params))
+                                return
+
                             gen_res = _bg.generate_board(
                                 dimensions=_dims,
                                 bonus_word=None,

@@ -2621,6 +2621,12 @@ window.showPage = showPage;
         }
     }
 
+    if (pageId !== 'page-tournaments') {
+        if (typeof window.stopTournamentPolling === 'function') {
+            window.stopTournamentPolling();
+        }
+    }
+
     // 3. Handle Lobby Music via Helper
     handleLobbyMusicState();
 }

@@ -13997,9 +13997,18 @@ if __name__ == '__main__':
     print('Morpheme server running on http://localhost:5001')
     try:
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=32)
+        serve(
+            app,
+            host='0.0.0.0',
+            port=5001,
+            threads=64,
+            connection_limit=1000,
+            channel_timeout=20,
+            cleanup_interval=10,
+            backlog=256
+        )
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback...")
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=4)
+        serve(app, host='0.0.0.0', port=5001, threads=16, connection_limit=500, channel_timeout=20)
 
