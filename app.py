@@ -9738,7 +9738,7 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
     if target_mp == 0:
         if target_diff == 0:
             return False
-        min_sub_len = 5 if source_len >= 5 else 3
+        min_sub_len = 3
         lengths_to_check = [source_len - target_diff] if target_diff is not None else range(min_sub_len, source_len + 1)
         for l in lengths_to_check:
             if l < min_sub_len or l > source_len or l == 4:
@@ -9752,20 +9752,21 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                     sub2 = w[::-1][start:start+l]
                     if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
                         return True
-        try:
-            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
-            if status_code == 200:
-                mp_matches = combo_res.get('mp_groups', {}).get(0, []) or combo_res.get('mp_groups', {}).get('0', [])
-                valid_matches = [m for m in mp_matches if len(m) != 4]
-                if target_diff is not None:
-                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
-                if direction == 'forwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 0)[0] == 0]
-                elif direction == 'backwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], 0)[0] == 0]
-                return len(valid_matches) > 0
-        except Exception:
-            pass
+        # Fast path: 1-letter extension superwords
+        common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
+        dirs = []
+        if direction in ('both', 'forwards'):
+            dirs.append(w)
+        if direction in ('both', 'backwards'):
+            dirs.append(w[::-1])
+        for s in dirs:
+            for c in common_chars:
+                cand1 = s + c
+                if len(cand1) != 4 and cand1 in dict_set and not is_plural_or_inflection(w, cand1):
+                    return True
+                cand2 = c + s
+                if len(cand2) != 4 and cand2 in dict_set and not is_plural_or_inflection(w, cand2):
+                    return True
         return False
 
     if target_mp == 1:
