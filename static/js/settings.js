@@ -750,6 +750,7 @@ function debounce(func, wait) {
             window.userSettings.subanagrams_tile_size = val;
             saveSettingsToStorage();
             saveSettingDebounced('subanagrams_tile_size', val);
+            if (window.fitSubanagramsBoard) window.fitSubanagramsBoard();
         });
     }
 

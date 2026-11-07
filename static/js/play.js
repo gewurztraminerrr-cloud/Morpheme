@@ -7363,6 +7363,9 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         boardEl.style.gridTemplateRows = '';
     } else {
         boardEl.style.display = '';
+        boardEl.style.removeProperty('width');
+        boardEl.style.removeProperty('padding-left');
+        boardEl.style.removeProperty('padding-right');
         // FORTE: Enforce grid sizing BEFORE children are added to prevent "vertical column" flickering
         if (!is3D && cols > 0 && rows > 0) {
             boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size, 60px))`;
@@ -7512,16 +7515,75 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
 
     // Trigger overflow check but don't clear grid styles anymore (to prevent flickering)
     setTimeout(checkBoardOverflow, 50);
+    if ((window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams')) {
+        fitSubanagramsBoard();
+        setTimeout(fitSubanagramsBoard, 60);
+    }
     reapplyBoardHighlights();
 }
 
+// Fit Multiplayer Subanagrams Board to Letter Sequence for Equal Padding
+function fitSubanagramsBoard() {
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl || !boardEl.classList.contains('is-subanagrams-board')) return;
+
+    if (document.body.classList.contains('is-mobile')) {
+        boardEl.style.removeProperty('width');
+        return;
+    }
+
+    // Allow natural wrapping inside parent container first
+    boardEl.style.setProperty('width', '100%', 'important');
+
+    const cells = Array.from(boardEl.querySelectorAll('.board-cell'));
+    if (cells.length === 0) {
+        boardEl.style.removeProperty('width');
+        return;
+    }
+
+    const rows = [];
+    cells.forEach(cell => {
+        const top = cell.getBoundingClientRect().top;
+        let row = rows.find(r => Math.abs(r.top - top) < 8);
+        if (!row) {
+            row = { top: top, cells: [] };
+            rows.push(row);
+        }
+        row.cells.push(cell);
+    });
+
+    let maxRowContentWidth = 0;
+    rows.forEach(row => {
+        if (row.cells.length > 0) {
+            const firstRect = row.cells[0].getBoundingClientRect();
+            const lastRect = row.cells[row.cells.length - 1].getBoundingClientRect();
+            const w = lastRect.right - firstRect.left;
+            if (w > maxRowContentWidth) {
+                maxRowContentWidth = w;
+            }
+        }
+    });
+
+    if (maxRowContentWidth <= 0) {
+        boardEl.style.removeProperty('width');
+        return;
+    }
+
+    const cs = window.getComputedStyle(boardEl);
+    const padTop = parseFloat(cs.paddingTop) || 24;
+    const borderLeft = parseFloat(cs.borderLeftWidth) || 1;
+    const borderRight = parseFloat(cs.borderRightWidth) || 1;
+
+    boardEl.style.setProperty('padding-left', padTop + 'px', 'important');
+    boardEl.style.setProperty('padding-right', padTop + 'px', 'important');
+
+    const totalWidth = Math.ceil(maxRowContentWidth + (padTop * 2) + borderLeft + borderRight);
+    boardEl.style.setProperty('width', totalWidth + 'px', 'important');
+}
+window.fitSubanagramsBoard = fitSubanagramsBoard;
 
 // Helper: Check if board panel needs vertical scrolling
-// Continuous Adaptive Layout Engine (formerly checkBoardOverflow)
-// Emergency Shim: Replaced older logic with confirmed strict capped logic
-// Helper: Check if board panel needs vertical scrolling
 // Continuous Adaptive Layout Engine (Board-First + Capped)
-// Emergency Shim: Replaced older logic with confirmed strict capped logic
 function checkBoardOverflow() {
     const playPage = document.getElementById('page-play');
     if (!playPage || !playPage.classList.contains('active')) return;
@@ -7538,6 +7600,7 @@ function checkBoardOverflow() {
         boardEl.style.alignItems = 'center';
         boardEl.style.gridTemplateColumns = '';
         boardEl.style.gridTemplateRows = '';
+        fitSubanagramsBoard();
         return;
     }
 
@@ -7794,6 +7857,7 @@ window.checkBoardOverflow = checkBoardOverflow;
 // Initial Listener for Resize
 window.addEventListener('resize', () => {
     if (window.checkBoardOverflow) checkBoardOverflow();
+    if (window.fitSubanagramsBoard) window.fitSubanagramsBoard();
 });
 
 // Removed ResizeObserver to prevent infinite rendering loops and layout thrashing.
@@ -10590,8 +10654,14 @@ async function leaveCurrentRoom() {
     window._lastParamString = null;
     window._displayedParams = null;
     window.subanagramsCustomBoard = null;
-    window.subanagramsBoardKey = null;
     document.body.classList.remove('is-subanagrams');
+    const boardEl = document.getElementById('game-board');
+    if (boardEl) {
+        boardEl.classList.remove('is-subanagrams-board');
+        boardEl.style.removeProperty('width');
+        boardEl.style.removeProperty('padding-left');
+        boardEl.style.removeProperty('padding-right');
+    }
     const submitBtn = document.getElementById('submit-word-btn');
     if (submitBtn) submitBtn.textContent = 'Enter';
     const colorBar = document.getElementById('game-color-bar');

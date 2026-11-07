@@ -17677,11 +17677,16 @@ body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
     body.is-subanagrams #game-board.is-subanagrams-board,
     .board-panel .game-board.is-subanagrams-board,
     #game-board.is-subanagrams-board {
+        gap: 12px !important;
         padding-top: 24px !important;
         padding-bottom: 24px !important;
         padding-left: 24px !important;
         padding-right: 24px !important;
         box-sizing: border-box !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        align-self: center !important;
+        justify-self: center !important;
     }
 
     /* Black theme */
@@ -17799,11 +17804,16 @@ body.is-desktop.theme-light-pink .timer-controls-group #transpose-board-btn {
     body.is-subanagrams #game-board.is-subanagrams-board,
     .board-panel .game-board.is-subanagrams-board,
     #game-board.is-subanagrams-board {
+        gap: 12px !important;
         padding-top: 24px !important;
         padding-bottom: 24px !important;
         padding-left: 24px !important;
         padding-right: 24px !important;
         box-sizing: border-box !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        align-self: center !important;
+        justify-self: center !important;
     }
 }
 
