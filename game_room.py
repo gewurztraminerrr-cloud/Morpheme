@@ -7938,11 +7938,10 @@ class RoomManager:
                 wc_tuple = room._get_wc_tuple(wc_range)
                 is_500plus = wc_tuple[0] >= 500
                 
-                # Board formats (Normal, Cube, Mania, etc.) are allowed for history
-                # (Validation for rank/stats can be done at display time if needed)
+                # Board formats and 500+ unranked boards are allowed for history
+                # so that words found are permanently preserved for Find Count.
                 if is_500plus:
-                     print(f"[RoomManager] SKIPPING history save for room {room.room_id} - 500+ is unranked.")
-                     return
+                    print(f"[RoomManager] Note: Room {room.room_id} Round {target_round} is 500+ (unranked for ratings, but history and word finds preserved).")
                      
                 # Determine best data source (Room state might have already advanced to Next Round)
                 actual_all_words = all_words if all_words is not None else room.all_words
@@ -7984,11 +7983,11 @@ class RoomManager:
                     u_score = p.score if hasattr(p, 'score') else p['score']
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p.get('submitted_words', [])
 
-                    # If a user gets a score of 0 or joined mid-round, do not save
+                    # Only skip if user earned 0 points AND submitted no words
                     # (Unless it is the System placeholder for 24-hour rooms)
                     u_mid = getattr(p, 'joined_mid_round', False) if hasattr(p, 'joined_mid_round') else p.get('joined_mid_round', False)
-                    if u_id != -1 and u_name != 'System' and (u_score <= 0 or u_mid):
-                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score} or joined mid-round ({u_mid})")
+                    if u_id != -1 and u_name != 'System' and u_score <= 0 and not u_submitted:
+                        print(f"[RoomManager] Skipping saving round history for {u_name} because score is {u_score} and no words submitted")
                         continue
 
                     u_submitted = p.submitted_words if hasattr(p, 'submitted_words') else p['submitted_words']

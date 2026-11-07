@@ -1,3 +1,7 @@
+import sys
+if '__main__' in sys.modules and 'app' not in sys.modules:
+    sys.modules['app'] = sys.modules['__main__']
+
 print(f"[Main] SERVER STARTING - VERSION: 2026-05-05_04:00 (Tally Hardened)")
 
 from flask import Flask, request, jsonify, session, send_from_directory, g, redirect, url_for, render_template, make_response, Response, has_request_context
@@ -3867,7 +3871,7 @@ def _get_word_finds(word):
     import time
     now = time.time()
     cached = _WORD_FINDS_CACHE.get(word)
-    if cached and (now - cached[0] < 60.0):
+    if cached and (now - cached[0] < 5.0):
         return cached[1]
         
     conn = sqlite3.connect(DB_PATH, timeout=30)
@@ -3992,9 +3996,8 @@ def _get_word_finds(word):
                 if '24h' in r_id_str or '86400' in r_id_str:
                     continue
 
-                saved_key = getattr(room, '_last_saved_round_key', None)
-                current_key = f"{room.room_id}_{room.current_round}"
-                if saved_key == current_key:
+                # If round history has already been saved for this round, don't re-add from in-memory
+                if getattr(room, 'last_saved_round', None) == getattr(room, 'current_round', None) and getattr(room, 'state', '') == 'intermission':
                     continue
                 players = list(room.players.values()) if isinstance(getattr(room, 'players', None), dict) else getattr(room, 'players', [])
                 for p in players:

@@ -104,6 +104,16 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
   - Added preview audio button in Personal Timer tool and consolidated alarm preview controls.
   - Added pulsating red flash animation across Definitions panel upon timer expiry.
 
+### 13. Retention of Word Finds in Find Count / Tools (`game_room.py`, `app.py`)
+- **Prevented Word Find Drops on Mid-Round Join**:
+  - Removed `or u_mid` from `save_round_history` skip condition (`if u_id != -1 and u_name != 'System' and u_score <= 0 and not u_submitted: continue`).
+  - Rounds where players entered mid-round and found words are now fully saved to `round_history`, ensuring all discovered words are permanently retained in Find Count across round transitions and server restarts.
+- **Preserved 500+ Board Finds**:
+  - Removed early return for 500+ word count range boards in `save_round_history`. While 500+ boards remain unranked for player ratings, word finds are permanently saved to history.
+- **Global Module State & Cache Safety**:
+  - Aliased `sys.modules['__main__']` to `'app'` at the entry point of `app.py` so background threads and modules importing `app` share the running `_WORD_FINDS_CACHE`.
+  - Reduced `_WORD_FINDS_CACHE` TTL to 5.0 seconds and improved in-memory room deduplication.
+
 ---
 
 ## Full Commit History (November 6, 2026)
