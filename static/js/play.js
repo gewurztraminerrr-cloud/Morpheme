@@ -2311,12 +2311,8 @@ async function _doUpdateGameState(incomingState = null) {
                 }
             }
 
-            // User Request: At the start of the intermission in all game rooms, default to "VIEW ALL" (one of the 3 buttons below "Players")
-            playersFilterMode = 'everyone';
-            const playersListEl = document.getElementById('players-list');
-            if (playersListEl) {
-                playersListEl.scrollTop = 0;
-            }
+            // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
+            resetPlayersToViewAll();
 
             console.log('[play.js] Transition to Intermission: Forcing Words tab and resetting view state.');
         }
@@ -2966,8 +2962,8 @@ async function _doUpdateGameState(incomingState = null) {
                 const remainingList = document.getElementById('remaining-words-list');
                 if (remainingList) remainingList.innerHTML = '';
 
-                // Reset Players Filter mode
-                playersFilterMode = 'everyone';
+                // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
+                resetPlayersToViewAll();
 
                 window.intermissionTileFilter = null;
                 document.querySelectorAll('.board-cell.intermission-highlight, .board-cell.review-highlight, .board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(el => {
@@ -4097,7 +4093,29 @@ function compareGameRoomPlayers(a, b, st) {
 }
 window.compareGameRoomPlayers = compareGameRoomPlayers;
 
+function resetPlayersToViewAll() {
+    playersFilterMode = 'everyone';
+    const showEveryoneBtn = document.getElementById('show-everyone-btn');
+    const findMeBtn = document.getElementById('find-me-btn');
+    const findFriendsBtn = document.getElementById('find-friends-btn');
+    if (showEveryoneBtn) showEveryoneBtn.classList.add('active');
+    if (findMeBtn) findMeBtn.classList.remove('active');
+    if (findFriendsBtn) findFriendsBtn.classList.remove('active');
+
+    const playersListEl = document.getElementById('players-list');
+    if (playersListEl) {
+        playersListEl.scrollTop = 0;
+    }
+
+    if (window.lastGameState && Array.isArray(window.lastGameState.players)) {
+        const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
+        renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
+    }
+}
+window.resetPlayersToViewAll = resetPlayersToViewAll;
+
 function renderPlayers(players, currentUser = null, state = null) {
+    window.renderPlayers = renderPlayers;
     console.log('[RenderPlayers] Players:', players && players.length);
     const listEl = document.getElementById('players-list');
     const headingEl = document.getElementById('players-heading');
@@ -5167,19 +5185,7 @@ function initPlayDOMElements() {
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
     if (showEveryoneBtn) {
         showEveryoneBtn.addEventListener('click', () => {
-            playersFilterMode = 'everyone';
-
-            // Re-render players
-            if (window.lastGameState) {
-                const currentUsername = window.lastGameState.your_username || window.currentUser || localStorage.getItem('morpheme_username');
-                renderPlayers(window.lastGameState.players, currentUsername, window.lastGameState);
-            }
-
-            // Scroll to top
-            const playersListEl = document.getElementById('players-list');
-            if (playersListEl) {
-                playersListEl.scrollTop = 0;
-            }
+            resetPlayersToViewAll();
         });
     }
 }
@@ -6615,6 +6621,10 @@ function updateLocalTimer() {
     const seconds = Math.ceil(remaining);
     if (seconds <= 0 || remaining <= 0) {
         setTimerWaitingState(true);
+        // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
+        if (typeof resetPlayersToViewAll === 'function') {
+            resetPlayersToViewAll();
+        }
         // At the very end of the round, clear swiped letters under the board so no text is visible
         const statusEl = document.getElementById('word-validation-status');
         if (statusEl) {
@@ -6731,6 +6741,11 @@ function updateLocalTimer() {
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
+        
+        // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
+        if (typeof resetPlayersToViewAll === 'function') {
+            resetPlayersToViewAll();
+        }
         
         const is24hRoom = !!(window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h')));
         if (is24hRoom && window._wasEverInRoster) {
