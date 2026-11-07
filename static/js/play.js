@@ -10249,7 +10249,6 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                         // Guarantee newly submitted word at top is in visible viewport
                         requestAnimationFrame(() => { listEl.scrollTop = 0; });
                     }
-                }
 
                     if (wordsStats && data.points > 0) {
                         // Update the "Found/Total" counter immediately
