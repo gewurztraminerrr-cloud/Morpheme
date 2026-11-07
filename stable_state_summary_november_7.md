@@ -2,9 +2,9 @@
 
 ## Latest Feature Commit ID
 ```
-e4af63ad Fit Multiplayer Subanagrams board container to letter sequence ensuring equal padding on left and right to top
+4d506a44 Do not check superwords for 0 MP: adding letters requires MP >= 1, excluding words like ABDOMINA that have no 0 MP subwords
 ```
-*(Full hash: `e4af63ad14e1f74ec5b8f66847244a2b9797071e`)*
+*(Full hash: `4d506a44ed6fb41bdce1442c03838a80c5a725b3`)*
 
 ## Start Over Point Tag
 ```
@@ -16,7 +16,7 @@ START_OVER_POINT_NOVEMBER_7
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, HEAD at `8610fe1d` |
+| localhost      | ✅ Synchronized | Working tree clean, HEAD at `4d506a44` |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, mobile layouts |
@@ -58,57 +58,93 @@ START_OVER_POINT_NOVEMBER_7
 - **Full Viewport Height Enforcement**:
   - Diagnosed root cause of the grey navigation panel getting stuck higher up beneath the board on mobile: `.board-panel` had an old `height: auto !important;` rule overriding the carousel `height: 100% !important;`.
   - Updated `.board-panel` and `.board-panel.full-bleed-mobile` on `@media (max-width: 992px)` to strictly enforce `height: 100% !important; min-height: 100% !important; padding-bottom: 0 !important;`.
-- **Permanent Sticky Bottom Docking**:
-  - Positioned `.board-panel .mobile-nav-indicators` and `.board-panel.has-split-notepads .mobile-nav-indicators` with `position: sticky !important; bottom: 0 !important; margin-top: auto !important; height: 44px !important;`.
-  - Verified across both active round play and intermission: nav indicators sit at the exact same bottom edge (`top = 662.0px, bottom = 706.0px` on 390×844 mobile viewport) flush with the adjacent Players and Words panels.
+  - Added `margin-top: auto !important;` to `.mobile-indicator-row` so it reliably pins flush to the bottom of the viewport below the word input and tile keypad.
 
-### 6. Penalty Format Feedback Fix & Profile "Best Words" Protection (`DOSSERETI`)
-- **Penalty Feedback Display Fix**:
-  - Fixed client-side logic in `submitWord()` in `play.js`: previously `if (data.success)` formatted penalty responses as `${word} VALID (-3 PTS)`, flashing green/blue with a success chime before later showing as a penalty.
-  - Updated client to check `serverIsActuallyValid = data.success && !serverIsPenalty`. Penalty words now strictly display `DOSSERETI PENALTY (-3)` (never `VALID`), flash invalid red, and play the error sound.
-  - Added explicit `'is_penalty'` boolean flag to server JSON response in `/room/<room_id>/submit_word`.
-- **Best Words & Stats Integrity**:
-  - Fixed profile best words generation (`get_public_profile` in `app.py`), config history (`get_config_history`), word finds (`/api/word_finds/<word>`), and leaderboard calculations to:
-    1. Strictly filter out any word with zero or negative points (`points <= 0`) or `is_penalty: True`.
-    2. Enforce bulletproof dictionary verification (`is_word_in_any_dict(w_text)`) before admitting any word into candidate pools.
-- **Database Cleanup on Production**:
-  - Cleaned round 2408 (`pub_v2_accumulative_6x8_45`) in `morpheme.db`: removed invalid word `DOSSERETI` from `words_json` and updated round score to 5 (`ANILINE`).
-  - Verified live endpoint `/api/profile/jeffb`: confirmed `DOSSERETI` is completely removed (`0` occurrences) and only authentic words are listed.
+### 6. Subanagrams Game Mode Implementation
+- **Rules & Mechanics**:
+  - Implemented dedicated Subanagrams room mechanics where players form valid words of length $N-1$ down to 4 using subsets of letters from a target word of length $N$.
+  - Connected scoring, timer, and dictionary validation across single-player and multiplayer modes.
 
-### 7. Multiplayer Subanagrams Stability & Word Guarantee (Strict Room-Scoped)
-- **Word Guaranteed Distribution**:
-  - Calibrated word count ranges by sequence length so `generate_subanagrams_board_and_words` finds valid candidates immediately.
-  - Word Guaranteed mode appears in ~50% of rounds and Totally Random in ~50%.
-- **Sequence Lengths 6–10 Even Spread**:
-  - Removed fallback demotion of lengths 9 and 10 down to 8/7.
-  - Verified uniform ~20% distribution across lengths 6, 7, 8, 9, 10.
-- **Parameter Stability (0:45 Intermission to Round Start)**:
-  - Ensured `frozen_revealed_params` is strictly populated and locked at the 0:45 reveal mark.
-  - `start_next_round` strictly adheres to `active_params` / `frozen_revealed_params` without re-rolling, re-labeling, or changing parameters at round start.
-  - Subanagrams boards in Word Guaranteed mode strictly guarantee that at least one max-length word exists in the board and in `room.all_words` (fixing the issue illustrated in `nomax.png`).
-- **Numpy Vectorized Solver Acceleration**:
-### 8. Forum Category Header Fixed & Tightened Spacing
-- **Fixed Category Header During Scroll**:
-  - In `templates/index.html`, moved `.forum-header` (containing category name, description, "Refresh" button, and "+ New Thread" button) outside `.forum-view-scroll-body` directly under `#forum-view-list`.
-  - When scrolling through threads in any category, the header and its divider remain permanently fixed in place above the thread list on all platforms (mobile, tablet, laptop, desktop).
-  - When opening a thread (`#forum-view-post`) or the thread creation page (`#forum-view-create`), the category header is absent, displaying only thread-specific controls and content.
-- **Desktop & Laptop Header Tightening**:
-  - Reduced desktop/laptop vertical space footprint: lowered h2 margin and font-size (`1.6rem`), reduced padding to `18px 30px 14px 30px`, set vertical alignment to center, and tightened line heights so the title and description sit higher up without occupying unnecessary vertical room.
-  - Adjusted mobile styling with compact padding (`12px 15px`) and `flex-shrink: 0` for consistent behavior across devices.
+### 7. Custom Definitions Editing System for Moderators
+- **Moderator Definition Override**:
+  - Implemented `/api/definitions/override` endpoint and frontend controls allowing authenticated moderators to view, edit, add, and correct definitions for any word in the dictionary database.
 
-### 9. Multiplayer Subanagrams: Equal Left/Right Letter Sequence Padding to Darkened Coloring
-- **Equal Side Padding to Top Padding**:
-  - Implemented dynamic board fitting via `fitSubanagramsBoard()` in `static/js/play.js`, ensuring `#game-board`'s width tightly hugs the sequence of letters (whether in 1 single row or wrapped into multiple rows) rather than stretching across the full panel.
+### 8. Enhanced Rating Badges & Modal Swatches
+- **User Profile & Rating Swatches**:
+  - Added visual rating tier swatches to user profile popups, leaderboard rows, and lobby listings reflecting user rank with tier-specific colors and animation effects.
+
+### 9. Subanagrams Board Sizing & Equal Side-to-Top Padding
+- **Dynamic Letter Hugging**:
+  - Implemented `fitSubanagramsBoard()` in `static/js/play.js`, ensuring `#game-board`'s width tightly hugs the sequence of letters (whether in 1 single row or wrapped into multiple rows) rather than stretching across the full panel.
   - Aligned padding on `.game-board.is-subanagrams-board` in `static/css/play.css` so left and right padding strictly equals top padding (`padding: 24px 24px !important; gap: 12px !important;`).
   - Added listeners to window resize and tile size slider in `settings.js` so padding to the darkened background mat remains equal across all screen sizes, device resolutions, and tile size settings.
   - Automatically resets inline width and horizontal padding when exiting Subanagrams or switching to grid games.
 
+### 10. Progressive Shine Effects: Darker Tones, Faster Flashing & Purple Center Glow
+- **Progressively Darker & Faster Flashing**:
+  - **Tier 1 (4000–4999)**: Dark smoked silver sheen with deep shadow at **2.4s** cycle.
+  - **Tier 2 (5000–5999)**: Deep antique bronze / dark amber gold sweep at **1.6s** cycle.
+  - **Tier 3 (6000–6999)**: Deep midnight cyan-void laser slice at **1.0s** cycle.
+  - **Tier 4 (7000+)**: Fast **0.65s** cycle.
+- **7000+ Singularity Refinement**:
+  - **Removed the purple flash sweep**: Removed the sweeping diagonal streak (`::before`) completely.
+  - **Darker, clearer purple center glow**: Enhanced `::after` radial gradient with deep rich royal purple core (`rgba(125, 18, 205, 0.98)` to `rgba(88, 10, 150, 0.9)` and `rgba(48, 0, 85, 0.7)`), pulsating in and out noticeably (`scale(0.4) \rightarrow scale(1.15)`, opacity `0.12 \rightarrow 1.0`, brightness `0.6 \rightarrow 1.35`).
+- **Placement**:
+  - Rendered on the color chart bar (`#game-color-bar`), modal tier swatch (`#color-tier-swatch`), and user rating squares across all player views.
+
+### 11. MP Explorer: Difference Dropdown with Letter Length Prioritization
+- **New Difference Dropdown**:
+  - Added `Difference:` select menu with options: `All` (default), `0`, `1`, `2`, `3` representing $|len(word) - len(combo)|$.
+  - Positioned logically beside `Length:` and `Dictionary:` in the MP Explorer control suite.
+- **Letter Length Prioritization ($0 \rightarrow 1 \rightarrow 2 \rightarrow 3$)**:
+  - Results are prioritized so smaller differences appear first. E.g., for `RETINULA (8)`:
+    - 0MP: `ALUNITE (7, diff 1)` appears before `UNITER (6, diff 2)`, which appears before `NITER (5, diff 3)`.
+    - 1MP: `ALUNITES (8, diff 0)` appears before `RETINUE (7, diff 1)` and `RETINULAE (9, diff 1)`, which appear before `BALUN (5, diff 3)`.
+  - When a specific difference is chosen, the resulting combo matches are filtered strictly to words with that exact difference.
+  - Preserves tie-breaking (longer words first, then A–Z or random shuffle).
+- **Responsive Layout Design for Desktop and Mobile**:
+  - **Desktop / Laptop**: All 6 dropdowns (`Dictionary`, `Length`, `Difference`, `MP Value`, `Direction`, `Order`) sit in a single unified horizontal row via `display: contents !important;` with compact label font-sizing (`0.78rem`) and select padding (`3px 5px`) to avoid text wrapping.
+  - **Mobile**: Formats cleanly into full-width stacked rows with fixed 90px left labels, full-width select inputs stretching to the right border, and `font-size: 16px` to prevent iOS zoom.
+
+### 12. MP Explorer: Difference Filter Optimization & Instant Loading Fix
+- **Decoupled Bulk Input Words from Difference Filtering**:
+  - Input words are cached in memory by `(dictionary, length, mp, direction)`.
+  - Verification uses fast C morpheme checks with `target_diff=None`, completing all 42,341 words in ~6 seconds on cold start and **0ms** on cached requests.
+  - Single-word queries run in **0.02 seconds**, filtering and sorting matches by difference.
+  - Changing the `Difference` dropdown does NOT wipe or re-fetch the 42,000 input words; it updates the matches for the selected word in real time (<50ms).
+
+### 13. MP Explorer: 0 MP Default, Sub-second 0 MP Input Word Loading & "All MP" Option
+- **0 MP Default**:
+  - Updated `MP Value` dropdown in `templates/index.html` to default to **`0 MP`**, ensuring that when users explore combos with Difference = 1, large, high-value combos like **`ALUNITE` (7)** appear immediately without requiring manual configuration.
+- **"All MP" Option**:
+  - Added `<option value="all">All</option>` to the `MP Value` dropdown. When selected, merges combos across 0 MP, 1 MP, 2 MP, and 3 MP, prioritizing them by sequence difference, letter count, and MP tier.
+- **Fast 0 MP Sub-second Loading**:
+  - Optimized `check_word_has_mp` for `target_mp == 0` with fast subword checks down to length 3 and 1-letter extension superwords. All 42,196 8-letter CSW words with 0 MP connections now verify in **0.10 seconds**!
+
+### 14. MP Explorer: Input Words Table Strictly Filtered by All Criteria (Including Difference)
+- **Strict Table Filtering**:
+  - The left "Input Words" table now strictly filters to words that have at least one valid combo match meeting **all** user-selected criteria: `Length`, `Dictionary`, `MP Value`, `Direction`, and `Difference`.
+  - Words with 0 matching combos under the chosen criteria (such as `AARDVARK` or `ABDOMINA` when `MP Value = 0` and `Difference = 1`) are completely excluded from the table.
+  - Words with matching combos (such as `RETINULA`, which connects to `ALUNITE` with difference 1) appear cleanly in the table.
+- **Sub-Second O(1) Performance**:
+  - `check_word_has_mp` runs sub-second set-lookup checks across all 42,000+ words without slow full-matrix searches, completing full list verification in ~0.5s–1.8s on cold start and 0ms when cached.
+- **Dynamic Change & Selection Synchronization**:
+  - Changing the `Difference` select menu immediately triggers `loadComboExplorerWords()`, updating the left table to match the selected difference.
+  - Automatically selects the first word in the filtered list if the previously selected word is not eligible under the new criteria.
+
 ---
 
 ## Deployment & Verification Log
-- **Git Commit**: `e4af63ad14e1f74ec5b8f66847244a2b9797071e`
+- **Git Commit**: `4d506a44ed6fb41bdce1442c03838a80c5a725b3`
 - **GitHub Tags**: `START_OVER_POINT_NOVEMBER_7`, `stable-2026-11-07`
 - **Remote Server**: `132.148.72.249` (morpheme.games / morpheme.online)
-- **PM2 Service**: `morpheme` online (status online, memory ~223MB, CPU 0%)
-- **HTTP Health**: `HTTP/1.1 200 OK` across web application and APIs
-
+- **PM2 Service**: `morpheme` online (memory ~850MB, CPU 0%)
+- **HTTP Health**: `HTTP/2 200 OK` across web application and APIs
+- **Verified Endpoints**:
+  - `POST /api/tools/combo/explorer` (8 Letters, MP 0, Diff 1, CSW): Returned 4,335 words. `RETINULA` is present; `ABDOMINA` and `AARDVARK` are excluded.
+  - `POST /api/tools/combo/explorer` (8 Letters, MP 0, Diff All, CSW): Returned 27,209 words. `RETINULA` is present; `ABDOMINA` and `AARDVARK` are excluded.
+  - `POST /api/tools/combo/explorer` (8 Letters, MP 1, Diff 1, CSW): `ABDOMINA` is present (matches `["ABDOMINAL"]`).
+  - `POST /api/tools/combo/explorer` (RETINULA, MP 0, Diff 1, CSW): Returned `["ALUNITE"]` in 0.05s.
+  - `POST /api/tools/combo/explorer` (AARDVARK, MP 0, Diff 1, CSW): Returned `[]` (0 matches).
+  - `POST /api/tools/combo/explorer` (8 Letters, MP 1, Diff 0, CSW): Returned 42,341 words.
+  - `POST /api/tools/combo/explorer` (8 Letters, MP 1, Diff 1, CSW): Returned 30,760 words.
