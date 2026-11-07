@@ -2802,7 +2802,7 @@ def _record_fallback_hash_used(board_hash):
     if len(_RECENTLY_USED_FALLBACK_HASHES) > _MAX_RECENT_FALLBACK_HASHES:
         _RECENTLY_USED_FALLBACK_HASHES.pop(0)
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None, sequence_length=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
     import random
     from board_generator import BoardGenerator, serialize_param_key, pop_cached_board, refill_board_cache_bg, pop_any_cached_board
@@ -2814,7 +2814,21 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
 
     if str(dimensions).lower() == 'subanagrams':
         from subanagrams_generator import generate_subanagrams_board_and_words
-        sp = SpinnerSet.generate_subanagrams_params()
+        clean_fmt = board_format if board_format in ['Word Guaranteed', 'Totally Random'] else 'Word Guaranteed'
+        target_seq_len = max(6, min(10, int(sequence_length))) if sequence_length else random.choice([6, 7, 8, 9, 10])
+        sp = {
+            'board_dimensions': 'subanagrams',
+            'time_limit': 120,
+            'min_word_length': min_word_length or 3,
+            'sequence_length': target_seq_len,
+            'dictionary': dictionary or 'NWL',
+            'base_dictionary': str(dictionary or 'NWL').replace('+ AW', '').replace('+AW', '').strip(),
+            'use_added_words': use_added_words,
+            'board_format': clean_fmt,
+            'mode': 'word' if clean_fmt == 'Word Guaranteed' else 'random',
+            'word_count_range': target_range or '100-200',
+            'difficulty': difficulty or 'Practice',
+        }
         res = generate_subanagrams_board_and_words(sp)
         if res:
             b_board, b_words, b_bonus, fparams = res
@@ -2822,12 +2836,39 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 b_board,
                 b_words,
                 (0, 0),
-                fparams.get('board_format', 'Normal'),
+                fparams.get('board_format', clean_fmt),
                 {w: [] for w in b_words},
                 0.5,
                 b_bonus,
                 fparams.get('word_count_range', '100-200'),
                 fparams
+            )
+        else:
+            # Absolute hardcoded fallback for Subanagrams: Strictly a 1D sequence of 8 letters (never a 4x4 grid!)
+            fallback_seq = ['S', 'T', 'A', 'R', 'L', 'I', 'N', 'G']
+            from subanagrams_generator import solve_subanagrams, get_subanagrams_dict
+            dict_data = get_subanagrams_dict('NWL', False)
+            fb_words = solve_subanagrams('STARLING', dict_data, min_length=3)
+            fb_params = {
+                'board_dimensions': 'subanagrams',
+                'time_limit': 120,
+                'min_word_length': 3,
+                'sequence_length': 8,
+                'dictionary': 'NWL',
+                'board_format': 'Word Guaranteed',
+                'mode': 'word',
+                'word_count_range': '200-300'
+            }
+            return (
+                [fallback_seq],
+                fb_words,
+                (0, 0),
+                'Word Guaranteed',
+                {w: [] for w in fb_words},
+                0.5,
+                'STARLING',
+                '200-300',
+                fb_params
             )
         
     floor_l = 3
@@ -3140,7 +3181,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         try:
             rows, cols = map(int, parts[:2])
         except (ValueError, TypeError):
-            rows, cols = 4, 4  # non-grid room (e.g. subanagrams): fall back to a 4x4 emergency grid
+            rows, cols = 4, 4
         # Randomly shuffled standard letter distribution to ensure unique boards
         std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
         offset = random.randint(0, len(std_letters) - 1)
@@ -7139,6 +7180,9 @@ class RoomManager:
                             room.next_round_total_words_count = len(b_words)
                             room.next_round_bonus = b_bonus
                             room.next_round_bonus_word = b_bonus
+                            room.next_round_format = fparams.get('board_format', 'Word Guaranteed')
+                            room.next_round_bonus_cell = None
+                            room.next_round_uniqueness = 0.0
                             room.next_round_word_scores = {}
                             if isinstance(room.spinner_params, dict) and isinstance(fparams, dict):
                                 room.spinner_params.update(fparams)
@@ -7207,20 +7251,19 @@ class RoomManager:
                         room.next_round_word_paths = e_paths
                         room.next_round_total_words_count = len(e_words)
                         room.next_round_bonus = e_bonus_word
-                    room.next_round_format = e_fmt
-                    room.next_round_bonus_cell = e_bonus_c
-                    room.next_round_uniqueness = e_ratio
-                    
-                    room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
-                    
-                    if hasattr(word_validator, 'word_validator'):
-                        if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
-                            word_validator.word_validator.ensure_csw_loaded()
-                        room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
-                        room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
-                    else:
-                        room.next_round_csw_only_words = []
-                        room.next_round_added_words = []
+                        room.next_round_format = e_fmt
+                        room.next_round_bonus_cell = e_bonus_c
+                        room.next_round_uniqueness = e_ratio
+                        room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
+                        
+                        if hasattr(word_validator, 'word_validator'):
+                            if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                                word_validator.word_validator.ensure_csw_loaded()
+                            room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
+                            room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
+                        else:
+                            room.next_round_csw_only_words = []
+                            room.next_round_added_words = []
                     
                     # USER REQUEST: Ensure Total Points is never 0.
                     # Fast-apply length based scores for the emergency board immediately.
@@ -7286,11 +7329,36 @@ class RoomManager:
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
                 room._board_promoted_this_transition = True
-                if getattr(room, 'game_type', None) == 'subanagrams' and room.board and isinstance(room.board[0], list):
-                    actual_seq_len = len(room.board[0])
-                    room.sequence_length = actual_seq_len
-                    if isinstance(room.spinner_params, dict):
-                        room.spinner_params['sequence_length'] = actual_seq_len
+                if getattr(room, 'game_type', None) == 'subanagrams':
+                    is_invalid_sub = (
+                        not room.board or
+                        not isinstance(room.board, list) or
+                        len(room.board) != 1 or
+                        not isinstance(room.board[0], list) or
+                        not (6 <= len(room.board[0]) <= 10)
+                    )
+                    if is_invalid_sub:
+                        print(f"[RoomManager] Promoted Subanagrams board was non-1D or not 6-10 letters ({room.board}). Healing...")
+                        from subanagrams_generator import generate_subanagrams_board_and_words
+                        heal_p = dict(room.spinner_params or {})
+                        heal_p['board_dimensions'] = 'subanagrams'
+                        heal_p['sequence_length'] = max(6, min(10, int(heal_p.get('sequence_length', 8))))
+                        heal_res = generate_subanagrams_board_and_words(heal_p)
+                        if heal_res:
+                            hb, hw, hbw, hp = heal_res
+                            room.board = hb
+                            room.next_round_words = hw
+                            room.all_words = set(hw)
+                            room.all_words_paths = {w: [] for w in hw}
+                            room.sequence_length = len(hb[0])
+                            room.next_round_bonus = hbw
+                            if isinstance(room.spinner_params, dict):
+                                room.spinner_params.update(hp)
+                    else:
+                        actual_seq_len = len(room.board[0])
+                        room.sequence_length = actual_seq_len
+                        if isinstance(room.spinner_params, dict):
+                            room.spinner_params['sequence_length'] = actual_seq_len
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
@@ -7456,11 +7524,25 @@ class RoomManager:
                         if isinstance(room.spinner_params, dict):
                             room.spinner_params['board_format'] = 'Totally Random'
                             room.spinner_params['mode'] = 'random'
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['board_format'] = 'Totally Random'
+                            room.frozen_revealed_params['mode'] = 'random'
+                        if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                            room.next_spinner_params['board_format'] = 'Totally Random'
+                            room.next_spinner_params['mode'] = 'random'
                     else:
                         sub_fmt = 'Word Guaranteed' if (active_params.get('mode') == 'word' or active_params.get('board_format') == 'Word Guaranteed' or str(room.current_board_format).lower() in ['normal', 'word guaranteed']) else 'Totally Random'
                         room.current_board_format = sub_fmt
+                        sub_mode = 'word' if sub_fmt == 'Word Guaranteed' else 'random'
                         if isinstance(room.spinner_params, dict):
                             room.spinner_params['board_format'] = sub_fmt
+                            room.spinner_params['mode'] = sub_mode
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['board_format'] = sub_fmt
+                            room.frozen_revealed_params['mode'] = sub_mode
+                        if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                            room.next_spinner_params['board_format'] = sub_fmt
+                            room.next_spinner_params['mode'] = sub_mode
 
                 room.complete_words = list(room.all_words)
                 room.update_counts_by_len()

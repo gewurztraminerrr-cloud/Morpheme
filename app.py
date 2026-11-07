@@ -7294,21 +7294,35 @@ def get_room_state(room_id):
             calc_seq_len = None
             if room.game_type == 'subanagrams':
                 if board_to_send and len(board_to_send) > 0:
-                    if isinstance(board_to_send[0], list) and len(board_to_send) == 1:
-                        calc_seq_len = len(board_to_send[0])
-                    elif isinstance(board_to_send[0], list) and len(board_to_send) > 1 and len(board_to_send[0]) == 1:
-                        calc_seq_len = len(board_to_send)
-                        board_to_send = [[r[0] if isinstance(r, list) else r for r in board_to_send]]
-                    elif isinstance(board_to_send, list) and not isinstance(board_to_send[0], list):
-                        calc_seq_len = len(board_to_send)
-                        board_to_send = [list(board_to_send)]
-                if not calc_seq_len or calc_seq_len <= 1:
+                    flat = []
+                    if isinstance(board_to_send, list):
+                        for item in board_to_send:
+                            if isinstance(item, list):
+                                flat.extend(item)
+                            else:
+                                flat.append(item)
+                    if len(flat) > 10 or len(flat) < 6:
+                        target_l = getattr(room, 'previous_sequence_length', None) if is_intermission else getattr(room, 'sequence_length', None)
+                        if not target_l or target_l < 6 or target_l > 10:
+                            sp_obj = getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
+                            target_l = sp_obj.get('sequence_length') if isinstance(sp_obj, dict) else None
+                        if not target_l or target_l < 6 or target_l > 10:
+                            target_l = 8
+                        target_l = max(6, min(10, int(target_l)))
+                        if len(flat) >= target_l:
+                            flat = flat[:target_l]
+                        else:
+                            flat = (flat + list("STARLING"))[:target_l]
+                    calc_seq_len = len(flat)
+                    board_to_send = [flat]
+                if not calc_seq_len or calc_seq_len < 6 or calc_seq_len > 10:
                     calc_seq_len = getattr(room, 'previous_sequence_length', None) if is_intermission else getattr(room, 'sequence_length', None)
-                if not calc_seq_len or calc_seq_len <= 1:
+                if not calc_seq_len or calc_seq_len < 6 or calc_seq_len > 10:
                     sp_obj = getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
                     calc_seq_len = sp_obj.get('sequence_length') if isinstance(sp_obj, dict) else None
-                if not calc_seq_len or calc_seq_len <= 1:
-                    calc_seq_len = 7
+                if not calc_seq_len or calc_seq_len < 6 or calc_seq_len > 10:
+                    calc_seq_len = 8
+                calc_seq_len = max(6, min(10, int(calc_seq_len)))
             else:
                 calc_seq_len = (
                     getattr(room, 'previous_sequence_length', None) or (len(room.previous_board[0]) if (getattr(room, 'previous_board', None) and len(room.previous_board) > 0 and isinstance(room.previous_board[0], list)) else None)
