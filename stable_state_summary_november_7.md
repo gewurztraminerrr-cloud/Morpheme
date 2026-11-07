@@ -2,9 +2,9 @@
 
 ## Latest Feature Commit ID
 ```
-92daeb3e Keep forum category header fixed when scrolling threads and tighten header spacing
+d50df962 Adjust forum category header padding for desktop browsers
 ```
-*(Full hash: `92daeb3ef064b5849cf25fa82cbda3789547cb0d`)*
+*(Full hash: `d50df96238b1f71a06216428fa48682915837fa9`)*
 
 ## Start Over Point Tag
 ```
@@ -16,7 +16,7 @@ START_OVER_POINT_NOVEMBER_7
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, HEAD at `92daeb3e` |
+| localhost      | ✅ Synchronized | Working tree clean, HEAD at `d50df962` |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, mobile layouts |
