@@ -9752,30 +9752,23 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                     sub2 = w[::-1][start:start+l]
                     if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
                         return True
-        # Fast path: 1-letter extension superwords
-        common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-        dirs = []
-        if direction in ('both', 'forwards'):
-            dirs.append(w)
-        if direction in ('both', 'backwards'):
-            dirs.append(w[::-1])
-        for s in dirs:
-            for c in common_chars:
-                cand1 = s + c
-                if len(cand1) != 4 and cand1 in dict_set and not is_plural_or_inflection(w, cand1):
-                    return True
-                cand2 = c + s
-                if len(cand2) != 4 and cand2 in dict_set and not is_plural_or_inflection(w, cand2):
-                    return True
+        # Superwords: if target_diff is None or target_diff == 1
+        if target_diff is None or target_diff == 1:
+            common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
+            dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
+            for s in dirs:
+                for c in common_chars:
+                    cand1 = s + c
+                    if len(cand1) != 4 and cand1 in dict_set and not is_plural_or_inflection(w, cand1):
+                        return True
+                    cand2 = c + s
+                    if len(cand2) != 4 and cand2 in dict_set and not is_plural_or_inflection(w, cand2):
+                        return True
         return False
 
     if target_mp == 1:
         common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-        dirs = []
-        if direction in ('both', 'forwards'):
-            dirs.append(w)
-        if direction in ('both', 'backwards'):
-            dirs.append(w[::-1])
+        dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
         for s in dirs:
             # Fast path 1: drop extremity letter (diff = 1)
             if (target_diff is None or target_diff == 1) and source_len > 5:
@@ -9827,46 +9820,13 @@ def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_
                                 ins = sub[:i] + char + sub[i:]
                                 if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
                                     return True
-
-        # Fallback to get_combo_payload_for_word to ensure 100% accuracy with Manual
-        try:
-            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
-            if status_code == 200:
-                mp_matches = combo_res.get('mp_groups', {}).get(1, []) or combo_res.get('mp_groups', {}).get('1', [])
-                valid_matches = [m for m in mp_matches if len(m) != 4]
-                if target_diff is not None:
-                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
-                if direction == 'forwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, 1)[0] == 1]
-                elif direction == 'backwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], 1)[0] == 1]
-                return len(valid_matches) > 0
-        except Exception:
-            pass
         return False
 
-    if target_mp >= 2:
-        # Any word with 0MP or 1MP connections also has 2MP and 3MP connections (only when target_diff is None)
-        if target_diff is None:
-            if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                return True
-            if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                return True
-        # Fallback to get_combo_payload_for_word for full accuracy with Manual
-        try:
-            combo_res, status_code = get_combo_payload_for_word(w, base_dict_name)
-            if status_code == 200:
-                mp_matches = combo_res.get('mp_groups', {}).get(target_mp, []) or combo_res.get('mp_groups', {}).get(str(target_mp), [])
-                valid_matches = [m for m in mp_matches if len(m) != 4]
-                if target_diff is not None:
-                    valid_matches = [m for m in valid_matches if abs(source_len - len(m)) == target_diff]
-                if direction == 'forwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m, target_mp)[0] == target_mp]
-                elif direction == 'backwards':
-                    valid_matches = [m for m in valid_matches if calculate_morpheme_metric(w, m[::-1], target_mp)[0] == target_mp]
-                return len(valid_matches) > 0
-        except Exception:
-            pass
+    if target_mp == 'all' or (isinstance(target_mp, int) and target_mp >= 2):
+        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+            return True
+        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+            return True
         return False
 
     return False
@@ -9996,17 +9956,11 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in sorted(words_of_len):
-            if target_mp == 'all':
-                if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                    verified_words.append(w)
-                elif check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                    verified_words.append(w)
-            else:
-                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                    verified_words.append(w)
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+                verified_words.append(w)
         input_words = verified_words
     else:
-        cache_key = (dict_name, length, target_mp, direction)
+        cache_key = (dict_name, length, target_mp, direction, target_diff)
         if cache_key in COMBO_EXPLORER_CACHE:
             input_words = COMBO_EXPLORER_CACHE[cache_key]
         else:
@@ -10021,14 +9975,8 @@ def tools_combo_explorer():
             dict_lens_int = dict_lens.astype(np.int16)
 
             for w in words_of_len:
-                if target_mp == 'all':
-                    if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                        verified_words.append(w)
-                    elif check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                        verified_words.append(w)
-                else:
-                    if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
-                        verified_words.append(w)
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+                    verified_words.append(w)
                     
             COMBO_EXPLORER_CACHE[cache_key] = verified_words
             input_words = verified_words

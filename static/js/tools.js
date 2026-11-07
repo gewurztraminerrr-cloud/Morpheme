@@ -1365,23 +1365,9 @@ function setupComboExplorer() {
 
     if (diffSelect) {
         diffSelect.addEventListener('change', () => {
+            _comboExplorerWordsCache.clear();
             _comboExplorerMatchesCache.clear();
-            const diffVal = diffSelect.value;
-            const diffTitle = (diffVal !== 'all') ? `, Diff ${diffVal}` : '';
-            const lengthSelect = document.getElementById('combo-explorer-length');
-            const mpSelect = document.getElementById('combo-explorer-mp');
-            const dirSelect = document.getElementById('combo-explorer-direction');
-            const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
-            const mpVal = mpSelect ? mpSelect.value : '0';
-            const mpLabel = (mpVal === 'all') ? 'All MP' : `${mpVal}MP`;
-            const direction = dirSelect ? dirSelect.value : 'both';
-            const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
-            const inputTitle = document.getElementById('combo-explorer-input-title');
-            if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mpLabel}${diffTitle}${dirTitle})`;
-
-            if (_comboExplorerSelectedWord) {
-                window.selectComboExplorerWord(_comboExplorerSelectedWord);
-            }
+            loadComboExplorerWords();
         });
     }
 
@@ -1617,6 +1603,7 @@ async function loadComboExplorerWords(preserveWord = null) {
                     length: length,
                     mp: mpVal,
                     direction: direction,
+                    difference: difference,
                     custom_words: eligibleOfLen
                 })
             });
@@ -1634,7 +1621,7 @@ async function loadComboExplorerWords(preserveWord = null) {
             }
         }
     } else {
-        const cacheKey = `${dictionary}_${length}_${mpVal}_${direction}`;
+        const cacheKey = `${dictionary}_${length}_${mpVal}_${direction}_${difference}`;
         if (_comboExplorerWordsCache.has(cacheKey)) {
             words = _comboExplorerWordsCache.get(cacheKey);
         } else {
@@ -1647,7 +1634,8 @@ async function loadComboExplorerWords(preserveWord = null) {
                         dictionary: dictionary,
                         length: length,
                         mp: mpVal,
-                        direction: direction
+                        direction: direction,
+                        difference: difference
                     })
                 });
                 const data = await resp.json();
@@ -1676,7 +1664,7 @@ async function loadComboExplorerWords(preserveWord = null) {
     if (prevWord && _comboExplorerWords.includes(prevWord)) {
         _comboExplorerSelectedWord = prevWord;
         window.selectComboExplorerWord(prevWord);
-    } else if (filterInput && filterInput.value.trim().length >= 3 && _comboExplorerDisplayWords.length === 1) {
+    } else if (_comboExplorerDisplayWords.length > 0) {
         _comboExplorerSelectedWord = _comboExplorerDisplayWords[0];
         window.selectComboExplorerWord(_comboExplorerDisplayWords[0]);
     } else {
