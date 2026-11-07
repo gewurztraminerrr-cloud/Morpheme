@@ -7953,6 +7953,16 @@ def lookup_raw_definition_online(word_upper):
     return None
 
 _WIKI_DB_CACHE = {}
+_WIKI_DB_LOCAL = threading.local()
+
+def get_wiki_db_cursor():
+    cur = getattr(_WIKI_DB_LOCAL, 'cursor', None)
+    if cur is None:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        _WIKI_DB_LOCAL.conn = conn
+        _WIKI_DB_LOCAL.cursor = conn.cursor()
+        cur = _WIKI_DB_LOCAL.cursor
+    return cur
 
 def lookup_wiki_definition_from_db(word):
     if not word:
@@ -7961,15 +7971,24 @@ def lookup_wiki_definition_from_db(word):
     if w_upper in _WIKI_DB_CACHE:
         return _WIKI_DB_CACHE[w_upper]
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=10)
-        cursor = conn.cursor()
-        cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
-        row = cursor.fetchone()
-        conn.close()
+        cur = get_wiki_db_cursor()
+        cur.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
+        row = cur.fetchone()
         res = row[0] if row else None
         _WIKI_DB_CACHE[w_upper] = res
         return res
     except Exception as e:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            _WIKI_DB_LOCAL.conn = conn
+            _WIKI_DB_LOCAL.cursor = conn.cursor()
+            _WIKI_DB_LOCAL.cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
+            row = _WIKI_DB_LOCAL.cursor.fetchone()
+            res = row[0] if row else None
+            _WIKI_DB_CACHE[w_upper] = res
+            return res
+        except Exception:
+            pass
         print(f"[Definitions] Error querying local wiki definition: {e}")
     return None
 
@@ -8332,7 +8351,54 @@ def format_resolved_definition(word_upper, visited=None):
         DEFINITIONS_CACHE[word_upper] = res
     return res
 
+_AW_INFLECTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'aw_inflections.txt')
 _AW_INFLECTIONS_CACHE = {}
+_AW_INFLECTIONS_LOADED = False
+_AW_INFLECTIONS_LOCK = threading.Lock()
+
+def load_aw_inflections_cache():
+    global _AW_INFLECTIONS_CACHE, _AW_INFLECTIONS_LOADED
+    if _AW_INFLECTIONS_LOADED:
+        return
+    with _AW_INFLECTIONS_LOCK:
+        if _AW_INFLECTIONS_LOADED:
+            return
+        if os.path.exists(_AW_INFLECTIONS_FILE):
+            try:
+                with open(_AW_INFLECTIONS_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or ':' not in line:
+                            continue
+                        w, infs_str = line.split(':', 1)
+                        w = w.strip().upper()
+                        infs_str = infs_str.strip()
+                        if not infs_str or infs_str.lower() == 'none':
+                            _AW_INFLECTIONS_CACHE[w] = []
+                        else:
+                            _AW_INFLECTIONS_CACHE[w] = [x.strip().upper() for x in infs_str.split(',') if x.strip()]
+            except Exception as e:
+                print(f"[AWInflections] Error loading cache file: {e}")
+        _AW_INFLECTIONS_LOADED = True
+
+def save_aw_inflection_to_disk(w, infs):
+    try:
+        with _AW_INFLECTIONS_LOCK:
+            with open(_AW_INFLECTIONS_FILE, 'a', encoding='utf-8') as f:
+                f.write(f"{w}:{','.join(infs) if infs else 'none'}\n")
+    except Exception:
+        pass
+
+def is_word_in_any_dict(w):
+    if not w:
+        return False
+    w_upper = w.upper().strip()
+    return (
+        w_upper in getattr(word_validator, 'nwl_words', set())
+        or w_upper in getattr(word_validator, 'csw_words', set())
+        or w_upper in getattr(word_validator, 'added_words', set())
+        or w_upper in getattr(word_validator, 'long_words', set())
+    )
 
 def extract_root_from_definition(defn):
     if not defn:
@@ -8449,14 +8515,14 @@ def get_candidates_from_root(root):
         cands.update({r + c + 'ED', r + c + 'ING', r + c + 'ER', r + c + 'EST'})
     return cands
 
-def get_roots_for_word(w, defn, all_words):
+def get_roots_for_word(w, defn, all_words=None):
     roots = set()
     r = extract_root_from_definition(defn)
     if not r:
         wiki_w = lookup_wiki_definition_from_db(w)
         if wiki_w:
             r = extract_root_from_definition(wiki_w)
-    if r and r in all_words and r != w:
+    if r and r != w and (r in all_words if all_words is not None else is_word_in_any_dict(r)):
         roots.add(r)
 
     cands = []
@@ -8485,7 +8551,7 @@ def get_roots_for_word(w, defn, all_words):
 
     global DEFINITIONS_CACHE
     for c in cands:
-        if c in all_words and c != w:
+        if c != w and (c in all_words if all_words is not None else is_word_in_any_dict(c)):
             def_c = DEFINITIONS_CACHE.get(c, '') if DEFINITIONS_CACHE else ''
             if is_verified_inflection(w, c, defn, def_c):
                 roots.add(c)
@@ -8493,13 +8559,13 @@ def get_roots_for_word(w, defn, all_words):
 
 def get_valid_inflections_for_aw_word(w):
     global _AW_INFLECTIONS_CACHE, DEFINITIONS_CACHE
+    load_aw_inflections_cache()
     w = w.upper().strip()
     if w in _AW_INFLECTIONS_CACHE:
         return _AW_INFLECTIONS_CACHE[w]
     
-    all_words = getattr(word_validator, 'nwl_words', set()) | getattr(word_validator, 'csw_words', set()) | getattr(word_validator, 'long_words', set()) | getattr(word_validator, 'added_words', set())
     defn = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
-    roots = get_roots_for_word(w, defn, all_words)
+    roots = get_roots_for_word(w, defn)
     candidates = set()
     candidates.update(get_candidates_from_root(w))
     for r in roots:
@@ -8508,7 +8574,7 @@ def get_valid_inflections_for_aw_word(w):
     
     valid = []
     for cand in candidates:
-        if cand in all_words and cand != w:
+        if cand != w and is_word_in_any_dict(cand):
             def_cand = DEFINITIONS_CACHE.get(cand, '') if DEFINITIONS_CACHE else ''
             if is_verified_inflection(w, cand, defn, def_cand):
                 valid.append(cand)
@@ -8521,6 +8587,7 @@ def get_valid_inflections_for_aw_word(w):
     
     valid = sorted(valid)
     _AW_INFLECTIONS_CACHE[w] = valid
+    save_aw_inflection_to_disk(w, valid)
     return valid
 
 def append_aw_inflections_to_definition(w, defn):
@@ -8529,7 +8596,11 @@ def append_aw_inflections_to_definition(w, defn):
     infs = get_valid_inflections_for_aw_word(w)
     if not infs:
         return defn
-    return f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
+    full_def = f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
+    global DEFINITIONS_CACHE
+    if DEFINITIONS_CACHE is not None:
+        DEFINITIONS_CACHE[w] = full_def
+    return full_def
 
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
@@ -8572,6 +8643,8 @@ def ensure_definitions_for_words(words_list):
             if needs_resolution:
                 formatted_def = format_resolved_definition(w_upper)
                 if formatted_def:
+                    if w_upper in getattr(word_validator, 'added_words', set()):
+                        formatted_def = append_aw_inflections_to_definition(w_upper, formatted_def)
                     DEFINITIONS_CACHE[w_upper] = formatted_def
                     new_entries.append((w_upper, formatted_def))
                     

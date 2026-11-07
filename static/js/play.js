@@ -8738,6 +8738,7 @@ function renderSplitNotepads(players, state) {
     boardEl.innerHTML = '';
 
     const myUsername = state.your_username || window.currentUser || (typeof globalUser === 'object' && globalUser ? globalUser.username : globalUser) || localStorage.getItem('morpheme_username') || null;
+    const allNotepadWords = [];
 
     sortedPlayers.forEach(p => {
         // Init state if needed
@@ -8912,6 +8913,7 @@ function renderSplitNotepads(players, state) {
             list.innerHTML = '<div style="color:var(--text-primary);font-style:italic;padding:10px;text-align:center;">None</div>';
         } else {
             wordsToShow.forEach(w => {
+                if (w && w.word) allNotepadWords.push(w.word);
                 const row = document.createElement('div');
                 row.className = 'notepad-item';
                 if (w.is_invalid) row.classList.add('invalid');
@@ -8985,6 +8987,9 @@ function renderSplitNotepads(players, state) {
     } else {
         boardEl.scrollTop = 0;
     }
+    if (typeof prefetchDefinitions === 'function') {
+        prefetchDefinitions(allNotepadWords);
+    }
 }
 
 function renderFCFSNotepads(players, state) {
@@ -9024,6 +9029,7 @@ function renderFCFSNotepads(players, state) {
     boardEl.innerHTML = '';
 
     const myUsername = state.your_username || window.currentUser || (typeof globalUser === 'object' && globalUser ? globalUser.username : globalUser) || localStorage.getItem('morpheme_username') || null;
+    const allNotepadWords = [];
 
     sortedPlayers.forEach(p => {
         const notepad = document.createElement('div');
@@ -9128,6 +9134,7 @@ function renderFCFSNotepads(players, state) {
 
             wordsToShow.forEach(wObj => {
                 const w = (typeof wObj === 'string' ? wObj : wObj.word);
+                if (w) allNotepadWords.push(w);
                 let ptsNum = (typeof wObj === 'string' ? 0 : wObj.points);
                 let ptsDisplay = (typeof wObj === 'string' ? '?' : wObj.points);
 
@@ -9170,6 +9177,9 @@ function renderFCFSNotepads(players, state) {
         boardEl.scrollTop = containerScrollTop;
     } else {
         boardEl.scrollTop = 0;
+    }
+    if (typeof prefetchDefinitions === 'function') {
+        prefetchDefinitions(allNotepadWords);
     }
 }
 
@@ -11114,6 +11124,68 @@ function clearDefinitionPanel() {
 }
 window.clearDefinitionPanel = clearDefinitionPanel;
 
+window._gameDefCache = window._gameDefCache || new Map();
+
+function renderDefinitionData(data, word, defContent, defPron) {
+    if (window._currentDefWord !== word) return;
+    if (data && (data.definition || data.pronunciation || data.image_url)) {
+        if (data.pronunciation && defPron) {
+            defPron.textContent = data.pronunciation;
+            defPron.classList.remove('hidden');
+            defPron.style.setProperty('display', 'block', 'important');
+        } else if (defPron) {
+            defPron.textContent = '';
+            defPron.classList.add('hidden');
+            defPron.style.setProperty('display', 'none', 'important');
+        }
+
+        let html = '';
+        if (data.pronunciation && !defPron) {
+            html += `<div class="pronunciation">${data.pronunciation}</div>`;
+        }
+        if (data.definition) {
+            html += `<span class="definition-text">${formatDefinitionWithLinks(data.definition)}</span>`;
+        }
+        if (data.image_url) {
+            html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
+        }
+        defContent.innerHTML = html;
+    } else {
+        if (defPron) {
+            defPron.textContent = '';
+            defPron.classList.add('hidden');
+            defPron.style.setProperty('display', 'none', 'important');
+        }
+        defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
+    }
+}
+
+function prefetchDefinitions(words) {
+    if (!words || !words.length) return;
+    const toFetch = [];
+    for (const raw of words) {
+        const w = (typeof raw === 'object' && raw !== null ? (raw.word || '') : String(raw)).trim().toUpperCase();
+        if (w && (!window._gameDefCache || !window._gameDefCache.has(w)) && !toFetch.includes(w)) {
+            toFetch.push(w);
+            if (toFetch.length >= 35) break;
+        }
+    }
+    if (!toFetch.length) return;
+    setTimeout(async () => {
+        for (const w of toFetch) {
+            if (window._gameDefCache && window._gameDefCache.has(w)) continue;
+            try {
+                const resp = await fetch(`/api/definition?word=${encodeURIComponent(w)}`);
+                const data = await resp.json();
+                if (data && window._gameDefCache) {
+                    window._gameDefCache.set(w, data);
+                }
+            } catch (e) {}
+        }
+    }, 120);
+}
+window.prefetchDefinitions = prefetchDefinitions;
+
 async function fetchDefinition(word) {
     if (!word) return;
     const s = window.lastGameState;
@@ -11307,48 +11379,29 @@ async function fetchDefinition(word) {
         }
     }
 
+    // Check instant client-side cache
+    if (window._gameDefCache && window._gameDefCache.has(cleanWord)) {
+        renderDefinitionData(window._gameDefCache.get(cleanWord), cleanWord, defContent, defPron);
+        return;
+    }
+
     defContent.innerHTML = '<p class="placeholder">Loading definition...</p>';
 
     try {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
         const data = await resp.json();
 
-        if (data.definition || data.pronunciation || data.image_url) {
-            if (data.pronunciation && defPron) {
-                defPron.textContent = data.pronunciation;
-                defPron.classList.remove('hidden');
-                defPron.style.display = 'block';
-            } else if (defPron) {
-                defPron.textContent = '';
-                defPron.classList.add('hidden');
-                defPron.style.display = 'none';
-            }
-
-            let html = '';
-            if (data.pronunciation && !defPron) {
-                html += `<div class="pronunciation">${data.pronunciation}</div>`;
-            }
-            if (data.definition) {
-                html += `<span class="definition-text">${formatDefinitionWithLinks(data.definition)}</span>`;
-            }
-            if (data.image_url) {
-                html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
-            }
-            defContent.innerHTML = html;
-        } else {
-            if (defPron) {
-                defPron.textContent = '';
-                defPron.classList.add('hidden');
-                defPron.style.display = 'none';
-            }
-            defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
+        if (window._gameDefCache) {
+            window._gameDefCache.set(cleanWord, data);
         }
+        renderDefinitionData(data, cleanWord, defContent, defPron);
     } catch (e) {
+        if (window._currentDefWord !== cleanWord) return;
         console.error('Definition error:', e);
         if (defPron) {
             defPron.textContent = '';
             defPron.classList.add('hidden');
-            defPron.style.display = 'none';
+            defPron.style.setProperty('display', 'none', 'important');
         }
         defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
     }
