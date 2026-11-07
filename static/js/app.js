@@ -3192,7 +3192,15 @@ function setupGlobalProfileLogic() {
                     document.getElementById('color-tier-icon').style.color = bgColor;
                     document.getElementById('color-tier-range').textContent = `Rating Range: ${tierLabel}`;
                     document.getElementById('color-tier-desc').textContent = tierDesc;
-                    document.getElementById('color-tier-swatch').style.backgroundColor = bgColor;
+                    const swatch = document.getElementById('color-tier-swatch');
+                    if (swatch) {
+                        swatch.style.backgroundColor = bgColor;
+                        swatch.classList.remove('rating-shine-4000', 'rating-shine-5000', 'rating-shine-6000', 'rating-shine-7000');
+                        const shineClass = segment.getAttribute('data-shine') || '';
+                        if (shineClass) {
+                            swatch.classList.add(shineClass);
+                        }
+                    }
                     modal.classList.remove('hidden');
                 }
             }
@@ -3501,6 +3509,18 @@ window.getRatingColor = function (rating) {
     // Fallback logic if out of bounds
     if (rating < 1) return RATING_RANGES[0].color;
     return '#a020f0'; // Super high (Purple)
+};
+
+// Helper to get progressive shine class for the top 4 rating ranges
+window.getRatingShineClass = function (rating) {
+    if (rating === undefined || rating === null) return '';
+    const r = parseFloat(rating);
+    if (isNaN(r)) return '';
+    if (r >= 7000) return 'rating-shine-7000';
+    if (r >= 6000) return 'rating-shine-6000';
+    if (r >= 5000) return 'rating-shine-5000';
+    if (r >= 4000) return 'rating-shine-4000';
+    return '';
 };
 
 window.showAlertModal = function (title, message, priority = false) {
@@ -3869,12 +3889,17 @@ function renderGameColorBar() {
     RATING_RANGES.forEach(range => {
         const rangeText = `${range.min}-${range.max === 99999 ? '∞' : range.max}`;
         const escapedDesc = (range.desc || '').replace(/"/g, '&quot;');
-        html += `<div class="color-bar-segment" 
+        const shineClass = window.getRatingShineClass ? window.getRatingShineClass(range.min) : '';
+        const shineOverlay = shineClass ? '<span class="color-bar-shine"></span>' : '';
+        html += `<div class="color-bar-segment${shineClass ? ` ${shineClass}` : ''}" 
                       style="background-color: ${range.color};" 
                       data-name="${range.name.toUpperCase()}" 
                       data-label="${rangeText}"
                       data-desc="${escapedDesc}"
+                      data-shine="${shineClass}"
+                      data-min="${range.min}"
                       title="${range.name.toUpperCase()} (${rangeText})">
+                      ${shineOverlay}
                  </div>`;
     });
 

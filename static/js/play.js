@@ -3912,10 +3912,11 @@ async function _doUpdateGameState(incomingState = null) {
                         const name = typeof w === 'string' ? w : w.username;
                         const rating = typeof w === 'string' ? 0 : (w.rating || 0);
                         const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#f1f1f1';
+                        const shineClass = window.getRatingShineClass ? window.getRatingShineClass(rating) : '';
 
                         return `
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${name}'); event.stopPropagation();" style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44; cursor: pointer;" title="View Mini-Profile"></div>
+                                <div class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) window.showMiniProfile('${name}'); event.stopPropagation();" style="width: 12px; height: 12px; background: ${rColor}; border-radius: 2px; box-shadow: 0 0 5px ${rColor}44; cursor: pointer;" title="View Mini-Profile"></div>
                                 <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${name}'); event.stopPropagation();" title="View Mini-Profile">${name}</span>
                                 <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 600;">(${rating})</span>
                             </div>
@@ -4277,6 +4278,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         } else if (!isGuest && p.games_played === 0) {
             ratingColor = '#0044ff';
         }
+        const shineClass = (isSubanagrams || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
 
         // Input Method Icon
         let inputIcon = '🖱️';
@@ -4319,7 +4321,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
                 <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
-                <span class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
+                <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
                 <span class="player-username" style="text-align: left !important;">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
@@ -13797,6 +13799,7 @@ window.showFinderModal = function (word) {
                     const score = p.score || 0;
                     const rank = playerRankMap.get(p.username) || 999;
                     const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
+                    const shineClass = window.getRatingShineClass ? window.getRatingShineClass(rating) : '';
                     
                     const swObj = p.submitted_words ? p.submitted_words.find(sw =>
                         (typeof sw === 'object' ? sw.word : sw).toUpperCase() === wordUpper
@@ -13834,7 +13837,7 @@ window.showFinderModal = function (word) {
                                 <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 22px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; font-size: 0.75rem; font-weight: 800;">
                                     ${rankText}
                                 </div>
-                                <div class="rating-square" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22; cursor: pointer;" title="View Mini-Profile"></div>
+                                <div class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="width: 14px; height: 14px; background: ${rColor}; border-radius: 3px; box-shadow: 0 0 10px ${rColor}22; cursor: pointer;" title="View Mini-Profile"></div>
                                 <span style="font-weight: 700; font-size: 0.95rem; cursor: pointer;" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" title="View Mini-Profile">${p.username}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">

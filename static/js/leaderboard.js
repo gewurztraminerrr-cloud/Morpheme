@@ -654,11 +654,12 @@ document.addEventListener('DOMContentLoaded', () => {
             else color = '#9b59b6'; // purple/basic
         }
 
+        const shineClass = window.getRatingShineClass ? window.getRatingShineClass(rating) : '';
         const flagHtml = window.getFlagHtml ? window.getFlagHtml(row.country_flag) : (row.country_flag || '');
 
         return `
             <div class="lb-user-cell" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${row.username}'); }">
-                <div class="rating-square" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${row.username}'); } event.stopPropagation();" style="background-color: ${color}; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;" title="View Mini-Profile"></div>
+                <div class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${row.username}'); } event.stopPropagation();" style="background-color: ${color}; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;" title="View Mini-Profile"></div>
                 <span class="user-flag" style="-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;">${flagHtml}</span>
                 <span class="username" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${row.username}'); } event.stopPropagation();" style="cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;" title="View Mini-Profile">${row.username}</span>
             </div>

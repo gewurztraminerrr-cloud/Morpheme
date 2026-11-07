@@ -12323,4 +12323,298 @@ body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
     margin-top: 2px;
 }
 
+/* ==========================================================================
+   PROGRESSIVE SHINE EFFECTS FOR TOP 4 RATING RANGES
+   Tier 1 (4000-4999): Transcendent - Luminous Silver Sheen
+   Tier 2 (5000-5999): Ethereal - Golden Solar Dual-Beam Flare & Radiant Aura
+   Tier 3 (6000-6999): ALIEN BEING - Prismatic Cyber-Laser Refraction & Pulse
+   Tier 4 (7000+): SINGULARITY - Divine Celestial Diamond Sheen & Starlight Glint
+   ========================================================================== */
+
+/* Base container setup for elements receiving shine */
+.rating-square.rating-shine-4000,
+.rating-square.rating-shine-5000,
+.rating-square.rating-shine-6000,
+.rating-square.rating-shine-7000,
+#color-tier-swatch.rating-shine-4000,
+#color-tier-swatch.rating-shine-5000,
+#color-tier-swatch.rating-shine-6000,
+#color-tier-swatch.rating-shine-7000 {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Color bar segments must keep overflow: visible for downward hover tooltips */
+.color-bar-segment.rating-shine-4000,
+.color-bar-segment.rating-shine-5000,
+.color-bar-segment.rating-shine-6000,
+.color-bar-segment.rating-shine-7000 {
+    overflow: visible !important;
+}
+
+/* Dedicated clipping container for shine on color-bar segments */
+.color-bar-shine {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 1;
+}
+
+/* --- TIER 1: 4000 - 4999 (Transcendent - Silver Sheen) --- */
+.rating-shine-4000 {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.45) !important;
+    animation: rating-glow-silver 3s ease-in-out infinite;
+}
+
+.rating-square.rating-shine-4000::before,
+#color-tier-swatch.rating-shine-4000::before,
+.color-bar-segment.rating-shine-4000 .color-bar-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.75) 50%, transparent 80%);
+    pointer-events: none;
+    animation: rating-sweep-silver 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes rating-glow-silver {
+    0%, 100% {
+        box-shadow: 0 0 3px rgba(255, 255, 255, 0.35) !important;
+    }
+    50% {
+        box-shadow: 0 0 7px rgba(255, 255, 255, 0.8) !important;
+    }
+}
+
+@keyframes rating-sweep-silver {
+    0% {
+        transform: translateX(-150%) skewX(-25deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    45% {
+        transform: translateX(250%) skewX(-25deg);
+        opacity: 0.9;
+    }
+    50%, 100% {
+        transform: translateX(250%) skewX(-25deg);
+        opacity: 0;
+    }
+}
+
+/* --- TIER 2: 5000 - 5999 (Ethereal - Golden Solar Dual-Beam & Radiant Aura) --- */
+.rating-shine-5000 {
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.65), inset 0 0 3px rgba(255, 220, 100, 0.4) !important;
+    animation: rating-glow-gold 2.5s ease-in-out infinite;
+}
+
+.rating-square.rating-shine-5000::before,
+#color-tier-swatch.rating-shine-5000::before,
+.color-bar-segment.rating-shine-5000 .color-bar-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -160%;
+    width: 110%;
+    height: 100%;
+    background: linear-gradient(120deg, 
+        transparent 15%, 
+        rgba(255, 235, 120, 0.4) 32%, 
+        rgba(255, 255, 255, 0.95) 50%, 
+        rgba(255, 215, 0, 0.85) 62%, 
+        transparent 85%
+    );
+    pointer-events: none;
+    animation: rating-sweep-gold 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes rating-glow-gold {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(255, 215, 0, 0.4), inset 0 0 2px rgba(255, 215, 0, 0.3) !important;
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.85), 0 0 14px rgba(255, 180, 0, 0.5), inset 0 0 5px rgba(255, 240, 150, 0.6) !important;
+    }
+}
+
+@keyframes rating-sweep-gold {
+    0% {
+        transform: translateX(-160%) skewX(-22deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(260%) skewX(-22deg);
+        opacity: 1;
+    }
+    55%, 100% {
+        transform: translateX(260%) skewX(-22deg);
+        opacity: 0;
+    }
+}
+
+/* --- TIER 3: 6000 - 6999 (ALIEN BEING - Prismatic Cyber-Laser Refraction & Pulse) --- */
+.rating-shine-6000 {
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.7), 0 0 12px rgba(255, 0, 255, 0.4), inset 0 0 4px rgba(0, 255, 255, 0.5) !important;
+    animation: rating-glow-alien 2s ease-in-out infinite alternate;
+}
+
+.rating-square.rating-shine-6000::before,
+#color-tier-swatch.rating-shine-6000::before,
+.color-bar-segment.rating-shine-6000 .color-bar-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -180%;
+    width: 125%;
+    height: 100%;
+    background: linear-gradient(125deg,
+        transparent 10%,
+        rgba(0, 255, 255, 0.65) 28%,
+        rgba(255, 255, 255, 0.98) 48%,
+        rgba(255, 0, 255, 0.85) 58%,
+        rgba(0, 255, 128, 0.65) 72%,
+        transparent 90%
+    );
+    pointer-events: none;
+    animation: rating-sweep-alien 2.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.rating-square.rating-shine-6000::after,
+#color-tier-swatch.rating-shine-6000::after,
+.color-bar-segment.rating-shine-6000 .color-bar-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.35) 0%, rgba(255, 0, 255, 0.2) 50%, transparent 80%);
+    pointer-events: none;
+    animation: rating-pulse-alien 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes rating-glow-alien {
+    0% {
+        box-shadow: 0 0 6px rgba(0, 255, 255, 0.5), 0 0 10px rgba(255, 0, 255, 0.3), inset 0 0 4px rgba(0, 255, 255, 0.4) !important;
+    }
+    100% {
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.95), 0 0 18px rgba(255, 0, 255, 0.75), inset 0 0 7px rgba(0, 255, 255, 0.85) !important;
+    }
+}
+
+@keyframes rating-sweep-alien {
+    0% {
+        transform: translateX(-180%) skewX(-25deg);
+        opacity: 0;
+    }
+    8% {
+        opacity: 1;
+    }
+    52% {
+        transform: translateX(280%) skewX(-25deg);
+        opacity: 1;
+    }
+    58%, 100% {
+        transform: translateX(280%) skewX(-25deg);
+        opacity: 0;
+    }
+}
+
+@keyframes rating-pulse-alien {
+    0% {
+        opacity: 0.2;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+/* --- TIER 4: 7000+ (SINGULARITY - Divine Celestial Diamond Sheen & Starlight Glint) --- */
+.rating-shine-7000 {
+    box-shadow: 0 0 10px rgba(160, 32, 240, 0.9), 0 0 18px rgba(255, 105, 180, 0.7), inset 0 0 6px rgba(255, 255, 255, 0.8) !important;
+    animation: rating-glow-singularity 1.8s ease-in-out infinite alternate;
+}
+
+.rating-square.rating-shine-7000::before,
+#color-tier-swatch.rating-shine-7000::before,
+.color-bar-segment.rating-shine-7000 .color-bar-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -200%;
+    width: 140%;
+    height: 100%;
+    background: linear-gradient(130deg,
+        transparent 5%,
+        rgba(255, 255, 255, 0.45) 18%,
+        rgba(192, 132, 252, 0.85) 32%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(244, 114, 182, 0.95) 65%,
+        rgba(147, 197, 253, 0.75) 80%,
+        transparent 95%
+    );
+    pointer-events: none;
+    animation: rating-sweep-singularity 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.rating-square.rating-shine-7000::after,
+#color-tier-swatch.rating-shine-7000::after,
+.color-bar-segment.rating-shine-7000 .color-bar-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(220, 150, 255, 0.7) 25%, rgba(160, 32, 240, 0.4) 50%, transparent 75%);
+    pointer-events: none;
+    animation: rating-glint-singularity 1.8s ease-in-out infinite;
+}
+
+@keyframes rating-glow-singularity {
+    0% {
+        box-shadow: 0 0 8px rgba(160, 32, 240, 0.8), 0 0 14px rgba(255, 105, 180, 0.6), inset 0 0 5px rgba(255, 255, 255, 0.6) !important;
+    }
+    100% {
+        box-shadow: 0 0 18px rgba(160, 32, 240, 1), 0 0 26px rgba(255, 105, 180, 0.95), 0 0 34px rgba(147, 197, 253, 0.75), inset 0 0 9px rgba(255, 255, 255, 1) !important;
+    }
+}
+
+@keyframes rating-sweep-singularity {
+    0% {
+        transform: translateX(-200%) skewX(-28deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    55% {
+        transform: translateX(300%) skewX(-28deg);
+        opacity: 1;
+    }
+    60%, 100% {
+        transform: translateX(300%) skewX(-28deg);
+        opacity: 0;
+    }
+}
+
+@keyframes rating-glint-singularity {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.35) rotate(90deg);
+        filter: drop-shadow(0 0 4px #fff);
+    }
+}
+
+
 

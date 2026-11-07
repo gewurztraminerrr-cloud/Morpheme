@@ -1251,9 +1251,10 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
                     const isGuest = uname.startsWith('Guest_');
                     const displayRating = isGuest ? 0 : (p && p.rating !== undefined ? p.rating : 0);
                     const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
+                    const shineClass = window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '';
 
                     return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
-                        <span onclick="window.showMiniProfile('${uname}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
+                        <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="window.showMiniProfile('${uname}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
                         ${uname} (${displayRating})
                     </span>`;
                 }).join('');
