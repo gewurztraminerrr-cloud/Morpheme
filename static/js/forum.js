@@ -2847,7 +2847,7 @@ const Forum = {
                 formData.append('images', imageFile);
             } else {
                 try {
-                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    const compressed = await this.compressImage(imageFile, 2560, 0.95);
                     formData.append('images', compressed);
                 } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
@@ -2917,7 +2917,7 @@ const Forum = {
                 formData.append('images', imageFile);
             } else {
                 try {
-                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    const compressed = await this.compressImage(imageFile, 2560, 0.95);
                     formData.append('images', compressed);
                 } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
@@ -2986,7 +2986,7 @@ const Forum = {
                 formData.append('images', imageFile);
             } else {
                 try {
-                    const compressed = await this.compressImage(imageFile, 1200, 0.8);
+                    const compressed = await this.compressImage(imageFile, 2560, 0.95);
                     formData.append('images', compressed);
                 } catch (err) {
                     console.error("[Forum] Compression failed, uploading original:", err);
@@ -3033,16 +3033,34 @@ const Forum = {
         }
     },
 
-    compressImage: function (file, maxDimension, quality = 0.8) {
-        return new Promise((resolve, reject) => {
+    compressImage: function (file, maxDimension = 2560, quality = 0.95) {
+        return new Promise((resolve) => {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                return resolve(file);
+            }
+            if (file.type === 'image/gif' || file.type === 'image/svg+xml') {
+                return resolve(file);
+            }
+
+            const isPng = file.type === 'image/png';
+            const isWebp = file.type === 'image/webp';
+
             const processImage = (imgSrc, shouldRevoke) => {
                 const img = new Image();
                 img.onload = () => {
                     if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
                         try { URL.revokeObjectURL(imgSrc); } catch (e) { }
                     }
-                    let width = img.width;
-                    let height = img.height;
+                    const origWidth = img.naturalWidth || img.width || 0;
+                    const origHeight = img.naturalHeight || img.height || 0;
+
+                    // If image is already within maxDimension and reasonable file size (under 8MB), keep original untouched!
+                    if (origWidth > 0 && origHeight > 0 && origWidth <= maxDimension && origHeight <= maxDimension && file.size <= 8 * 1024 * 1024) {
+                        return resolve(file);
+                    }
+
+                    let width = origWidth;
+                    let height = origHeight;
 
                     if (width > maxDimension || height > maxDimension) {
                         if (width > height) {
@@ -3058,25 +3076,36 @@ const Forum = {
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
+                    if (ctx) {
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, width, height);
+                    }
+
+                    const outputType = isPng ? 'image/png' : (isWebp ? 'image/webp' : 'image/jpeg');
+                    const outputQuality = isPng ? undefined : quality;
 
                     canvas.toBlob((blob) => {
                         if (blob) {
+                            if (blob.size >= file.size && width === origWidth && height === origHeight) {
+                                return resolve(file);
+                            }
                             const baseName = (file.name && file.name.lastIndexOf('.') > 0)
                                 ? file.name.substring(0, file.name.lastIndexOf('.'))
                                 : (file.name || 'image');
-                            const compressedFile = new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+                            const ext = isPng ? '.png' : (isWebp ? '.webp' : '.jpg');
+                            const compressedFile = new File([blob], `${baseName}${ext}`, { type: outputType, lastModified: Date.now() });
                             resolve(compressedFile);
                         } else {
-                            reject(new Error("Canvas to Blob failed"));
+                            resolve(file);
                         }
-                    }, 'image/jpeg', quality);
+                    }, outputType, outputQuality);
                 };
-                img.onerror = (err) => {
+                img.onerror = () => {
                     if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
                         try { URL.revokeObjectURL(imgSrc); } catch (e) { }
                     }
-                    reject(err);
+                    resolve(file);
                 };
                 img.src = imgSrc;
             };
@@ -3093,11 +3122,11 @@ const Forum = {
 
             const reader = new FileReader();
             reader.onload = (event) => processImage(event.target.result, false);
-            reader.onerror = (err) => reject(err);
+            reader.onerror = () => resolve(file);
             try {
                 reader.readAsDataURL(file);
             } catch (err) {
-                reject(err);
+                resolve(file);
             }
         });
     },
@@ -3753,6 +3782,7 @@ const Forum = {
         }
     }
 };
+window.Forum = Forum;
 
 window.initForum = function () {
     Forum.init();

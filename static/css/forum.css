@@ -2149,6 +2149,8 @@ body.is-mobile .forum-thread-header-btn {
     display: block !important;
     cursor: pointer;
     transition: opacity 0.15s ease;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 
 .preview-thumb:hover {
@@ -2220,6 +2222,8 @@ body.is-mobile .forum-thread-header-btn {
     display: block;
     cursor: pointer;
     transition: opacity 0.2s ease;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 
 .post-image-item img:hover, .comment-image-item img:hover {
@@ -3627,6 +3631,8 @@ body.theme-white #page-forums .forum-bottom-bar {
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.14);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 .reply-preview-more-images {
     display: inline-flex;

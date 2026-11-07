@@ -2258,6 +2258,8 @@ body.theme-white .header {
     background-repeat: no-repeat;
     background-position: center;
     background-color: rgba(0, 0, 0, 0.2);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 
 .profile-avatar.large:hover {
@@ -3323,6 +3325,8 @@ body.theme-white .header {
     background-position: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 
 .mini-profile-identity {
@@ -4835,6 +4839,10 @@ body.theme-light-gray #close-integrated-replay:hover {
     -webkit-user-select: none;
     transform-origin: center center;
     will-change: transform;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .image-lightbox-close {

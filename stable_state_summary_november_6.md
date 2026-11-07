@@ -130,6 +130,17 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
   - When disabled, `body.game-chat-disabled` is attached and `.chat-panel` receives `display: none !important;`. The Players panel automatically expands to utilize the full height of the left column.
   - `applyGameRoomChatSetting()` coordinates with `adjustPlayHeaderForDevice()`, room initialization, and tournament exit flows to guarantee the chat panel stays hidden when disabled and restores seamlessly when re-enabled.
 
+### 16. High-Resolution & Crisp Image Uploads for Profile and Forum (`tools.js`, `forum.js`, `style.css`, `forum.css`)
+- **Elimination of Aggressive Compression**:
+  - Previously, avatar uploads in `tools.js` were forced down to a tiny `300px` max dimension with lossy JPEG `0.8` quality, causing extreme blur on high-DPI/Retina screens and when enlarged in the lightbox. Forum uploads in `forum.js` were forced down to `1200px` at `0.8` JPEG quality.
+- **Original File Preservation**:
+  - Avatars up to `2048px` and Forum images up to `2560px` that are under `8MB` bypass canvas re-encoding completely, maintaining pristine bit-for-bit sharpness.
+  - Preserves original PNG (`image/png`) and WebP formats without converting them to lossy JPEG.
+- **High-Quality Scaling Engine**:
+  - When downscaling images exceeding 2048px/2560px, HTML5 Canvas smoothing is set to high (`ctx.imageSmoothingQuality = 'high'`) with `0.95` quality encoding.
+- **Crisp CSS Rendering**:
+  - Added `image-rendering: -webkit-optimize-contrast; image-rendering: auto;` and backface stabilization to `.image-lightbox-content img`, `.profile-avatar.large`, `.mini-avatar`, `.post-image-item img`, `.comment-image-item img`, `.preview-thumb`, and `.reply-preview-thumb` to prevent subpixel blurring in both thumbnail and enlarged modal views.
+
 ---
 
 ## Full Commit History (November 6, 2026)
@@ -158,6 +169,7 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `ccbcba5e` | Fix Find Count word retention: preserve history for mid-round joins and 500+ boards |
 | `c5689261` | docs(faq): add What music is playing in the Lobby? (Simon Patterson - Thump) |
 | `8ab0e881` | feat(settings): allow user to disable game room chat in Gameplay & Preferences |
+| `36ecea8f` | fix(settings): correct game room chat toggle display state in desktop view |
 
 ---
 
@@ -174,3 +186,11 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
    - Verified instant player list state change on round start and round end.
 5. **Wiktionary Fallback**:
    - Verified live on `/api/definition?word=LEGERED` returning complete grammatical definition.
+6. **Game Room Chat Setting**:
+   - Verified toggle in Gameplay & Preferences hides chat panel and restores it immediately, persisting in `user_settings` and `localStorage`.
+7. **Image Clarity & High-Resolution Uploads**:
+   - Automated Selenium test (`scratch/test_image_clarity.py`) verified:
+     - CSS `image-rendering` styling on `#image-lightbox-img` and `.profile-avatar.large`.
+     - Preserving PNG original files untouched without downscaling or lossy compression.
+     - Preserving aspect ratio and high 0.95 quality when scaling oversized 4000x3000 images down to 2560px max dimension.
+     - Global availability of `window.compressImage` and `window.Forum`.

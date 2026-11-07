@@ -2786,16 +2786,36 @@ async function updateFlag(flag) {
     }
 }
 
-function compressImage(file, maxDimension, quality = 0.8) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
+function compressImage(file, maxDimension = 2048, quality = 0.95) {
+    return new Promise((resolve) => {
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+            return resolve(file);
+        }
+        // If it's a GIF or SVG, never re-encode to preserve animations and vectors
+        if (file.type === 'image/gif' || file.type === 'image/svg+xml') {
+            return resolve(file);
+        }
+
+        const isPng = file.type === 'image/png';
+        const isWebp = file.type === 'image/webp';
+
+        const processWithImage = (imgSrc, shouldRevoke) => {
             const img = new Image();
-            img.src = event.target.result;
             img.onload = () => {
-                let width = img.width;
-                let height = img.height;
+                if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
+                    try { URL.revokeObjectURL(imgSrc); } catch (e) {}
+                }
+
+                const origWidth = img.naturalWidth || img.width || 0;
+                const origHeight = img.naturalHeight || img.height || 0;
+
+                // If image is already within maxDimension and reasonable file size (under 8MB), keep original untouched!
+                if (origWidth > 0 && origHeight > 0 && origWidth <= maxDimension && origHeight <= maxDimension && file.size <= 8 * 1024 * 1024) {
+                    return resolve(file);
+                }
+
+                let width = origWidth;
+                let height = origHeight;
 
                 if (width > maxDimension || height > maxDimension) {
                     if (width > height) {
@@ -2811,41 +2831,79 @@ function compressImage(file, maxDimension, quality = 0.8) {
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+                if (ctx) {
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                }
+
+                const outputType = isPng ? 'image/png' : (isWebp ? 'image/webp' : 'image/jpeg');
+                const outputQuality = isPng ? undefined : quality;
 
                 canvas.toBlob((blob) => {
                     if (blob) {
-                        const name = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
-                        const compressedFile = new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+                        if (blob.size >= file.size && width === origWidth && height === origHeight) {
+                            return resolve(file);
+                        }
+                        const ext = isPng ? '.png' : (isWebp ? '.webp' : '.jpg');
+                        const baseName = (file.name && file.name.lastIndexOf('.') > 0)
+                            ? file.name.substring(0, file.name.lastIndexOf('.'))
+                            : (file.name || 'avatar');
+                        const compressedFile = new File([blob], `${baseName}${ext}`, { type: outputType, lastModified: Date.now() });
                         resolve(compressedFile);
                     } else {
-                        reject(new Error("Canvas to Blob failed"));
+                        resolve(file);
                     }
-                }, 'image/jpeg', quality);
+                }, outputType, outputQuality);
             };
-            img.onerror = (err) => reject(err);
+            img.onerror = () => {
+                if (shouldRevoke && typeof URL !== 'undefined' && URL.revokeObjectURL) {
+                    try { URL.revokeObjectURL(imgSrc); } catch (e) {}
+                }
+                resolve(file);
+            };
+            img.src = imgSrc;
         };
-        reader.onerror = (err) => reject(err);
+
+        if (typeof URL !== 'undefined' && URL.createObjectURL) {
+            try {
+                const blobUrl = URL.createObjectURL(file);
+                processWithImage(blobUrl, true);
+                return;
+            } catch (e) {}
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => processWithImage(event.target.result, false);
+        reader.onerror = () => resolve(file);
+        try {
+            reader.readAsDataURL(file);
+        } catch (err) {
+            resolve(file);
+        }
     });
 }
+window.compressImage = compressImage;
 
 async function uploadAvatar(file) {
     const avatarEl = document.querySelector('.profile-avatar');
-    const originalContent = avatarEl.innerHTML;
+    const originalContent = avatarEl ? avatarEl.innerHTML : '';
 
     // Optimistic UI
-    avatarEl.innerHTML = '<span style="font-size:12px">...</span>';
+    if (avatarEl) {
+        avatarEl.innerHTML = '<span style="font-size:12px">...</span>';
+    }
 
     let processedFile = file;
     if (file && file.type !== 'image/gif') {
         try {
-            processedFile = await compressImage(file, 300, 0.8);
+            processedFile = await compressImage(file, 2048, 0.95);
         } catch (e) {
             console.error("Avatar compression failed, uploading original:", e);
         }
     } else if (file && file.size > 2 * 1024 * 1024) {
         alert("GIF files must be under 2MB.");
-        avatarEl.innerHTML = originalContent;
+        if (avatarEl) avatarEl.innerHTML = originalContent;
         return;
     }
 
