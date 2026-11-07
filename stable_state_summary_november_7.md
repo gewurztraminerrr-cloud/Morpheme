@@ -2,8 +2,9 @@
 
 ## Latest Feature Commit ID
 ```
-5a390ba66e4b1cda30cdfb68bd9613f9bcb17b4f
+92daeb3e Keep forum category header fixed when scrolling threads and tighten header spacing
 ```
+*(Full hash: `92daeb3ef064b5849cf25fa82cbda3789547cb0d`)*
 
 ## Start Over Point Tag
 ```
@@ -15,8 +16,8 @@ START_OVER_POINT_NOVEMBER_7
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, HEAD at `7db69714` |
-| GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` & tags updated on GitHub |
+| localhost      | ✅ Synchronized | Working tree clean, HEAD at `92daeb3e` |
+| GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, mobile layouts |
 
@@ -74,11 +75,33 @@ START_OVER_POINT_NOVEMBER_7
   - Cleaned round 2408 (`pub_v2_accumulative_6x8_45`) in `morpheme.db`: removed invalid word `DOSSERETI` from `words_json` and updated round score to 5 (`ANILINE`).
   - Verified live endpoint `/api/profile/jeffb`: confirmed `DOSSERETI` is completely removed (`0` occurrences) and only authentic words are listed.
 
+### 7. Multiplayer Subanagrams Stability & Word Guarantee (Strict Room-Scoped)
+- **Word Guaranteed Distribution**:
+  - Calibrated word count ranges by sequence length so `generate_subanagrams_board_and_words` finds valid candidates immediately.
+  - Word Guaranteed mode appears in ~50% of rounds and Totally Random in ~50%.
+- **Sequence Lengths 6–10 Even Spread**:
+  - Removed fallback demotion of lengths 9 and 10 down to 8/7.
+  - Verified uniform ~20% distribution across lengths 6, 7, 8, 9, 10.
+- **Parameter Stability (0:45 Intermission to Round Start)**:
+  - Ensured `frozen_revealed_params` is strictly populated and locked at the 0:45 reveal mark.
+  - `start_next_round` strictly adheres to `active_params` / `frozen_revealed_params` without re-rolling, re-labeling, or changing parameters at round start.
+  - Subanagrams boards in Word Guaranteed mode strictly guarantee that at least one max-length word exists in the board and in `room.all_words` (fixing the issue illustrated in `nomax.png`).
+- **Numpy Vectorized Solver Acceleration**:
+### 8. Forum Category Header Fixed & Tightened Spacing
+- **Fixed Category Header During Scroll**:
+  - In `templates/index.html`, moved `.forum-header` (containing category name, description, "Refresh" button, and "+ New Thread" button) outside `.forum-view-scroll-body` directly under `#forum-view-list`.
+  - When scrolling through threads in any category, the header and its divider remain permanently fixed in place above the thread list on all platforms (mobile, tablet, laptop, desktop).
+  - When opening a thread (`#forum-view-post`) or the thread creation page (`#forum-view-create`), the category header is absent, displaying only thread-specific controls and content.
+- **Desktop & Laptop Header Tightening**:
+  - Reduced desktop/laptop vertical space footprint: lowered h2 margin and font-size (`1.6rem`), reduced padding to `18px 30px 14px 30px`, set vertical alignment to center, and tightened line heights so the title and description sit higher up without occupying unnecessary vertical room.
+  - Adjusted mobile styling with compact padding (`12px 15px`) and `flex-shrink: 0` for consistent behavior across devices.
+
 ---
 
 ## Deployment & Verification Log
-- **Git Commit**: `7db69714ebfe1c5fae67414bc699fe575492d5c3`
+- **Git Commit**: `92daeb3ef064b5849cf25fa82cbda3789547cb0d`
 - **GitHub Tags**: `START_OVER_POINT_NOVEMBER_7`, `stable-2026-11-07`
 - **Remote Server**: `132.148.72.249` (morpheme.games / morpheme.online)
-- **PM2 Service**: `morpheme` online (PID 2727, status online, memory 1.4GB, CPU 0%)
+- **PM2 Service**: `morpheme` online (PID 3719157, status online, memory 130MB, CPU 0%)
 - **HTTP Health**: `HTTP/1.1 200 OK` across web application and APIs
+
