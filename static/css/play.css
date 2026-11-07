@@ -6642,38 +6642,53 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
 .notepad-scroll-controls {
     display: flex;
     flex-direction: column;
-    width: 22px;
-    background: rgba(0, 0, 0, 0.25);
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    width: 28px;
+    background: rgba(10, 18, 34, 0.7);
+    border-left: 1px solid rgba(56, 189, 248, 0.2);
     flex-shrink: 0;
+    overflow: hidden;
 }
 
-.notepad-scroll-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #64748b;
-    font-size: 0.75rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    user-select: none;
+.user-notepad .notepad-scroll-btn,
+.notepad-scroll-controls .notepad-scroll-btn {
+    width: 100% !important;
+    height: auto !important;
+    flex: 1 1 0 !important;
+    background: rgba(30, 58, 138, 0.45) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: #93c5fd !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: all 0.15s ease !important;
+    user-select: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-.notepad-scroll-btn:hover {
-    background: rgba(56, 189, 248, 0.2);
-    color: #38bdf8;
+.user-notepad .notepad-scroll-btn:hover,
+.notepad-scroll-controls .notepad-scroll-btn:hover {
+    background: rgba(37, 99, 235, 0.8) !important;
+    color: #ffffff !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-.notepad-scroll-btn:active {
-    background: rgba(56, 189, 248, 0.4);
-    transform: scale(0.9);
+.user-notepad .notepad-scroll-btn:active,
+.notepad-scroll-controls .notepad-scroll-btn:active {
+    background: #1d4ed8 !important;
+    color: #ffffff !important;
+    transform: scale(0.92) !important;
 }
 
-.notepad-scroll-btn.up {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.user-notepad .notepad-scroll-btn.up,
+.notepad-scroll-controls .notepad-scroll-btn.up {
+    border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
 }
 
 /* List Items */
@@ -11497,7 +11512,7 @@ body.is-desktop .word-input-section {
 }
 
 /* Floating round arrows style */
-.notepad-scroll-btn {
+.notepad-controls .notepad-scroll-btn {
     width: 38px;
     height: 38px;
     background: #1a5fb4;
@@ -11515,17 +11530,17 @@ body.is-desktop .word-input-section {
     outline: none;
 }
 
-.notepad-scroll-btn:hover:not(.disabled) {
+.notepad-controls .notepad-scroll-btn:hover:not(.disabled) {
     transform: translateY(-2px);
     background: #3583e4;
     box-shadow: 0 6px 14px rgba(53, 131, 228, 0.55);
 }
 
-.notepad-scroll-btn:active:not(.disabled) {
+.notepad-controls .notepad-scroll-btn:active:not(.disabled) {
     transform: translateY(1px);
 }
 
-.notepad-scroll-btn.disabled {
+.notepad-controls .notepad-scroll-btn.disabled {
     background: #93a1a1;
     box-shadow: none;
     cursor: not-allowed;
