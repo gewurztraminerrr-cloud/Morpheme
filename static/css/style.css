@@ -1964,87 +1964,87 @@ body.theme-white .header {
 /* Split Points Notepads */
 .split-notepads-container {
     padding: 10px;
-    background: rgba(0, 0, 0, 0.2);
+    background: transparent;
     border-radius: 12px;
 }
 
 .user-notepad {
-    background: rgba(var(--text-primary-rgb), 0.05); /* Theme-aware background */
-    color: var(--text-primary); /* Theme-aware text color */
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, rgba(16, 26, 46, 0.88) 0%, rgba(11, 18, 32, 0.95) 100%);
+    color: var(--text-primary);
+    border-radius: 12px;
+    border: 1.5px solid rgba(56, 189, 248, 0.22);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     display: flex;
     flex-direction: column;
-    height: 300px;
-    /* Fixed height or max-height */
-    border: 2px solid transparent;
-    transition: transform 0.2s, border-color 0.2s;
+    min-height: 170px;
+    height: auto;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     cursor: pointer;
 }
 
 .user-notepad:hover {
     transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.user-notepad.is-current-user {
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
 }
 
 .user-notepad.selected {
-    border-color: #007bff;
-    /* Highlight selected user */
-    box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+    border-color: #60a5fa;
+    box-shadow: 0 0 22px rgba(96, 165, 250, 0.45);
 }
 
 .notepad-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    font-size: 1.1rem;
+    padding: 10px 14px;
+    font-size: 1rem;
+    font-weight: 700;
 }
 
 .notepad-tabs {
     display: flex;
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 5px;
+    padding: 5px 6px;
+    background: rgba(10, 15, 28, 0.65);
 }
 
 .notepad-tab {
     flex: 1;
-    padding: 4px;
+    padding: 6px 4px;
     font-size: 0.8rem;
-    border: 1px solid #ccc;
-    background: #eee;
+    font-weight: 600;
+    border: 1px solid transparent;
+    background: transparent;
     cursor: pointer;
-    border-radius: 4px 4px 0 0;
-    color: #555;
+    border-radius: 6px;
+    color: #94a3b8;
+    transition: all 0.15s ease;
 }
 
 .notepad-tab.active {
-    background: #fff;
-    border-bottom-color: var(--text-primary);
-    font-weight: bold;
-    color: #000;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
 }
 
 .notepad-list {
     flex: 1;
     overflow-y: auto;
-    background: rgba(var(--text-primary-rgb), 0.05);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    padding: 5px;
+    background: rgba(0, 0, 0, 0.12);
+    padding: 8px 10px;
     border-radius: 4px;
-    font-family: monospace;
-    font-size: 0.95rem;
 }
 
 .notepad-item {
-    padding: 2px 4px;
-    border-bottom: 1px dashed #eee;
-}
-
-.notepad-item:last-child {
-    border-bottom: none;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Variable Usage for Settings */

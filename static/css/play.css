@@ -6335,8 +6335,14 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
 /* Split Points Logic Styles */
 
 /* Container for notepads replacing the board */
+.play-grid:has(.has-split-notepads),
+.play-grid.has-split-notepads {
+    grid-template-columns: minmax(240px, 280px) 1fr minmax(250px, 300px);
+    gap: 16px;
+}
+
 .board-panel.has-split-notepads {
-    padding: 10px !important;
+    padding: 8px 12px 14px 12px !important;
     overflow-y: hidden !important;
     overflow-x: hidden !important;
     display: flex !important;
@@ -6356,8 +6362,8 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
 .split-notepads-container,
 #game-board.split-notepads-container,
 .game-board.split-notepads-container {
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 8px 16px 8px !important;
+    background: transparent !important;
     border-radius: 12px;
     width: 100%;
     max-width: 100%;
@@ -6365,19 +6371,31 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     max-height: 100%;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)) !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: max-content !important;
+    align-items: start !important;
     justify-content: flex-start !important;
-    gap: 16px;
+    align-content: start !important;
+    gap: 14px;
     min-height: 0;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y !important;
     box-sizing: border-box;
     margin: 0 !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+}
+
+.split-notepads-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.split-notepads-container::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.3);
+    border-radius: 4px;
 }
 
 @media (max-width: 992px) {
@@ -6387,7 +6405,7 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     }
 
     .board-panel.has-split-notepads {
-        padding: 0 !important;
+        padding: 6px 10px 10px 10px !important;
         height: 100% !important;
         max-height: 100% !important;
         overflow: hidden !important;
@@ -6412,8 +6430,8 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
-        gap: 14px !important;
-        padding: 10px 10px 30px 10px !important;
+        gap: 12px !important;
+        padding: 4px 6px 20px 6px !important;
         margin: 0 !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
@@ -6434,7 +6452,7 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     }
     .user-notepad {
         height: auto !important;
-        min-height: 140px !important;
+        min-height: 160px !important;
         max-height: none !important;
         touch-action: pan-y !important;
         flex-shrink: 0 !important;
@@ -6447,27 +6465,28 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     }
     .notepad-list {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
-        max-height: 200px !important;
+        max-height: 230px !important;
         flex: 1 !important;
     }
 }
 
-/* Individual User Notepad */
+/* Individual User Notepad - Aesthetic Blue Glass */
 .user-notepad {
-    background: rgba(var(--text-primary-rgb), 0.05);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
-    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(16, 26, 46, 0.88) 0%, rgba(11, 18, 32, 0.95) 100%);
+    border: 1.5px solid rgba(56, 189, 248, 0.22);
+    border-radius: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: auto;
-    min-height: 160px;
-    transition: all 0.2s ease;
+    min-height: 170px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
     min-width: 0;
     box-sizing: border-box;
@@ -6475,176 +6494,349 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
 }
 
 .user-notepad:hover {
-    background: rgba(var(--text-primary-rgb), 0.08);
-    border-color: rgba(var(--text-primary-rgb), 0.2);
+    border-color: rgba(56, 189, 248, 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.user-notepad.is-current-user {
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.35), 0 8px 24px rgba(0, 0, 0, 0.45);
+    background: linear-gradient(145deg, rgba(18, 36, 68, 0.92) 0%, rgba(12, 22, 42, 0.98) 100%);
 }
 
 .user-notepad.selected {
-    border-color: #409cff;
-    box-shadow: 0 0 15px rgba(64, 156, 255, 0.3);
-    background: rgba(64, 156, 255, 0.1);
+    border-color: #60a5fa;
+    box-shadow: 0 0 22px rgba(96, 165, 250, 0.45), 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .user-notepad.highlight-shared {
-    border-color: #ffd700 !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.45) !important;
-    background: rgba(255, 215, 0, 0.08) !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.45) !important;
 }
 
 /* Notepad Header */
-.notepad-header {
-    padding: 10px 16px;
-    background: rgba(0, 0, 0, 0.3);
+.user-notepad .notepad-header {
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 0;
 }
 
-.notepad-header strong {
-    color: var(--text-primary);
-    font-size: 1.05rem;
+.user-notepad .notepad-header .notepad-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.user-notepad .notepad-header strong {
+    color: #ffffff !important;
+    font-size: 1rem;
     font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.3px;
 }
 
-.notepad-header span {
-    color: #a8d5ff;
-    font-weight: 700;
-    font-size: 1rem;
+.user-notepad .notepad-header .you-badge {
+    background: rgba(56, 189, 248, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    color: #7dd3fc;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-notepad .notepad-header .notepad-score-badge {
+    color: #facc15 !important;
+    background: rgba(250, 204, 21, 0.15);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 /* Tabs */
 .notepad-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.notepad-buttons button {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 8px 5px;
-    color: rgba(var(--text-primary-rgb), 0.6);
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-bottom: 2px solid transparent;
+    background: rgba(10, 15, 28, 0.65);
+    padding: 5px 6px;
+    gap: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .notepad-tab {
     flex: 1;
-    background: #d0d0d0;
-    border: none;
-    padding: 8px 5px;
-    color: #000;
-    font-size: 0.95rem;
-    font-weight: 700;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 4px;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
 }
 
 .notepad-tab:hover {
-    color: #000;
-    background: #e0e0e0;
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .notepad-tab.active {
-    color: #000;
-    border-bottom-color: #409cff;
-    background: #fff;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
 }
 
-/* List Area */
-.notepad-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 14px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 6px 10px;
-    max-height: 250px;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-}
-
+/* List Area & Main Content */
 .notepad-main-content {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    min-height: 0;
     position: relative;
-    background: rgba(var(--text-primary-rgb), 0.02);
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.notepad-list {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 6px 8px;
+    max-height: 250px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.35) transparent;
+}
+
+.notepad-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notepad-list::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.35);
+    border-radius: 4px;
 }
 
 .notepad-scroll-controls {
     display: flex;
     flex-direction: column;
-    width: 32px;
-    background: rgba(0, 0, 0, 0.3);
-    border-left: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    width: 22px;
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
 }
 
 .notepad-scroll-btn {
     flex: 1;
     background: transparent;
     border: none;
-    color: rgba(var(--text-primary-rgb), 0.6);
-    font-size: 1.1rem;
+    color: #64748b;
+    font-size: 0.75rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.15s;
     user-select: none;
 }
 
 .notepad-scroll-btn:hover {
-    background: rgba(64, 156, 255, 0.2);
-    color: var(--text-primary);
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
 }
 
 .notepad-scroll-btn:active {
-    background: rgba(64, 156, 255, 0.4);
+    background: rgba(56, 189, 248, 0.4);
     transform: scale(0.9);
 }
 
 .notepad-scroll-btn.up {
-    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* List Items */
 .notepad-item {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
-    padding: 4px 8px;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    user-select: none;
+    min-width: 0;
+}
+
+.notepad-item:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.35);
+    transform: translateY(-1px);
+}
+
+.notepad-item .word-text,
+.notepad-item > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.4px;
+    min-width: 0;
+}
+
+.notepad-item .word-pts,
+.notepad-item .word-item-pts,
+.notepad-item > span:last-child {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    padding: 1px 6px;
     border-radius: 4px;
-    background: rgba(var(--text-primary-rgb), 0.08);
-    color: var(--text-primary);
-    margin-bottom: 2px;
+    flex-shrink: 0;
     white-space: nowrap;
 }
 
-.notepad-item:nth-child(odd) {
-    background: rgba(var(--text-primary-rgb), 0.12);
+.notepad-item.active {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5) !important;
+}
+
+.notepad-item.active .word-item-pts,
+.notepad-item.active .word-pts,
+.notepad-item.active > span:last-child {
+    color: #000 !important;
+    background: rgba(0, 0, 0, 0.15) !important;
 }
 
 .notepad-item.invalid {
-    color: #ff6b6b;
+    color: #ef4444 !important;
     text-decoration: line-through;
-    opacity: 0.7;
+    opacity: 0.65;
+    border-color: rgba(239, 68, 68, 0.25);
 }
 
-.notepad-item.active {
-    background: #ffd700 !important;
-    color: #000 !important;
-    font-weight: 800;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    border: 1px solid #000;
+.notepad-item.invalid .word-item-pts,
+.notepad-item.invalid .word-pts,
+.notepad-item.invalid > span:last-child {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.notepad-item.bonus-word {
+    border-color: rgba(168, 85, 247, 0.4);
+    background: rgba(168, 85, 247, 0.12);
+}
+
+.notepad-item.bonus-word .word-item-pts,
+.notepad-item.bonus-word .word-pts,
+.notepad-item.bonus-word > span:last-child {
+    color: #c084fc;
+    background: rgba(168, 85, 247, 0.2);
+}
+
+.notepad-item.penalty-word {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+/* Light / White Theme Harmonization */
+[class*="theme-light-"] .user-notepad,
+[class*="theme-white"] .user-notepad,
+body.theme-white .user-notepad,
+body[class*="theme-light-"] .user-notepad {
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[class*="theme-light-"] .user-notepad.is-current-user,
+[class*="theme-white"] .user-notepad.is-current-user,
+body.theme-white .user-notepad.is-current-user,
+body[class*="theme-light-"] .user-notepad.is-current-user {
+    border-color: #2563eb;
+    box-shadow: 0 0 16px rgba(37, 99, 235, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[class*="theme-light-"] .notepad-tabs,
+[class*="theme-white"] .notepad-tabs,
+body.theme-white .notepad-tabs,
+body[class*="theme-light-"] .notepad-tabs {
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+[class*="theme-light-"] .notepad-tab,
+[class*="theme-white"] .notepad-tab,
+body.theme-white .notepad-tab,
+body[class*="theme-light-"] .notepad-tab {
+    color: #475569;
+}
+
+[class*="theme-light-"] .notepad-tab.active,
+[class*="theme-white"] .notepad-tab.active,
+body.theme-white .notepad-tab.active,
+body[class*="theme-light-"] .notepad-tab.active {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+[class*="theme-light-"] .notepad-main-content,
+[class*="theme-white"] .notepad-main-content,
+body.theme-white .notepad-main-content,
+body[class*="theme-light-"] .notepad-main-content {
+    background: #f8fafc;
+}
+
+[class*="theme-light-"] .notepad-item,
+[class*="theme-white"] .notepad-item,
+body.theme-white .notepad-item,
+body[class*="theme-light-"] .notepad-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+[class*="theme-light-"] .notepad-item .word-item-pts,
+[class*="theme-light-"] .notepad-item .word-pts,
+[class*="theme-light-"] .notepad-item > span:last-child,
+[class*="theme-white"] .notepad-item .word-item-pts,
+[class*="theme-white"] .notepad-item .word-pts,
+[class*="theme-white"] .notepad-item > span:last-child {
+    color: #1d4ed8;
+    background: #dbeafe;
 }
 
 
@@ -10718,11 +10910,11 @@ body.theme-white .m-scroller-thumb.dragging {
         gap: 6px !important;
     }
 
-    .board-panel .game-board:not(.game-board-loading):not(.is-subanagrams-board),
-    .board-panel.full-bleed-mobile .game-board:not(.game-board-loading):not(.is-subanagrams-board),
+    .board-panel .game-board:not(.game-board-loading):not(.is-subanagrams-board):not(.split-notepads-container),
+    .board-panel.full-bleed-mobile .game-board:not(.game-board-loading):not(.is-subanagrams-board):not(.split-notepads-container),
     #game-board:not(.split-notepads-container):not(.game-board-loading):not(.is-subanagrams-board),
-    .board-panel #game-board:not(.is-subanagrams-board),
-    .board-panel .game-board:not(.is-subanagrams-board) {
+    .board-panel #game-board:not(.split-notepads-container):not(.is-subanagrams-board),
+    .board-panel .game-board:not(.split-notepads-container):not(.is-subanagrams-board) {
         width: max-content !important;
         max-width: 100vw !important;
         padding: 0 !important;

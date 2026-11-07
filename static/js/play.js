@@ -7202,6 +7202,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     const boardPanel = boardEl.closest('.board-panel');
     if (boardPanel) {
         boardPanel.classList.remove('has-split-notepads');
+        const playGrid = boardPanel.closest('.play-grid');
+        if (playGrid) playGrid.classList.remove('has-split-notepads');
         if (is3D || !board || board.length === 0 || !hasLetters) {
             boardPanel.classList.remove('full-bleed-mobile');
         } else {
@@ -8727,11 +8729,15 @@ function renderSplitNotepads(players, state) {
         boardPanel.classList.add('has-split-notepads');
         boardPanel.classList.remove('full-bleed-mobile');
         boardPanel.scrollTop = 0;
+        const playGrid = boardPanel.closest('.play-grid');
+        if (playGrid) playGrid.classList.add('has-split-notepads');
     }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
     boardEl.style.gridTemplateRows = '';
     boardEl.innerHTML = '';
+
+    const myUsername = state.your_username || window.currentUser || (typeof globalUser === 'object' && globalUser ? globalUser.username : globalUser) || localStorage.getItem('morpheme_username') || null;
 
     sortedPlayers.forEach(p => {
         // Init state if needed
@@ -8743,6 +8749,11 @@ function renderSplitNotepads(players, state) {
         const notepad = document.createElement('div');
         notepad.className = 'user-notepad';
         notepad.dataset.username = p.username; // Store username for scroll tracking
+
+        const isMe = !!(myUsername && p.username && p.username.toLowerCase() === myUsername.toLowerCase());
+        if (isMe) {
+            notepad.classList.add('is-current-user');
+        }
 
         // highlight selected user
         if (p.username === selectedPlayerUsername) {
@@ -8778,7 +8789,13 @@ function renderSplitNotepads(players, state) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `
+            <div class="notepad-user-info">
+                <strong>${p.username}</strong>
+                ${isMe ? '<span class="you-badge">You</span>' : ''}
+            </div>
+            <span class="notepad-score-badge">${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>
+        `;
         notepad.appendChild(header);
 
         // Tabs
@@ -8946,7 +8963,7 @@ function renderSplitNotepads(players, state) {
                 const isBonusWord = w.is_bonus || (state.bonus_word && w.word.toUpperCase() === state.bonus_word.toUpperCase());
                 if (isBonusWord) row.classList.add('bonus-word');
 
-                row.innerHTML = `<span>${w.word}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
+                row.innerHTML = `<span class="word-text">${w.word}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }
@@ -8998,16 +9015,25 @@ function renderFCFSNotepads(players, state) {
         boardPanel.classList.add('has-split-notepads');
         boardPanel.classList.remove('full-bleed-mobile');
         boardPanel.scrollTop = 0;
+        const playGrid = boardPanel.closest('.play-grid');
+        if (playGrid) playGrid.classList.add('has-split-notepads');
     }
     // Clear inline grid styles from renderBoard
     boardEl.style.gridTemplateColumns = '';
     boardEl.style.gridTemplateRows = '';
     boardEl.innerHTML = '';
 
+    const myUsername = state.your_username || window.currentUser || (typeof globalUser === 'object' && globalUser ? globalUser.username : globalUser) || localStorage.getItem('morpheme_username') || null;
+
     sortedPlayers.forEach(p => {
         const notepad = document.createElement('div');
         notepad.className = 'user-notepad';
         notepad.dataset.username = p.username;
+
+        const isMe = !!(myUsername && p.username && p.username.toLowerCase() === myUsername.toLowerCase());
+        if (isMe) {
+            notepad.classList.add('is-current-user');
+        }
 
         if (p.username === selectedPlayerUsername) {
             notepad.classList.add('selected');
@@ -9025,7 +9051,13 @@ function renderFCFSNotepads(players, state) {
         // Header
         const header = document.createElement('div');
         header.className = 'notepad-header';
-        header.innerHTML = `<strong>${p.username}</strong> <span>${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>`;
+        header.innerHTML = `
+            <div class="notepad-user-info">
+                <strong>${p.username}</strong>
+                ${isMe ? '<span class="you-badge">You</span>' : ''}
+            </div>
+            <span class="notepad-score-badge">${isPlayerDNP(p, state) ? 'DNP' : p.score + ' pts'}</span>
+        `;
         notepad.appendChild(header);
 
         // No Tabs for FCFS
@@ -9037,8 +9069,6 @@ function renderFCFSNotepads(players, state) {
         // List
         const list = document.createElement('div');
         list.className = 'notepad-list';
-        list.style.marginTop = '10px';
-        list.style.height = '100%'; // Fill parent
 
         // Scroll Controls
         const scrollControls = document.createElement('div');
@@ -9118,7 +9148,7 @@ function renderFCFSNotepads(players, state) {
                 }
                 row.dataset.word = w;
                 row.onclick = () => window.fetchDefinition(w); // Direct handler
-                row.innerHTML = `<span>${w}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
+                row.innerHTML = `<span class="word-text">${w}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
         }
