@@ -831,9 +831,11 @@
                     });
                     var data = await response.json();
 
-                    if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play')) {
+                    if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
                         console.log('[Lobby] handleJoinRoomInline aborted: user left or navigated away');
                         window._isEnteringRoom = false;
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
                         return;
                     }
 
@@ -855,6 +857,10 @@
                         window.currentRoomId = roomId;
                         localStorage.setItem('last_joined_room', roomId);
                         window.isSpectatorMode = (data.role === 'spectator' || isSpectator);
+
+                        if (typeof window.stopLobbyPolling === 'function') {
+                            window.stopLobbyPolling();
+                        }
 
                         // Switch to page-play NOW that currentRoomId is confirmed
                         if (typeof window.clearGameUIAndCache === 'function') {
@@ -931,6 +937,10 @@
                 } finally {
                     window._isEnteringRoom = false;
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+                    if (btn) {
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    }
                 }
             };
 
@@ -10003,7 +10013,7 @@
     <script src="/js/settings.js?v=1794024000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
     <script src="/js/app.js?v=1794024000"></script>
-    <script src="/js/lobby.js?v=1794023000"></script>
+    <script src="/js/lobby.js?v=1794071000"></script>
     <script src="/js/play.js?v=1794030000"></script>
     <script src="/js/tournaments.js?v=1794024000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>

@@ -461,6 +461,9 @@ function setupLobbyEvents() {
         // Handle Join Room logic (dynamic button inside rooms-list)
         const joinBtn = target.closest('.join-room-btn');
         if (joinBtn) {
+            if (joinBtn.hasAttribute('onclick')) {
+                return;
+            }
             if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
                 return;
             }
@@ -580,7 +583,7 @@ function setupLobbyEvents() {
                     return;
                 }
 
-                if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play')) {
+                if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
                     console.log('[Lobby] User left or navigated away while join was in-flight, canceling room activation');
                     window._isEnteringRoom = false;
                     return;
