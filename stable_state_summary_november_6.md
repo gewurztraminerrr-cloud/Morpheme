@@ -141,11 +141,14 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 - **Crisp CSS Rendering**:
   - Added `image-rendering: -webkit-optimize-contrast; image-rendering: auto;` and backface stabilization to `.image-lightbox-content img`, `.profile-avatar.large`, `.mini-avatar`, `.post-image-item img`, `.comment-image-item img`, `.preview-thumb`, and `.reply-preview-thumb` to prevent subpixel blurring in both thumbnail and enlarged modal views.
 
-### 17. Game Room Chat Disabled Crossed-Out Horn Icon (`game_room.py`, `app.py`, `play.js`, `play.css`)
+### 17. Game Room Chat Disabled Crossed-Out Horn Icon (`game_room.py`, `app.py`, `play.js`, `play.css`, `templates/index.html`)
 - **Icon Presence & Seamless Coexistence**:
   - Added a crossed-out horn icon (`🔇`, title `"Chat disabled (cannot read chats)"`) to the bottom-left corner of player cards (`.player-row-bottom`) for any user who has disabled game room chat.
   - Sits cleanly alongside the country flag and device input method icon (`[Flag] [Input] [🏆] [🔇]`).
   - **Zero Interference with Trophy Icon**: The presence logic and position of the 🏆 trophy icon for exceptional performances during intermission are completely unaffected. When a player with disabled chat earns an exceptional performance, both the trophy and crossed-out horn icons render side-by-side with clean flex spacing, while the flexible spacer `<div style="flex:1;"></div>` pushes the words count and score cleanly to the right.
+- **Cross-Browser & Platform Rendering (Circle with Cross Through It)**:
+  - Styled `.chat-disabled-icon` with explicit font stack `font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif` and inline-flex vertical centering, ensuring the Apple-designed speaker horn with the red circle with a cross through it renders consistently across Chrome, Safari, and Firefox.
+  - Bumped asset cache busters (`play.js?v=1794030000`, `play.css?v=1794030000`, `forum.css?v=1794030000`) in `templates/index.html` to invalidate cached assets in Google Chrome so the icon appears immediately on all laptops and desktops without requiring manual cache clearing.
 - **Real-Time Client & Server Synchronization**:
   - Added `game_room_chat` to the `Player` dataclass in `game_room.py` and serialized it in `/api/room/<room_id>/state`.
   - Toggling the setting in Settings immediately updates the player's active room state in memory and calls `applyGameRoomChatSetting()`, which instantly refreshes the player list without waiting for polling.
@@ -190,7 +193,8 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `36ecea8f` | fix(settings): correct game room chat toggle display state in desktop view |
 | `d9eecdc9` | fix(images): preserve high resolution and crisp rendering for profile and forum images |
 | `2884f3d6` | feat(play): add crossed-out horn icon in game room for users with chat disabled |
-| `44fe2da9` | feat(forum): fit create thread page on mobile without vertical scrolling and extend to full page on desktop |
+| `f6dd995f` | feat(forum): fit create thread page on mobile without vertical scrolling and extend to full page on desktop |
+| `b09e5057` | fix(play): ensure chat disabled icon appears on Google Chrome and all desktop browsers with circle and cross |
 
 ---
 
