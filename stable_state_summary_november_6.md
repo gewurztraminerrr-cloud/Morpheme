@@ -114,6 +114,12 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
   - Aliased `sys.modules['__main__']` to `'app'` at the entry point of `app.py` so background threads and modules importing `app` share the running `_WORD_FINDS_CACHE`.
   - Reduced `_WORD_FINDS_CACHE` TTL to 5.0 seconds and improved in-memory room deduplication.
 
+### 14. Lobby Music FAQ Entry (`index.html`)
+- **FAQ Quick Navigate & Answer**:
+  - Added dedicated button in Quick Navigate FAQ grid and corresponding item in the FAQ container:
+    - **Question**: *What music is playing in the Lobby?*
+    - **Answer**: *Simon Patterson - Thump*
+
 ---
 
 ## Full Commit History (November 6, 2026)
