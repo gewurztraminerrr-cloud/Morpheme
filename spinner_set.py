@@ -369,7 +369,7 @@ class SpinnerSet:
         # Calibrate min_word_length based on sequence length so >= 50 words is physically achievable
         if sequence_length == 6:
             min_word_length = 3
-        elif sequence_length == 7:
+        elif sequence_length in [7, 8]:
             min_word_length = random.choice([3, 4])
         else:
             min_word_length = random.choice([3, 4, 5])
@@ -378,7 +378,18 @@ class SpinnerSet:
         use_added_words = ('+ AW' in dict_choice or '+AW' in dict_choice)
         base_dict = dict_choice.replace('+ AW', '').replace('+AW', '').strip()
         mode = random.choice(['word', 'random'])
-        word_count_range = random.choice(['50-100', '100-200', '200-300', '300-400', '500+'])
+
+        # Realistic word count ranges calibrated to sequence length
+        if sequence_length == 6:
+            word_count_range = random.choice(['50-100', '100-200'])
+        elif sequence_length == 7:
+            word_count_range = random.choice(['50-100', '100-200', '200-300'])
+        elif sequence_length == 8:
+            word_count_range = random.choice(['100-200', '200-300', '300-400'])
+        else: # 9 or 10 letters
+            word_count_range = random.choice(['100-200', '200-300', '300-400', '500+'])
+
+        bonus_len = random.choice(range(min_word_length, sequence_length + 1))
 
         return {
             'board_dimensions': 'subanagrams',
@@ -393,7 +404,7 @@ class SpinnerSet:
             'word_count_range': word_count_range,
             'difficulty': 'Practice',
             'bonus_word': '',
-            'bonus_word_length': 0,
+            'bonus_word_length': bonus_len,
             'generated_at': time.time()
         }
 

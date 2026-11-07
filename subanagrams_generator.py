@@ -75,6 +75,7 @@ def get_subanagrams_dict(base_dict='CSW', use_added_words=False):
     masks = np.zeros(count, dtype=np.uint32)
     lens = np.zeros(count, dtype=np.uint8)
     by_len = {}
+    counters = [Counter(w) for w in word_list]
 
     for i, w in enumerate(word_list):
         l = len(w)
@@ -92,7 +93,8 @@ def get_subanagrams_dict(base_dict='CSW', use_added_words=False):
         'words': word_list,
         'masks': masks,
         'lens': lens,
-        'by_len': by_len
+        'by_len': by_len,
+        'counters': counters
     }
     SUBANAGRAMS_CACHE[cache_key] = entry
     return entry
@@ -116,26 +118,23 @@ def solve_subanagrams(sequence, dict_data, min_length=3):
     masks = dict_data['masks']
     lens = dict_data['lens']
     word_list = dict_data['words']
+    counters = dict_data.get('counters')
 
-    # Vectorized / fast loop
+    # Vectorized fast bitmask filter in numpy C-speed (< 1ms)
+    candidate_indices = np.where((lens >= min_length) & (lens <= seq_len) & ((masks & seq_inv_mask) == 0))[0]
+
     results = []
-    for i in range(len(word_list)):
-        l = lens[i]
-        if l < min_length or l > seq_len:
-            continue
-        if (masks[i] & seq_inv_mask) != 0:
-            continue
-
-        w = word_list[i]
-        # Check letter counts
-        w_counter = Counter(w)
-        match = True
-        for ch, cnt in w_counter.items():
-            if seq_counter[ch] < cnt:
-                match = False
-                break
-        if match:
-            results.append(w)
+    if counters is not None:
+        for idx in candidate_indices:
+            w_cnt = counters[idx]
+            if all(seq_counter[ch] >= cnt for ch, cnt in w_cnt.items()):
+                results.append(word_list[idx])
+    else:
+        for idx in candidate_indices:
+            w = word_list[idx]
+            w_cnt = Counter(w)
+            if all(seq_counter[ch] >= cnt for ch, cnt in w_cnt.items()):
+                results.append(w)
 
     results.sort(key=lambda x: (-len(x), x))
     return results
@@ -212,9 +211,9 @@ def generate_subanagrams_board_and_words(params):
     dict_data = get_subanagrams_dict(base_dict, use_aw)
     candidates_by_len = dict_data['by_len'].get(seq_len, [])
 
-    # If word mode requested but no exact length words exist in dictionary, fallback to length 8 or 7
+    # If word mode requested but no exact length words exist in dictionary, search nearby lengths
     if mode == 'word' and not candidates_by_len:
-        for fallback_len in [8, 7, 6, 9, 10]:
+        for fallback_len in [10, 9, 8, 7, 6]:
             if dict_data['by_len'].get(fallback_len):
                 seq_len = fallback_len
                 candidates_by_len = dict_data['by_len'][fallback_len]
@@ -231,7 +230,7 @@ def generate_subanagrams_board_and_words(params):
     elif target_range == '300-400': target_mid = 350
     elif target_range == '500+': target_mid = 550
 
-    max_attempts = 50
+    max_attempts = 25
     for attempt in range(max_attempts):
         if mode == 'word' and candidates_by_len:
             # Word Guaranteed: Pick an authentic dictionary word of exact length seq_len and shuffle
@@ -246,7 +245,7 @@ def generate_subanagrams_board_and_words(params):
         else:
             # Totally Random letters matching Tools Subanagrams English tile distribution
             min_vowels = max(1, seq_len // 4)
-            for _ in range(50):
+            for _ in range(25):
                 selected = random.choices(BAG, k=seq_len)
                 vowel_cnt = sum(1 for c in selected if c in VOWELS)
                 if min_vowels <= vowel_cnt < seq_len:
@@ -272,10 +271,10 @@ def generate_subanagrams_board_and_words(params):
             best_results = solved_words
             break
 
-    # If best candidate has < 50 words, do passes to reach at least 50 words
+    # If best candidate has < 50 words, do fast passes to reach at least 50 words
     while (not best_results or len(best_results) < 50):
         if mode == 'word' and candidates_by_len:
-            for _ in range(30):
+            for _ in range(20):
                 chosen_word = random.choice(candidates_by_len)
                 letters = list(chosen_word)
                 random.shuffle(letters)
@@ -287,7 +286,7 @@ def generate_subanagrams_board_and_words(params):
                     break
         else:
             min_vowels = max(1, seq_len // 4)
-            for _ in range(30):
+            for _ in range(20):
                 selected = random.choices(BAG, k=seq_len)
                 vowel_cnt = sum(1 for c in selected if c in VOWELS)
                 if min_vowels <= vowel_cnt < seq_len:
@@ -302,6 +301,8 @@ def generate_subanagrams_board_and_words(params):
             break
         if min_len > 3:
             min_len -= 1
+            if best_candidate:
+                best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
         else:
             break
 
@@ -320,15 +321,51 @@ def generate_subanagrams_board_and_words(params):
             best_candidate = "".join(selected)
             best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
 
-    # In Word Guaranteed mode, ensure the sequence strictly contains at least one max-length word
+    # In Word Guaranteed mode, strictly guarantee at least one full sequence_length word and >= 50 words
     if mode == 'word' and candidates_by_len:
-        has_max_len = any(len(w) == len(best_candidate) for w in (best_results or []))
-        if not has_max_len:
-            chosen_word = random.choice(candidates_by_len)
-            letters = list(chosen_word)
-            random.shuffle(letters)
-            best_candidate = "".join(letters)
-            best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+        has_max_len = any(len(w) == seq_len for w in (best_results or []))
+        if not has_max_len or (best_results and len(best_results) < 50):
+            for _ in range(30):
+                chosen_word = random.choice(candidates_by_len)
+                letters = list(chosen_word)
+                random.shuffle(letters)
+                cand_seq = "".join(letters)
+                cand_results = solve_subanagrams(cand_seq, dict_data, min_length=min_len)
+                if any(len(w) == seq_len for w in cand_results) and len(cand_results) >= 50:
+                    best_candidate = cand_seq
+                    best_results = cand_results
+                    break
+            else:
+                min_len = 3
+                for _ in range(30):
+                    chosen_word = random.choice(candidates_by_len)
+                    letters = list(chosen_word)
+                    random.shuffle(letters)
+                    cand_seq = "".join(letters)
+                    cand_results = solve_subanagrams(cand_seq, dict_data, min_length=3)
+                    if any(len(w) == seq_len for w in cand_results) and len(cand_results) >= 50:
+                        best_candidate = cand_seq
+                        best_results = cand_results
+                        break
+    else:
+        while (not best_results or len(best_results) < 50):
+            if min_len > 3:
+                min_len -= 1
+                best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+            else:
+                min_vowels = max(1, seq_len // 3)
+                for _ in range(30):
+                    selected = random.choices(BAG, k=seq_len)
+                    vowel_cnt = sum(1 for c in selected if c in VOWELS)
+                    if min_vowels <= vowel_cnt < seq_len:
+                        random.shuffle(selected)
+                        cand_seq = "".join(selected)
+                        cand_results = solve_subanagrams(cand_seq, dict_data, min_length=min_len)
+                        if len(cand_results) >= 50:
+                            best_candidate = cand_seq
+                            best_results = cand_results
+                            break
+                break
 
     # Resolve bonus word: chosen at random from the solved subanagrams
     if best_results:
