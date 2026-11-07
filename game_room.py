@@ -8033,10 +8033,15 @@ class RoomManager:
                             'timestamp': raw_time
                         })
                     
-                    # Calculate Best Word
-                    best_w_entry = max(u_submitted, key=lambda x: x.get('points', 0)) if u_submitted else None
+                    # Calculate Best Word (Using Base Points Only - strictly excluding bonus word extra points)
+                    def _get_u_base_score(item):
+                        if not item: return 0
+                        w_txt = item.get('word', '') if isinstance(item, dict) else str(item)
+                        return calculate_word_score(w_txt, bonus_word=None, board_format=board_format)
+
+                    best_w_entry = max(u_submitted, key=lambda x: (_get_u_base_score(x), len(x.get('word', '')))) if u_submitted else None
                     best_word_text = best_w_entry['word'] if best_w_entry else None
-                    best_word_val = best_w_entry.get('points', 0) if best_w_entry else 0
+                    best_word_val = _get_u_base_score(best_w_entry) if best_w_entry else 0
 
                     # Calculate WPM (Words Per Minute)
                     final_wpm = 0.0

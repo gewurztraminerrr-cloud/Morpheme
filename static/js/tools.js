@@ -2300,7 +2300,7 @@ window.showMiniProfile = async function (username) {
 
         const msgBtn = document.getElementById('mini-profile-message');
         const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-        const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+        const currentName = (globalUser && typeof globalUser === 'object') ? globalUser.username : (globalUser || null);
 
         if (msgBtn) {
             const allowPm = data.allow_pm !== false;
@@ -2735,8 +2735,8 @@ function renderFlagDropdown(filter = '') {
 
 async function updateFlag(flag) {
     const displayedName = document.getElementById('profile-username').innerText;
-    const globalUser = window.currentUser || currentUser;
-    const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+    const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+    const currentName = (globalUser && typeof globalUser === 'object') ? globalUser.username : (globalUser || null);
 
     // Only allow saving if it matches current user (case-insensitive)
     if (!currentName || currentName.toLowerCase() !== displayedName.toLowerCase()) {
@@ -3064,7 +3064,7 @@ window.cleanProfileText = cleanProfileText;
 async function renderProfile(user) {
     // Check Ownership for Editing
     const globalUser = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-    const currentName = (typeof globalUser === 'object') ? globalUser.username : globalUser;
+    const currentName = (globalUser && typeof globalUser === 'object') ? globalUser.username : (globalUser || null);
     const isOwner = currentName && currentName.toLowerCase() === user.username.toLowerCase();
 
     const usernameEl = document.getElementById('profile-username');
@@ -3474,7 +3474,6 @@ async function renderProfile(user) {
         </div>
         `;
     };
-
     window.roundGridHeader = `
         <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Mode</div>
@@ -3487,9 +3486,43 @@ async function renderProfile(user) {
         </div>
     `;
 
-    // --- Render Round History & Exceptional Rounds ---
+    window.renderBestWordGridItem = (w) => {
+        const gameTypeLabel = w.game_type === 'split' ? 'Split' :
+            w.game_type === 'fcfs' ? 'FCFS' :
+            w.game_type === '3d' ? 'Cube' : 'Acc';
+        const typeClass = `history-type-${w.game_type || 'accumulative'}`;
+        const dims = w.dimensions || '?';
+        let dateStr = '-';
+        if (w.timestamp) {
+            dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(w.timestamp, true) : String(w.timestamp);
+        }
+        return `
+        <div class="history-grid-item" onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'})" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">${w.word}</div>
+            <div style="font-weight: 800; color: #d97706; font-size: 0.9rem;">${w.points} <small style="font-size: 0.6rem; opacity: 0.7;">PTS</small></div>
+            <div style="color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-size: 0.8rem; font-weight: 700;">${w.length || w.word.length} <small style="font-size: 0.6rem; opacity: 0.7;">LETTERS</small></div>
+            <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">${dims}</div>
+            <div style="font-size: 0.7rem; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); font-weight: 600; text-align: right;">${dateStr}</div>
+        </div>
+        `;
+    };
+
+    window.bestWordsGridHeader = `
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
+            <div>Word</div>
+            <div>Points</div>
+            <div>Length</div>
+            <div>Mode</div>
+            <div>Board</div>
+            <div style="text-align: right;">Date</div>
+        </div>
+    `;
+
+    // --- Render Round History & Exceptional Rounds & Best Words ---
     const historyList = document.getElementById('profile-history-list');
     const exceptionalList = document.getElementById('profile-exceptional-list');
+    const bestWordsList = document.getElementById('profile-bestwords-list');
 
     if (historyList) {
         if (!user.recent_rounds || user.recent_rounds.length === 0) {
@@ -3518,7 +3551,22 @@ async function renderProfile(user) {
         }
     }
 
-    // Cache all rounds for review (both recent and exceptional)
+    if (bestWordsList) {
+        if (!user.best_words || user.best_words.length === 0) {
+            bestWordsList.innerHTML = '<p class="placeholder">No exceptional word finds recorded yet.</p>';
+        } else {
+            const displayWords = user.best_words.slice(0, 50);
+            const bwHeader = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Best Words (Relative Good Finds)</span>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #ffd700;">Top ${displayWords.length} Finds</span>
+                </div>
+            `;
+            bestWordsList.innerHTML = bwHeader + window.bestWordsGridHeader + displayWords.map(w => window.renderBestWordGridItem(w)).join('');
+        }
+    }
+
+    // Cache all rounds for review (recent, exceptional, and best words)
     window.lastRenderedRounds = [...(user.recent_rounds || []), ...(user.exceptional_rounds || [])];
 
     // Render Ratings Grid (32 setups)

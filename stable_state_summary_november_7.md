@@ -203,3 +203,17 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_7
    - Automated Selenium test suite (`scratch/test_forum_create_layout.py`) verified:
      - **Mobile Viewports (390x844, 375x667, 412x915)**: `scrollBodyHasScroll == False` (`scrollHeight == clientHeight`), all elements including form card, title, title input, details textarea, image upload section, Publish Thread button, and Cancel bottom bar fit within the viewport with zero vertical scrolling.
      - **Desktop & Laptop Viewports (1280x850, 1440x900)**: `scrollBodyHasScroll == False`, form card fills 100% of available height in `.forum-main`, empty space below the form is eliminated, and Details textarea dynamically expands to fill available height.
+10. **Missing Round Recovery (`ENCIERRO` & `ENCIERROS`)**:
+   - Recovered missing 4x4 round for user `jeffjeff` (user ID 11) played on Oct 30, 2026 17:33:49 in room `pub_v2_accumulative_4x4_45`.
+   - Board hash `CIBERERBNIROECSY`, 191 solutions, 18 user submissions, total score 58, best word `ENCIERROS` (13 pts base).
+   - Inserted into production and local database as round ID 2490.
+11. **Best Individual Words Base Scoring (Strict Exclusion of Bonus Word Additions)**:
+   - Recalculated round 2410 (`SHARKLIKE` base points 13 vs 22 with bonus addition) and updated all 1,774 rounds in `round_history` across production and local environments.
+   - Updated `game_room.py` and `app.py` so future rounds and API endpoints strictly evaluate base score excluding bonus points.
+   - `PERTUSSISES` (21 pts base) now properly supersedes `SHARKLIKE` (13 pts base) on Leaderboards and Achievements.
+12. **Profile "BEST WORDS" Tab & Adaptive Good Find Logic**:
+   - Added "BEST WORDS" tab directly to the right of "EXCEPTIONAL ROUNDS" on user profiles (`templates/index.html`, `static/js/tools.js`).
+   - Adaptive good find baseline: accepts 7L+ words (like `SERENADE`) for players who normally find 3-6 letter words, while requiring 9L+ or obscure CSW words for players who regularly find simple 8L words.
+   - Displays Word, Points, Length, Mode, Board, and Date with interactive replay on click via `watchRoundHistory`.
+   - Fixed unauthenticated visitor profile crash (`typeof null === 'object'`).
+

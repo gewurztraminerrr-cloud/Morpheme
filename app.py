@@ -5414,6 +5414,73 @@ def get_public_profile(username):
                                key=lambda x: x['timestamp'], reverse=True)[:50]
     dynamic_max_pe = max([p['performance_value'] for p in processed_all]) if processed_all else 0
 
+    # Calculate Best Words (Good finds relative to what the user normally finds)
+    unique_csw = getattr(word_validator, 'unique_csw_words', set())
+    all_user_word_lengths = []
+    user_words_pool = []
+    for p in standard_rounds:
+        r_words = p.get('words', [])
+        for w in r_words:
+            w_text = w.get('word', '').upper() if isinstance(w, dict) else str(w).upper()
+            if not w_text or len(w_text) < 3:
+                continue
+            all_user_word_lengths.append(len(w_text))
+            base_pts = calculate_word_score(w_text, bonus_word=None, board_format=p.get('board_format', 'Normal'))
+            user_words_pool.append({
+                'word': w_text,
+                'points': base_pts,
+                'length': len(w_text),
+                'room_id': p.get('room_id'),
+                'round_number': p.get('round_number'),
+                'game_id': p.get('game_id'),
+                'timestamp': p.get('timestamp'),
+                'game_type': p.get('game_type'),
+                'dimensions': p.get('dimensions')
+            })
+
+    # Determine user's typical length baseline
+    if all_user_word_lengths:
+        sorted_lens = sorted(all_user_word_lengths)
+        n_words = len(sorted_lens)
+        p90_len = sorted_lens[int(n_words * 0.90)]
+        eight_plus_count = sum(1 for l in sorted_lens if l >= 8)
+        eight_plus_ratio = eight_plus_count / n_words
+        commonly_finds_8 = (p90_len >= 8) or (eight_plus_count >= 10 and eight_plus_ratio >= 0.05)
+    else:
+        commonly_finds_8 = False
+
+    # Filter for good finds relative to player baseline
+    qualified_words = {}
+    for item in user_words_pool:
+        w_text = item['word']
+        w_len = item['length']
+        w_pts = item['points']
+        
+        # Relative Good Find qualification rule:
+        # If user normally gets 3, 4, 5, 6 letter words: 7L+ or 8L (like SERENADE) is a good find.
+        # If user commonly finds simple 8 letter words: simple 8L words are excluded; requires 9L+ or obscure CSW word.
+        if commonly_finds_8:
+            is_good_find = (w_len >= 9) or (w_len == 8 and w_text in unique_csw)
+        else:
+            is_good_find = (w_len >= 7)
+
+        if is_good_find:
+            if w_text not in qualified_words or w_pts > qualified_words[w_text]['points']:
+                qualified_words[w_text] = item
+
+    # If user has no words qualifying under the threshold yet, provide top base-point finds as fallback
+    if not qualified_words and user_words_pool:
+        for item in user_words_pool:
+            w_text = item['word']
+            if w_text not in qualified_words or item['points'] > qualified_words[w_text]['points']:
+                qualified_words[w_text] = item
+
+    profile_best_words = sorted(
+        qualified_words.values(),
+        key=lambda x: (x['points'], x['length'], x['timestamp']),
+        reverse=True
+    )[:50]
+
     conn.close()
     session_info = room_manager.find_user_session(user[0])
         
@@ -5447,6 +5514,7 @@ def get_public_profile(username):
         'forum_posts_count': forum_posts_count,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
+        'best_words': profile_best_words,
         'config_ratings': config_stats,
         'status': {
             'is_online': session_info['is_online'] if session_info else False,
@@ -5547,8 +5615,10 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
                 global_stats["total_score"] += score
                 if score > global_stats["high_score"]: global_stats["high_score"] = score
                 for w in words:
-                    if w.get('points', 0) > global_stats["best_word"]["points"]:
-                        global_stats["best_word"] = {"word": w['word'], "points": w.get('points',0)}
+                    w_text = w.get('word', '') if isinstance(w, dict) else str(w)
+                    base_pts = calculate_word_score(w_text, bonus_word=None, board_format=b_fmt)
+                    if base_pts > global_stats["best_word"]["points"]:
+                        global_stats["best_word"] = {"word": w_text, "points": base_pts}
 
             global_stats["total_words"] += len(words)
             if len(words) > global_stats["max_words"]: global_stats["max_words"] = len(words)
@@ -5713,15 +5783,20 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     # Games Played: Timestamp DESC (True Recency)
     recent = sorted(performance_list, key=lambda x: x['timestamp'], reverse=True)[:50] 
     
-    # Best Words: Points DESC (Unique words only, standard scoring)
+    # Best Words: Points DESC (Unique words only, standard scoring, strictly excluding bonus word additions)
+    unique_csw = getattr(word_validator, 'unique_csw_words', set())
     unique_words = {}
+    all_lens = []
     for w in all_period_words:
         word_text = w.get('word')
-        points = int(w.get('points', 0))
-        if word_text not in unique_words or points >= unique_words[word_text]['points']:
+        if not word_text:
+            continue
+        base_points = calculate_word_score(word_text, bonus_word=None, board_format='Normal')
+        all_lens.append(len(word_text))
+        if word_text not in unique_words or base_points >= unique_words[word_text]['points']:
             unique_words[word_text] = {
                 'word': word_text, 
-                'points': points, 
+                'points': base_points, 
                 'timestamp': w.get('timestamp'), 
                 'game_id': w.get('game_id'),
                 'room_id': w.get('room_id'),
@@ -5729,7 +5804,28 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             }
     
     unique_word_list = list(unique_words.values())
-    best_words = sorted(unique_word_list, key=lambda x: (x['points'], x['timestamp']), reverse=True)[:50]
+    if all_lens:
+        sorted_lens = sorted(all_lens)
+        n_l = len(sorted_lens)
+        p90_l = sorted_lens[int(n_l * 0.90)]
+        eight_plus_cnt = sum(1 for l in sorted_lens if l >= 8)
+        commonly_8 = (p90_l >= 8) or (eight_plus_cnt >= 5 and (eight_plus_cnt / n_l) >= 0.05)
+    else:
+        commonly_8 = False
+
+    def is_ach_good_find(item):
+        w_t = item['word']
+        w_l = len(w_t)
+        if commonly_8:
+            return (w_l >= 9) or (w_l == 8 and w_t in unique_csw)
+        else:
+            return (w_l >= 7)
+
+    filtered_best = [x for x in unique_word_list if is_ach_good_find(x)]
+    if not filtered_best:
+        filtered_best = unique_word_list
+
+    best_words = sorted(filtered_best, key=lambda x: (x['points'], len(x['word']), x['timestamp']), reverse=True)[:50]
 
     # Collect round objects for best_words
     best_word_game_ids = {w['game_id'] for w in best_words if w.get('game_id')}
@@ -12352,12 +12448,12 @@ def get_leaderboard_data():
                 SELECT rh.best_word, rh.best_word_score, COALESCE(u.rating, 1200) as user_rating, u.username, u.country_flag, u.avatar_url,
                        rh.room_id, rh.round_number, rh.timestamp, rh.board_json, rh.words_json,
                        rh.round_duration, rh.id, rh.game_type, rh.board_dimensions, rh.round_start_time,
-                       ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, rh.timestamp DESC) as rn
+                       ROW_NUMBER() OVER (PARTITION BY rh.user_id ORDER BY rh.best_word_score DESC, LENGTH(rh.best_word) DESC, rh.timestamp DESC) as rn
                 FROM round_history rh
                 JOIN users u ON rh.user_id = u.id
                 WHERE {base_where} AND rh.best_word IS NOT NULL
             ) sub WHERE rn = 1
-            ORDER BY best_word_score DESC, timestamp DESC LIMIT 50
+            ORDER BY best_word_score DESC, LENGTH(best_word) DESC, timestamp DESC LIMIT 50
         """, params).fetchall()
 
         # 3. Best PE
