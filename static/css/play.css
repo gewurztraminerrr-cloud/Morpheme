@@ -19641,8 +19641,14 @@ body.is-mobile .page *::-webkit-scrollbar {
         text-align: center !important;
         box-sizing: border-box !important;
     }
+    #combo-explorer-input-card,
+    #combo-explorer-response-card,
     .combo-explorer-card {
-        height: 250px !important;
+        height: 280px !important;
+        min-height: 280px !important;
+        max-height: 280px !important;
+        width: 100% !important;
+        flex: 0 0 280px !important;
     }
 }
 
@@ -19695,13 +19701,55 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
     text-align: center !important;
     box-sizing: border-box !important;
 }
+body.is-mobile .combo-explorer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #combo-explorer-input-card,
+body.is-mobile #combo-explorer-response-card,
+body.is-mobile .combo-explorer-card {
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+    width: 100% !important;
+    flex: 0 0 280px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+body.is-mobile #combo-explorer-input-list,
+body.is-mobile #combo-explorer-response-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 6px 8px !important;
+    padding-right: 18px !important;
+    box-sizing: border-box !important;
+}
 
 /* Custom scrollbar for Combo Explorer cards */
 .combo-explorer-card {
     position: relative !important;
 }
 
-#combo-explorer-input-card .custom-scrollbar-track,
+#combo-explorer-input-card .custom-scrollbar-track {
+    top: 76px !important;
+    bottom: 6px !important;
+    right: 3px !important;
+    width: 14px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.08) !important;
+    border-radius: 7px !important;
+}
+
 #combo-explorer-response-card .custom-scrollbar-track {
     top: 40px !important;
     bottom: 6px !important;
@@ -20207,6 +20255,57 @@ body.is-mobile #combo-explorer-section .combo-explorer-order-btn {
         display: flex !important;
         flex-direction: column !important;
         gap: 8px !important;
+    }
+
+    #combo-explorer-section .combo-explorer-grid,
+    .combo-explorer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #combo-explorer-input-card,
+    #combo-explorer-response-card,
+    .combo-explorer-card {
+        height: 280px !important;
+        min-height: 280px !important;
+        max-height: 280px !important;
+        width: 100% !important;
+        flex: 0 0 280px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+
+    #combo-explorer-input-list,
+    #combo-explorer-response-list {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 6px 8px !important;
+        padding-right: 18px !important;
+        box-sizing: border-box !important;
+    }
+
+    #combo-explorer-input-card .custom-scrollbar-track {
+        top: 76px !important;
+        bottom: 6px !important;
+        right: 3px !important;
+        width: 14px !important;
+    }
+
+    #combo-explorer-response-card .custom-scrollbar-track {
+        top: 40px !important;
+        bottom: 6px !important;
+        right: 3px !important;
+        width: 14px !important;
     }
 
     /* Mobile Unified Panel enclosing "ENTER LETTERS TO CHECK..." and MP/LIC Tabs */
