@@ -2038,6 +2038,9 @@ async function _doUpdateGameState(incomingState = null) {
         // Guarantees zero-latency countdown resumption and clears any lingering "WAIT..." state
         // before heavy DOM manipulation (board, players, chat, scores) takes place.
         window._lastLocalTimerTickTime = Date.now();
+        if (state && state.your_user_id) {
+            window.currentUserId = state.your_user_id;
+        }
         syncTimerWithServer(state, tBefore, tAfter);
         updateLocalTimer();
 
@@ -10158,6 +10161,37 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         if (data.success) {
             const currentState = window.lastGameState;
             if (currentState) {
+                if (!window.currentUserId && currentState.your_user_id) {
+                    window.currentUserId = currentState.your_user_id;
+                }
+
+                const me = currentState.players && currentState.players.find(p => 
+                    (p.username && p.username.toLowerCase().trim() === (currentUser || "").toLowerCase().trim()) ||
+                    (p.user_id && String(p.user_id) === String(window.currentUserId || ''))
+                );
+                if (me) {
+                    me.score = Math.max(0, data.new_score);
+                    me.submitted_words = me.submitted_words || [];
+                    const wordUpper = (data.word || word).toUpperCase();
+                    const existingWordIdx = me.submitted_words.findIndex(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase() === wordUpper);
+                    if (existingWordIdx >= 0) {
+                        me.submitted_words[existingWordIdx] = {
+                            word: data.word || word,
+                            points: data.points || 0,
+                            score_details: data.score_details || {},
+                            time: me.submitted_words[existingWordIdx].time || (Date.now() / 1000)
+                        };
+                    } else {
+                        me.submitted_words.push({
+                            word: data.word || word,
+                            points: data.points || 0,
+                            score_details: data.score_details || {},
+                            time: Date.now() / 1000
+                        });
+                    }
+                    renderPlayers(currentState.players, currentUser, currentState);
+                }
+
                 // USER: INSTANT DENSITY UPDATE
                 if (data.cell_density) {
                     currentState.cell_density = data.cell_density;
@@ -10183,8 +10217,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
                         // Prevent duplicate row: Check if word is already in DOM (e.g. from optimistic instant render)
                         const existingWordItem = Array.from(listEl.querySelectorAll('.word-item')).find(item => {
-                            const w = (item.dataset.word || item.querySelector('span')?.textContent || '').toUpperCase().trim();
-                            return w === cleanWord || w.endsWith(cleanWord);
+                            const raw = (item.dataset.word || item.querySelector('span')?.textContent || '').trim();
+                            const w = raw.replace(/^[✓✔\s*]+/, '').toUpperCase().trim();
+                            return w === cleanWord;
                         });
 
                         if (!existingWordItem) {
@@ -10211,34 +10246,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                                 ptsSpan.textContent = data.points;
                             }
                         }
+                        // Guarantee newly submitted word at top is in visible viewport
+                        requestAnimationFrame(() => { listEl.scrollTop = 0; });
                     }
-
-                    const me = currentState.players && currentState.players.find(p => 
-                        (p.username && p.username.toLowerCase().trim() === (currentUser || "").toLowerCase().trim()) ||
-                        (p.user_id && String(p.user_id) === String(window.currentUserId || ''))
-                    );
-                    if (me) {
-                        me.score = Math.max(0, data.new_score);
-                        me.submitted_words = me.submitted_words || [];
-                        const wordUpper = (data.word || word).toUpperCase();
-                        const existingWordIdx = me.submitted_words.findIndex(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase() === wordUpper);
-                        if (existingWordIdx >= 0) {
-                            me.submitted_words[existingWordIdx] = {
-                                word: data.word || word,
-                                points: data.points || 0,
-                                score_details: data.score_details || {},
-                                time: me.submitted_words[existingWordIdx].time || (Date.now() / 1000)
-                            };
-                        } else {
-                            me.submitted_words.push({
-                                word: data.word || word,
-                                points: data.points || 0,
-                                score_details: data.score_details || {},
-                                time: Date.now() / 1000
-                            });
-                        }
-                        renderPlayers(currentState.players, currentUser, currentState);
-                    }
+                }
 
                     if (wordsStats && data.points > 0) {
                         // Update the "Found/Total" counter immediately

@@ -7343,6 +7343,7 @@ def get_room_state(room_id):
                 'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
                 'your_username': session.get('username'),
+                'your_user_id': session.get('user_id'),
                 'your_rating': user_rating_for_snapshot,
                 'board': board_to_send,
                 'board_dimensions': room.board_dimensions,
