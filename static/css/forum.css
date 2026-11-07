@@ -236,10 +236,14 @@
 .forum-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 18px 30px 14px 30px;
     border-bottom: 1px solid var(--input-border);
+    background: transparent;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .header-titles {
@@ -249,16 +253,20 @@
 }
 
 .header-titles h2 {
-    font-size: 1.8rem;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    font-size: 1.6rem;
+    margin-top: 0;
+    margin-bottom: 2px;
     color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .header-titles p {
     opacity: 0.7;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1.3;
 }
 
 #forum-category-desc.forum-desc-scrolling-box {
@@ -2907,13 +2915,14 @@ body.theme-white #page-forums .forum-bottom-bar {
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 12px !important;
-        margin-top: 0 !important;
-        margin-bottom: 20px !important;
-        padding-top: 0 !important;
-        padding-bottom: 15px !important;
+        gap: 10px !important;
+        margin: 0 !important;
+        padding: 12px 15px 12px 15px !important;
+        flex-shrink: 0 !important;
         border-top: none !important;
         border-bottom: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
     }
     .header-titles {
         order: 1 !important;
