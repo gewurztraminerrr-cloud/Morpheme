@@ -37,6 +37,7 @@ function debounce(func, wait) {
             app_theme: 'default',
             allow_pm: true,
             allow_invites: true,
+            game_room_chat: true,
             lobby_guide_dismissed: (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true')
         };
     }
@@ -100,6 +101,11 @@ function debounce(func, wait) {
         }
         if (window.userSettings.def_font_size) {
             document.documentElement.style.setProperty('--def-font-size', `${window.userSettings.def_font_size}px`, 'important');
+        }
+        if (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false' || localStorage.getItem('morpheme_game_room_chat') === 'false') {
+            document.body.classList.add('game-chat-disabled');
+        } else {
+            document.body.classList.remove('game-chat-disabled');
         }
     }
 
@@ -427,6 +433,28 @@ function debounce(func, wait) {
 
             if (!window.userSettings) window.userSettings = getDefaultSettings();
             window.userSettings.allow_invites = val;
+        }
+
+        // Game Room Chat
+        if (settings.game_room_chat !== undefined) {
+            let val = settings.game_room_chat;
+            if (val === 'true' || val === 'True' || val === true) val = true;
+            else if (val === 'false' || val === 'False' || val === false) val = false;
+
+            const chatToggle = document.getElementById('setting-game-room-chat');
+            if (chatToggle) chatToggle.checked = val;
+
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.game_room_chat = val;
+            try {
+                localStorage.setItem('morpheme_game_room_chat', val.toString());
+            } catch (e) {}
+
+            if (typeof window.applyGameRoomChatSetting === 'function') {
+                window.applyGameRoomChatSetting();
+            } else {
+                document.body.classList.toggle('game-chat-disabled', !val);
+            }
         }
 
         // Next Round Bell Type
@@ -925,6 +953,30 @@ function debounce(func, wait) {
             const val = e.target.checked;
             window.userSettings.allow_invites = val;
             saveSettingDebounced('allow_invites', val);
+        });
+    }
+
+    const gameChatToggle = document.getElementById('setting-game-room-chat');
+    if (gameChatToggle) {
+        gameChatToggle.addEventListener('change', (e) => {
+            const val = e.target.checked;
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.game_room_chat = val;
+            try {
+                localStorage.setItem('morpheme_game_room_chat', val.toString());
+            } catch (err) {}
+            saveSettingsToStorage();
+            saveSettingDebounced('game_room_chat', val);
+            if (typeof window.applyGameRoomChatSetting === 'function') {
+                window.applyGameRoomChatSetting();
+            } else {
+                document.body.classList.toggle('game-chat-disabled', !val);
+                const cp = document.querySelector('.chat-panel');
+                if (cp) {
+                    if (!val) cp.style.setProperty('display', 'none', 'important');
+                    else cp.style.removeProperty('display');
+                }
+            }
         });
     }
 

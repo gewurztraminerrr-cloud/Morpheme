@@ -2401,6 +2401,7 @@ async function _doUpdateGameState(incomingState = null) {
         if (currentUsername) {
             localStorage.setItem('last_morpheme_user', currentUsername);
         }
+        applyGameRoomChatSetting();
 
         const amIPlayer = state.players.some(p => {
             const match = p.username.toLowerCase() === (currentUsername ? currentUsername.toLowerCase().trim() : '');
@@ -4690,8 +4691,39 @@ async function sendChatMessage() {
 }
 window.sendChatMessage = sendChatMessage;
 
+function applyGameRoomChatSetting() {
+    let isEnabled = true;
+    if (window.userSettings && window.userSettings.game_room_chat !== undefined) {
+        isEnabled = (window.userSettings.game_room_chat === true || window.userSettings.game_room_chat === 'true');
+    } else {
+        try {
+            const cached = localStorage.getItem('morpheme_game_room_chat');
+            if (cached !== null) {
+                isEnabled = (cached === 'true' || cached === true);
+            }
+        } catch (e) {}
+    }
+
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    const chatPanel = document.querySelector('.chat-panel');
+
+    if (!isEnabled) {
+        document.body.classList.add('game-chat-disabled');
+        if (chatPanel) {
+            chatPanel.style.setProperty('display', 'none', 'important');
+        }
+    } else {
+        document.body.classList.remove('game-chat-disabled');
+        if (chatPanel && !isTournament) {
+            chatPanel.style.removeProperty('display');
+        }
+    }
+}
+window.applyGameRoomChatSetting = applyGameRoomChatSetting;
+
 // Initialize Play DOM elements and listeners
 function initPlayDOMElements() {
+    applyGameRoomChatSetting();
     const chatInput = document.getElementById('chat-input');
     if (chatInput) {
         if (!chatInput.hasAttribute('data-original-placeholder')) {
@@ -12622,8 +12654,7 @@ function exitTournamentPlay(targetPage = 'tournaments') {
     if (headingEl) headingEl.style.removeProperty('display');
     const playerActionsRow = document.querySelector('.player-actions-row');
     if (playerActionsRow) playerActionsRow.style.removeProperty('display');
-    const chatPanel = document.querySelector('.chat-panel');
-    if (chatPanel) chatPanel.style.removeProperty('display');
+    applyGameRoomChatSetting();
     isBoardTransposed = false; // RESET: clear portrait transposition set for tournament mobile
     isBoardRotated = false;    // RESET: ensure board isn't flipped from previous game
     clearGameUIAndCache();

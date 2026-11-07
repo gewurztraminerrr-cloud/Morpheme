@@ -120,6 +120,16 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
     - **Question**: *What music is playing in the Lobby?*
     - **Answer**: *Simon Patterson - Thump*
 
+### 15. Game Room Chat Setting in Gameplay & Preferences (`index.html`, `play.css`, `settings.js`, `play.js`)
+- **Gameplay & Preferences Toggle**:
+  - Added "Game Room Chat" sub-navigation button and dedicated subpage (`#setting-subpage-game-room-chat`) under Gameplay & Preferences in Settings.
+  - Provided a clean switch toggle ("Enable Game Room Chat") allowing players to easily enable or disable the live chat box inside game rooms.
+- **Client & Server Persistence**:
+  - Setting key `game_room_chat` is stored in `window.userSettings`, cached in `localStorage` (`morpheme_game_room_chat`), and persisted server-side via `/api/settings/update` into `user_settings`.
+- **Dynamic In-Room Application**:
+  - When disabled, `body.game-chat-disabled` is attached and `.chat-panel` receives `display: none !important;`. The Players panel automatically expands to utilize the full height of the left column.
+  - `applyGameRoomChatSetting()` coordinates with `adjustPlayHeaderForDevice()`, room initialization, and tournament exit flows to guarantee the chat panel stays hidden when disabled and restores seamlessly when re-enabled.
+
 ---
 
 ## Full Commit History (November 6, 2026)
@@ -144,6 +154,10 @@ Resolved with: git rev-parse START_OVER_POINT_NOVEMBER_6
 | `19673cf1` | Settings: move navigation arrows to right side across tabs and buttons on desktop and laptop |
 | `f126e947` | Personal Timer: add authentic gong audio, green start button, compact mobile layout, and relocate demo box from settings |
 | `b66c42ad` | docs: establish Start Over stable point for November 6 (START_OVER_POINT_NOVEMBER_6) |
+| `d48be28d` | docs: update Stable State Summary for November 6 (START_OVER_POINT_NOVEMBER_6) |
+| `ccbcba5e` | Fix Find Count word retention: preserve history for mid-round joins and 500+ boards |
+| `c5689261` | docs(faq): add What music is playing in the Lobby? (Simon Patterson - Thump) |
+| `8ab0e881` | feat(settings): allow user to disable game room chat in Gameplay & Preferences |
 
 ---
 

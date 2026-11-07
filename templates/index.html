@@ -6481,6 +6481,10 @@
                                 <div class="settings-subnav-title">Allow Game Invitations</div>
                                 <div class="settings-subnav-desc">Allow other players to send you match invitations</div>
                             </button>
+                            <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'game-room-chat')">
+                                <div class="settings-subnav-title">Game Room Chat</div>
+                                <div class="settings-subnav-desc">Enable or disable chat in game rooms</div>
+                            </button>
                             <button class="settings-subnav-btn" type="button" onclick="window.showSettingSubTab('gameplay', 'lobby-guide')">
                                 <div class="settings-subnav-title">Lobby Guide ("What am I looking at?")</div>
                                 <div class="settings-subnav-desc">Display the explanation banner at the top of the Lobby</div>
@@ -6597,7 +6601,25 @@
                             </div>
                         </div>
 
-                        <!-- 5. Subpage: Lobby Guide ("What am I looking at?") -->
+                        <!-- 5. Subpage: Game Room Chat -->
+                        <div id="setting-subpage-game-room-chat" class="setting-subpage" style="display: none;">
+                            <div class="setting-subpage-header">
+                                <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
+                                <h3 class="setting-subpage-title">Game Room Chat</h3>
+                                <p class="setting-subpage-desc">Enable or disable chat in game rooms. When disabled, the chat box will be hidden during gameplay.</p>
+                            </div>
+                            <div class="setting-subpage-content">
+                                <label for="setting-game-room-chat" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                    <span style="font-weight: 600; font-size: 0.95rem;">Enable Game Room Chat</span>
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="setting-game-room-chat" checked>
+                                        <span class="slider round"></span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 6. Subpage: Lobby Guide ("What am I looking at?") -->
                         <div id="setting-subpage-lobby-guide" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
@@ -10135,9 +10157,10 @@
             if (headingEl && isTournament) {
                 headingEl.style.setProperty('display', 'none', 'important');
             }
+            const isChatDisabled = document.body.classList.contains('game-chat-disabled') || (window.userSettings && (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false')) || (localStorage.getItem('morpheme_game_room_chat') === 'false');
             const chatPanel = document.querySelector('.chat-panel');
             if (chatPanel) {
-                if (isTournament) {
+                if (isTournament || isChatDisabled) {
                     chatPanel.style.setProperty('display', 'none', 'important');
                 } else if (!isTournament && !document.body.classList.contains('is-tournament-round')) {
                     chatPanel.style.removeProperty('display');
