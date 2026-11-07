@@ -3923,6 +3923,8 @@ def _get_word_finds(word):
                 words = json.loads(row['words_json']) if row['words_json'] else []
                 if isinstance(words, list):
                     for w_obj in words:
+                        if isinstance(w_obj, dict) and (w_obj.get('is_penalty') or w_obj.get('points', 0) <= 0):
+                            continue
                         w_str = w_obj.get('word', '') if isinstance(w_obj, dict) else str(w_obj)
                         if w_str.upper() == word:
                             ts_val = (w_obj.get('timestamp') if isinstance(w_obj, dict) else None)
@@ -5305,12 +5307,13 @@ def get_public_profile(username):
                 pe_ratio = 1.0
         perf_val = int(round(pe_ratio * 100)) if pe_ratio else 100
         words = json.loads(wjson)
-        num_words = len(words)
+        valid_words = [w for w in words if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0))] if isinstance(words, list) else []
+        num_words = len(valid_words)
         top_word = "-"
         if num_words > 0:
-            best_w_obj = max(words, key=lambda x: x.get('points', 0))
-            top_word = best_w_obj.get('word', '-')
-        avg_len = round(sum(len(str(w.get('word', ''))) for w in words)/num_words, 1) if num_words > 0 else 0
+            best_w_obj = max(valid_words, key=lambda x: (x.get('points', 0) if isinstance(x, dict) else 0))
+            top_word = best_w_obj.get('word', '-') if isinstance(best_w_obj, dict) else str(best_w_obj)
+        avg_len = round(sum(len(str(w.get('word', ''))) for w in valid_words if isinstance(w, dict))/num_words, 1) if num_words > 0 else 0
         room_strength = sum(e[1] for e in r_entries) if r_entries else urat
         board = json.loads(bjson)
         
@@ -5421,8 +5424,12 @@ def get_public_profile(username):
     for p in standard_rounds:
         r_words = p.get('words', [])
         for w in r_words:
+            if isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0):
+                continue
             w_text = w.get('word', '').upper() if isinstance(w, dict) else str(w).upper()
             if not w_text or len(w_text) < 3:
+                continue
+            if not is_word_in_any_dict(w_text):
                 continue
             all_user_word_lengths.append(len(w_text))
             base_pts = calculate_word_score(w_text, bonus_word=None, board_format=p.get('board_format', 'Normal'))
@@ -5712,8 +5719,11 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
         if not is_valued:
             total_period_score += my_score
             for w in words:
-                w.update({'timestamp': format_chicago_to_utc(ts), 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
-                all_period_words.append(w)
+                if isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0):
+                    continue
+                w_copy = dict(w) if isinstance(w, dict) else {'word': str(w)}
+                w_copy.update({'timestamp': format_chicago_to_utc(ts), 'room_id': r_id, 'round_number': r_num, 'game_id': g_id})
+                all_period_words.append(w_copy)
         total_period_words += len(words)
 
         # Context fetch
@@ -5802,8 +5812,12 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     unique_words = {}
     all_lens = []
     for w in all_period_words:
-        word_text = w.get('word')
-        if not word_text:
+        word_text = (w.get('word') or '').upper() if isinstance(w, dict) else str(w).upper()
+        if not word_text or len(word_text) < 3:
+            continue
+        if isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0):
+            continue
+        if not is_word_in_any_dict(word_text):
             continue
         base_points = calculate_word_score(word_text, bonus_word=None, board_format='Normal')
         all_lens.append(len(word_text))
@@ -7665,12 +7679,15 @@ def submit_word(room_id):
     if success and not returned_path:
         returned_path = (last_sub.get('path') if isinstance(last_sub, dict) else None) or (room.all_words_paths.get(final_word) if (final_word and getattr(room, 'all_words_paths', None)) else None)
 
+    is_penalty_sub = bool(points < 0 or (isinstance(last_sub, dict) and last_sub.get('is_penalty')) or ('PENALTY' in str(message).upper()))
+
     return jsonify({
         'success': success, 
         'message': message,
         'points': points,
         'word': final_word,
         'is_bonus': is_bonus,
+        'is_penalty': is_penalty_sub,
         'new_score': new_score,
         'score_details': score_details,
         'path': returned_path,
@@ -12573,7 +12590,8 @@ def get_leaderboard_data():
         for r in cursor_pcts:
             d = dict(r)
             try:
-                words_list = json.loads(d.get('words_json', '[]'))
+                raw_words = json.loads(d.get('words_json', '[]'))
+                words_list = [w for w in raw_words if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0))]
                 twa = d.get('total_words_avail', 0)
                 d['pct_found'] = round(len(words_list) / twa * 100, 1) if twa > 0 else 0
             except:
@@ -12637,7 +12655,8 @@ def get_leaderboard_data():
         for r in cursor_obscure:
             d = dict(r)
             try:
-                words_list = json.loads(d.get('words_json', '[]'))
+                raw_words = json.loads(d.get('words_json', '[]'))
+                words_list = [w for w in raw_words if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0))]
                 d['obscure_count'] = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
             except:
                 d['obscure_count'] = 0
@@ -12792,7 +12811,8 @@ def get_leaderboard_data():
         for r in pes:
             d = dict(r)
             try:
-                words_list = json.loads(d.get('words_json', '[]'))
+                raw_words = json.loads(d.get('words_json', '[]'))
+                words_list = [w for w in raw_words if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0))]
                 twa = d.get('total_words_avail', 0)
                 d['pct_found'] = round(len(words_list) / twa * 100, 1) if twa > 0 else 0
             except:

@@ -9982,11 +9982,11 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
         // Determine the server's actual color result.
         const currentState = window.lastGameState;
-        const isBonusWord = data.success && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
+        const serverIsPenalty = Boolean(data.is_penalty || (data.message && data.message.toUpperCase().includes('PENALTY')) || (data.points !== undefined && data.points < 0));
+        const serverIsActuallyValid = data.success && !serverIsPenalty;
+        const isBonusWord = serverIsActuallyValid && currentState && currentState.bonus_word && data.word && data.word.toUpperCase() === currentState.bonus_word.toUpperCase();
         const hasBonusLetter = data.score_details ? ((data.score_details.bonus_letter_points || 0) > 0) : false;
         const isBonus = isBonusWord;
-        const serverIsPenalty = data.message && data.message.toUpperCase().includes('PENALTY');
-        const serverIsActuallyValid = data.success && !serverIsPenalty;
         const serverIsAlreadyFound = data.message && data.message.toUpperCase().includes('ALREADY FOUND');
         let serverColor = 'red';
         if (serverIsAlreadyFound) {
@@ -10000,10 +10000,12 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
 
         let msg;
-        if (data.success) {
+        if (serverIsActuallyValid) {
             msg = isBonusWord 
                 ? `BONUS WORD! (${data.points} PTS)`
                 : (hasBonusLetter ? `${(data.word || word).toUpperCase()} VALID (+3 BONUS LTR! ${data.points} PTS)` : `${(data.word || word).toUpperCase()} VALID (${data.points} PTS)`);
+        } else if (serverIsPenalty) {
+            msg = data.message || `${word.toUpperCase()} PENALTY (${data.points !== undefined ? data.points : -3})`;
         } else {
             msg = data.message || `${word.toUpperCase()} INVALID`;
         }
@@ -10014,8 +10016,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         } else {
             // Local check didn't run or server result differs from local check — trigger feedback flash
             // If optimistic check flashed red but server confirms SUCCESS, ALWAYS play success sound!
-            const shouldPlayServerSound = (optimisticColor === null) || (data.success && optimisticColor === 'red');
-            showValidationFeedback(msg, data.success, isBonusWord, finalPath, shouldPlayServerSound);
+            const shouldPlayServerSound = (optimisticColor === null) || (serverIsActuallyValid && optimisticColor === 'red') || serverIsPenalty;
+            showValidationFeedback(msg, serverIsActuallyValid, isBonusWord, finalPath, shouldPlayServerSound);
         }
 
 
@@ -10049,7 +10051,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             isSpecialSkip = true;
         }
 
-        if (data.success) {
+        if (serverIsActuallyValid) {
             window._localSubmittedWords = window._localSubmittedWords || new Set();
             window._localSubmittedWords.add(word);
             window._localSubmittedWordsList = window._localSubmittedWordsList || [];
@@ -10079,6 +10081,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 });
             }
             recordGuessResult(true, true);
+        } else if (serverIsPenalty) {
+            window._localSubmittedWords = window._localSubmittedWords || new Set();
+            window._localSubmittedWords.add(word);
+            recordGuessResult(false, finalPath && finalPath.length > 0, false);
         } else {
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
         }
