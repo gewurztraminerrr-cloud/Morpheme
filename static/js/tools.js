@@ -302,7 +302,7 @@ window.showTool = function(toolId) {
                 p.style.display = 'none';
             }
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
@@ -356,6 +356,9 @@ window.showTool = function(toolId) {
         }
         if (toolId === 'store') {
             content.classList.add('has-store-active');
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('store-scroll-container', 'store-scrollbar-track', 'store-scrollbar-thumb');
+            }
         } else {
             content.classList.remove('has-store-active');
         }

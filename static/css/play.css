@@ -11844,73 +11844,62 @@ body .board-cell.tile-flash-purple * {
     background: var(--accent-color, #ff007f) !important;
 }
 
-/* Explicitly re-enable and style scroller and thumb for Store tab on Desktops and Laptops */
-#page-tools .tools-content:has(#tool-store.active),
-#page-tools .tools-content.has-store-active,
-#page-tools #tool-store.active {
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04) !important;
-    -ms-overflow-style: auto !important;
-}
-
-#page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar,
-#page-tools .tools-content.has-store-active::-webkit-scrollbar,
-#page-tools #tool-store.active::-webkit-scrollbar {
-    width: 8px !important;
-    height: 8px !important;
-    display: block !important;
-    opacity: 1 !important;
-}
-
-#page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-track,
-#page-tools .tools-content.has-store-active::-webkit-scrollbar-track,
-#page-tools #tool-store.active::-webkit-scrollbar-track {
+/* Store Custom Scrollbar Track and Thumb for Desktops and Laptops */
+#store-scrollbar-track {
+    position: absolute !important;
+    top: 4px !important;
+    bottom: 4px !important;
+    right: 3px !important;
+    width: 16px !important;
     background: rgba(255, 255, 255, 0.04) !important;
-    border-radius: 4px !important;
-    margin: 4px 0 !important;
+    border-radius: 8px !important;
+    z-index: 20 !important;
+    backdrop-filter: blur(2px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: none;
+    touch-action: none !important;
+    user-select: none !important;
+    cursor: pointer !important;
 }
 
-#page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb,
-#page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb,
-#page-tools #tool-store.active::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-primary-rgb), 0.35) !important;
-    border-radius: 4px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+#store-scrollbar-thumb {
+    position: absolute !important;
+    top: 0 !important;
+    left: 2px !important;
+    width: 10px !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 0.8), rgba(58, 123, 213, 0.8)) !important;
+    border-radius: 5px !important;
+    cursor: grab !important;
+    border: 1px solid rgba(0, 210, 255, 0.6) !important;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4) !important;
+    touch-action: none !important;
+    user-select: none !important;
+    min-height: 28px !important;
+    pointer-events: auto !important;
 }
 
-#page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb:hover,
-#page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb:hover,
-#page-tools #tool-store.active::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-primary-rgb), 0.55) !important;
+#store-scrollbar-thumb:active,
+#store-scrollbar-thumb.dragging {
+    cursor: grabbing !important;
+    background: linear-gradient(180deg, rgba(0, 210, 255, 1), rgba(58, 123, 213, 1)) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.8) !important;
 }
 
-/* Light & White themes for Store scroller */
-[class*="theme-white"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-track,
-[class*="theme-white"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-track,
-[class*="theme-white"] #page-tools #tool-store.active::-webkit-scrollbar-track,
-[class*="theme-light-"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-track,
-[class*="theme-light-"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-track,
-[class*="theme-light-"] #page-tools #tool-store.active::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05) !important;
+/* Light & White themes for Store custom scrollbar */
+body.theme-white #store-scrollbar-track,
+[class*="theme-white"] #store-scrollbar-track,
+body[class*="theme-light-"] #store-scrollbar-track,
+[class*="theme-light-"] #store-scrollbar-track {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
-[class*="theme-white"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb,
-[class*="theme-white"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb,
-[class*="theme-white"] #page-tools #tool-store.active::-webkit-scrollbar-thumb,
-[class*="theme-light-"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb,
-[class*="theme-light-"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb,
-[class*="theme-light-"] #page-tools #tool-store.active::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-}
-
-[class*="theme-white"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb:hover,
-[class*="theme-white"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb:hover,
-[class*="theme-white"] #page-tools #tool-store.active::-webkit-scrollbar-thumb:hover,
-[class*="theme-light-"] #page-tools .tools-content:has(#tool-store.active)::-webkit-scrollbar-thumb:hover,
-[class*="theme-light-"] #page-tools .tools-content.has-store-active::-webkit-scrollbar-thumb:hover,
-[class*="theme-light-"] #page-tools #tool-store.active::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.5) !important;
+body.theme-white #store-scrollbar-thumb,
+[class*="theme-white"] #store-scrollbar-thumb,
+body[class*="theme-light-"] #store-scrollbar-thumb,
+[class*="theme-light-"] #store-scrollbar-thumb {
+    background: linear-gradient(180deg, #60a5fa, #2563eb) !important;
+    border: 1px solid #1d4ed8 !important;
 }
 
 /* Explicitly re-enable and style thin grey scrollbars for Settings content tabs */
@@ -11962,6 +11951,7 @@ body .board-cell.tile-flash-purple * {
     #tool-lists.tool-pane.active,
     #tool-combo.tool-pane.active,
     #tool-work-on.tool-pane.active,
+    #tool-store.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -11978,7 +11968,8 @@ body .board-cell.tile-flash-purple * {
     #tool-subanagrams .tool-header,
     #tool-unscramble .tool-header,
     #tool-lists .tool-header,
-    #tool-work-on .tool-header {
+    #tool-work-on .tool-header,
+    #tool-store .tool-header {
         flex: 0 0 auto !important;
         margin-bottom: 4px !important;
         padding: 0 !important;
@@ -13928,6 +13919,29 @@ body .board-cell.tile-flash-purple * {
         border: 1px solid rgba(167, 139, 250, 0.85) !important;
         box-shadow: 0 0 8px rgba(167, 139, 250, 0.45) !important;
         touch-action: none !important;
+    }
+
+    /* Mobile overrides for Store: natural page scroll, hide custom desktop scrollbar track */
+    #page-tools #tool-store .store-scroll-area-wrapper,
+    body.is-mobile #page-tools #tool-store .store-scroll-area-wrapper {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        flex: none !important;
+    }
+
+    #page-tools #tool-store #store-scroll-container,
+    body.is-mobile #page-tools #tool-store #store-scroll-container {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        padding-right: 0 !important;
+        flex: none !important;
+    }
+
+    #page-tools #tool-store #store-scrollbar-track,
+    body.is-mobile #page-tools #tool-store #store-scrollbar-track {
+        display: none !important;
     }
 }
 

@@ -339,6 +339,14 @@
                 }
             });
         });
+
+        // Update custom scrollbar for desktop/laptop store view
+        const scrollContainer = document.getElementById('store-scroll-container');
+        if (scrollContainer && typeof scrollContainer._updateCustomScrollbar === 'function') {
+            scrollContainer._updateCustomScrollbar();
+        } else if (typeof window.initCustomScrollbarForElement === 'function') {
+            window.initCustomScrollbarForElement('store-scroll-container', 'store-scrollbar-track', 'store-scrollbar-thumb');
+        }
     }
 
     function escapeHtml(str) {

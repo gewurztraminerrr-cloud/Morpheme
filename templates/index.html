@@ -178,7 +178,7 @@
     <link rel="preload" href="/css/lobby.css?v=1793630000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793550000">
     <link rel="stylesheet" href="/css/lobby.css?v=1793630000">
-    <link rel="stylesheet" href="/css/play.css?v=1794018000">
+    <link rel="stylesheet" href="/css/play.css?v=1794019000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1793427000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4443,8 +4443,15 @@
                             <h2>Morpheme Store</h2>
                             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
                         </div>
-                        <div class="store-grid" id="store-items-grid" style="margin-top: 15px;">
-                            <!-- Products dynamically loaded via store.js -->
+                        <div class="store-scroll-area-wrapper list-scroll-area-wrapper" style="position: relative; flex: 1 1 0px; min-height: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+                            <div class="store-scroll-area list-scroll-area" id="store-scroll-container" style="flex: 1 1 0px; min-height: 0; height: 100%; overflow-y: auto; padding-right: 14px; box-sizing: border-box;">
+                                <div class="store-grid" id="store-items-grid" style="margin-top: 15px;">
+                                    <!-- Products dynamically loaded via store.js -->
+                                </div>
+                            </div>
+                            <div class="custom-scrollbar-track" id="store-scrollbar-track">
+                                <div class="custom-scrollbar-thumb" id="store-scrollbar-thumb"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -4859,19 +4866,6 @@
                                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: stretch;">
                                     <input type="text" id="sub-input" placeholder="Letters..."
                                         autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="width: 100%; height: 42px; text-transform: uppercase; text-align: center; font-size: 1.05rem; letter-spacing: 1px; box-sizing: border-box;">
-                                    <select id="sub-dict" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
-                                        <option value="NWL">Dictionary: NWL (US)</option>
-                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
-                                        <option value="added_words">Dictionary: AW</option>
-                                        <option value="ALL">Dictionary: All (Full)</option>
-                                        <option value="words_to_work_on">Dictionary: Words to Work on</option>
-                                        <option value="csw_only">Dictionary: CSW Only</option>
-                                        <option value="uniqueNWL">Dictionary: NWL Uniques</option>
-                                        <option value="new_nwl">Dictionary: New NWL Words</option>
-                                        <option value="new_csw">Dictionary: New CSW Words</option>
-                                        <option value="new_added">Dictionary: New AW Words</option>
-                                        <option value="all_new">Dictionary: All New Words</option>
-                                    </select>
                                     <select id="sub-min-len" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="2" selected>Min Word Length: 2</option>
                                         <option value="3">Min Word Length: 3</option>
@@ -4884,6 +4878,19 @@
                                         <option value="10">Min Word Length: 10</option>
                                         <option value="11">Min Word Length: 11</option>
                                         <option value="12">Min Word Length: 12</option>
+                                    </select>
+                                    <select id="sub-dict" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="NWL">Dictionary: NWL (US)</option>
+                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
+                                        <option value="ALL">Dictionary: All (Full)</option>
+                                        <option value="words_to_work_on">Dictionary: Words to Work on</option>
+                                        <option value="csw_only">Dictionary: CSW Only</option>
+                                        <option value="uniqueNWL">Dictionary: NWL Uniques</option>
+                                        <option value="new_nwl">Dictionary: New NWL Words</option>
+                                        <option value="new_csw">Dictionary: New CSW Words</option>
+                                        <option value="new_added">Dictionary: New AW Words</option>
+                                        <option value="all_new">Dictionary: All New Words</option>
                                     </select>
                                     <button id="sub-find-all-btn" class="primary-action" type="button" style="width: 100%; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🔍 Find All Words</button>
                                     <button id="sub-practice-btn" class="sub-practice-btn" type="button" style="width: 100%; height: 42px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🎮 Practice</button>
@@ -4903,19 +4910,6 @@
                                         <option value="11">Sequence Length: 11</option>
                                         <option value="12">Sequence Length: 12</option>
                                     </select>
-                                    <select id="sub-dict-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
-                                        <option value="NWL">Dictionary: NWL (US)</option>
-                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
-                                        <option value="added_words">Dictionary: AW</option>
-                                        <option value="ALL">Dictionary: All (Full)</option>
-                                        <option value="words_to_work_on">Dictionary: Words to Work on</option>
-                                        <option value="csw_only">Dictionary: CSW Only</option>
-                                        <option value="uniqueNWL">Dictionary: NWL Uniques</option>
-                                        <option value="new_nwl">Dictionary: New NWL Words</option>
-                                        <option value="new_csw">Dictionary: New CSW Words</option>
-                                        <option value="new_added">Dictionary: New AW Words</option>
-                                        <option value="all_new">Dictionary: All New Words</option>
-                                    </select>
                                     <select id="sub-min-len-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="2" selected>Min Word Length: 2</option>
                                         <option value="3">Min Word Length: 3</option>
@@ -4928,6 +4922,19 @@
                                         <option value="10">Min Word Length: 10</option>
                                         <option value="11">Min Word Length: 11</option>
                                         <option value="12">Min Word Length: 12</option>
+                                    </select>
+                                    <select id="sub-dict-random" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
+                                        <option value="NWL">Dictionary: NWL (US)</option>
+                                        <option value="CSW" selected>Dictionary: CSW (Intl)</option>
+                                        <option value="added_words">Dictionary: AW</option>
+                                        <option value="ALL">Dictionary: All (Full)</option>
+                                        <option value="words_to_work_on">Dictionary: Words to Work on</option>
+                                        <option value="csw_only">Dictionary: CSW Only</option>
+                                        <option value="uniqueNWL">Dictionary: NWL Uniques</option>
+                                        <option value="new_nwl">Dictionary: New NWL Words</option>
+                                        <option value="new_csw">Dictionary: New CSW Words</option>
+                                        <option value="new_added">Dictionary: New AW Words</option>
+                                        <option value="all_new">Dictionary: All New Words</option>
                                     </select>
                                     <select id="sub-gen-mode" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="word" selected>Word of Max Length Guaranteed</option>
@@ -9953,8 +9960,8 @@
     <script src="/js/tournaments.js?v=1789333000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1793462000"></script>
-    <script src="/js/tools.js?v=1794018000"></script>
-    <script src="/js/store.js?v=1792215000"></script>
+    <script src="/js/tools.js?v=1794019000"></script>
+    <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1792837000"></script>
     <script src="/js/private_matches.js?v=1793520000"></script>
