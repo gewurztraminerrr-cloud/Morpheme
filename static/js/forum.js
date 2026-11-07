@@ -297,6 +297,8 @@ const Forum = {
     friends: [],
     friendsLoaded: false,
     activeMentionState: null,
+    categoryScrollPositions: {},
+    _lastCategoryScrollTop: 0,
 
     init: async function () {
         if (this.initialized) return;
@@ -410,6 +412,17 @@ const Forum = {
             });
         }
 
+        // Track vertical scroll position in category thread list
+        const listScrollBody = document.querySelector('#forum-view-list .forum-view-scroll-body');
+        if (listScrollBody) {
+            listScrollBody.addEventListener('scroll', () => {
+                const listView = document.getElementById('forum-view-list');
+                if (listView && listView.classList.contains('active')) {
+                    this.saveListScrollPosition();
+                }
+            }, { passive: true });
+        }
+
         // New post button
         const newPostBtn = document.getElementById('forum-new-post-btn');
         if (newPostBtn) {
@@ -475,10 +488,10 @@ const Forum = {
                     backToListBtn.classList.add('active');
                     setTimeout(() => {
                         backToListBtn.classList.remove('active');
-                        this.showListView();
+                        this.showListView(false, true);
                     }, 120);
                 } else {
-                    this.showListView();
+                    this.showListView(false, true);
                 }
             });
         }
@@ -492,10 +505,10 @@ const Forum = {
                     cancelCreateBtn.classList.add('active');
                     setTimeout(() => {
                         cancelCreateBtn.classList.remove('active');
-                        this.showListView();
+                        this.showListView(false, true);
                     }, 120);
                 } else {
-                    this.showListView();
+                    this.showListView(false, true);
                 }
             });
         }
@@ -1475,6 +1488,9 @@ const Forum = {
         this.currentCategoryId = 'responders';
         this.isUserSearch = false;
         this.hasNewResponders = false;
+        this.categoryScrollPositions = this.categoryScrollPositions || {};
+        this.categoryScrollPositions['responders'] = 0;
+        this._lastCategoryScrollTop = 0;
 
         // Immediately stop highlighting "View Responses" and "Forum" in top menu
         const respTab = document.querySelector('.forum-responders-tab');
@@ -1677,6 +1693,7 @@ const Forum = {
                     }
 
                     if (postId) {
+                        this.saveListScrollPosition();
                         await this.loadPostDetail(postId, {
                             highlightCommentId: commentId,
                             highlightPostNumber: postNumber
@@ -1700,6 +1717,9 @@ const Forum = {
     selectCategory: async function (catId) {
         this.currentCategoryId = catId;
         this.isUserSearch = false;
+        this.categoryScrollPositions = this.categoryScrollPositions || {};
+        this.categoryScrollPositions[String(catId)] = 0;
+        this._lastCategoryScrollTop = 0;
         const category = this.categories.find(c => c.id === catId);
 
         // Update UI
@@ -1777,6 +1797,9 @@ const Forum = {
         document.querySelectorAll('.forum-cat-item').forEach(item => item.classList.remove('active'));
         this.currentCategoryId = null;
         this.isUserSearch = true;
+        this.categoryScrollPositions = this.categoryScrollPositions || {};
+        this.categoryScrollPositions[`user_${username}`] = 0;
+        this._lastCategoryScrollTop = 0;
 
         // Update UI Header
         document.getElementById('forum-category-title').textContent = `Posts by ${username}`;
@@ -1913,12 +1936,14 @@ const Forum = {
                         };
                     }
                 }
+                this.saveListScrollPosition();
                 this.loadPostDetail(postId, options);
             });
         });
     },
 
     loadPostDetail: async function (postId, options = null) {
+        this.saveListScrollPosition();
         this.currentPostId = postId;
         try {
             const response = await fetch(`/api/forum/post/${postId}`, { cache: 'no-store' });
@@ -3083,12 +3108,55 @@ const Forum = {
         this.renderImagePreviews(type);
     },
 
-    showListView: function (noMobileScroll = false) {
+    getCategoryScrollKey: function () {
+        if (this.currentCategoryId !== null && this.currentCategoryId !== undefined) {
+            return String(this.currentCategoryId);
+        }
+        if (this.isUserSearch) {
+            const searchInput = document.getElementById('forum-user-search-input');
+            const username = searchInput ? searchInput.value.trim() : '';
+            return username ? `user_${username}` : 'user_search';
+        }
+        return 'default';
+    },
+
+    saveListScrollPosition: function () {
+        const listScroll = document.querySelector('#forum-view-list .forum-view-scroll-body');
+        const listView = document.getElementById('forum-view-list');
+        if (listScroll && listView && listView.classList.contains('active')) {
+            const key = this.getCategoryScrollKey();
+            this.categoryScrollPositions = this.categoryScrollPositions || {};
+            this.categoryScrollPositions[key] = listScroll.scrollTop;
+            this._lastCategoryScrollTop = listScroll.scrollTop;
+        }
+    },
+
+    showListView: function (noMobileScroll = false, restoreScroll = false) {
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-list').classList.add('active');
 
         const activeScroll = document.querySelector('#forum-view-list .forum-view-scroll-body');
-        if (activeScroll) activeScroll.scrollTop = 0;
+        if (activeScroll) {
+            if (restoreScroll) {
+                const key = this.getCategoryScrollKey();
+                const savedPos = (this.categoryScrollPositions && this.categoryScrollPositions[key] !== undefined)
+                    ? this.categoryScrollPositions[key]
+                    : (this._lastCategoryScrollTop !== undefined ? this._lastCategoryScrollTop : 0);
+                activeScroll.scrollTop = savedPos;
+                requestAnimationFrame(() => {
+                    if (activeScroll) {
+                        activeScroll.scrollTop = savedPos;
+                    }
+                });
+                setTimeout(() => {
+                    if (activeScroll) {
+                        activeScroll.scrollTop = savedPos;
+                    }
+                }, 50);
+            } else {
+                activeScroll.scrollTop = 0;
+            }
+        }
 
         this.hideReplyHoverPreview(true);
         this.closeReplyMobileModal();
@@ -3121,6 +3189,7 @@ const Forum = {
     },
 
     showPostView: function () {
+        this.saveListScrollPosition();
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-post').classList.add('active');
 
@@ -3143,6 +3212,7 @@ const Forum = {
     showCreateView: function () {
         if (!this.currentCategoryId) return;
 
+        this.saveListScrollPosition();
         document.querySelectorAll('.forum-view').forEach(v => v.classList.remove('active'));
         document.getElementById('forum-view-create').classList.add('active');
         document.getElementById('forum-post-category-id').value = this.currentCategoryId;
@@ -3627,6 +3697,8 @@ const Forum = {
         this.currentCategoryId = null;
         this.currentPostId = null;
         this.isUserSearch = false;
+        this.categoryScrollPositions = {};
+        this._lastCategoryScrollTop = 0;
 
         // Ensure list view is active, skipping mobile auto-scroll to main
         this.showListView(true);
