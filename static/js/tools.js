@@ -1365,9 +1365,22 @@ function setupComboExplorer() {
 
     if (diffSelect) {
         diffSelect.addEventListener('change', () => {
-            _comboExplorerWordsCache.clear();
             _comboExplorerMatchesCache.clear();
-            loadComboExplorerWords();
+            const diffVal = diffSelect.value;
+            const diffTitle = (diffVal !== 'all') ? `, Diff ${diffVal}` : '';
+            const lengthSelect = document.getElementById('combo-explorer-length');
+            const mpSelect = document.getElementById('combo-explorer-mp');
+            const dirSelect = document.getElementById('combo-explorer-direction');
+            const length = lengthSelect ? parseInt(lengthSelect.value, 10) : 7;
+            const mp = mpSelect ? parseInt(mpSelect.value, 10) : 1;
+            const direction = dirSelect ? dirSelect.value : 'both';
+            const dirTitle = (direction === 'forwards') ? ' (Forwards)' : ((direction === 'backwards') ? ' (Backwards)' : '');
+            const inputTitle = document.getElementById('combo-explorer-input-title');
+            if (inputTitle) inputTitle.textContent = `${length}-Letter Words (${mp}MP${diffTitle}${dirTitle})`;
+
+            if (_comboExplorerSelectedWord) {
+                window.selectComboExplorerWord(_comboExplorerSelectedWord);
+            }
         });
     }
 
@@ -1602,7 +1615,6 @@ async function loadComboExplorerWords(preserveWord = null) {
                     length: length,
                     mp: mp,
                     direction: direction,
-                    difference: difference,
                     custom_words: eligibleOfLen
                 })
             });
@@ -1620,7 +1632,7 @@ async function loadComboExplorerWords(preserveWord = null) {
             }
         }
     } else {
-        const cacheKey = `${dictionary}_${length}_${mp}_${direction}_${difference}`;
+        const cacheKey = `${dictionary}_${length}_${mp}_${direction}`;
         if (_comboExplorerWordsCache.has(cacheKey)) {
             words = _comboExplorerWordsCache.get(cacheKey);
         } else {
@@ -1633,8 +1645,7 @@ async function loadComboExplorerWords(preserveWord = null) {
                         dictionary: dictionary,
                         length: length,
                         mp: mp,
-                        direction: direction,
-                        difference: difference
+                        direction: direction
                     })
                 });
                 const data = await resp.json();

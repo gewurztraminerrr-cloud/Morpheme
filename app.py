@@ -9977,11 +9977,11 @@ def tools_combo_explorer():
         dict_lens_int = dict_lens.astype(np.int16)
 
         for w in sorted(words_of_len):
-            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+            if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
                 verified_words.append(w)
         input_words = verified_words
     else:
-        cache_key = (dict_name, length, target_mp, direction, target_diff)
+        cache_key = (dict_name, length, target_mp, direction)
         if cache_key in COMBO_EXPLORER_CACHE:
             input_words = COMBO_EXPLORER_CACHE[cache_key]
         else:
@@ -9996,7 +9996,7 @@ def tools_combo_explorer():
             dict_lens_int = dict_lens.astype(np.int16)
 
             for w in words_of_len:
-                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
+                if check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name):
                     verified_words.append(w)
                     
             COMBO_EXPLORER_CACHE[cache_key] = verified_words
