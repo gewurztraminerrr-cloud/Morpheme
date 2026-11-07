@@ -2,9 +2,9 @@
 
 ## Latest Feature Commit ID
 ```
-338f955f Guarantee equal padding on Multiplayer Subanagrams letter sequence across all themes
+e4af63ad Fit Multiplayer Subanagrams board container to letter sequence ensuring equal padding on left and right to top
 ```
-*(Full hash: `338f955f36e4b85cceb701f4094a973cb439bb7f`)*
+*(Full hash: `e4af63ad14e1f74ec5b8f66847244a2b9797071e`)*
 
 ## Start Over Point Tag
 ```
@@ -16,7 +16,7 @@ START_OVER_POINT_NOVEMBER_7
 
 | Environment    | Status | Commit / Notes |
 |----------------|--------|----------------|
-| localhost      | ✅ Synchronized | Working tree clean, HEAD at `338f955f` |
+| localhost      | ✅ Synchronized | Working tree clean, HEAD at `e4af63ad` |
 | GitHub (main)  | ✅ Synchronized | Pushed to `origin/main` |
 | morpheme.games | ✅ Synchronized | Deployed to 132.148.72.249 (PM2 online, HTTP 200 OK) |
 | App / Client   | ✅ Synchronized | Verified on desktop, laptop, mobile layouts |
@@ -96,18 +96,19 @@ START_OVER_POINT_NOVEMBER_7
   - Reduced desktop/laptop vertical space footprint: lowered h2 margin and font-size (`1.6rem`), reduced padding to `18px 30px 14px 30px`, set vertical alignment to center, and tightened line heights so the title and description sit higher up without occupying unnecessary vertical room.
   - Adjusted mobile styling with compact padding (`12px 15px`) and `flex-shrink: 0` for consistent behavior across devices.
 
-### 9. Multiplayer Subanagrams: Equal Left/Right Letter Sequence Padding
+### 9. Multiplayer Subanagrams: Equal Left/Right Letter Sequence Padding to Darkened Coloring
 - **Equal Side Padding to Top Padding**:
-  - In `static/css/play.css`, aligned padding on `.game-board.is-subanagrams-board` so the left and right padding equals the top padding (`padding: 24px 24px !important`).
-  - Updated desktop/laptop media query (`@media (min-width: 901px)`) to set `padding-top: 24px !important; padding-bottom: 24px !important; padding-left: 24px !important; padding-right: 24px !important;` on the letter sequence board container.
-  - Updated mobile media query so left/right padding matches top padding (`padding: 12px 12px !important`), maintaining symmetry and visual balance across all resolutions.
+  - Implemented dynamic board fitting via `fitSubanagramsBoard()` in `static/js/play.js`, ensuring `#game-board`'s width tightly hugs the sequence of letters (whether in 1 single row or wrapped into multiple rows) rather than stretching across the full panel.
+  - Aligned padding on `.game-board.is-subanagrams-board` in `static/css/play.css` so left and right padding strictly equals top padding (`padding: 24px 24px !important; gap: 12px !important;`).
+  - Added listeners to window resize and tile size slider in `settings.js` so padding to the darkened background mat remains equal across all screen sizes, device resolutions, and tile size settings.
+  - Automatically resets inline width and horizontal padding when exiting Subanagrams or switching to grid games.
 
 ---
 
 ## Deployment & Verification Log
-- **Git Commit**: `458df506a7cbb0fa8c26bb437b01b6a22f36f6d0`
+- **Git Commit**: `e4af63ad14e1f74ec5b8f66847244a2b9797071e`
 - **GitHub Tags**: `START_OVER_POINT_NOVEMBER_7`, `stable-2026-11-07`
 - **Remote Server**: `132.148.72.249` (morpheme.games / morpheme.online)
-- **PM2 Service**: `morpheme` online (PID 3719934, status online, memory 123MB, CPU 0%)
+- **PM2 Service**: `morpheme` online (status online, memory ~223MB, CPU 0%)
 - **HTTP Health**: `HTTP/1.1 200 OK` across web application and APIs
 
