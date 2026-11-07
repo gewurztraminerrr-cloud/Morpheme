@@ -13,9 +13,12 @@ from typing import List, Dict
 import os
 import fcntl
 
-# Fixed UTC-5 ("CDT forever"): daylight saving no longer observed, so the
-# daily 12:00 AM reset for 24h rooms never shifts.
-DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-5), "CDT")
+try:
+    from zoneinfo import ZoneInfo
+    DAILY_TZ = ZoneInfo("America/Chicago")
+except Exception:
+    import datetime
+    DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-6), "CST")
 
 # GLOBAL WORD TALLY CONTROLLER
 # Absolute path ensures consistency across Gunicorn/Flask environments

@@ -67,39 +67,14 @@ function formatTournamentStartDate(epochSeconds) {
         const second = p.second;
         let ampm = (p.dayPeriod || (d.getHours() >= 12 ? 'PM' : 'AM')).toUpperCase().replace(/\./g, '').trim();
 
-        const tzAbbr = p.timeZoneName || '';
+        const rawTzAbbr = p.timeZoneName || '';
+        const tzAbbr = (typeof window.getAppTimezoneAbbr === 'function')
+            ? window.getAppTimezoneAbbr(profileTz, rawTzAbbr)
+            : rawTzAbbr;
         let tzDisplay = tzAbbr;
-        const tzLabels = window.TIMEZONE_LABELS || {
-            'UTC': 'UTC (Universal Time)',
-            'America/New_York': 'US Eastern (ET)',
-            'America/Chicago': 'US Central (CT)',
-            'America/Denver': 'US Mountain (MT)',
-            'America/Phoenix': 'US Arizona (MST)',
-            'America/Los_Angeles': 'US Pacific (PT)',
-            'America/Anchorage': 'US Alaska (AKT)',
-            'Pacific/Honolulu': 'US Hawaii (HST)',
-            'America/Toronto': 'Canada Eastern',
-            'America/Vancouver': 'Canada Pacific',
-            'America/Sao_Paulo': 'Brazil (BRT)',
-            'Europe/London': 'London (GMT/BST)',
-            'Europe/Paris': 'Central Europe (CET)',
-            'Europe/Athens': 'Eastern Europe (EET)',
-            'Europe/Moscow': 'Moscow (MSK)',
-            'Asia/Dubai': 'Dubai (GST)',
-            'Asia/Kolkata': 'India (IST)',
-            'Asia/Bangkok': 'Indochina (ICT)',
-            'Asia/Singapore': 'Singapore (SGT)',
-            'Asia/Hong_Kong': 'Hong Kong (HKT)',
-            'Asia/Shanghai': 'China (CST)',
-            'Asia/Tokyo': 'Japan (JST)',
-            'Asia/Seoul': 'Korea (KST)',
-            'Australia/Perth': 'Australia West (AWST)',
-            'Australia/Adelaide': 'Australia Central (ACST)',
-            'Australia/Sydney': 'Australia East (AEST)',
-            'Pacific/Auckland': 'New Zealand (NZST)'
-        };
+        const tzLabels = window.TIMEZONE_LABELS;
 
-        if (profileTz && tzLabels[profileTz]) {
+        if (profileTz && tzLabels && tzLabels[profileTz]) {
             const rawLabel = tzLabels[profileTz].replace(/\s*\([^)]*\)$/, '').trim();
             if (rawLabel && !tzDisplay.toLowerCase().includes(rawLabel.toLowerCase())) {
                 tzDisplay = tzDisplay ? `${tzDisplay} (${rawLabel})` : rawLabel;

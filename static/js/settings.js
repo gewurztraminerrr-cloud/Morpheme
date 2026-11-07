@@ -904,6 +904,9 @@ function debounce(func, wait) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ timezone: newTz })
             }).catch(err => console.error(err));
+            if (typeof window.refreshCurrentToolDates === 'function') {
+                window.refreshCurrentToolDates();
+            }
         });
     }
 

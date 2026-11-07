@@ -1992,36 +1992,39 @@ function formatLastVisited(lastVisitedStr, isOnline) {
     return `${formattedDate} (${durationStr})`;
 }
 
-window.TIMEZONE_LABELS = {
-    'auto': 'Auto (Device)',
-    'UTC': 'UTC (Universal Time)',
-    'America/New_York': 'US Eastern (ET)',
-    'America/Chicago': 'US Central (CT)',
-    'America/Denver': 'US Mountain (MT)',
-    'America/Phoenix': 'US Arizona (MST)',
-    'America/Los_Angeles': 'US Pacific (PT)',
-    'America/Anchorage': 'US Alaska (AKT)',
-    'Pacific/Honolulu': 'US Hawaii (HST)',
-    'America/Toronto': 'Canada Eastern',
-    'America/Vancouver': 'Canada Pacific',
-    'America/Sao_Paulo': 'Brazil (BRT)',
-    'Europe/London': 'London (GMT/BST)',
-    'Europe/Paris': 'Central Europe (CET)',
-    'Europe/Athens': 'Eastern Europe (EET)',
-    'Europe/Moscow': 'Moscow (MSK)',
-    'Asia/Dubai': 'Dubai (GST)',
-    'Asia/Kolkata': 'India (IST)',
-    'Asia/Bangkok': 'Indochina (ICT)',
-    'Asia/Singapore': 'Singapore (SGT)',
-    'Asia/Hong_Kong': 'Hong Kong (HKT)',
-    'Asia/Shanghai': 'China (CST)',
-    'Asia/Tokyo': 'Japan (JST)',
-    'Asia/Seoul': 'Korea (KST)',
-    'Australia/Perth': 'Australia West (AWST)',
-    'Australia/Adelaide': 'Australia Central (ACST)',
-    'Australia/Sydney': 'Australia East (AEST)',
-    'Pacific/Auckland': 'New Zealand (NZST)'
-};
+if (!window.TIMEZONE_LABELS) {
+    window.TIMEZONE_LABELS = {
+        'auto': 'Auto (Device)',
+        'UTC': 'UTC (Universal Time)',
+        'America/New_York': 'US Eastern Time (ET)',
+        'America/Chicago': 'US Central Time (CT)',
+        'America/Denver': 'US Mountain Time (MT)',
+        'America/Phoenix': 'US Arizona (MST, no DST)',
+        'America/Los_Angeles': 'US Pacific Time (PT)',
+        'America/Anchorage': 'US Alaska Time (AKT)',
+        'Pacific/Honolulu': 'US Hawaii Time (HST)',
+        'America/Toronto': 'Canada Eastern (Toronto - ET)',
+        'America/Winnipeg': 'Canada Central (Winnipeg - CT)',
+        'America/Vancouver': 'Canada Pacific (Vancouver - PT)',
+        'America/Sao_Paulo': 'Brazil (São Paulo - BRT)',
+        'Europe/London': 'UK / Ireland (London - GMT/BST)',
+        'Europe/Paris': 'Central Europe (Paris, Berlin - CET/CEST)',
+        'Europe/Athens': 'Eastern Europe (Athens, Cairo - EET/EEST)',
+        'Europe/Moscow': 'Russia (Moscow - MSK)',
+        'Asia/Dubai': 'Gulf Standard Time (Dubai - GST)',
+        'Asia/Kolkata': 'India Standard Time (IST)',
+        'Asia/Bangkok': 'Indochina Time (Bangkok, Jakarta - ICT)',
+        'Asia/Singapore': 'Singapore / Malaysia (SGT)',
+        'Asia/Hong_Kong': 'Hong Kong (HKT)',
+        'Asia/Shanghai': 'China Standard Time (Beijing - CST)',
+        'Asia/Tokyo': 'Japan Standard Time (Tokyo - JST)',
+        'Asia/Seoul': 'Korea Standard Time (Seoul - KST)',
+        'Australia/Perth': 'Australia Western (Perth - AWST)',
+        'Australia/Adelaide': 'Australia Central (Adelaide - ACST)',
+        'Australia/Sydney': 'Australia Eastern (Sydney - AEST/AEDT)',
+        'Pacific/Auckland': 'New Zealand (Auckland - NZST/NZDT)'
+    };
+}
 
 window.getUserCurrentTime = function(tz) {
     try {
@@ -2030,8 +2033,15 @@ window.getUserCurrentTime = function(tz) {
             minute: '2-digit',
             hour12: true
         };
-        if (tz && tz !== 'auto') {
-            options.timeZone = tz;
+        const activeTz = (tz && tz !== 'auto')
+            ? tz
+            : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
+                ? window.currentUserTimezone
+                : (typeof localStorage !== 'undefined' && localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
+                    ? localStorage.getItem('morpheme_timezone')
+                    : undefined));
+        if (activeTz) {
+            options.timeZone = activeTz;
         }
         return new Intl.DateTimeFormat('en-US', options).format(new Date());
     } catch (e) {
@@ -3113,37 +3123,7 @@ async function renderProfile(user) {
     const userTz = user.timezone || 'auto';
     window._activeProfileUserTz = userTz;
 
-    const tzLabels = window.TIMEZONE_LABELS || {
-        'auto': 'Auto (Device)',
-        'UTC': 'UTC (Universal Time)',
-        'America/New_York': 'US Eastern (ET)',
-        'America/Chicago': 'US Central (CT)',
-        'America/Denver': 'US Mountain (MT)',
-        'America/Phoenix': 'US Arizona (MST)',
-        'America/Los_Angeles': 'US Pacific (PT)',
-        'America/Anchorage': 'US Alaska (AKT)',
-        'Pacific/Honolulu': 'US Hawaii (HST)',
-        'America/Toronto': 'Canada Eastern',
-        'America/Vancouver': 'Canada Pacific',
-        'America/Sao_Paulo': 'Brazil (BRT)',
-        'Europe/London': 'London (GMT/BST)',
-        'Europe/Paris': 'Central Europe (CET)',
-        'Europe/Athens': 'Eastern Europe (EET)',
-        'Europe/Moscow': 'Moscow (MSK)',
-        'Asia/Dubai': 'Dubai (GST)',
-        'Asia/Kolkata': 'India (IST)',
-        'Asia/Bangkok': 'Indochina (ICT)',
-        'Asia/Singapore': 'Singapore (SGT)',
-        'Asia/Hong_Kong': 'Hong Kong (HKT)',
-        'Asia/Shanghai': 'China (CST)',
-        'Asia/Tokyo': 'Japan (JST)',
-        'Asia/Seoul': 'Korea (KST)',
-        'Australia/Perth': 'Australia West (AWST)',
-        'Australia/Adelaide': 'Australia Central (ACST)',
-        'Australia/Sydney': 'Australia East (AEST)',
-        'Pacific/Auckland': 'New Zealand (NZST)'
-    };
-
+    const tzLabels = window.TIMEZONE_LABELS || {};
     const tzLabel = tzLabels[userTz] || userTz;
     const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
 
@@ -3178,6 +3158,9 @@ async function renderProfile(user) {
                     if (listContainer && typeof window.renderRoundItem === 'function') {
                         listContainer.innerHTML = user.recent_rounds.map(r => window.renderRoundItem(r)).join('');
                     }
+                }
+                if (typeof window.refreshCurrentToolDates === 'function') {
+                    window.refreshCurrentToolDates();
                 }
             };
         } else {
@@ -11860,3 +11843,29 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
         }
     }
 };
+
+window.refreshCurrentToolDates = function() {
+    try {
+        const newUsersPane = document.getElementById('tool-new-users');
+        if (newUsersPane && newUsersPane.classList.contains('active') && typeof window.loadNewUsersTool === 'function') {
+            window.loadNewUsersTool(true);
+        }
+        const fcPane = document.getElementById('tool-find-count');
+        const fcInput = document.getElementById('find-count-input');
+        if (fcPane && fcPane.classList.contains('active') && fcInput && fcInput.value.trim() && typeof window.executeFindCountSearch === 'function') {
+            window.executeFindCountSearch();
+        }
+        if (window._activeProfileUser && window._activeProfileUser.recent_rounds) {
+            const listContainer = document.getElementById('profile-history-list');
+            if (listContainer && typeof window.renderRoundItem === 'function') {
+                listContainer.innerHTML = window._activeProfileUser.recent_rounds.map(r => window.renderRoundItem(r)).join('');
+            }
+        }
+        if (typeof window.updateDisplayedProfileTimes === 'function') {
+            window.updateDisplayedProfileTimes();
+        }
+    } catch (e) {
+        console.error('[refreshCurrentToolDates] Error refreshing dates:', e);
+    }
+};
+

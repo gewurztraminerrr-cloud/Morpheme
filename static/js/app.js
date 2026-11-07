@@ -132,6 +132,83 @@ try {
     if (_savedUid) window.currentUserId = parseInt(_savedUid) || _savedUid;
 } catch (e) {}
 
+window.TIMEZONE_LABELS = {
+    'auto': 'Auto (Device)',
+    'UTC': 'UTC (Universal Time)',
+    'America/New_York': 'US Eastern Time (ET)',
+    'America/Chicago': 'US Central Time (CT)',
+    'America/Denver': 'US Mountain Time (MT)',
+    'America/Phoenix': 'US Arizona (MST, no DST)',
+    'America/Los_Angeles': 'US Pacific Time (PT)',
+    'America/Anchorage': 'US Alaska Time (AKT)',
+    'Pacific/Honolulu': 'US Hawaii Time (HST)',
+    'America/Toronto': 'Canada Eastern (Toronto - ET)',
+    'America/Winnipeg': 'Canada Central (Winnipeg - CT)',
+    'America/Vancouver': 'Canada Pacific (Vancouver - PT)',
+    'America/Sao_Paulo': 'Brazil (São Paulo - BRT)',
+    'Europe/London': 'UK / Ireland (London - GMT/BST)',
+    'Europe/Paris': 'Central Europe (Paris, Berlin - CET/CEST)',
+    'Europe/Athens': 'Eastern Europe (Athens, Cairo - EET/EEST)',
+    'Europe/Moscow': 'Russia (Moscow - MSK)',
+    'Asia/Dubai': 'Gulf Standard Time (Dubai - GST)',
+    'Asia/Kolkata': 'India Standard Time (IST)',
+    'Asia/Bangkok': 'Indochina Time (Bangkok, Jakarta - ICT)',
+    'Asia/Singapore': 'Singapore / Malaysia (SGT)',
+    'Asia/Hong_Kong': 'Hong Kong (HKT)',
+    'Asia/Shanghai': 'China Standard Time (Beijing - CST)',
+    'Asia/Tokyo': 'Japan Standard Time (Tokyo - JST)',
+    'Asia/Seoul': 'Korea Standard Time (Seoul - KST)',
+    'Australia/Perth': 'Australia Western (Perth - AWST)',
+    'Australia/Adelaide': 'Australia Central (Adelaide - ACST)',
+    'Australia/Sydney': 'Australia Eastern (Sydney - AEST/AEDT)',
+    'Pacific/Auckland': 'New Zealand (Auckland - NZST/NZDT)'
+};
+
+window.TIMEZONE_ABBR_MAP = {
+    'America/New_York': 'ET',
+    'America/Chicago': 'CT',
+    'America/Winnipeg': 'CT',
+    'America/Denver': 'MT',
+    'America/Phoenix': 'MST',
+    'America/Los_Angeles': 'PT',
+    'America/Anchorage': 'AKT',
+    'Pacific/Honolulu': 'HST',
+    'America/Toronto': 'ET',
+    'America/Vancouver': 'PT',
+    'America/Sao_Paulo': 'BRT',
+    'Europe/London': 'GMT',
+    'Europe/Paris': 'CET',
+    'Europe/Athens': 'EET',
+    'Europe/Moscow': 'MSK',
+    'Asia/Dubai': 'GST',
+    'Asia/Kolkata': 'IST',
+    'Asia/Bangkok': 'ICT',
+    'Asia/Singapore': 'SGT',
+    'Asia/Hong_Kong': 'HKT',
+    'Asia/Shanghai': 'CST',
+    'Asia/Tokyo': 'JST',
+    'Asia/Seoul': 'KST',
+    'Australia/Perth': 'AWST',
+    'Australia/Adelaide': 'ACST',
+    'Australia/Sydney': 'AEST',
+    'Pacific/Auckland': 'NZST',
+    'UTC': 'UTC'
+};
+
+window.getAppTimezoneAbbr = function(tz, rawAbbr) {
+    if (tz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz]) {
+        return window.TIMEZONE_ABBR_MAP[tz];
+    }
+    const abbr = String(rawAbbr || '').trim().toUpperCase();
+    if (abbr === 'CST' || abbr === 'CDT') return 'CT';
+    if (abbr === 'EST' || abbr === 'EDT') return 'ET';
+    if (abbr === 'PST' || abbr === 'PDT') return 'PT';
+    if (abbr === 'MST' || abbr === 'MDT') return 'MT';
+    if (abbr === 'AKST' || abbr === 'AKDT') return 'AKT';
+    if (abbr === 'HST' || abbr === 'HDT') return 'HST';
+    return abbr;
+};
+
 function formatAppDate(val, includeTime = false, customTz = null) {
     if (!val && val !== 0) return '-';
     let d;
@@ -152,7 +229,11 @@ function formatAppDate(val, includeTime = false, customTz = null) {
 
     const tz = (customTz && customTz !== 'auto') 
         ? customTz 
-        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto' ? window.currentUserTimezone : undefined);
+        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
+            ? window.currentUserTimezone
+            : (typeof localStorage !== 'undefined' && localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
+                ? localStorage.getItem('morpheme_timezone')
+                : undefined));
 
     try {
         const dtf = new Intl.DateTimeFormat('en-US', {
@@ -175,7 +256,10 @@ function formatAppDate(val, includeTime = false, customTz = null) {
             const h = p.hour;
             const m = p.minute;
             const ampm = (p.dayPeriod || '').toUpperCase();
-            const tzAbbr = p.timeZoneName || '';
+            const rawTzAbbr = p.timeZoneName || '';
+            const tzAbbr = (typeof window.getAppTimezoneAbbr === 'function')
+                ? window.getAppTimezoneAbbr(tz, rawTzAbbr)
+                : rawTzAbbr;
             return `${dateStr} ${h}:${m} ${ampm}${tzAbbr ? ' ' + tzAbbr : ''}`.trim();
         }
         return dateStr;
@@ -189,7 +273,8 @@ function formatAppDate(val, includeTime = false, customTz = null) {
             const minutes = String(d.getMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12 || 12;
-            return `${dateStr} ${hours}:${minutes} ${ampm}`;
+            const fallbackAbbr = tz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz] ? ` ${window.TIMEZONE_ABBR_MAP[tz]}` : '';
+            return `${dateStr} ${hours}:${minutes} ${ampm}${fallbackAbbr}`;
         }
         return dateStr;
     }
@@ -244,39 +329,14 @@ function formatTimeoutTimestamp(val) {
         const second = p.second;
         let ampm = (p.dayPeriod || (d.getHours() >= 12 ? 'PM' : 'AM')).toUpperCase().replace(/\./g, '').trim();
 
-        const tzAbbr = p.timeZoneName || '';
+        const rawTzAbbr = p.timeZoneName || '';
+        const tzAbbr = (typeof window.getAppTimezoneAbbr === 'function')
+            ? window.getAppTimezoneAbbr(profileTz, rawTzAbbr)
+            : rawTzAbbr;
         let tzDisplay = tzAbbr;
-        const tzLabels = window.TIMEZONE_LABELS || {
-            'UTC': 'UTC (Universal Time)',
-            'America/New_York': 'US Eastern (ET)',
-            'America/Chicago': 'US Central (CT)',
-            'America/Denver': 'US Mountain (MT)',
-            'America/Phoenix': 'US Arizona (MST)',
-            'America/Los_Angeles': 'US Pacific (PT)',
-            'America/Anchorage': 'US Alaska (AKT)',
-            'Pacific/Honolulu': 'US Hawaii (HST)',
-            'America/Toronto': 'Canada Eastern',
-            'America/Vancouver': 'Canada Pacific',
-            'America/Sao_Paulo': 'Brazil (BRT)',
-            'Europe/London': 'London (GMT/BST)',
-            'Europe/Paris': 'Central Europe (CET)',
-            'Europe/Athens': 'Eastern Europe (EET)',
-            'Europe/Moscow': 'Moscow (MSK)',
-            'Asia/Dubai': 'Dubai (GST)',
-            'Asia/Kolkata': 'India (IST)',
-            'Asia/Bangkok': 'Indochina (ICT)',
-            'Asia/Singapore': 'Singapore (SGT)',
-            'Asia/Hong_Kong': 'Hong Kong (HKT)',
-            'Asia/Shanghai': 'China (CST)',
-            'Asia/Tokyo': 'Japan (JST)',
-            'Asia/Seoul': 'Korea (KST)',
-            'Australia/Perth': 'Australia West (AWST)',
-            'Australia/Adelaide': 'Australia Central (ACST)',
-            'Australia/Sydney': 'Australia East (AEST)',
-            'Pacific/Auckland': 'New Zealand (NZST)'
-        };
+        const tzLabels = window.TIMEZONE_LABELS;
 
-        if (profileTz && tzLabels[profileTz]) {
+        if (profileTz && tzLabels && tzLabels[profileTz]) {
             const rawLabel = tzLabels[profileTz].replace(/\s*\([^)]*\)$/, '').trim();
             if (rawLabel && !tzDisplay.toLowerCase().includes(rawLabel.toLowerCase())) {
                 tzDisplay = tzDisplay ? `${tzDisplay} (${rawLabel})` : rawLabel;
@@ -310,9 +370,12 @@ async function loadCurrentUserConfigRatings() {
         const resp = await fetch(`/api/profile/${encodeURIComponent(window.currentUser)}?t=${Date.now()}`);
         const data = await resp.json();
         if (data) {
-            if (data.timezone) {
+            if (data.timezone && data.timezone !== 'auto') {
                 window.currentUserTimezone = data.timezone;
                 localStorage.setItem('morpheme_timezone', data.timezone);
+            } else if (!localStorage.getItem('morpheme_timezone') || localStorage.getItem('morpheme_timezone') === 'auto') {
+                window.currentUserTimezone = data.timezone || 'auto';
+                localStorage.setItem('morpheme_timezone', window.currentUserTimezone);
             }
             if (data.country_flag) {
                 window.currentUserFlag = data.country_flag;

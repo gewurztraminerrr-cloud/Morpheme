@@ -289,6 +289,12 @@ _lb_cache = {}
 _lb_cache_expiry = {}
 _LB_CACHE_TTL = 45  # seconds
 
+try:
+    from zoneinfo import ZoneInfo
+    DAILY_TZ = ZoneInfo("America/Chicago")
+except Exception:
+    import datetime
+    DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-6), "CST")
 
 def format_chicago_to_utc(chicago_ts_str):
     if not chicago_ts_str:
@@ -419,8 +425,7 @@ def load_word_date_pairs(file_path, default_fallback_date=None):
 STATS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'word_stats.json')
 TRACE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'stats_trace.log')
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'morpheme.db')
-# Fixed UTC-5 ("CDT forever"): daylight saving no longer observed.
-DAILY_TZ = datetime.timezone(datetime.timedelta(hours=-5), "CDT")
+# DAILY_TZ defined above via ZoneInfo("America/Chicago")
 RATING_AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rating_audit.log')
 DEBUG_FLOW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug_flow.log')
 
@@ -3755,6 +3760,11 @@ def update_setting():
             ON CONFLICT(user_id, setting_key) 
             DO UPDATE SET setting_value=excluded.setting_value
         ''', (session['user_id'], key, str(value)))
+        if key == 'timezone':
+            conn.execute('UPDATE users SET timezone = ? WHERE id = ?', (str(value), session['user_id']))
+            username = session.get('username')
+            if username and username.lower() in _PROFILE_CACHE:
+                del _PROFILE_CACHE[username.lower()]
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -5051,8 +5061,18 @@ def update_profile():
         values.append(session['user_id'])
         
         conn.execute(f'UPDATE users SET {set_clause} WHERE id = ?', values)
+        if 'timezone' in updates:
+            conn.execute('''
+                INSERT INTO user_settings (user_id, setting_key, setting_value)
+                VALUES (?, 'timezone', ?)
+                ON CONFLICT(user_id, setting_key)
+                DO UPDATE SET setting_value=excluded.setting_value
+            ''', (session['user_id'], str(updates['timezone'])))
         conn.commit()
         conn.close()
+        username = session.get('username')
+        if username and username.lower() in _PROFILE_CACHE:
+            del _PROFILE_CACHE[username.lower()]
         return jsonify({'success': True})
     except Exception as e:
         print(f"Profile update error: {e}")
@@ -5146,6 +5166,17 @@ def get_public_profile(username):
         val = str(pm_setting_row[0]).lower()
         if val in ('false', '0', 'off'):
             allow_pm = False
+
+    user_tz = user[19]
+    if not user_tz or user_tz == 'auto':
+        tz_setting_row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'timezone'", (user_id,)).fetchone()
+        if tz_setting_row and tz_setting_row[0]:
+            user_tz = tz_setting_row[0]
+            try:
+                conn.execute("UPDATE users SET timezone = ? WHERE id = ?", (user_tz, user_id))
+                conn.commit()
+            except Exception:
+                pass
 
     period = request.args.get('period', 'all').lower()
     
@@ -5379,7 +5410,7 @@ def get_public_profile(username):
         'avg_pe': round(user[15], 2) if user[15] else 0.0,
         'created_at': user[17],
         'last_visited': user[18] or user[17],
-        'timezone': user[19] or 'auto',
+        'timezone': user_tz or 'auto',
         'allow_pm': allow_pm,
         'forum_posts_count': forum_posts_count,
         'recent_rounds': recent_rounds,
