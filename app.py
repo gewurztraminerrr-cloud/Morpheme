@@ -6682,6 +6682,11 @@ def create_room():
                         provisional_ratings_sum=r_info['provisional_ratings_sum'],
                         provisional_rating=r_info['provisional_rating'])
         
+        # Room creator is present from the inception of round 1 and never joined mid-round
+        creator_player = room.get_player(session['user_id'])
+        if creator_player:
+            creator_player.joined_mid_round = False
+        
         # Start first round immediately if room does not have a board
         if not room.board:
             print(f"[app.py] Kickstarting first round for NEW room {room_id}")
