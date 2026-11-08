@@ -8,7 +8,7 @@ START_OVER_POINT_NOVEMBER_8
 
 ## Latest Feature Commit ID
 ```
-5e00ff481b4fc66107cb5b5c98cf8efd4399e52c
+76f357d3839cb4ae9775be725c8989e2c65a3962
 ```
 
 ## Synchronization Status
@@ -105,7 +105,7 @@ START_OVER_POINT_NOVEMBER_8
 - **Global & Live Game Room Rating Adjustment**:
   - Created dedicated "Constant Parameter Rating Adjustment" tab in Mods section (`#mod-tab-ratings`) to increase or reduce ratings across all users in specific game room constant parameter configurations (e.g., `ACC 4x4 45s`, `ACC 4x4 3m`, `FCFS 4x4 45s`, `Split 4x4 45s`, `Cube 3x3x3 3m`, etc.) when ratings become skewed.
   - **Strict Authorization**: Access is strictly restricted to root administrator `jeffb` on both frontend and backend (`(session.get('username') or '').strip().lower() == 'jeffb'`), with any non-jeffb request rejected with `403 Forbidden`.
-  - **Instantaneous Live Synchronization**: Updates the database (`user_ratings` with `MAX(400, rating + delta)`) and live in-memory room player ratings (`room_manager.rooms`) simultaneously under thread locks, ensuring players active in live rooms see their rating change in under 1 second without waiting for round completion.
+  - **Instantaneous Live Synchronization**: Updates the database (`user_ratings` with `MAX(1, rating + delta)`) and live in-memory room player ratings (`room_manager.rooms`) simultaneously under thread locks, ensuring players active in live rooms see their rating change in under 1 second without waiting for round completion.
   - **Interactive UI & Audit Logging**:
     - Step 1: Point delta input with quick presets (`+10`, `+25`, `+50`, `+100`, `-10`, `-25`, `-50`, `-100`).
     - Step 2: Categorized configuration cards with "Select All", "Deselect All", and "Active Only" filters.
