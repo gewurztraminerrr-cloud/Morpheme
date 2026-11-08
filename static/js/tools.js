@@ -1812,6 +1812,24 @@ window.selectComboExplorerWord = async function(word) {
     _comboExplorerMatches = validMatches;
     _comboExplorerDisplayMatches = _sortMatchesByLength(_comboExplorerMatches, _comboExplorerIsRandom, word);
 
+    // Prune words with 0 matches from the explorer table so empty words never remain in the list
+    if (validMatches.length === 0 && _comboExplorerWords.includes(word)) {
+        const idxAll = _comboExplorerWords.indexOf(word);
+        if (idxAll !== -1) _comboExplorerWords.splice(idxAll, 1);
+        const idxDisp = _comboExplorerDisplayWords.indexOf(word);
+        if (idxDisp !== -1) {
+            _comboExplorerDisplayWords.splice(idxDisp, 1);
+            renderComboExplorerInputWords(false);
+        }
+        if (_comboExplorerDisplayWords.length > 0) {
+            const nextWord = _comboExplorerDisplayWords[Math.min(idxDisp >= 0 ? idxDisp : 0, _comboExplorerDisplayWords.length - 1)];
+            window.selectComboExplorerWord(nextWord);
+            return;
+        } else {
+            _comboExplorerSelectedWord = null;
+        }
+    }
+
     renderComboExplorerMatches();
 };
 

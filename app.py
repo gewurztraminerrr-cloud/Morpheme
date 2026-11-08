@@ -9731,100 +9731,209 @@ def get_combo_payload_for_word(search_term, dict_name):
     return result_payload, 200
 
 
-def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both', base_dict_name='CSW', target_diff=None):
-    """Fast check whether word w has at least one valid (non-plural, non-inflection) match at target_mp with optional target_diff."""
-    source_len = len(w)
-    dict_set = dict_data['set']
-    
-    if target_mp == 0:
-        # 1. Reverse exact match (diff = 0)
-        if (target_diff is None or target_diff == 0) and direction in ('both', 'backwards'):
-            rev = w[::-1]
-            if len(rev) != 4 and rev != w and rev in dict_set and not is_plural_or_inflection(w, rev):
-                return True
+def is_valid_mp_target_len(source_len, target_len, mp):
+    if target_len == 4:
+        return False
+    if source_len == 3:
+        return target_len >= 3
+    elif source_len == 4:
+        return target_len >= 4
+    elif source_len == 5:
+        if target_len >= 4 and (mp == 'all' or mp <= 3):
+            return (target_len >= 5) if (mp != 'all' and mp >= 3) else True
+    elif source_len == 6:
+        if target_len >= 4 and (mp == 'all' or mp <= 3):
+            return (target_len >= 5) if (mp != 'all' and mp >= 3) else True
+    elif source_len == 7:
+        if target_len >= 5 and (mp == 'all' or mp <= 4):
+            return (target_len >= 8) if (mp != 'all' and mp >= 4) else True
+    elif source_len == 8:
+        return target_len >= 5 and (mp == 'all' or mp <= 4)
+    elif source_len >= 9:
+        if target_len >= 5 and (mp == 'all' or mp <= 5):
+            return (target_len >= 8) if (mp != 'all' and mp >= 5) else True
+    return False
 
-        # 2. Subwords: length difference in {1, 2, 3}. Target length must be >= 5 for source_len >= 6 (or 3 for source_len == 4) and != 4.
-        min_sub_len = 5 if source_len >= 6 else (3 if source_len == 4 else 5)
-        possible_diffs = [target_diff] if target_diff is not None else [1, 2, 3]
-        for d in possible_diffs:
-            if d == 0:
-                continue
-            l = source_len - d
-            if l < min_sub_len or l == 4 or l >= source_len:
-                continue
-            for start in range(source_len - l + 1):
-                if direction in ('both', 'forwards'):
-                    sub1 = w[start:start+l]
-                    if len(sub1) != 4 and sub1 != w and sub1 in dict_set and not is_plural_or_inflection(w, sub1):
-                        return True
-                if direction in ('both', 'backwards'):
-                    sub2 = w[::-1][start:start+l]
-                    if len(sub2) != 4 and sub2 != w and sub2 in dict_set and not is_plural_or_inflection(w, sub2):
-                        return True
+
+def is_valid_candidate(w, cand, target_mp, direction, target_diff, dict_set, c_engine):
+    if cand == w:
+        return False
+    target_len = len(cand)
+    source_len = len(w)
+    if target_len == 4:
+        return False
+    if target_diff is not None and abs(source_len - target_len) != target_diff:
+        return False
+    if not is_valid_mp_target_len(source_len, target_len, target_mp):
+        return False
+    if cand not in dict_set:
+        return False
+    if is_plural_or_inflection(w, cand):
         return False
 
-    if target_mp == 1:
-        common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
-        dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
+    s_b = w.encode('ascii')
+    cand_b = cand.encode('ascii')
+    cand_rev_b = cand[::-1].encode('ascii')
+    max_check = 3 if target_mp == 'all' else target_mp
+
+    if direction == 'forwards':
+        mp = c_engine.c_calculate_morpheme_metric(s_b, cand_b, max_check) if c_engine else calculate_morpheme_metric_py(w, cand, max_check)[0]
+        return (mp <= 3) if target_mp == 'all' else (mp == target_mp)
+    elif direction == 'backwards':
+        mp = c_engine.c_calculate_morpheme_metric(s_b, cand_rev_b, max_check) if c_engine else calculate_morpheme_metric_py(w, cand[::-1], max_check)[0]
+        return (mp <= 3) if target_mp == 'all' else (mp == target_mp)
+    else:
+        mp1 = c_engine.c_calculate_morpheme_metric(s_b, cand_b, max_check) if c_engine else calculate_morpheme_metric_py(w, cand, max_check)[0]
+        if mp1 == target_mp or (target_mp == 'all' and mp1 <= 3):
+            return True
+        mp2 = c_engine.c_calculate_morpheme_metric(s_b, cand_rev_b, max_check) if c_engine else calculate_morpheme_metric_py(w, cand[::-1], max_check)[0]
+        return (mp2 <= 3) if target_mp == 'all' else (mp2 == target_mp)
+
+
+def check_word_has_mp(w, target_mp, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction='both', base_dict_name='CSW', target_diff=None):
+    """Fast, accurate check whether word w has at least one valid (non-plural, non-inflection) match at target_mp with optional target_diff."""
+    source_len = len(w)
+    dict_set = dict_data['set']
+    common_chars = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'
+
+    # 0 MP
+    if target_mp in (0, 'all'):
+        if target_diff is None or target_diff == 0:
+            if direction in ('both', 'backwards'):
+                if is_valid_candidate(w, w[::-1], 0, direction, target_diff, dict_set, c_engine):
+                    return True
+        diffs = [target_diff] if target_diff is not None else [1, 2, 3]
+        for d in diffs:
+            if d == 0:
+                continue
+            sub_len = source_len - d
+            if is_valid_mp_target_len(source_len, sub_len, 0):
+                for start in range(source_len - sub_len + 1):
+                    if direction in ('both', 'forwards'):
+                        if is_valid_candidate(w, w[start:start+sub_len], 0, direction, target_diff, dict_set, c_engine):
+                            return True
+                    if direction in ('both', 'backwards'):
+                        if is_valid_candidate(w, w[::-1][start:start+sub_len], 0, direction, target_diff, dict_set, c_engine):
+                            return True
+
+    dirs = [w] if direction == 'forwards' else ([w[::-1]] if direction == 'backwards' else [w, w[::-1]])
+
+    # 1 MP
+    if target_mp in (1, 'all'):
         for s in dirs:
-            # Fast path 1: drop extremity letter (diff = 1)
-            if (target_diff is None or target_diff == 1) and source_len > 5:
-                d1 = s[1:]
-                if len(d1) != 4 and d1 in dict_set and not is_plural_or_inflection(w, d1):
-                    return True
-                d2 = s[:-1]
-                if len(d2) != 4 and d2 in dict_set and not is_plural_or_inflection(w, d2):
-                    return True
-            # Fast path 2: add or insert letter anywhere (diff = 1)
-            if target_diff is None or target_diff == 1:
-                for i in range(len(s) + 1):
-                    for char in common_chars:
-                        ins = s[:i] + char + s[i:]
-                        if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
-                            return True
-            # Fast path 3: adjacent transposition (diff = 0)
-            if (target_diff is None or target_diff == 0) and source_len != 4:
-                for i in range(len(s) - 1):
-                    if s[i] != s[i+1]:
-                        trans = s[:i] + s[i+1] + s[i] + s[i+2:]
-                        if len(trans) != 4 and trans in dict_set and not is_plural_or_inflection(w, trans):
-                            return True
-            # Fast path 4: interior deletion (diff = 1)
-            if (target_diff is None or target_diff == 1) and source_len > 5:
-                for i in range(1, len(s) - 1):
-                    sub = s[:i] + s[i+1:]
-                    if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
-                        return True
-            # Fast path 5: single letter substitution (diff = 0)
-            if (target_diff is None or target_diff == 0) and source_len != 4:
+            # 1. Single letter relocation (diff 0)
+            if target_diff is None or target_diff == 0:
                 for i in range(len(s)):
-                    orig = s[i]
-                    for c in common_chars:
-                        if c != orig:
-                            sub = s[:i] + c + s[i+1:]
-                            if len(sub) != 4 and sub in dict_set and not is_plural_or_inflection(w, sub):
+                    ch = s[i]
+                    rem = s[:i] + s[i+1:]
+                    for j in range(len(rem) + 1):
+                        if j != i and j != i - 1:
+                            cand = rem[:j] + ch + rem[j:]
+                            if is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
                                 return True
-            # Fast path 6: drop extremity letters leaving substring of length >= 4, then insert 1 letter
-            if source_len >= 5:
-                for sub_len in range(4, source_len):
-                    diff = abs(source_len - (sub_len + 1))
-                    if target_diff is not None and diff != target_diff:
-                        continue
+
+            # 2. Extremity substitution (diff 0)
+            if target_diff is None or target_diff == 0:
+                orig0, orig_end = s[0], s[-1]
+                for c in common_chars:
+                    if c != orig0:
+                        cand = c + s[1:]
+                        if is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
+                            return True
+                    if c != orig_end:
+                        cand = s[:-1] + c
+                        if is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
+                            return True
+
+            # 3. Extremity drop + insert (diffs 0, 1, 2, 3)
+            allowed_diffs = [target_diff] if target_diff is not None else [0, 1, 2, 3]
+            for d in allowed_diffs:
+                sub_len = source_len - 1 - d
+                if sub_len >= 4:
                     for start in range(source_len - sub_len + 1):
                         sub = s[start:start+sub_len]
                         for i in range(len(sub) + 1):
-                            for char in common_chars:
-                                ins = sub[:i] + char + sub[i:]
-                                if len(ins) != 4 and ins in dict_set and not is_plural_or_inflection(w, ins):
+                            for c in common_chars:
+                                cand = sub[:i] + c + sub[i:]
+                                if cand in dict_set and is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
                                     return True
-        return False
 
-    if target_mp == 'all' or (isinstance(target_mp, int) and target_mp >= 2):
-        if check_word_has_mp(w, 0, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
-            return True
-        if check_word_has_mp(w, 1, dict_data, c_engine, dict_matrix, dict_lens_int, dict_masks, word_list, direction, base_dict_name, target_diff=target_diff):
-            return True
-        return False
+            # 4. Insertion (diff 1)
+            if target_diff is None or target_diff == 1:
+                for i in range(len(s) + 1):
+                    for c in common_chars:
+                        cand = s[:i] + c + s[i:]
+                        if cand in dict_set and is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
+                            return True
+
+            # 5. Interior deletion (diff 1)
+            if (target_diff is None or target_diff == 1) and source_len > 5:
+                for i in range(1, len(s) - 1):
+                    cand = s[:i] + s[i+1:]
+                    if is_valid_candidate(w, cand, 1, direction, target_diff, dict_set, c_engine):
+                        return True
+
+    # 2 MP
+    if target_mp in (2, 'all'):
+        for s in dirs:
+            # Interior substitution (diff 0)
+            if (target_diff is None or target_diff == 0) and source_len > 4:
+                for i in range(1, len(s) - 1):
+                    orig = s[i]
+                    for c in common_chars:
+                        if c != orig:
+                            cand = s[:i] + c + s[i+1:]
+                            if cand in dict_set and is_valid_candidate(w, cand, 2, direction, target_diff, dict_set, c_engine):
+                                return True
+
+            # Drop extremity + interior substitution (diff 1, 2, 3)
+            allowed_diffs = [target_diff] if target_diff is not None else [1, 2, 3]
+            for d in allowed_diffs:
+                sub_len = source_len - d
+                if sub_len > 4:
+                    for start in (0, source_len - sub_len):
+                        sub = s[start:start+sub_len]
+                        for i in range(1, len(sub) - 1):
+                            orig = sub[i]
+                            for c in common_chars:
+                                if c != orig:
+                                    cand = sub[:i] + c + sub[i+1:]
+                                    if cand in dict_set and is_valid_candidate(w, cand, 2, direction, target_diff, dict_set, c_engine):
+                                        return True
+
+            # 2 insertions (diff 2)
+            if (target_diff is None or target_diff == 2):
+                for i in range(len(s) + 1):
+                    for c1 in ('S', 'E', 'D', 'R', 'A', 'I', 'O'):
+                        sub = s[:i] + c1 + s[i:]
+                        for j in range(len(sub) + 1):
+                            for c2 in ('S', 'E', 'D', 'R', 'A', 'I', 'O'):
+                                cand = sub[:j] + c2 + sub[j:]
+                                if cand in dict_set and is_valid_candidate(w, cand, 2, direction, target_diff, dict_set, c_engine):
+                                    return True
+
+            # 2 interior deletions (diff 2)
+            if (target_diff is None or target_diff == 2) and source_len > 6:
+                for i in range(1, len(s) - 2):
+                    for j in range(i + 1, len(s) - 1):
+                        cand = s[:i] + s[i+1:j] + s[j+1:]
+                        if is_valid_candidate(w, cand, 2, direction, target_diff, dict_set, c_engine):
+                            return True
+
+    # 3 MP
+    if target_mp in (3, 'all'):
+        for s in dirs:
+            # 2 interior substitutions (diff 0)
+            if (target_diff is None or target_diff == 0) and source_len > 5:
+                for i in range(1, min(len(s) - 2, 4)):
+                    for j in range(i + 1, min(len(s) - 1, 6)):
+                        for c1 in ('E', 'A', 'I', 'O', 'S', 'T', 'R'):
+                            if c1 != s[i]:
+                                for c2 in ('E', 'A', 'I', 'O', 'S', 'T', 'R'):
+                                    if c2 != s[j]:
+                                        cand = s[:i] + c1 + s[i+1:j] + c2 + s[j+1:]
+                                        if cand in dict_set and is_valid_candidate(w, cand, 3, direction, target_diff, dict_set, c_engine):
+                                            return True
 
     return False
 
