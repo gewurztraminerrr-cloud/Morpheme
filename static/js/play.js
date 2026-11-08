@@ -3391,16 +3391,16 @@ async function _doUpdateGameState(incomingState = null) {
 
                     // Add click listeners
                     listEl.querySelectorAll('.word-item').forEach(item => {
-                        item.onclick = () => {
-                            const word = item.dataset.word.toUpperCase();
-                            highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
-                            updateGameState();
-                            if (highlightedFoundWord) {
+                        item.onclick = (e) => {
+                            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                            const word = (item.dataset.word || '').trim().toUpperCase();
+                            if (!word) return;
+                            highlightedFoundWord = word;
+                            listEl.querySelectorAll('.word-item').forEach(el => {
+                                el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === word);
+                            });
+                            if (typeof window.fetchDefinition === 'function') {
                                 window.fetchDefinition(item.dataset.word);
-                            } else {
-                                if (typeof window.clearDefinitionPanel === 'function') {
-                                    window.clearDefinitionPanel();
-                                }
                             }
                         };
                     });
@@ -3493,16 +3493,16 @@ async function _doUpdateGameState(incomingState = null) {
                         listEl.innerHTML = html;
                         // Add click listeners
                         listEl.querySelectorAll('.word-item').forEach(item => {
-                            item.onclick = () => {
-                                const word = item.dataset.word.toUpperCase();
-                                highlightedFoundWord = (highlightedFoundWord === word) ? null : word;
-                                updateGameState();
-                                if (highlightedFoundWord) {
+                            item.onclick = (e) => {
+                                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                                const word = (item.dataset.word || '').trim().toUpperCase();
+                                if (!word) return;
+                                highlightedFoundWord = word;
+                                listEl.querySelectorAll('.word-item').forEach(el => {
+                                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === word);
+                                });
+                                if (typeof window.fetchDefinition === 'function') {
                                     window.fetchDefinition(item.dataset.word);
-                                } else {
-                                    if (typeof window.clearDefinitionPanel === 'function') {
-                                        window.clearDefinitionPanel();
-                                    }
                                 }
                             };
                         });
@@ -8675,7 +8675,6 @@ function reapplyBoardHighlights() {
     const isCurrentActiveRound = window.lastGameState && window.lastGameState.state === 'active';
     if (isCurrentActiveRound) {
         // Clear stale intermission/review word selection when an active round is running
-        highlightedFoundWord = null;
         highlightedSplitWord = null;
         window._lastAnimatedReviewWord = null;
         window.intermissionTileFilter = null;
@@ -9509,27 +9508,6 @@ function clearSubmissionVisuals() {
         c.classList.remove('typing-highlight');
         applyDensityToCell(c);
     });
-    const isIntermission = window.lastGameState && window.lastGameState.state === 'intermission';
-    if (!isIntermission) {
-        if (typeof clearDefinitionPanel === 'function') {
-            clearDefinitionPanel();
-        } else {
-            const defHeader = document.getElementById('definition-header');
-            if (defHeader) {
-                defHeader.classList.add('hidden');
-                defHeader.style.display = 'none';
-            }
-            const defWord = document.getElementById('definition-word');
-            if (defWord) defWord.textContent = '';
-            const defPron = document.getElementById('definition-pronunciation');
-            if (defPron) {
-                defPron.textContent = '';
-                defPron.style.display = 'none';
-            }
-            const defContent = document.getElementById('definition-content');
-            if (defContent) defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
-        }
-    }
 }
 
 function calculateWordScoreLocally(word, path) {
@@ -10247,11 +10225,15 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             newDiv.dataset.word = data.word || word;
                             newDiv.style.cssText = 'display:flex; justify-content:space-between; animation: slideIn 0.3s ease; cursor:pointer;';
                             newDiv.innerHTML = `<span><span class="found-indicator present">✓</span>${data.word || word}</span><span style="opacity:0.8">${data.points}</span>`;
-                            newDiv.onclick = () => {
-                                const w = (newDiv.dataset.word || data.word || word).toUpperCase();
-                                highlightedFoundWord = (highlightedFoundWord === w) ? null : w;
-                                updateGameState();
-                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(data.word || word);
+                            newDiv.onclick = (e) => {
+                                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                                const w = (newDiv.dataset.word || data.word || word || '').trim().toUpperCase();
+                                if (!w) return;
+                                highlightedFoundWord = w;
+                                listEl.querySelectorAll('.word-item').forEach(el => {
+                                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === w);
+                                });
+                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(w);
                             };
                             listEl.prepend(newDiv);
                         } else {
@@ -11326,7 +11308,6 @@ async function fetchDefinition(word) {
     const is24H = !!((s && ((s.time_limit >= 7200) || (s.room_id && (s.room_id.includes('24h') || s.room_id.includes('86400'))) || (s.game_type === '24h'))) ||
         (window.currentRoomId && (window.currentRoomId.includes('24h') || window.currentRoomId.includes('86400'))) ||
         (window.location.hash && (window.location.hash.includes('24h') || window.location.hash.includes('86400'))));
-    if (window.isSpectatorMode && !is24H) return; // Block spectators from overwriting definition panel in non-24h active play
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
 
     const cleanWord = String(word).trim().toUpperCase();
@@ -11338,10 +11319,22 @@ async function fetchDefinition(word) {
         window.userViewingDefinitionIntermission = true;
     }
     const defPanel = document.querySelector('.definitions-panel');
-    if (defPanel && defPanel.classList.contains('winner-flash')) {
-        defPanel.classList.remove('winner-flash');
+    if (defPanel) {
+        if (defPanel.classList.contains('winner-flash')) {
+            defPanel.classList.remove('winner-flash');
+        }
+        if (defPanel.style.display === 'none') {
+            defPanel.style.removeProperty('display');
+        }
+    }
+    const specPanel = document.getElementById('spectator-status-panel');
+    if (specPanel) {
+        specPanel.style.display = 'none';
     }
     const defContent = document.getElementById('definition-content');
+    if (defContent) {
+        defContent.style.display = '';
+    }
     const defWord = document.getElementById('definition-word');
     const defLenBadge = document.getElementById('definition-len-badge');
     const defHeader = document.getElementById('definition-header');
@@ -11572,7 +11565,14 @@ if (submittedWordsListEl) {
                 }
             }
 
-            if (word) fetchDefinition(word);
+            if (word) {
+                const cleanWord = String(word).trim().toUpperCase();
+                highlightedFoundWord = cleanWord;
+                submittedWordsListEl.querySelectorAll('.word-item').forEach(el => {
+                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === cleanWord);
+                });
+                fetchDefinition(cleanWord);
+            }
         }
     });
 }
@@ -14046,7 +14046,7 @@ window.showNotepadPopup = function(username) {
                         `;
 
                         return `
-                            <div class="notepad-word-line">
+                            <div class="notepad-word-line" data-word="${wordText}" style="cursor: pointer;" title="Click to view definition">
                                 <span class="notepad-word"><span class="notepad-word-num">${idx + 1}.</span>${wordText}</span>
                                 <div class="notepad-word-right">
                                     <span class="notepad-word-points">${pts} pts</span>
@@ -14072,6 +14072,19 @@ window.showNotepadPopup = function(username) {
         if (e.target === modal) {
             window.closeNotepadPopup();
         }
+    });
+
+    // Click on any word line in notepad to view its definition
+    modal.querySelectorAll('.notepad-word-line').forEach(line => {
+        line.addEventListener('click', (e) => {
+            const w = line.dataset.word;
+            if (w) {
+                window.closeNotepadPopup();
+                if (typeof window.fetchDefinition === 'function') {
+                    window.fetchDefinition(w);
+                }
+            }
+        });
     });
 
     // Touch/click scrolling mechanics
