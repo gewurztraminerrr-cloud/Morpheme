@@ -240,36 +240,39 @@ function findWordPathOnBoard(word, board) {
         if (visited.has(`${r},${c}`)) return null;
 
         const cellChar = board[r][c].toUpperCase();
-        let matchLength = 0;
+        let matchOptions = [];
 
-        if (cellChar === 'Q') {
+        if (cellChar === 'Q' || cellChar === 'QU') {
             if (upperWord.substring(index, index + 2) === 'QU') {
-                matchLength = 2;
+                matchOptions.push(2);
+                matchOptions.push(1);
             } else if (upperWord[index] === 'Q') {
-                matchLength = 1;
-            } else {
-                return null;
+                matchOptions.push(1);
             }
-        } else {
-            if (upperWord[index] === cellChar) {
-                matchLength = 1;
-            } else {
-                return null;
+        } else if (cellChar.length > 1) {
+            if (upperWord.substring(index, index + cellChar.length) === cellChar) {
+                matchOptions.push(cellChar.length);
             }
+        } else if (upperWord[index] === cellChar) {
+            matchOptions.push(1);
         }
+
+        if (matchOptions.length === 0) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
         const newPath = [...currentPath, { r, c }];
 
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return newPath;
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) return newPath;
 
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited);
-                if (result) return result;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const result = dfs(r + dr, c + dc, nextIndex, newPath, newVisited);
+                    if (result) return result;
+                }
             }
         }
         return null;

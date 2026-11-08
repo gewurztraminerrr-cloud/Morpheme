@@ -5365,31 +5365,42 @@ function rebuildTileToWordsMap() {
             function dfs3D(f, r, c, index, visited) {
                 const cellValue = board[f][r][c].toUpperCase();
                 const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
-                let foundMatch = false;
-                let matchLength = 0;
+                const matchOptions = [];
                 for (const char of letters) {
-                    if (char === 'Q') {
-                        if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
-                        else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
-                    } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+                    if (char === 'Q' || char === 'QU') {
+                        if (upperWord.substring(index, index + 2) === 'QU') {
+                            matchOptions.push(2);
+                            matchOptions.push(1);
+                        } else if (upperWord[index] === 'Q') {
+                            matchOptions.push(1);
+                        }
+                    } else if (char.length > 1) {
+                        if (upperWord.substring(index, index + char.length) === char) {
+                            matchOptions.push(char.length);
+                        }
+                    } else if (upperWord[index] === char) {
+                        matchOptions.push(1);
+                    }
                 }
-                if (!foundMatch) return;
+                if (matchOptions.length === 0) return;
 
-                const nextIndex = index + matchLength;
                 const visitedKey = `${f},${r},${c}`;
                 visited.add(visitedKey);
 
-                if (nextIndex >= wordLen) {
-                    for (const k of visited) matchingKeys.add(k);
-                    visited.delete(visitedKey);
-                    return;
-                }
+                const uniqueMatchOptions = matchOptions.length > 1 ? [...new Set(matchOptions)] : matchOptions;
+                for (const matchLength of uniqueMatchOptions) {
+                    const nextIndex = index + matchLength;
+                    if (nextIndex >= wordLen) {
+                        for (const k of visited) matchingKeys.add(k);
+                        continue;
+                    }
 
-                const neighbors = getCubeNeighbors(f, r, c);
-                for (const n of neighbors) {
-                    const nKey = `${n.f},${n.r},${n.c}`;
-                    if (!visited.has(nKey)) {
-                        dfs3D(n.f, n.r, n.c, nextIndex, visited);
+                    const neighbors = getCubeNeighbors(f, r, c);
+                    for (const n of neighbors) {
+                        const nKey = `${n.f},${n.r},${n.c}`;
+                        if (!visited.has(nKey)) {
+                            dfs3D(n.f, n.r, n.c, nextIndex, visited);
+                        }
                     }
                 }
                 visited.delete(visitedKey);
@@ -5409,40 +5420,48 @@ function rebuildTileToWordsMap() {
             function dfs2D(r, c, index, visited) {
                 const cellValue = board[r][c].toUpperCase();
                 const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
-                let foundMatch = false;
-                let matchLength = 0;
+                const matchOptions = [];
                 for (const char of letters) {
-                    if (char === 'Q') {
-                        if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
-                        else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
-                    } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+                    if (char === 'Q' || char === 'QU') {
+                        if (upperWord.substring(index, index + 2) === 'QU') {
+                            matchOptions.push(2);
+                            matchOptions.push(1);
+                        } else if (upperWord[index] === 'Q') {
+                            matchOptions.push(1);
+                        }
+                    } else if (char.length > 1) {
+                        if (upperWord.substring(index, index + char.length) === char) {
+                            matchOptions.push(char.length);
+                        }
+                    } else if (upperWord[index] === char) {
+                        matchOptions.push(1);
+                    }
                 }
-                if (!foundMatch) return;
+                if (matchOptions.length === 0) return;
 
-                const nextIndex = index + matchLength;
                 const visitedKey = `${r},${c}`;
                 visited.add(visitedKey);
 
-                if (nextIndex >= wordLen) {
-                    for (const k of visited) {
-                        const parts = k.split(',');
-                        const itemR = parseInt(parts[0]);
-                        const itemC = parseInt(parts[1]);
-                        matchingKeys.add(`${itemR},${itemC}`);
+                const uniqueMatchOptions = matchOptions.length > 1 ? [...new Set(matchOptions)] : matchOptions;
+                for (const matchLength of uniqueMatchOptions) {
+                    const nextIndex = index + matchLength;
+                    if (nextIndex >= wordLen) {
+                        for (const k of visited) {
+                            matchingKeys.add(k);
+                        }
+                        continue;
                     }
-                    visited.delete(visitedKey);
-                    return;
-                }
 
-                for (let dr = -1; dr <= 1; dr++) {
-                    for (let dc = -1; dc <= 1; dc++) {
-                        if (dr === 0 && dc === 0) continue;
-                        const nr = r + dr;
-                        const nc = c + dc;
-                        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-                            const nKey = `${nr},${nc}`;
-                            if (!visited.has(nKey)) {
-                                dfs2D(nr, nc, nextIndex, visited);
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            const nr = r + dr;
+                            const nc = c + dc;
+                            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                                const nKey = `${nr},${nc}`;
+                                if (!visited.has(nKey)) {
+                                    dfs2D(nr, nc, nextIndex, visited);
+                                }
                             }
                         }
                     }
@@ -5461,13 +5480,49 @@ function rebuildTileToWordsMap() {
     }
 
     // Populate tileToWordsMap by finding ALL cells for every word
-    for (const wordUpper of Object.keys(paths)) {
+    const wordsToMap = new Set();
+    if (paths) {
+        for (const w of Object.keys(paths)) {
+            if (w) wordsToMap.add(w.toUpperCase());
+        }
+    }
+    if (window.lastDisplayAllWordsArgs && Array.isArray(window.lastDisplayAllWordsArgs[0])) {
+        for (const entry of window.lastDisplayAllWordsArgs[0]) {
+            const w = (typeof entry === 'object' && entry !== null) ? (entry.word || '') : (entry || '');
+            if (w) wordsToMap.add(String(w).toUpperCase());
+        }
+    }
+    if (window.lastGameState) {
+        const fallbackWords = window.lastGameState.previous_all_words || window.lastGameState.all_words;
+        if (Array.isArray(fallbackWords)) {
+            for (const entry of fallbackWords) {
+                const w = (typeof entry === 'object' && entry !== null) ? (entry.word || '') : (entry || '');
+                if (w) wordsToMap.add(String(w).toUpperCase());
+            }
+        }
+    }
+
+    for (const wordUpper of wordsToMap) {
         const matchingKeys = getWordCells(wordUpper);
         for (const key of matchingKeys) {
             if (!window.tileToWordsMap[key]) {
                 window.tileToWordsMap[key] = new Set();
             }
             window.tileToWordsMap[key].add(wordUpper);
+        }
+        if (paths[wordUpper] && Array.isArray(paths[wordUpper])) {
+            for (const pt of paths[wordUpper]) {
+                let k;
+                if (Array.isArray(pt)) {
+                    k = pt.length === 3 ? `${pt[0]},${pt[1]},${pt[2]}` : `${pt[0]},${pt[1]}`;
+                } else if (pt && typeof pt === 'object') {
+                    k = (pt.f !== undefined && pt.f !== null) ? `${pt.f},${pt.r},${pt.c}` : `${pt.r},${pt.c}`;
+                }
+                if (k) {
+                    if (!window.tileToWordsMap[k]) window.tileToWordsMap[k] = new Set();
+                    window.tileToWordsMap[k].add(wordUpper);
+                }
+            }
         }
     }
 
@@ -8376,13 +8431,18 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         let matchOptions = [];
 
         for (const char of letters) {
-            if (char === 'Q') {
+            if (char === 'Q' || char === 'QU') {
                 if (upperWord.substring(index, index + 2) === 'QU') {
                     matchOptions.push(2);
                     matchOptions.push(1);
                     break;
                 } else if (upperWord[index] === 'Q') {
                     matchOptions.push(1);
+                    break;
+                }
+            } else if (char.length > 1) {
+                if (upperWord.substring(index, index + char.length) === char) {
+                    matchOptions.push(char.length);
                     break;
                 }
             } else if (upperWord[index] === char) {
@@ -8416,7 +8476,6 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
             }
         }
         return null;
-        return null;
     }
 
     // Try starting from all possible cells to find a path that hits a special tile
@@ -8435,25 +8494,41 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         if (visited.has(`${r},${c}`)) return null;
         const cellValue = board[r][c].toUpperCase();
         const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
-        let foundMatch = false;
-        let matchLength = 0;
+        let matchOptions = [];
         for (const char of letters) {
-            if (char === 'Q') {
-                if (upperWord.substring(index, index + 2) === 'QU') { matchLength = 2; foundMatch = true; break; }
-                else if (upperWord[index] === 'Q') { matchLength = 1; foundMatch = true; break; }
-            } else if (upperWord[index] === char) { matchLength = 1; foundMatch = true; break; }
+            if (char === 'Q' || char === 'QU') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchOptions.push(2);
+                    matchOptions.push(1);
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchOptions.push(1);
+                    break;
+                }
+            } else if (char.length > 1) {
+                if (upperWord.substring(index, index + char.length) === char) {
+                    matchOptions.push(char.length);
+                    break;
+                }
+            } else if (upperWord[index] === char) {
+                matchOptions.push(1);
+                break;
+            }
         }
-        if (!foundMatch) return null;
+        if (matchOptions.length === 0) return null;
         const newVisited = new Set(visited);
         newVisited.add(`${r},${c}`);
         const newPath = [...currentPath, { r, c }];
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return newPath;
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                const result = dfsBasic(r + dr, c + dc, nextIndex, newPath, newVisited);
-                if (result) return result;
+
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) return newPath;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const result = dfsBasic(r + dr, c + dc, nextIndex, newPath, newVisited);
+                    if (result) return result;
+                }
             }
         }
         return null;
@@ -8546,15 +8621,30 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
         if (visited.has(`${f},${r},${c}`)) return null;
 
         const cellValue = board[f][r][c].toUpperCase();
-        let matchLength = 0;
-        if (cellValue === 'Q') {
-            if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
-            else if (upperWord[index] === 'Q') matchLength = 1;
-        } else if (upperWord[index] === cellValue) {
-            matchLength = 1;
+        const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+        let matchOptions = [];
+        for (const char of letters) {
+            if (char === 'Q' || char === 'QU') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchOptions.push(2);
+                    matchOptions.push(1);
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchOptions.push(1);
+                    break;
+                }
+            } else if (char.length > 1) {
+                if (upperWord.substring(index, index + char.length) === char) {
+                    matchOptions.push(char.length);
+                    break;
+                }
+            } else if (upperWord[index] === char) {
+                matchOptions.push(1);
+                break;
+            }
         }
 
-        if (matchLength === 0) return null;
+        if (matchOptions.length === 0) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${f},${r},${c}`);
@@ -8562,15 +8652,17 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
 
         let nowHit = hasHitTarget || specialCoords.has(`${f},${r},${c}`);
 
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) {
-            if (specialCoords.size > 0 && !nowHit) return null;
-            return newPath;
-        }
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) {
+                if (specialCoords.size > 0 && !nowHit) continue;
+                return newPath;
+            }
 
-        for (const n of getCubeNeighbors(f, r, c)) {
-            const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited, nowHit);
-            if (result) return result;
+            for (const n of getCubeNeighbors(f, r, c)) {
+                const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited, nowHit);
+                if (result) return result;
+            }
         }
         return null;
     }
@@ -8593,26 +8685,43 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
         if (visited.has(`${f},${r},${c}`)) return null;
 
         const cellValue = board[f][r][c].toUpperCase();
-        let matchLength = 0;
-        if (cellValue === 'Q') {
-            if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
-            else if (upperWord[index] === 'Q') matchLength = 1;
-        } else if (upperWord[index] === cellValue) {
-            matchLength = 1;
+        const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+        let matchOptions = [];
+        for (const char of letters) {
+            if (char === 'Q' || char === 'QU') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchOptions.push(2);
+                    matchOptions.push(1);
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchOptions.push(1);
+                    break;
+                }
+            } else if (char.length > 1) {
+                if (upperWord.substring(index, index + char.length) === char) {
+                    matchOptions.push(char.length);
+                    break;
+                }
+            } else if (upperWord[index] === char) {
+                matchOptions.push(1);
+                break;
+            }
         }
 
-        if (matchLength === 0) return null;
+        if (matchOptions.length === 0) return null;
 
         const newVisited = new Set(visited);
         newVisited.add(`${f},${r},${c}`);
         const newPath = [...currentPath, { f, r, c }];
 
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return newPath;
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) return newPath;
 
-        for (const n of getCubeNeighbors(f, r, c)) {
-            const result = dfsBasic(n.f, n.r, n.c, nextIndex, newPath, newVisited);
-            if (result) return result;
+            for (const n of getCubeNeighbors(f, r, c)) {
+                const result = dfsBasic(n.f, n.r, n.c, nextIndex, newPath, newVisited);
+                if (result) return result;
+            }
         }
         return null;
     }

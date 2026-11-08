@@ -64,3 +64,12 @@ START_OVER_POINT_NOVEMBER_8
   - When a user selects a word under Words or All Words (as well as FCFS feed, notepads, or previous day list) during active rounds or intermission, clicking that same word again immediately deselects/retracts it.
   - Instantly removes `.finder-active` highlight from word items, clears `.review-highlight` from board cells, removes `.finder-highlight` from player cards in the roster, and calls `clearDefinitionPanel()` to return the definition card back to its clean default state.
   - Bumped asset version query string to `1794101000`.
+
+### 7. Intermission Tile Filtering for Q / QU Tiles and Separate U Tiles (`static/js/play.js`, `static/js/play_tournament.js`, `static/js/tools.js`, `templates/index.html`)
+- **Exhaustive Q / QU Match Length Exploration ([2, 1])**:
+  - Resolved an issue during intermission where clicking a "QU" tile on the board failed to include words like `EQUINES` in the filtered All Words list, even though `EQUINES` appeared in All Words when no tile was selected.
+  - The root cause was greedy matching in `rebuildTileToWordsMap()` (`dfs2D` and `dfs3D`), `findWordPathOnBoard()`, `findWordPathOnCube()`, and tools/tournament pathfinders: when matching letters on a `'Q'` or `'QU'` tile, if the word contained `'QU'`, the search greedily consumed both letters (`matchLength = 2`) on the single tile and never tested `matchLength = 1` (consuming only `'Q'` on the tile and proceeding to an adjacent `'U'` tile).
+  - Updated all DFS pathfinding and indexing routines to branch over both `matchLength = 2` and `matchLength = 1` for `'Q'` / `'QU'` tiles.
+  - Words formed via `Q + separate adjacent U` tiles (such as `EQUINES`: `E` -> `Q` -> `U` -> `I` -> `N` -> `E` -> `S`) are now properly indexed and displayed when clicking either the `QU` tile or the separate adjacent `U` tile during intermission.
+  - Ensured all board words across `all_words_paths`, `lastDisplayAllWordsArgs`, `previous_all_words`, and `all_words` are exhaustively indexed and mapped to their tiles.
+  - Bumped asset version query string to `1794102000`.

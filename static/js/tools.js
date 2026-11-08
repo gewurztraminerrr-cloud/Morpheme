@@ -3684,43 +3684,48 @@ function findWordPath(board, word) {
         if (index >= targetWord.length) return [];
         const cellVal = board[r][c].toUpperCase();
         let matchLen = 0;
-        if (cellVal.includes('/')) {
-            const options = cellVal.split('/');
-            for (const opt of options) {
-                if (opt === 'Q') {
-                    if (targetWord.substring(index, index + 2) === 'QU') {
-                        matchLen = 2;
-                        break;
-                    } else if (targetWord[index] === 'Q') {
-                        matchLen = 1;
-                        break;
-                    }
-                } else if (targetWord.substring(index).startsWith(opt)) {
-                    matchLen = opt.length;
+        const letters = cellVal.includes('/') ? cellVal.split('/') : [cellVal];
+        let matchOptions = [];
+        for (const opt of letters) {
+            if (opt === 'Q' || opt === 'QU') {
+                if (targetWord.substring(index, index + 2) === 'QU') {
+                    matchOptions.push(2);
+                    matchOptions.push(1);
+                    break;
+                } else if (targetWord[index] === 'Q') {
+                    matchOptions.push(1);
                     break;
                 }
-            }
-        } else {
-            const letter = cellVal;
-            if (targetWord[index] === letter) {
-                matchLen = 1;
-            } else if (letter === 'Q' && targetWord.substring(index, index + 2) === 'QU') {
-                matchLen = 2;
+            } else if (opt.length > 1) {
+                if (targetWord.substring(index).startsWith(opt)) {
+                    matchOptions.push(opt.length);
+                    break;
+                }
+            } else if (targetWord[index] === opt) {
+                matchOptions.push(1);
+                break;
             }
         }
-        if (matchLen === 0) return null;
-        if (index + matchLen === targetWord.length) {
-            return [{ row: r, col: c }];
-        }
+        if (matchOptions.length === 0) return null;
+
         visited.add(`${r},${c}`);
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                const nr = r + dr;
-                const nc = c + dc;
-                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
-                    const result = dfs(nr, nc, index + matchLen, visited);
-                    if (result) return [{ row: r, col: c }, ...result];
+        for (const matchLen of matchOptions) {
+            if (index + matchLen === targetWord.length) {
+                visited.delete(`${r},${c}`);
+                return [{ row: r, col: c }];
+            }
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited.has(`${nr},${nc}`)) {
+                        const result = dfs(nr, nc, index + matchLen, visited);
+                        if (result) {
+                            visited.delete(`${r},${c}`);
+                            return [{ row: r, col: c }, ...result];
+                        }
+                    }
                 }
             }
         }
@@ -3787,36 +3792,40 @@ function findWordPathOnCube(word, board) {
         if (index >= upperWord.length) return currentPath;
         if (visited.has(`${f},${r},${c}`)) return null;
         const cellValue = board[f][r][c].toUpperCase();
-        let matchLength = 0;
-        if (cellValue.includes('/')) {
-            const options = cellValue.split('/');
-            for (const opt of options) {
-                if (opt === 'Q') {
-                    if (upperWord.substring(index, index + 2) === 'QU') {
-                        matchLength = 2;
-                        break;
-                    } else if (upperWord[index] === 'Q') {
-                        matchLength = 1;
-                        break;
-                    }
-                } else if (upperWord.substring(index).startsWith(opt)) {
-                    matchLength = opt.length;
+        const letters = cellValue.includes('/') ? cellValue.split('/') : [cellValue];
+        let matchOptions = [];
+        for (const opt of letters) {
+            if (opt === 'Q' || opt === 'QU') {
+                if (upperWord.substring(index, index + 2) === 'QU') {
+                    matchOptions.push(2);
+                    matchOptions.push(1);
+                    break;
+                } else if (upperWord[index] === 'Q') {
+                    matchOptions.push(1);
                     break;
                 }
+            } else if (opt.length > 1) {
+                if (upperWord.substring(index).startsWith(opt)) {
+                    matchOptions.push(opt.length);
+                    break;
+                }
+            } else if (upperWord[index] === opt) {
+                matchOptions.push(1);
+                break;
             }
-        } else if (cellValue === 'Q') {
-            if (upperWord.substring(index, index + 2) === 'QU') matchLength = 2;
-            else if (upperWord[index] === 'Q') matchLength = 1;
-        } else if (upperWord[index] === cellValue) matchLength = 1;
-        if (matchLength === 0) return null;
+        }
+        if (matchOptions.length === 0) return null;
         const newVisited = new Set(visited);
         newVisited.add(`${f},${r},${c}`);
         const newPath = [...currentPath, { f, r, c }];
-        const nextIndex = index + matchLength;
-        if (nextIndex >= upperWord.length) return newPath;
-        for (const n of getCubeNeighbors(f, r, c)) {
-            const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited);
-            if (result) return result;
+
+        for (const matchLength of matchOptions) {
+            const nextIndex = index + matchLength;
+            if (nextIndex >= upperWord.length) return newPath;
+            for (const n of getCubeNeighbors(f, r, c)) {
+                const result = dfs(n.f, n.r, n.c, nextIndex, newPath, newVisited);
+                if (result) return result;
+            }
         }
         return null;
     }
