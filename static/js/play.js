@@ -5949,6 +5949,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             
             // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
             if (window.lastGameState && window.lastGameState.state === 'intermission') {
+                window.wordPressedDuringIntermission = true;
                 window.userViewingDefinitionIntermission = true;
             }
 
@@ -11537,10 +11538,9 @@ async function fetchDefinition(word) {
 const submittedWordsListEl = document.getElementById('submitted-words-list');
 if (submittedWordsListEl) {
     submittedWordsListEl.addEventListener('click', (e) => {
-        // Mark that the user is explicitly viewing a definition (so definition persists into next round)
+        // If in intermission, displayAllWords handles word clicks completely (finder highlights, board path trace, definition)
         if (window.lastGameState && window.lastGameState.state === 'intermission') {
-            window.wordPressedDuringIntermission = true;
-            window.userViewingDefinitionIntermission = true;
+            return;
         }
 
         // Handle clicks on feed items, notepads, etc.
