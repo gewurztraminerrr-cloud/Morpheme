@@ -91,3 +91,12 @@ START_OVER_POINT_NOVEMBER_8
   - Removed the legacy `margin-right: 25px !important;` offset on `.mobile-nav-indicators .nav-right` and updated it to `margin-right: 0 !important;`, allowing the buttons to sit 25px further right (aligned with the standard 15px container padding).
   - Restored visual balance and symmetry with the left-hand navigation buttons ("➜ Players" and "➜ Board").
   - Bumped `play.css` version query string in `templates/index.html` to `1794090100`.
+
+### 10. Intermission Board Tile Filtering Letter Accuracy (`static/js/play.js`, `templates/index.html`)
+- **Accurate Tile Word Filtering During Intermission**:
+  - Resolved an issue during intermission where selecting a letter on the board caused words that did not use that letter to appear in the filtered All Words list.
+  - Eliminated server path coordinate mismatch on mobile portrait boards by removing untransposed server coordinate injection in `rebuildTileToWordsMap()`, relying authoritatively on `getWordCells()` DFS pathfinder on the actual displayed board (`previous_board`).
+  - Added path transposition for `all_words_paths` and `previous_all_words_paths` in `safelyTransposeState()` so client paths match transposed boards.
+  - Removed the `all_words_paths` prerequisite check in `displayAllWords()`, ensuring tile filtering reliably executes even if `all_words_paths` is empty.
+  - Implemented ironclad secondary letter verification in `displayAllWords()` so that only words containing the selected tile's letter(s) can ever appear.
+  - Bumped `play.js` version query string in `templates/index.html` to `1794104000`.

@@ -830,6 +830,38 @@ function safelyTransposeState(state) {
                             }
                         }
                     }
+
+                    // Transpose all_words_paths safely
+                    if (state.all_words_paths && typeof state.all_words_paths === 'object') {
+                        const transposedPaths = {};
+                        for (const [w, pList] of Object.entries(state.all_words_paths)) {
+                            if (Array.isArray(pList)) {
+                                transposedPaths[w] = pList.map(coord => {
+                                    if (Array.isArray(coord) && coord.length === 2) return [coord[1], coord[0]];
+                                    if (coord && typeof coord === 'object' && coord.r !== undefined && coord.c !== undefined && coord.f === undefined) {
+                                        return { r: coord.c, c: coord.r };
+                                    }
+                                    return coord;
+                                });
+                            }
+                        }
+                        state.all_words_paths = transposedPaths;
+                    }
+                    if (state.previous_all_words_paths && typeof state.previous_all_words_paths === 'object') {
+                        const transposedPrevPaths = {};
+                        for (const [w, pList] of Object.entries(state.previous_all_words_paths)) {
+                            if (Array.isArray(pList)) {
+                                transposedPrevPaths[w] = pList.map(coord => {
+                                    if (Array.isArray(coord) && coord.length === 2) return [coord[1], coord[0]];
+                                    if (coord && typeof coord === 'object' && coord.r !== undefined && coord.c !== undefined && coord.f === undefined) {
+                                        return { r: coord.c, c: coord.r };
+                                    }
+                                    return coord;
+                                });
+                            }
+                        }
+                        state.previous_all_words_paths = transposedPrevPaths;
+                    }
                 }
             }
         }
@@ -5333,15 +5365,21 @@ function rebuildTileToWordsMap() {
     window.tileToWordsMap = {};
     window.tileToWordsMapCacheKey = null;
 
-    if (!window.lastGameState || !window.lastGameState.board) return;
+    if (!window.lastGameState) return;
 
-    const board = window.lastGameState.board;
+    const state = window.lastGameState;
+    const board = ((state.state === 'intermission' || state.state === 'waiting') && state.previous_board && state.previous_board.length > 0)
+        ? state.previous_board
+        : state.board;
+
+    if (!board || board.length === 0) return;
+
     const isTransposed = !!window.isBoardTransposed;
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-    const roundId = `${window.lastGameState.room_id}_${window.lastGameState.current_round}`;
+    const roundId = `${state.room_id}_${state.current_round}`;
     const cacheKey = `${roundId}_${isTransposed}`;
 
-    const paths = window.lastGameState.all_words_paths || {};
+    const paths = state.all_words_paths || {};
 
     // 3D Neighbors Helper matching board_generator.py logic
     function getCubeNeighbors(f, r, c) {
@@ -5542,20 +5580,6 @@ function rebuildTileToWordsMap() {
             }
             window.tileToWordsMap[key].add(wordUpper);
         }
-        if (paths[wordUpper] && Array.isArray(paths[wordUpper])) {
-            for (const pt of paths[wordUpper]) {
-                let k;
-                if (Array.isArray(pt)) {
-                    k = pt.length === 3 ? `${pt[0]},${pt[1]},${pt[2]}` : `${pt[0]},${pt[1]}`;
-                } else if (pt && typeof pt === 'object') {
-                    k = (pt.f !== undefined && pt.f !== null) ? `${pt.f},${pt.r},${pt.c}` : `${pt.r},${pt.c}`;
-                }
-                if (k) {
-                    if (!window.tileToWordsMap[k]) window.tileToWordsMap[k] = new Set();
-                    window.tileToWordsMap[k].add(wordUpper);
-                }
-            }
-        }
     }
 
     window.tileToWordsMapCacheKey = cacheKey;
@@ -5635,7 +5659,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     // Filter first (by intermission tile filter)
     let displayWords = cleanWords;
-    if (window.intermissionTileFilter && window.lastGameState && window.lastGameState.all_words_paths) {
+    if (window.intermissionTileFilter && window.lastGameState) {
         const { r, c, f } = window.intermissionTileFilter;
         const roundId = window.lastGameState ? `${window.lastGameState.room_id}_${window.lastGameState.current_round}` : null;
         const isTransposed = !!window.isBoardTransposed;
@@ -5647,7 +5671,21 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
         const filterKey = (f !== null && f !== undefined && f !== -1) ? `${f},${r},${c}` : `${r},${c}`;
         const matchingWords = window.tileToWordsMap[filterKey] || new Set();
-        displayWords = displayWords.filter(entry => matchingWords.has(entry.wordUpper));
+        const filterLetter = (window.intermissionTileFilter.letter || '').toUpperCase().trim();
+        displayWords = displayWords.filter(entry => {
+            if (!matchingWords.has(entry.wordUpper)) return false;
+            if (filterLetter) {
+                const options = filterLetter.includes('/') ? filterLetter.split('/') : [filterLetter];
+                const matchesAnyLetter = options.some(opt => {
+                    if (opt === 'Q' || opt === 'QU') {
+                        return entry.wordUpper.includes('Q');
+                    }
+                    return entry.wordUpper.includes(opt);
+                });
+                if (!matchesAnyLetter) return false;
+            }
+            return true;
+        });
     }
 
     // Determine room/spinner dictionary
