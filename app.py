@@ -2960,38 +2960,90 @@ def get_rating_configs():
     conn = get_db_connection()
     try:
         cur = conn.execute('''
-            SELECT ur.config_key, COUNT(ur.user_id) as user_count, ROUND(AVG(ur.rating), 1) as avg_rating
+            SELECT ur.config_key, ur.user_id, ur.rating,
+                   MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) as games
             FROM user_ratings ur
             JOIN users u ON ur.user_id = u.id
-            WHERE NOT (
-                ur.rating = 1200
-                AND MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) <= 10
-            )
-            GROUP BY ur.config_key
         ''')
-        db_rows = {row[0]: {'user_count': row[1], 'avg_rating': row[2]} for row in cur.fetchall()}
+        rows = cur.fetchall()
+
+        cfg_stats = {}
+        for row in rows:
+            cfg, uid, rating, games = row[0], row[1], row[2], (row[3] or 0)
+            if cfg not in cfg_stats:
+                cfg_stats[cfg] = {
+                    'total_users': 0,
+                    'count_1200': 0,
+                    'unestablished_1200': 0,
+                    'established_1200': 0,
+                    'established_ratings': []
+                }
+            s = cfg_stats[cfg]
+            s['total_users'] += 1
+            if rating == 1200:
+                s['count_1200'] += 1
+                if games > 10:
+                    s['established_1200'] += 1
+                    s['established_ratings'].append(rating)
+                else:
+                    s['unestablished_1200'] += 1
+            else:
+                s['established_ratings'].append(rating)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
 
     result = []
+    total_1200_count = 0
+    total_unest_1200 = 0
+    total_est_1200 = 0
+    total_established_count = 0
+
     for k in VALID_CONSTANT_CONFIGS:
-        stats = db_rows.get(k)
-        if not stats and k.startswith('3d|'):
+        s = cfg_stats.get(k)
+        if not s and k.startswith('3d|'):
             cube_alias = k.replace('3d|', 'cube|', 1)
-            stats = db_rows.get(cube_alias)
-        if not stats:
-            stats = {'user_count': 0, 'avg_rating': None}
+            s = cfg_stats.get(cube_alias)
+
+        if s:
+            established_cnt = len(s['established_ratings'])
+            avg_rating = round(sum(s['established_ratings']) / established_cnt, 1) if established_cnt > 0 else None
+            count_1200 = s['count_1200']
+            unest_1200 = s['unestablished_1200']
+            est_1200 = s['established_1200']
+        else:
+            established_cnt = 0
+            avg_rating = None
+            count_1200 = 0
+            unest_1200 = 0
+            est_1200 = 0
+
+        total_1200_count += count_1200
+        total_unest_1200 += unest_1200
+        total_est_1200 += est_1200
+        total_established_count += established_cnt
 
         result.append({
             'key': k,
             'label': format_config_label(k),
-            'user_count': stats['user_count'],
-            'avg_rating': stats['avg_rating']
+            'user_count': established_cnt,
+            'established_count': established_cnt,
+            'count_1200': count_1200,
+            'unestablished_1200': unest_1200,
+            'established_1200': est_1200,
+            'avg_rating': avg_rating
         })
 
-    return jsonify({'configs': result})
+    return jsonify({
+        'configs': result,
+        'totals': {
+            'established_count': total_established_count,
+            'count_1200': total_1200_count,
+            'unestablished_1200': total_unest_1200,
+            'established_1200': total_est_1200
+        }
+    })
 
 
 @app.route('/api/mods/adjust-ratings', methods=['POST'])

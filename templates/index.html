@@ -5950,6 +5950,15 @@
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
                                 Check each configuration to adjust. Configurations with eligible player ratings are marked with player counts.
                             </p>
+                            <div id="rating-stats-banner" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.85rem;">
+                                <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                                    <div><strong style="color: #60a5fa;">Firmly Established:</strong> <span id="stat-total-established" style="font-weight: 700; color: var(--text-primary);">--</span></div>
+                                    <div><strong style="color: #a855f7;">1200 Ratings:</strong> <span id="stat-total-1200" style="font-weight: 700; color: var(--text-primary);">--</span> <span id="stat-1200-breakdown" style="opacity: 0.7; font-size: 0.78rem;"></span></div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    *Averages exclude 1200 ratings with ≤10 games
+                                </div>
+                            </div>
                             <div id="rating-configs-container" style="display: flex; flex-direction: column; gap: 14px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
                                 <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading configurations...</div>
                             </div>
@@ -10151,7 +10160,7 @@
     <script src="/js/tools.js?v=1794102000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1794123000"></script>
+    <script src="/js/mods.js?v=1794124000"></script>
     <script src="/js/private_matches.js?v=1793520000"></script>
     <script src="/js/donate.js?v=33806"></script>
     

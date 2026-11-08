@@ -1805,6 +1805,19 @@ async function loadRatingConfigs() {
         const data = await res.json();
         _ratingConfigsCache = data.configs || [];
 
+        // Update Stats Overview Banner
+        const totals = data.totals || {};
+        const statEstEl = document.getElementById('stat-total-established');
+        const stat1200El = document.getElementById('stat-total-1200');
+        const stat1200BreakdownEl = document.getElementById('stat-1200-breakdown');
+        if (statEstEl) statEstEl.textContent = totals.established_count ?? '--';
+        if (stat1200El) stat1200El.textContent = totals.count_1200 ?? '--';
+        if (stat1200BreakdownEl) {
+            stat1200BreakdownEl.textContent = totals.count_1200 !== undefined
+                ? `(${totals.unestablished_1200 || 0} provisional ≤10 games, ${totals.established_1200 || 0} established >10 games)`
+                : '';
+        }
+
         // Group into categories
         const groups = {
             'Accumulative (ACC)': [],
@@ -1839,17 +1852,20 @@ async function loadRatingConfigs() {
             `;
 
             configs.forEach(c => {
-                const hasUsers = (c.user_count || 0) > 0;
+                const estCount = c.established_count !== undefined ? c.established_count : (c.user_count || 0);
+                const hasUsers = estCount > 0;
                 const cardBorder = hasUsers ? 'rgba(59, 130, 246, 0.4)' : 'var(--input-border)';
                 const cardBg = hasUsers ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-surface)';
                 const badgeColor = hasUsers ? '#3b82f6' : 'var(--text-secondary)';
+                const avgText = (c.avg_rating !== null && c.avg_rating !== undefined) ? ` (avg ${c.avg_rating})` : '';
+                const c1200 = c.count_1200 || 0;
                 
                 html += `
                     <label class="rating-cfg-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; border: 1px solid ${cardBorder}; background: ${cardBg}; cursor: pointer; user-select: none;">
-                        <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${c.user_count || 0}" style="cursor: pointer; width: 16px; height: 16px; margin: 0;">
+                        <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" style="cursor: pointer; width: 16px; height: 16px; margin: 0;">
                         <div style="display: flex; flex-direction: column; overflow: hidden; line-height: 1.25;">
                             <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.label}</span>
-                            <span style="font-size: 0.72rem; color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'};">${c.user_count || 0} user${c.user_count === 1 ? '' : 's'}${hasUsers && c.avg_rating ? ` (avg ${c.avg_rating})` : ''}</span>
+                            <span style="font-size: 0.72rem; color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'};">${estCount} established${avgText} • ${c1200} @ 1200</span>
                         </div>
                     </label>
                 `;
@@ -1885,7 +1901,7 @@ function updateRatingSelectionSummary() {
         totalUsers += parseInt(cb.dataset.users || '0', 10);
     });
 
-    summaryEl.textContent = `Selected: ${checkboxes.length} configuration${checkboxes.length === 1 ? '' : 's'} (${totalUsers} user rating${totalUsers === 1 ? '' : 's'} currently on record)`;
+    summaryEl.textContent = `Selected: ${checkboxes.length} configuration${checkboxes.length === 1 ? '' : 's'} (${totalUsers} firmly established rating${totalUsers === 1 ? '' : 's'})`;
 }
 
 async function loadRatingAdjHistory() {
