@@ -1333,6 +1333,8 @@ function clearGameUIAndCache() {
     window.selectedAllWordsLength = 'all';
     window.allWordsSortMode = 'length';
     window.lastIntermissionRoundId = null;
+    if (typeof cleanupGuessingPopup === 'function') cleanupGuessingPopup();
+    wrongGuessesOnBoardCount = 0;
     stopBounceFormat();
     stopRotatingLetters();
     
@@ -2179,6 +2181,8 @@ async function _doUpdateGameState(incomingState = null) {
 
         // Detect transition to intermission (round end)
         if (previousState && previousState.state !== 'intermission' && state.state === 'intermission') {
+            if (typeof cleanupGuessingPopup === 'function') cleanupGuessingPopup();
+            wrongGuessesOnBoardCount = 0;
             window.subanagramsCustomBoard = null;
             window.subanagramsBoardKey = null;
             stopRotatingLetters();
@@ -3237,7 +3241,8 @@ async function _doUpdateGameState(incomingState = null) {
                 const selectedLen = window.selectedAllWordsLength || 'all';
                 const selectedDict = window.selectedAllWordsDict || 'all';
                 const sortMode = window.allWordsSortMode || 'length';
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+                const wordsLen = allWords ? allWords.length : 0;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -3245,6 +3250,7 @@ async function _doUpdateGameState(incomingState = null) {
                         window.lastRenderedIntermissionKey = currentRenderKey;
                     } catch (renderErr) {
                         console.error('[Intermission Words Render Error]', renderErr);
+                        window.lastRenderedIntermissionKey = currentRenderKey;
                     }
                 }
                 if (state.game_type === 'split' || state.game_type === 'fcfs') addSplitViewBoardToggle();
@@ -5476,7 +5482,8 @@ function updateIntermissionRenderKey() {
     const selectedLen = window.selectedAllWordsLength || 'all';
     const selectedDict = window.selectedAllWordsDict || 'all';
     const sortMode = window.allWordsSortMode || 'length';
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}`;
+    const wordsLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) ? window.lastDisplayAllWordsArgs[0].length : 0;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -5489,7 +5496,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     console.log(`[displayAllWords] RENDERING. BonusWord: "${bonusWord}" | Words count: ${allWords ? allWords.length : 0}`);
     const listEl = document.getElementById('submitted-words-list');
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const prevScrollTop = (listEl && !isMobile) ? listEl.scrollTop : 0;
+    const prevScrollTop = listEl ? listEl.scrollTop : 0;
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
         const existingBtn = document.getElementById('toggle-board-btn');
@@ -6102,7 +6109,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         </div>`;
     }).join('');
 
-    if (listEl && !isMobile) {
+    if (listEl) {
         listEl.scrollTop = prevScrollTop;
     }
 
@@ -10337,9 +10344,31 @@ function recordGuessResult(isValid, isOnBoard, isSpecialSkip = false) {
 
 let activeGuessingScrollPrevent = null;
 
+function cleanupGuessingPopup() {
+    if (activeGuessingScrollPrevent) {
+        document.removeEventListener('wheel', activeGuessingScrollPrevent, { passive: false });
+        document.removeEventListener('touchmove', activeGuessingScrollPrevent, { passive: false });
+        activeGuessingScrollPrevent = null;
+    }
+    const popup = document.getElementById('guessing-popup');
+    if (popup) {
+        popup.remove();
+    }
+    document.body.style.overflow = '';
+    window.isPopupVisible = false;
+    const boardPanel = document.querySelector('.board-panel') || document.getElementById('game-board');
+    if (boardPanel) {
+        boardPanel.style.pointerEvents = 'auto';
+    }
+}
+window.cleanupGuessingPopup = cleanupGuessingPopup;
+
 function showGuessingPopup() {
     if (window.lastGameState && window.lastGameState.time_limit >= 7200) return;
     if (document.getElementById('guessing-popup')) return;
+
+    // Clean up any stale listeners/popups first
+    cleanupGuessingPopup();
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -10455,26 +10484,14 @@ function showGuessingPopup() {
 
     setTimeout(() => {
         popup.style.opacity = '0';
-        popup.querySelector('.guessing-popup-card').style.transform = 'scale(0.9)';
+        const card = popup.querySelector('.guessing-popup-card');
+        if (card) card.style.transform = 'scale(0.9)';
         setTimeout(() => {
-            popup.remove();
-            document.body.style.overflow = originalOverflow;
-            
-            // Release global scroll/swipe lock
-            if (activeGuessingScrollPrevent) {
-                document.removeEventListener('wheel', activeGuessingScrollPrevent, { passive: false });
-                document.removeEventListener('touchmove', activeGuessingScrollPrevent, { passive: false });
-                activeGuessingScrollPrevent = null;
-            }
-            
-            window.isPopupVisible = false;
+            cleanupGuessingPopup();
             if (wordInput) {
                 wordInput.disabled = false;
                 const isMobile = window.innerWidth <= 992;
                 if (!isMobile) wordInput.focus();
-            }
-            if (boardPanel) {
-                boardPanel.style.pointerEvents = 'auto';
             }
         }, 250);
     }, 3000);
@@ -12347,6 +12364,7 @@ document.addEventListener('click', (e) => {
 // Helper to ensure UI is correctly reset for active play (escapes spectator mode)
 function resetPlayUI() {
     console.log('[play.js] resetPlayUI() called for active play session');
+    if (typeof cleanupGuessingPopup === 'function') cleanupGuessingPopup();
     wrongGuessesOnBoardCount = 0;
     const wordInputSection = document.querySelector('.word-input-section');
     const wordInput = document.getElementById('word-input');

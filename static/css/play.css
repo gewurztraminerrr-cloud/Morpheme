@@ -229,7 +229,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow-y: auto; /* Allow scrolling inside the box */
+    overflow: hidden; /* Ensure inner tabs and lists handle scrolling cleanly */
 }
 
 
@@ -242,7 +242,10 @@
 
 #submitted-words-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 /* Players Panel and Definitions Container */
@@ -2278,6 +2281,7 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     display: none !important;
     flex-direction: column;
     flex: 1;
+    min-height: 0 !important;
     overflow: hidden;
     /* Prevent container from scrolling */
 }
@@ -2399,9 +2403,13 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     flex-direction: column;
     gap: 8px;
     flex: 1;
+    min-height: 0 !important;
     /* Grow to fill space */
     overflow-y: auto;
-    /* Scrollably list */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    /* Scrollable list */
     padding-right: 5px;
     /* Space for scrollbar */
     margin-bottom: 10px;
@@ -2412,9 +2420,13 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     flex-direction: column;
     gap: 8px;
     flex: 1;
+    min-height: 0 !important;
     /* Grow to fill space */
     overflow-y: auto;
-    /* Scrollably list */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    /* Scrollable list */
     padding-right: 5px;
     /* Space for scrollbar */
     margin-bottom: 10px;
@@ -8966,6 +8978,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .words-table-box {
         height: auto !important; /* Allow it to flex */
         flex: 1 1 0% !important; /* Allow it to shrink if needed */
+        min-height: 0 !important;
+        overflow: hidden !important;
         max-height: none !important;
         width: 100% !important;
         max-width: 100% !important;
