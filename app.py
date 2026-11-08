@@ -3041,9 +3041,20 @@ def get_rating_configs():
 
     conn = get_db_connection()
     try:
+        rh_cur = conn.execute('''
+            SELECT user_id, LOWER(game_type), LOWER(board_dimensions), round_duration, COUNT(*)
+            FROM round_history
+            GROUP BY user_id, LOWER(game_type), LOWER(board_dimensions), round_duration
+        ''')
+        rh_counts = {}
+        for r_uid, r_gt, r_dims, r_dur, r_cnt in rh_cur.fetchall():
+            canon_gt = 'accumulative' if r_gt in ('classic', 'accumulative') else ('3d' if r_gt in ('3d', 'cube') else r_gt)
+            k1 = f"{canon_gt}|{r_dims}|{r_dur}"
+            rh_counts[(r_uid, k1)] = rh_counts.get((r_uid, k1), 0) + r_cnt
+
         cur = conn.execute('''
             SELECT ur.config_key, ur.user_id, ur.rating,
-                   MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) as games,
+                   COALESCE(ur.games_played, 0) as ur_games,
                    COALESCE(ur.is_unrated, 0) as is_unrated
             FROM user_ratings ur
             JOIN users u ON ur.user_id = u.id
@@ -3054,8 +3065,16 @@ def get_rating_configs():
         policy_map = {r[0]: bool(r[1]) for r in pol_cur.fetchall()}
 
         cfg_stats = {}
+        seen_user_cfg = set()
         for row in rows:
-            cfg, uid, rating, games, is_unr = row[0], row[1], row[2], (row[3] or 0), bool(row[4])
+            raw_cfg, uid, rating, ur_games, is_unr = row[0], row[1], row[2], (row[3] or 0), bool(row[4])
+            cfg = raw_cfg.replace('cube|', '3d|', 1) if raw_cfg.startswith('cube|') else raw_cfg
+            if (uid, cfg) in seen_user_cfg:
+                continue
+            seen_user_cfg.add((uid, cfg))
+
+            games = max(ur_games, rh_counts.get((uid, cfg.lower()), 0))
+
             if cfg not in cfg_stats:
                 cfg_stats[cfg] = {
                     'total_users': 0,
@@ -3182,6 +3201,10 @@ def adjust_ratings_by_config():
     total_users_affected = 0
     try:
         for cfg in db_configs_to_update:
+            parts = cfg.lower().split('|')
+            gt_raw, dims_raw, dur_raw = parts[0], parts[1], int(parts[2])
+            gt_1 = 'classic' if gt_raw == 'accumulative' else ('cube' if gt_raw in ('3d', 'cube') else gt_raw)
+            gt_2 = 'accumulative' if gt_raw == 'accumulative' else ('3d' if gt_raw in ('3d', 'cube') else gt_raw)
             cur = conn.execute('''
                 UPDATE user_ratings
                 SET rating = MAX(1, rating + ?)
@@ -3189,16 +3212,19 @@ def adjust_ratings_by_config():
                   AND COALESCE(is_unrated, 0) = 0
                   AND NOT (
                       rating = 1200
-                      AND (
-                          SELECT MAX(
-                              COALESCE(u.games_played, 0),
-                              (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = user_ratings.user_id)
+                      AND MAX(
+                          COALESCE(user_ratings.games_played, 0),
+                          (
+                              SELECT COUNT(*)
+                              FROM round_history rh
+                              WHERE rh.user_id = user_ratings.user_id
+                                AND LOWER(rh.game_type) IN (?, ?)
+                                AND LOWER(rh.board_dimensions) = ?
+                                AND rh.round_duration = ?
                           )
-                          FROM users u
-                          WHERE u.id = user_ratings.user_id
                       ) <= 10
                   )
-            ''', (delta, cfg))
+            ''', (delta, cfg, gt_1, gt_2, dims_raw, dur_raw))
             total_users_affected += cur.rowcount
 
         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
