@@ -1390,6 +1390,10 @@ window.showModTab = function(tabId) {
         if (!window._modListLoaded) loadModList();
     } else if (tabId === 'added') {
         if (!window._addedWordsConfigLoaded && typeof loadAddedWordsConfig === 'function') loadAddedWordsConfig();
+    } else if (tabId === 'ratings') {
+        loadRatingConfigs();
+        loadRatingAdjHistory();
+        checkRatingAdjAuth();
     }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
@@ -1629,6 +1633,8 @@ function setupModsNavigation() {
             }
         });
     }
+
+    setupRatingAdjHandlers();
 }
 
 async function loadModDonations() {
@@ -1751,6 +1757,303 @@ async function deleteModDonation(id) {
 window.loadModDonations = loadModDonations;
 window.addModDonation = addModDonation;
 window.deleteModDonation = deleteModDonation;
+
+// --- CONSTANT PARAMETER RATING ADJUSTMENT ---
+
+let _ratingConfigsCache = [];
+
+function checkRatingAdjAuth() {
+    const isJeffb = Boolean(window.currentUserIsRootMod) || 
+                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+    const warningEl = document.getElementById('rating-adj-auth-warning');
+    const applyBtn = document.getElementById('apply-rating-adj-btn');
+    if (warningEl) {
+        warningEl.style.display = isJeffb ? 'none' : 'block';
+    }
+    if (applyBtn) {
+        applyBtn.disabled = !isJeffb;
+        applyBtn.style.opacity = isJeffb ? '1' : '0.5';
+        applyBtn.style.cursor = isJeffb ? 'pointer' : 'not-allowed';
+    }
+}
+
+async function loadRatingConfigs() {
+    const container = document.getElementById('rating-configs-container');
+    if (!container) return;
+
+    checkRatingAdjAuth();
+
+    try {
+        const res = await fetch('/api/mods/rating-configs');
+        if (!res.ok) {
+            container.innerHTML = `<div style="padding: 15px; color: #ef4444; text-align: center;">Failed to load configurations (${res.status})</div>`;
+            return;
+        }
+        const data = await res.json();
+        _ratingConfigsCache = data.configs || [];
+
+        // Group into categories
+        const groups = {
+            'Accumulative (ACC)': [],
+            'First-Come-First-Served (FCFS)': [],
+            'Split': [],
+            '3D Cube & Other': []
+        };
+
+        _ratingConfigsCache.forEach(cfg => {
+            const keyLower = cfg.key.toLowerCase();
+            if (keyLower.startsWith('accumulative') || keyLower.startsWith('solo_accumulative')) {
+                groups['Accumulative (ACC)'].push(cfg);
+            } else if (keyLower.startsWith('fcfs')) {
+                groups['First-Come-First-Served (FCFS)'].push(cfg);
+            } else if (keyLower.startsWith('split')) {
+                groups['Split'].push(cfg);
+            } else {
+                groups['3D Cube & Other'].push(cfg);
+            }
+        });
+
+        let html = '';
+        for (const [groupName, configs] of Object.entries(groups)) {
+            if (configs.length === 0) continue;
+            html += `
+                <div class="rating-group-block" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border); border-radius: 6px; padding: 10px 12px;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${groupName}</span>
+                        <span style="font-size: 0.75rem; opacity: 0.6; font-weight: normal;">${configs.length} configs</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;">
+            `;
+
+            configs.forEach(c => {
+                const hasUsers = (c.user_count || 0) > 0;
+                const cardBorder = hasUsers ? 'rgba(59, 130, 246, 0.4)' : 'var(--input-border)';
+                const cardBg = hasUsers ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-surface)';
+                const badgeColor = hasUsers ? '#3b82f6' : 'var(--text-secondary)';
+                
+                html += `
+                    <label class="rating-cfg-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; border: 1px solid ${cardBorder}; background: ${cardBg}; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${c.user_count || 0}" style="cursor: pointer; width: 16px; height: 16px; margin: 0;">
+                        <div style="display: flex; flex-direction: column; overflow: hidden; line-height: 1.25;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.label}</span>
+                            <span style="font-size: 0.72rem; color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'};">${c.user_count || 0} user${c.user_count === 1 ? '' : 's'}${hasUsers && c.avg_rating ? ` (avg ${c.avg_rating})` : ''}</span>
+                        </div>
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        // Bind checkbox change listeners
+        container.querySelectorAll('.rating-cfg-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateRatingSelectionSummary);
+        });
+
+        updateRatingSelectionSummary();
+    } catch (err) {
+        console.error("Error loading rating configs:", err);
+        container.innerHTML = `<div style="padding: 15px; color: #ef4444; text-align: center;">Error loading configurations</div>`;
+    }
+}
+
+function updateRatingSelectionSummary() {
+    const checkboxes = document.querySelectorAll('.rating-cfg-checkbox:checked');
+    const summaryEl = document.getElementById('rating-selection-summary');
+    if (!summaryEl) return;
+
+    let totalUsers = 0;
+    checkboxes.forEach(cb => {
+        totalUsers += parseInt(cb.dataset.users || '0', 10);
+    });
+
+    summaryEl.textContent = `Selected: ${checkboxes.length} configuration${checkboxes.length === 1 ? '' : 's'} (${totalUsers} user rating${totalUsers === 1 ? '' : 's'} currently on record)`;
+}
+
+async function loadRatingAdjHistory() {
+    const container = document.getElementById('rating-adj-history-container');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/api/mods/rating-adjustments/history');
+        if (!res.ok) return;
+        const data = await res.json();
+        const history = data.history || [];
+
+        if (history.length === 0) {
+            container.innerHTML = '<div style="padding: 12px; text-align: center; opacity: 0.6;">No adjustments recorded yet.</div>';
+            return;
+        }
+
+        container.innerHTML = history.map(item => {
+            const isPos = item.delta > 0;
+            const deltaBadge = `<span style="font-weight: 700; color: ${isPos ? '#10b981' : '#ef4444'};">${isPos ? '+' : ''}${item.delta}</span>`;
+            
+            const cfgLabels = (item.configs || []).map(cfg => {
+                const found = _ratingConfigsCache.find(c => c.key === cfg);
+                return found ? found.label : cfg;
+            });
+            const cfgSummary = cfgLabels.length <= 3 
+                ? cfgLabels.join(', ') 
+                : `${cfgLabels.slice(0, 3).join(', ')} +${cfgLabels.length - 3} more`;
+
+            const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Recently';
+
+            return `
+                <div style="padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                    <div>
+                        <span style="font-weight: 600; color: var(--text-primary);">${item.admin_username || 'Admin'}</span>
+                        <span style="opacity: 0.7;"> adjusted ratings by </span>
+                        ${deltaBadge}
+                        <span style="opacity: 0.7;"> on </span>
+                        <span style="font-weight: 600;" title="${cfgLabels.join(', ')}">${cfgSummary}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.6; white-space: nowrap;">
+                        <span>${item.users_affected || 0} users updated</span> • <span>${dateStr}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Error loading rating adj history:", err);
+    }
+}
+
+async function applyRatingAdjustment() {
+    const isJeffb = Boolean(window.currentUserIsRootMod) || 
+                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+    if (!isJeffb) {
+        showModStatus("Unauthorized: Only jeffb can adjust ratings.", true, 'rating-adj-status-area');
+        return;
+    }
+
+    const deltaInput = document.getElementById('rating-adj-delta');
+    const delta = parseInt(deltaInput ? deltaInput.value : '0', 10);
+    if (isNaN(delta) || delta === 0) {
+        showModStatus("Please enter a valid non-zero integer point value (e.g. 25 or -25).", true, 'rating-adj-status-area');
+        return;
+    }
+
+    const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
+    if (checkedBoxes.length === 0) {
+        showModStatus("Please select at least one configuration to adjust.", true, 'rating-adj-status-area');
+        return;
+    }
+
+    const configs = checkedBoxes.map(cb => cb.value);
+    let totalUsers = 0;
+    checkedBoxes.forEach(cb => {
+        totalUsers += parseInt(cb.dataset.users || '0', 10);
+    });
+
+    const actionWord = delta > 0 ? 'INCREASE' : 'REDUCE';
+    const confirmMsg = `ATTENTION: You are about to ${actionWord} ratings by ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} for ALL users in ${configs.length} constant parameter configuration(s).\n\n` +
+                       `Selected configurations: ${configs.length}\n` +
+                       `Users currently affected: ${totalUsers}\n` +
+                       `Active game rooms: Live players will be updated immediately.\n\n` +
+                       `Are you sure you want to proceed?`;
+
+    if (!window.confirm(confirmMsg)) {
+        return;
+    }
+
+    const applyBtn = document.getElementById('apply-rating-adj-btn');
+    if (applyBtn) {
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Applying Adjustment...';
+    }
+
+    try {
+        const res = await fetch('/api/mods/adjust-ratings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ delta, configs })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const sign = delta > 0 ? '+' : '';
+            showModStatus(`Successfully adjusted ratings by ${sign}${delta} across ${data.configs.length} configuration(s)! ${data.users_affected} database record(s) and ${data.active_rooms_updated || 0} active room(s) updated immediately.`, false, 'rating-adj-status-area');
+            if (deltaInput) deltaInput.value = '';
+            loadRatingConfigs();
+            loadRatingAdjHistory();
+        } else {
+            showModStatus(data.error || "Failed to adjust ratings.", true, 'rating-adj-status-area');
+        }
+    } catch (err) {
+        console.error("Error applying rating adjustment:", err);
+        showModStatus("Network error while applying rating adjustment.", true, 'rating-adj-status-area');
+    } finally {
+        if (applyBtn) {
+            applyBtn.disabled = false;
+            applyBtn.textContent = '🚀 Apply Rating Adjustment';
+        }
+    }
+}
+
+function setupRatingAdjHandlers() {
+    // Delta preset buttons
+    document.querySelectorAll('.mod-rating-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const deltaInput = document.getElementById('rating-adj-delta');
+            if (deltaInput) {
+                deltaInput.value = btn.dataset.val;
+            }
+        });
+    });
+
+    // Select All
+    const selectAllBtn = document.getElementById('rating-adj-select-all');
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => { cb.checked = true; });
+            updateRatingSelectionSummary();
+        });
+    }
+
+    // Deselect All
+    const deselectAllBtn = document.getElementById('rating-adj-deselect-all');
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => { cb.checked = false; });
+            updateRatingSelectionSummary();
+        });
+    }
+
+    // Active Only
+    const selectActiveBtn = document.getElementById('rating-adj-select-active');
+    if (selectActiveBtn) {
+        selectActiveBtn.addEventListener('click', () => {
+            document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => {
+                cb.checked = (parseInt(cb.dataset.users || '0', 10) > 0);
+            });
+            updateRatingSelectionSummary();
+        });
+    }
+
+    // Apply Button
+    const applyBtn = document.getElementById('apply-rating-adj-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', applyRatingAdjustment);
+    }
+
+    // Refresh history
+    const refreshHistoryBtn = document.getElementById('refresh-rating-adj-history-btn');
+    if (refreshHistoryBtn) {
+        refreshHistoryBtn.addEventListener('click', loadRatingAdjHistory);
+    }
+}
+
+window.loadRatingConfigs = loadRatingConfigs;
+window.updateRatingSelectionSummary = updateRatingSelectionSummary;
+window.loadRatingAdjHistory = loadRatingAdjHistory;
+window.applyRatingAdjustment = applyRatingAdjustment;
+window.setupRatingAdjHandlers = setupRatingAdjHandlers;
+window.checkRatingAdjAuth = checkRatingAdjAuth;
 
 // Add event listener to initialize setupModsNavigation when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

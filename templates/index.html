@@ -5500,6 +5500,10 @@
                         <div class="tool-btn-title">Moderator Access</div>
                         <div class="tool-btn-desc">Manage moderator permissions</div>
                     </button>
+                    <button class="tool-nav-btn" data-mod-tab="ratings" onclick="window.showModTab('ratings')">
+                        <div class="tool-btn-title">Constant Parameter Rating Adjustment</div>
+                        <div class="tool-btn-desc">Adjust user ratings by game configuration</div>
+                    </button>
                 </div>
 
                 <!-- Content Column (2/3) -->
@@ -5889,6 +5893,88 @@
                         <div class="mod-list-title" style="margin-top: 15px; margin-bottom: 10px;">Current Moderators</div>
                         <div id="mod-list-container" class="mod-list" style="width: 100%;">
                             <!-- Loaded by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Constant Parameter Rating Adjustment -->
+                    <div id="mod-tab-ratings" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Constant Parameter Rating Adjustment</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">Adjust user ratings across specific constant parameter configurations (e.g. ACC 4x4 45s, ACC 4x4 3m). Only root administrator jeffb can perform adjustments.</p>
+                        </div>
+                        <div id="rating-adj-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
+
+                        <!-- Authorization Banner (shown if not jeffb) -->
+                        <div id="rating-adj-auth-warning" style="display: none; padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.88rem; font-weight: 600;">
+                            🔒 Access Restricted: Only <strong>jeffb</strong> is authorized to adjust ratings across constant parameters.
+                        </div>
+
+                        <!-- Step 1: Delta Input Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; background: rgba(59, 130, 246, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="font-weight: 700; color: #3b82f6; margin-bottom: 8px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                                🔢 1. Rating Point Value (Increase or Reduce)
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                                Specify the point adjustment value. Use positive numbers to give points (e.g. <code>+25</code>) or negative numbers to deduct points (e.g. <code>-25</code>). Ratings have a strict minimum floor of 400.
+                            </p>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label for="rating-adj-delta" style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary); margin: 0;">Point Delta:</label>
+                                    <input type="number" id="rating-adj-delta" placeholder="e.g. 25 or -25" step="1" style="width: 130px; padding: 8px 12px; font-size: 1rem; font-weight: 700; text-align: center; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                </div>
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                                    <span style="font-size: 0.8rem; opacity: 0.7; margin-right: 4px;">Quick Presets:</span>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="10" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; cursor: pointer;">+10</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="25" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; cursor: pointer;">+25</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="50" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; cursor: pointer;">+50</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="100" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; cursor: pointer;">+100</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="-10" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; cursor: pointer;">-10</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="-25" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; cursor: pointer;">-25</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="-50" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; cursor: pointer;">-50</button>
+                                    <button type="button" class="mod-rating-preset-btn" data-val="-100" style="padding: 5px 9px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; cursor: pointer;">-100</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Configuration Selection Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 8px; background: rgba(168, 85, 247, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                                <div style="font-weight: 700; color: #a855f7; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                                    ⚙️ 2. Select Constant Parameter Configurations
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" id="rating-adj-select-all" class="mod-full-btn" style="padding: 4px 10px; font-size: 0.8rem; min-width: auto; background: var(--bg-surface); border: 1px solid var(--input-border);">Select All</button>
+                                    <button type="button" id="rating-adj-deselect-all" class="mod-full-btn" style="padding: 4px 10px; font-size: 0.8rem; min-width: auto; background: var(--bg-surface); border: 1px solid var(--input-border);">Deselect All</button>
+                                    <button type="button" id="rating-adj-select-active" class="mod-full-btn" style="padding: 4px 10px; font-size: 0.8rem; min-width: auto; background: var(--bg-surface); border: 1px solid var(--input-border);">Active Only</button>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                                Check each configuration to adjust. Configurations currently possessing user rating records are marked.
+                            </p>
+                            <div id="rating-configs-container" style="display: flex; flex-direction: column; gap: 14px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
+                                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading configurations...</div>
+                            </div>
+                            <div id="rating-selection-summary" style="margin-top: 10px; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); text-align: right;">
+                                Selected: 0 configurations (0 users)
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Apply Button -->
+                        <div style="margin-bottom: 24px;">
+                            <button id="apply-rating-adj-btn" class="mod-full-btn add" style="width: 100%; padding: 12px 18px; font-size: 1rem; font-weight: 700; background: #3b82f6; border-color: #2563eb;">
+                                🚀 Apply Rating Adjustment
+                            </button>
+                        </div>
+
+                        <!-- Audit History Section -->
+                        <div class="mod-action-card" style="border: 1px solid var(--input-border); border-radius: 8px; background: var(--bg-surface); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between;">
+                                <span>📜 Recent Adjustment History</span>
+                                <button type="button" id="refresh-rating-adj-history-btn" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;">🔄 Refresh</button>
+                            </div>
+                            <div id="rating-adj-history-container" style="max-height: 240px; overflow-y: auto; font-size: 0.85rem;">
+                                <div style="padding: 12px; text-align: center; opacity: 0.6;">No adjustments recorded yet.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -10066,7 +10152,7 @@
     <script src="/js/tools.js?v=1794102000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1792837000"></script>
+    <script src="/js/mods.js?v=1794120000"></script>
     <script src="/js/private_matches.js?v=1793520000"></script>
     <script src="/js/donate.js?v=33806"></script>
     

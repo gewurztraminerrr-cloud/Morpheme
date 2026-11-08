@@ -2875,6 +2875,224 @@ def delete_mod_donation():
         conn.close()
 
 
+# --- RATING ADJUSTMENT BY CONSTANT PARAMETERS ---
+
+def format_config_label(config_key: str) -> str:
+    parts = config_key.split('|')
+    if len(parts) >= 3:
+        game_type, board_dims, time_limit = parts[0], parts[1], parts[2]
+        gt_lower = game_type.lower()
+        if gt_lower == 'accumulative':
+            gt_label = 'ACC'
+        elif gt_lower == 'fcfs':
+            gt_label = 'FCFS'
+        elif gt_lower == 'split':
+            gt_label = 'Split'
+        elif gt_lower == 'cube':
+            gt_label = 'Cube'
+        elif gt_lower == 'solo_accumulative':
+            gt_label = 'Solo ACC'
+        elif gt_lower.startswith('solo_'):
+            base = gt_lower.replace('solo_', '')
+            base_label = 'ACC' if base == 'accumulative' else base.upper()
+            gt_label = f"Solo {base_label}"
+        else:
+            gt_label = game_type.upper()
+
+        try:
+            sec = int(time_limit)
+            if sec == 86400:
+                t_label = "24h"
+            elif sec >= 86400 and sec % 86400 == 0:
+                t_label = f"{sec // 86400}d"
+            elif sec >= 3600 and sec % 3600 == 0:
+                t_label = f"{sec // 3600}h"
+            elif sec >= 60 and sec % 60 == 0:
+                t_label = f"{sec // 60}m"
+            else:
+                t_label = f"{sec}s"
+        except (ValueError, TypeError):
+            t_label = str(time_limit)
+
+        return f"{gt_label} {board_dims} {t_label}"
+    return config_key
+
+
+@app.route('/api/mods/rating-configs', methods=['GET'])
+@login_required
+def get_rating_configs():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    conn = get_db_connection()
+    try:
+        cur = conn.execute('''
+            SELECT config_key, COUNT(user_id) as user_count, ROUND(AVG(rating), 1) as avg_rating
+            FROM user_ratings
+            GROUP BY config_key
+        ''')
+        db_rows = {row[0]: {'user_count': row[1], 'avg_rating': row[2]} for row in cur.fetchall()}
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+    preset_keys = [
+        # Accumulative
+        'accumulative|4x4|45', 'accumulative|4x4|60', 'accumulative|4x4|120', 'accumulative|4x4|180', 'accumulative|4x4|240', 'accumulative|4x4|600', 'accumulative|4x4|86400',
+        'accumulative|4x6|45', 'accumulative|4x6|60', 'accumulative|4x6|120', 'accumulative|4x6|180', 'accumulative|4x6|240', 'accumulative|4x6|600', 'accumulative|4x6|86400',
+        'accumulative|5x7|45', 'accumulative|5x7|60', 'accumulative|5x7|120', 'accumulative|5x7|180', 'accumulative|5x7|240', 'accumulative|5x7|600', 'accumulative|5x7|86400',
+        'accumulative|6x8|45', 'accumulative|6x8|60', 'accumulative|6x8|120', 'accumulative|6x8|180', 'accumulative|6x8|240', 'accumulative|6x8|600', 'accumulative|6x8|86400',
+        # FCFS
+        'fcfs|4x4|45', 'fcfs|4x4|60', 'fcfs|4x4|120', 'fcfs|4x4|180', 'fcfs|4x4|240', 'fcfs|4x4|600', 'fcfs|4x4|86400',
+        'fcfs|4x6|45', 'fcfs|4x6|60', 'fcfs|4x6|120', 'fcfs|4x6|180', 'fcfs|4x6|240', 'fcfs|4x6|600', 'fcfs|4x6|86400',
+        'fcfs|5x7|45', 'fcfs|5x7|60', 'fcfs|5x7|120', 'fcfs|5x7|180', 'fcfs|5x7|240', 'fcfs|5x7|600', 'fcfs|5x7|86400',
+        'fcfs|6x8|45', 'fcfs|6x8|60', 'fcfs|6x8|120', 'fcfs|6x8|180', 'fcfs|6x8|240', 'fcfs|6x8|600', 'fcfs|6x8|86400',
+        # Split
+        'split|4x4|45', 'split|4x4|60', 'split|4x4|120', 'split|4x4|180', 'split|4x4|240', 'split|4x4|600', 'split|4x4|86400',
+        'split|4x6|45', 'split|4x6|60', 'split|4x6|120', 'split|4x6|180', 'split|4x6|240', 'split|4x6|600', 'split|4x6|86400',
+        'split|5x7|45', 'split|5x7|60', 'split|5x7|120', 'split|5x7|180', 'split|5x7|240', 'split|5x7|600', 'split|5x7|86400',
+        'split|6x8|45', 'split|6x8|60', 'split|6x8|120', 'split|6x8|180', 'split|6x8|240', 'split|6x8|600', 'split|6x8|86400',
+        # Cube
+        'cube|3x3x3|180'
+    ]
+
+    all_keys = list(db_rows.keys())
+    for k in preset_keys:
+        if k not in db_rows:
+            all_keys.append(k)
+
+    result = []
+    for k in all_keys:
+        stats = db_rows.get(k, {'user_count': 0, 'avg_rating': 1200})
+        result.append({
+            'key': k,
+            'label': format_config_label(k),
+            'user_count': stats['user_count'],
+            'avg_rating': stats['avg_rating']
+        })
+
+    return jsonify({'configs': result})
+
+
+@app.route('/api/mods/adjust-ratings', methods=['POST'])
+@login_required
+def adjust_ratings_by_config():
+    current_user = (session.get('username') or '').strip().lower()
+    if current_user != 'jeffb':
+        return jsonify({'error': 'Unauthorized: Only jeffb can adjust ratings.'}), 403
+
+    data = request.json or {}
+    try:
+        delta = int(data.get('delta'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid delta value. Must be a non-zero integer.'}), 400
+
+    if delta == 0:
+        return jsonify({'error': 'Delta cannot be zero.'}), 400
+
+    configs = data.get('configs')
+    if not isinstance(configs, list) or len(configs) == 0:
+        return jsonify({'error': 'Please select at least one configuration to adjust.'}), 400
+
+    sanitized_configs = [str(c).strip() for c in configs if str(c).strip()]
+    if not sanitized_configs:
+        return jsonify({'error': 'No valid configurations selected.'}), 400
+
+    conn = get_db_connection()
+    total_users_affected = 0
+    try:
+        for cfg in sanitized_configs:
+            cur = conn.execute('''
+                UPDATE user_ratings
+                SET rating = MAX(400, rating + ?)
+                WHERE config_key = ?
+            ''', (delta, cfg))
+            total_users_affected += cur.rowcount
+
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        conn.execute('''
+            INSERT INTO rating_adjustments (admin_username, delta, configs_json, users_affected, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (session.get('username'), delta, json.dumps(sanitized_configs), total_users_affected, now_iso))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': f"Database error during rating adjustment: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+    # Update active in-memory rooms immediately so live players see the update in <1s
+    active_rooms_updated = 0
+    try:
+        from game_room import room_manager
+        if 'room_manager' in globals() or room_manager:
+            for r_id, room in list(room_manager.rooms.items()):
+                gt = getattr(room, 'game_type', '').replace('solo_', '')
+                rcfg = f"{gt}|{getattr(room, 'board_dimensions', '')}|{getattr(room, 'time_limit', '')}"
+                if rcfg in sanitized_configs:
+                    with getattr(room, 'lock', threading.Lock()):
+                        for p in getattr(room, 'players', []):
+                            if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
+                                p.rating = max(400, p.rating + delta)
+                        if hasattr(room, 'players'):
+                            room.players.sort(key=lambda p: p.rating, reverse=True)
+                    active_rooms_updated += 1
+    except Exception as r_err:
+        print(f"[RatingAdjustment] Error updating active rooms: {r_err}")
+
+    # Write to audit log
+    try:
+        with open(RATING_AUDIT_PATH, 'a') as log_f:
+            log_f.write(f"[{time.time()}] ADMIN RATING ADJUSTMENT by {session.get('username')}: delta={delta:+d}, configs={sanitized_configs}, users_affected={total_users_affected}, active_rooms={active_rooms_updated}\n")
+    except Exception as log_err:
+        print(f"[RatingAdjustment] Error writing to rating audit log: {log_err}")
+
+    return jsonify({
+        'success': True,
+        'delta': delta,
+        'configs': sanitized_configs,
+        'users_affected': total_users_affected,
+        'active_rooms_updated': active_rooms_updated
+    })
+
+
+@app.route('/api/mods/rating-adjustments/history', methods=['GET'])
+@login_required
+def get_rating_adjustment_history():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    conn = get_db_connection()
+    try:
+        cur = conn.execute('''
+            SELECT id, admin_username, delta, configs_json, users_affected, timestamp
+            FROM rating_adjustments
+            ORDER BY id DESC
+            LIMIT 20
+        ''')
+        rows = cur.fetchall()
+        history = []
+        for r in rows:
+            try:
+                cfgs = json.loads(r[3])
+            except Exception:
+                cfgs = [r[3]]
+            history.append({
+                'id': r[0],
+                'admin_username': r[1],
+                'delta': r[2],
+                'configs': cfgs,
+                'users_affected': r[4],
+                'timestamp': r[5]
+            })
+        return jsonify({'history': history})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 # --- AUTH ROUTES ---
 
 DEFINITIONS_CACHE = None
@@ -2936,6 +3154,14 @@ def init_db():
             banned_by TEXT,
             reason TEXT,
             created_at TEXT
+        );
+        CREATE TABLE IF NOT EXISTS rating_adjustments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            admin_username TEXT NOT NULL,
+            delta INTEGER NOT NULL,
+            configs_json TEXT NOT NULL,
+            users_affected INTEGER NOT NULL,
+            timestamp TEXT NOT NULL
         );
     ''')
     conn.commit()
