@@ -1810,6 +1810,7 @@ async function loadRatingConfigs() {
         const statEstEl = document.getElementById('stat-total-established');
         const stat1200El = document.getElementById('stat-total-1200');
         const stat1200BreakdownEl = document.getElementById('stat-1200-breakdown');
+        const statUnratedPoliciesEl = document.getElementById('stat-total-unrated-policies');
         if (statEstEl) statEstEl.textContent = totals.established_count ?? '--';
         if (stat1200El) stat1200El.textContent = totals.count_1200 ?? '--';
         if (stat1200BreakdownEl) {
@@ -1817,6 +1818,7 @@ async function loadRatingConfigs() {
                 ? `(${totals.unestablished_1200 || 0} provisional ≤10 games, ${totals.established_1200 || 0} established >10 games)`
                 : '';
         }
+        if (statUnratedPoliciesEl) statUnratedPoliciesEl.textContent = totals.unrated_placement_configs ?? '0';
 
         // Group into categories
         const groups = {
@@ -1848,7 +1850,7 @@ async function loadRatingConfigs() {
                         <span>${groupName}</span>
                         <span style="font-size: 0.75rem; opacity: 0.6; font-weight: normal;">${configs.length} configs</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
             `;
 
             configs.forEach(c => {
@@ -1859,15 +1861,31 @@ async function loadRatingConfigs() {
                 const badgeColor = hasUsers ? '#3b82f6' : 'var(--text-secondary)';
                 const avgText = (c.avg_rating !== null && c.avg_rating !== undefined) ? ` (avg ${c.avg_rating})` : '';
                 const c1200 = c.count_1200 || 0;
-                
+
+                const isUnratedActive = Boolean(c.unrated_placement);
+                const switchTitle = isUnratedActive
+                    ? `10-Rounds rating established policy is ACTIVE for ${c.label}. Toggle OFF to return to Standard 1200.`
+                    : `Standard 1200 rating active for ${c.label}. Toggle ON to enact transfer over to 10-rounds-rating-established.`;
+
                 html += `
-                    <label class="rating-cfg-card" style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; border: 1px solid ${cardBorder}; background: ${cardBg}; cursor: pointer; user-select: none;">
-                        <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" style="cursor: pointer; width: 16px; height: 16px; margin: 0;">
-                        <div style="display: flex; flex-direction: column; overflow: hidden; line-height: 1.25;">
-                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.label}</span>
-                            <span style="font-size: 0.72rem; color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'};">${estCount} established${avgText} • ${c1200} @ 1200</span>
+                    <div class="rating-cfg-card" style="display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 6px; border: 1px solid ${cardBorder}; background: ${cardBg}; user-select: none;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; cursor: pointer; margin: 0;">
+                                <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" style="cursor: pointer; width: 16px; height: 16px; margin: 0; flex-shrink: 0;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.label}</span>
+                            </label>
+                            <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; margin: 0; cursor: pointer;" title="${switchTitle}">
+                                <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
+                                <span class="mod-toggle-slider" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; transition: all .2s ease; background-color: ${isUnratedActive ? '#10b981' : 'rgba(255,255,255,0.2)'}; border: 1px solid ${isUnratedActive ? '#059669' : 'rgba(255,255,255,0.3)'};">
+                                    <span style="position: absolute; content: ''; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: #ffffff; border-radius: 50%; transition: all .2s ease; transform: ${isUnratedActive ? 'translateX(16px)' : 'translateX(0px)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></span>
+                                </span>
+                            </label>
                         </div>
-                    </label>
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; padding-left: 24px;">
+                            <span style="color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${estCount} established${avgText} • ${c1200} @ 1200</span>
+                            <span style="font-weight: 700; color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-size: 0.68rem; flex-shrink: 0;">${isUnratedActive ? '10-Rounds Est.' : 'Standard 1200'}</span>
+                        </div>
+                    </div>
                 `;
             });
 
@@ -2017,6 +2035,55 @@ async function applyRatingAdjustment() {
     }
 }
 
+window.toggleSingleRatingPolicy = async function (configKey, enable) {
+    const actionDesc = enable ? "enact" : "revoke";
+    try {
+        const res = await fetch('/api/mods/toggle-unrated-placement', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ configs: [configKey], enabled: enable })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-rounds-rating-established for ${configKey}.`, false, 'rating-adj-status-area');
+            await loadRatingConfigs();
+        } else {
+            showModStatus(data.error || `Failed to ${actionDesc} 10-rounds-rating-established policy.`, true, 'rating-adj-status-area');
+        }
+    } catch (err) {
+        console.error("Error toggling rating policy:", err);
+        showModStatus("Network error while updating rating policy.", true, 'rating-adj-status-area');
+    }
+};
+
+window.batchToggleRatingPolicy = async function (enable) {
+    const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
+    if (checkedBoxes.length === 0) {
+        showModStatus(`Please select at least one configuration to ${enable ? 'enact' : 'revoke'} unrated placement.`, true, 'rating-adj-status-area');
+        return;
+    }
+    const configs = checkedBoxes.map(cb => cb.value);
+    const actionDesc = enable ? "enacting" : "revoking";
+    try {
+        const res = await fetch('/api/mods/toggle-unrated-placement', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ configs: configs, enabled: enable })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            const count = (data.configs || []).length;
+            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-rounds-rating-established for ${count} configuration(s)! New users henceforth will ${enable ? 'start unrated with a white square for 10 rounds, establishing their rating at round 10' : 'start at standard 1200 rating'}.`, false, 'rating-adj-status-area');
+            await loadRatingConfigs();
+        } else {
+            showModStatus(data.error || `Failed while ${actionDesc} 10-rounds-rating-established policy.`, true, 'rating-adj-status-area');
+        }
+    } catch (err) {
+        console.error("Error batch toggling rating policy:", err);
+        showModStatus("Network error while updating rating policy.", true, 'rating-adj-status-area');
+    }
+};
+
 function setupRatingAdjHandlers() {
     // Delta preset buttons
     document.querySelectorAll('.mod-rating-preset-btn').forEach(btn => {
@@ -2044,6 +2111,18 @@ function setupRatingAdjHandlers() {
             document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => { cb.checked = false; });
             updateRatingSelectionSummary();
         });
+    }
+
+    // Batch Enact Unrated
+    const enactBtn = document.getElementById('rating-enact-unrated-btn');
+    if (enactBtn) {
+        enactBtn.addEventListener('click', () => window.batchToggleRatingPolicy(true));
+    }
+
+    // Batch Revoke Unrated
+    const revokeBtn = document.getElementById('rating-revoke-unrated-btn');
+    if (revokeBtn) {
+        revokeBtn.addEventListener('click', () => window.batchToggleRatingPolicy(false));
     }
 
     // Apply Button

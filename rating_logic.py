@@ -53,7 +53,10 @@ def calculate_proportional_rating_change(players, is_private=False, board_format
     
     # Calculate scoreSum and ratingSum
     score_sum = sum(getattr(p, 'score', 0) for p in active_pool)
-    rating_sum = sum(getattr(p, 'rating', 1200) for p in active_pool)
+    rating_sum = sum(
+        float(getattr(p, 'provisional_rating', getattr(p, 'rating', 1200)) if getattr(p, 'is_unrated', False) else getattr(p, 'rating', 1200))
+        for p in active_pool
+    )
     
     print(f"[RatingLogic] Totals - ScoreSum: {score_sum}, RatingSum: {rating_sum}")
     if rating_sum <= 0 or score_sum <= 0:
@@ -65,7 +68,7 @@ def calculate_proportional_rating_change(players, is_private=False, board_format
     K = 40 
 
     for p in active_pool:
-        the_rating = float(getattr(p, 'rating', 1200))
+        the_rating = float(getattr(p, 'provisional_rating', getattr(p, 'rating', 1200)) if getattr(p, 'is_unrated', False) else getattr(p, 'rating', 1200))
         the_score = float(getattr(p, 'score', 0))
         
         # Fair share of points based on relative rating

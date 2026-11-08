@@ -1246,14 +1246,15 @@ async function fetchAndRenderRooms(gameType, timeLimit, boardDimensions, allowAu
         } else {
             const html = filteredRooms.map(room => {
                 let playersHtml = (room.players || []).map(p => {
-                    // Override rating for Guest users
+                    // Override rating for Guest or Unrated users
                     const uname = (p && p.username) ? String(p.username) : 'Player';
                     const isGuest = uname.startsWith('Guest_');
-                    const displayRating = isGuest ? 0 : (p && p.rating !== undefined ? p.rating : 0);
-                    const ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
-                    const shineClass = window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '';
+                    const isUnrated = Boolean(p && p.is_unrated);
+                    const displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : (p && p.rating !== undefined ? p.rating : 0));
+                    const ratingColor = (isUnrated || isGuest) ? '#ffffff' : (window.getRatingColor ? window.getRatingColor(displayRating) : '#fff');
+                    const shineClass = isUnrated ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
 
-                    return `<span class="room-player-pill" title="Rating: ${displayRating}" style="display:inline-flex; align-items:center;">
+                    return `<span class="room-player-pill" title="${isUnrated ? 'Unrated' : `Rating: ${displayRating}`}" style="display:inline-flex; align-items:center;">
                         <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="window.showMiniProfile('${uname}')" style="background-color: ${ratingColor}; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; display:inline-block; cursor: pointer;"></span>    
                         ${uname} (${displayRating})
                     </span>`;

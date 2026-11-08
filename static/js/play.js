@@ -4307,26 +4307,32 @@ function renderPlayers(players, currentUser = null, state = null) {
         const index = p.originalRank - 1; // Use original rank for visuals if needed
         const rank = p.originalRank;
 
-        // Override rating for Guest users
+        // Override rating for Guest users or Unrated users
         const isGuest = p.username.startsWith('Guest_');
-        const displayRating = isGuest ? 0 : p.rating;
+        const isUnrated = Boolean(p.is_unrated);
+        const displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : p.rating);
 
         let changeTxt = '0';
         let changeClass = 'change-neutral';
-        if (p.rating_change > 0) {
-            changeTxt = `+${p.rating_change}`;
-            changeClass = 'change-positive';
-        } else if (p.rating_change < 0) {
-            changeTxt = `${p.rating_change}`;
-            changeClass = 'change-negative';
+        if (!isUnrated) {
+            if (p.rating_change > 0) {
+                changeTxt = `+${p.rating_change}`;
+                changeClass = 'change-positive';
+            } else if (p.rating_change < 0) {
+                changeTxt = `${p.rating_change}`;
+                changeClass = 'change-negative';
+            }
         }
 
-
-        
         // Final display string (User request: in brackets next to rating)
         const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
         const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;
-        const ratingDisplay = isSubanagrams ? 'Unrated' : ((isGuest && displayRating === 0 && p.rating_change === 0) ? 'Guest' : ratingDisplayStr);
+        let ratingDisplay = ratingDisplayStr;
+        if (isSubanagrams || isUnrated) {
+            ratingDisplay = 'Unrated';
+        } else if (isGuest && displayRating === 0 && p.rating_change === 0) {
+            ratingDisplay = 'Guest';
+        }
 
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
@@ -4348,12 +4354,14 @@ function renderPlayers(players, currentUser = null, state = null) {
 
         // Calculate rating color
         let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
-        if (isSubanagrams) {
+        if (isUnrated) {
+            ratingColor = '#ffffff'; // User mandate: square color of white for unrated
+        } else if (isSubanagrams) {
             ratingColor = '#777';
         } else if (!isGuest && p.games_played === 0) {
             ratingColor = '#0044ff';
         }
-        const shineClass = (isSubanagrams || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
+        const shineClass = (isSubanagrams || isUnrated || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
 
         // Input Method Icon
         let inputIcon = '🖱️';

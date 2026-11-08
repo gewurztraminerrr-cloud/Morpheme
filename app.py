@@ -2951,6 +2951,88 @@ def format_config_label(config_key: str) -> str:
     return config_key
 
 
+def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
+    """
+    Returns dict:
+      {
+        'rating': int,
+        'is_unrated': bool,
+        'provisional_games': int,
+        'provisional_ratings_sum': float,
+        'provisional_rating': float
+      }
+    If no record exists and unrated_placement_enabled is active for config_key, initializes unrated state.
+    """
+    if is_24h:
+        cur = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+        row = cur.fetchone()
+        r = row[0] if (row and row[0] is not None) else 1200
+        return {
+            'rating': r,
+            'is_unrated': False,
+            'provisional_games': 0,
+            'provisional_ratings_sum': 0.0,
+            'provisional_rating': 1200.0
+        }
+
+    cur = conn.execute('''
+        SELECT rating, COALESCE(is_unrated, 0), COALESCE(provisional_games, 0),
+               COALESCE(provisional_ratings_sum, 0.0), COALESCE(provisional_rating, 1200.0)
+        FROM user_ratings WHERE user_id = ? AND config_key = ?
+    ''', (user_id, config_key))
+    row = cur.fetchone()
+    if row:
+        r = row[0] if row[0] is not None else 1200
+        is_unr = bool(row[1])
+        prov_g = row[2]
+        prov_sum = row[3]
+        prov_r = row[4]
+        if prov_g >= 10:
+            is_unr = False
+        return {
+            'rating': r,
+            'is_unrated': is_unr,
+            'provisional_games': prov_g,
+            'provisional_ratings_sum': prov_sum,
+            'provisional_rating': prov_r
+        }
+
+    # No record exists: Check policy
+    cube_alias = config_key.replace('3d|', 'cube|', 1) if config_key.startswith('3d|') else config_key.replace('cube|', '3d|', 1)
+    pol_cur = conn.execute('''
+        SELECT unrated_placement_enabled FROM constant_config_policies
+        WHERE config_key = ? OR config_key = ?
+    ''', (config_key, cube_alias))
+    pol_row = pol_cur.fetchone()
+    is_policy_active = bool(pol_row and pol_row[0])
+
+    if is_policy_active:
+        try:
+            conn.execute('''
+                INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                VALUES (?, ?, 1200, 1, 0, 0.0, 1200.0, 0)
+                ON CONFLICT(user_id, config_key) DO NOTHING
+            ''', (user_id, config_key))
+            conn.commit()
+        except Exception:
+            pass
+        return {
+            'rating': 1200,
+            'is_unrated': True,
+            'provisional_games': 0,
+            'provisional_ratings_sum': 0.0,
+            'provisional_rating': 1200.0
+        }
+    else:
+        return {
+            'rating': 1200,
+            'is_unrated': False,
+            'provisional_games': 0,
+            'provisional_ratings_sum': 0.0,
+            'provisional_rating': 1200.0
+        }
+
+
 @app.route('/api/mods/rating-configs', methods=['GET'])
 @login_required
 def get_rating_configs():
@@ -2961,26 +3043,33 @@ def get_rating_configs():
     try:
         cur = conn.execute('''
             SELECT ur.config_key, ur.user_id, ur.rating,
-                   MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) as games
+                   MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) as games,
+                   COALESCE(ur.is_unrated, 0) as is_unrated
             FROM user_ratings ur
             JOIN users u ON ur.user_id = u.id
         ''')
         rows = cur.fetchall()
 
+        pol_cur = conn.execute('SELECT config_key, unrated_placement_enabled FROM constant_config_policies')
+        policy_map = {r[0]: bool(r[1]) for r in pol_cur.fetchall()}
+
         cfg_stats = {}
         for row in rows:
-            cfg, uid, rating, games = row[0], row[1], row[2], (row[3] or 0)
+            cfg, uid, rating, games, is_unr = row[0], row[1], row[2], (row[3] or 0), bool(row[4])
             if cfg not in cfg_stats:
                 cfg_stats[cfg] = {
                     'total_users': 0,
                     'count_1200': 0,
                     'unestablished_1200': 0,
                     'established_1200': 0,
+                    'unrated_users': 0,
                     'established_ratings': []
                 }
             s = cfg_stats[cfg]
             s['total_users'] += 1
-            if rating == 1200:
+            if is_unr:
+                s['unrated_users'] += 1
+            elif rating == 1200:
                 s['count_1200'] += 1
                 if games > 10:
                     s['established_1200'] += 1
@@ -2999,6 +3088,7 @@ def get_rating_configs():
     total_unest_1200 = 0
     total_est_1200 = 0
     total_established_count = 0
+    total_unrated_placement_configs = 0
 
     for k in VALID_CONSTANT_CONFIGS:
         s = cfg_stats.get(k)
@@ -3019,6 +3109,14 @@ def get_rating_configs():
             unest_1200 = 0
             est_1200 = 0
 
+        unrated_placement = bool(
+            policy_map.get(k) or
+            (k.startswith('3d|') and policy_map.get(k.replace('3d|', 'cube|', 1))) or
+            (k.startswith('cube|') and policy_map.get(k.replace('cube|', '3d|', 1)))
+        )
+        if unrated_placement:
+            total_unrated_placement_configs += 1
+
         total_1200_count += count_1200
         total_unest_1200 += unest_1200
         total_est_1200 += est_1200
@@ -3032,7 +3130,8 @@ def get_rating_configs():
             'count_1200': count_1200,
             'unestablished_1200': unest_1200,
             'established_1200': est_1200,
-            'avg_rating': avg_rating
+            'avg_rating': avg_rating,
+            'unrated_placement': unrated_placement
         })
 
     return jsonify({
@@ -3041,7 +3140,8 @@ def get_rating_configs():
             'established_count': total_established_count,
             'count_1200': total_1200_count,
             'unestablished_1200': total_unest_1200,
-            'established_1200': total_est_1200
+            'established_1200': total_est_1200,
+            'unrated_placement_configs': total_unrated_placement_configs
         }
     })
 
@@ -3086,6 +3186,7 @@ def adjust_ratings_by_config():
                 UPDATE user_ratings
                 SET rating = MAX(1, rating + ?)
                 WHERE config_key = ?
+                  AND COALESCE(is_unrated, 0) = 0
                   AND NOT (
                       rating = 1200
                       AND (
@@ -3125,6 +3226,8 @@ def adjust_ratings_by_config():
                     with getattr(room, 'lock', threading.Lock()):
                         for p in getattr(room, 'players', []):
                             if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
+                                if getattr(p, 'is_unrated', False):
+                                    continue
                                 p_games = getattr(p, 'games_played', 0) or 0
                                 if p.rating == 1200 and p_games <= 10:
                                     continue
@@ -3148,6 +3251,61 @@ def adjust_ratings_by_config():
         'configs': sanitized_configs,
         'users_affected': total_users_affected,
         'active_rooms_updated': active_rooms_updated
+    })
+
+
+@app.route('/api/mods/toggle-unrated-placement', methods=['POST'])
+@login_required
+def toggle_unrated_placement():
+    current_user = (session.get('username') or '').strip().lower()
+    if not is_mod(current_user):
+        return jsonify({'error': 'Unauthorized: Only moderators can update rating placement policies.'}), 403
+
+    data = request.json or {}
+    configs = data.get('configs', [])
+    enabled = bool(data.get('enabled', False))
+
+    if not isinstance(configs, list) or len(configs) == 0:
+        return jsonify({'error': 'Please select at least one configuration.'}), 400
+
+    valid_set = set(VALID_CONSTANT_CONFIGS)
+    sanitized_configs = [str(c).strip() for c in configs if str(c).strip() in valid_set or str(c).strip().replace('cube|', '3d|', 1) in valid_set]
+    if not sanitized_configs:
+        return jsonify({'error': 'No valid configurations provided.'}), 400
+
+    conn = get_db_connection()
+    try:
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        for cfg in sanitized_configs:
+            cube_alias = cfg.replace('3d|', 'cube|', 1) if cfg.startswith('3d|') else (cfg.replace('cube|', '3d|', 1) if cfg.startswith('cube|') else cfg)
+            for c_val in set([cfg, cube_alias]):
+                conn.execute('''
+                    INSERT INTO constant_config_policies (config_key, unrated_placement_enabled, updated_at, updated_by)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(config_key) DO UPDATE SET
+                        unrated_placement_enabled = excluded.unrated_placement_enabled,
+                        updated_at = excluded.updated_at,
+                        updated_by = excluded.updated_by
+                ''', (c_val, 1 if enabled else 0, now_iso, session.get('username')))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': f"Database error toggling unrated placement: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+    # Log to audit log
+    try:
+        with open(RATING_AUDIT_PATH, 'a') as log_f:
+            action_desc = "ENACTED" if enabled else "REVOKED"
+            log_f.write(f"[{time.time()}] UNRATED PLACEMENT {action_desc} by {session.get('username')} for {len(sanitized_configs)} configs: {sanitized_configs}\n")
+    except Exception as log_err:
+        print(f"[RatingPlacement] Error writing to audit log: {log_err}")
+
+    return jsonify({
+        'success': True,
+        'enabled': enabled,
+        'configs': sanitized_configs
     })
 
 
@@ -3257,8 +3415,28 @@ def init_db():
             users_affected INTEGER NOT NULL,
             timestamp TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS constant_config_policies (
+            config_key TEXT PRIMARY KEY,
+            unrated_placement_enabled INTEGER DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT
+        );
     ''')
     conn.commit()
+
+    # MIGRATION: Ensure user_ratings columns exist for unrated placement
+    for col_sql in [
+        'ALTER TABLE user_ratings ADD COLUMN games_played INTEGER DEFAULT 0',
+        'ALTER TABLE user_ratings ADD COLUMN is_unrated INTEGER DEFAULT 0',
+        'ALTER TABLE user_ratings ADD COLUMN provisional_rating REAL DEFAULT 1200.0',
+        'ALTER TABLE user_ratings ADD COLUMN provisional_games INTEGER DEFAULT 0',
+        'ALTER TABLE user_ratings ADD COLUMN provisional_ratings_sum REAL DEFAULT 0.0'
+    ]:
+        try:
+            conn.execute(col_sql)
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
     
     # MIGRATION: Upgrade daily_score_sums table to include room_id composite key if needed
     try:
@@ -6450,6 +6628,7 @@ def create_room():
         rating = 1200
         games_played = 0
         country_flag = '🏳️'
+        r_info = {'rating': 1200, 'is_unrated': False, 'provisional_games': 0, 'provisional_ratings_sum': 0.0, 'provisional_rating': 1200.0}
         
         if session.get('is_guest', False):
             rating = 0
@@ -6463,14 +6642,8 @@ def create_room():
                     if u_row[1]: country_flag = u_row[1]
                 
                 is_24h = (clean_time_limit >= 7200)
-                if not is_24h:
-                    r_cur = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                         (session['user_id'], config_key))
-                    r_row = r_cur.fetchone()
-                    if r_row and r_row[0] is not None:
-                        rating = r_row[0]
-                    else:
-                        rating = 1200
+                r_info = get_user_config_rating_data(conn, session['user_id'], config_key, is_24h=is_24h)
+                rating = r_info['rating']
             except Exception as e:
                 print(f"[create_room] user stats query warning: {e}")
                 rating = 1200
@@ -6502,8 +6675,12 @@ def create_room():
         room_id = room.room_id
         
         room.add_player(session['user_id'], session['username'], rating, 
-                        games_played=games_played, country_flag=country_flag, 
-                        is_guest=session.get('is_guest', False))
+                        games_played=games_played, country_flag=country_flag,
+                        is_guest=session.get('is_guest', False),
+                        is_unrated=r_info['is_unrated'],
+                        provisional_games=r_info['provisional_games'],
+                        provisional_ratings_sum=r_info['provisional_ratings_sum'],
+                        provisional_rating=r_info['provisional_rating'])
         
         # Start first round immediately if room does not have a board
         if not room.board:
@@ -6546,30 +6723,21 @@ def join_room(room_id):
     game_type_base = room.game_type.replace('solo_', '')
     config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
     rating = 1200
+    r_info = {'rating': 1200, 'is_unrated': False, 'provisional_games': 0, 'provisional_ratings_sum': 0.0, 'provisional_rating': 1200.0}
     
     if session.get('is_guest', False):
         rating = 0
     else:
         conn = sqlite3.connect(DB_PATH, timeout=30)
-        # 24-hour rooms exception: load global rating from users table
-        is_24h = (room.time_limit >= 7200)
-        if is_24h:
-            cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (session['user_id'],))
-            row = cursor.fetchone()
-            if row:
-                rating = row[0]
-            else:
-                rating = 1200
-        else:
-            cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', 
-                                (session['user_id'], config_key))
-            row = cursor.fetchone()
-            if row:
-                rating = row[0]
-            else:
-                # Every room starts the user at 1200, completely unique to this room configuration
-                rating = 1200
-        conn.close()
+        try:
+            is_24h = (room.time_limit >= 7200)
+            r_info = get_user_config_rating_data(conn, session['user_id'], config_key, is_24h=is_24h)
+            rating = r_info['rating']
+        except Exception as e:
+            print(f"[join_room] rating fetch warning: {e}")
+            rating = 1200
+        finally:
+            conn.close()
         
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
@@ -6618,7 +6786,11 @@ def join_room(room_id):
     # Pass has_exceptional_round
     success = room.add_player(user_id, session['username'], rating, 
                              games_played=games_played, country_flag=country_flag, 
-                             manual_accessed=False, is_guest=session.get('is_guest', False))
+                             manual_accessed=False, is_guest=session.get('is_guest', False),
+                             is_unrated=r_info['is_unrated'],
+                             provisional_games=r_info['provisional_games'],
+                             provisional_ratings_sum=r_info['provisional_ratings_sum'],
+                             provisional_rating=r_info['provisional_rating'])
     if success:
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
@@ -7045,6 +7217,7 @@ def get_room_state(room_id):
             games_played = 0
             country_flag = '🏳️'
             is_guest = session.get('is_guest', False)
+            r_info = {'rating': 1200, 'is_unrated': False, 'provisional_games': 0, 'provisional_ratings_sum': 0.0, 'provisional_rating': 1200.0}
             if is_guest:
                 rating = 0
             else:
@@ -7053,14 +7226,8 @@ def get_room_state(room_id):
                     game_type_base = str(room.game_type).replace('solo_', '')
                     config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
                     is_24h = (room.time_limit >= 7200)
-                    if is_24h:
-                        cursor = conn.execute('SELECT rating FROM users WHERE id = ?', (uid,))
-                        row = cursor.fetchone()
-                        rating = row[0] if row else 1200
-                    else:
-                        cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (uid, config_key))
-                        row = cursor.fetchone()
-                        rating = row[0] if row else 1200
+                    r_info = get_user_config_rating_data(conn, uid, config_key, is_24h=is_24h)
+                    rating = r_info['rating']
                     cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
                     row2 = cur.fetchone()
                     if row2:
@@ -7071,7 +7238,7 @@ def get_room_state(room_id):
                 finally:
                     conn.close()
 
-            user_rating_for_snapshot = rating
+            user_rating_for_snapshot = 'Unrated' if r_info['is_unrated'] else rating
 
             # Automatically sync active polling user into room.players OR room.spectators if not already present
             if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
@@ -7084,9 +7251,20 @@ def get_room_state(room_id):
                     print(f"[get_room_state] Auto-syncing user {session.get('username')} as SPECTATOR (rating: {rating}, limits: {room.min_rating}-{room.max_rating}, full: {is_full})")
                     room.add_spectator(uid, session.get('username', 'Player'), rating)
                 else:
-                    room.add_player(uid, session.get('username', 'Player'), rating, games_played=games_played, country_flag=country_flag, is_guest=is_guest)
+                    room.add_player(uid, session.get('username', 'Player'), rating, 
+                                    games_played=games_played, country_flag=country_flag, 
+                                    is_guest=is_guest,
+                                    is_unrated=r_info['is_unrated'],
+                                    provisional_games=r_info['provisional_games'],
+                                    provisional_ratings_sum=r_info['provisional_ratings_sum'],
+                                    provisional_rating=r_info['provisional_rating'])
 
             p_obj = room.get_player(uid)
+            if p_obj and not is_guest:
+                p_obj.is_unrated = r_info['is_unrated']
+                p_obj.provisional_games = r_info['provisional_games']
+                p_obj.provisional_ratings_sum = r_info['provisional_ratings_sum']
+                p_obj.provisional_rating = r_info['provisional_rating']
             if p_obj:
                 p_obj.game_room_chat = get_user_chat_setting(uid)
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
@@ -7712,6 +7890,8 @@ def get_room_state(room_id):
                         'username': p.username,
                         'is_ai': p.is_ai,
                         'rating': p.rating,
+                        'is_unrated': getattr(p, 'is_unrated', False),
+                        'provisional_games': getattr(p, 'provisional_games', 0),
                         'words_count': len(data[0]),
                         'score': data[1],
                         'rating_change': p.rating_change,

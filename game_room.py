@@ -68,6 +68,10 @@ class Player:
     has_abandoned: bool = False
     cell_density: List = field(default_factory=list)
     game_room_chat: bool = True
+    is_unrated: bool = False
+    provisional_games: int = 0
+    provisional_ratings_sum: float = 0.0
+    provisional_rating: float = 1200.0
 
     @property
     def is_registered(self) -> bool:
@@ -423,7 +427,7 @@ class GameRoom:
                 print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
                 self.check_and_update_state()
     
-    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200, game_room_chat=True):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200, game_room_chat=True, is_unrated=False, provisional_games=0, provisional_ratings_sum=0.0, provisional_rating=1200.0):
         """Add player to room"""
         if not is_ai and user_id:
             try:
@@ -470,6 +474,11 @@ class GameRoom:
                 if rating is not None and not is_guest:
                     existing_player.rating = rating
                 existing_player.is_guest = is_guest
+                if is_unrated is not None:
+                    existing_player.is_unrated = is_unrated
+                    existing_player.provisional_games = provisional_games
+                    existing_player.provisional_ratings_sum = provisional_ratings_sum
+                    existing_player.provisional_rating = provisional_rating
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
                 # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
@@ -504,6 +513,11 @@ class GameRoom:
                 quitter.last_active = time.time()
                 quitter.country_flag = country_flag
                 quitter.is_guest = is_guest
+                if is_unrated is not None:
+                    quitter.is_unrated = is_unrated
+                    quitter.provisional_games = provisional_games
+                    quitter.provisional_ratings_sum = provisional_ratings_sum
+                    quitter.provisional_rating = provisional_rating
                 if game_room_chat is not None:
                     quitter.game_room_chat = game_room_chat
                 if not getattr(quitter, 'cell_density', None):
@@ -550,6 +564,11 @@ class GameRoom:
                 if rating is not None and not is_guest:
                     existing_player.rating = rating
                 existing_player.is_guest = is_guest
+                if is_unrated is not None:
+                    existing_player.is_unrated = is_unrated
+                    existing_player.provisional_games = provisional_games
+                    existing_player.provisional_ratings_sum = provisional_ratings_sum
+                    existing_player.provisional_rating = provisional_rating
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
                 
@@ -590,7 +609,11 @@ class GameRoom:
                 is_guest=is_guest,
                 is_ai=is_ai,
                 ai_rating=ai_rating,
-                game_room_chat=game_room_chat
+                game_room_chat=game_room_chat,
+                is_unrated=is_unrated,
+                provisional_games=provisional_games,
+                provisional_ratings_sum=provisional_ratings_sum,
+                provisional_rating=provisional_rating
             )
             if manual_accessed:
                 player.joined_mid_round = True
@@ -2314,28 +2337,105 @@ class GameRoom:
                                 ]
                                 rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
                                 
+                                display_game_type = self.game_type.replace('solo_', '')
+                                config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
+                                active_humans = [
+                                    p for p in participants
+                                    if (getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words)))
+                                    and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False)
+                                ]
+
                                 with get_db() as conn_p:
                                     for p in self.players + quitters_snapshot:
                                         if p.user_id in rating_changes:
-                                             p.rating_change = rating_changes[p.user_id]
-                                             p.rating += p.rating_change
-                                             # Update Global Rating
-                                             conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                             
-                                             # Update Config-Specific Rating (using INSERT OR ON CONFLICT UPDATE upsert)
-                                             display_game_type = self.game_type.replace('solo_', '')
-                                             config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
-                                             conn_p.execute('''
-                                                 INSERT INTO user_ratings (user_id, config_key, rating)
-                                                 VALUES (?, ?, MAX(400, 1200 + ?))
-                                                 ON CONFLICT(user_id, config_key) DO UPDATE SET rating = MAX(400, rating + ?)
-                                             ''', (p.user_id, config_key, p.rating_change, p.rating_change))
+                                            simulated_change = rating_changes[p.user_id]
+                                            if getattr(p, 'is_unrated', False):
+                                                # 10-Game Unrated Placement:
+                                                # User starts unrated and rating remains unchanged for first 10 games (with white square)
+                                                p.rating_change = 0
+                                                opponents = [o for o in active_humans if o.user_id != p.user_id]
+                                                if opponents:
+                                                    opp_score = sum(getattr(o, 'score', 0) for o in opponents)
+                                                    opp_rating = sum(
+                                                        float(getattr(o, 'provisional_rating', getattr(o, 'rating', 1200)) if getattr(o, 'is_unrated', False) else getattr(o, 'rating', 1200))
+                                                        for o in opponents
+                                                    )
+                                                    user_score = getattr(p, 'score', 0)
+
+                                                    if opp_score > 0 and user_score > 0:
+                                                        r_round = opp_rating * (float(user_score) / float(opp_score))
+                                                    elif opp_score == 0 and user_score > 0:
+                                                        r_round = (opp_rating / len(opponents)) * 1.5
+                                                    elif user_score == 0:
+                                                        r_round = 400.0
+                                                    else:
+                                                        r_round = 1200.0
+
+                                                    r_round = max(1.0, min(3000.0, r_round))
+                                                    p.provisional_games = getattr(p, 'provisional_games', 0) + 1
+                                                    p.provisional_ratings_sum = getattr(p, 'provisional_ratings_sum', 0.0) + r_round
+                                                    p.provisional_rating = p.provisional_ratings_sum / p.provisional_games
+
+                                                    print(f"[RatingPlacement] {p.username} placement game {p.provisional_games}/10: round_equilibrium={r_round:.1f}, running_avg={p.provisional_rating:.1f}")
+
+                                                    if p.provisional_games >= 10:
+                                                        # 10 games completed: establish approximate rating
+                                                        raw_approx = int(round(p.provisional_ratings_sum / 10.0))
+                                                        # User mandate: In the event the user cheats, make highest rating establishment 2100.
+                                                        established_rating = max(1, min(2100, raw_approx))
+                                                        p.rating = established_rating
+                                                        p.is_unrated = False
+
+                                                        conn_p.execute('''
+                                                            INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                                                            VALUES (?, ?, ?, 0, 10, ?, ?, 1)
+                                                            ON CONFLICT(user_id, config_key) DO UPDATE SET
+                                                                rating = excluded.rating,
+                                                                is_unrated = 0,
+                                                                provisional_games = 10,
+                                                                provisional_ratings_sum = excluded.provisional_ratings_sum,
+                                                                provisional_rating = excluded.provisional_rating,
+                                                                games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                        ''', (p.user_id, config_key, established_rating, p.provisional_ratings_sum, established_rating))
+
+                                                        conn_p.execute('UPDATE users SET rating = MAX(400, ?) WHERE id = ?', (established_rating, p.user_id))
+                                                        print(f"[RatingPlacement] 🎯 Established rating for {p.username} in {config_key}: {established_rating} (raw was {raw_approx})")
+                                                    else:
+                                                        conn_p.execute('''
+                                                            INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                                                            VALUES (?, ?, 1200, 1, ?, ?, ?, 1)
+                                                            ON CONFLICT(user_id, config_key) DO UPDATE SET
+                                                                is_unrated = 1,
+                                                                provisional_games = excluded.provisional_games,
+                                                                provisional_ratings_sum = excluded.provisional_ratings_sum,
+                                                                provisional_rating = excluded.provisional_rating,
+                                                                games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                        ''', (p.user_id, config_key, p.provisional_games, p.provisional_ratings_sum, p.provisional_rating))
+                                            else:
+                                                p.rating_change = simulated_change
+                                                p.rating += p.rating_change
+                                                # Update Global Rating
+                                                conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                                
+                                                # Update Config-Specific Rating
+                                                conn_p.execute('''
+                                                    INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, games_played)
+                                                    VALUES (?, ?, MAX(400, 1200 + ?), 0, 1)
+                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET 
+                                                        rating = MAX(400, rating + ?),
+                                                        games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                ''', (p.user_id, config_key, p.rating_change, p.rating_change))
                                         else:
-                                             p.rating_change = 0
+                                            p.rating_change = 0
 
                                     # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
                                     if self.abandonment_bounty > 0:
-                                        eligible_receivers = [p for p in self.players if not p.is_ai and not getattr(p, 'is_guest', False) and not getattr(p, 'joined_mid_round', False)]
+                                        eligible_receivers = [
+                                            p for p in self.players 
+                                            if not p.is_ai and not getattr(p, 'is_guest', False) 
+                                            and not getattr(p, 'joined_mid_round', False)
+                                            and not getattr(p, 'is_unrated', False)
+                                        ]
                                         if eligible_receivers:
                                             count = len(eligible_receivers)
                                             share = self.abandonment_bounty // count

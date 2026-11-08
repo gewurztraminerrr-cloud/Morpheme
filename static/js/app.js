@@ -3501,7 +3501,7 @@ function selectRoom(roomName) {
 
 // Helper to get color for any rating
 window.getRatingColor = function (rating) {
-    if (rating === undefined || rating === null || rating === 0) return '#ffffff';
+    if (rating === undefined || rating === null || rating === 0 || rating === 'Unrated' || rating === 'unrated') return '#ffffff';
     // Find matching range
     const match = RATING_RANGES.find(r => rating >= r.min && rating <= r.max);
     if (match) return match.color;
@@ -3513,7 +3513,7 @@ window.getRatingColor = function (rating) {
 
 // Helper to get progressive shine class for the top 4 rating ranges
 window.getRatingShineClass = function (rating) {
-    if (rating === undefined || rating === null) return '';
+    if (rating === undefined || rating === null || rating === 'Unrated' || rating === 'unrated') return '';
     const r = parseFloat(rating);
     if (isNaN(r)) return '';
     if (r >= 7000) return 'rating-shine-7000';
