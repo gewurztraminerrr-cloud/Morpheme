@@ -2965,7 +2965,7 @@ def get_rating_configs():
             JOIN users u ON ur.user_id = u.id
             WHERE NOT (
                 ur.rating = 1200
-                AND MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) < 10
+                AND MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) <= 10
             )
             GROUP BY ur.config_key
         ''')
@@ -2982,7 +2982,7 @@ def get_rating_configs():
             cube_alias = k.replace('3d|', 'cube|', 1)
             stats = db_rows.get(cube_alias)
         if not stats:
-            stats = {'user_count': 0, 'avg_rating': 1200}
+            stats = {'user_count': 0, 'avg_rating': None}
 
         result.append({
             'key': k,
@@ -3043,7 +3043,7 @@ def adjust_ratings_by_config():
                           )
                           FROM users u
                           WHERE u.id = user_ratings.user_id
-                      ) < 10
+                      ) <= 10
                   )
             ''', (delta, cfg))
             total_users_affected += cur.rowcount
@@ -3074,7 +3074,7 @@ def adjust_ratings_by_config():
                         for p in getattr(room, 'players', []):
                             if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
                                 p_games = getattr(p, 'games_played', 0) or 0
-                                if p.rating == 1200 and p_games < 10:
+                                if p.rating == 1200 and p_games <= 10:
                                     continue
                                 p.rating = max(1, p.rating + delta)
                         if hasattr(room, 'players'):
