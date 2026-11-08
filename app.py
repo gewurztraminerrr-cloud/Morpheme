@@ -2954,9 +2954,14 @@ def get_rating_configs():
     conn = get_db_connection()
     try:
         cur = conn.execute('''
-            SELECT config_key, COUNT(user_id) as user_count, ROUND(AVG(rating), 1) as avg_rating
-            FROM user_ratings
-            GROUP BY config_key
+            SELECT ur.config_key, COUNT(ur.user_id) as user_count, ROUND(AVG(ur.rating), 1) as avg_rating
+            FROM user_ratings ur
+            JOIN users u ON ur.user_id = u.id
+            WHERE NOT (
+                ur.rating = 1200
+                AND MAX(COALESCE(u.games_played, 0), (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = ur.user_id)) < 10
+            )
+            GROUP BY ur.config_key
         ''')
         db_rows = {row[0]: {'user_count': row[1], 'avg_rating': row[2]} for row in cur.fetchall()}
     except Exception as e:
@@ -3017,8 +3022,19 @@ def adjust_ratings_by_config():
         for cfg in db_configs_to_update:
             cur = conn.execute('''
                 UPDATE user_ratings
-                SET rating = MAX(400, rating + ?)
+                SET rating = MAX(1, rating + ?)
                 WHERE config_key = ?
+                  AND NOT (
+                      rating = 1200
+                      AND (
+                          SELECT MAX(
+                              COALESCE(u.games_played, 0),
+                              (SELECT COUNT(*) FROM round_history rh WHERE rh.user_id = user_ratings.user_id)
+                          )
+                          FROM users u
+                          WHERE u.id = user_ratings.user_id
+                      ) < 10
+                  )
             ''', (delta, cfg))
             total_users_affected += cur.rowcount
 
@@ -3046,7 +3062,10 @@ def adjust_ratings_by_config():
                     with getattr(room, 'lock', threading.Lock()):
                         for p in getattr(room, 'players', []):
                             if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
-                                p.rating = max(400, p.rating + delta)
+                                p_games = getattr(p, 'games_played', 0) or 0
+                                if p.rating == 1200 and p_games < 10:
+                                    continue
+                                p.rating = max(1, p.rating + delta)
                         if hasattr(room, 'players'):
                             room.players.sort(key=lambda p: p.rating, reverse=True)
                     active_rooms_updated += 1

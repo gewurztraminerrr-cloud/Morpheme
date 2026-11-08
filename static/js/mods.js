@@ -2024,17 +2024,6 @@ function setupRatingAdjHandlers() {
         });
     }
 
-    // Active Only
-    const selectActiveBtn = document.getElementById('rating-adj-select-active');
-    if (selectActiveBtn) {
-        selectActiveBtn.addEventListener('click', () => {
-            document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => {
-                cb.checked = (parseInt(cb.dataset.users || '0', 10) > 0);
-            });
-            updateRatingSelectionSummary();
-        });
-    }
-
     // Apply Button
     const applyBtn = document.getElementById('apply-rating-adj-btn');
     if (applyBtn) {
