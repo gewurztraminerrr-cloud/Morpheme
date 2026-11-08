@@ -3393,14 +3393,9 @@ async function _doUpdateGameState(incomingState = null) {
                     listEl.querySelectorAll('.word-item').forEach(item => {
                         item.onclick = (e) => {
                             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                            const word = (item.dataset.word || '').trim().toUpperCase();
-                            if (!word) return;
-                            highlightedFoundWord = word;
-                            listEl.querySelectorAll('.word-item').forEach(el => {
-                                el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === word);
-                            });
-                            if (typeof window.fetchDefinition === 'function') {
-                                window.fetchDefinition(item.dataset.word);
+                            const word = item.dataset.word;
+                            if (word && typeof window.toggleWordSelection === 'function') {
+                                window.toggleWordSelection(word, item);
                             }
                         };
                     });
@@ -3495,14 +3490,9 @@ async function _doUpdateGameState(incomingState = null) {
                         listEl.querySelectorAll('.word-item').forEach(item => {
                             item.onclick = (e) => {
                                 if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                                const word = (item.dataset.word || '').trim().toUpperCase();
-                                if (!word) return;
-                                highlightedFoundWord = word;
-                                listEl.querySelectorAll('.word-item').forEach(el => {
-                                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === word);
-                                });
-                                if (typeof window.fetchDefinition === 'function') {
-                                    window.fetchDefinition(item.dataset.word);
+                                const word = item.dataset.word;
+                                if (word && typeof window.toggleWordSelection === 'function') {
+                                    window.toggleWordSelection(word, item);
                                 }
                             };
                         });
@@ -3898,9 +3888,10 @@ async function _doUpdateGameState(incomingState = null) {
                 // Add click listeners for definitions
                 prevListEl.querySelectorAll('.word-item').forEach(item => {
                     item.addEventListener('click', (e) => {
+                        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
                         const word = item.dataset.word;
-                        if (window.fetchDefinition) {
-                            window.fetchDefinition(word);
+                        if (word && typeof window.toggleWordSelection === 'function') {
+                            window.toggleWordSelection(word, item);
                         }
                     });
                 });
@@ -5944,36 +5935,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.word-item');
             if (!item || !item.dataset.word) return;
-            
-            const word = item.dataset.word.toUpperCase();
-            
-            // Mark that the user is explicitly viewing a definition (so winner announcement doesn't overwrite it)
-            if (window.lastGameState && window.lastGameState.state === 'intermission') {
-                window.wordPressedDuringIntermission = true;
-                window.userViewingDefinitionIntermission = true;
-            }
-
-            if (highlightedFoundWord === word) {
-                highlightedFoundWord = null;
-            } else {
-                highlightedFoundWord = word;
-            }
-
-            // Highlighting update - fast approach using classes on the parent
-            const allItems = listEl.querySelectorAll('.word-item');
-            allItems.forEach(el => el.classList.remove('finder-active'));
-            if (highlightedFoundWord) {
-                item.classList.add('finder-active');
-                window.fetchDefinition(item.dataset.word);
-            } else {
-                if (typeof window.clearDefinitionPanel === 'function') {
-                    window.clearDefinitionPanel();
-                }
-            }
-
-            // Optionally call updateGameState to sync other UI parts, but keep it minimal
-            if (window.lastGameState) {
-                updateGameState(window.lastGameState);
+            if (typeof window.toggleWordSelection === 'function') {
+                window.toggleWordSelection(item.dataset.word, item);
             }
         });
         listEl.hasScoringListener = true;
@@ -9241,7 +9204,12 @@ function renderFCFSNotepads(players, state) {
                     row.style.fontWeight = 'bold';
                 }
                 row.dataset.word = w;
-                row.onclick = () => window.fetchDefinition(w); // Direct handler
+                row.onclick = (e) => {
+                    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                    if (typeof window.toggleWordSelection === 'function') {
+                        window.toggleWordSelection(w, row);
+                    }
+                };
                 row.innerHTML = `<span class="word-text">${w}</span> <span class="word-item-pts">${ptsDisplay}</span>`;
                 list.appendChild(row);
             });
@@ -10228,13 +10196,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             newDiv.innerHTML = `<span><span class="found-indicator present">✓</span>${data.word || word}</span><span style="opacity:0.8">${data.points}</span>`;
                             newDiv.onclick = (e) => {
                                 if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                                const w = (newDiv.dataset.word || data.word || word || '').trim().toUpperCase();
-                                if (!w) return;
-                                highlightedFoundWord = w;
-                                listEl.querySelectorAll('.word-item').forEach(el => {
-                                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === w);
-                                });
-                                if (typeof window.fetchDefinition === 'function') window.fetchDefinition(w);
+                                const w = newDiv.dataset.word || data.word || word;
+                                if (w && typeof window.toggleWordSelection === 'function') {
+                                    window.toggleWordSelection(w, newDiv);
+                                }
                             };
                             listEl.prepend(newDiv);
                         } else {
@@ -11241,6 +11206,82 @@ function clearDefinitionPanel() {
 }
 window.clearDefinitionPanel = clearDefinitionPanel;
 
+function toggleWordSelection(word, clickedElement = null) {
+    if (!word) return false;
+    const cleanWord = String(word).trim().toUpperCase();
+
+    // Check if this word is ALREADY selected
+    if (highlightedFoundWord === cleanWord) {
+        // RETRACT / DESELECT THE WORD
+        highlightedFoundWord = null;
+        window._lastAnimatedReviewWord = null;
+        window.wordPressedDuringIntermission = false;
+        window.userViewingDefinitionIntermission = false;
+
+        // Remove .finder-active from all word elements
+        document.querySelectorAll('.word-item.finder-active, .feed-item.finder-active, .clue-item.finder-active, .notepad-item.finder-active, .notepad-word-line.finder-active').forEach(el => {
+            el.classList.remove('finder-active');
+        });
+
+        // Remove board review highlights immediately
+        document.querySelectorAll('.board-cell.review-highlight').forEach(el => {
+            el.classList.remove('review-highlight');
+        });
+
+        // Remove player roster finder highlights immediately
+        document.querySelectorAll('.player-card.finder-highlight').forEach(el => {
+            el.classList.remove('finder-highlight');
+        });
+
+        // Clear definition panel
+        if (typeof window.clearDefinitionPanel === 'function') {
+            window.clearDefinitionPanel();
+        }
+
+        // If in intermission, sync UI so review state / player cards refresh
+        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            if (typeof reapplyBoardHighlights === 'function') {
+                reapplyBoardHighlights();
+            }
+            if (typeof updateGameState === 'function') {
+                updateGameState(window.lastGameState);
+            }
+        }
+        return false; // Retracted
+    } else {
+        // SELECT THE WORD
+        highlightedFoundWord = cleanWord;
+
+        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            window.wordPressedDuringIntermission = true;
+            window.userViewingDefinitionIntermission = true;
+        }
+
+        // Update .finder-active on matching word elements
+        document.querySelectorAll('.word-item, .feed-item, .clue-item, .notepad-item, .notepad-word-line').forEach(el => {
+            const w = (el.dataset.word || '').trim().toUpperCase();
+            el.classList.toggle('finder-active', w === cleanWord);
+        });
+
+        // Fetch and show definition
+        if (typeof window.fetchDefinition === 'function') {
+            window.fetchDefinition(cleanWord);
+        }
+
+        // If in intermission, trace board path and highlight finders
+        if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            if (typeof reapplyBoardHighlights === 'function') {
+                reapplyBoardHighlights();
+            }
+            if (typeof updateGameState === 'function') {
+                updateGameState(window.lastGameState);
+            }
+        }
+        return true; // Selected
+    }
+}
+window.toggleWordSelection = toggleWordSelection;
+
 window._gameDefCache = window._gameDefCache || new Map();
 
 function renderDefinitionData(data, word, defContent, defPron) {
@@ -11565,13 +11606,8 @@ if (submittedWordsListEl) {
                 }
             }
 
-            if (word) {
-                const cleanWord = String(word).trim().toUpperCase();
-                highlightedFoundWord = cleanWord;
-                submittedWordsListEl.querySelectorAll('.word-item').forEach(el => {
-                    el.classList.toggle('finder-active', (el.dataset.word || '').toUpperCase() === cleanWord);
-                });
-                fetchDefinition(cleanWord);
+            if (word && typeof window.toggleWordSelection === 'function') {
+                window.toggleWordSelection(word, item);
             }
         }
     });
@@ -12831,8 +12867,11 @@ async function handleTournamentWord(word, path = null) {
         item.style.cursor = 'pointer';
         item.dataset.word = word;
         item.innerHTML = `<span>${word}</span> <span style="opacity:0.8">${pts}</span>`;
-        item.onclick = () => {
-            if (typeof window.fetchDefinition === 'function') window.fetchDefinition(word);
+        item.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.toggleWordSelection === 'function') {
+                window.toggleWordSelection(word, item);
+            }
         };
         list.prepend(item);
     }
@@ -13352,6 +13391,14 @@ async function handlePrivateMatchWord(word, path = null) {
         item.style.display = 'flex';
         item.style.justifyContent = 'space-between';
         item.style.animation = 'slideIn 0.3s ease';
+        item.style.cursor = 'pointer';
+        item.dataset.word = word;
+        item.onclick = (e) => {
+            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof window.toggleWordSelection === 'function') {
+                window.toggleWordSelection(word, item);
+            }
+        };
         item.innerHTML = `<span>${word}</span> <span style="opacity:0.8">${pts}</span>`;
         list.prepend(item);
     }
@@ -14074,14 +14121,14 @@ window.showNotepadPopup = function(username) {
         }
     });
 
-    // Click on any word line in notepad to view its definition
+    // Click on any word line in notepad to view its definition / toggle selection
     modal.querySelectorAll('.notepad-word-line').forEach(line => {
         line.addEventListener('click', (e) => {
             const w = line.dataset.word;
             if (w) {
                 window.closeNotepadPopup();
-                if (typeof window.fetchDefinition === 'function') {
-                    window.fetchDefinition(w);
+                if (typeof window.toggleWordSelection === 'function') {
+                    window.toggleWordSelection(w, line);
                 }
             }
         });

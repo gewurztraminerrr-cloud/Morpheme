@@ -57,3 +57,10 @@ fa8b31e58e164af999dbc02452185e3394f2e0f1
 - **Dynamic Toggle Restoral**:
   - Added toggle-off / deselect support in `handleShowRoomsInline` and exposed `window.renderRoomsPlaceholderView()` so deselecting "Show Rooms" immediately restores the centered logo placeholder view.
   - Bumped asset query strings to `1794100000` to prevent caching issues.
+
+### 6. Toggle / Retract Selected Words in Game Rooms Across Rounds and Intermission (`static/js/play.js`, `templates/index.html`)
+- **Word Selection Retraction on Repeated Click**:
+  - Implemented `toggleWordSelection(word, clickedElement)` in `static/js/play.js`.
+  - When a user selects a word under Words or All Words (as well as FCFS feed, notepads, or previous day list) during active rounds or intermission, clicking that same word again immediately deselects/retracts it.
+  - Instantly removes `.finder-active` highlight from word items, clears `.review-highlight` from board cells, removes `.finder-highlight` from player cards in the roster, and calls `clearDefinitionPanel()` to return the definition card back to its clean default state.
+  - Bumped asset version query string to `1794101000`.
