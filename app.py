@@ -2877,6 +2877,41 @@ def delete_mod_donation():
 
 # --- RATING ADJUSTMENT BY CONSTANT PARAMETERS ---
 
+VALID_CONSTANT_CONFIGS = [
+    # Accumulative (ACC)
+    'accumulative|4x4|45',
+    'accumulative|4x4|180',
+    'accumulative|4x6|45',
+    'accumulative|4x6|180',
+    'accumulative|5x7|45',
+    'accumulative|5x7|180',
+    'accumulative|6x8|45',
+    'accumulative|6x8|180',
+    
+    # First Come First Serve (FCFS)
+    'fcfs|4x4|45',
+    'fcfs|4x4|180',
+    'fcfs|4x6|45',
+    'fcfs|4x6|180',
+    'fcfs|5x7|45',
+    'fcfs|5x7|180',
+    'fcfs|6x8|45',
+    'fcfs|6x8|180',
+    
+    # Split Points
+    'split|4x4|45',
+    'split|4x4|180',
+    'split|4x6|45',
+    'split|4x6|180',
+    'split|5x7|45',
+    'split|5x7|180',
+    'split|6x8|45',
+    'split|6x8|180',
+    
+    # Cube (3D)
+    '3d|3x3x3|180'
+]
+
 def format_config_label(config_key: str) -> str:
     parts = config_key.split('|')
     if len(parts) >= 3:
@@ -2888,25 +2923,17 @@ def format_config_label(config_key: str) -> str:
             gt_label = 'FCFS'
         elif gt_lower == 'split':
             gt_label = 'Split'
-        elif gt_lower == 'cube':
+        elif gt_lower in ('cube', '3d'):
             gt_label = 'Cube'
-        elif gt_lower == 'solo_accumulative':
-            gt_label = 'Solo ACC'
-        elif gt_lower.startswith('solo_'):
-            base = gt_lower.replace('solo_', '')
-            base_label = 'ACC' if base == 'accumulative' else base.upper()
-            gt_label = f"Solo {base_label}"
         else:
             gt_label = game_type.upper()
 
         try:
             sec = int(time_limit)
-            if sec == 86400:
-                t_label = "24h"
-            elif sec >= 86400 and sec % 86400 == 0:
-                t_label = f"{sec // 86400}d"
-            elif sec >= 3600 and sec % 3600 == 0:
-                t_label = f"{sec // 3600}h"
+            if sec == 180:
+                t_label = "3m"
+            elif sec == 45:
+                t_label = "45s"
             elif sec >= 60 and sec % 60 == 0:
                 t_label = f"{sec // 60}m"
             else:
@@ -2937,34 +2964,14 @@ def get_rating_configs():
     finally:
         conn.close()
 
-    preset_keys = [
-        # Accumulative
-        'accumulative|4x4|45', 'accumulative|4x4|60', 'accumulative|4x4|120', 'accumulative|4x4|180', 'accumulative|4x4|240', 'accumulative|4x4|600', 'accumulative|4x4|86400',
-        'accumulative|4x6|45', 'accumulative|4x6|60', 'accumulative|4x6|120', 'accumulative|4x6|180', 'accumulative|4x6|240', 'accumulative|4x6|600', 'accumulative|4x6|86400',
-        'accumulative|5x7|45', 'accumulative|5x7|60', 'accumulative|5x7|120', 'accumulative|5x7|180', 'accumulative|5x7|240', 'accumulative|5x7|600', 'accumulative|5x7|86400',
-        'accumulative|6x8|45', 'accumulative|6x8|60', 'accumulative|6x8|120', 'accumulative|6x8|180', 'accumulative|6x8|240', 'accumulative|6x8|600', 'accumulative|6x8|86400',
-        # FCFS
-        'fcfs|4x4|45', 'fcfs|4x4|60', 'fcfs|4x4|120', 'fcfs|4x4|180', 'fcfs|4x4|240', 'fcfs|4x4|600', 'fcfs|4x4|86400',
-        'fcfs|4x6|45', 'fcfs|4x6|60', 'fcfs|4x6|120', 'fcfs|4x6|180', 'fcfs|4x6|240', 'fcfs|4x6|600', 'fcfs|4x6|86400',
-        'fcfs|5x7|45', 'fcfs|5x7|60', 'fcfs|5x7|120', 'fcfs|5x7|180', 'fcfs|5x7|240', 'fcfs|5x7|600', 'fcfs|5x7|86400',
-        'fcfs|6x8|45', 'fcfs|6x8|60', 'fcfs|6x8|120', 'fcfs|6x8|180', 'fcfs|6x8|240', 'fcfs|6x8|600', 'fcfs|6x8|86400',
-        # Split
-        'split|4x4|45', 'split|4x4|60', 'split|4x4|120', 'split|4x4|180', 'split|4x4|240', 'split|4x4|600', 'split|4x4|86400',
-        'split|4x6|45', 'split|4x6|60', 'split|4x6|120', 'split|4x6|180', 'split|4x6|240', 'split|4x6|600', 'split|4x6|86400',
-        'split|5x7|45', 'split|5x7|60', 'split|5x7|120', 'split|5x7|180', 'split|5x7|240', 'split|5x7|600', 'split|5x7|86400',
-        'split|6x8|45', 'split|6x8|60', 'split|6x8|120', 'split|6x8|180', 'split|6x8|240', 'split|6x8|600', 'split|6x8|86400',
-        # Cube
-        'cube|3x3x3|180'
-    ]
-
-    all_keys = list(db_rows.keys())
-    for k in preset_keys:
-        if k not in db_rows:
-            all_keys.append(k)
-
     result = []
-    for k in all_keys:
-        stats = db_rows.get(k, {'user_count': 0, 'avg_rating': 1200})
+    for k in VALID_CONSTANT_CONFIGS:
+        stats = db_rows.get(k)
+        if not stats and k == '3d|3x3x3|180':
+            stats = db_rows.get('cube|3x3x3|180')
+        if not stats:
+            stats = {'user_count': 0, 'avg_rating': 1200}
+
         result.append({
             'key': k,
             'label': format_config_label(k),
@@ -2995,14 +3002,19 @@ def adjust_ratings_by_config():
     if not isinstance(configs, list) or len(configs) == 0:
         return jsonify({'error': 'Please select at least one configuration to adjust.'}), 400
 
-    sanitized_configs = [str(c).strip() for c in configs if str(c).strip()]
+    valid_set = set(VALID_CONSTANT_CONFIGS)
+    sanitized_configs = [str(c).strip() for c in configs if str(c).strip() in valid_set or str(c).strip() == 'cube|3x3x3|180']
     if not sanitized_configs:
-        return jsonify({'error': 'No valid configurations selected.'}), 400
+        return jsonify({'error': 'No valid constant parameter configurations selected.'}), 400
+
+    db_configs_to_update = list(sanitized_configs)
+    if '3d|3x3x3|180' in db_configs_to_update and 'cube|3x3x3|180' not in db_configs_to_update:
+        db_configs_to_update.append('cube|3x3x3|180')
 
     conn = get_db_connection()
     total_users_affected = 0
     try:
-        for cfg in sanitized_configs:
+        for cfg in db_configs_to_update:
             cur = conn.execute('''
                 UPDATE user_ratings
                 SET rating = MAX(400, rating + ?)
@@ -3030,7 +3042,7 @@ def adjust_ratings_by_config():
             for r_id, room in list(room_manager.rooms.items()):
                 gt = getattr(room, 'game_type', '').replace('solo_', '')
                 rcfg = f"{gt}|{getattr(room, 'board_dimensions', '')}|{getattr(room, 'time_limit', '')}"
-                if rcfg in sanitized_configs:
+                if rcfg in sanitized_configs or (rcfg == 'cube|3x3x3|180' and '3d|3x3x3|180' in sanitized_configs):
                     with getattr(room, 'lock', threading.Lock()):
                         for p in getattr(room, 'players', []):
                             if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):

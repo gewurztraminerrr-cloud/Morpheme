@@ -8,7 +8,7 @@ START_OVER_POINT_NOVEMBER_8
 
 ## Latest Feature Commit ID
 ```
-ea42496c50860ced1bea05e78a25ff0554f16b8e
+5e00ff481b4fc66107cb5b5c98cf8efd4399e52c
 ```
 
 ## Synchronization Status
@@ -111,4 +111,6 @@ ea42496c50860ced1bea05e78a25ff0554f16b8e
     - Step 2: Categorized configuration cards with "Select All", "Deselect All", and "Active Only" filters.
     - Step 3: Apply button with confirmation safety dialog detailing affected configs and users.
     - Audit logging stored in `rating_adjustments` database table and appended to `rating_audit.log`.
-  - Bumped `mods.js` version query string in `templates/index.html` to `1794120000`.
+  - **Strict Constant Parameter Conformance**:
+    - Strictly restricts selectable configurations to the 25 authentic constant parameter room configurations that exist in Morpheme (ACC: 45s/3m across 4x4, 4x6, 5x7, 6x8; FCFS: 45s/3m across 4x4, 4x6, 5x7, 6x8; Split: 45s/3m across 4x4, 4x6, 5x7, 6x8; Cube: 3x3x3 3m), eliminating phantom or non-existent options (e.g. 10s, 10m, 24h, 1m, 2m, 4m).
+  - Bumped `mods.js` version query string in `templates/index.html` to `1794121000`.

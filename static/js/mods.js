@@ -1796,20 +1796,20 @@ async function loadRatingConfigs() {
         const groups = {
             'Accumulative (ACC)': [],
             'First-Come-First-Served (FCFS)': [],
-            'Split': [],
-            '3D Cube & Other': []
+            'Split Points': [],
+            'Cube (3D)': []
         };
 
         _ratingConfigsCache.forEach(cfg => {
             const keyLower = cfg.key.toLowerCase();
-            if (keyLower.startsWith('accumulative') || keyLower.startsWith('solo_accumulative')) {
+            if (keyLower.startsWith('accumulative')) {
                 groups['Accumulative (ACC)'].push(cfg);
             } else if (keyLower.startsWith('fcfs')) {
                 groups['First-Come-First-Served (FCFS)'].push(cfg);
             } else if (keyLower.startsWith('split')) {
-                groups['Split'].push(cfg);
+                groups['Split Points'].push(cfg);
             } else {
-                groups['3D Cube & Other'].push(cfg);
+                groups['Cube (3D)'].push(cfg);
             }
         });
 
