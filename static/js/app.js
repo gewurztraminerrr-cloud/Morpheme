@@ -4390,14 +4390,18 @@ function touchMorphemeActivity() {
 window.addEventListener('beforeunload', touchMorphemeActivity);
 function handleAppVisibilityChange() {
     if (document.visibilityState === 'visible') {
+        let last = 0;
+        try {
+            last = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
+        } catch(e) {}
         touchMorphemeActivity();
         const onPlay = (typeof isOnPlayPage === 'function' && isOnPlayPage()) || !!window.currentRoomId;
         if (!onPlay && typeof window.fetchLobbyStats === 'function') {
             window.fetchLobbyStats('all').catch(() => {});
         }
         try {
-            const last = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
-            const isExceededTimeout = (last > 0) && (Date.now() - last >= 10 * 60 * 1000);
+            const playIdle = (typeof lastGameInteractionTime === 'number' && lastGameInteractionTime > 0) ? (Date.now() - lastGameInteractionTime) : 0;
+            const isExceededTimeout = ((last > 0) && (Date.now() - last >= 10 * 60 * 1000)) || (playIdle >= 10 * 60 * 1000);
             if (isExceededTimeout) {
                 const playPage = document.getElementById('page-play');
                 const wasOnPlayPage = playPage && !playPage.classList.contains('hidden') && playPage.style.display !== 'none';
@@ -4412,6 +4416,9 @@ function handleAppVisibilityChange() {
                     }
                 } else {
                     // Stale background session cleanup when not actively in a room
+                    if (hasRoom && typeof window.leaveCurrentRoom === 'function') {
+                        window.leaveCurrentRoom().catch(() => {});
+                    }
                     window._suppressInactivityNotice = true;
                     sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
                     localStorage.removeItem('last_joined_room');

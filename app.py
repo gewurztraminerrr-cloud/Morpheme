@@ -6314,7 +6314,7 @@ def join_room(room_id):
         room.update_player_activity(user_id)
         return jsonify({'success': True, 'role': 'spectator'})
 
-@app.route('/api/room/<room_id>/leave', methods=['POST'])
+@app.route('/api/room/<room_id>/leave', methods=['POST', 'GET'])
 def leave_room(room_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
@@ -6325,6 +6325,8 @@ def leave_room(room_id):
         apply_leave_penalty(session['user_id'], room)
         
         room.remove_player(session['user_id'])
+        if hasattr(room, 'evicted_users') and str(session['user_id']) in room.evicted_users:
+            del room.evicted_users[str(session['user_id'])]
         
         # USER REQUEST: Immediate cleanup if no humans left
         humans = [p for p in room.players if not p.is_ai]
@@ -6579,6 +6581,22 @@ def get_lobby_chat():
                 print(f"[get_lobby_chat] DB error: {e}")
         
         lobby_manager.update_presence(user_id, username, rating, avatar_url, country_flag=country_flag)
+
+        # Failsafe: Remove user from any non-24h game room where their in-room polling has ceased (>15s)
+        try:
+            now_t = time.time()
+            for r in list(room_manager.rooms.values()):
+                if getattr(r, 'time_limit', 0) < 7200:
+                    p_in_room = next((p for p in getattr(r, 'players', []) if str(p.user_id) == str(user_id)), None)
+                    if p_in_room and (now_t - getattr(p_in_room, 'last_active', 0)) > 15:
+                        print(f"[get_lobby_chat] Removing stale lobby player {username} (ID={user_id}) from room {r.room_id}")
+                        apply_leave_penalty(user_id, r)
+                        r.remove_player(user_id, force=True)
+                    s_in_room = next((s for s in getattr(r, 'spectators', []) if str(s.user_id) == str(user_id)), None)
+                    if s_in_room and (now_t - getattr(s_in_room, 'last_active', 0)) > 15:
+                        r.remove_player(user_id, force=True)
+        except Exception as stale_err:
+            print(f"[get_lobby_chat] Stale room cleanup error: {stale_err}")
     
     state = lobby_manager.get_lobby_state()
     return jsonify(state)
@@ -6684,7 +6702,7 @@ def get_room_state(room_id):
     if room:
         if uid:
             if str(uid) in getattr(room, 'evicted_users', {}):
-                reason = room.evicted_users.pop(str(uid), 'inactivity')
+                reason = room.evicted_users.get(str(uid), 'inactivity')
                 print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
                 return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
             
@@ -6755,11 +6773,30 @@ def get_room_state(room_id):
                 _gap = time.time() - p_obj._last_seen_before_update
                 if _gap >= 15.0:
                     print(f"[Gap-Diag] t={time.time():.1f} uid={uid} room={room_id} gap={_gap:.1f}s wake_up={request.args.get('wake_up')} bg={request.args.get('bg')} state={room.state} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
-            room.update_player_activity(uid)
+            idle_arg = request.args.get('idle')
+            if p_obj and idle_arg is not None:
+                try:
+                    idle_val = max(0.0, float(idle_arg))
+                    p_obj.user_last_interacted = time.time() - idle_val
+                except (ValueError, TypeError):
+                    pass
+
+            is_bg_poll = (request.args.get('bg') == '1')
+            if not is_bg_poll:
+                room.update_player_activity(uid)
+
+        # On-demand room participant inactivity check (10-minute threshold)
+        if getattr(room, 'time_limit', 0) < 7200:
+            room.check_inactivity(timeout=600, spec_timeout=600)
+
+        if uid:
+            if str(uid) in getattr(room, 'evicted_users', {}):
+                reason = room.evicted_users.get(str(uid), 'inactivity')
+                print(f"[get_room_state] User {uid} detected in room.evicted_users after check_inactivity! Returning 403 eviction response (Reason: {reason}).")
+                return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
 
         # 1. On-demand state updates & next round transitions safeguard
         # If room is paused in 'waiting' and a human player/spectator is present/polling, wake up immediately!
-        is_bg_poll = (request.args.get('bg') == '1')
         if request.args.get('wake_up') == '1':
             _wp = room.get_player(uid) if uid else None
             print(f"[WakeUp-Diag] uid={uid} room={room_id} state={room.state} tr={room.time_remaining:.1f} idle={(time.time() - getattr(_wp, '_last_seen_before_update', time.time())) if _wp else -1:.1f}s starting={getattr(room, 'starting_round', False)} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
@@ -7030,45 +7067,8 @@ def get_room_state(room_id):
              return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
             
         user_id = session.get('user_id')
-        if user_id:
-            if not room.get_player(user_id) and not room.get_spectator(user_id):
-                # When an active player is polling or returning to a room, unmark is_closing
-                room.is_closing = False
-                username = session.get('username')
-                if username:
-                    is_guest = session.get('is_guest', False)
-                    rating = 1200
-                    games_played = 0
-                    country_flag = '🏳️'
-                    if not is_guest:
-                        try:
-                            conn = sqlite3.connect(DB_PATH, timeout=5)
-                            game_type_base = room.game_type.replace('solo_', '')
-                            config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
-                            if room.time_limit >= 7200:
-                                cursor = conn.execute('SELECT rating, games_played, country_flag FROM users WHERE id = ?', (user_id,))
-                                row = cursor.fetchone()
-                                if row:
-                                    rating = row[0]
-                                    games_played = row[1]
-                                    if row[2]: country_flag = row[2]
-                            else:
-                                cursor = conn.execute('SELECT rating FROM user_ratings WHERE user_id = ? AND config_key = ?', (user_id, config_key))
-                                row = cursor.fetchone()
-                                if row:
-                                    rating = row[0]
-                                cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (user_id,))
-                                row2 = cur.fetchone()
-                                if row2:
-                                    games_played = row2[0]
-                                    if row2[1]: country_flag = row2[1]
-                            conn.close()
-                        except Exception as e:
-                            print(f"[app.py] Auto-rejoin user stats error: {e}")
-                    room.add_player(user_id, username, rating, games_played=games_played, country_flag=country_flag, manual_accessed=False, is_guest=is_guest)
-            else:
-                room.is_closing = False
-            room.update_player_activity(user_id)
+        if user_id and not is_bg_poll:
+            room.is_closing = False
 
         # USER REQUEST: Ensure the server transitions EXACTLY when the client hits 0:00.
         _hb_t0 = time.time()
@@ -7625,7 +7625,7 @@ def submit_chat_message(room_id):
             req_placement = None
         
     room.add_chat_message(session['username'], message, image=image, rating=rating, placement=req_placement)
-    room.update_player_activity(session['user_id'])
+    room.update_player_activity(session['user_id'], is_user_interaction=True)
     
     return jsonify({
         'success': True,
@@ -7682,7 +7682,7 @@ def submit_word(room_id):
         return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
     
     # Refresh activity on any submission attempt (valid or not)
-    room.update_player_activity(user_id)
+    room.update_player_activity(user_id, is_user_interaction=True)
     
     player = room.get_player(user_id)
     new_score = player.score if player else 0

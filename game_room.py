@@ -55,6 +55,7 @@ class Player:
     previous_submitted_words: List[Dict] = field(default_factory=list)
     found_bonus_word: bool = False
     last_active: float = field(default_factory=time.time)
+    user_last_interacted: float = field(default_factory=time.time)
     input_method: str = "mouse"  # 'keyboard', 'mouse', or 'touch'
     country_flag: str = '🏳️'
     joined_mid_round: bool = False
@@ -745,18 +746,22 @@ class GameRoom:
             print(f"[GameRoom] Removed spectator {user_id} ({spec_username}) from room {self.room_id}")
             self.add_chat_message("System", f"{spec_username} has left the room.", is_system=True)
 
-    def update_player_activity(self, user_id):
+    def update_player_activity(self, user_id, is_user_interaction=False):
         """Update last_active timestamp for a player or spectator"""
         uid_str = str(user_id)
         player = self.get_player(user_id)
         if player:
             player.last_active = time.time()
+            if is_user_interaction:
+                player.user_last_interacted = time.time()
             return
 
         # Check spectators too
         for p in self.spectators:
             if str(p.user_id) == uid_str:
                 p.last_active = time.time()
+                if is_user_interaction:
+                    p.user_last_interacted = time.time()
                 break
 
     def check_inactivity(self, timeout=600, spec_timeout=600): 
@@ -767,7 +772,10 @@ class GameRoom:
         # Collect IDs to remove to avoid modifying list during iteration (10-minute standard timeout)
         to_remove_ids = []
         for p in self.players:
-            age = now - p.last_active
+            last_interacted = getattr(p, 'user_last_interacted', getattr(p, 'last_active', now))
+            human_idle_age = now - last_interacted
+            network_age = now - getattr(p, 'last_active', now)
+            age = max(human_idle_age, network_age)
             if age >= timeout and not p.is_ai:
                 # PERSISTENCE: Never remove players from 24h rooms for inactivity
                 if is_daily:
@@ -794,7 +802,10 @@ class GameRoom:
         active_spectators = []
         specs_removed = False
         for p in self.spectators:
-            age = now - p.last_active
+            last_interacted = getattr(p, 'user_last_interacted', getattr(p, 'last_active', now))
+            human_idle_age = now - last_interacted
+            network_age = now - getattr(p, 'last_active', now)
+            age = max(human_idle_age, network_age)
             # Spectators get a longer timeout (default 10-30 mins depending on call)
             # PERSISTENCE: No idle limit for 24h rooms
             if age < spec_timeout or is_daily:
@@ -3384,9 +3395,9 @@ class RoomManager:
                         import traceback
                         print(f"[Heartbeat] Error on {room_id}: {tick_err}\n{traceback.format_exc()}")
                 
-                # 2. Lazy Inactivity Cleanup (Every 30s: 120 iterations at 0.25s)
-                if loop_counter % 120 == 0:
-                    self.cleanup_rooms(timeout=600)
+                # 2. Inactivity Cleanup (Every 5s: 20 iterations at 0.25s)
+                if loop_counter % 20 == 0:
+                    self.cleanup_rooms(timeout=600, spec_timeout=600)
                     now = time.time()
                     with self.lock:
                         self.user_presence = {uid: ts for uid, ts in self.user_presence.items() if (now - ts) < 600}
@@ -4612,8 +4623,8 @@ class RoomManager:
             else:
                 print(f"[RoomManager] delete_room called for {room_id} but not found")
     
-    def cleanup_rooms(self, timeout=1200, spec_timeout=1800):
-        """Clean up empty or inactive rooms (defaults: 20m players, 30m spectators)"""
+    def cleanup_rooms(self, timeout=600, spec_timeout=600):
+        """Clean up empty or inactive rooms (defaults: 10m players, 10m spectators)"""
         rooms_to_delete = []
         
         # Iterate over a copy of keys to avoid modification issues

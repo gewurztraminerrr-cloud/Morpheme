@@ -942,17 +942,30 @@ async function ejectToLobby(reason = "inactivity") {
         localStorage.removeItem('last_joined_room');
     } catch(e) {}
 
-    // 1. Notify server immediately so lobby counts decrease
+    // 1. Notify server immediately so lobby counts decrease and player is removed from room
     if (targetRoomId) {
         try {
-            const url = `/api/room/${targetRoomId}/leave`;
+            const leavePromise = fetch(`/api/room/${targetRoomId}/leave`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+                keepalive: true
+            });
             if (navigator.sendBeacon) {
-                navigator.sendBeacon(url);
-            } else {
-                fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+                try {
+                    const blob = new Blob(['{}'], { type: 'application/json' });
+                    navigator.sendBeacon(`/api/room/${targetRoomId}/leave`, blob);
+                } catch (bErr) {}
             }
+            await leavePromise;
         } catch (e) {
             console.error('[play.js] Failed to notify server of leave during ejection:', e);
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob(['{}'], { type: 'application/json' });
+                    navigator.sendBeacon(`/api/room/${targetRoomId}/leave`, blob);
+                } catch (bErr) {}
+            }
         }
     }
 
@@ -1172,9 +1185,6 @@ document.addEventListener('keydown', (e) => {
 // Applies when the user is on the Play page and has been idle for 10 minutes.
 setInterval(() => {
     if (!isOnPlayPage()) {
-        return;
-    }
-    if (document.hidden) {
         return;
     }
     const roomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
@@ -1902,7 +1912,8 @@ async function _doUpdateGameState(incomingState = null) {
             // Fetch authoritative room state with mobile socket-thaw retry
             let response;
             const isWakeUpThaw = !!window._isWakeUpFetch;
-            const wakeParam = (window._isWakeUpFetch ? '&wake_up=1' : '') + ((document.hidden && !window._isWakeUpFetch) ? '&bg=1' : '');
+            const idleSec = Math.max(0, Math.floor((Date.now() - (lastGameInteractionTime || Date.now())) / 1000));
+            const wakeParam = (window._isWakeUpFetch ? '&wake_up=1' : '') + ((document.hidden && !window._isWakeUpFetch) ? '&bg=1' : '') + `&idle=${idleSec}`;
             window._isWakeUpFetch = false;
             if (isWakeUpThaw) {
                 try {
@@ -10718,12 +10729,30 @@ async function leaveCurrentRoom() {
 
     if (!roomId) return;
 
-    // 2. Non-blocking beacon/fetch to notify server of leave
+    // 2. Immediate fetch with keepalive to notify server of leave
     const url = `/api/room/${roomId}/leave`;
-    if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
-    } else {
-        fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+    try {
+        const leavePromise = fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+            keepalive: true
+        });
+        if (navigator.sendBeacon) {
+            try {
+                const blob = new Blob(['{}'], { type: 'application/json' });
+                navigator.sendBeacon(url, blob);
+            } catch (bErr) {}
+        }
+        await leavePromise;
+    } catch (e) {
+        console.error('[play.js] fetch /leave failed in leaveCurrentRoom, attempting fallback:', e);
+        if (navigator.sendBeacon) {
+            try {
+                const blob = new Blob(['{}'], { type: 'application/json' });
+                navigator.sendBeacon(url, blob);
+            } catch (bErr) {}
+        }
     }
 
     // 3. Refresh lobby stats in background without blocking
