@@ -3158,6 +3158,28 @@ async function _doUpdateGameState(incomingState = null) {
                         if (str) allPlayerFoundStrs.push(str.toUpperCase());
                     });
                 }
+                if (state.state === 'intermission' && p && p.previous_submitted_words && Array.isArray(p.previous_submitted_words)) {
+                    p.previous_submitted_words.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
+                    });
+                }
+            });
+        }
+        if (state.previous_players && Array.isArray(state.previous_players)) {
+            state.previous_players.forEach(p => {
+                if (p && p.submitted_words && Array.isArray(p.submitted_words)) {
+                    p.submitted_words.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
+                    });
+                }
+            });
+        }
+        if (state.global_found_words && Array.isArray(state.global_found_words)) {
+            state.global_found_words.forEach(w => {
+                const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                if (str) allPlayerFoundStrs.push(str.toUpperCase());
             });
         }
 
@@ -3237,7 +3259,17 @@ async function _doUpdateGameState(incomingState = null) {
                     }
                 }
 
-                const uniqueGlobalFound = [...new Set(allPlayerFoundStrs)];
+                // Ensure all target words (found by player) and local submitted words are in uniqueGlobalFound
+                const uniqueGlobalFoundSet = new Set(allPlayerFoundStrs);
+                for (const tw of targetWords) {
+                    if (tw) uniqueGlobalFoundSet.add(tw);
+                }
+                if (window._localSubmittedWords) {
+                    for (const lw of window._localSubmittedWords) {
+                        if (lw) uniqueGlobalFoundSet.add(lw.toUpperCase());
+                    }
+                }
+                const uniqueGlobalFound = [...uniqueGlobalFoundSet];
                 const bonusForList = state.previous_bonus_word || state.bonus_word;
 
 
@@ -6038,7 +6070,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const isCSWOnly = cswOnlySet.has(wordUpper);
         const isAddedWord = addedSet.has(wordUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wordUpper));
         const isTargetFound = targetWordsSet.has(wordUpper);
-        const isFoundByAny = allFoundSet.has(wordUpper);
+        const isFoundByAny = allFoundSet.has(wordUpper) || isTargetFound;
 
         const totalPts = entry.totalPts;
         const pointsText = entry.pointsText;
@@ -10041,21 +10073,24 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     optimisticColor = isBonusWord ? 'green' : 'blue';
                     optimisticIsDefinitive = true;
 
-                    // Optimistic Instant UI Update: Add word to local lists immediately
-                    window._localSubmittedWords = window._localSubmittedWords || new Set();
-                    if (!window._localSubmittedWords.has(word)) {
-                        window._localSubmittedWords.add(word);
-                        window._localSubmittedWordsList = window._localSubmittedWordsList || [];
-                        window._localSubmittedWordsList.push({
-                            word: word,
-                            points: localPts,
-                            score_details: isBonusWord ? { base: Math.max(0, localPts - word.length), bonus_word_points: word.length, total: localPts } : { base: localPts, total: localPts },
-                            is_bonus: isBonusWord,
-                            time: Date.now() / 1000
-                        });
+                    // Optimistic Instant UI Update: Add word to local lists immediately during active rounds
+                    const isRoundActive = (preState && preState.state === 'active');
+                    if (isRoundActive) {
+                        window._localSubmittedWords = window._localSubmittedWords || new Set();
+                        if (!window._localSubmittedWords.has(word)) {
+                            window._localSubmittedWords.add(word);
+                            window._localSubmittedWordsList = window._localSubmittedWordsList || [];
+                            window._localSubmittedWordsList.push({
+                                word: word,
+                                points: localPts,
+                                score_details: isBonusWord ? { base: Math.max(0, localPts - word.length), bonus_word_points: word.length, total: localPts } : { base: localPts, total: localPts },
+                                is_bonus: isBonusWord,
+                                time: Date.now() / 1000
+                            });
 
-                        if (typeof updateGameState === 'function') {
-                            updateGameState();
+                            if (typeof updateGameState === 'function') {
+                                updateGameState();
+                            }
                         }
                     }
                 }
@@ -10229,6 +10264,18 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             window._localSubmittedWords.add(word);
             recordGuessResult(false, finalPath && finalPath.length > 0, false);
         } else {
+            // Server rejected the word: roll back optimistic addition
+            if (window._localSubmittedWords) {
+                window._localSubmittedWords.delete(word);
+            }
+            if (window._localSubmittedWordsList) {
+                window._localSubmittedWordsList = window._localSubmittedWordsList.filter(
+                    item => (typeof item === 'string' ? item : (item && item.word) || '').toUpperCase() !== word
+                );
+            }
+            if (typeof updateGameState === 'function') {
+                updateGameState();
+            }
             recordGuessResult(false, finalPath && finalPath.length > 0, isSpecialSkip);
         }
 

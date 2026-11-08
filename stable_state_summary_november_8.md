@@ -73,3 +73,14 @@ START_OVER_POINT_NOVEMBER_8
   - Words formed via `Q + separate adjacent U` tiles (such as `EQUINES`: `E` -> `Q` -> `U` -> `I` -> `N` -> `E` -> `S`) are now properly indexed and displayed when clicking either the `QU` tile or the separate adjacent `U` tile during intermission.
   - Ensured all board words across `all_words_paths`, `lastDisplayAllWordsArgs`, `previous_all_words`, and `all_words` are exhaustively indexed and mapped to their tiles.
   - Bumped asset version query string to `1794102000`.
+
+### 8. Final-Second / Intermission Word Checkmark & State Synchronization (`game_room.py`, `static/js/play.js`, `templates/index.html`)
+- **Buzzer-Beater Grace Period on Server (`game_room.py`)**:
+  - Implemented a 1.5-second buzzer-beater grace period in `GameRoom.submit_word()` so that words submitted at the final second of the round that arrive over the network right as the server transitions to intermission are validated, credited, and recorded rather than discarded with "Round is not active".
+  - Synchronized `winners_history` and player scores for submissions accepted during this grace period.
+- **Optimistic Rollback & Checkmark Parity (`static/js/play.js`)**:
+  - Resolved state discrepancy where words submitted on the wire were optimistically highlighted blue as found by the player, but failed to show a checkmark (`✓`) in the "All Words" list because `isFoundByAny` only checked server player arrays.
+  - In `displayAllWords()`, enforced `isFoundByAny = allFoundSet.has(wordUpper) || isTargetFound`, guaranteeing that any word marked as found by the player (`isTargetFound` / blue) is 100% consistently displayed with a checkmark (`✓`).
+  - Merged player found words across `previous_submitted_words` during intermission, `previous_players`, and `window._localSubmittedWords` into `uniqueGlobalFound`.
+  - Added optimistic rollback in `submitWord()` so if a submission is genuinely rejected by the server, it is removed from `_localSubmittedWords` and does not linger as a false found word.
+  - Bumped asset version query string to `1794103000`.

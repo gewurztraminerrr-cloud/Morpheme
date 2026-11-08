@@ -944,7 +944,15 @@ class GameRoom:
     
     def submit_word(self, user_id, word, path=None):
         """Submit word for player"""
-        if self.state != 'active':
+        now = time.time()
+        # BUZZER-BEATER GRACE PERIOD: Allow in-flight submissions sent at the final second of the round
+        # that arrive within 1.5s of intermission start to be validated and credited to the completed round.
+        is_grace_period = (
+            self.state == 'intermission' and 
+            getattr(self, 'intermission_start_time', 0) > 0 and 
+            (now - self.intermission_start_time) <= 1.5
+        )
+        if self.state != 'active' and not is_grace_period:
             return False, "Round is not active", 0, None
             
         player = self.get_player(user_id)
@@ -1297,6 +1305,17 @@ class GameRoom:
                 if isinstance(w_obj, dict) and w_obj.get('word') == final_word:
                     points = w_obj.get('points', points)
                     break
+
+        # Buzzer-beater grace period sync: Update winners_history if it was already created at round end
+        if is_grace_period and hasattr(self, 'winners_history') and self.winners_history:
+            for h in self.winners_history:
+                if h.get('round') == self.current_round:
+                    for p_entry in h.get('all_players', []):
+                        if p_entry.get('username', '').lower() == player.username.lower():
+                            p_entry['score'] = player.score
+                    for w_user in h.get('winners', []):
+                        if w_user.get('username', '').lower() == player.username.lower():
+                            h.setdefault('words', []).append({'word': final_word, 'points': points, 'time': word_timestamp})
 
         # Persistence: Save active players for 24h rooms after successful submission in background thread
         if self.time_limit >= 7200:
