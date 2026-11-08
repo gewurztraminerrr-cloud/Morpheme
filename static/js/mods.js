@@ -1820,6 +1820,8 @@ async function loadRatingConfigs() {
         }
         if (statUnratedPoliciesEl) statUnratedPoliciesEl.textContent = totals.unrated_placement_configs ?? '0';
 
+        const previouslyChecked = new Set(Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked')).map(cb => cb.value));
+
         // Group into categories
         const groups = {
             'Accumulative (ACC)': [],
@@ -1850,7 +1852,7 @@ async function loadRatingConfigs() {
                         <span>${groupName}</span>
                         <span style="font-size: 0.75rem; opacity: 0.6; font-weight: normal;">${configs.length} configs</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
             `;
 
             configs.forEach(c => {
@@ -1858,9 +1860,9 @@ async function loadRatingConfigs() {
                 const hasUsers = estCount > 0;
                 const cardBorder = hasUsers ? 'rgba(59, 130, 246, 0.4)' : 'var(--input-border)';
                 const cardBg = hasUsers ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-surface)';
-                const badgeColor = hasUsers ? '#3b82f6' : 'var(--text-secondary)';
-                const avgText = (c.avg_rating !== null && c.avg_rating !== undefined) ? ` (avg ${c.avg_rating})` : '';
+                const avgText = (c.avg_rating !== null && c.avg_rating !== undefined) ? ` <span style="opacity: 0.85; font-size: 0.72rem; font-weight: normal;">(avg ${c.avg_rating})</span>` : '';
                 const c1200 = c.count_1200 || 0;
+                const isChecked = previouslyChecked.has(c.key);
 
                 const isUnratedActive = Boolean(c.unrated_placement);
                 const switchTitle = isUnratedActive
@@ -1868,22 +1870,36 @@ async function loadRatingConfigs() {
                     : `Standard 1200 rating active for ${c.label}. Toggle ON to enact transfer over to 10-rounds-rating-established.`;
 
                 html += `
-                    <div class="rating-cfg-card" style="display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 6px; border: 1px solid ${cardBorder}; background: ${cardBg}; user-select: none;">
+                    <div class="rating-cfg-card" style="display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: 7px; border: 1px solid ${cardBorder}; background: ${cardBg}; user-select: none; transition: border-color 0.15s ease;">
+                        <!-- Row 1: Checkbox & Configuration Title -->
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                             <label style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; cursor: pointer; margin: 0;">
-                                <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" style="cursor: pointer; width: 16px; height: 16px; margin: 0; flex-shrink: 0;">
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.label}</span>
-                            </label>
-                            <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; margin: 0; cursor: pointer;" title="${switchTitle}">
-                                <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
-                                <span class="mod-toggle-slider" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; transition: all .2s ease; background-color: ${isUnratedActive ? '#10b981' : 'rgba(255,255,255,0.2)'}; border: 1px solid ${isUnratedActive ? '#059669' : 'rgba(255,255,255,0.3)'};">
-                                    <span style="position: absolute; content: ''; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: #ffffff; border-radius: 50%; transition: all .2s ease; transform: ${isUnratedActive ? 'translateX(16px)' : 'translateX(0px)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></span>
-                                </span>
+                                <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; margin: 0; flex-shrink: 0;">
+                                <span style="font-size: 0.86rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${c.label}">${c.label}</span>
                             </label>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; padding-left: 24px;">
-                            <span style="color: ${badgeColor}; font-weight: ${hasUsers ? '600' : 'normal'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${estCount} established${avgText} • ${c1200} @ 1200</span>
-                            <span style="font-weight: 700; color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-size: 0.68rem; flex-shrink: 0;">${isUnratedActive ? '10-Rounds Est.' : 'Standard 1200'}</span>
+
+                        <!-- Row 2: Full Width Dedicated Rating Counts -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; padding-left: 24px; color: var(--text-secondary); line-height: 1.3;">
+                            <span style="color: ${hasUsers ? '#60a5fa' : 'inherit'}; font-weight: ${hasUsers ? '600' : 'normal'};">
+                                ${estCount} established${avgText}
+                            </span>
+                            <span style="color: ${c1200 > 0 ? '#c084fc' : 'inherit'}; font-weight: ${c1200 > 0 ? '600' : 'normal'}; flex-shrink: 0;" title="${c.unestablished_1200 || 0} provisional (≤10 games), ${c.established_1200 || 0} established (>10 games)">
+                                ${c1200} @ 1200
+                            </span>
+                        </div>
+
+                        <!-- Row 3: Toggle Switch with Transfer Status -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.73rem; padding-left: 24px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+                            <span style="color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-weight: 600;">
+                                ${isUnratedActive ? '⚡ 10-Rounds Est.' : 'Standard 1200'}
+                            </span>
+                            <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; margin: 0; cursor: pointer;" title="${switchTitle}">
+                                <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
+                                <span class="mod-toggle-slider" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 18px; transition: all .2s ease; background-color: ${isUnratedActive ? '#10b981' : 'rgba(255,255,255,0.2)'}; border: 1px solid ${isUnratedActive ? '#059669' : 'rgba(255,255,255,0.3)'};">
+                                    <span style="position: absolute; content: ''; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: #ffffff; border-radius: 50%; transition: all .2s ease; transform: ${isUnratedActive ? 'translateX(16px)' : 'translateX(0px)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                 `;
