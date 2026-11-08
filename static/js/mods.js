@@ -1762,18 +1762,31 @@ window.deleteModDonation = deleteModDonation;
 
 let _ratingConfigsCache = [];
 
-function checkRatingAdjAuth() {
-    const isJeffb = Boolean(window.currentUserIsRootMod) || 
-                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
+async function checkRatingAdjAuth() {
     const warningEl = document.getElementById('rating-adj-auth-warning');
     const applyBtn = document.getElementById('apply-rating-adj-btn');
-    if (warningEl) {
-        warningEl.style.display = isJeffb ? 'none' : 'block';
-    }
+
+    // Default to enabled so admin is never locked out by client state delay
     if (applyBtn) {
-        applyBtn.disabled = !isJeffb;
-        applyBtn.style.opacity = isJeffb ? '1' : '0.5';
-        applyBtn.style.cursor = isJeffb ? 'pointer' : 'not-allowed';
+        applyBtn.disabled = false;
+        applyBtn.style.opacity = '1';
+        applyBtn.style.cursor = 'pointer';
+    }
+
+    try {
+        const res = await fetch('/api/mods/status');
+        const data = await res.json();
+        const isRoot = Boolean(data.is_root);
+        if (warningEl) {
+            warningEl.style.display = isRoot ? 'none' : 'block';
+        }
+        if (applyBtn && !isRoot) {
+            applyBtn.disabled = true;
+            applyBtn.style.opacity = '0.5';
+            applyBtn.style.cursor = 'not-allowed';
+        }
+    } catch (e) {
+        console.warn("Could not check mod status:", e);
     }
 }
 
@@ -1925,17 +1938,10 @@ async function loadRatingAdjHistory() {
 }
 
 async function applyRatingAdjustment() {
-    const isJeffb = Boolean(window.currentUserIsRootMod) || 
-                    (window.currentUser || localStorage.getItem('morpheme_username') || '').toLowerCase().trim() === 'jeffb';
-    if (!isJeffb) {
-        showModStatus("Unauthorized: Only jeffb can adjust ratings.", true, 'rating-adj-status-area');
-        return;
-    }
-
     const deltaInput = document.getElementById('rating-adj-delta');
     const delta = parseInt(deltaInput ? deltaInput.value : '0', 10);
     if (isNaN(delta) || delta === 0) {
-        showModStatus("Please enter a valid non-zero integer point value (e.g. 25 or -25).", true, 'rating-adj-status-area');
+        showModStatus("Please enter a valid non-zero integer point value (e.g. 1, 25, or -25).", true, 'rating-adj-status-area');
         return;
     }
 
@@ -2044,9 +2050,15 @@ window.applyRatingAdjustment = applyRatingAdjustment;
 window.setupRatingAdjHandlers = setupRatingAdjHandlers;
 window.checkRatingAdjAuth = checkRatingAdjAuth;
 
-// Add event listener to initialize setupModsNavigation when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize setupModsNavigation and handlers when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setupModsNavigation();
+        setupRatingAdjHandlers();
+    });
+} else {
     setupModsNavigation();
-});
+    setupRatingAdjHandlers();
+}
 
 
