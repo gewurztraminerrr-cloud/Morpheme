@@ -1164,6 +1164,9 @@ window.switchComboMainTab = function(tabName) {
     }
 
     if (isExplorer) {
+        if (typeof syncComboExplorerFilterPlacement === 'function') {
+            syncComboExplorerFilterPlacement();
+        }
         const inputList = document.getElementById('combo-explorer-input-list');
         if (inputList && typeof inputList._updateCustomScrollbar === 'function') {
             inputList._updateCustomScrollbar();
@@ -1346,7 +1349,31 @@ function _sortMatchesByLength(matches, isRandom, selectedWord = _comboExplorerSe
     return result;
 }
 
+function syncComboExplorerFilterPlacement() {
+    const filterBar = document.getElementById('combo-explorer-filter-bar');
+    const inputCard = document.getElementById('combo-explorer-input-card');
+    const mobileSlot = document.getElementById('combo-explorer-mobile-filter-slot');
+    if (!filterBar || !inputCard || !mobileSlot) return;
+
+    const isMobile = (window.innerWidth <= 900) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+        if (filterBar.parentElement !== mobileSlot) {
+            mobileSlot.appendChild(filterBar);
+        }
+    } else {
+        const inputHeader = inputCard.querySelector('.combo-explorer-card-header');
+        if (inputHeader && filterBar.parentElement !== inputCard) {
+            inputHeader.insertAdjacentElement('afterend', filterBar);
+        }
+    }
+}
+window.syncComboExplorerFilterPlacement = syncComboExplorerFilterPlacement;
+
 function setupComboExplorer() {
+    syncComboExplorerFilterPlacement();
+    window.addEventListener('resize', syncComboExplorerFilterPlacement);
+    window.addEventListener('orientationchange', syncComboExplorerFilterPlacement);
+
     const lengthSelect = document.getElementById('combo-explorer-length');
     const mpSelect = document.getElementById('combo-explorer-mp');
     const diffSelect = document.getElementById('combo-explorer-difference');

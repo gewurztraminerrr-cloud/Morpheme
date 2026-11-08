@@ -4785,6 +4785,9 @@
                                             </div>
                                         </div>
 
+                                        <!-- Mobile Filter Slot (outside scrollable panel, kept firmly in place) -->
+                                        <div id="combo-explorer-mobile-filter-slot" class="combo-explorer-mobile-filter-slot"></div>
+
                                         <!-- Dual Table Layout -->
                                         <div class="combo-explorer-grid">
                                             <!-- Input Words Table -->
@@ -4793,7 +4796,7 @@
                                                     <span id="combo-explorer-input-title">Input Words</span>
                                                     <span id="combo-explorer-input-count" class="combo-explorer-badge combo-explorer-badge-input">0</span>
                                                 </div>
-                                                <div class="combo-explorer-filter-bar">
+                                                <div class="combo-explorer-filter-bar" id="combo-explorer-filter-bar">
                                                     <input id="combo-explorer-filter" class="combo-explorer-filter-input" type="text" placeholder="Filter input words..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
                                                 </div>
                                                 <div id="combo-explorer-input-list">
@@ -4820,6 +4823,16 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <script>
+                                            try {
+                                                if ((window.innerWidth <= 900) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                                                    var fb = document.getElementById('combo-explorer-filter-bar');
+                                                    var slot = document.getElementById('combo-explorer-mobile-filter-slot');
+                                                    if (fb && slot) slot.appendChild(fb);
+                                                }
+                                            } catch(e) {}
+                                        </script>
                                     </div>
                                 </div>
                             </div>
