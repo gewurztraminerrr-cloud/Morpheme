@@ -8,7 +8,7 @@ START_OVER_POINT_NOVEMBER_8
 
 ## Latest Feature Commit ID
 ```
-76f357d3839cb4ae9775be725c8989e2c65a3962
+f4f4c6f6e684b7d7cd39d393b7f10493a61b6f1a
 ```
 
 ## Synchronization Status
@@ -119,4 +119,20 @@ START_OVER_POINT_NOVEMBER_8
     - **Firmly Established Rating Average & Protection Rule (>10 Games)**: When declaring the average rating for each constant configuration, provisional/unestablished 1200 ratings (users who have played ≤ 10 games) are strictly excluded; only firmly established ratings (any rating != 1200, plus 1200 ratings for users with > 10 games) are included in the average calculation and eligible user counts.
     - **In-Panel Rating Breakdown & Stats Overview Banner**: Integrated a stats banner directly inside the Constant Parameter Rating Adjustment panel displaying total firmly established ratings (18) and 1200 ratings (31 total: 15 provisional ≤10 games, 16 established >10 games); each configuration card now explicitly declares established count, average rating, and 1200 count (e.g. `4 established (avg 1200.0) • 9 @ 1200`).
     - **Unconditional Apply Button Clickability & Direct Event Handling**: Fixed an issue where the "Apply Rating Adjustment" button could become unclickable due to client-side timing checks in `checkRatingAdjAuth()`; button defaults to active with direct `onclick="window.applyRatingAdjustment()"` fallback, verifies authority seamlessly against `/api/mods/status`, and lets backend authoritatively enforce `jeffb` permission.
-  - Bumped `mods.js` version query string in `templates/index.html` to `1794124000`.
+  - Bumped `mods.js` version query string in `templates/index.html` to `1794128000`.
+
+### 12. 10-Rounds Unrated Placement Policy, Toggle Switches & Zero-Change Equilibrium Rating (`app.py`, `game_room.py`, `rating_logic.py`, `static/js/mods.js`, `static/js/play.js`, `static/js/lobby.js`, `static/js/app.js`, `templates/index.html`)
+- **Per-Configuration Toggle Switches & Batch Controls**:
+  - Added dedicated animated iOS-style toggle switches (`.mod-toggle-switch`) on each of the 31 constant parameter configuration cards in `#mod-tab-ratings` (`⚡ 10-Rounds Est.` vs `Standard 1200`), plus Step 2 batch buttons (`⚡ Enact 10-Rounds Est. (Selected)` and `Revoke 10-Rounds Est. (Selected)`) and an active configuration counter in the overview banner.
+  - **Strict `jeffb` Authorization**: Toggling placement switches is strictly restricted to root administrator `jeffb` on both the backend (`POST /api/mods/toggle-unrated-placement` returning `403 Forbidden` for any other moderator) and the frontend (`disabled` toggle inputs, `cursor: not-allowed`, dimmed opacity, and restricted tooltip).
+- **10-Round Unrated Placement & White Square Display**:
+  - When enabled for a configuration, all new users henceforth start **Unrated** with a pure white rating square (`#ffffff` with no metallic shine) in both the Lobby (`lobby.js`) and Game Rooms (`play.js`, `app.js`), and their rating remains unchanged (`rating_change = 0`) for their first 10 rounds.
+  - Unrated players are protected from mass rating delta adjustments and excluded from round abandonment bounty payouts during their 10 placement rounds.
+- **Zero-Change Equilibrium Rating Establishment & Anti-Cheat Cap (2100)**:
+  - At the conclusion of each placement round against active human opponents, the server calculates the Zero-Change Equilibrium Rating ($R_{\text{round}} = R_{\text{opponents}} \times \frac{S_{\text{user}}}{S_{\text{opponents}}}$)—the rating at which the player would have had `0` rating change given the round's scores.
+  - Upon completing round 10, the user's approximate rating is established as the average of the 10 equilibrium ratings, clamped to a strict ceiling of **2100** (`max(1, min(2100, R_approx))`) in the event of cheating and a floor of `1`. From round 11 onward, the user's rating changes normally with each round.
+- **Expanded 3-Tier Card Layout & Configuration-Specific Game Counts**:
+  - Redesigned configuration cards (`minmax(250px, 1fr)`) into a 3-row layout providing full, unclipped room for: (1) Checkbox & Configuration Title, (2) Firmly Established Count & Average alongside Accounts at `1200`, and (3) Policy Status & Toggle Switch.
+  - Fixed room creation so the room creator is explicitly initialized with `joined_mid_round = False`, ensuring Round 1 participation is recorded in `user_ratings`.
+  - Updated `get_rating_configs` and `adjust_ratings_by_config` to count games played strictly **per configuration** (`ur.games_played` and matching `round_history` entries for that mode, board dimensions, and duration) rather than global site-wide games, ensuring unestablished `1200` accounts (`≤ 10` rounds in that specific configuration) are never falsely counted as established.
+  - Bumped asset cache busters to `1794128000` (`mods.js`) and `1794125000` (`play.js`, `lobby.js`, `app.js`).
