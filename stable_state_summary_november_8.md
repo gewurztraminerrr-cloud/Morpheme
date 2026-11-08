@@ -84,3 +84,10 @@ START_OVER_POINT_NOVEMBER_8
   - Merged player found words across `previous_submitted_words` during intermission, `previous_players`, and `window._localSubmittedWords` into `uniqueGlobalFound`.
   - Added optimistic rollback in `submitWord()` so if a submission is genuinely rejected by the server, it is removed from `_localSubmittedWords` and does not linger as a false found word.
   - Bumped asset version query string to `1794103000`.
+
+### 9. Mobile Bottom Panel Navigation Alignment ('Words ➜' and 'Board ➜') (`static/css/play.css`, `templates/index.html`)
+- **Right-Aligned Positioning for Mobile Navigation Arrows**:
+  - Resolved layout spacing on mobile devices in game rooms where the bottom navigation buttons ("Words ➜" on the board panel and "Board ➜" on the players panel) appeared shifted inward to the left and not far enough to the right.
+  - Removed the legacy `margin-right: 25px !important;` offset on `.mobile-nav-indicators .nav-right` and updated it to `margin-right: 0 !important;`, allowing the buttons to sit 25px further right (aligned with the standard 15px container padding).
+  - Restored visual balance and symmetry with the left-hand navigation buttons ("➜ Players" and "➜ Board").
+  - Bumped `play.css` version query string in `templates/index.html` to `1794090100`.
