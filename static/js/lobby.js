@@ -1592,6 +1592,20 @@ function getUserConfigRating(gameType, board, time) {
 }
 window.getUserConfigRating = getUserConfigRating;
 
+function renderRoomsPlaceholderView() {
+    const roomsList = document.getElementById('rooms-list');
+    if (!roomsList) return;
+    roomsList.innerHTML = `
+        <div id="rooms-placeholder-view">
+            <p class="placeholder">No "Show Rooms" selected</p>
+            <div class="placeholder-icon-wrap">
+                <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
+            </div>
+        </div>
+    `;
+}
+window.renderRoomsPlaceholderView = renderRoomsPlaceholderView;
+
 function resetLobbyButtons() {
     const gameButtons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     gameButtons.forEach(btn => {

@@ -175,9 +175,9 @@
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1793462000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1793630000" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1794100000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1793550000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1793630000">
+    <link rel="stylesheet" href="/css/lobby.css?v=1794100000">
     <link rel="stylesheet" href="/css/play.css?v=1794090000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000">
@@ -611,6 +611,24 @@
         async function handleShowRoomsInline(rawBtn) {
             if (!rawBtn) return;
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
+
+            // If clicked button is already active, toggle it off and restore placeholder view
+            if (btn && btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                window.currentLobbyConfig = null;
+                var infoElReset = document.getElementById('selected-game-info');
+                if (infoElReset) infoElReset.textContent = 'Select a game type';
+                if (typeof window.renderRoomsPlaceholderView === 'function') {
+                    window.renderRoomsPlaceholderView();
+                } else {
+                    var rlEl = document.getElementById('rooms-list');
+                    if (rlEl) {
+                        rlEl.innerHTML = '<div id="rooms-placeholder-view"><p class="placeholder">No &quot;Show Rooms&quot; selected</p><div class="placeholder-icon-wrap"><img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;"></div></div>';
+                    }
+                }
+                return;
+            }
+
             var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'fcfs';
             var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
             var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
@@ -3595,7 +3613,9 @@
                     <div id="rooms-list">
                         <div id="rooms-placeholder-view">
                             <p class="placeholder">No "Show Rooms" selected</p>
-                            <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
+                            <div class="placeholder-icon-wrap">
+                                <img src="/static/images/morpheme_transparent.png" class="placeholder-icon" alt="Morpheme Logo" style="pointer-events:none;">
+                            </div>
                         </div>
                     </div>
                     <div class="mobile-lobby-spacer"></div>
@@ -10038,7 +10058,7 @@
     <script src="/js/settings.js?v=1794024000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
     <script src="/js/app.js?v=1794024000"></script>
-    <script src="/js/lobby.js?v=1794071000"></script>
+    <script src="/js/lobby.js?v=1794100000"></script>
     <script src="/js/play.js?v=1794090000"></script>
     <script src="/js/tournaments.js?v=1794024000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
