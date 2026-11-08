@@ -1765,13 +1765,17 @@ let _ratingConfigsCache = [];
 async function checkRatingAdjAuth() {
     const warningEl = document.getElementById('rating-adj-auth-warning');
     const applyBtn = document.getElementById('apply-rating-adj-btn');
+    const enactBtn = document.getElementById('rating-enact-unrated-btn');
+    const revokeBtn = document.getElementById('rating-revoke-unrated-btn');
 
     // Default to enabled so admin is never locked out by client state delay
-    if (applyBtn) {
-        applyBtn.disabled = false;
-        applyBtn.style.opacity = '1';
-        applyBtn.style.cursor = 'pointer';
-    }
+    [applyBtn, enactBtn, revokeBtn].forEach(btn => {
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+    });
 
     try {
         const res = await fetch('/api/mods/status');
@@ -1780,10 +1784,23 @@ async function checkRatingAdjAuth() {
         if (warningEl) {
             warningEl.style.display = isRoot ? 'none' : 'block';
         }
-        if (applyBtn && !isRoot) {
-            applyBtn.disabled = true;
-            applyBtn.style.opacity = '0.5';
-            applyBtn.style.cursor = 'not-allowed';
+        if (!isRoot) {
+            [applyBtn, enactBtn, revokeBtn].forEach(btn => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+            document.querySelectorAll('.mod-policy-toggle-input').forEach(inp => {
+                inp.disabled = true;
+                const label = inp.closest('.mod-toggle-switch');
+                if (label) {
+                    label.style.opacity = '0.45';
+                    label.style.cursor = 'not-allowed';
+                    label.title = 'Restricted: Only jeffb can toggle rating placement switches.';
+                }
+            });
         }
     } catch (e) {
         console.warn("Could not check mod status:", e);
@@ -1803,6 +1820,7 @@ async function loadRatingConfigs() {
             return;
         }
         const data = await res.json();
+        const isRoot = data.is_root !== undefined ? Boolean(data.is_root) : true;
         _ratingConfigsCache = data.configs || [];
 
         // Update Stats Overview Banner
@@ -1865,9 +1883,11 @@ async function loadRatingConfigs() {
                 const isChecked = previouslyChecked.has(c.key);
 
                 const isUnratedActive = Boolean(c.unrated_placement);
-                const switchTitle = isUnratedActive
-                    ? `10-Rounds rating established policy is ACTIVE for ${c.label}. Toggle OFF to return to Standard 1200.`
-                    : `Standard 1200 rating active for ${c.label}. Toggle ON to enact transfer over to 10-rounds-rating-established.`;
+                const switchTitle = !isRoot
+                    ? `Restricted: Only jeffb can toggle rating placement switches.`
+                    : (isUnratedActive
+                        ? `10-Rounds rating established policy is ACTIVE for ${c.label}. Toggle OFF to return to Standard 1200.`
+                        : `Standard 1200 rating active for ${c.label}. Toggle ON to enact transfer over to 10-rounds-rating-established.`);
 
                 html += `
                     <div class="rating-cfg-card" style="display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: 7px; border: 1px solid ${cardBorder}; background: ${cardBg}; user-select: none; transition: border-color 0.15s ease;">
@@ -1894,8 +1914,8 @@ async function loadRatingConfigs() {
                             <span style="color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-weight: 600;">
                                 ${isUnratedActive ? '⚡ 10-Rounds Est.' : 'Standard 1200'}
                             </span>
-                            <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; margin: 0; cursor: pointer;" title="${switchTitle}">
-                                <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
+                            <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; margin: 0; cursor: ${isRoot ? 'pointer' : 'not-allowed'}; opacity: ${isRoot ? '1' : '0.45'};" title="${switchTitle}">
+                                <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} ${!isRoot ? 'disabled' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
                                 <span class="mod-toggle-slider" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 18px; transition: all .2s ease; background-color: ${isUnratedActive ? '#10b981' : 'rgba(255,255,255,0.2)'}; border: 1px solid ${isUnratedActive ? '#059669' : 'rgba(255,255,255,0.3)'};">
                                     <span style="position: absolute; content: ''; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: #ffffff; border-radius: 50%; transition: all .2s ease; transform: ${isUnratedActive ? 'translateX(16px)' : 'translateX(0px)'}; box-shadow: 0 1px 3px rgba(0,0,0,0.5);"></span>
                                 </span>
@@ -2065,10 +2085,12 @@ window.toggleSingleRatingPolicy = async function (configKey, enable) {
             await loadRatingConfigs();
         } else {
             showModStatus(data.error || `Failed to ${actionDesc} 10-rounds-rating-established policy.`, true, 'rating-adj-status-area');
+            await loadRatingConfigs();
         }
     } catch (err) {
         console.error("Error toggling rating policy:", err);
         showModStatus("Network error while updating rating policy.", true, 'rating-adj-status-area');
+        await loadRatingConfigs();
     }
 };
 

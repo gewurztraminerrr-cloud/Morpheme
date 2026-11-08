@@ -3155,6 +3155,7 @@ def get_rating_configs():
 
     return jsonify({
         'configs': result,
+        'is_root': (session.get('username') or '').strip().lower() == 'jeffb',
         'totals': {
             'established_count': total_established_count,
             'count_1200': total_1200_count,
@@ -3284,8 +3285,8 @@ def adjust_ratings_by_config():
 @login_required
 def toggle_unrated_placement():
     current_user = (session.get('username') or '').strip().lower()
-    if not is_mod(current_user):
-        return jsonify({'error': 'Unauthorized: Only moderators can update rating placement policies.'}), 403
+    if current_user != 'jeffb':
+        return jsonify({'error': 'Unauthorized: Only jeffb can toggle rating placement switches.'}), 403
 
     data = request.json or {}
     configs = data.get('configs', [])
