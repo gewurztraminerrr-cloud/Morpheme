@@ -2881,12 +2881,16 @@ VALID_CONSTANT_CONFIGS = [
     # Accumulative (ACC)
     'accumulative|4x4|45',
     'accumulative|4x4|180',
+    'accumulative|4x4|600',
     'accumulative|4x6|45',
     'accumulative|4x6|180',
+    'accumulative|4x6|600',
     'accumulative|5x7|45',
     'accumulative|5x7|180',
+    'accumulative|5x7|600',
     'accumulative|6x8|45',
     'accumulative|6x8|180',
+    'accumulative|6x8|600',
     
     # First Come First Serve (FCFS)
     'fcfs|4x4|45',
@@ -2909,7 +2913,9 @@ VALID_CONSTANT_CONFIGS = [
     'split|6x8|180',
     
     # Cube (3D)
-    '3d|3x3x3|180'
+    '3d|3x3x3|180',
+    '3d|3x3x3|300',
+    '3d|3x3x3|600'
 ]
 
 def format_config_label(config_key: str) -> str:
@@ -2972,8 +2978,9 @@ def get_rating_configs():
     result = []
     for k in VALID_CONSTANT_CONFIGS:
         stats = db_rows.get(k)
-        if not stats and k == '3d|3x3x3|180':
-            stats = db_rows.get('cube|3x3x3|180')
+        if not stats and k.startswith('3d|'):
+            cube_alias = k.replace('3d|', 'cube|', 1)
+            stats = db_rows.get(cube_alias)
         if not stats:
             stats = {'user_count': 0, 'avg_rating': 1200}
 
@@ -3008,13 +3015,16 @@ def adjust_ratings_by_config():
         return jsonify({'error': 'Please select at least one configuration to adjust.'}), 400
 
     valid_set = set(VALID_CONSTANT_CONFIGS)
-    sanitized_configs = [str(c).strip() for c in configs if str(c).strip() in valid_set or str(c).strip() == 'cube|3x3x3|180']
+    sanitized_configs = [str(c).strip() for c in configs if str(c).strip() in valid_set or str(c).strip().replace('cube|', '3d|', 1) in valid_set]
     if not sanitized_configs:
         return jsonify({'error': 'No valid constant parameter configurations selected.'}), 400
 
     db_configs_to_update = list(sanitized_configs)
-    if '3d|3x3x3|180' in db_configs_to_update and 'cube|3x3x3|180' not in db_configs_to_update:
-        db_configs_to_update.append('cube|3x3x3|180')
+    for c in list(db_configs_to_update):
+        if c.startswith('3d|'):
+            cube_alias = c.replace('3d|', 'cube|', 1)
+            if cube_alias not in db_configs_to_update:
+                db_configs_to_update.append(cube_alias)
 
     conn = get_db_connection()
     total_users_affected = 0
@@ -3058,7 +3068,8 @@ def adjust_ratings_by_config():
             for r_id, room in list(room_manager.rooms.items()):
                 gt = getattr(room, 'game_type', '').replace('solo_', '')
                 rcfg = f"{gt}|{getattr(room, 'board_dimensions', '')}|{getattr(room, 'time_limit', '')}"
-                if rcfg in sanitized_configs or (rcfg == 'cube|3x3x3|180' and '3d|3x3x3|180' in sanitized_configs):
+                is_matching = (rcfg in sanitized_configs) or (rcfg.startswith('cube|') and rcfg.replace('cube|', '3d|', 1) in sanitized_configs) or (rcfg.startswith('3d|') and rcfg.replace('3d|', 'cube|', 1) in sanitized_configs)
+                if is_matching:
                     with getattr(room, 'lock', threading.Lock()):
                         for p in getattr(room, 'players', []):
                             if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
