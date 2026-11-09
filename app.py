@@ -3194,6 +3194,10 @@ def get_rating_configs():
     })
 
 
+_LAST_RATING_ADJ_LOCK = threading.Lock()
+_LAST_RATING_ADJ_STATE = {'signature': None, 'ts': 0.0, 'response': None}
+
+
 @app.route('/api/mods/adjust-ratings', methods=['POST'])
 @login_required
 def adjust_ratings_by_config():
@@ -3218,6 +3222,14 @@ def adjust_ratings_by_config():
     sanitized_configs = [str(c).strip() for c in configs if str(c).strip() in valid_set or str(c).strip().replace('cube|', '3d|', 1) in valid_set]
     if not sanitized_configs:
         return jsonify({'error': 'No valid constant parameter configurations selected.'}), 400
+
+    req_sig = (delta, tuple(sorted(sanitized_configs)))
+    now_ts = time.time()
+    with _LAST_RATING_ADJ_LOCK:
+        if _LAST_RATING_ADJ_STATE['signature'] == req_sig and (now_ts - _LAST_RATING_ADJ_STATE['ts']) < 3.0 and _LAST_RATING_ADJ_STATE['response']:
+            return jsonify(_LAST_RATING_ADJ_STATE['response'])
+        _LAST_RATING_ADJ_STATE['signature'] = req_sig
+        _LAST_RATING_ADJ_STATE['ts'] = now_ts
 
     db_configs_to_update = list(sanitized_configs)
     for c in list(db_configs_to_update):
@@ -3300,13 +3312,16 @@ def adjust_ratings_by_config():
     except Exception as log_err:
         print(f"[RatingAdjustment] Error writing to rating audit log: {log_err}")
 
-    return jsonify({
+    resp_payload = {
         'success': True,
         'delta': delta,
         'configs': sanitized_configs,
         'users_affected': total_users_affected,
         'active_rooms_updated': active_rooms_updated
-    })
+    }
+    with _LAST_RATING_ADJ_LOCK:
+        _LAST_RATING_ADJ_STATE['response'] = resp_payload
+    return jsonify(resp_payload)
 
 
 @app.route('/api/mods/toggle-unrated-placement', methods=['POST'])

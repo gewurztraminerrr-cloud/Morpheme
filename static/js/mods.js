@@ -2008,66 +2008,72 @@ async function loadRatingAdjHistory() {
 }
 
 async function applyRatingAdjustment() {
-    const deltaInput = document.getElementById('rating-adj-delta');
-    const delta = parseInt(deltaInput ? deltaInput.value : '0', 10);
-    if (isNaN(delta) || delta === 0) {
-        showModStatus("Please enter a valid non-zero integer point value (e.g. 1, 25, or -25).", true, 'rating-adj-status-area');
-        return;
-    }
-
-    const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
-    if (checkedBoxes.length === 0) {
-        showModStatus("Please select at least one configuration to adjust.", true, 'rating-adj-status-area');
-        return;
-    }
-
-    const configs = checkedBoxes.map(cb => cb.value);
-    let totalUsers = 0;
-    checkedBoxes.forEach(cb => {
-        totalUsers += parseInt(cb.dataset.users || '0', 10);
-    });
-
-    const actionWord = delta > 0 ? 'INCREASE' : 'REDUCE';
-    const confirmMsg = `ATTENTION: You are about to ${actionWord} ratings by ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} for ALL users in ${configs.length} constant parameter configuration(s).\n\n` +
-                       `Selected configurations: ${configs.length}\n` +
-                       `Users currently affected: ${totalUsers}\n` +
-                       `Active game rooms: Live players will be updated immediately.\n\n` +
-                       `Are you sure you want to proceed?`;
-
-    if (!window.confirm(confirmMsg)) {
-        return;
-    }
-
-    const applyBtn = document.getElementById('apply-rating-adj-btn');
-    if (applyBtn) {
-        applyBtn.disabled = true;
-        applyBtn.textContent = 'Applying Adjustment...';
-    }
-
+    if (window._isApplyingRatingAdj) return;
+    window._isApplyingRatingAdj = true;
     try {
-        const res = await fetch('/api/mods/adjust-ratings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ delta, configs })
+        const deltaInput = document.getElementById('rating-adj-delta');
+        const delta = parseInt(deltaInput ? deltaInput.value : '0', 10);
+        if (isNaN(delta) || delta === 0) {
+            showModStatus("Please enter a valid non-zero integer point value (e.g. 1, 25, or -25).", true, 'rating-adj-status-area');
+            return;
+        }
+
+        const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+            showModStatus("Please select at least one configuration to adjust.", true, 'rating-adj-status-area');
+            return;
+        }
+
+        const configs = checkedBoxes.map(cb => cb.value);
+        let totalUsers = 0;
+        checkedBoxes.forEach(cb => {
+            totalUsers += parseInt(cb.dataset.users || '0', 10);
         });
-        const data = await res.json();
-        if (data.success) {
-            const sign = delta > 0 ? '+' : '';
-            showModStatus(`Successfully adjusted ratings by ${sign}${delta} across ${data.configs.length} configuration(s)! ${data.users_affected} database record(s) and ${data.active_rooms_updated || 0} active room(s) updated immediately.`, false, 'rating-adj-status-area');
-            if (deltaInput) deltaInput.value = '';
-            loadRatingConfigs();
-            loadRatingAdjHistory();
-        } else {
-            showModStatus(data.error || "Failed to adjust ratings.", true, 'rating-adj-status-area');
+
+        const actionWord = delta > 0 ? 'INCREASE' : 'REDUCE';
+        const confirmMsg = `ATTENTION: You are about to ${actionWord} ratings by ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} for ALL users in ${configs.length} constant parameter configuration(s).\n\n` +
+                           `Selected configurations: ${configs.length}\n` +
+                           `Users currently affected: ${totalUsers}\n` +
+                           `Active game rooms: Live players will be updated immediately.\n\n` +
+                           `Are you sure you want to proceed?`;
+
+        if (!window.confirm(confirmMsg)) {
+            return;
         }
-    } catch (err) {
-        console.error("Error applying rating adjustment:", err);
-        showModStatus("Network error while applying rating adjustment.", true, 'rating-adj-status-area');
-    } finally {
+
+        const applyBtn = document.getElementById('apply-rating-adj-btn');
         if (applyBtn) {
-            applyBtn.disabled = false;
-            applyBtn.textContent = '🚀 Apply Rating Adjustment';
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Applying Adjustment...';
         }
+
+        try {
+            const res = await fetch('/api/mods/adjust-ratings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delta, configs })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const sign = delta > 0 ? '+' : '';
+                showModStatus(`Successfully adjusted ratings by ${sign}${delta} across ${data.configs.length} configuration(s)! ${data.users_affected} database record(s) and ${data.active_rooms_updated || 0} active room(s) updated immediately.`, false, 'rating-adj-status-area');
+                if (deltaInput) deltaInput.value = '';
+                loadRatingConfigs();
+                loadRatingAdjHistory();
+            } else {
+                showModStatus(data.error || "Failed to adjust ratings.", true, 'rating-adj-status-area');
+            }
+        } catch (err) {
+            console.error("Error applying rating adjustment:", err);
+            showModStatus("Network error while applying rating adjustment.", true, 'rating-adj-status-area');
+        } finally {
+            if (applyBtn) {
+                applyBtn.disabled = false;
+                applyBtn.textContent = '🚀 Apply Rating Adjustment';
+            }
+        }
+    } finally {
+        window._isApplyingRatingAdj = false;
     }
 }
 
@@ -2095,14 +2101,16 @@ window.toggleSingleRatingPolicy = async function (configKey, enable) {
 };
 
 window.batchToggleRatingPolicy = async function (enable) {
-    const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
-    if (checkedBoxes.length === 0) {
-        showModStatus(`Please select at least one configuration to ${enable ? 'enact' : 'revoke'} unrated placement.`, true, 'rating-adj-status-area');
-        return;
-    }
-    const configs = checkedBoxes.map(cb => cb.value);
-    const actionDesc = enable ? "enacting" : "revoking";
+    if (window._isBatchTogglingRatingPolicy) return;
+    window._isBatchTogglingRatingPolicy = true;
     try {
+        const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+            showModStatus(`Please select at least one configuration to ${enable ? 'enact' : 'revoke'} unrated placement.`, true, 'rating-adj-status-area');
+            return;
+        }
+        const configs = checkedBoxes.map(cb => cb.value);
+        const actionDesc = enable ? "enacting" : "revoking";
         const res = await fetch('/api/mods/toggle-unrated-placement', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2119,60 +2127,62 @@ window.batchToggleRatingPolicy = async function (enable) {
     } catch (err) {
         console.error("Error batch toggling rating policy:", err);
         showModStatus("Network error while updating rating policy.", true, 'rating-adj-status-area');
+    } finally {
+        window._isBatchTogglingRatingPolicy = false;
     }
 };
 
 function setupRatingAdjHandlers() {
     // Delta preset buttons
     document.querySelectorAll('.mod-rating-preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             const deltaInput = document.getElementById('rating-adj-delta');
             if (deltaInput) {
                 deltaInput.value = btn.dataset.val;
             }
-        });
+        };
     });
 
     // Select All
     const selectAllBtn = document.getElementById('rating-adj-select-all');
     if (selectAllBtn) {
-        selectAllBtn.addEventListener('click', () => {
+        selectAllBtn.onclick = () => {
             document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => { cb.checked = true; });
             updateRatingSelectionSummary();
-        });
+        };
     }
 
     // Deselect All
     const deselectAllBtn = document.getElementById('rating-adj-deselect-all');
     if (deselectAllBtn) {
-        deselectAllBtn.addEventListener('click', () => {
+        deselectAllBtn.onclick = () => {
             document.querySelectorAll('.rating-cfg-checkbox').forEach(cb => { cb.checked = false; });
             updateRatingSelectionSummary();
-        });
+        };
     }
 
     // Batch Enact Unrated
     const enactBtn = document.getElementById('rating-enact-unrated-btn');
     if (enactBtn) {
-        enactBtn.addEventListener('click', () => window.batchToggleRatingPolicy(true));
+        enactBtn.onclick = () => window.batchToggleRatingPolicy(true);
     }
 
     // Batch Revoke Unrated
     const revokeBtn = document.getElementById('rating-revoke-unrated-btn');
     if (revokeBtn) {
-        revokeBtn.addEventListener('click', () => window.batchToggleRatingPolicy(false));
+        revokeBtn.onclick = () => window.batchToggleRatingPolicy(false);
     }
 
     // Apply Button
     const applyBtn = document.getElementById('apply-rating-adj-btn');
     if (applyBtn) {
-        applyBtn.addEventListener('click', applyRatingAdjustment);
+        applyBtn.onclick = applyRatingAdjustment;
     }
 
     // Refresh history
     const refreshHistoryBtn = document.getElementById('refresh-rating-adj-history-btn');
     if (refreshHistoryBtn) {
-        refreshHistoryBtn.addEventListener('click', loadRatingAdjHistory);
+        refreshHistoryBtn.onclick = loadRatingAdjHistory;
     }
 }
 
@@ -2187,11 +2197,9 @@ window.checkRatingAdjAuth = checkRatingAdjAuth;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setupModsNavigation();
-        setupRatingAdjHandlers();
     });
 } else {
     setupModsNavigation();
-    setupRatingAdjHandlers();
 }
 
 
