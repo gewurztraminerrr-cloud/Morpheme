@@ -8,7 +8,7 @@ START_OVER_POINT_NOVEMBER_8
 
 ## Latest Feature Commit ID
 ```
-f314593ec639d4f965bcd19408419fffb033910b
+9af85041298de0615d2d85fd10d283703449d995
 ```
 
 ## Synchronization Status
@@ -118,8 +118,8 @@ f314593ec639d4f965bcd19408419fffb033910b
     - **Provisional/Newcomer Protection Rule**: Excludes users who have a rating of 1200 and have played fewer than 10 games (`games_played < 10` across persistent `users.games_played` and `round_history`), protecting unplayed or barely-played newcomer accounts from mass rating adjustments while continuing to adjust established users with 1200 ratings who have played 10 or more games.
     - **Firmly Established Rating Average & Protection Rule (>10 Games)**: When declaring the average rating for each constant configuration, provisional/unestablished 1200 ratings (users who have played ≤ 10 games) are strictly excluded; only firmly established ratings (any rating != 1200, plus 1200 ratings for users with > 10 games) are included in the average calculation and eligible user counts.
     - **In-Panel Rating Breakdown & Stats Overview Banner**: Integrated a stats banner directly inside the Constant Parameter Rating Adjustment panel displaying total firmly established ratings (18) and 1200 ratings (31 total: 15 provisional ≤10 games, 16 established >10 games); each configuration card now explicitly declares established count, average rating, and 1200 count (e.g. `4 established (avg 1200.0) • 9 @ 1200`).
-    - **Unconditional Apply Button Clickability & Direct Event Handling**: Fixed an issue where the "Apply Rating Adjustment" button could become unclickable due to client-side timing checks in `checkRatingAdjAuth()`; button defaults to active with direct `onclick="window.applyRatingAdjustment()"` fallback, verifies authority seamlessly against `/api/mods/status`, and lets backend authoritatively enforce `jeffb` permission.
-  - Bumped `mods.js` version query string in `templates/index.html` to `1794128000`.
+    - **Single-Execution Binding & Client/Server Re-Entrancy Guards**: Resolved duplicate popup and double-execution issue on `#apply-rating-adj-btn` by removing the duplicate inline `onclick` attribute in `templates/index.html`, removing the redundant second `setupRatingAdjHandlers()` call in `mods.js`, switching button handlers to idempotent `.onclick = ...` bindings, adding a `window._isApplyingRatingAdj` client re-entrancy lock, and enforcing a 3-second server-side idempotency guard (`_LAST_RATING_ADJ_LOCK`) in `POST /api/mods/adjust-ratings`.
+  - Bumped `mods.js` version query string in `templates/index.html` to `1794131000`.
 
 ### 12. 10-Rounds Unrated Placement Policy, Toggle Switches & Zero-Change Equilibrium Rating (`app.py`, `game_room.py`, `rating_logic.py`, `static/js/mods.js`, `static/js/play.js`, `static/js/lobby.js`, `static/js/app.js`, `templates/index.html`)
 - **Per-Configuration Toggle Switches & Batch Controls**:
@@ -137,10 +137,18 @@ f314593ec639d4f965bcd19408419fffb033910b
   - Redesigned configuration cards (`minmax(250px, 1fr)`) into a 3-row layout providing full, unclipped room for: (1) Checkbox & Configuration Title, (2) Firmly Established Count & Average alongside Accounts at `1200`, and (3) Policy Status & Toggle Switch.
   - Fixed room creation so the room creator is explicitly initialized with `joined_mid_round = False`, ensuring Round 1 participation is recorded in `user_ratings`.
   - Updated `get_rating_configs` and `adjust_ratings_by_config` to count games played strictly **per configuration** (`ur.games_played` and matching `round_history` entries for that mode, board dimensions, and duration) rather than global site-wide games, ensuring unestablished `1200` accounts (`≤ 10` rounds in that specific configuration) are never falsely counted as established.
-  - Bumped asset cache busters to `1794128000` (`mods.js`) and `1794125000` (`play.js`, `lobby.js`, `app.js`).
+  - Bumped asset cache busters to `1794131000` (`mods.js`) and `1794130000` (`play.js`, `app.js`).
 
 ### 13. AW & Dictionary Word Inflection Logic & Root Tag Inheritance Fix (`app.py`)
 - **Eliminated Root Tag Inheritance & Cache Pollution (`STREAMIES` -> `[inflections: STREAMIE]`)**:
   - Fixed `format_resolved_definition()` and `append_aw_inflections_to_definition()` in `app.py` so `DEFINITIONS_CACHE` is never mutated with `[inflections: ...]`, pointer resolution (`< streamie`) strips the root word's `[inflections: ...]` tag before constructing the inflected word's definition, and a word is strictly excluded (`x != w`) from its own inflections list.
 - **Zero-Latency Morphological Inflection Verification Across AW Words (`added_words.txt`)**:
   - Enhanced `extract_root_from_definition()`, `is_verified_inflection()`, and `is_plural_or_inflection()` with precompiled regexes and `-IES` / `-IE` vs `-Y` morphological disambiguation (~0.036 ms per definition lookup, adding zero perceptible latency).
+
+### 14. Lobby Music Playback Reliability on App Open & Top-Menu Lobby Navigation (`static/js/app.js`, `static/js/play.js`, `templates/index.html`)
+- **Eliminated `window.currentRoomId` False Lockout on Gateway & Lobby (`LobbyMusicEngine.isLobbyOrGatewayActive()`)**:
+  - Fixed `LobbyMusicEngine.play()`, `loadBuffer()`, `playMusicOnFirstInteraction()`, and `triggerGatewayAudioImmediate()` so that a lingering `window.currentRoomId` returned by `/api/user/current-room` during `checkSession()` never pauses or blocks Lobby music while the active view is `page-loading` (Gateway) or `page-lobby`.
+- **Synchronous User-Gesture Audio Resume on Top-Menu "Lobby" & "Return to Lobby" Clicks**:
+  - Updated `setupNavigation()` and `#return-lobby-btn` so `window.leaveCurrentRoom()` synchronously clears `window.currentRoomId` and stops room polling while dispatching its `/leave` keepalive request in the background without blocking `showPage('page-lobby')`, preserving the browser's synchronous user-gesture activation for `AudioContext.resume()`.
+  - Added `pointerdown` / `touchstart` / `mousedown` pre-wake listeners on `.nav-btn[data-page="lobby"]` and updated capture-phase `playMusicOnFirstInteraction()` so clicking the top-menu Lobby button from another tab wakes the `AudioContext` rather than suspending it.
+  - Retained first-interaction unlock listeners until `LobbyMusicEngine.isActuallyPlaying()` confirms `this.ctx.state === 'running'` (or active fallback HTML5 audio).
