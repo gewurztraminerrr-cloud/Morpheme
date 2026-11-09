@@ -1,3 +1,13 @@
+# ==============================================================================
+# ARCHITECTURAL MANDATE (PREFACE):
+# Any fix or rule applied to Game Room boards, Spinner Set configurations,
+# word acceptance, or Remaining/All Words tabs MUST be applied identically across:
+#   1. Game Rooms (game_room.py / spinner_set.py / board_generator.py)
+#   2. Solo & With Friends (private_match_logic.py / app.py)
+#   3. Tournaments (tournament_logic.py)
+# (Do NOT apply board-grid rules to Multiplayer Subanagrams.)
+# The method for generating boards must be unified and identical everywhere.
+# ==============================================================================
 import sqlite3
 import json
 import time
@@ -288,19 +298,26 @@ class PrivateMatchManager:
         bonus_cell = None # Initialize to avoid NameError
         dims = parameters.get('board_dimensions', '4x4')
         dict_name = parameters.get('dictionary', 'NWL')
-        min_len = parameters.get('min_word_length', 3)
+        try:
+            min_len = int(parameters.get('min_word_length', 3) or 3)
+        except Exception:
+            min_len = 3
 
         # Bonus word selection BEFORE board generation to allow embedding
+        # Guarantee bonus_word_length >= min_len
+        valid_bonus_lens = [l for l in [6, 7, 8, 9, 10] if l >= min_len]
+        if not valid_bonus_lens:
+            valid_bonus_lens = [max(6, min_len)]
         bonus_len_choice = parameters.get('bonus_word_length', 'random')
         if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
              import random
-             bonus_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+             bonus_len = random.choice(valid_bonus_lens)
         else:
              try:
-                 bonus_len = int(bonus_len_choice)
+                 bonus_len = max(min_len, int(bonus_len_choice))
              except:
                  import random
-                 bonus_len = random.randint(6, 10)
+                 bonus_len = random.choice(valid_bonus_lens)
         bonus_word = ""
         # Check if the format allows a bonus word
         target_format = parameters.get('board_format', 'Normal')
@@ -320,18 +337,19 @@ class PrivateMatchManager:
                 mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
             target_format = f"{mania_letter} Mania"
             
-        # Already imported above, keep it clean
-        
         target_difficulty = parameters.get('difficulty', 'random')
         if target_difficulty == 'random':
             target_difficulty = SpinnerSet._spin_difficulty()
+        else:
+            target_difficulty = SpinnerSet.format_difficulty_with_pct(target_difficulty)
             
         # Randomize dictionary for each round if it's not fixed
+        use_aw_flag = bool(parameters.get('use_added_words', False))
         if dict_name == 'random':
             dict_name = SpinnerSet._spin_dictionary()
+            use_aw_flag = False
 
-        # Extract + AW from dictionary name
-        use_aw_flag = False
+        # Extract + AW from dictionary name (preserving existing use_added_words flag)
         if dict_name and ('+ AW' in str(dict_name) or '+AW' in str(dict_name)):
             use_aw_flag = True
             dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
@@ -341,20 +359,37 @@ class PrivateMatchManager:
             
         parameters['dictionary'] = dict_name
         parameters['use_added_words'] = use_aw_flag
+        display_dict_name = f"{dict_name} + AW" if use_aw_flag else dict_name
 
+        is_24h_match = int(parameters.get('time_limit', 60) or 60) >= 86400
         target_range = parameters.get('word_count_range', 'random')
-        if target_range == 'random':
+        if is_24h_match:
+            target_range = '300-400'
+        elif target_range == 'random':
             target_range = SpinnerSet._spin_word_count(dict_name, min_len, target_difficulty, dims, use_added_words=use_aw_flag)
+        else:
+            if use_aw_flag and target_range in ['50-100', '100-200', '200-300']:
+                target_range = '300-400'
+            elif not use_aw_flag and target_range == '400-500':
+                target_range = '300-400'
         
         fmt_check = target_format.lower()
         if bonus_len > 0:
             from word_validator import word_validator
-            dictionary_set = word_validator.csw_words if dict_name == 'CSW' else word_validator.nwl_words
-            potential_dict_words = [w for w in dictionary_set if len(w) == bonus_len]
+            if dict_name == 'CSW':
+                word_validator.ensure_csw_loaded()
+                dictionary_set = word_validator.csw_words
+            else:
+                dictionary_set = word_validator.nwl_words
+            base_diff = SpinnerSet.strip_difficulty_pct(target_difficulty)
+            potential_dict_words = [
+                w for w in dictionary_set
+                if len(w) == bonus_len and (base_diff not in ['Medium', 'Hard'] or 'ING' not in w.upper())
+            ]
             if potential_dict_words:
                 bonus_word = random.choice(potential_dict_words)
         
-        # Generate board
+        # Generate board (always pass use_added_words=use_aw_flag)
         res = bg.generate_board(
             dimensions=dims,
             bonus_word=bonus_word,
@@ -362,17 +397,20 @@ class PrivateMatchManager:
             dictionary=dict_name,
             board_format=target_format,
             min_word_length=min_len,
-            difficulty=target_difficulty
+            difficulty=target_difficulty,
+            use_added_words=use_aw_flag
         )
         board, all_words_on_board, bonus_cell, updated_format, all_words_dict = res[0], res[1], res[2], res[3], res[4]
+        u_ratio = res[5] if len(res) >= 6 else None
         if len(res) >= 7 and res[6]:
             bonus_word = res[6]
         # Use the updated format (e.g. "X Mania" instead of just "Mania")
         target_format = updated_format
+        target_difficulty = SpinnerSet.format_difficulty_with_pct(target_difficulty, u_ratio)
         
-        # User Request Fix: Ensure private matches also respect the lockdown for Normal format
-        f_low = str(target_format).lower()
-        if 'bonus letter' not in f_low and 'either' not in f_low:
+        # Strict Format Lockdown: bonus_cell is ONLY allowed for Bonus Letter format (NEVER Either/Or or Normal)
+        f_low = str(target_format).lower().strip()
+        if not ('bonus letter' in f_low or f_low == 'bonus'):
              bonus_cell = None
         
         # Fact check word count range & min word length
@@ -396,7 +434,7 @@ class PrivateMatchManager:
             conn.execute('''
                 INSERT INTO private_match_rounds (match_id, round_number, board_data, bonus_word, bonus_cell, word_count_range, all_words, start_time, end_time, board_format, dictionary, difficulty)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(factual_range), json.dumps(all_words_dict), now, end_time, target_format, dict_name, target_difficulty))
+            ''', (match_id, round_number, json.dumps(board), bonus_word, json.dumps(bonus_cell) if bonus_cell else None, json.dumps(factual_range), json.dumps(all_words_dict), now, end_time, target_format, display_dict_name, target_difficulty))
         except Exception as e:
             print(f"FAILED TO INSERT ROUND: {e}")
             print(f"DEBUG LOCALS: board={ 'board' in locals() }, bonus_cell={ 'bonus_cell' in locals() }, target_format={ 'target_format' in locals() }")

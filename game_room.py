@@ -1,6 +1,13 @@
 """
 Game Room Management for Multiplayer Boggle
 Handles room state, players, timers, and game logic
+
+ARCHITECTURAL MANDATE (PREFACE) - READ BEFORE EDITING BOARDS / SPINNER SET:
+  Any fix to game-room boards, Spinner Set configuration, word acceptance, the Remaining tab or the
+  info above Words/All Words MUST be applied identically to Game Rooms, Solo, With Friends
+  (private_match_logic.py) and Tournaments (tournament_logic.py). NOT to Multiplayer Subanagrams.
+  Board generation must be one unified method everywhere. Parameters declared in the Spinner Set at
+  0:45 of intermission are final: nothing may change them until the next intermission.
 """
 
 import time
@@ -1213,15 +1220,11 @@ class GameRoom:
             # Use snapshotted min_length to avoid contamination from next-round pre-generation
             min_len = self.current_min_length
             
-            # FIX: Use current_board_format instead of spinner_params to work correctly in With Friends / Private Match
+            # PREFACE FIX (#7): In Penalty format, ANY invalid word of at least min length costs 3 points,
+            # whether or not it can be traced on the board.
             if 'penalty' in fmt_lower and not is_24h:
-                # Is it on the board? If path was provided by dragging, we know it is!
-                if path:
+                if len(word) >= int(min_len or 3):
                     is_penalty = True
-                else:
-                    is_on_b, _ = word_validator.word_validator.find_word_on_board(self.board, word)
-                    if is_on_b:
-                        is_penalty = True
             
             if is_penalty:
                 # Apply penalty (-3 points)
@@ -1241,7 +1244,7 @@ class GameRoom:
                 
                 # Update score (Sequential floor at 0 to avoid negative debt)
                 self._recalculate_player_score(player)
-                return True, f"{word} PENALTY (-3)", penalty_points, word
+                return True, f"{word} INVALID (-3 PTS)", penalty_points, word
             else:
                 # Standard invalid word
                 player.invalid_words.append(word)
@@ -2641,6 +2644,7 @@ class GameRoom:
         elif declared_target_wc == '300-400': max_cap = 399
         elif declared_target_wc == '400-500': max_cap = 499
 
+        max_cap = None  # PREFACE FIX (#13/#14): never truncate valid board words
         if max_cap and len(fw) > max_cap:
             sampled_set = proportionally_sample_words(fw, max_cap)
             if fbw and fbw in fw and fbw not in sampled_set:
@@ -3303,7 +3307,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             min_required = 300 if is_aw else 15
             if len(l_w_filt) >= min_required:
                 # If target_range_resolved was provided and generated board exceeded max_accept, sample down
-                if max_accept < 99999 and len(l_w_filt) > max_accept:
+                if False and max_accept < 99999 and len(l_w_filt) > max_accept:  # never truncate valid words
                     sampled_set = proportionally_sample_words(l_w_filt, max_accept)
                     if l_bw and l_bw in l_w_filt and l_bw not in sampled_set:
                         sampled_set.add(l_bw)
@@ -3392,7 +3396,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             words_filtered.append(bonus_word)
             paths_filtered[bonus_word] = [bonus_cell]
 
-    if max_accept < 99999 and len(words_filtered) > max_accept:
+    if False and max_accept < 99999 and len(words_filtered) > max_accept:  # never truncate valid words
         sampled_set = proportionally_sample_words(words_filtered, max_accept)
         if bonus_word and bonus_word in words_filtered and bonus_word not in sampled_set:
             sampled_set.add(bonus_word)
@@ -4922,6 +4926,8 @@ class RoomManager:
             # Once params are locked (revealed during intermission), do NOT mutate them.
             if not getattr(room, 'spinner_params_revealed', False):
                 room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, is_24h)
+            if getattr(room, 'is_solo', False) and room.game_type != 'subanagrams' and not getattr(room, 'locked_solo_params', None) and isinstance(room.spinner_params, dict):
+                room.locked_solo_params = copy.deepcopy(room.spinner_params)  # PREFACE #23
             
             # GET BONUS WORD (Use override if available, else roll new)
             if bonus_word_override:
@@ -5384,7 +5390,7 @@ class RoomManager:
                                     json.dumps(room.bonus_cell) if room.bonus_cell else None,
                                     room.current_board_format or 'Normal',
                                     room.current_uniqueness or 0.0,
-                                    room.current_word_count_range or '200-300',
+                                    room.current_word_count_range or '300-400',
                                     players_json
                                 ))
                             print(f"[RoomManager] Reconstructed 24h room {room.room_id} board saved to active_boards DB successfully.")
@@ -5592,6 +5598,11 @@ class RoomManager:
                     # Generate new parameters
                     if room.game_type == 'subanagrams':
                         new_params = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
+                    elif getattr(room, 'is_solo', False) and getattr(room, 'locked_solo_params', None):
+                        # PREFACE #23: Solo repeats the very same parameters every round until exit.
+                        import copy as _cp2
+                        new_params = _cp2.deepcopy(room.locked_solo_params)
+                        new_params['generated_at'] = time.time()
                     elif getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                         initial_solo_params = room.initial_solo_params
                         dict_choice = initial_solo_params.get('dictionary', 'random')
@@ -5675,6 +5686,9 @@ class RoomManager:
                     # Metadata: Ensure dimensions and time limits are included for the reveal animation
                     new_params['board_dimensions'] = room.board_dimensions
                     new_params['time_limit'] = room.time_limit
+                    if getattr(room, 'is_solo', False) and room.game_type != 'subanagrams' and not getattr(room, 'locked_solo_params', None):
+                        import copy as _cp
+                        room.locked_solo_params = _cp.deepcopy(new_params)
 
                     if room.game_type == 'subanagrams':
                         room.next_spinner_params = new_params
@@ -5815,7 +5829,7 @@ class RoomManager:
                         dims_parts = str(room.board_dimensions).lower().split('x')
                         r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
                         c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
-                        new_params['difficulty'] = self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3))
+                        new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3)), ratio)
                         if final_bonus_word:
                             new_params['bonus_word_length'] = len(final_bonus_word)
                         
@@ -6028,7 +6042,7 @@ class RoomManager:
                 
             # Randomize word count range according to Odds Window probabilities (never hardcode 100-200!)
             if room.time_limit >= 7200:
-                easy_wc = '200-300'
+                easy_wc = '300-400'
             else:
                 easy_wc = SpinnerSet._spin_word_count(base_dict, easy_min, 'Easy', dims, use_added_words=False)
             
@@ -6247,7 +6261,7 @@ class RoomManager:
                 fast_params = {
                     'difficulty': 'Medium',
                     'dictionary': 'NWL',
-                    'word_count_range': '200-300' if room.time_limit >= 7200 else '100-200',
+                    'word_count_range': '300-400' if room.time_limit >= 7200 else '100-200',
                     'board_format': 'Valued Letters' if room.time_limit >= 7200 else 'Normal',
                     'min_word_length': fast_min,
                     'bonus_word_length': 6,
@@ -6409,9 +6423,9 @@ class RoomManager:
             if room.time_limit >= 7200:
                 if params:
                     params['board_format'] = 'Valued Letters'
-                    params['word_count_range'] = '200-300'
+                    params['word_count_range'] = '300-400'
                 fmt = 'Valued Letters'
-                wc_range = '200-300'
+                wc_range = '300-400'
             else:
                 fmt = params.get('board_format', 'Normal')
                 wc_range = params.get('word_count_range', '100-200')
@@ -6757,7 +6771,7 @@ class RoomManager:
                     elif planned_wc == '300-400': max_cap = 399
                     elif planned_wc == '400-500': max_cap = 499
 
-                    if max_cap and len(all_words) > max_cap:
+                    if False and max_cap and len(all_words) > max_cap:  # never truncate valid words
                         _wl = list(all_words)
                         total_raw = len(_wl)
                         by_len = {}
@@ -6792,7 +6806,7 @@ class RoomManager:
                     achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag, dictionary=search_dict)
 
                     f_low = str(updated_format).lower()
-                    final_bonus_cell = bonus_cell if ('bonus letter' in f_low or 'either' in f_low) else None
+                    final_bonus_cell = bonus_cell if ('bonus letter' in f_low or f_low.strip() == 'bonus') else None
 
                     # INITIALIZATION: Calculate detailed scores with bonus letter and bonus word points
                     scored_dict = {}
@@ -6818,6 +6832,7 @@ class RoomManager:
                     rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                     cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
                     achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=target_room.next_spinner_params.get('difficulty') if getattr(target_room, 'next_spinner_params', None) else None, min_word_length=_sb_min_len)
+                    achieved_diff = SpinnerSet.format_difficulty_with_pct(achieved_diff, u_ratio)
 
                     # CSW and AW word tagging
                     display_min = _sb_min_len
@@ -7359,9 +7374,12 @@ class RoomManager:
                     dims_parts = str(room.board_dimensions).lower().split('x')
                     r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
                     c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
-                    room.current_difficulty = self.board_generator.get_difficulty_label(
-                        room.current_uniqueness, rows=r_cnt, cols=c_cnt, dictionary=room.current_dictionary, min_word_length=raw_min
+                    # PREFACE: the difficulty declared at 0:45 is final; only add the (XX%) suffix.
+                    room.current_difficulty = SpinnerSet.format_difficulty_with_pct(
+                        active_params.get('difficulty', 'Medium'), room.current_uniqueness
                     )
+                    if isinstance(room.spinner_params, dict):
+                        room.spinner_params['difficulty'] = room.current_difficulty
                 try:
                     room.current_min_length = int(raw_min)
                 except:
@@ -7657,7 +7675,7 @@ class RoomManager:
                 elif target_sp_range == '300-400': max_cap = 399
                 elif target_sp_range == '400-500': max_cap = 499
 
-                if getattr(room, 'game_type', None) != 'subanagrams' and max_cap and len(room.all_words) > max_cap:
+                if False and getattr(room, 'game_type', None) != 'subanagrams' and max_cap and len(room.all_words) > max_cap:  # never truncate valid words
                     _wl       = list(room.all_words)
                     total_raw = len(_wl)
                     by_len    = {}
@@ -7810,7 +7828,7 @@ class RoomManager:
                                     room.current_dictionary, room.current_min_length, time.time(),
                                     room.bonus_word or '', json.dumps(room.bonus_cell) if room.bonus_cell else None,
                                     room.current_board_format or 'Normal', room.current_uniqueness or 0.0,
-                                    room.current_word_count_range or ('200-300' if room.time_limit >= 7200 else '100-200'),
+                                    room.current_word_count_range or ('300-400' if room.time_limit >= 7200 else '100-200'),
                                     players_json
                                 ))
                         except Exception as db_err:
@@ -8665,10 +8683,8 @@ class RoomManager:
                     room.solving_complete = True # STOPS SERVER SEARCH
                     
                     # Sync UI
-                    room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
-                    room.spinner_params['difficulty'] = room.current_difficulty
-                    room.spinner_params['uniqueness'] = u_ratio
-                    room.current_uniqueness = u_ratio
+                    # Never mutate active/declared params mid-round or after 0:45 reveal.
+                    room.next_round_difficulty = SpinnerSet.format_difficulty_with_pct(achieved_diff, u_ratio)
                     
                     self.trigger_room_update(room_id)
                     return {"success": True, "words_found": total_count, "uniqueness": u_ratio}

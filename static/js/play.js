@@ -5703,22 +5703,21 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     let useAW = false;
     const s = window.lastGameState;
     if (s) {
-        const dictStr = String(s.previous_dictionary || s.current_dictionary || (s.spinner_params && s.spinner_params.dictionary) || 'NWL').toUpperCase();
+        // PREFACE #15: during intermission use ONLY the completed round's dictionary; during play ONLY the live one.
+        // Never mix in next-round spinner params or word-set heuristics.
+        const inInter = (s.state === 'intermission');
+        const dictStr = String((inInter ? (s.previous_dictionary || s.current_dictionary) : s.current_dictionary) || (s.spinner_params && s.spinner_params.dictionary) || 'NWL').toUpperCase();
         useAW = (
-            s.previous_use_added_words === true ||
-            s.use_added_words === true ||
-            (s.spinner_params && s.spinner_params.use_added_words === true) ||
+            (inInter ? s.previous_use_added_words === true : s.use_added_words === true) ||
             dictStr.includes('+ AW') ||
             dictStr.includes('+AW') ||
-            dictStr.includes('ADDED') ||
-            (addedSet && addedSet.size > 0)
+            dictStr.includes('ADDED')
         );
         const baseDict = dictStr.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').replace(/ADDED_WORDS/i, '').trim();
         isCSW = (
             baseDict === 'CSW' ||
             baseDict.includes('CSW') ||
-            baseDict.includes('COLLINS') ||
-            (cswOnlySet && cswOnlySet.size > 0)
+            baseDict.includes('COLLINS')
         );
     } else {
         if (cswOnlySet && cswOnlySet.size > 0) isCSW = true;
@@ -6991,11 +6990,7 @@ function updateLocalTimer() {
                 window._rapidTransitionPolling = false;
                 return;
             }
-            if (transitionAttempts >= 25) { // 2.5s max safety
-                window._transitionPollTimer = null;
-                window._rapidTransitionPolling = false;
-                return;
-            }
+            // PREFACE #5: never give up while stuck at WAIT... (slow to 500ms polling after 2.5s)
             isFetchingState = false;
             lastStateFetchTime = 0;
             updateGameState().finally(() => {
@@ -7006,7 +7001,7 @@ function updateLocalTimer() {
                     return;
                 }
                 if (window._transitionPollTimer) {
-                    window._transitionPollTimer = setTimeout(pollTransitionNext, 80);
+                    window._transitionPollTimer = setTimeout(pollTransitionNext, transitionAttempts >= 25 ? 500 : 80);
                 }
             });
         }
@@ -7532,7 +7527,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     // 3D Bonus Highlight Detection
                     let bonusClass = "";
                         const bc = (state && state.bonus_cell) ? state.bonus_cell : (window.lastGameState ? window.lastGameState.bonus_cell : null);
-                        if (Array.isArray(bc) && bc.length === 3) {
+                        const _bcFmt = String((state && state.current_board_format) || (window.lastGameState && window.lastGameState.current_board_format) || '').toLowerCase();
+                        if (Array.isArray(bc) && bc.length === 3 && (_bcFmt.includes('bonus letter') || _bcFmt.trim() === 'bonus')) {
                             if (Number(bc[0]) === f && Number(bc[1]) === r && Number(bc[2]) === c) {
                                 bonusClass = " bonus-highlight";
                                 tileHtml += `<span class="bonus-star">★</span>`;
@@ -8109,7 +8105,8 @@ function updateBoardCell(cell, r, c, letter, grayed, f, state = null) {
     const existingStar = cell.querySelector('.bonus-star');
     const fmtLower = (boardFormat || '').toLowerCase();
     // scoring.py awards BL whenever a bonus_cell exists (except checkerboard), so mirror that here.
-    const isBonusLetterFormat = fmtLower.includes('bonus') || fmtLower.includes('either') || (isMatch && !fmtLower.includes('checker'));
+    // PREFACE (#4/#6/#17/#18): the bonus star appears ONLY in the "Bonus Letter" format.
+    const isBonusLetterFormat = fmtLower.includes('bonus letter') || fmtLower.trim() === 'bonus';
     if (isMatch && isBonusLetterFormat && !existingStar) {
         const star = document.createElement('span');
         star.className = 'bonus-star';
@@ -10081,7 +10078,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     const isBonusWord = preState.bonus_word && word === preState.bonus_word.toUpperCase();
                     let usesBonusLetterTile = false;
                     const _bonusFmtLow = (preState.current_board_format || '').toLowerCase();
-                    const _isBonusFmt = _bonusFmtLow.includes('bonus') || _bonusFmtLow.includes('either');
+                    const _isBonusFmt = _bonusFmtLow.includes('bonus letter') || _bonusFmtLow.trim() === 'bonus';
                     if (_isBonusFmt && preState.bonus_cell && finalPath) {
                         const bc = preState.bonus_cell;
                         let targetF = -1, targetR = -1, targetC = -1;
@@ -10141,10 +10138,16 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             }
                         }
                     }
+                } else if (!isEO) {
+                    // PREFACE #20: the board word list is complete (never truncated), so an unlisted word is
+                    // invalid. Flash red at the same instant (0ms) and duration as the blue flash.
+                    const invMsg = isPenaltyMode
+                        ? `${word.toUpperCase()} INVALID (-3 PTS)`
+                        : `${word.toUpperCase()} INVALID`;
+                    showValidationFeedback(invMsg, false, false, finalPath, true);
+                    optimisticColor = 'red';
+                    optimisticIsDefinitive = false;
                 }
-                // NOTE: No optimistic red flash for words missing from the local list. The server can accept
-                // valid words that the client list lacks (dynamic accept), so we wait for the server verdict
-                // instead of flashing a false "invalid" first.
             }
         }
     }

@@ -7739,6 +7739,8 @@ def get_room_state(room_id):
 
             words_to_return = []
             word_scores_to_return = {}
+            intermission_csw_only = None
+            intermission_added = None
             if is_intermission:
                 # USER REQUEST: Return completed round words, scores, and min length for Intermission
                 cur_min = getattr(room, 'previous_min_length', getattr(room, 'current_min_length', 3))
@@ -7759,29 +7761,24 @@ def get_room_state(room_id):
 
                 words_to_return = list(raw_w_list)
 
-                # RE-SYNC: Ensure re-categorized lists also respect this floor using pre-cached, self-healing lists
+                # RE-SYNC (read-only): the intermission shows the COMPLETED round, so its dictionary/AW
+                # flags come from previous_* snapshots. NEVER mutate room.csw_only_words / room.added_words here.
                 if hasattr(word_validator, 'word_validator'):
-                    dict_name = str(getattr(room, 'current_dictionary', 'NWL')).upper()
-                    if 'CSW' in dict_name or 'AW' in dict_name or 'ALL' in dict_name or 'ADDED' in dict_name:
+                    prev_dict_name = str(getattr(room, 'previous_dictionary', None) or getattr(room, 'current_dictionary', 'NWL')).upper()
+                    prev_use_aw = bool(getattr(room, 'previous_use_added_words', False)) or '+ AW' in prev_dict_name or '+AW' in prev_dict_name
+                    prev_csw_list = list(getattr(room, 'previous_csw_only_words', None) or [])
+                    prev_aw_list = list(getattr(room, 'previous_added_words', None) or [])
+                    if not prev_csw_list and 'CSW' in prev_dict_name:
                         word_validator.word_validator.ensure_csw_loaded()
-                        prev_csw = getattr(room, 'previous_csw_only_words', None)
-                        if prev_csw:
-                            room.csw_only_words = list(prev_csw)
-                        elif getattr(room, 'csw_only_words', None) is None:
-                            room.csw_only_words = []
-                    else:
-                        room.csw_only_words = []
-                    room.csw_only_words = [w for w in (room.csw_only_words or []) if len(w) >= display_floor]
-
-                    if getattr(room, 'use_added_words', False) or 'AW' in dict_name or 'ALL' in dict_name or 'ADDED' in dict_name:
-                        prev_aw = getattr(room, 'previous_added_words', None)
-                        if prev_aw:
-                            room.added_words = list(prev_aw)
-                        elif getattr(room, 'added_words', None) is None:
-                            room.added_words = []
-                    else:
-                        room.added_words = []
-                    room.added_words = [w for w in (room.added_words or []) if len(w) >= display_floor]
+                        prev_csw_list = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                    if not prev_aw_list and prev_use_aw:
+                        prev_aw_list = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                    if 'CSW' not in prev_dict_name:
+                        prev_csw_list = []
+                    if not prev_use_aw:
+                        prev_aw_list = []
+                    intermission_csw_only = [w for w in prev_csw_list if len(w) >= display_floor]
+                    intermission_added = [w for w in prev_aw_list if len(w) >= display_floor]
 
                 # Purge scores as well
                 word_scores_to_return = {w: word_scores_to_return[w] for w in words_to_return if w in word_scores_to_return}
@@ -7848,7 +7845,7 @@ def get_room_state(room_id):
                 actual_total = max(0, room.total_words_count - len(global_found))
 
             raw_fmt = getattr(room, 'current_board_format', 'Normal')
-            is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or 'either' in str(raw_fmt).lower())
+            is_bonus_format = ('bonus letter' in str(raw_fmt).lower() or str(raw_fmt).lower().strip() == 'bonus')
 
             # Normalize subanagrams board representation and calculate sequence length
             board_to_send = (getattr(room, 'previous_board', None) or room.board) if is_intermission else room.board
@@ -7939,8 +7936,8 @@ def get_room_state(room_id):
                 'all_words_paths': (getattr(room, 'previous_all_words_paths', None) or room.all_words_paths) if is_intermission else {},
                 'global_found_words': global_found,
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
-                'added_words': list(room.added_words) if (getattr(room, 'added_words', None) and getattr(room, 'use_added_words', False)) else [],
-                'csw_only_words': list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else [],
+                'added_words': (intermission_added if intermission_added is not None else (list(room.added_words) if (getattr(room, 'added_words', None) and getattr(room, 'use_added_words', False)) else [])),
+                'csw_only_words': (intermission_csw_only if intermission_csw_only is not None else (list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else [])),
                 'previous_all_words': list(getattr(room, 'previous_all_words', []) or []),
                 'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}) or {},
                 'previous_board': getattr(room, 'previous_board', []),
@@ -7952,7 +7949,8 @@ def get_room_state(room_id):
                 'spinner_params': (
                     getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
                 ),
-                'use_added_words': getattr(room, 'use_added_words', False),
+                 'use_added_words': (getattr(room, 'previous_use_added_words', False) if is_intermission else getattr(room, 'use_added_words', False)),
+                'current_dictionary': (getattr(room, 'previous_dictionary', None) or getattr(room, 'current_dictionary', 'NWL')) if is_intermission else getattr(room, 'current_dictionary', 'NWL'),
                 'current_min_length': getattr(room, 'previous_min_length', room.current_min_length) if is_intermission else room.current_min_length,
                 'min_rating': getattr(room, 'min_rating', 0),
                 'max_rating': getattr(room, 'max_rating', 9999),
@@ -8241,7 +8239,7 @@ def submit_word(room_id):
             
     try:
         _sw_t0 = time.time()
-        acquired = room._state_lock.acquire(timeout=2.0)
+        acquired = room._state_lock.acquire(timeout=6.0)
         _sw_acq_ms = (time.time() - _sw_t0) * 1000
         if not acquired:
             print(f"[SW-TIMING] LOCK FAIL after {_sw_acq_ms:.0f}ms word='{word}' room={room_id}")

@@ -1,4 +1,14 @@
 
+# ==============================================================================
+# ARCHITECTURAL MANDATE (PREFACE):
+# Any fix or rule applied to Game Room boards, Spinner Set configurations,
+# word acceptance, or Remaining/All Words tabs MUST be applied identically across:
+#   1. Game Rooms (game_room.py / spinner_set.py / board_generator.py)
+#   2. Solo & With Friends (private_match_logic.py / app.py)
+#   3. Tournaments (tournament_logic.py)
+# (Do NOT apply board-grid rules to Multiplayer Subanagrams.)
+# The method for generating boards must be unified and identical everywhere.
+# ==============================================================================
 import sqlite3
 import time
 import json
@@ -271,12 +281,20 @@ class TournamentManager:
         # User Request: Bonus words should appear in ALL rooms, including tournaments
         target_format = params.get('board_format', 'Normal')
         dict_name = params.get('dictionary', 'NWL')
+        use_aw_flag = bool(params.get('use_added_words', False))
+        if '+ AW' in str(dict_name) or '+AW' in str(dict_name):
+            use_aw_flag = True
+            dict_name = str(dict_name).replace('+ AW', '').replace('+AW', '').strip()
+        elif str(dict_name).upper() == 'AW':
+            use_aw_flag = True
+            dict_name = 'NWL'
+        min_len_param = int(params.get('min_word_length', 3) or 3)
         
-        # Get a bonus word of specified length from parameters
+        # Get a bonus word of specified length from parameters (guaranteed >= min_word_length)
         try:
-            bonus_len = int(params.get('bonus_word_length', 8))
+            bonus_len = max(min_len_param, int(params.get('bonus_word_length', 8)))
         except:
-            bonus_len = 8
+            bonus_len = max(min_len_param, 8)
             
         d_name_upper = str(dict_name).upper()
         if d_name_upper == 'CSW':
@@ -289,7 +307,8 @@ class TournamentManager:
             
         # Filter out words containing 'ING' if the difficulty is Medium/Hard
         difficulty = params.get('difficulty', 'Medium')
-        if difficulty in ['Medium', 'Hard']:
+        base_diff = SpinnerSet.strip_difficulty_pct(difficulty)
+        if base_diff in ['Medium', 'Hard']:
             valid_words = [w for w in words_pool if 'ING' not in w.upper()]
             if not valid_words:
                 valid_words = words_pool
@@ -309,7 +328,12 @@ class TournamentManager:
         # Use tournament parameters
         target_range = params.get('word_count_range')
         if not target_range or target_range == 'None':
-             target_range = SpinnerSet._spin_word_count(dict_name, params.get('min_word_length', 3), params.get('difficulty', 'Medium'), dims, use_added_words=params.get('use_added_words', False))
+             target_range = SpinnerSet._spin_word_count(dict_name, min_len_param, difficulty, dims, use_added_words=use_aw_flag)
+        else:
+             if use_aw_flag and target_range in ['50-100', '100-200', '200-300']:
+                 target_range = '300-400'
+             elif not use_aw_flag and target_range == '400-500':
+                 target_range = '300-400'
         
         try:
             res = bg.generate_board(
@@ -318,21 +342,23 @@ class TournamentManager:
                 word_count_range=target_range,
                 dictionary=dict_name,
                 board_format=target_format,
-                min_word_length=params.get('min_word_length', 3),
-                difficulty=params.get('difficulty', 'Medium')
+                min_word_length=min_len_param,
+                difficulty=difficulty,
+                use_added_words=use_aw_flag
             )
         except Exception as bg_err:
             print(f"[Tournament] Primary board generation failed: {bg_err}. Using emergency fallback...")
             try:
                 res = bg.generate_board(
                     dimensions=dims,
-                    bonus_word=None,
-                    word_count_range=(100, 200),
-                    dictionary='NWL',
-                    board_format='Normal',
-                    min_word_length=3,
-                    difficulty='Medium',
-                    is_emergency=True
+                    bonus_word=bonus_word,
+                    word_count_range=target_range,
+                    dictionary=dict_name,
+                    board_format=target_format,
+                    min_word_length=min_len_param,
+                    difficulty=difficulty,
+                    is_emergency=True,
+                    use_added_words=use_aw_flag
                 )
             except Exception as em_err:
                 print(f"[Tournament] Emergency board generation failed: {em_err}. Using hardcoded fallback grid...")
@@ -341,17 +367,22 @@ class TournamentManager:
                 res = (default_board, ["TEST", "WORD", "GAME", "PLAY"], None, "Normal", {}, 0.2, "TEST")
         
         if len(res) == 7:
-            board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio, final_bonus_word = res
+            board, all_words_on_board, bonus_cell, updated_fmt, all_words_dict, uniqueness_ratio, final_bonus_word = res
         else:
-            board, all_words_on_board, bonus_cell, _, _, uniqueness_ratio = res
+            board, all_words_on_board, bonus_cell, updated_fmt, all_words_dict, uniqueness_ratio = res
             final_bonus_word = bonus_word
             
         bonus_word = final_bonus_word
+        target_format = updated_fmt or target_format
+        f_low = str(target_format).lower().strip()
+        if not ('bonus letter' in f_low or f_low == 'bonus'):
+            bonus_cell = None
+        formatted_difficulty = SpinnerSet.format_difficulty_with_pct(difficulty, uniqueness_ratio)
         
         # Fact check word count range & min word length
         actual_wc = len(all_words_on_board or [])
-        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=params.get('use_added_words', False), dictionary=dict_name)
-        factual_min = params.get('min_word_length', 3)
+        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
+        factual_min = min_len_param
         if all_words_on_board:
             actual_min = min(len(w) for w in all_words_on_board)
             if actual_min > factual_min:
@@ -362,12 +393,6 @@ class TournamentManager:
         turn_dur = params.get('turn_duration', self.turn_duration)
         end_time = now + turn_dur
         
-        # Tournament rounds table needs to store the bonus word
-        # (Assuming the schema supports it or we use board_data JSON)
-        # We will embed it into board_data as a wrapper if needed, 
-        # but the standard game-state API in app.py expects it from the round object.
-        # Wait! Let's check the schema.
-        
         conn.execute('''
             INSERT OR REPLACE INTO tournament_rounds (tournament_id, round_number, start_time, end_time, board_data)
             VALUES (?, ?, ?, ?, ?)
@@ -375,9 +400,13 @@ class TournamentManager:
             'board': board,
             'bonus_word': bonus_word,
             'all_words': all_words_on_board,
+            'all_words_paths': all_words_dict if isinstance(all_words_dict, dict) else {},
             'bonus_cell': bonus_cell,
             'board_format': target_format,
             'uniqueness_ratio': uniqueness_ratio,
+            'difficulty': formatted_difficulty,
+            'dictionary': f"{dict_name} + AW" if use_aw_flag else dict_name,
+            'use_added_words': use_aw_flag,
             'word_count_range': factual_range,
             'min_word_length': factual_min
         })))
