@@ -2399,8 +2399,8 @@ class GameRoom:
                                                     if p.provisional_games >= 10:
                                                         # 10 games completed: establish approximate rating
                                                         raw_approx = int(round(p.provisional_ratings_sum / 10.0))
-                                                        # User mandate: In the event the user cheats, make highest rating establishment 2100.
-                                                        established_rating = max(1, min(2100, raw_approx))
+                                                        # User mandate: In the event the user cheats, make highest rating establishment 2300.
+                                                        established_rating = max(1, min(2300, raw_approx))
                                                         p.rating = established_rating
                                                         p.is_unrated = False
 
