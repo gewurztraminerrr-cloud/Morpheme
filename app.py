@@ -8598,11 +8598,20 @@ def get_definition_cached_or_online_with_guess(w):
             DEFINITIONS_CACHE[w] = f"plural of {r.lower()}"
             return DEFINITIONS_CACHE[w]
 
-    # 2. Plurals ending in -IES -> plural of {root}y
+    # 2. Plurals ending in -IES -> plural of {root}ie or {root}y
     if w.endswith('IES') and len(w) > 4:
-        r = w[:-3] + 'Y'
-        if _local_lookup(r):
-            DEFINITIONS_CACHE[w] = f"plural of {r.lower()}"
+        r_ie = w[:-1]
+        r_y = w[:-3] + 'Y'
+        d_ie = _local_lookup(r_ie)
+        d_y = _local_lookup(r_y)
+        if d_ie and (not d_y or _is_pure_adjective_def(d_y)):
+            DEFINITIONS_CACHE[w] = f"plural of {r_ie.lower()}"
+            return DEFINITIONS_CACHE[w]
+        if d_y:
+            DEFINITIONS_CACHE[w] = f"plural of {r_y.lower()}"
+            return DEFINITIONS_CACHE[w]
+        if d_ie:
+            DEFINITIONS_CACHE[w] = f"plural of {r_ie.lower()}"
             return DEFINITIONS_CACHE[w]
 
     # 3. Standard Plurals
@@ -8827,7 +8836,8 @@ def format_resolved_definition(word_upper, visited=None):
         else:
             return None
 
-    # Strip any leading (noun) from raw and deduplicate
+    # Strip any leading (noun) or stray [inflections: ...] from raw and deduplicate
+    raw = re.sub(r'\s*\[inflections:[^\]]*\]', '', raw.strip(), flags=re.IGNORECASE)
     raw = re.sub(r'^\s*\(noun\)\s*', '', raw.strip(), flags=re.IGNORECASE)
     raw = deduplicate_repeated_text(raw)
 
@@ -8867,6 +8877,7 @@ def format_resolved_definition(word_upper, visited=None):
                 target_resolved = lookup_raw_definition_online(target_raw)
             if target_resolved:
                 target_clean = re.sub(r'^\s*\(noun\)\s*', '', target_resolved.strip(), flags=re.IGNORECASE)
+                target_clean = re.sub(r'\s*\[inflections:[^\]]*\]', '', target_clean, flags=re.IGNORECASE).strip()
                 if is_case_pointer:
                     raw = target_clean
                 else:
@@ -8891,8 +8902,12 @@ def format_resolved_definition(word_upper, visited=None):
         pos_raw = m.group(1).strip()
         meaning = m.group(2).strip()
         if pos_raw.lower() == 'noun':
-            return deduplicate_repeated_text(meaning)
-        return deduplicate_repeated_text(f"({pos_raw}) {meaning}")
+            res = deduplicate_repeated_text(meaning)
+        else:
+            res = deduplicate_repeated_text(f"({pos_raw}) {meaning}")
+        if res:
+            DEFINITIONS_CACHE[word_upper] = res
+        return res
 
     # Convert legacy format to clean format (no leading '(noun)')
     meaning, pos = clean_def_text(raw)
@@ -8940,7 +8955,7 @@ def load_aw_inflections_cache():
                         if not infs_str or infs_str.lower() == 'none':
                             _AW_INFLECTIONS_CACHE[w] = []
                         else:
-                            _AW_INFLECTIONS_CACHE[w] = [x.strip().upper() for x in infs_str.split(',') if x.strip()]
+                            _AW_INFLECTIONS_CACHE[w] = [x.strip().upper() for x in infs_str.split(',') if x.strip() and x.strip().upper() != w]
             except Exception as e:
                 print(f"[AWInflections] Error loading cache file: {e}")
         _AW_INFLECTIONS_LOADED = True
@@ -8964,25 +8979,83 @@ def is_word_in_any_dict(w):
         or w_upper in getattr(word_validator, 'long_words', set())
     )
 
-def extract_root_from_definition(defn):
+_RE_INF_HEAD = re.compile(r'^(?:\([^)]+\)\s*)*([A-Z]{2,}),\s+')
+_RE_INF_ROOT = re.compile(
+    r'\b(?:plural|singular|(?:singular\s+or\s+)?attributive\s+form|conjugation|participle|past tense|simple past|past|gerund|'
+    r'diminutive|comparative|superlative|inflection|indicative(?:\s+form)?|simple present|present tense|third-person singular(?:\s+present)?|'
+    r'(?:comparative|superlative|inflected)\s+(?:form|spelling))\s+of\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)',
+    re.I
+)
+_RE_ALT_FORM = re.compile(
+    r'\b(?:alternative|obsolete|archaic|dated|variant|pronunciation|nonstandard|standard|eye dialect)\s+(?:form|spelling)\s+of\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)',
+    re.I
+)
+_RE_NON_ALPHA = re.compile(r'[^A-Z]')
+_RE_ADJ_BRACK = re.compile(r'\[adj(?:\s+[^\]]*)?\]\s*$', re.I)
+_RE_ADJ_PREFIX = re.compile(
+    r'^(?:\([^)]+\)\s*)*(?:of,?\s+(?:or\s+)?(?:relating|pertaining)\s+to|pertaining\s+to|relating\s+to|having\s+|characterized\s+by\s+|resembling\s+)',
+    re.I
+)
+_RE_BRACK_INF = re.compile(r'\[([a-z]+)\s+([^\]]+)\]', re.I)
+_RE_TOK_SPLIT = re.compile(r'[,/]|(?:\s+or\s+)|\s+')
+_RE_STRIP_INFLECTIONS = re.compile(r'\s*\[inflections:[^\]]*\]', re.I)
+
+def extract_root_from_definition(defn, self_word=None):
     if not defn:
         return None
-    m_head = re.match(r'^([A-Z]{3,}),\s+', defn)
+    sw = self_word.upper().strip() if self_word else None
+    m_head = _RE_INF_HEAD.match(defn)
     if m_head:
-        return m_head.group(1).upper()
-    m_inf = re.search(r'\b(?:plural|singular|conjugation|participle|past tense|simple past|past|gerund|diminutive|comparative|superlative|inflection|(?:alternative|obsolete|archaic|variant|comparative|superlative)\s+(?:form|spelling))\s+of\s+(?:a\s+|an\s+|the\s+)?([a-zA-Z\-]+)', defn, re.I)
-    if m_inf:
-        return re.sub(r'[^A-Z]', '', m_inf.group(1).upper())
+        r = m_head.group(1).upper()
+        if r != sw:
+            return r
+    if ' of ' not in defn and ' OF ' not in defn:
+        return None
+    for m_inf in _RE_INF_ROOT.finditer(defn):
+        r = _RE_NON_ALPHA.sub('', m_inf.group(1).upper())
+        if r and r != sw:
+            return r
     return None
 
+def extract_alt_form_from_definition(defn, self_word=None):
+    if not defn or (' of ' not in defn and ' OF ' not in defn):
+        return None
+    sw = self_word.upper().strip() if self_word else None
+    for m_alt in _RE_ALT_FORM.finditer(defn):
+        r = _RE_NON_ALPHA.sub('', m_alt.group(1).upper())
+        if r and r != sw:
+            return r
+    return None
+
+def _is_pure_adjective_def(d):
+    if not d:
+        return False
+    dl = d.strip().lower()
+    if dl.startswith('(adjective)') and '; (noun)' not in dl and '; (verb)' not in dl:
+        return True
+    if _RE_ADJ_BRACK.search(dl):
+        return True
+    if _RE_ADJ_PREFIX.match(dl):
+        return True
+    return False
+
+def _core_def_for_inflection(d):
+    if not d:
+        return ''
+    s = re.sub(r'\[[^\]]*\]', '', d)
+    s = re.sub(r'^\s*\([^)]*\)\s*', '', s)
+    return s.strip().rstrip('.').strip().lower()
+
 def extract_bracket_inflections(defn, root):
-    if not defn:
+    if not defn or '[' not in defn:
         return set()
     infs = set()
     root = root.upper()
-    for m in re.finditer(r'\[([a-z]+)\s+([^\]]+)\]', defn, re.I):
+    for m in _RE_BRACK_INF.finditer(defn):
+        if m.group(1).lower() == 'inflections':
+            continue
         content = m.group(2).strip()
-        tokens = re.split(r'[,/]|(?:\s+or\s+)|\s+', content)
+        tokens = _RE_TOK_SPLIT.split(content)
         for tok in tokens:
             tok = tok.strip().upper()
             if not tok:
@@ -8991,10 +9064,22 @@ def extract_bracket_inflections(defn, root):
                 suf = tok[1:]
                 if root.endswith('E') and suf.startswith(('E', 'I')):
                     infs.add(root[:-1] + suf)
+                elif root.endswith('Y') and len(root) >= 2 and root[-2] not in 'AEIOU':
+                    if suf in ('S', 'ES', 'IES'):
+                        infs.add(root[:-1] + 'IES')
+                    elif suf in ('ED', 'D', 'IED'):
+                        infs.add(root[:-1] + 'IED')
+                    elif suf in ('ER', 'R', 'IER'):
+                        infs.add(root[:-1] + 'IER')
+                    elif suf in ('EST', 'ST', 'IEST'):
+                        infs.add(root[:-1] + 'IEST')
+                    else:
+                        infs.add(root + suf)
                 else:
                     infs.add(root + suf)
             elif tok.isalpha() and len(tok) >= 2:
                 infs.add(tok)
+    infs.discard(root)
     return infs
 
 def is_verified_inflection(w, cand, def_w=None, def_cand=None):
@@ -9008,14 +9093,18 @@ def is_verified_inflection(w, cand, def_w=None, def_cand=None):
         def_w = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
     if def_cand is None:
         def_cand = DEFINITIONS_CACHE.get(cand, '') if DEFINITIONS_CACHE else ''
+    if def_w and '[inflections:' in def_w.lower():
+        def_w = re.sub(r'\s*\[inflections:[^\]]*\]', '', def_w, flags=re.IGNORECASE).strip()
+    if def_cand and '[inflections:' in def_cand.lower():
+        def_cand = re.sub(r'\s*\[inflections:[^\]]*\]', '', def_cand, flags=re.IGNORECASE).strip()
     
     # 1. def(cand) explicitly states root is w (e.g. 'plural of adenia', 'ADENIA, ...')
-    root_c = extract_root_from_definition(def_cand)
+    root_c = extract_root_from_definition(def_cand, cand)
     if root_c and root_c == w:
         return True
         
     # 2. def(w) explicitly states root is cand (e.g. 'plural of adenia' when w is ADENIAS and cand is ADENIA)
-    root_w = extract_root_from_definition(def_w)
+    root_w = extract_root_from_definition(def_w, w)
     if root_w and root_w == cand:
         return True
 
@@ -9033,30 +9122,69 @@ def is_verified_inflection(w, cand, def_w=None, def_cand=None):
     if w in brack_c:
         return True
         
-    # 4.5 Wiktionary verification: if def_cand or def_w has standalone definitions (e.g. historical Scrabble noun glosses),
-    # check if Wiktionary identifies either candidate or word as a grammatical inflection of the root or each other.
-    wiki_c = lookup_wiki_definition_from_db(cand)
-    root_c_wiki = extract_root_from_definition(wiki_c) if wiki_c else None
-    if root_c_wiki:
-        if root_c_wiki == w:
+    # 4.5 Wiktionary verification: only query DB if root_c or root_w was not already extracted from DEFINITIONS_CACHE
+    wiki_c = None
+    root_c_wiki = None
+    if not root_c:
+        wiki_c = lookup_wiki_definition_from_db(cand)
+        root_c_wiki = extract_root_from_definition(wiki_c, cand) if wiki_c else None
+        if root_c_wiki:
+            if root_c_wiki == w:
+                return True
+            if root_w and root_c_wiki == root_w:
+                return True
+
+    wiki_w = None
+    root_w_wiki = None
+    if not root_w:
+        wiki_w = lookup_wiki_definition_from_db(w)
+        root_w_wiki = extract_root_from_definition(wiki_w, w) if wiki_w else None
+        if root_w_wiki:
+            if root_w_wiki == cand:
+                return True
+            if root_c and root_w_wiki == root_c:
+                return True
+            if root_c_wiki and root_w_wiki == root_c_wiki:
+                return True
+
+    eff_root_w = root_w or root_w_wiki
+    eff_root_c = root_c or root_c_wiki
+
+    # 4.6 Alternative-spelling bridge ONLY when w and cand are morphological inflections (e.g. APPIE -> alt of APPY, APPIES -> plural of APPY)
+    if is_plural_or_inflection(w, cand):
+        alt_w = extract_alt_form_from_definition(def_w, w) or (extract_alt_form_from_definition(wiki_w, w) if wiki_w else None)
+        alt_c = extract_alt_form_from_definition(def_cand, cand) or (extract_alt_form_from_definition(wiki_c, cand) if wiki_c else None)
+        if alt_w and eff_root_c and alt_w == eff_root_c:
             return True
-        if root_w and root_c_wiki == root_w:
+        if alt_c and eff_root_w and alt_c == eff_root_w:
             return True
 
-    wiki_w = lookup_wiki_definition_from_db(w)
-    root_w_wiki = extract_root_from_definition(wiki_w) if wiki_w else None
-    if root_w_wiki:
-        if root_w_wiki == cand:
-            return True
-        if root_c and root_w_wiki == root_c:
-            return True
-        if root_c_wiki and root_w_wiki == root_c_wiki:
+    # 5. If either word explicitly identifies a different grammatical root, reject
+    if eff_root_c and eff_root_c != w and eff_root_c != eff_root_w:
+        return False
+    if eff_root_w and eff_root_w != cand and eff_root_w != eff_root_c:
+        return False
+
+    # 5.5 Morphological disambiguation for -IES <-> -Y / -IE when neither word has a conflicting root pointer
+    a, b = (w, cand) if len(w) <= len(cand) else (cand, w)
+    def_a, def_b = (def_w, def_cand) if len(w) <= len(cand) else (def_cand, def_w)
+    if b.endswith('IES') and len(b) > 4:
+        if a.endswith('Y') and b == a[:-1] + 'IES':
+            if not _is_pure_adjective_def(def_a) and not is_word_in_any_dict(b[:-1]):
+                return True
+        elif a.endswith('IE') and b == a + 'S':
+            y_form = a[:-2] + 'Y'
+            if not is_word_in_any_dict(y_form) or _is_pure_adjective_def(DEFINITIONS_CACHE.get(y_form, '') if DEFINITIONS_CACHE else ''):
+                return True
+
+    # 5.6 If both have identical non-empty core definitions and are grammatical inflections
+    if def_w and def_cand and is_plural_or_inflection(w, cand):
+        cw = _core_def_for_inflection(def_w)
+        cc = _core_def_for_inflection(def_cand)
+        if cw and len(cw) >= 10 and cw == cc:
             return True
 
-    # 5. If def_cand exists and describes an independent entity without linking to w:
     if def_cand:
-        if re.search(rf'\b{re.escape(w)}\b', def_cand, re.I):
-            return True
         return False
         
     # 6. If def_cand is unindexed in DEFINITIONS_CACHE, allow ONLY if it is a regular grammatical inflection
@@ -9069,7 +9197,9 @@ def get_candidates_from_root(root):
     r = root.upper()
     cands = {r + 'S', r + 'ES', r + 'ED', r + 'ING', r + 'ER', r + 'EST'}
     if r.endswith('E'):
-        cands.update({r + 'D', r + 'R', r + 'ST', r[:-1] + 'ING', r[:-1] + 'ED', r[:-1] + 'ER', r[:-1] + 'EST'})
+        cands.add(r + 'D')
+        if not r.endswith('IE'):
+            cands.update({r + 'R', r + 'ST', r[:-1] + 'ING', r[:-1] + 'ED', r[:-1] + 'ER', r[:-1] + 'EST'})
     if r.endswith('Y'):
         cands.update({r[:-1] + 'IES', r[:-1] + 'IED', r[:-1] + 'IER', r[:-1] + 'IEST'})
     if r.endswith('IE'):
@@ -9081,26 +9211,26 @@ def get_candidates_from_root(root):
 
 def get_roots_for_word(w, defn, all_words=None):
     roots = set()
-    r = extract_root_from_definition(defn)
+    r = extract_root_from_definition(defn, w)
     if not r:
         wiki_w = lookup_wiki_definition_from_db(w)
         if wiki_w:
-            r = extract_root_from_definition(wiki_w)
+            r = extract_root_from_definition(wiki_w, w)
     if r and r != w and (r in all_words if all_words is not None else is_word_in_any_dict(r)):
         roots.add(r)
 
     cands = []
-    if w.endswith('IES') and len(w) > 4: cands.append(w[:-3] + 'Y')
-    if w.endswith('ES') and len(w) > 4: cands.extend([w[:-2], w[:-1], w[:-2] + 'IS'])
-    if w.endswith('S') and len(w) > 3 and not w.endswith(('SS', 'US', 'IS', 'AS')): cands.append(w[:-1])
-    if w.endswith('ING') and len(w) > 5:
+    if w.endswith('IES') and len(w) > 3: cands.append(w[:-3] + 'Y')
+    if w.endswith('ES') and len(w) > 3: cands.extend([w[:-2], w[:-1], w[:-2] + 'IS'])
+    if w.endswith('S') and len(w) > 2 and not w.endswith(('SS', 'US', 'IS', 'AS')): cands.append(w[:-1])
+    if w.endswith('ING') and len(w) > 4:
         cands.extend([w[:-3], w[:-3] + 'E'])
-        if len(w) > 6 and w[-4] == w[-5]: cands.append(w[:-4])
+        if len(w) > 5 and w[-4] == w[-5]: cands.append(w[:-4])
         if w.endswith('YING'): cands.append(w[:-4] + 'IE')
-    if w.endswith('ED') and len(w) > 4:
+    if w.endswith('ED') and len(w) > 3:
         cands.extend([w[:-2], w[:-1]])
         if w.endswith('IED'): cands.append(w[:-3] + 'Y')
-        if len(w) > 5 and w[-3] == w[-4]: cands.append(w[:-3])
+        if len(w) > 4 and w[-3] == w[-4]: cands.append(w[:-3])
     if w.endswith('ER') and len(w) > 3:
         cands.extend([w[:-2], w[:-1]])
         if w.endswith('IER'): cands.append(w[:-3] + 'Y')
@@ -9126,15 +9256,16 @@ def get_valid_inflections_for_aw_word(w):
     load_aw_inflections_cache()
     w = w.upper().strip()
     if w in _AW_INFLECTIONS_CACHE:
-        return _AW_INFLECTIONS_CACHE[w]
+        return [x for x in _AW_INFLECTIONS_CACHE[w] if x != w]
     
     defn = DEFINITIONS_CACHE.get(w, '') if DEFINITIONS_CACHE else ''
     roots = get_roots_for_word(w, defn)
     candidates = set()
     candidates.update(get_candidates_from_root(w))
     for r in roots:
-        candidates.add(r)
-        candidates.update(get_candidates_from_root(r))
+        if r != w:
+            candidates.add(r)
+            candidates.update(get_candidates_from_root(r))
     
     valid = []
     for cand in candidates:
@@ -9149,22 +9280,21 @@ def get_valid_inflections_for_aw_word(w):
                         valid.append(cand)
                         break
     
-    valid = sorted(valid)
+    valid = sorted(x for x in set(valid) if x != w)
     _AW_INFLECTIONS_CACHE[w] = valid
     save_aw_inflection_to_disk(w, valid)
     return valid
 
 def append_aw_inflections_to_definition(w, defn):
-    if not defn or '[inflections:' in defn.lower():
+    if not defn:
         return defn
-    infs = get_valid_inflections_for_aw_word(w)
+    w_clean = w.upper().strip()
+    if '[inflections:' in defn.lower():
+        defn = re.sub(r'\s*\[inflections:[^\]]*\]', '', defn, flags=re.IGNORECASE).strip()
+    infs = [x for x in get_valid_inflections_for_aw_word(w_clean) if x != w_clean]
     if not infs:
         return defn
-    full_def = f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
-    global DEFINITIONS_CACHE
-    if DEFINITIONS_CACHE is not None:
-        DEFINITIONS_CACHE[w] = full_def
-    return full_def
+    return f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
 
 def lookup_word_definition_and_pronunciation(word):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
@@ -9207,10 +9337,10 @@ def ensure_definitions_for_words(words_list):
             if needs_resolution:
                 formatted_def = format_resolved_definition(w_upper)
                 if formatted_def:
-                    if w_upper in getattr(word_validator, 'added_words', set()):
-                        formatted_def = append_aw_inflections_to_definition(w_upper, formatted_def)
                     DEFINITIONS_CACHE[w_upper] = formatted_def
                     new_entries.append((w_upper, formatted_def))
+                    if w_upper in getattr(word_validator, 'added_words', set()):
+                        get_valid_inflections_for_aw_word(w_upper)
                     
         if new_entries:
             with _DEFS_FILE_LOCK:
@@ -9303,7 +9433,8 @@ def ensure_aw_definitions_for_words(words_list):
     def _clean_root_for_pointer(root_def):
         if not root_def:
             return ""
-        clean = re.sub(r'^\s*Meaning Definition:\s*[A-Za-z0-9\-]+\s*(?:\([^)]*\)\s*)?(?:refers to|is)\s+', '', root_def.strip(), flags=re.I)
+        clean = _RE_STRIP_INFLECTIONS.sub('', root_def.strip())
+        clean = re.sub(r'^\s*Meaning Definition:\s*[A-Za-z0-9\-]+\s*(?:\([^)]*\)\s*)?(?:refers to|is)\s+', '', clean, flags=re.I)
         clean = re.sub(r'^\s*\((?:noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection)\)\s*', '', clean, flags=re.I).strip()
         clean = re.sub(r'^\s*\[[^\]]+\]\s*', '', clean).strip()
         if clean:
@@ -9332,12 +9463,21 @@ def ensure_aw_definitions_for_words(words_list):
             # Evaluated FIRST so regular inflections inherit root definitions before external search/guesses
             # Plurals (-IES, -ES, -S)
             if w_upper.endswith('IES') and len(w_upper) > 4:
-                root = w_upper[:-3] + 'Y'
-                root_def = DEFINITIONS_CACHE.get(root) or lookup_wiki_definition_from_db(root) or format_resolved_definition(root)
-                if root_def:
-                    clean_root = _clean_root_for_pointer(root_def)
-                    formatted_def = f"plural of {root.lower()} ({clean_root})"
-            elif w_upper.endswith('ES') and len(w_upper) > 4:
+                r_ie = w_upper[:-1]
+                r_y = w_upper[:-3] + 'Y'
+                def_ie = DEFINITIONS_CACHE.get(r_ie) or lookup_wiki_definition_from_db(r_ie) or format_resolved_definition(r_ie)
+                def_y = DEFINITIONS_CACHE.get(r_y) or lookup_wiki_definition_from_db(r_y) or format_resolved_definition(r_y)
+                chosen_root, chosen_def = None, None
+                if def_ie and (not def_y or _is_pure_adjective_def(def_y)):
+                    chosen_root, chosen_def = r_ie, def_ie
+                elif def_y:
+                    chosen_root, chosen_def = r_y, def_y
+                elif def_ie:
+                    chosen_root, chosen_def = r_ie, def_ie
+                if chosen_root and chosen_def:
+                    clean_root = _clean_root_for_pointer(chosen_def)
+                    formatted_def = f"plural of {chosen_root.lower()} ({clean_root})"
+            if not formatted_def and w_upper.endswith('ES') and len(w_upper) > 4:
                 for cand in [w_upper[:-2], w_upper[:-1], w_upper[:-2] + 'IS']:
                     root_def = DEFINITIONS_CACHE.get(cand) or lookup_wiki_definition_from_db(cand) or format_resolved_definition(cand)
                     if root_def:
@@ -10042,7 +10182,7 @@ def is_plural_or_inflection(w1, w2):
         return True
     if len_diff == 1 and b == a + 'D' and a.endswith('E'):
         return True
-    if len_diff == 1 and b == a + 'R' and a.endswith('E'):
+    if len_diff == 1 and b == a + 'R' and a.endswith('E') and not a.endswith('IE'):
         return True
     if len_diff == 2 and b == a + 'ES':
         return True
@@ -10050,7 +10190,7 @@ def is_plural_or_inflection(w1, w2):
         return True
     if len_diff == 2 and b == a + 'ER':
         return True
-    if len_diff == 2 and b == a + 'ST' and a.endswith('E'):
+    if len_diff == 2 and b == a + 'ST' and a.endswith('E') and not a.endswith('IE'):
         return True
     if len_diff == 3 and b == a + 'EST':
         return True
@@ -10058,9 +10198,12 @@ def is_plural_or_inflection(w1, w2):
         return True
         
     # 2. Vowel elision before suffixes (drop final E)
-    if a.endswith('E'):
+    if a.endswith('E') and not a.endswith('IE'):
         root = a[:-1]
         if b in (root + 'ING', root + 'ED', root + 'ER', root + 'EST'):
+            return True
+    if a.endswith('IE'):
+        if b == a[:-2] + 'YING':
             return True
             
     # 3. Y to IES / IED / IER / IEST
