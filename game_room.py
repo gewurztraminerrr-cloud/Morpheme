@@ -72,6 +72,7 @@ class Player:
     provisional_games: int = 0
     provisional_ratings_sum: float = 0.0
     provisional_rating: float = 1200.0
+    config_games_played: int = 0
 
     @property
     def is_registered(self) -> bool:
@@ -427,7 +428,7 @@ class GameRoom:
                 print(f"[GameRoom] Human player {username} joined paused room {self.room_id}. Triggering instant wake-up.")
                 self.check_and_update_state()
     
-    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200, game_room_chat=True, is_unrated=False, provisional_games=0, provisional_ratings_sum=0.0, provisional_rating=1200.0):
+    def add_player(self, user_id, username, rating, games_played=0, country_flag='🏳️', manual_accessed=False, is_guest=False, is_ai=False, ai_rating=1200, game_room_chat=True, is_unrated=False, provisional_games=0, provisional_ratings_sum=0.0, provisional_rating=1200.0, config_games_played=0):
         """Add player to room"""
         if not is_ai and user_id:
             try:
@@ -479,6 +480,7 @@ class GameRoom:
                     existing_player.provisional_games = provisional_games
                     existing_player.provisional_ratings_sum = provisional_ratings_sum
                     existing_player.provisional_rating = provisional_rating
+                    existing_player.config_games_played = config_games_played
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
                 # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
@@ -518,6 +520,7 @@ class GameRoom:
                     quitter.provisional_games = provisional_games
                     quitter.provisional_ratings_sum = provisional_ratings_sum
                     quitter.provisional_rating = provisional_rating
+                    quitter.config_games_played = config_games_played
                 if game_room_chat is not None:
                     quitter.game_room_chat = game_room_chat
                 if not getattr(quitter, 'cell_density', None):
@@ -569,6 +572,7 @@ class GameRoom:
                     existing_player.provisional_games = provisional_games
                     existing_player.provisional_ratings_sum = provisional_ratings_sum
                     existing_player.provisional_rating = provisional_rating
+                    existing_player.config_games_played = config_games_played
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
                 
@@ -613,7 +617,8 @@ class GameRoom:
                 is_unrated=is_unrated,
                 provisional_games=provisional_games,
                 provisional_ratings_sum=provisional_ratings_sum,
-                provisional_rating=provisional_rating
+                provisional_rating=provisional_rating,
+                config_games_played=config_games_played
             )
             if manual_accessed:
                 player.joined_mid_round = True
@@ -2345,21 +2350,33 @@ class GameRoom:
                                     and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False)
                                 ]
 
+                                def _is_established_opponent(o):
+                                    if getattr(o, 'is_unrated', False):
+                                        return False
+                                    o_rating = getattr(o, 'rating', 1200)
+                                    if o_rating == 1200:
+                                        o_cfg_games = getattr(o, 'config_games_played', 0) or 0
+                                        o_prov_games = getattr(o, 'provisional_games', 0) or 0
+                                        if o_cfg_games <= 10 and o_prov_games < 10:
+                                            return False
+                                    return True
+
                                 with get_db() as conn_p:
                                     for p in self.players + quitters_snapshot:
                                         if p.user_id in rating_changes:
                                             simulated_change = rating_changes[p.user_id]
                                             if getattr(p, 'is_unrated', False):
                                                 # 10-Game Unrated Placement:
-                                                # User starts unrated and rating remains unchanged for first 10 games (with white square)
+                                                # User starts unrated and rating remains unchanged for first 10 games (with white square).
+                                                # Only rounds played alongside at least one established rated opponent count toward placement.
                                                 p.rating_change = 0
-                                                opponents = [o for o in active_humans if o.user_id != p.user_id]
+                                                opponents = [
+                                                    o for o in active_humans
+                                                    if o.user_id != p.user_id and _is_established_opponent(o)
+                                                ] if p in active_humans else []
                                                 if opponents:
                                                     opp_score = sum(getattr(o, 'score', 0) for o in opponents)
-                                                    opp_rating = sum(
-                                                        float(getattr(o, 'provisional_rating', getattr(o, 'rating', 1200)) if getattr(o, 'is_unrated', False) else getattr(o, 'rating', 1200))
-                                                        for o in opponents
-                                                    )
+                                                    opp_rating = sum(float(getattr(o, 'rating', 1200)) for o in opponents)
                                                     user_score = getattr(p, 'score', 0)
 
                                                     if opp_score > 0 and user_score > 0:
@@ -2375,6 +2392,7 @@ class GameRoom:
                                                     p.provisional_games = getattr(p, 'provisional_games', 0) + 1
                                                     p.provisional_ratings_sum = getattr(p, 'provisional_ratings_sum', 0.0) + r_round
                                                     p.provisional_rating = p.provisional_ratings_sum / p.provisional_games
+                                                    p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
 
                                                     print(f"[RatingPlacement] {p.username} placement game {p.provisional_games}/10: round_equilibrium={r_round:.1f}, running_avg={p.provisional_rating:.1f}")
 
@@ -2411,9 +2429,12 @@ class GameRoom:
                                                                 provisional_rating = excluded.provisional_rating,
                                                                 games_played = COALESCE(user_ratings.games_played, 0) + 1
                                                         ''', (p.user_id, config_key, p.provisional_games, p.provisional_ratings_sum, p.provisional_rating))
+                                                else:
+                                                    print(f"[RatingPlacement] {p.username} round skipped for placement in {config_key} (no established rated opponents in room).")
                                             else:
                                                 p.rating_change = simulated_change
                                                 p.rating += p.rating_change
+                                                p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
                                                 # Update Global Rating
                                                 conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
                                                 

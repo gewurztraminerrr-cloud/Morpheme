@@ -2959,45 +2959,25 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
         'is_unrated': bool,
         'provisional_games': int,
         'provisional_ratings_sum': float,
-        'provisional_rating': float
+        'provisional_rating': float,
+        'config_games_played': int
       }
     If no record exists and unrated_placement_enabled is active for config_key, initializes unrated state.
     """
     if is_24h:
-        cur = conn.execute('SELECT rating FROM users WHERE id = ?', (user_id,))
+        cur = conn.execute('SELECT rating, COALESCE(games_played, 0) FROM users WHERE id = ?', (user_id,))
         row = cur.fetchone()
         r = row[0] if (row and row[0] is not None) else 1200
+        gp = row[1] if (row and row[1] is not None) else 0
         return {
             'rating': r,
             'is_unrated': False,
             'provisional_games': 0,
             'provisional_ratings_sum': 0.0,
-            'provisional_rating': 1200.0
+            'provisional_rating': 1200.0,
+            'config_games_played': gp
         }
 
-    cur = conn.execute('''
-        SELECT rating, COALESCE(is_unrated, 0), COALESCE(provisional_games, 0),
-               COALESCE(provisional_ratings_sum, 0.0), COALESCE(provisional_rating, 1200.0)
-        FROM user_ratings WHERE user_id = ? AND config_key = ?
-    ''', (user_id, config_key))
-    row = cur.fetchone()
-    if row:
-        r = row[0] if row[0] is not None else 1200
-        is_unr = bool(row[1])
-        prov_g = row[2]
-        prov_sum = row[3]
-        prov_r = row[4]
-        if prov_g >= 10:
-            is_unr = False
-        return {
-            'rating': r,
-            'is_unrated': is_unr,
-            'provisional_games': prov_g,
-            'provisional_ratings_sum': prov_sum,
-            'provisional_rating': prov_r
-        }
-
-    # No record exists: Check policy
     cube_alias = config_key.replace('3d|', 'cube|', 1) if config_key.startswith('3d|') else config_key.replace('cube|', '3d|', 1)
     pol_cur = conn.execute('''
         SELECT unrated_placement_enabled FROM constant_config_policies
@@ -3005,6 +2985,52 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
     ''', (config_key, cube_alias))
     pol_row = pol_cur.fetchone()
     is_policy_active = bool(pol_row and pol_row[0])
+
+    rh_games = 0
+    try:
+        parts = config_key.lower().split('|')
+        if len(parts) >= 3:
+            gt_raw, dims_raw, dur_raw = parts[0], parts[1], int(parts[2])
+            gt_1 = 'classic' if gt_raw == 'accumulative' else ('cube' if gt_raw in ('3d', 'cube') else gt_raw)
+            gt_2 = 'accumulative' if gt_raw == 'accumulative' else ('3d' if gt_raw in ('3d', 'cube') else gt_raw)
+            rh_cur = conn.execute('''
+                SELECT COUNT(*) FROM round_history
+                WHERE user_id = ? AND LOWER(game_type) IN (?, ?) AND LOWER(board_dimensions) = ? AND round_duration = ?
+            ''', (user_id, gt_1, gt_2, dims_raw, dur_raw))
+            rh_row = rh_cur.fetchone()
+            if rh_row and rh_row[0]:
+                rh_games = int(rh_row[0])
+    except Exception:
+        pass
+
+    cur = conn.execute('''
+        SELECT rating, COALESCE(is_unrated, 0), COALESCE(provisional_games, 0),
+               COALESCE(provisional_ratings_sum, 0.0), COALESCE(provisional_rating, 1200.0),
+               COALESCE(games_played, 0)
+        FROM user_ratings WHERE user_id = ? AND (config_key = ? OR config_key = ?)
+        ORDER BY games_played DESC LIMIT 1
+    ''', (user_id, config_key, cube_alias))
+    row = cur.fetchone()
+    if row:
+        r = row[0] if row[0] is not None else 1200
+        is_unr = bool(row[1])
+        prov_g = row[2]
+        prov_sum = row[3]
+        prov_r = row[4]
+        ur_games = row[5] or 0
+        cfg_games = max(ur_games, rh_games)
+        if prov_g >= 10 or r != 1200 or cfg_games > 10:
+            is_unr = False
+        elif is_policy_active and r == 1200 and cfg_games <= 10 and prov_g < 10:
+            is_unr = True
+        return {
+            'rating': r,
+            'is_unrated': is_unr,
+            'provisional_games': prov_g,
+            'provisional_ratings_sum': prov_sum,
+            'provisional_rating': prov_r,
+            'config_games_played': cfg_games
+        }
 
     if is_policy_active:
         try:
@@ -3021,7 +3047,8 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
             'is_unrated': True,
             'provisional_games': 0,
             'provisional_ratings_sum': 0.0,
-            'provisional_rating': 1200.0
+            'provisional_rating': 1200.0,
+            'config_games_played': rh_games
         }
     else:
         return {
@@ -3029,7 +3056,8 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
             'is_unrated': False,
             'provisional_games': 0,
             'provisional_ratings_sum': 0.0,
-            'provisional_rating': 1200.0
+            'provisional_rating': 1200.0,
+            'config_games_played': rh_games
         }
 
 
@@ -6707,7 +6735,8 @@ def create_room():
                         is_unrated=r_info['is_unrated'],
                         provisional_games=r_info['provisional_games'],
                         provisional_ratings_sum=r_info['provisional_ratings_sum'],
-                        provisional_rating=r_info['provisional_rating'])
+                        provisional_rating=r_info['provisional_rating'],
+                        config_games_played=r_info.get('config_games_played', 0))
         
         # Room creator is present from the inception of round 1 and never joined mid-round
         creator_player = room.get_player(session['user_id'])
@@ -6822,7 +6851,8 @@ def join_room(room_id):
                              is_unrated=r_info['is_unrated'],
                              provisional_games=r_info['provisional_games'],
                              provisional_ratings_sum=r_info['provisional_ratings_sum'],
-                             provisional_rating=r_info['provisional_rating'])
+                             provisional_rating=r_info['provisional_rating'],
+                             config_games_played=r_info.get('config_games_played', 0))
     if success:
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
@@ -7289,7 +7319,8 @@ def get_room_state(room_id):
                                     is_unrated=r_info['is_unrated'],
                                     provisional_games=r_info['provisional_games'],
                                     provisional_ratings_sum=r_info['provisional_ratings_sum'],
-                                    provisional_rating=r_info['provisional_rating'])
+                                    provisional_rating=r_info['provisional_rating'],
+                                    config_games_played=r_info.get('config_games_played', 0))
 
             p_obj = room.get_player(uid)
             if p_obj and not is_guest:
