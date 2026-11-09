@@ -8,7 +8,7 @@ START_OVER_POINT_NOVEMBER_8
 
 ## Latest Feature Commit ID
 ```
-f4f4c6f6e684b7d7cd39d393b7f10493a61b6f1a
+f314593ec639d4f965bcd19408419fffb033910b
 ```
 
 ## Synchronization Status
@@ -128,11 +128,19 @@ f4f4c6f6e684b7d7cd39d393b7f10493a61b6f1a
 - **10-Round Unrated Placement & White Square Display**:
   - When enabled for a configuration, all new users henceforth start **Unrated** with a pure white rating square (`#ffffff` with no metallic shine) in both the Lobby (`lobby.js`) and Game Rooms (`play.js`, `app.js`), and their rating remains unchanged (`rating_change = 0`) for their first 10 rounds.
   - Unrated players are protected from mass rating delta adjustments and excluded from round abandonment bounty payouts during their 10 placement rounds.
-- **Zero-Change Equilibrium Rating Establishment & Anti-Cheat Cap (2100)**:
-  - At the conclusion of each placement round against active human opponents, the server calculates the Zero-Change Equilibrium Rating ($R_{\text{round}} = R_{\text{opponents}} \times \frac{S_{\text{user}}}{S_{\text{opponents}}}$)—the rating at which the player would have had `0` rating change given the round's scores.
-  - Upon completing round 10, the user's approximate rating is established as the average of the 10 equilibrium ratings, clamped to a strict ceiling of **2100** (`max(1, min(2100, R_approx))`) in the event of cheating and a floor of `1`. From round 11 onward, the user's rating changes normally with each round.
+- **Zero-Change Equilibrium Rating Establishment, Established-Opponent Anchor & Anti-Cheat Cap (2300)**:
+  - At the conclusion of each placement round, the server filters opponents strictly to **established rated players** (`_is_established_opponent(o)`—excluding `is_unrated` players and un-established `1200` players with `≤ 10` games in that configuration). Solo rounds and rounds played only with other un-established players do not count toward the 10 placement rounds.
+  - Established players' ratings in `rating_logic.py` are adjusted exclusively against other established players in the room (`not getattr(p, 'is_unrated', False)`).
+  - For each qualifying placement round against established rated opponent(s), the server calculates the Zero-Change Equilibrium Rating ($R_{\text{round}} = R_{\text{opponents}} \times \frac{S_{\text{user}}}{S_{\text{opponents}}}$)—the rating at which the player would have had `0` rating change given the round's scores.
+  - Upon completing round 10, the user's approximate rating is established as the average of the 10 equilibrium ratings, clamped to a strict establishment ceiling of **2300** (`max(1, min(2300, R_approx))`) and a floor of `1`. From round 11 onward, the user's rating changes normally with each round (with no upper cap).
 - **Expanded 3-Tier Card Layout & Configuration-Specific Game Counts**:
   - Redesigned configuration cards (`minmax(250px, 1fr)`) into a 3-row layout providing full, unclipped room for: (1) Checkbox & Configuration Title, (2) Firmly Established Count & Average alongside Accounts at `1200`, and (3) Policy Status & Toggle Switch.
   - Fixed room creation so the room creator is explicitly initialized with `joined_mid_round = False`, ensuring Round 1 participation is recorded in `user_ratings`.
   - Updated `get_rating_configs` and `adjust_ratings_by_config` to count games played strictly **per configuration** (`ur.games_played` and matching `round_history` entries for that mode, board dimensions, and duration) rather than global site-wide games, ensuring unestablished `1200` accounts (`≤ 10` rounds in that specific configuration) are never falsely counted as established.
   - Bumped asset cache busters to `1794128000` (`mods.js`) and `1794125000` (`play.js`, `lobby.js`, `app.js`).
+
+### 13. AW & Dictionary Word Inflection Logic & Root Tag Inheritance Fix (`app.py`)
+- **Eliminated Root Tag Inheritance & Cache Pollution (`STREAMIES` -> `[inflections: STREAMIE]`)**:
+  - Fixed `format_resolved_definition()` and `append_aw_inflections_to_definition()` in `app.py` so `DEFINITIONS_CACHE` is never mutated with `[inflections: ...]`, pointer resolution (`< streamie`) strips the root word's `[inflections: ...]` tag before constructing the inflected word's definition, and a word is strictly excluded (`x != w`) from its own inflections list.
+- **Zero-Latency Morphological Inflection Verification Across AW Words (`added_words.txt`)**:
+  - Enhanced `extract_root_from_definition()`, `is_verified_inflection()`, and `is_plural_or_inflection()` with precompiled regexes and `-IES` / `-IE` vs `-Y` morphological disambiguation (~0.036 ms per definition lookup, adding zero perceptible latency).
