@@ -1221,58 +1221,106 @@ class LobbyMusicEngine {
         }
     }
 
+    isLobbyOrGatewayActive() {
+        const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
+        const onPlay = (activePage === 'page-play') ||
+                       !!window._isEnteringRoom ||
+                       !!window._isCreatingRoom ||
+                       (activePage !== 'page-lobby' && activePage !== 'page-loading' && (
+                           (document.getElementById('page-play')?.classList.contains('active')) ||
+                           document.body.classList.contains('play-active')
+                       ));
+        if (onPlay) return false;
+        const onGateway = (activePage === 'page-loading') || (!activePage && document.getElementById('page-loading')?.classList.contains('active'));
+        const onLobby = (activePage === 'page-lobby') || (!activePage && document.getElementById('page-lobby')?.classList.contains('active')) || onGateway;
+        const howToPlayModal = document.getElementById('modal-howtoplay');
+        const howToPlayOpen = howToPlayModal && !howToPlayModal.classList.contains('hidden');
+        return Boolean(onLobby && !howToPlayOpen);
+    }
+
+    isActuallyPlaying() {
+        if (this.isPlaying && this.source && this.ctx && this.ctx.state === 'running') {
+            return true;
+        }
+        const fallbackAudio = document.getElementById('lobby-music');
+        if (fallbackAudio && !fallbackAudio.paused && !fallbackAudio.muted && fallbackAudio.currentTime > 0) {
+            return true;
+        }
+        return false;
+    }
+
     loadBuffer() {
-        if (this.buffer || !this.ctx) return;
+        if (this.buffer) return;
+        if (!this.ctx) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = window._morphemeAudioCtx || new AudioCtx({ latencyHint: 'interactive' });
+                    window._morphemeAudioCtx = this.ctx;
+                }
+            } catch (e) {}
+        }
+        if (!this.ctx || this._loadingBuffer) return;
+        this._loadingBuffer = true;
         fetch('/music/lobby.mp3', { cache: 'force-cache' })
             .then(res => res.arrayBuffer())
             .then(arrayBuf => {
                 if (this.ctx) {
                     this.ctx.decodeAudioData(arrayBuf, decoded => {
+                        this._loadingBuffer = false;
                         this.buffer = decoded;
                         window._preDecodedLobbyBuffer = decoded;
                         this.isLoaded = true;
-                        if (this._pendingPlay) {
+                        if (this._pendingPlay || this.isLobbyOrGatewayActive()) {
                             this._pendingPlay = false;
-                            const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-                            const inGameRoom = (activePage === 'page-play') || 
-                                               !!window.currentRoomId || 
-                                               (document.getElementById('page-play')?.classList.contains('active')) ||
-                                               document.body.classList.contains('play-active');
-                            if (!inGameRoom) {
-                                // Silence any fallback HTML audio before switching to Web Audio
-                                const htmlAudio = document.getElementById('lobby-music');
-                                if (htmlAudio && !htmlAudio.paused) {
-                                    try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
-                                }
+                            if (this.isLobbyOrGatewayActive() && (!window.userSettings || window.userSettings.lobby_music !== false)) {
                                 this.play();
                             }
                         }
                     }, err => {
+                        this._loadingBuffer = false;
                         console.warn('[LobbyMusicEngine] decodeAudioData failed:', err);
                     });
+                } else {
+                    this._loadingBuffer = false;
                 }
             })
             .catch(err => {
+                this._loadingBuffer = false;
                 console.warn('[LobbyMusicEngine] fetch lobby.mp3 failed:', err);
             });
     }
 
-    play() {
-        // Absolute lockdown: Lobby music must NEVER play while in a game room or on page-play
-        const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-        const inGameRoom = (activePage === 'page-play') || 
-                           !!window.currentRoomId || 
-                           (document.getElementById('page-play')?.classList.contains('active')) ||
-                           document.body.classList.contains('play-active');
-        if (inGameRoom) {
-            this.pause();
-            return;
-        }
+    _startBufferSource() {
+        if (!this.ctx || !this.buffer) return false;
+        try {
+            if (this.source) {
+                try { this.source.stop(); } catch(e) {}
+                try { this.source.disconnect(); } catch(e) {}
+                this.source = null;
+            }
+            this.source = this.ctx.createBufferSource();
+            this.source.buffer = this.buffer;
+            this.source.loop = true;
 
-        // Must be on page-lobby or page-loading (Gateway)
-        const onGateway = (activePage === 'page-loading') || (document.getElementById('page-loading')?.classList.contains('active'));
-        const onLobby = (activePage === 'page-lobby') || (document.getElementById('page-lobby')?.classList.contains('active')) || onGateway;
-        if (!onLobby) {
+            if (!this.gainNode || this.gainNode.context !== this.ctx) {
+                this.gainNode = this.ctx.createGain();
+                this.gainNode.connect(this.ctx.destination);
+            }
+            this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime || 0);
+            this.source.connect(this.gainNode);
+            this.source.start(0);
+            this.isPlaying = true;
+            this._pendingPlay = false;
+            return true;
+        } catch (e) {
+            console.warn('[LobbyMusicEngine] Failed to start Web Audio source:', e);
+            return false;
+        }
+    }
+
+    play() {
+        if (!this.isLobbyOrGatewayActive()) {
             this.pause();
             return;
         }
@@ -1281,6 +1329,15 @@ class LobbyMusicEngine {
         if (window.userSettings && window.userSettings.lobby_music === false) {
             this.pause();
             return;
+        }
+
+        if (!this.buffer && window._preDecodedLobbyBuffer) {
+            this.buffer = window._preDecodedLobbyBuffer;
+            this.isLoaded = true;
+        }
+
+        if (!this.ctx && window._morphemeAudioCtx) {
+            this.ctx = window._morphemeAudioCtx;
         }
 
         // Adopt early web audio source if one was created during button press
@@ -1295,14 +1352,38 @@ class LobbyMusicEngine {
             window._earlyWebAudioGain = null;
         }
 
-        // If already playing smoothly via Web Audio, do NOT duplicate playback
-        if (this.isPlaying && this.source) {
-            if (this.ctx && typeof this.ctx.resume === 'function' && this.ctx.state === 'suspended') {
-                this.ctx.resume().catch(() => {});
-            }
-            if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.resume === 'function' && window._morphemeAudioCtx.state === 'suspended') {
-                window._morphemeAudioCtx.resume().catch(() => {});
-            }
+        // Unconditionally resume AudioContext (cancels any in-flight suspend() and wakes 'suspended' or iOS 'interrupted' states)
+        if (this.ctx && typeof this.ctx.resume === 'function') {
+            try {
+                const resumePromise = this.ctx.resume();
+                if (resumePromise && typeof resumePromise.then === 'function') {
+                    resumePromise.then(() => {
+                        if (!this.isLobbyOrGatewayActive() || (window.userSettings && window.userSettings.lobby_music === false)) {
+                            this.pause();
+                            return;
+                        }
+                        if (this.buffer && (!this.source || !this.isPlaying)) {
+                            this._startBufferSource();
+                        }
+                        if (this.source && this.isPlaying && this.ctx && this.ctx.state === 'running') {
+                            const htmlAudio = document.getElementById('lobby-music');
+                            if (htmlAudio && !htmlAudio.paused) {
+                                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
+                            }
+                            if (typeof removeInteractionListeners === 'function') {
+                                removeInteractionListeners();
+                            }
+                        }
+                    }).catch(() => {});
+                }
+            } catch (e) {}
+        }
+        if (window._morphemeAudioCtx && window._morphemeAudioCtx !== this.ctx && typeof window._morphemeAudioCtx.resume === 'function') {
+            try { window._morphemeAudioCtx.resume().catch(() => {}); } catch (e) {}
+        }
+
+        // If already playing smoothly on a running AudioContext, do NOT duplicate playback
+        if (this.isPlaying && this.source && this.ctx && this.ctx.state === 'running') {
             const htmlAudio = document.getElementById('lobby-music');
             if (htmlAudio && !htmlAudio.paused) {
                 try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
@@ -1311,34 +1392,11 @@ class LobbyMusicEngine {
         }
 
         if (this.ctx) {
-            if (typeof this.ctx.resume === 'function' && this.ctx.state === 'suspended') {
-                this.ctx.resume().catch(() => {});
-            }
-            if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.resume === 'function' && window._morphemeAudioCtx.state === 'suspended') {
-                window._morphemeAudioCtx.resume().catch(() => {});
-            }
-
             if (this.buffer) {
-                try {
-                    if (this.source) {
-                        try { this.source.stop(); } catch(e) {}
-                        try { this.source.disconnect(); } catch(e) {}
-                        this.source = null;
-                    }
-                    this.source = this.ctx.createBufferSource();
-                    this.source.buffer = this.buffer;
-                    this.source.loop = true;
-
-                    if (!this.gainNode) {
-                        this.gainNode = this.ctx.createGain();
-                        this.gainNode.connect(this.ctx.destination);
-                    }
-                    this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime);
-                    this.source.connect(this.gainNode);
-                    this.source.start(0);
-                    this.isPlaying = true;
-                    this._pendingPlay = false;
-
+                if (!this.source || !this.isPlaying) {
+                    this._startBufferSource();
+                }
+                if (this.ctx.state === 'running' && this.isPlaying) {
                     // Unconditionally stop & mute HTML5 fallback audio so only 1 stream plays
                     const fallbackAudio = document.getElementById('lobby-music');
                     if (fallbackAudio && !fallbackAudio.paused) {
@@ -1346,8 +1404,6 @@ class LobbyMusicEngine {
                     }
                     console.log('[LobbyMusicEngine] Web Audio buffer playback started single stream (0ms latency).');
                     return;
-                } catch (e) {
-                    console.warn('[LobbyMusicEngine] Failed to start Web Audio source:', e);
                 }
             } else {
                 this._pendingPlay = true;
@@ -1355,8 +1411,8 @@ class LobbyMusicEngine {
             }
         }
 
-        // Fallback to HTML5 <audio> element ONLY if Web Audio buffer source is not playing
-        if (!this.isPlaying) {
+        // Fallback to HTML5 <audio> element if Web Audio context is not yet in 'running' state or buffer is still loading
+        if (!this.ctx || this.ctx.state !== 'running' || !this.buffer) {
             const fallbackAudio = document.getElementById('lobby-music');
             if (fallbackAudio) {
                 if (!fallbackAudio.src || !fallbackAudio.src.includes('/music/lobby.mp3')) {
@@ -1369,7 +1425,15 @@ class LobbyMusicEngine {
                     const p = fallbackAudio.play();
                     if (p !== undefined) {
                         p.then(() => {
-                            this.isPlaying = true;
+                            if (this.ctx && this.ctx.state === 'running' && this.source && this.isPlaying) {
+                                // Web Audio already woke up; silence HTML5 fallback to prevent double audio
+                                try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; fallbackAudio.muted = true; } catch(e) {}
+                            } else {
+                                this.isPlaying = true;
+                            }
+                            if (typeof removeInteractionListeners === 'function') {
+                                removeInteractionListeners();
+                            }
                         }).catch(err => {
                             console.warn('[LobbyMusicEngine] HTML5 Audio play deferred until gesture:', err);
                         });
@@ -1450,12 +1514,11 @@ function handleLobbyMusicState() {
         window.lobbyMusicEngine = new LobbyMusicEngine();
     }
 
-    // Use window.currentPageId if available to avoid DOM ID race conditions during transition
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     const onGateway = (activePage === 'page-loading');
-    const onLobby = (activePage === 'page-lobby' || onGateway);
+    const onLobby = window.lobbyMusicEngine.isLobbyOrGatewayActive();
     const onPlay = (activePage === 'page-play');
-    const inGameRoom = onPlay || (window.currentRoomId && activePage !== 'page-loading' && activePage !== 'page-lobby');
+    const inGameRoom = onPlay || !!window._isEnteringRoom || !!window._isCreatingRoom;
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
     // Play lobby music when on gateway screen, in lobby, or transitioning into lobby
@@ -1473,7 +1536,7 @@ function handleLobbyMusicState() {
 
     if (shouldPlay) {
         window.lobbyMusicEngine.play();
-        if (typeof removeInteractionListeners === 'function') {
+        if (window.lobbyMusicEngine.isActuallyPlaying() && typeof removeInteractionListeners === 'function') {
             removeInteractionListeners();
         }
     } else {
@@ -1484,26 +1547,49 @@ function handleLobbyMusicState() {
 
 // Modern Browser Autoplay bypass helpers
 function playMusicOnFirstInteraction(e) {
+    if (!window.lobbyMusicEngine) {
+        window.lobbyMusicEngine = new LobbyMusicEngine();
+    }
+    const target = (e && e.target && typeof e.target.closest === 'function') ? e.target : null;
+    const isClickingLobbyBtn = Boolean(
+        target && (
+            target.closest('.nav-btn[data-page="lobby"]') ||
+            target.closest('#return-lobby-btn') ||
+            target.closest('#btn-enter-lobby-gateway') ||
+            target.closest('#gateway-housing')
+        )
+    );
+    const isClickingNonLobbyNav = Boolean(
+        target && (
+            target.closest('.nav-btn:not([data-page="lobby"])') ||
+            target.closest('#btn-login-gateway') ||
+            target.closest('.game-btn, .acc-btn, .fcfs-btn, .split-btn')
+        )
+    );
+
+    const onLobby = (isClickingLobbyBtn || window.lobbyMusicEngine.isLobbyOrGatewayActive()) && !isClickingNonLobbyNav;
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
-    const onGateway = (activePage === 'page-loading') || (document.getElementById('page-loading')?.classList.contains('active'));
-    const onLobby = (activePage === 'page-lobby') || (document.getElementById('page-lobby')?.classList.contains('active')) || onGateway;
-    const onPlay = (activePage === 'page-play') || (document.getElementById('page-play')?.classList.contains('active'));
-    const inGameRoom = onPlay || !!window.currentRoomId || document.body.classList.contains('play-active');
+    const onPlay = (activePage === 'page-play') && !isClickingLobbyBtn;
+    const inGameRoom = onPlay || !!window._isEnteringRoom || !!window._isCreatingRoom;
     const lobbyMusicSetting = (!window.userSettings || window.userSettings.lobby_music !== false);
     
     const shouldPlay = onLobby && !inGameRoom && lobbyMusicSetting;
 
     if (shouldPlay) {
-        if (!window.lobbyMusicEngine) {
-            window.lobbyMusicEngine = new LobbyMusicEngine();
+        if (isClickingLobbyBtn && window.lobbyMusicEngine.ctx && typeof window.lobbyMusicEngine.ctx.resume === 'function') {
+            try { window.lobbyMusicEngine.ctx.resume().catch(() => {}); } catch (_) {}
         }
-        window.lobbyMusicEngine.play();
-        removeInteractionListeners();
+        if (window.lobbyMusicEngine.isLobbyOrGatewayActive()) {
+            window.lobbyMusicEngine.play();
+            if (window.lobbyMusicEngine.isActuallyPlaying()) {
+                removeInteractionListeners();
+            }
+        }
     } else {
         if (inGameRoom) {
             removeInteractionListeners();
         }
-        if (window.lobbyMusicEngine) {
+        if (window.lobbyMusicEngine && !isClickingLobbyBtn) {
             window.lobbyMusicEngine.pause();
         }
     }
@@ -1930,6 +2016,20 @@ function setupNavigation() {
     console.log(`[setupNavigation] Initializing ${navButtons.length} buttons.`);
     
     navButtons.forEach(btn => {
+        if (btn.dataset.page === 'lobby') {
+            const preWakeLobbyAudio = () => {
+                if (window.isTournamentPlay || window.isPrivateMatchPlay) return;
+                if (!window.userSettings || window.userSettings.lobby_music !== false) {
+                    if (window.lobbyMusicEngine && window.lobbyMusicEngine.ctx && typeof window.lobbyMusicEngine.ctx.resume === 'function') {
+                        try { window.lobbyMusicEngine.ctx.resume().catch(() => {}); } catch (_) {}
+                    }
+                }
+            };
+            btn.addEventListener('pointerdown', preWakeLobbyAudio, { passive: true });
+            btn.addEventListener('touchstart', preWakeLobbyAudio, { passive: true });
+            btn.addEventListener('mousedown', preWakeLobbyAudio, { passive: true });
+        }
+
         btn.addEventListener('click', async (e) => {
             if (window.currentPageId === 'page-login' || document.body.classList.contains('login-active')) {
                 e.preventDefault();
@@ -1985,10 +2085,12 @@ function setupNavigation() {
             }
 
             // USER NAVIGATION LEAVE HARNESS: If navigating to lobby from another page, leave the current room
+            // Execute synchronously up to the network beacon so showPage('page-lobby') and AudioContext.resume()
+            // run inside the direct user click gesture without waiting on network latency.
             if (pageTarget === 'lobby') {
                 if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
                     console.log('[setupNavigation] Leaving current room on Lobby navigation click.');
-                    await window.leaveCurrentRoom();
+                    window.leaveCurrentRoom().catch(() => {});
                 }
             } else {
                 if (typeof window.leaveLobbyPresence === 'function') {
@@ -4427,6 +4529,9 @@ function handleAppVisibilityChange() {
                 }
             }
         } catch(e) {}
+        if (typeof handleLobbyMusicState === 'function') {
+            handleLobbyMusicState();
+        }
     }
 }
 document.addEventListener('visibilitychange', handleAppVisibilityChange);

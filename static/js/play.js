@@ -2154,11 +2154,13 @@ async function _doUpdateGameState(incomingState = null) {
         }
 
         // Ensure lobby music is strictly killed and interaction listeners detached in game room
-        if (window.lobbyMusicEngine && (window.lobbyMusicEngine.isPlaying || window.lobbyMusicEngine._pendingPlay)) {
-            window.lobbyMusicEngine.pause();
-        }
-        if (typeof removeInteractionListeners === 'function') {
-            removeInteractionListeners();
+        if ((window.currentPageId || (document.querySelector('.page.active')?.id)) === 'page-play') {
+            if (window.lobbyMusicEngine && (window.lobbyMusicEngine.isPlaying || window.lobbyMusicEngine._pendingPlay)) {
+                window.lobbyMusicEngine.pause();
+            }
+            if (typeof removeInteractionListeners === 'function') {
+                removeInteractionListeners();
+            }
         }
 
         window.lastGameState = state;  // Store for optimistic updates
@@ -10929,7 +10931,7 @@ if (returnBtnEl) {
             await finishPrivateMatchTurn();
             return;
         }
-        await leaveCurrentRoom();
+        leaveCurrentRoom().catch(() => {});
         showPage('page-lobby');
     });
 }
