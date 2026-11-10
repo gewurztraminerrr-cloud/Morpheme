@@ -5135,6 +5135,22 @@ class RoomManager:
                     )
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res[:7]
+
+                # PREFACE #18b: the format declared in the Spinner Set is final. A cached/fallback board may carry a
+                # different SCORING-ONLY format (e.g. Bounce instead of Valued Letters); those need no board change,
+                # so stamp the declared one. Board-shape formats (Mania, Checkerboard, ...) are left untouched.
+                try:
+                    _declared_fmt = str(room.spinner_params.get('board_format', '') or '')
+                    _scoring_only = ('normal', 'valued letters', 'penalty', 'bounce 1x', 'bounce 2x', 'bounce 3x', 'bounce')
+                    if is_24h:
+                        _declared_fmt = 'Valued Letters'
+                    if (_declared_fmt.lower().strip() in _scoring_only
+                            and str(updated_format).lower().strip() in _scoring_only
+                            and str(updated_format).lower().strip() != _declared_fmt.lower().strip()):
+                        updated_format = _declared_fmt
+                        bonus_cell = None
+                except Exception as _fmt_err:
+                    print(f"[RoomManager] format stamp error: {_fmt_err}")
                 break
                 
                 # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
@@ -5487,7 +5503,15 @@ class RoomManager:
         room = self.get_room(room_id)
         if not room:
             return False
-            
+
+        # PERF (#3/#6): load CSW BEFORE taking the room lock. Lazy-loading it inside the lock stalled
+        # submit_word and the 0:00 transition for seconds.
+        try:
+            if hasattr(word_validator, 'word_validator'):
+                word_validator.word_validator.ensure_csw_loaded()
+        except Exception as _csw_err:
+            print(f"[RoomManager] CSW preload error: {_csw_err}")
+
         with room._state_lock:
             # 1. Check if already revealed - if so, NOOP
             if reveal and getattr(room, 'spinner_params_revealed', False):
