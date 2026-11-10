@@ -5151,6 +5151,61 @@ class RoomManager:
                         bonus_cell = None
                 except Exception as _fmt_err:
                     print(f"[RoomManager] format stamp error: {_fmt_err}")
+
+                # PREFACE (first-board contract): the board MUST satisfy what the Spinner Set declared (word count
+                # range + board-shape format). If a cache/fallback pop does not, generate a compliant one instead.
+                try:
+                    _sp0 = room.spinner_params if isinstance(room.spinner_params, dict) else {}
+                    _decl_rng = _sp0.get('word_count_range')
+                    _decl_fmt = str(_sp0.get('board_format', '') or '')
+                    _decl_low = _decl_fmt.lower().strip()
+                    _cnt0 = sum(1 for w in (all_words or []) if len(w) >= int(m_len or 3))
+
+                    def _flat_cells(b):
+                        for x in b:
+                            if isinstance(x, list):
+                                yield from _flat_cells(x)
+                            else:
+                                yield x
+                    _cells = list(_flat_cells(board))
+                    _has_eo = any('/' in str(c) for c in _cells)
+                    _bad = []
+                    if _decl_rng and not is_board_count_valid(_cnt0, _decl_rng):
+                        _bad.append(f"count {_cnt0} not in {_decl_rng}")
+                    if 'either' in _decl_low and not _has_eo:
+                        _bad.append("missing Either/Or tile")
+                    if 'either' not in _decl_low and _has_eo:
+                        _bad.append("unexpected Either/Or tile")
+                    if 'bonus letter' in _decl_low and not bonus_cell:
+                        _bad.append("missing bonus cell")
+                    if 'mania' in _decl_low and 'mania' not in str(updated_format).lower():
+                        _bad.append("missing Mania")
+                    if _decl_low in ('checkerboard', 'equality freq') and str(updated_format).lower().strip() != _decl_low:
+                        _bad.append("format shape mismatch")
+                    if _bad and not is_24h:
+                        print(f"[RoomManager] First-board contract violated for {room_id}: {_bad}. Generating compliant board...")
+                        _base_dict = str(_sp0.get('dictionary', 'NWL')).replace('+ AW', '').replace('+AW', '').strip() or 'NWL'
+                        for _try in range(2):
+                            try:
+                                _g = self.board_generator.generate_board(
+                                    dimensions=room.board_dimensions,
+                                    bonus_word=bonus_word,
+                                    word_count_range=_decl_rng,
+                                    dictionary=_base_dict,
+                                    board_format=_decl_fmt,
+                                    min_word_length=m_len,
+                                    difficulty=_sp0.get('difficulty', 'Medium'),
+                                    timeout=40.0,
+                                    use_added_words=use_aw_flag
+                                )
+                                if _g and len(_g) >= 7:
+                                    board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = _g[:7]
+                                    print(f"[RoomManager] Compliant first board generated for {room_id}: {len(all_words)} words")
+                                    break
+                            except Exception as _gen_err:
+                                print(f"[RoomManager] Compliant first-board generation attempt failed: {_gen_err}")
+                except Exception as _contract_err:
+                    print(f"[RoomManager] first-board contract check error: {_contract_err}")
                 break
                 
                 # Issue 1 & 7: Check against rolling 10-board fingerprint history, not just 1 previous board
