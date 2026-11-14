@@ -12925,16 +12925,21 @@ def tools_random_word():
         definition = "No definition available for this word."
     image_url = lookup_definition_image(random_word)
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(random_word, definition)
+    import tally_divisions as td
+    div_info = td.get_word_division_info(random_word)
     
-    return jsonify({
+    resp = jsonify({
         'word': random_word,
         'definition': definition,
         'pronunciation': pronunciation,
         'image_url': image_url,
+        'division_info': div_info,
         'is_noun': is_noun,
         'wiki_url': wiki_url,
         'wiki_title': wiki_title
     })
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return resp
 
 _WOTD_CACHE = {}
 
@@ -12981,6 +12986,8 @@ def tools_wotd():
         definition = "No definition available for this word."
     image_url = lookup_definition_image(wotd)
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(wotd, definition)
+    import tally_divisions as td
+    div_info = td.get_word_division_info(wotd)
     
     payload = {
         'word': wotd,
@@ -12988,6 +12995,7 @@ def tools_wotd():
         'definition': definition,
         'pronunciation': pronunciation,
         'image_url': image_url,
+        'division_info': div_info,
         'is_noun': is_noun,
         'wiki_url': wiki_url,
         'wiki_title': wiki_title

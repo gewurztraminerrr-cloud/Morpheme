@@ -8437,6 +8437,14 @@ async function generateRandomWord() {
                 html += `<div class="pronunciation" style="margin-bottom: 8px; font-size: 1.5rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${window.formatDefinitionWithLinks(definition) || "No definition available."}</div>`;
+            const dInfo = data && data.division_info;
+            if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+                const divLabel = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+                html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)">${divLabel}</span></div>`;
+            } else if (dInfo && (dInfo.points || dInfo.base_points)) {
+                const pts = dInfo.points || dInfo.base_points || 1;
+                html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
+            }
             if (data.is_noun && data.wiki_url) {
                 const wikiTitle = data.wiki_title || word;
                 html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
@@ -8522,6 +8530,14 @@ async function updateWotd() {
                 html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text">${window.formatDefinitionWithLinks(data.definition) || "No definition available."}</div>`;
+            const dInfo = data && data.division_info;
+            if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+                const divLabel = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+                html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)">${divLabel}</span></div>`;
+            } else if (dInfo && (dInfo.points || dInfo.base_points)) {
+                const pts = dInfo.points || dInfo.base_points || 1;
+                html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
+            }
             if (data.is_noun && data.wiki_url) {
                 const wikiTitle = data.wiki_title || data.word;
                 html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
@@ -9320,6 +9336,14 @@ async function runValidationCheck() {
                 }
                 if (data.definition) {
                     html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: var(--text-primary); font-style: normal;">${window.formatDefinitionWithLinks(data.definition)}</div>`;
+                }
+                const dInfo = data && data.division_info;
+                if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+                    const divLabel = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+                    html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)">${divLabel}</span></div>`;
+                } else if (dInfo && (dInfo.points || dInfo.base_points)) {
+                    const pts = dInfo.points || dInfo.base_points || 1;
+                    html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
                 }
                 if (data.is_noun && data.wiki_url) {
                     const wikiTitle = data.wiki_title || word;
