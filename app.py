@@ -12185,29 +12185,48 @@ def get_concept_synonyms(word):
     syns = set(base_variants)
     try:
         from nltk.corpus import wordnet as wn
-        target_synsets = wn.synsets(w)
+        target_synsets = set(wn.synsets(w))
         if not target_synsets:
             for v in base_variants:
-                target_synsets = wn.synsets(v)
+                target_synsets = set(wn.synsets(v))
                 if target_synsets:
                     break
-        for s in target_synsets:
+
+        # Expand direct lemmas & link related synsets of direct synonyms
+        for s in list(target_synsets):
             for l in s.lemmas():
                 name = l.name().replace('_', ' ').lower()
                 if ' ' not in name and len(name) >= 2:
                     syns.update(expand_morphological_variants(name))
-            if s.pos() == 'n':
-                for hyp in s.hyponyms():
-                    for hl in hyp.lemmas():
-                        hname = hl.name().replace('_', ' ').lower()
-                        if ' ' not in hname and len(hname) >= 2:
-                            syns.update(expand_morphological_variants(hname))
+                # For direct synonyms of w (e.g. 'bird' alongside 'fowl' in bird.n.02),
+                # include top synsets so broad sister concepts link together
+                if name != w and ' ' not in name and len(name) >= 3:
+                    for s2 in wn.synsets(name)[:2]:
+                        target_synsets.add(s2)
+
             if s.pos() in ('a', 's'):
                 for sim in s.similar_tos():
                     for sl in sim.lemmas():
                         sname = sl.name().replace('_', ' ').lower()
                         if ' ' not in sname and len(sname) >= 2:
                             syns.update(expand_morphological_variants(sname))
+
+        # For noun concepts, recursively expand taxonomic hyponyms up to depth 6
+        # so categories like bird/fowl include peacock, eagle, hawk, seabird, etc.
+        for s in list(target_synsets):
+            if s.pos() == 'n':
+                try:
+                    for hyp in s.closure(lambda ss: ss.hyponyms(), depth=6):
+                        for hl in hyp.lemmas():
+                            hname = hl.name().replace('_', ' ').lower()
+                            if ' ' not in hname and len(hname) >= 2:
+                                syns.update(expand_morphological_variants(hname))
+                except Exception:
+                    for hyp in s.hyponyms():
+                        for hl in hyp.lemmas():
+                            hname = hl.name().replace('_', ' ').lower()
+                            if ' ' not in hname and len(hname) >= 2:
+                                syns.update(expand_morphological_variants(hname))
     except Exception:
         pass
     _REVERSE_DICT_SYNS_CACHE[w] = syns
@@ -12220,18 +12239,15 @@ def tools_reverse_dictionary():
         query = data.get('query', '')
         mode = data.get('mode', 'similar')
         dict_name = data.get('dictionary', 'all')
-        limit = data.get('limit', 500)
     else:
         query = request.args.get('query', '') or request.args.get('q', '')
         mode = request.args.get('mode', 'similar')
         dict_name = request.args.get('dictionary', 'all') or request.args.get('dict', 'all')
-        limit = request.args.get('limit', 500, type=int)
 
     query = (query or '').strip()
     if not query:
         return jsonify({'error': 'No query provided', 'results': [], 'count': 0}), 400
 
-    limit = max(1, min(limit or 500, 1000))
     dict_filter = (dict_name or 'all').upper().strip()
 
     search_list = get_reverse_dict_search_list()
@@ -12280,15 +12296,26 @@ def tools_reverse_dictionary():
             if inter:
                 relevant_comp_patterns.append((comp_term, inter, re.compile(r'\b' + re.escape(comp_term) + r'\b')))
 
+    import string
+    use_token_set_match = any(len(s) > 30 for s in token_stem_sets)
+    trans_table = str.maketrans({c: ' ' for c in string.punctuation}) if use_token_set_match else None
+
     matches = []
     for word, defn, d_low in search_list:
         matched = True
         
         # Check standard token matching
-        for stem_set, pattern in zip(token_stem_sets, token_patterns):
-            if not any(s in d_low for s in stem_set) or not pattern.search(d_low):
-                matched = False
-                break
+        if use_token_set_match:
+            d_tokens = set(d_low.translate(trans_table).split())
+            for stem_set in token_stem_sets:
+                if not (d_tokens & stem_set):
+                    matched = False
+                    break
+        else:
+            for stem_set, pattern in zip(token_stem_sets, token_patterns):
+                if not any(s in d_low for s in stem_set) or not pattern.search(d_low):
+                    matched = False
+                    break
         
         # Multi-word composite fallback (e.g. 'virago' covers 'mean' + 'woman' for 'mean old woman')
         if not matched and relevant_comp_patterns:
@@ -12355,8 +12382,8 @@ def tools_reverse_dictionary():
         'mode': mode,
         'dictionary': dict_name,
         'count': len(matches),
-        'results': matches[:limit],
-        'matched_terms': matched_terms[:120]
+        'results': matches,
+        'matched_terms': matched_terms[:250]
     })
 
 # --- Private Messaging Routes ---

@@ -12356,10 +12356,8 @@ window.performReverseDictSearch = async function() {
         }
 
         // Render results
-        const isLimited = count > results.length;
-        const limitNotice = isLimited ? ` <span style="font-size: 0.82rem; opacity: 0.8; font-weight: 500;">(showing top ${results.length})</span>` : '';
         if (countText) {
-            countText.innerHTML = `Found <strong style="color: #38bdf8;">${count.toLocaleString()}</strong> word${count === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>${limitNotice}`;
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${count.toLocaleString()}</strong> word${count === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>`;
         }
 
         let rowsHtml = '';
