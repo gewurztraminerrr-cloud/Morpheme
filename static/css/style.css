@@ -2777,13 +2777,17 @@ body.theme-white .header {
     opacity: 0;
 }
 
-[contenteditable="true"]:empty::before,
-[contenteditable="true"].is-empty::before {
+[contenteditable="true"]:not(#profile-quote-val):not(#profile-description-val):empty::before {
     content: attr(data-placeholder);
-    color: var(--text-40);
-    opacity: 0.65;
+    color: var(--text-30);
     pointer-events: none;
-    display: block;
+    display: inline-block;
+}
+
+#profile-quote-val.is-empty,
+#profile-description-val.is-empty {
+    color: var(--text-40) !important;
+    opacity: 0.65;
 }
 
 /* Ratings Grid Section */
