@@ -11,7 +11,8 @@ function initToolsModules() {
         setupWordsToWorkOnTool,
         setupSequenceTool, setupManualTool, setupRandomWordTool, setupWotdTool,
         setupSubanagramsTool, setupIsValidTool, setupPrivateMessaging, setupMiniProfileModal,
-        setupImageLightbox, setupUnscrambleTool, setupFindCountTool, setupPersonalTimer
+        setupImageLightbox, setupUnscrambleTool, setupFindCountTool, setupPersonalTimer,
+        setupReverseDictionaryTool
     ];
     inits.forEach(fn => {
         try {
@@ -237,6 +238,7 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
     if (toolId === 'player-stats') toolId = 'new-users';
+    if (toolId === 'key-word-in-definition') toolId = 'reverse-dictionary';
     if (window._toolsSlideTimeout) {
         clearTimeout(window._toolsSlideTimeout);
         window._toolsSlideTimeout = null;
@@ -262,6 +264,11 @@ window.showTool = function(toolId) {
             const comboScroll = document.getElementById('combo-scroll-container');
             if (comboScroll) {
                 window._savedComboScrollTop = comboScroll.scrollTop;
+            }
+        } else if (curId === 'reverse-dictionary') {
+            const rdScroll = document.getElementById('reverse-dict-table-scroll');
+            if (rdScroll) {
+                window._savedReverseDictScrollTop = rdScroll.scrollTop;
             }
         }
     }
@@ -303,10 +310,20 @@ window.showTool = function(toolId) {
                 p.style.display = 'none';
             }
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
+        }
+        if (toolId === 'reverse-dictionary') {
+            content.classList.add('has-reverse-dictionary-active');
+            if (typeof initCustomScrollbarForElement === 'function') {
+                initCustomScrollbarForElement('reverse-dict-table-scroll', 'reverse-dict-scrollbar-track', 'reverse-dict-scrollbar-thumb');
+            }
+            const inp = document.getElementById('reverse-dict-input');
+            if (inp) setTimeout(() => inp.focus(), 80);
+        } else {
+            content.classList.remove('has-reverse-dictionary-active');
         }
         if (toolId === 'lists') {
             content.classList.add('has-lists-active');
@@ -445,6 +462,14 @@ window.showTool = function(toolId) {
     if (toolId === 'sequence') {
         if (typeof window.restoreSequencePosition === 'function') {
             window.restoreSequencePosition();
+        }
+    }
+    if (toolId === 'reverse-dictionary') {
+        const rdScroll = document.getElementById('reverse-dict-table-scroll');
+        if (rdScroll && typeof window._savedReverseDictScrollTop === 'number') {
+            setTimeout(() => {
+                rdScroll.scrollTop = window._savedReverseDictScrollTop;
+            }, 30);
         }
     }
     if (window._savedToolScrollPositions && typeof window._savedToolScrollPositions[toolId] === 'number') {
@@ -12118,6 +12143,283 @@ window.refreshCurrentToolDates = function() {
         }
     } catch (e) {
         console.error('[refreshCurrentToolDates] Error refreshing dates:', e);
+    }
+};
+
+/* ==========================================================================
+   REVERSE DICTIONARY TOOL (Key Word in Definition)
+   ========================================================================== */
+
+window.setupReverseDictionaryTool = function() {
+    const input = document.getElementById('reverse-dict-input');
+    const clearBtn = document.getElementById('reverse-dict-clear-btn');
+    const modeSelect = document.getElementById('reverse-dict-mode');
+    const dictSelect = document.getElementById('reverse-dict-dict');
+    const searchBtn = document.getElementById('reverse-dict-search-btn');
+
+    if (input) {
+        input.addEventListener('input', () => {
+            if (clearBtn) {
+                clearBtn.style.display = input.value.trim().length > 0 ? 'flex' : 'none';
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.performReverseDictSearch();
+            }
+        });
+    }
+
+    if (modeSelect) {
+        modeSelect.addEventListener('change', () => {
+            if (input && input.value.trim().length > 0) {
+                window.performReverseDictSearch();
+            }
+        });
+    }
+
+    if (dictSelect) {
+        dictSelect.addEventListener('change', () => {
+            if (input && input.value.trim().length > 0) {
+                window.performReverseDictSearch();
+            }
+        });
+    }
+
+    if (typeof initCustomScrollbarForElement === 'function') {
+        initCustomScrollbarForElement('reverse-dict-table-scroll', 'reverse-dict-scrollbar-track', 'reverse-dict-scrollbar-thumb');
+    }
+};
+
+window.clearReverseDictInput = function() {
+    const input = document.getElementById('reverse-dict-input');
+    const clearBtn = document.getElementById('reverse-dict-clear-btn');
+    const statusBar = document.getElementById('reverse-dict-count-text');
+    const metaBadges = document.getElementById('reverse-dict-meta-badges');
+    const table = document.getElementById('reverse-dict-table');
+    const tbody = document.getElementById('reverse-dict-table-body');
+    const placeholder = document.getElementById('reverse-dict-placeholder');
+    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (statusBar) statusBar.textContent = 'Enter a search term above and press Enter.';
+    if (metaBadges) metaBadges.innerHTML = '';
+    if (tbody) tbody.innerHTML = '';
+    if (table) table.style.display = 'none';
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">📖</div>
+            <div style="font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Find Words by Meaning</div>
+            <div style="font-size: 0.85rem; max-width: 480px; margin: 0 auto; line-height: 1.45; color: var(--muted-text);">
+                Search definitions by entering any keyword, inflection, or concept. Choose <strong>Exact</strong> to match the word and its grammatical variations, or <strong>Similar to</strong> to uncover synonyms and related concepts.
+            </div>
+        `;
+    }
+    if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+        scrollArea.scrollTop = 0;
+        scrollArea._updateCustomScrollbar();
+    }
+};
+
+window.highlightKeywordsInDefinition = function(defn, query, mode, matchedTerms) {
+    if (!defn) return '';
+
+    // Escape HTML first
+    let escaped = defn
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Collect all terms to highlight
+    const termSet = new Set();
+    if (Array.isArray(matchedTerms)) {
+        matchedTerms.forEach(t => {
+            if (t && typeof t === 'string' && t.trim().length >= 2) {
+                termSet.add(t.trim().toLowerCase());
+            }
+        });
+    }
+    if (query) {
+        const qWords = query.toLowerCase().match(/[a-z0-9]+/g) || [];
+        qWords.forEach(w => {
+            if (w.length >= 2) termSet.add(w);
+        });
+    }
+
+    if (termSet.size === 0) return escaped;
+
+    // Sort terms descending by length so longer multi-word phrases match before substrings
+    const sortedTerms = Array.from(termSet).sort((a, b) => b.length - a.length);
+    const regexPattern = sortedTerms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    if (!regexPattern) return escaped;
+
+    try {
+        const regex = new RegExp(`(\\b(?:${regexPattern})\\b)`, 'gi');
+        return escaped.replace(regex, '<mark class="reverse-dict-highlight">$1</mark>');
+    } catch (e) {
+        return escaped;
+    }
+};
+
+window.performReverseDictSearch = async function() {
+    const input = document.getElementById('reverse-dict-input');
+    const searchBtn = document.getElementById('reverse-dict-search-btn');
+    const modeSelect = document.getElementById('reverse-dict-mode');
+    const dictSelect = document.getElementById('reverse-dict-dict');
+    const countText = document.getElementById('reverse-dict-count-text');
+    const metaBadges = document.getElementById('reverse-dict-meta-badges');
+    const table = document.getElementById('reverse-dict-table');
+    const tbody = document.getElementById('reverse-dict-table-body');
+    const placeholder = document.getElementById('reverse-dict-placeholder');
+    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+
+    const query = input ? input.value.trim() : '';
+    if (!query) {
+        if (input) input.focus();
+        return;
+    }
+
+    const mode = modeSelect ? modeSelect.value : 'similar';
+    const dictFilter = dictSelect ? dictSelect.value : 'all';
+
+    // Show searching state
+    if (searchBtn) searchBtn.disabled = true;
+    if (countText) {
+        countText.innerHTML = `Searching definitions for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>...`;
+    }
+    if (metaBadges) metaBadges.innerHTML = '<span class="reverse-dict-searching-spinner"></span>';
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `
+            <div class="reverse-dict-spinner" style="margin-bottom: 12px;"></div>
+            <div style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">Searching 827,000+ definitions...</div>
+            <div style="font-size: 0.85rem; color: var(--muted-text); margin-top: 4px;">Analyzing keywords, grammatical inflections, and semantic concepts</div>
+        `;
+    }
+    if (table) table.style.display = 'none';
+
+    try {
+        const url = `/api/tools/reverse-dictionary?query=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}&dict=${encodeURIComponent(dictFilter)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+            throw new Error(data.error || 'Server error searching definitions');
+        }
+
+        const count = data.count || 0;
+        const results = data.results || [];
+        const matchedTerms = data.matched_terms || [];
+
+        // Meta badges
+        const modeLabel = mode === 'exact' ? 'Exact Inflections' : 'Similar Concepts & Synonyms';
+        let dictLabel = 'All Dictionaries';
+        if (dictFilter === 'NWL') dictLabel = 'NWL Only';
+        else if (dictFilter === 'CSW') dictLabel = 'CSW Only';
+        else if (dictFilter === 'AW') dictLabel = 'Added Words Only';
+
+        if (metaBadges) {
+            metaBadges.innerHTML = `
+                <span class="reverse-dict-mode-badge">${modeLabel}</span>
+                <span class="reverse-dict-filter-badge">${dictLabel}</span>
+            `;
+        }
+
+        if (count === 0 || results.length === 0) {
+            if (countText) {
+                countText.innerHTML = `No definitions found matching <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>.`;
+            }
+            if (table) table.style.display = 'none';
+            if (tbody) tbody.innerHTML = '';
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+                placeholder.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">No Matching Definitions</div>
+                    <div style="font-size: 0.85rem; color: var(--muted-text); max-width: 440px; line-height: 1.45;">
+                        No words matched <em>"${escapeHtml(query)}"</em> in this dictionary mode. Try switching to <strong>Similar to</strong> or searching for a root concept or synonym.
+                    </div>
+                `;
+            }
+            if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+                scrollArea.scrollTop = 0;
+                scrollArea._updateCustomScrollbar();
+            }
+            return;
+        }
+
+        // Render results
+        const isLimited = count > results.length;
+        const limitNotice = isLimited ? ` <span style="font-size: 0.82rem; opacity: 0.8; font-weight: 500;">(showing top ${results.length})</span>` : '';
+        if (countText) {
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${count.toLocaleString()}</strong> word${count === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>${limitNotice}`;
+        }
+
+        let rowsHtml = '';
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            const word = item.word || '';
+            const safeJsWord = escapeHtml(word).replace(/'/g, "\\'");
+            const escapedWord = escapeHtml(word);
+            const wordLen = item.len || word.length;
+            const highlightedDefn = window.highlightKeywordsInDefinition(item.definition || '', query, mode, matchedTerms);
+
+            // Dictionaries badges
+            const lists = item.lists || [];
+            let badgesHtml = '<div class="reverse-dict-badges-wrapper">';
+            ['NWL', 'CSW', 'AW'].forEach(dictName => {
+                if (lists.includes(dictName)) {
+                    badgesHtml += `<span class="work-on-badge work-on-badge-${dictName.toLowerCase()}">${dictName}</span>`;
+                }
+            });
+            badgesHtml += '</div>';
+
+            rowsHtml += `
+                <tr class="reverse-dict-row" data-word="${escapedWord}">
+                    <td class="col-num">${i + 1}</td>
+                    <td class="col-word">
+                        <span class="reverse-dict-word-text" onclick="window.showWordDefinitionPopup('${safeJsWord}', event)" title="Click to view definition for ${escapedWord}">${escapedWord}</span>
+                        <span class="reverse-dict-length-badge">${wordLen}</span>
+                    </td>
+                    <td class="col-definition">${highlightedDefn}</td>
+                    <td class="col-dicts">${badgesHtml}</td>
+                </tr>
+            `;
+        }
+
+        if (tbody) tbody.innerHTML = rowsHtml;
+        if (placeholder) placeholder.style.display = 'none';
+        if (table) table.style.display = 'table';
+
+        if (scrollArea) {
+            scrollArea.scrollTop = 0;
+            if (typeof scrollArea._updateCustomScrollbar === 'function') {
+                scrollArea._updateCustomScrollbar();
+            }
+        }
+    } catch (err) {
+        console.error('[ReverseDictionary] Search error:', err);
+        if (countText) countText.textContent = 'Error executing search. Please try again.';
+        if (table) table.style.display = 'none';
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+            placeholder.innerHTML = `
+                <div style="font-size: 2rem; color: #ef4444; margin-bottom: 8px;">⚠️</div>
+                <div style="font-size: 1rem; font-weight: 700; color: #ef4444; margin-bottom: 4px;">Search Failed</div>
+                <div style="font-size: 0.85rem; color: var(--muted-text); max-width: 400px;">
+                    ${escapeHtml(err.message || 'Unable to connect to dictionary server.')}
+                </div>
+            `;
+        }
+    } finally {
+        if (searchBtn) searchBtn.disabled = false;
     }
 };
 

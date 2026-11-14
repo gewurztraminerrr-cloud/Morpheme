@@ -12077,6 +12077,288 @@ def tools_unscramble_random():
         'count': len(anagrams)
     })
 
+# ==========================================
+# REVERSE DICTIONARY (KEY WORD IN DEFINITION)
+# ==========================================
+
+_REVERSE_DICT_SEARCH_LIST = None
+_REVERSE_DICT_LOCK = threading.Lock()
+
+COMPOSITE_CONCEPTS = {
+    # (mean, woman) / ill-tempered, domineering woman
+    'virago': {'mean', 'woman'},
+    'viragos': {'mean', 'woman'},
+    'viragoes': {'mean', 'woman'},
+    'shrew': {'mean', 'woman'},
+    'shrews': {'mean', 'woman'},
+    'termagant': {'mean', 'woman'},
+    'termagants': {'mean', 'woman'},
+    'vixen': {'mean', 'woman'},
+    'vixens': {'mean', 'woman'},
+    # (old, woman)
+    'crone': {'old', 'woman'},
+    'crones': {'old', 'woman'},
+    'hag': {'old', 'woman'},
+    'hags': {'old', 'woman'},
+    'beldam': {'old', 'woman'},
+    'beldame': {'old', 'woman'},
+    'beldams': {'old', 'woman'},
+    # (old, man)
+    'geezer': {'old', 'man'},
+    'codger': {'old', 'man'},
+    # (young, dog)
+    'puppy': {'young', 'dog'},
+    'pup': {'young', 'dog'},
+    # (young, cat)
+    'kitten': {'young', 'cat'},
+}
+
+def get_reverse_dict_search_list():
+    global _REVERSE_DICT_SEARCH_LIST, DEFINITIONS_CACHE
+    if _REVERSE_DICT_SEARCH_LIST is not None:
+        return _REVERSE_DICT_SEARCH_LIST
+    with _REVERSE_DICT_LOCK:
+        if _REVERSE_DICT_SEARCH_LIST is not None:
+            return _REVERSE_DICT_SEARCH_LIST
+        if not DEFINITIONS_CACHE:
+            load_definitions()
+        _REVERSE_DICT_SEARCH_LIST = [(w, d, d.lower()) for w, d in (DEFINITIONS_CACHE or {}).items()]
+        return _REVERSE_DICT_SEARCH_LIST
+
+_REVERSE_DICT_VARIANTS_CACHE = {}
+_REVERSE_DICT_SYNS_CACHE = {}
+
+def expand_morphological_variants(word):
+    """Generate canonical base stems, uninflected forms, and regular inflections for a word."""
+    w = word.lower().strip()
+    if not w:
+        return set()
+    if w in _REVERSE_DICT_VARIANTS_CACHE:
+        return _REVERSE_DICT_VARIANTS_CACHE[w]
+
+    forms = {w}
+    try:
+        from nltk.corpus import wordnet as wn
+        for pos in (wn.NOUN, wn.VERB, wn.ADJ, wn.ADV):
+            m = wn.morphy(w, pos)
+            if m:
+                forms.add(m.lower())
+    except Exception:
+        pass
+
+    if w.endswith('ies') and len(w) > 4:
+        forms.add(w[:-3] + 'y')
+    elif w.endswith('es') and len(w) > 3:
+        forms.add(w[:-2])
+        forms.add(w[:-1])
+    elif w.endswith('s') and not w.endswith('ss') and len(w) > 2:
+        forms.add(w[:-1])
+    if w.endswith('ing') and len(w) > 4:
+        forms.add(w[:-3])
+        forms.add(w[:-3] + 'e')
+    if w.endswith('ed') and len(w) > 3:
+        forms.add(w[:-2])
+        forms.add(w[:-1])
+
+    bases = set(forms)
+    for b in bases:
+        if b.endswith(('s', 'x', 'z', 'ch', 'sh')):
+            forms.add(b + 'es')
+        elif b.endswith('y') and len(b) > 1 and b[-2] not in 'aeiou':
+            forms.add(b[:-1] + 'ies')
+        else:
+            forms.add(b + 's')
+
+    res = {f for f in forms if len(f) >= 2}
+    _REVERSE_DICT_VARIANTS_CACHE[w] = res
+    return res
+
+def get_concept_synonyms(word):
+    """Extract synonyms, hyponyms, and related concept terms using WordNet."""
+    w = word.lower().strip()
+    if not w:
+        return set()
+    if w in _REVERSE_DICT_SYNS_CACHE:
+        return _REVERSE_DICT_SYNS_CACHE[w]
+
+    base_variants = expand_morphological_variants(w)
+    syns = set(base_variants)
+    try:
+        from nltk.corpus import wordnet as wn
+        target_synsets = wn.synsets(w)
+        if not target_synsets:
+            for v in base_variants:
+                target_synsets = wn.synsets(v)
+                if target_synsets:
+                    break
+        for s in target_synsets:
+            for l in s.lemmas():
+                name = l.name().replace('_', ' ').lower()
+                if ' ' not in name and len(name) >= 2:
+                    syns.update(expand_morphological_variants(name))
+            if s.pos() == 'n':
+                for hyp in s.hyponyms():
+                    for hl in hyp.lemmas():
+                        hname = hl.name().replace('_', ' ').lower()
+                        if ' ' not in hname and len(hname) >= 2:
+                            syns.update(expand_morphological_variants(hname))
+            if s.pos() in ('a', 's'):
+                for sim in s.similar_tos():
+                    for sl in sim.lemmas():
+                        sname = sl.name().replace('_', ' ').lower()
+                        if ' ' not in sname and len(sname) >= 2:
+                            syns.update(expand_morphological_variants(sname))
+    except Exception:
+        pass
+    _REVERSE_DICT_SYNS_CACHE[w] = syns
+    return syns
+
+@app.route('/api/tools/reverse-dictionary', methods=['GET', 'POST'])
+def tools_reverse_dictionary():
+    if request.method == 'POST':
+        data = request.json or {}
+        query = data.get('query', '')
+        mode = data.get('mode', 'similar')
+        dict_name = data.get('dictionary', 'all')
+        limit = data.get('limit', 500)
+    else:
+        query = request.args.get('query', '') or request.args.get('q', '')
+        mode = request.args.get('mode', 'similar')
+        dict_name = request.args.get('dictionary', 'all') or request.args.get('dict', 'all')
+        limit = request.args.get('limit', 500, type=int)
+
+    query = (query or '').strip()
+    if not query:
+        return jsonify({'error': 'No query provided', 'results': [], 'count': 0}), 400
+
+    limit = max(1, min(limit or 500, 1000))
+    dict_filter = (dict_name or 'all').upper().strip()
+
+    search_list = get_reverse_dict_search_list()
+    words = re.findall(r'[a-zA-Z0-9]+', query.lower())
+    if not words:
+        return jsonify({'query': query, 'mode': mode, 'dictionary': dict_name, 'results': [], 'count': 0})
+
+    # Token variant groups
+    token_variants = []
+    token_stem_sets = []
+    token_patterns = []
+    for w in words:
+        if mode == 'exact':
+            v_set = expand_morphological_variants(w)
+        else:
+            v_set = get_concept_synonyms(w)
+        if not v_set:
+            v_set = {w}
+        token_variants.append(v_set)
+        token_stem_sets.append(v_set)
+        escaped = [re.escape(v) for v in v_set if len(v) >= 2]
+        if escaped:
+            token_patterns.append(re.compile(r'\b(?:' + '|'.join(escaped) + r')\b'))
+
+    # Dictionary validator caches
+    word_validator.ensure_csw_loaded()
+    nwl_dict = load_tools_dictionary('NWL')
+    csw_dict = load_tools_dictionary('CSW')
+    nwl_set = getattr(word_validator, 'nwl_words', set())
+    csw_set = getattr(word_validator, 'csw_words', set())
+    aw_set = getattr(word_validator, 'added_words', set())
+    long_set = getattr(word_validator, 'long_words', set())
+    nwl_dict_set = nwl_dict.get('set', set()) if nwl_dict else set()
+    csw_dict_set = csw_dict.get('set', set()) if csw_dict else set()
+
+    exact_phrase = query.lower()
+    exact_pattern = re.compile(r'\b' + re.escape(exact_phrase) + r'\b') if len(words) > 1 else None
+
+    # Identify any multi-word composite concepts
+    is_multi_word = len(words) > 1
+    req_concepts = set(words)
+    relevant_comp_patterns = []
+    if is_multi_word and mode == 'similar':
+        for comp_term, covered in COMPOSITE_CONCEPTS.items():
+            inter = covered.intersection(req_concepts)
+            if inter:
+                relevant_comp_patterns.append((comp_term, inter, re.compile(r'\b' + re.escape(comp_term) + r'\b')))
+
+    matches = []
+    for word, defn, d_low in search_list:
+        matched = True
+        
+        # Check standard token matching
+        for stem_set, pattern in zip(token_stem_sets, token_patterns):
+            if not any(s in d_low for s in stem_set) or not pattern.search(d_low):
+                matched = False
+                break
+        
+        # Multi-word composite fallback (e.g. 'virago' covers 'mean' + 'woman' for 'mean old woman')
+        if not matched and relevant_comp_patterns:
+            if any(comp in d_low for comp, _, _ in relevant_comp_patterns):
+                satisfied = set()
+                for idx, w in enumerate(words):
+                    if any(s in d_low for s in token_stem_sets[idx]) and token_patterns[idx].search(d_low):
+                        satisfied.add(w)
+                for comp, cov, pat in relevant_comp_patterns:
+                    if comp in d_low and pat.search(d_low):
+                        satisfied.update(cov)
+                if req_concepts.issubset(satisfied):
+                    matched = True
+
+        if not matched:
+            continue
+
+        # Check dictionary membership
+        in_nwl = word in nwl_set or word in long_set or word in nwl_dict_set
+        in_csw = word in csw_set or word in long_set or word in csw_dict_set
+        in_aw = word in aw_set
+
+        if dict_filter == 'NWL' and not in_nwl:
+            continue
+        if dict_filter == 'CSW' and not in_csw:
+            continue
+        if dict_filter in ('AW', 'ADDED_WORDS') and not in_aw:
+            continue
+
+        lists = []
+        if in_nwl: lists.append('NWL')
+        if in_csw: lists.append('CSW')
+        if in_aw: lists.append('AW')
+
+        # Score calculation for ranking
+        score = 1
+        if exact_pattern and exact_pattern.search(d_low):
+            score = 4
+        elif all(w in d_low for w in words):
+            score = 3
+        elif any(w in d_low for w in words):
+            score = 2
+
+        matches.append({
+            'word': word,
+            'len': len(word),
+            'definition': defn,
+            'lists': lists,
+            'score': score
+        })
+
+    # Sort: highest score first, then shorter word lengths, then alphabetical
+    matches.sort(key=lambda x: (-x['score'], x['len'], x['word']))
+
+    terms_set = set(words)
+    for s in token_variants:
+        terms_set.update(s)
+    if is_multi_word and mode == 'similar':
+        terms_set.update(COMPOSITE_CONCEPTS.keys())
+    matched_terms = [t for t in sorted(terms_set, key=lambda x: -len(x)) if len(t) >= 2]
+
+    return jsonify({
+        'query': query,
+        'mode': mode,
+        'dictionary': dict_name,
+        'count': len(matches),
+        'results': matches[:limit],
+        'matched_terms': matched_terms[:120]
+    })
+
 # --- Private Messaging Routes ---
 
 @app.route('/api/pm/send', methods=['POST'])

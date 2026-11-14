@@ -187,7 +187,7 @@
     <link rel="preload" href="/css/lobby.css?v=1794100000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794141000">
     <link rel="stylesheet" href="/css/lobby.css?v=1794100000">
-    <link rel="stylesheet" href="/css/play.css?v=1794150000">
+    <link rel="stylesheet" href="/css/play.css?v=1794151000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4209,6 +4209,10 @@
                         <div class="tool-btn-title">Random Word</div>
                         <div class="tool-btn-desc">Generate random words</div>
                     </button>
+                    <button class="tool-nav-btn" data-tool="reverse-dictionary" onclick="window.showTool('reverse-dictionary')">
+                        <div class="tool-btn-title">Reverse Dictionary</div>
+                        <div class="tool-btn-desc">Search words by definition or concept</div>
+                    </button>
                     <button class="tool-nav-btn" data-tool="wotd" onclick="window.showTool('wotd')">
                         <div class="tool-btn-title">Word of the Day</div>
                         <div class="tool-btn-desc">Learn a new word daily</div>
@@ -4671,7 +4675,72 @@
                         </div>
                     </div>
 
+                    <!-- Reverse Dictionary Interface -->
+                    <div id="tool-reverse-dictionary" class="tool-pane" style="display: none; flex-direction: column; width: 100%; box-sizing: border-box;">
+                        <div class="tool-header">
+                            <h2>Reverse Dictionary</h2>
+                            <p>Search for words by definition keywords, inflections, or related concepts and synonyms.</p>
+                        </div>
 
+                        <!-- Top Input & Action Controls -->
+                        <div class="reverse-dict-input-panel">
+                            <div class="reverse-dict-controls-row">
+                                <div class="reverse-dict-search-wrapper">
+                                    <input type="text" id="reverse-dict-input" class="reverse-dict-input" placeholder="Enter word, phrase, or concept (e.g. snake, mean old woman, derogatory)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    <button type="button" id="reverse-dict-clear-btn" class="reverse-dict-clear-btn" style="display: none;" onclick="window.clearReverseDictInput()" title="Clear search">✕</button>
+                                </div>
+                                <div class="reverse-dict-controls-actions">
+                                    <select id="reverse-dict-mode" class="reverse-dict-select" title="Match Mode">
+                                        <option value="similar" selected>Similar to (Synonyms & Concepts)</option>
+                                        <option value="exact">Exact (Word & Inflections)</option>
+                                    </select>
+                                    <select id="reverse-dict-dict" class="reverse-dict-select" title="Dictionary Filter">
+                                        <option value="all" selected>All Dictionaries</option>
+                                        <option value="NWL">NWL</option>
+                                        <option value="CSW">CSW</option>
+                                        <option value="AW">Added Words (AW)</option>
+                                    </select>
+                                    <button type="button" id="reverse-dict-search-btn" class="reverse-dict-search-btn" onclick="window.performReverseDictSearch()">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        <span>Search</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Bar: Counter & Info -->
+                        <div class="reverse-dict-status-bar" id="reverse-dict-status-bar">
+                            <div id="reverse-dict-count-text">Enter a search term above and press Enter.</div>
+                            <div id="reverse-dict-meta-badges"></div>
+                        </div>
+
+                        <!-- Words Table Box with Custom Scrollbar -->
+                        <div class="reverse-dict-table-card">
+                            <div class="reverse-dict-table-header">
+                                <div class="col-num">#</div>
+                                <div class="col-word">Word</div>
+                                <div class="col-definition">Definition</div>
+                                <div class="col-dicts">Dictionaries</div>
+                            </div>
+                            <div class="list-scroll-area-wrapper">
+                                <div id="reverse-dict-table-scroll" class="reverse-dict-table-scroll">
+                                    <div id="reverse-dict-placeholder" class="reverse-dict-placeholder">
+                                        <div style="font-size: 2.2rem; margin-bottom: 8px;">📖</div>
+                                        <div style="font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Find Words by Meaning</div>
+                                        <div style="font-size: 0.85rem; max-width: 480px; margin: 0 auto; line-height: 1.45; color: var(--muted-text);">
+                                            Search definitions by entering any keyword, inflection, or concept. Choose <strong>Exact</strong> to match the word and its grammatical variations, or <strong>Similar to</strong> to uncover synonyms and related concepts.
+                                        </div>
+                                    </div>
+                                    <table id="reverse-dict-table" class="reverse-dict-table" style="display: none;">
+                                        <tbody id="reverse-dict-table-body"></tbody>
+                                    </table>
+                                </div>
+                                <div class="custom-scrollbar-track" id="reverse-dict-scrollbar-track">
+                                    <div class="custom-scrollbar-thumb" id="reverse-dict-scrollbar-thumb"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- ... omitted combo/list content to match target ... -->
 
@@ -10219,13 +10288,13 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794143000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794150000"></script>
+    <script src="/js/app.js?v=1794151000"></script>
     <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794147000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794149000"></script>
+    <script src="/js/tools.js?v=1794151000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794138000"></script>
